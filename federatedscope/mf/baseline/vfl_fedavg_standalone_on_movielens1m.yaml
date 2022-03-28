@@ -1,0 +1,25 @@
+use_gpu: True
+device: 0
+early_stopping: 100
+federate:
+  mode: standalone
+  local_update_steps: 10
+  total_round_num: 100
+  client_num: 5
+data:
+  root: data/
+  type: movielens1m
+  batch_size: 8
+  num_workers: 0
+model:
+  type: MFNet
+  hidden: 20
+optimizer:
+  lr: 0.01
+criterion:
+  type: MSELoss
+trainer:
+  type: mftrainer
+eval:
+  freq: 10
+  metrics: []

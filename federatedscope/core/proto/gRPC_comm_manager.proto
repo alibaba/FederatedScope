@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+service gRPCComServeFunc {
+    rpc sendMessage (MessageRequest) returns (MessageResponse);
+}
+
+message MessageRequest{
+    string msg = 1;
+}
+
+message MessageResponse{
+    string msg = 1;
+}

@@ -1,0 +1,17 @@
+use_gpu: True
+device: 1
+federate:
+  mode: 'standalone'
+  total_round_num: 20
+  make_global_eval: False
+  client_num: 5
+  share_local_model: True
+  online_aggr: True
+trainer:
+  type: 'general'
+eval:
+  freq: 10
+data:
+  type: 'toy'
+model:
+  type: 'lr'

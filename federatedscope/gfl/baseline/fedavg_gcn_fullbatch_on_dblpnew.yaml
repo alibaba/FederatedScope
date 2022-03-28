@@ -1,0 +1,25 @@
+use_gpu: True
+device: 7
+early_stopping: 100
+federate:
+  mode: standalone
+  make_global_eval: True
+  total_round_num: 400
+data:
+  root: data/
+  type: dblp_conf
+  batch_size: 1
+  splits: [0.5, 0.2, 0.3]
+model:
+  type: gcn
+  hidden: 1024
+  out_channels: 4
+optimizer:
+  lr: 0.05
+  weight_decay: 0.0005
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nodefullbatch_trainer
+eval:
+  metrics: ['acc', 'correct']

@@ -1,0 +1,20 @@
+use_gpu: True
+federate:
+  client_num: 2
+  mode: 'distributed'
+  total_round_num: 20
+  make_global_eval: False
+  online_aggr: False
+distribute:
+  server_host: ''xx.xx.xx.xx
+  server_port: x
+  role: 'server'
+  data_file: 'toy_data/server_data'
+trainer:
+  type: 'general'
+eval:
+  freq: 10
+data:
+  type: 'toy'
+model:
+  type: 'lr'

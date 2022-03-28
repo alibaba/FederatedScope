@@ -1,0 +1,28 @@
+use_gpu: True
+device: 0
+early_stopping: 100
+federate:
+  mode: standalone
+  make_global_eval: True
+  local_update_steps: 16
+  total_round_num: 400
+  client_num: 5
+data:
+  root: data/
+  type: wn18
+  splitter: rel_type
+  pre_transforms: constant_feat
+model:
+  type: gcn
+  hidden: 64
+  out_channels: 18
+  task: link
+optimizer:
+  lr: 0.25
+  weight_decay: 0.0005
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: linkfullbatch_trainer
+eval:
+  metrics: ['hits@1', 'hits@5', 'hits@10']

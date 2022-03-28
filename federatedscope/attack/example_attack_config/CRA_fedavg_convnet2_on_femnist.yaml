@@ -1,0 +1,34 @@
+use_gpu: False
+device: -1
+early_stopping: 1000
+seed: 12345
+federate:
+  mode: standalone
+  local_update_steps: 50
+  total_round_num: 1000
+  sample_client_num: 20
+data:
+  root: data/
+  type: femnist
+  splits: [0.6,0.2,0.2]
+  batch_size: 10
+  subsample: 0.0001
+  num_workers: 0
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 62
+optimizer:
+  lr: 0.01
+  weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']
+attack:
+  attack_method: gan_attack
+  attacker_id: 50
+  target_label_ind: 3

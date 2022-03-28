@@ -1,0 +1,15 @@
+colorama
+click
+filelock
+flatbuffers
+funcsigs
+numpy
+opencv-python-headless
+pyarrow
+pyyaml
+recommonmark
+setproctitle
+sphinx
+sphinx-click
+sphinx_rtd_theme
+pandas
