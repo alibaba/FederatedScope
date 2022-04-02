@@ -261,7 +261,7 @@ def get_passive_PIA_auxiliary_dataset(dataset_name):
 
         def _generate_data(instance_num=1000, feature_num=5, save_data=False):
             """
-            Generate data in DAILFed format
+            Generate data in FedRunner format
             Args:
                 instance_num:
                 feature_num:

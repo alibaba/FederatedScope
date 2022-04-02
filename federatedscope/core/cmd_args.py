@@ -3,7 +3,7 @@ import sys
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='DAIL FedML')
+    parser = argparse.ArgumentParser(description='FederatedScope')
     parser.add_argument('--cfg',
                         dest='cfg_file',
                         help='Config file path',

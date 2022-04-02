@@ -4,9 +4,6 @@ import logging
 import yaml
 import re
 
-# running example
-# first `wandb login --host=http://11.158.195.242:8080/
-# then `python parse_exp_results_wandb.py --exp_dir=/mnt1/daoyuanchen.cdy/dailFL/exp_out --project=pfl_benchmark --user=daoyuan`
 
 parser = argparse.ArgumentParser(description='FederatedScope result parsing')
 parser.add_argument('--exp_dir',

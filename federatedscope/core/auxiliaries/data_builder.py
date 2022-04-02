@@ -13,7 +13,7 @@ def load_toy_data(config=None):
                        feature_num=5,
                        save_data=False):
         """
-        Generate data in DAILFed format
+        Generate data in FedRunner format
         Args:
             client_num:
             instance_num:

@@ -11,7 +11,7 @@ from federatedscope.config import cfg
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.worker import Server, Client
-from federatedscope.core.DAIL_fed_api import DAILFed
+from federatedscope.core.fed_runner import FedRunner
 from federatedscope.autotune.choice_types import Discrete, Continuous
 from federatedscope.autotune.utils import generate_candidates, config2cmdargs, config2str, summarize_hpo_results
 
@@ -73,10 +73,10 @@ class TrialExecutor(threading.Thread):
     def run(self):
         setup_seed(self._trial_cfg.seed)
         data, modified_config = get_data(self._trial_cfg)
-        Fed_runner = DAILFed(data=data,
-                             server_class=Server,
-                             client_class=Client,
-                             config=modified_config)
+        Fed_runner = FedRunner(data=data,
+                               server_class=Server,
+                               client_class=Client,
+                               config=modified_config)
         test_results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = test_results[key1][key2]

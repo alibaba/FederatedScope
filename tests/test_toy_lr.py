@@ -4,7 +4,7 @@ import unittest
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
 from federatedscope.config import cfg, assert_cfg
-from federatedscope.core.DAIL_fed_api import DAILFed
+from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -38,10 +38,10 @@ class ToyLRTest(unittest.TestCase):
 
         self.assertIsNotNone(data)
 
-        Fed_runner = DAILFed(data=data,
-                             server_class=get_server_cls(cfg),
-                             client_class=get_client_cls(cfg),
-                             config=cfg.clone())
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(cfg),
+                               client_class=get_client_cls(cfg),
+                               config=cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
@@ -61,10 +61,10 @@ class ToyLRTest(unittest.TestCase):
 
         self.assertIsNotNone(data)
 
-        Fed_runner = DAILFed(data=data,
-                             server_class=get_server_cls(cfg),
-                             client_class=get_client_cls(cfg),
-                             config=cfg.clone())
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(cfg),
+                               client_class=get_client_cls(cfg),
+                               config=cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)

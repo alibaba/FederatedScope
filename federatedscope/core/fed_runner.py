@@ -7,7 +7,7 @@ from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
 
 
-class DAILFed(object):
+class FedRunner(object):
     """
     This class is used for building up the Federated Learning course
     """
