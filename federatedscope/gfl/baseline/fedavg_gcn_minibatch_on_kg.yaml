@@ -1,6 +1,12 @@
 use_gpu: True
 device: 0
+<<<<<<< HEAD
 early_stopping: 100
+=======
+early_stop:
+  patience: 20
+  improve_indicator_mode: mean
+>>>>>>> be synchronized with gitlab
 federate:
   mode: standalone
   make_global_eval: True
@@ -25,4 +31,8 @@ criterion:
 trainer:
   type: linkfullbatch_trainer
 eval:
+<<<<<<< HEAD
+=======
+  freq: 5
+>>>>>>> be synchronized with gitlab
   metrics: ['hits@1', 'hits@5', 'hits@10']

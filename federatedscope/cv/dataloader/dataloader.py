@@ -59,7 +59,7 @@ def load_cv_dataset(config=None):
                           s_frac=config.data.subsample,
                           tr_frac=splits[0],
                           val_frac=splits[1],
-                          seed=config.seed,
+                          seed=1234,
                           transform=transform)
     else:
         raise ValueError(f'No dataset named: {name}!')

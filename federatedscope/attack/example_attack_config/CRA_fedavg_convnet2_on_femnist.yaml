@@ -1,6 +1,11 @@
 use_gpu: False
 device: -1
+<<<<<<< HEAD
 early_stopping: 1000
+=======
+early_stop:
+  patience: 100
+>>>>>>> be synchronized with gitlab
 seed: 12345
 federate:
   mode: standalone

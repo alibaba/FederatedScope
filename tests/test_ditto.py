@@ -16,7 +16,6 @@ class FEMNISTTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc', 'loss_regular']
 

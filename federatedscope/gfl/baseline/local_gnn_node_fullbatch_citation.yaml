@@ -1,6 +1,12 @@
 use_gpu: True
 device: 0
+<<<<<<< HEAD
 early_stopping: 100
+=======
+early_stop:
+  patience: 100
+  improve_indicator_mode: mean
+>>>>>>> be synchronized with gitlab
 federate:
   make_global_eval: True
   local_update_steps: 1000000

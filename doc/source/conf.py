@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
-project = u'FLPackage'
+project = u'federatedscope'
 copyright = u'2022, The DAIL Team'
 author = u'The DAIL Team'
 

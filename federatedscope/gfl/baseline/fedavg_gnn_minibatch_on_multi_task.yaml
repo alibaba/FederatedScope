@@ -1,15 +1,29 @@
 use_gpu: True
 device: 0
+<<<<<<< HEAD
 early_stopping: 100
 federate:
   mode: 'standalone'
   make_global_eval: False
   local_update_steps: 100
+=======
+early_stop:
+  patience: 20
+  improve_indicator_mode: mean
+federate:
+  mode: 'standalone'
+  make_global_eval: False
+  local_update_steps: 1
+>>>>>>> be synchronized with gitlab
   total_round_num: 400
   share_local_model: False
 data:
   root: data/
+<<<<<<< HEAD
   type: graph_multi_domain_mix
+=======
+  type: graph_multi_domain_mol
+>>>>>>> be synchronized with gitlab
   pre_transforms: constant_feat
 model:
   type: gin

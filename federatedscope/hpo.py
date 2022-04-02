@@ -6,7 +6,7 @@ import logging
 import yaml
 import numpy as np
 
-DEV_MODE = True  # simplify the flpackage re-setup everytime we change the source codes of flpackage
+DEV_MODE = True  # simplify the federatedscope re-setup everytime we change the source codes of federatedscope
 if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(file_dir)
@@ -16,7 +16,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_logger
 from federatedscope.config import cfg, assert_cfg
 from federatedscope.core.DAIL_fed_api import DAILFed
-#from flpackage.core.DAIL_fed_api_single_process import DAILFed_SIM
+#from federatedscope.core.DAIL_fed_api_single_process import DAILFed_SIM
 from federatedscope.autotune import split_raw_config, config2cmdargs, get_scheduler
 
 if os.environ.get('https_proxy'):

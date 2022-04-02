@@ -120,9 +120,9 @@ def load_toy_data(config=None):
 
 def get_data(config):
     for func in register.data_dict.values():
-        data = func()
-        if data is not None:
-            return data
+        data_and_config = func(config)
+        if data_and_config is not None:
+            return data_and_config
     if config.data.type.lower() == 'toy':
         data, modified_config = load_toy_data(config)
     elif config.data.type.lower() in ['femnist', 'celeba']:
@@ -155,7 +155,7 @@ def get_data(config):
     elif config.data.type.lower() == 'vertical_fl_data':
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         data, modified_config = load_vertical_data(config, generate=True)
-    elif config.data.type.lower() in ['movielens1m']:
+    elif 'movielens' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)
     else:

@@ -10,7 +10,7 @@ def parse_args():
                         required=True,
                         type=str)
     parser.add_argument('opts',
-                        help='See flpackage/core/config.py for all options',
+                        help='See federatedscope/core/config.py for all options',
                         default=None,
                         nargs=argparse.REMAINDER)
     if len(sys.argv) == 1:

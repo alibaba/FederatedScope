@@ -1,4 +1,4 @@
-from federatedscope.contrib.metrics.example import *
+from federatedscope.contrib.metrics import *
 import federatedscope.register as register
 
 

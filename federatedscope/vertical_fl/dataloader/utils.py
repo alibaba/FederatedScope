@@ -3,6 +3,16 @@ import math
 
 
 def batch_iter(data, batch_size, shuffled=True):
+    """
+    A batch iteration
+
+    Arguments:
+        data(dict): data
+        batch_size (int): the batch size
+        shuffled (bool): whether to shuffle the data at the start of each epoch
+    :returns: sample index, batch of x, batch_of y
+    :rtype: int, ndarray, ndarry
+    """
 
     assert 'x' in data and 'y' in data
     data_x = data['x']

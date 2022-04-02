@@ -5,22 +5,33 @@ import random
 import copy
 import sys
 import time
+import math
 from datetime import datetime
 
 import numpy as np
-import torch
-import torchvision
-import torch.distributions as distributions
+# Blind torch
+try:
+    import torch
+    import torchvision
+    import torch.distributions as distributions
+except ImportError:
+    torch = None
+    torchvision = None
+    distributions = None
 
 import federatedscope.register as register
 
 
 def setup_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
-    torch.backends.cudnn.deterministic = True
+    if torch is not None:
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+    else:
+        import tensorflow as tf
+        tf.set_random_seed(seed)
 
 
 def setup_logger(cfg):
@@ -173,47 +184,84 @@ def calc_measurements(raw_results, config):
 SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
 
-def formatted_logging(results,
-                      rnd,
-                      role=-1,
-                      forms=['weighted_avg', 'avg', 'fairness', 'raw']):
-    # fomatted the output
-    output = {'Role': role, 'Round': rnd}
+def formatted_logging(results, rnd, role=-1, forms=None):
+    """
+        format the output
+
+        Args:
+            results (dict): a dict to store the evaluation results {metric: value}
+            rnd (int|string): FL round
+            role (int|string): the output role
+            forms (list): format type
+
+        Returns:
+            round_formatted_results (dict): a formatted results with different forms and roles,
+            e.g.,
+            {
+            'Role': 'Server #',
+            'Round': 200,
+            'Results_weighted_avg': {
+                'test_avg_loss': 0.58, 'test_acc': 0.67, 'test_correct': 3356, 'test_loss': 2892, 'test_total': 5000
+                },
+            'Results_avg': {
+                'test_avg_loss': 0.57, 'test_acc': 0.67, 'test_correct': 3356, 'test_loss': 2892, 'test_total': 5000
+                },
+            'Results_fairness': {
+                'test_correct': 3356,      'test_total': 5000,
+                'test_avg_loss_std': 0.04, 'test_avg_loss_bottom_decile': 0.52, 'test_avg_loss_top_decile': 0.64,
+                'test_acc_std': 0.06,      'test_acc_bottom_decile': 0.60,      'test_acc_top_decile': 0.75,
+                'test_loss_std': 214.17,   'test_loss_bottom_decile': 2644.64,  'test_loss_top_decile': 3241.23
+                },
+            }
+    """
+    # TODO: better visualization via wandb or tensorboard
+    # TODO: save the results logging into outdir/results.log
+    if forms is None:
+        forms = ['weighted_avg', 'avg', 'fairness', 'raw']
+    round_formatted_results = {'Role': role, 'Round': rnd}
     for form in forms:
         new_results = copy.deepcopy(results)
         if not role.lower().startswith('server') or form == 'raw':
-            output['Results_raw'] = new_results
+            round_formatted_results['Results_raw'] = new_results
         elif form not in SUPPORTED_FORMS:
             continue
         else:
-            for mode in ['train', 'val', 'test']:
-                if f'{mode}_total' not in results:
-                    continue
-                num = np.array(new_results[f'{mode}_total'])
-                for key in results.keys():
-                    if key in [f'{mode}_total', f'{mode}_correct']:
+            for key in results.keys():
+                dataset_name = key.split("_")[0]
+                if f'{dataset_name}_total' not in results:
+                    raise ValueError(
+                        "Results to be formatted should be include the dataset_num in the dict,"
+                        f"with key = {dataset_name}_total")
+                else:
+                    dataset_num = np.array(results[f'{dataset_name}_total'])
+                    if key in [
+                            f'{dataset_name}_total', f'{dataset_name}_correct'
+                    ]:
                         new_results[key] = np.mean(new_results[key])
-                    else:
-                        if form == 'weighted_avg':
-                            new_results[key] = np.sum(
-                                np.array(new_results[key]) * num) / np.sum(num)
-                        if form == "avg":
-                            new_results[key] = np.mean(new_results[key])
-                        if form == "fairness":
-                            # by default, log the std and decile
-                            all_res = copy.copy(results[key])
-                            new_results.pop(
-                                key, None)  # delete the redundant original one
-                            all_res.sort()
-                            new_results[f"{key}_std"] = np.std(
-                                np.array(all_res))
-                            new_results[f"{key}_bottom_decile"] = all_res[
-                                len(all_res) // 10]
-                            new_results[f"{key}_top_decile"] = all_res[
-                                len(all_res) * 9 // 10]
-            output[f'Results_{form}'] = new_results
 
-    return output
+                if key in [f'{dataset_name}_total', f'{dataset_name}_correct']:
+                    new_results[key] = np.mean(new_results[key])
+                else:
+                    all_res = np.array(copy.copy(results[key]))
+                    if form == 'weighted_avg':
+                        new_results[key] = np.sum(
+                            np.array(new_results[key]) *
+                            dataset_num) / np.sum(dataset_num)
+                    if form == "avg":
+                        new_results[key] = np.mean(new_results[key])
+                    if form == "fairness" and all_res.size > 1:
+                        # by default, log the std and decile
+                        new_results.pop(
+                            key, None)  # delete the redundant original one
+                        all_res.sort()
+                        new_results[f"{key}_std"] = np.std(np.array(all_res))
+                        new_results[f"{key}_bottom_decile"] = all_res[
+                            all_res.size // 10]
+                        new_results[f"{key}_top_decile"] = all_res[all_res.size
+                                                                   * 9 // 10]
+            round_formatted_results[f'Results_{form}'] = new_results
+
+    return round_formatted_results
 
 
 def save_local_data(dir_path,
@@ -253,3 +301,37 @@ def get_random(type, sample_shape, params, device):
                                   "(https://pytorch.org/docs/stable/distributions.html).".format(type))
     generator = getattr(distributions, type)(**params)
     return generator.sample(sample_shape=sample_shape).to(device)
+
+
+def batch_iter(data, batch_size=64, shuffled=True):
+
+    assert 'x' in data and 'y' in data
+    data_x = data['x']
+    data_y = data['y']
+    data_size = len(data_y)
+    num_batches_per_epoch = math.ceil(data_size / batch_size)
+
+    while True:
+        shuffled_index = np.random.permutation(
+            np.arange(data_size)) if shuffled else np.arange(data_size)
+        for batch in range(num_batches_per_epoch):
+            start_index = batch * batch_size
+            end_index = min(data_size, (batch + 1) * batch_size)
+            sample_index = shuffled_index[start_index:end_index]
+            yield {'x': data_x[sample_index], 'y': data_y[sample_index]}
+
+
+def merge_dict(dict1, dict2):
+    # Merge results for history
+    for key, value in dict2.items():
+        if key not in dict1:
+            if isinstance(value, dict):
+                dict1[key] = merge_dict({}, value)
+            else:
+                dict1[key] = [value]
+        else:
+            if isinstance(value, dict):
+                merge_dict(dict1[key], value)
+            else:
+                dict1[key].append(value)
+    return dict1

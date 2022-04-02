@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.register import register_trainer
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 
 MODE2MASK = {
@@ -16,7 +16,7 @@ MODE2MASK = {
 }
 
 
-class LinkFullBatchTrainer(GeneralTrainer):
+class LinkFullBatchTrainer(GeneralTorchTrainer):
     def register_default_hooks_eval(self):
         super().register_default_hooks_eval()
         self.register_hook_in_eval(
@@ -65,9 +65,9 @@ class LinkFullBatchTrainer(GeneralTrainer):
     def _hook_on_batch_forward(self, ctx):
         data = ctx.data
         perm = ctx.data_batch
-        mask = ctx.data[MODE2MASK[ctx.cur_mode]]
+        mask = ctx.data[MODE2MASK[ctx.cur_data_split]]
         edges = data.edge_index.T[mask]
-        if ctx.cur_mode in ['train', 'val']:
+        if ctx.cur_data_split in ['train', 'val']:
             h = ctx.model((data.x, ctx.input_edge_index))
         else:
             h = ctx.model((data.x, data.edge_index))
@@ -81,7 +81,7 @@ class LinkFullBatchTrainer(GeneralTrainer):
         ctx.y_prob = pred
 
 
-class LinkMiniBatchTrainer(GeneralTrainer):
+class LinkMiniBatchTrainer(GeneralTorchTrainer):
     """
         # Support GraphSAGE with GraphSAINTRandomWalkSampler in train ONLY!
     """
@@ -119,18 +119,18 @@ class LinkMiniBatchTrainer(GeneralTrainer):
         return init_dict
 
     def _hook_on_batch_forward(self, ctx):
-        if ctx.cur_mode == 'train':
+        if ctx.cur_data_split == 'train':
             batch = ctx.data_batch.to(ctx.device)
-            mask = batch[MODE2MASK[ctx.cur_mode]]
+            mask = batch[MODE2MASK[ctx.cur_data_split]]
             edges = batch.edge_index.T[mask].T
             h = ctx.model((batch.x, edges))
             pred = ctx.model.link_predictor(h, edges)
             label = batch.edge_type[mask]
             ctx.batch_size = torch.sum(
-                ctx.data_batch[MODE2MASK[ctx.cur_mode]]).item()
+                ctx.data_batch[MODE2MASK[ctx.cur_data_split]]).item()
         else:
             # For inference
-            mask = ctx.data['data'][MODE2MASK[ctx.cur_mode]]
+            mask = ctx.data['data'][MODE2MASK[ctx.cur_data_split]]
             subgraph_loader = ctx.data_batch
             h = ctx.model.gnn.inference(ctx.data['data'].x, subgraph_loader,
                                         ctx.device).to(ctx.device)
@@ -144,7 +144,7 @@ class LinkMiniBatchTrainer(GeneralTrainer):
             pred = torch.cat(pred, dim=0)
             label = ctx.data['data'].edge_type[mask].to(ctx.device)
             ctx.batch_size = torch.sum(
-                ctx.data['data'][MODE2MASK[ctx.cur_mode]]).item()
+                ctx.data['data'][MODE2MASK[ctx.cur_data_split]]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
         ctx.y_true = label

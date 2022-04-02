@@ -8,6 +8,9 @@ from federatedscope.core.auxiliaries.model_builder import get_model
 
 
 class DAILFed(object):
+    """
+    This class is used for building up the Federated Learning course
+    """
     def __init__(self,
                  data,
                  server_class=Server,
@@ -29,6 +32,9 @@ class DAILFed(object):
             self._setup_for_distributed()
 
     def _setup_for_standalone(self):
+        """
+        To set up server and client for standalone mode
+        """
         self.server = self._setup_server()
 
         self.client = dict()
@@ -38,13 +44,16 @@ class DAILFed(object):
 
         # assume the client-wise data are consistent in their input&output shape
         self._shared_client_model = get_model(
-            self.cfg.model,
-            self.data[1]) if self.cfg.federate.share_local_model else None
+            self.cfg.model, self.data[1], backend=self.cfg.backend
+        ) if self.cfg.federate.share_local_model else None
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id, client_model=self._shared_client_model)
 
     def _setup_for_distributed(self):
+        """
+        To set up server or client for distributed mode
+        """
         self.server_address = {
             'host': self.cfg.distribute.server_host,
             'port': self.cfg.distribute.server_port
@@ -60,6 +69,9 @@ class DAILFed(object):
             self.client = self._setup_client()
 
     def run(self):
+        """
+        To run an FL course, which is called after server/client has been set up
+        """
         if self.mode == 'standalone':
             # trigger the FL course
             for each_client in self.client:
@@ -113,21 +125,27 @@ class DAILFed(object):
                 self.client.run()
 
     def _setup_server(self):
+        """
+        Set up the server
+        """
         self.server_id = 0
         if self.mode == 'standalone':
             if self.server_id in self.data:
                 server_data = self.data[self.server_id]
-                model = get_model(self.cfg.model, server_data)
+                model = get_model(self.cfg.model,
+                                  server_data,
+                                  backend=self.cfg.backend)
             else:
                 server_data = None
                 model = get_model(
-                    self.cfg.model, self.data[1]
+                    self.cfg.model, self.data[1], backend=self.cfg.backend
                 )  # get the model according to client's data if the server does not own data
             kw = {'shared_comm_queue': self.shared_comm_queue}
         elif self.mode == 'distributed':
             server_data = self.data
-            model = get_model(self.cfg.model,
-                              server_data)
+            model = get_model(
+                self.cfg.model, server_data,
+                backend=self.cfg.backend)
             kw = self.server_address
         else:
             raise ValueError('Mode {} is not provided'.format(
@@ -157,6 +175,9 @@ class DAILFed(object):
         return server
 
     def _setup_client(self, client_id=-1, client_model=None):
+        """
+        Set up the client
+        """
         self.server_id = 0
         if self.mode == 'standalone':
             client_data = self.data[client_id]
@@ -177,7 +198,8 @@ class DAILFed(object):
                 server_id=self.server_id,
                 config=client_specific_config,
                 data=client_data,
-                model=client_model or get_model(self.cfg.model, client_data),
+                model=client_model or get_model(
+                    self.cfg.model, client_data, backend=self.cfg.backend),
                 device=self.gpu_manager.auto_choice(),
                 **kw)
         else:
@@ -192,6 +214,9 @@ class DAILFed(object):
         return client
 
     def _handle_msg(self, msg, rcv=-1):
+        """
+        To simulate the message handling process (used only for the standalone mode)
+        """
         if rcv != -1:
             # simulate broadcast one-by-one
             self.client[rcv].msg_handlers[msg.msg_type](msg)

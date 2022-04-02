@@ -23,6 +23,9 @@ from federatedscope.core.message import Message
 
 
 class StandaloneCommManager(object):
+    """
+    The communicator used for standalone mode
+    """
     def __init__(self, comm_queue):
         self.comm_queue = comm_queue
         self.neighbors = dict()

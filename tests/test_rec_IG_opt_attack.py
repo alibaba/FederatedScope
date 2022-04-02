@@ -8,7 +8,6 @@ from federatedscope.core.DAIL_fed_api import DAILFed
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
-
 class RECTest(unittest.TestCase):
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -17,7 +16,6 @@ class RECTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc', 'loss_regular']
 
@@ -63,9 +61,9 @@ class RECTest(unittest.TestCase):
         assert_cfg(cfg)
 
         Fed_runner = DAILFed(data=data,
-                         server_class=get_server_cls(cfg),
-                         client_class=get_client_cls(cfg),
-                         config=cfg.clone())
+                             server_class=get_server_cls(cfg),
+                             client_class=get_client_cls(cfg),
+                             config=cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)

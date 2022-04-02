@@ -1,0 +1,35 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 100
+  improve_indicator_mode: mean
+federate:
+  mode: standalone
+  make_global_eval: True
+  client_num: 5
+  total_round_num: 400
+data:
+  root: data/
+  type: cora
+  splitter: 'louvain'
+  batch_size: 1
+model:
+  type: gcn
+  hidden: 64
+  dropout: 0.5
+  out_channels: 7
+optimizer:
+  weight_decay: 0.0005
+  type: SGD
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nodefullbatch_trainer
+eval:
+  metrics: ['acc', 'correct']
+hpo:
+  scheduler: sha
+  larger_better: True
+  metric: 'server_global_eval.test_acc'
+  sha:
+    budgets: [1,3,9]

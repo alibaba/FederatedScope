@@ -15,7 +15,7 @@ class EfficientSimulationTest(unittest.TestCase):
     def test_toy_example_standalone_cmp_sim_impl(self):
         case_cfg = cfg.clone()
         case_cfg.merge_from_file(
-            'flpackage/example_configs/single_process.yaml')
+            'federatedscope/example_configs/single_process.yaml')
         assert_cfg(case_cfg)
 
         setup_seed(case_cfg.seed)

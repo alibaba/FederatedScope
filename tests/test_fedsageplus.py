@@ -16,25 +16,24 @@ class FedSagePlusTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
-        
+
         cfg.federate.mode = 'standalone'
         cfg.federate.make_global_eval = True
         cfg.federate.client_num = 3
         cfg.federate.total_round_num = 10
         cfg.federate.method = 'fedsageplus'
         cfg.federate.batch_or_epoch = 'epoch'
-        
+
         cfg.data.root = 'test_data/'
         cfg.data.type = 'cora'
         cfg.data.splitter = 'louvain'
         cfg.data.batch_size = 1
-        
+
         cfg.model.type = 'sage'
         cfg.model.hidden = 64
         cfg.model.dropout = 0.5
         cfg.model.out_channels = 7
-        
+
         cfg.fedsageplus.num_pred = 5
         cfg.fedsageplus.gen_hidden = 64
         cfg.fedsageplus.hide_portion = 0.5
@@ -43,7 +42,7 @@ class FedSagePlusTest(unittest.TestCase):
         cfg.fedsageplus.a = 1.0
         cfg.fedsageplus.b = 1.0
         cfg.fedsageplus.c = 1.0
-        
+
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'nodefullbatch_trainer'
         cfg.eval.metrics = ['acc', 'correct']
@@ -67,9 +66,8 @@ class FedSagePlusTest(unittest.TestCase):
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(
-            test_best_results["server_global_eval"]['test_acc'],
-            0.7)
+        self.assertGreater(test_best_results["server_global_eval"]['test_acc'],
+                           0.7)
 
 
 if __name__ == '__main__':

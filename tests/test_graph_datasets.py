@@ -7,7 +7,7 @@ import numpy as np
 from torch_geometric.datasets import Planetoid
 import torch_geometric.transforms as T
 
-#from flpackage.gfl.dataset import ACM, RecSys, DBLPfull, DBLPNew
+#from federatedscope.gfl.dataset import ACM, RecSys, DBLPfull, DBLPNew
 from federatedscope.gfl.dataset.splitter import LouvainSplitter, RandomSplitter
 
 

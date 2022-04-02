@@ -1,4 +1,7 @@
 class Worker(object):
+    """
+    The base worker class
+    """
     def __init__(self, ID=-1, state=0, config=None, model=None, strategy=None):
         self._ID = ID
         self._state = state

@@ -1,9 +1,10 @@
 import torch
 import torch.nn.functional as F
-from sklearn.linear_model import LogisticRegression
 import matplotlib.pyplot as plt
 import logging
 import os
+import numpy as np
+import federatedscope.register as register
 
 
 def label_to_onehot(target, num_classes=100):
@@ -78,23 +79,32 @@ def approximate_func(x, device, C1=20, C2=0.5):
         1/(1+e^{-1*C1 (x-C2)})
 
     '''
-    C1= torch.tensor(C1).to(
-                torch.device(device))
-    C2 = torch.tensor(C2).to(
-                torch.device(device))
+    C1 = torch.tensor(C1).to(torch.device(device))
+    C2 = torch.tensor(C2).to(torch.device(device))
 
     return 1 / (1 + torch.exp(-1 * C1 * (x - C2)))
 
 
 def get_classifier(classifier: str, model=None):
-    if classifier == 'LR':
+    if model is not None:
+        return model
+
+    if classifier == 'lr':
+        from sklearn.linear_model import LogisticRegression
         model = LogisticRegression(random_state=0)
         return model
+    elif classifier.lower() == 'randomforest':
+        from sklearn.ensemble import RandomForestClassifier
+        model = RandomForestClassifier(random_state=0)
+        return model
+    elif classifier.lower() == 'svm':
+        from sklearn.svm import SVC
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.pipeline import make_pipeline
+        model = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+        return model
     else:
-        if model is not None:
-            return model
-        else:
-            ValueError()
+        ValueError()
 
 
 def get_data_info(dataset_name):
@@ -179,7 +189,8 @@ def get_reconstructor(atk_method, **kwargs):
 
     if atk_method.lower() == 'dlg':
         from federatedscope.attack.privacy_attacks.reconstruction_opt import DLG
-        logging.info('--------- Getting reconstructor: DLG --------------------')
+        logging.info(
+            '--------- Getting reconstructor: DLG --------------------')
 
         return DLG(max_ite=kwargs['max_ite'],
                    lr=kwargs['lr'],
@@ -191,16 +202,18 @@ def get_reconstructor(atk_method, **kwargs):
                    federate_method=kwargs['federate_method'])
     elif atk_method.lower() == 'ig':
         from federatedscope.attack.privacy_attacks.reconstruction_opt import InvertGradient
-        logging.info('--------- Getting reconstructor: InvertGradient --------------------')
+        logging.info(
+            '--------- Getting reconstructor: InvertGradient --------------------'
+        )
         return InvertGradient(max_ite=kwargs['max_ite'],
-                   lr=kwargs['lr'],
-                   federate_loss_fn=kwargs['federate_loss_fn'],
-                   device=kwargs['device'],
-                   federate_lr=kwargs['federate_lr'],
-                   optim=kwargs['optim'],
-                   info_diff_type=kwargs['info_diff_type'],
-                   federate_method=kwargs['federate_method'],
-                   alpha_TV=kwargs['alpha_TV'])
+                              lr=kwargs['lr'],
+                              federate_loss_fn=kwargs['federate_loss_fn'],
+                              device=kwargs['device'],
+                              federate_lr=kwargs['federate_lr'],
+                              optim=kwargs['optim'],
+                              info_diff_type=kwargs['info_diff_type'],
+                              federate_method=kwargs['federate_method'],
+                              alpha_TV=kwargs['alpha_TV'])
     else:
         ValueError(
             "attack method: {} lacks reconstructor implementation".format(
@@ -221,5 +234,69 @@ def get_generator(dataset_name):
         from federatedscope.attack.models.gan_based_model import GeneratorFemnist
         return GeneratorFemnist
     else:
-        ValueError("The generator to generate data like {} is not defined!".format(dataset_name))
+        ValueError(
+            "The generator to generate data like {} is not defined!".format(
+                dataset_name))
 
+
+def get_data_property(ctx):
+    # A SHOWCASE for Femnist dataset: Property := whether contains a circle.
+    x, label = [_.to(ctx.device) for _ in ctx.data_batch]
+
+    prop = torch.zeros(label.size)
+    positive_labels = [0, 6, 8]
+    for ind in range(label.size()[0]):
+        if label[ind] in positive_labels:
+            prop[ind] = 1
+    prop.to(ctx.device)
+    return prop
+
+
+def get_passive_PIA_auxiliary_dataset(dataset_name):
+    for func in register.auxiliary_data_loader_PIA_dict.values():
+        criterion = func(dataset_name)
+        if criterion is not None:
+            return criterion
+    if dataset_name == 'toy':
+
+        def _generate_data(instance_num=1000, feature_num=5, save_data=False):
+            """
+            Generate data in DAILFed format
+            Args:
+                instance_num:
+                feature_num:
+                save_data:
+
+            Returns:
+                {
+                            'x': ...,
+                            'y': ...,
+                            'prop': ...
+                        }
+
+            """
+            weights = np.random.normal(loc=0.0, scale=1.0, size=feature_num)
+            bias = np.random.normal(loc=0.0, scale=1.0)
+
+            prop_weights = np.random.normal(loc=0.0,
+                                            scale=1.0,
+                                            size=feature_num)
+            prop_bias = np.random.normal(loc=0.0, scale=1.0)
+
+            x = np.random.normal(loc=0.0,
+                                 scale=0.5,
+                                 size=(instance_num, feature_num))
+            y = np.sum(x * weights, axis=-1) + bias
+            y = np.expand_dims(y, -1)
+            prop = np.sum(x * prop_weights, axis=-1) + prop_bias
+            prop = 1.0 * ((1 / (1 + np.exp(-1 * prop))) > 0.5)
+            prop = np.expand_dims(prop, -1)
+
+            data_train = {'x': x, 'y': y, 'prop': prop}
+            return data_train
+
+        return _generate_data()
+    else:
+        ValueError(
+            'The data: {} cannot be loaded. Please specify the data load function.'
+        )

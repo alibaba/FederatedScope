@@ -9,6 +9,7 @@ from federatedscope.core.auxiliaries.utils import formatted_logging
 
 class vFLServer(Server):
     """
+    The server class for vertical FL, which customizes the handled functions. Please refer to the tutorial for more details about the implementation algorithm
     Implementation of Vertical FL refer to `Private federated learning on vertically partitioned data via entity resolution and additively homomorphic encryption` [Hardy, et al., 2017]
     (https://arxiv.org/abs/1711.10677)
     """
@@ -76,10 +77,13 @@ class vFLServer(Server):
         self.state += 1
         if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
             metrics = self.evaluate()
-            self.update_best_result(metrics, results_type='server_global_eval')
+            self.update_best_result(
+                metrics,
+                results_type='server_global_eval',
+                round_wise_update_key=self._cfg.best_res_update_round_wise_key)
             formatted_logs = formatted_logging(metrics,
                                                rnd=self.state,
-                                               role='Server #',
+                                               role='Global-Eval-Server #',
                                                forms=self._cfg.eval.report)
             logging.info(formatted_logs)
 
@@ -91,7 +95,10 @@ class vFLServer(Server):
             self.broadcast_model_para()
         else:
             metrics = self.evaluate()
-            self.update_best_result(metrics, results_type='server_global_eval')
+            self.update_best_result(
+                metrics,
+                results_type='server_global_eval',
+                round_wise_update_key=self._cfg.best_res_update_round_wise_key)
             formatted_logs = formatted_logging(metrics,
                                                rnd=self.state,
                                                role='Server #',
@@ -105,4 +112,4 @@ class vFLServer(Server):
             np.log(1 + np.exp(-test_y * np.matmul(test_x, self.theta))))
         acc = np.mean((test_y * np.matmul(test_x, self.theta)) > 0)
 
-        return {'loss': loss, 'acc': acc}
+        return {'test_loss': loss, 'test_acc': acc, 'test_total': len(test_y)}

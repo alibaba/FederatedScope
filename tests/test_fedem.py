@@ -16,7 +16,6 @@ class FEMNISTTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc', 'loss_regular']
 
@@ -68,7 +67,9 @@ class FEMNISTTest(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         cfg.merge_from_other_cfg(backup_cfg)
-        self.assertLess(test_best_results["client_summarized_weighted_avg"]['test_loss'], 600)
+        self.assertLess(
+            test_best_results["client_summarized_weighted_avg"]['test_loss'],
+            600)
 
 
 if __name__ == '__main__':

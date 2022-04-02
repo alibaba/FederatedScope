@@ -1,4 +1,4 @@
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from typing import Type
 
 from federatedscope.attack.privacy_attacks.GAN_based_attack import GANCRA
@@ -22,10 +22,9 @@ def wrap_GANTrainer(
     base_trainer.ctx.target_label_ind = base_trainer.cfg.attack.target_label_ind
     base_trainer.ctx.gan_cra = GANCRA(base_trainer.cfg.attack.target_label_ind,
                                       base_trainer.ctx.model,
-                                      dataset_name = base_trainer.cfg.data.type,
+                                      dataset_name=base_trainer.cfg.data.type,
                                       device=base_trainer.ctx.device,
-                                      sav_pth=base_trainer.cfg.outdir
-                                      )
+                                      sav_pth=base_trainer.cfg.outdir)
 
     # ---- action-level plug-in -------
 

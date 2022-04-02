@@ -2,7 +2,7 @@ import json
 import os
 import sys
 
-DEV_MODE = True  # simplify the flpackage re-setup everytime we change the source codes of flpackage
+DEV_MODE = True  # simplify the federatedscope re-setup everytime we change the source codes of federatedscope
 if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(file_dir)

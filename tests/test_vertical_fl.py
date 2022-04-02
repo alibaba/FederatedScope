@@ -34,6 +34,7 @@ class vFLTest(unittest.TestCase):
 
         cfg.trainer.type = 'none'
         cfg.eval.freq = 5
+        cfg.best_res_update_round_wise_key = "test_loss"
 
         return backup_cfg
 
@@ -53,7 +54,8 @@ class vFLTest(unittest.TestCase):
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
         cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_results['server_global_eval']['acc'], 0.9)
+        print(test_results)
+        self.assertGreater(test_results['server_global_eval']['test_acc'], 0.9)
 
 
 if __name__ == '__main__':

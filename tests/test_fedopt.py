@@ -16,7 +16,6 @@ class FedOptTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc']
 
@@ -67,7 +66,8 @@ class FedOptTest(unittest.TestCase):
         test_results = Fed_runner.run()
         cfg.merge_from_other_cfg(backup_cfg)
 
-        self.assertLess(test_results['client_summarized_weighted_avg']['test_loss'], 600)
+        self.assertLess(
+            test_results['client_summarized_weighted_avg']['test_loss'], 600)
 
 
 if __name__ == '__main__':

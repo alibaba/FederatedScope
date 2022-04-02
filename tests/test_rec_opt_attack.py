@@ -16,7 +16,6 @@ class RECTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc', 'loss_regular']
 
@@ -61,11 +60,11 @@ class RECTest(unittest.TestCase):
         self.assertIsNotNone(data)
         assert_cfg(cfg)
 
-#         if cfg.attack.attack_method.lower() == 'dlg':
-#             from flpackage.attack.worker_as_attacker.server_attacker import PassiveServer
-#             server_class = PassiveServer
-#         else:
-#             server_class = Server
+        #         if cfg.attack.attack_method.lower() == 'dlg':
+        #             from federatedscope.attack.worker_as_attacker.server_attacker import PassiveServer
+        #             server_class = PassiveServer
+        #         else:
+        #             server_class = Server
 
         Fed_runner = DAILFed(data=data,
                              server_class=get_server_cls(cfg),
