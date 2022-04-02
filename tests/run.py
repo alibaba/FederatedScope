@@ -33,6 +33,8 @@ def gather_test_cases(test_dir, pattern, list_tests):
 
 
 def main():
+    import sys
+    print(sys.path)
     runner = unittest.TextTestRunner()
     test_suite = gather_test_cases(os.path.abspath(args.test_dir),
                                    args.pattern, args.list_tests)
