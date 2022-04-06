@@ -12,7 +12,7 @@ mus=(0.01 0.1 1. 10. 100.)
 
 for ((im=0; im<${#mus[@]}; im++ ))
 do
-  python flpackage/main.py --cfg flpackage/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} \
+  python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} \
   data.root /mnt/gaodawei.gdw/data/ \
   fedprox.use True \
   fedprox.mu ${mus[$im]} \
@@ -22,7 +22,7 @@ done
 
 for ((im=0; im<${#mus[@]}; im++ ))
 do
-  python flpackage/../scripts/fedprox_exp_scripts/parse_mf_results.py --input out_fedprox_femnist/mu_${mus[$im]}.log \
+  python federatedscope/../scripts/fedprox_exp_scripts/parse_mf_results.py --input out_fedprox_femnist/mu_${mus[$im]}.log \
   --round 300
 done
 

@@ -20,7 +20,7 @@ do
     do
         for k in {1..5}
         do
-            python flpackage/hpo.py --cfg flpackage/gfl/baseline/fedavg_gnn_node_fullbatch_citation.yaml federate.sample_client_num ${samples[$s]} device ${cudaid} data.type ${dataset} hpo.r ${rs[$r]} seed $k >>hpo/hpo_on_${dataset}_${rs[$r]}_sample${samples[$s]}.log 2>&1
+            python federatedscope/hpo.py --cfg federatedscope/gfl/baseline/fedavg_gnn_node_fullbatch_citation.yaml federate.sample_client_num ${samples[$s]} device ${cudaid} data.type ${dataset} hpo.r ${rs[$r]} seed $k >>hpo/hpo_on_${dataset}_${rs[$r]}_sample${samples[$s]}.log 2>&1
             rm hpo_${dataset}/*
         done
     done

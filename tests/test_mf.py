@@ -3,7 +3,7 @@ import unittest
 
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
-from federatedscope.config import cfg
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
@@ -17,7 +17,7 @@ class MFTest(unittest.TestCase):
 
         cfg.use_gpu = True
         cfg.early_stop_patience = 100
-        cfg.best_res_update_round_wise_key = "test_avg_loss"
+        cfg.eval.best_res_update_round_wise_key = "test_avg_loss"
         cfg.eval.freq = 5
         cfg.eval.metrics = []
 
@@ -43,21 +43,21 @@ class MFTest(unittest.TestCase):
         return backup_cfg
 
     def test_mf_standalone(self):
-        backup_cfg = self.set_config_movielens1m(cfg)
-        setup_seed(cfg.seed)
-        setup_logger(cfg)
+        backup_cfg = self.set_config_movielens1m(global_cfg)
+        setup_seed(global_cfg.seed)
+        setup_logger(global_cfg)
 
-        data, modified_cfg = get_data(cfg.clone())
-        cfg.merge_from_other_cfg(modified_cfg)
+        data, modified_cfg = get_data(global_cfg.clone())
+        global_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
         Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(cfg),
-                               client_class=get_client_cls(cfg),
-                               config=cfg.clone())
+                               server_class=get_server_cls(global_cfg),
+                               client_class=get_client_cls(global_cfg),
+                               config=global_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
-        cfg.merge_from_other_cfg(backup_cfg)
+        global_cfg.merge_from_other_cfg(backup_cfg)
 
         self.assertLess(test_results['client_individual']['test_avg_loss'], 20)
 

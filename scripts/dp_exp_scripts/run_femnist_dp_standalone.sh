@@ -21,7 +21,7 @@ do
         do
             for ((ic=0; ic<${#constants[@]}; ic++ ))
             do
-                python flpackage/main.py --cfg flpackage/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} nbafl.use True \
+                python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} nbafl.use True \
                 data.root /mnt/gaodawei.gdw/data/ \
                 nbafl.mu ${mus[$im]} \
                 nbafl.epsilon ${epsilons[$ie]} \
@@ -42,7 +42,7 @@ do
         do
             for ((ic=0; ic<${#constants[@]}; ic++ ))
             do
-                python flpackage/../scripts/dp_exp_scripts/parse_nbafl_results.py --input out_nbafl/clip_${clips[$iw]}_eps_${epsilons[$ie]}_mu_${mus[$im]}_const_${constants[$ic]}.log \
+                python federatedscope/../scripts/dp_exp_scripts/parse_nbafl_results.py --input out_nbafl/clip_${clips[$iw]}_eps_${epsilons[$ie]}_mu_${mus[$im]}_const_${constants[$ic]}.log \
                 --round 300\
                 >>out_nbafl/parse.log
             done

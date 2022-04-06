@@ -4,7 +4,7 @@ import unittest
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
 from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
-from federatedscope.config import cfg
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 
 
@@ -34,26 +34,26 @@ class vFLTest(unittest.TestCase):
 
         cfg.trainer.type = 'none'
         cfg.eval.freq = 5
-        cfg.best_res_update_round_wise_key = "test_loss"
+        cfg.eval.best_res_update_round_wise_key = "test_loss"
 
         return backup_cfg
 
     def test_vFL(self):
-        backup_cfg = self.set_config(cfg)
-        setup_seed(cfg.seed)
-        setup_logger(cfg)
+        backup_cfg = self.set_config(global_cfg)
+        setup_seed(global_cfg.seed)
+        setup_logger(global_cfg)
 
-        data, modified_config = get_data(cfg.clone())
-        cfg.merge_from_other_cfg(modified_config)
+        data, modified_config = get_data(global_cfg.clone())
+        global_cfg.merge_from_other_cfg(modified_config)
         self.assertIsNotNone(data)
 
         Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(cfg),
-                               client_class=get_client_cls(cfg),
-                               config=cfg.clone())
+                               server_class=get_server_cls(global_cfg),
+                               client_class=get_client_cls(global_cfg),
+                               config=global_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
-        cfg.merge_from_other_cfg(backup_cfg)
+        global_cfg.merge_from_other_cfg(backup_cfg)
         print(test_results)
         self.assertGreater(test_results['server_global_eval']['test_acc'], 0.9)
 

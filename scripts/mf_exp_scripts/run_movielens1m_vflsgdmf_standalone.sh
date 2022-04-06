@@ -26,7 +26,7 @@ do
       do
         for ((il=0; il<${#lrs[@]}; il++ ))
         do
-          python flpackage/main.py --cfg flpackage/mf/baseline/vfl-sgdmf_fedavg_standalone_on_movielens1m.yaml device ${cudaid} \
+          python federatedscope/main.py --cfg federatedscope/mf/baseline/vfl-sgdmf_fedavg_standalone_on_movielens1m.yaml device ${cudaid} \
           data.root /mnt/gaodawei.gdw/data/ \
           sgdmf.use True \
           sgdmf.epsilon ${epsilons[$ie]} \
@@ -54,7 +54,7 @@ do
       do
         for ((il=0; il<${#lrs[@]}; il++ ))
         do
-          python flpackage/../scripts/mf_exp_scripts/parse_mf_results.py \
+          python federatedscope/../scripts/mf_exp_scripts/parse_mf_results.py \
           --input out_vflsgdmf1m/batch_${batchs[$ib]}_round_${round}_steps_${steps[$is]}_eps_${epsilons[$ie]}_delta_${deltas[$id]}_lr_${lrs[$il]}.log \
           --round ${round}
         done
