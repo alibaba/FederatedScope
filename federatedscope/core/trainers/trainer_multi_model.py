@@ -59,7 +59,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                    isinstance(base_trainer, GeneralTorchTrainer) or \
                    issubclass(type(base_trainer), GeneralTorchTrainer) or \
                    "can only copy instances of `GeneralMultiModelTrainer` and its subclasses, or " \
-                   "`GeneralTrainer` and its subclasses"
+                   "`GeneralTorchTrainer` and its subclasses"
             self.__dict__ = copy.deepcopy(base_trainer.__dict__)
 
         assert models_interact_mode in ["sequential", "parallel"], \

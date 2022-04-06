@@ -10,10 +10,10 @@ def wrap_GANTrainer(
     Warp the trainer for gan_based class representative attack.
 
     Args:
-        base_trainer: Type: core.trainers.GeneralTrainer
+        base_trainer: Type: core.trainers.GeneralTorchTrainer
 
     Returns:
-        The wrapped trainer; Type: core.trainers.GeneralTrainer
+        The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
 
     '''
 

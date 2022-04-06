@@ -43,3 +43,14 @@ RUN conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoo
 RUN conda install -y wandb tensorboard tensorboardX -c conda-forge \
     && pip install grpcio grpcio-tools protobuf==3.19.4 setuptools==61.2.0 \
     && conda clean -a -y
+
+# for grpah
+RUN conda install -y pyg==2.0.4 -c pyg  \
+    && conda install -y rdkit=2021.09.4=py39hccf6a74_0 -c conda-forge \
+    && conda clean -a -y
+
+# for speech and nlp
+RUN conda install -y sentencepiece textgrid typeguard -c conda-forge \
+    && conda clean -a -y
+
+

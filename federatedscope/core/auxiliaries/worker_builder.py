@@ -35,7 +35,7 @@ def get_client_cls(cfg):
         client_atk_type = None
 
     if client_atk_type == 'gradascent':
-        from federatedscope.attack.worker_as_attacker import add_atk_method_to_Client_GradAscent
+        from federatedscope.attack.worker_as_attacker.active_client import add_atk_method_to_Client_GradAscent
         logging.info("=========== add method to current client class ")
         client_class = add_atk_method_to_Client_GradAscent(client_class)
     return client_class

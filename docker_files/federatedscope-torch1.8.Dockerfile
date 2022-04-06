@@ -13,6 +13,10 @@ SHELL ["/bin/bash", "-c"]
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# install basic tools
+RUN apt-get -y update \
+    && apt-get -y install curl git gcc g++ make openssl libssl-dev libbz2-dev libreadline-dev libsqlite3-dev python-dev libmysqlclient-dev
+
 # install miniconda,  in batch (silent) mode, does not edit PATH or .bashrc or .bash_profile
 RUN apt-get update -y \
     && apt-get install -y wget
@@ -28,7 +32,7 @@ RUN conda update -y conda \
     && conda config --add channels conda-forge
 
 # basic machine learning env
-RUN conda install -y numpy=1.21.2 scikit-learn=1.0.2 scipy=1.7.3 pandas=1.4.1 matplotlib -c scikit-learn \
+RUN conda install -y numpy=1.21.2 scikit-learn=1.0.2 scipy=1.7.3 pandas=1.4.1 -c scikit-learn \
     && conda clean -a -y
 
 # basic torch env
@@ -37,10 +41,11 @@ RUN conda install -y pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoo
 
 # for graph
 RUN conda install -y pyg==2.0.1 -c pyg  \
+    && conda install -y rdkit=2021.09.4 -c conda-forge \
     && conda clean -a -y
 
 # for speech and nlp
-RUN conda install -y sentencepiece textgrid typeguard nltk -c conda-forge \
+RUN conda install -y sentencepiece textgrid typeguard -c conda-forge \
     && conda clean -a -y
 
 # auxiliaries (communications, monitoring, etc.)
