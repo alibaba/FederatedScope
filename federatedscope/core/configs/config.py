@@ -67,6 +67,10 @@ from federatedscope.core.configs import all_sub_configs
 for sub_config in all_sub_configs:
     __import__("federatedscope.core.configs." + sub_config)
 
+from federatedscope.contrib.configs import all_sub_configs_contrib
+for sub_config in all_sub_configs_contrib:
+    __import__("federatedscope.contrib.configs." + sub_config)
+
 # Global config object
 global_cfg = CN()
 
