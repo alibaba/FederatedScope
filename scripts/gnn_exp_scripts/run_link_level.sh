@@ -14,9 +14,6 @@ if [[ $dataset = 'ciao' ]]; then
 elif [[ $dataset = 'epinions' ]]; then
     out_channels=5
     hidden=64
-elif [[ $dataset = 'taobao' ]]; then
-    out_channels=2
-    hidden=64
 else
     out_channels=4
     hidden=1024

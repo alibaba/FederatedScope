@@ -10,4 +10,5 @@ __all__ = [
 
 # to ensure the sub-configs registered before set up the global config
 all_sub_configs = copy.copy(__all__)
-all_sub_configs.remove('config')
+if "config" in all_sub_configs:
+    all_sub_configs.remove('config')

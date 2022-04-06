@@ -1,8 +1,8 @@
 Trainer Module Reference
 =======================
 
-flpackage.gfl.trainer
+federatedscope.gfl.trainer
 --------------------------
 
-.. automodule:: flpackage.gfl.trainer
+.. automodule:: federatedscope.gfl.trainer
     :members:

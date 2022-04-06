@@ -35,7 +35,7 @@ builtin cd "$ROOT" || exit 1
 
 # Add the upstream branch if it doesn't exist
 #if ! [[ -e "$ROOT/.git/refs/remotes/upstream" ]]; then
-#    git remote add 'upstream' 'http://gitlab.alibaba-inc.com/DAILFed/FLPackage.git'
+#    git remote add 'upstream' 'https://github.com/alibaba/FederatedScope.git'
 #fi
 
 
