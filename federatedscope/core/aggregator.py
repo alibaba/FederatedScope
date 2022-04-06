@@ -107,7 +107,6 @@ class ClientsAvgAggregator(Aggregator):
 class NoCommunicationAggregator(Aggregator):
     """"Clients do not communicate. Each client work locally
     """
-
     def aggregate(self, agg_info):
         return
 
@@ -132,7 +131,7 @@ class OnlineClientsAvgAggregator(ClientsAvgAggregator):
                 #    model_params[key].to(self.maintained[key].device)
                 self.maintained[key] = (self.cnt * self.maintained[key] +
                                         sample_size * model_params[key]) / (
-                                               self.cnt + sample_size)
+                                            self.cnt + sample_size)
             self.cnt += sample_size
         else:
             raise TypeError(
@@ -146,7 +145,6 @@ class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
     """"
         # conduct aggregation by interpolating global model from server and local models from clients
     """
-
     def __init__(self, model=None, device='cpu', beta=1.0):
         super(ServerClientsInterpolateAggregator, self).__init__(model, device)
         self.beta = beta  # the weight for local models used in interpolation
@@ -170,7 +168,6 @@ class FedOptAggregator(ClientsAvgAggregator):
         (https://openreview.net/forum?id=LkFG3lB13U5)
 
     """
-
     def __init__(self, config, model, device='cpu'):
         super(FedOptAggregator, self).__init__(model, device)
         self.cfg = config

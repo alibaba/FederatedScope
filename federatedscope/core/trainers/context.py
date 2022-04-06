@@ -66,7 +66,6 @@ class Context(dict):
         eval_metrics (dict): evaluation results
     """
 
-
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
@@ -158,7 +157,6 @@ class Context(dict):
             num_train_batch_last_epoch = local_update_steps % num_train_batch
             num_total_train_batch = local_update_steps
         return num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch
-
 
     def append_mode(self, mode):
         self.mode.append(mode)

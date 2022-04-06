@@ -223,7 +223,6 @@ class Server(Worker):
                             msg_list.append((train_data_size,
                                              model_para_multiple[model_idx]))
 
-
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
                         B_val = calc_blocal_dissim(

@@ -43,7 +43,6 @@ def discretize(contd_choices, num_bkt):
 class Continuous(tuple):
     """Represents a continuous search space, e.g., in the range [0.001, 0.1].
     """
-
     def __new__(cls, lb, ub):
         assert ub >= lb, "Invalid configuration where ub:{} is less than lb:{}".format(
             ub, lb)
@@ -89,7 +88,6 @@ yaml.add_constructor(u'!contd', contd_constructor)
 class Discrete(tuple):
     """Represents a discrete search space, e.g., {'abc', 'ijk', 'xyz'}.
     """
-
     def __new__(cls, *args):
         return tuple.__new__(cls, args)
 

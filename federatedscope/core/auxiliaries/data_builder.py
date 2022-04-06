@@ -142,9 +142,7 @@ def get_data(config):
     ] or config.data.type.lower().startswith('csbm'):
         from federatedscope.gfl.dataloader import load_nodelevel_dataset
         data, modified_config = load_nodelevel_dataset(config)
-    elif config.data.type.lower() in [
-            'ciao', 'epinions', 'fb15k-237', 'wn18'
-    ]:
+    elif config.data.type.lower() in ['ciao', 'epinions', 'fb15k-237', 'wn18']:
         from federatedscope.gfl.dataloader import load_linklevel_dataset
         data, modified_config = load_linklevel_dataset(config)
     elif config.data.type.lower() in [

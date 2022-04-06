@@ -1,6 +1,5 @@
 """Configuration file for composition of different aggregators, messages, handlers, etc."""
 
-
 AGGREGATOR_TYPE = {
     "local": "no_communication",
     "fedavg": "clients_avg",  # FedAvg
