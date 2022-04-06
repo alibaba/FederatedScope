@@ -77,10 +77,10 @@ def read_RecSys(path, FL=False):
 
 class RecSys(InMemoryDataset):
     r"""
-    Args:
+    Arguments:
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"epinions"`, :obj:`"ciao"`).
-        FL (Bool): Federated setting.
+        FL (Bool): Federated setting or centralized setting.
         transform (callable, optional): A function/transform that takes in an
             :obj:`torch_geometric.data.Data` object and returns a transformed
             version. The data object will be transformed before every access.

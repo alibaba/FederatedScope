@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-
 import torch
 import torch.nn.functional as F
 from torch.nn import Linear, Sequential

@@ -6,7 +6,7 @@ import numpy as np
 from federatedscope.core.message import Message
 from federatedscope.core.worker.server import Server
 from federatedscope.core.worker.client import Client
-from federatedscope.core.auxiliaries.utils import formatted_logging
+from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
 from federatedscope.gfl.gcflplus.utils import compute_pairwise_distances, min_cut, norm
 
 
@@ -163,40 +163,13 @@ class GCFLPlusServer(Server):
                         'Server #{:d}: Training is finished! Starting evaluation.'
                         .format(self.ID))
                     self.eval()
-                    if self._cfg.federate.save_to != '':
-                        self.aggregator.save_model(self._cfg.federate.save_to,
-                                                   self.state)
-                    formatted_best_res = formatted_logging(self.best_results,
-                                                           rnd="Final",
-                                                           role='Server #',
-                                                           forms=["raw"])
-                    logging.info(formatted_best_res)
 
             else:  # in the evaluation process
                 # Get all the message & aggregate
-                eval_msg_buffer = self.msg_buffer['eval'][self.state]
-                metrics_all_clients = dict()
-                for each_client in eval_msg_buffer:
-                    client_eval_results = eval_msg_buffer[each_client]
-                    for key in client_eval_results.keys():
-                        if key not in metrics_all_clients:
-                            metrics_all_clients[key] = list()
-                        metrics_all_clients[key].append(
-                            float(client_eval_results[key]))
-
-                formatted_logs = formatted_logging(metrics_all_clients,
-                                                   rnd=self.state,
-                                                   role='Server #',
-                                                   forms=self._cfg.eval.report)
-                self.history_results.append(formatted_logs)
-                logging.info(formatted_logs)
-                self.update_best_result(metrics_all_clients,
-                                        results_type="client_individual")
-                for form in self._cfg.eval.report:
-                    if form != "raw":
-                        self.update_best_result(
-                            formatted_logs[f"Results_{form}"],
-                            results_type=f"client_summarized_{form}")
+                formatted_eval_res = self.merge_eval_results_from_all_clients()
+                self.history_results = merge_dict(self.history_results,
+                                                  formatted_eval_res)
+                self.check_and_save()
 
 
 class GCFLPlusClient(Client):

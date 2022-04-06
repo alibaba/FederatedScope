@@ -37,7 +37,7 @@ def load_nlp_dataset(config=None):
                            s_frac=config.data.subsample,
                            tr_frac=splits[0],
                            val_frac=splits[1],
-                           seed=config.seed,
+                           seed=1234,
                            transform=transform)
     elif name == 'synthetic':
         dataset = LEAF_SYNTHETIC(root=path)

@@ -1,8 +1,8 @@
 from federatedscope.register import register_trainer
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
 
-class GraphMiniBatchTrainer(GeneralTrainer):
+class GraphMiniBatchTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)

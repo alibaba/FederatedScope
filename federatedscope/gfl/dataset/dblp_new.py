@@ -109,7 +109,7 @@ class DBLPNew(InMemoryDataset):
     r"""
     Args:
         root (string): Root directory where the dataset should be saved.
-        FL (Bool): Federated setting.
+        FL (Bool): Federated setting, `0` for DBLP, `1` for FLDBLPbyConf, `2` for FLDBLPbyOrg
         transform (callable, optional): A function/transform that takes in an
             :obj:`torch_geometric.data.Data` object and returns a transformed
             version. The data object will be transformed before every access.

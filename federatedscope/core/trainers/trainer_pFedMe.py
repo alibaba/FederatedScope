@@ -1,12 +1,12 @@
 import copy
 
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
 from typing import Type
 
 
 def wrap_pFedMeTrainer(
-        base_trainer: Type[GeneralTrainer]) -> Type[GeneralTrainer]:
+        base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
     """
     Build a `pFedMeTrainer` with a plug-in manner, by registering new functions into specific `BaseTrainer`
 
@@ -121,4 +121,3 @@ def hook_on_fit_end_update_local(ctx):
         param.data = local_para_tmp.data
 
     del ctx.pFedMe_local_model_tmp
-

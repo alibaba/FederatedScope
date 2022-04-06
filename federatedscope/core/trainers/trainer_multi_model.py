@@ -4,10 +4,10 @@ from typing import Type
 
 from federatedscope.config import cfg
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
 
-class GeneralMultiModelTrainer(GeneralTrainer):
+class GeneralMultiModelTrainer(GeneralTorchTrainer):
     def __init__(self,
                  model_nums,
                  models_interact_mode="sequential",
@@ -15,20 +15,23 @@ class GeneralMultiModelTrainer(GeneralTrainer):
                  data=None,
                  device=None,
                  config=None,
-                 base_trainer: Type[GeneralTrainer] = None):
+                 base_trainer: Type[GeneralTorchTrainer] = None):
         """
-            `GeneralMultiModelTrainer` supports train/eval via multiple models
+            `GeneralMultiModelTrainer` supports train/eval via multiple internal models
 
             Arguments:
+                model_nums (int): how many internal models and optimizers will be held by the trainer
+                models_interact_mode (str): how the models interact, can be "sequential" or "parallel".
                 model: training model
                 data: a dict contains train/val/test data
                 device: device to run
-                model_nums: how many internal models and optimizers will be held by the trainer
-                models_interact_mode: how the models interact, can be "sequential" or "parallel".
+                config: for trainer-related configuration
+                base_trainer: if given, the GeneralMultiModelTrainer init will based on base_trainer copy
 
                 The sequential mode indicates the interaction at run_routine level
                 [one model runs its whole routine, then do sth. for interaction, then next model runs its whole routine]
                 ... -> run_routine_model_i
+                    -> _switch_model_ctx
                     -> (on_fit_end, _interact_to_other_models)
                     -> run_routine_model_i+1
                     -> ...
@@ -54,8 +57,8 @@ class GeneralMultiModelTrainer(GeneralTrainer):
         else:
             assert isinstance(base_trainer, GeneralMultiModelTrainer) or \
                    issubclass(type(base_trainer), GeneralMultiModelTrainer) or \
-                   isinstance(base_trainer, GeneralTrainer) or \
-                   issubclass(type(base_trainer), GeneralTrainer) or \
+                   isinstance(base_trainer, GeneralTorchTrainer) or \
+                   issubclass(type(base_trainer), GeneralTorchTrainer) or \
                    "can only copy instances of `GeneralMultiModelTrainer` and its subclasses, or " \
                    "`GeneralTrainer` and its subclasses"
             self.__dict__ = copy.deepcopy(base_trainer.__dict__)
@@ -94,7 +97,8 @@ class GeneralMultiModelTrainer(GeneralTrainer):
         self.ctx.models = [self.ctx.model] + additional_models
 
         additional_optimizers = [
-            get_optimizer(cfg.optimizer.type, self.ctx.models[i],
+            get_optimizer(cfg.optimizer.type,
+                          self.ctx.models[i],
                           cfg.optimizer.lr,
                           weight_decay=cfg.optimizer.weight_decay)
             for i in range(1, self.model_nums)
@@ -206,6 +210,7 @@ class GeneralMultiModelTrainer(GeneralTrainer):
                 # [Interaction at run_routine level]
                 # one model runs its whole routine, then do sth. for interaction, then next model runs its whole routine
                 # ... -> run_routine_model_i
+                #     -> _switch_model_ctx
                 #     -> (on_fit_end, _interact_to_other_models)
                 #     -> run_routine_model_i+1
                 #     -> ...
@@ -242,12 +247,13 @@ class GeneralMultiModelTrainer(GeneralTrainer):
                 f"model_parameters should has the same length to self.model_nums, " \
                 f"but got {len(model_parameters)} and {self.model_nums} respectively"
             for model_idx in range(self.model_nums):
-                self.ctx.model.load_state_dict(self._param_filter(
-                    model_parameters[model_idx]), strict=False)
+                self.ctx.models[model_idx].load_state_dict(self._param_filter(
+                    model_parameters[model_idx]),
+                                                           strict=False)
 
-    def train(self, target_data_name="train"):
+    def train(self, target_data_split_name="train"):
         # return multiple model paras
-        sample_size, _, results = super().train(target_data_name)
+        sample_size, _, results = super().train(target_data_split_name)
 
         trained_model_para = []
         for model_idx in range(self.model_nums):
@@ -259,4 +265,3 @@ class GeneralMultiModelTrainer(GeneralTrainer):
             return sample_size, trained_model_para[0], results
         else:
             return sample_size, trained_model_para, results
-

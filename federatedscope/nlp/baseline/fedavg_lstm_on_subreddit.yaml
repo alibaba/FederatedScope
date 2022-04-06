@@ -1,6 +1,7 @@
 use_gpu: True
 device: 0
-early_stopping: 100
+early_stop:
+  patience: 10
 federate:
   mode: standalone
   local_update_steps: 10

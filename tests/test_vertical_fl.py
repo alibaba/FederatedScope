@@ -5,7 +5,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
 from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
 from federatedscope.config import cfg
-from federatedscope.core.DAIL_fed_api import DAILFed
+from federatedscope.core.fed_runner import FedRunner
 
 
 class vFLTest(unittest.TestCase):
@@ -34,6 +34,7 @@ class vFLTest(unittest.TestCase):
 
         cfg.trainer.type = 'none'
         cfg.eval.freq = 5
+        cfg.best_res_update_round_wise_key = "test_loss"
 
         return backup_cfg
 
@@ -46,14 +47,15 @@ class vFLTest(unittest.TestCase):
         cfg.merge_from_other_cfg(modified_config)
         self.assertIsNotNone(data)
 
-        Fed_runner = DAILFed(data=data,
-                             server_class=get_server_cls(cfg),
-                             client_class=get_client_cls(cfg),
-                             config=cfg.clone())
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(cfg),
+                               client_class=get_client_cls(cfg),
+                               config=cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
         cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_results['server_global_eval']['acc'], 0.9)
+        print(test_results)
+        self.assertGreater(test_results['server_global_eval']['test_acc'], 0.9)
 
 
 if __name__ == '__main__':

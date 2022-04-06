@@ -4,7 +4,7 @@ import unittest
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
 from federatedscope.config import cfg
-from federatedscope.core.DAIL_fed_api import DAILFed
+from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -16,31 +16,29 @@ class MFTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
-        cfg.early_stopping = 100
+        cfg.early_stop_patience = 100
+        cfg.best_res_update_round_wise_key = "test_avg_loss"
         cfg.eval.freq = 5
         cfg.eval.metrics = []
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 10
-        cfg.federate.total_round_num = 5
+        cfg.federate.local_update_steps = 20
+        cfg.federate.total_round_num = 200
         cfg.federate.client_num = 5
 
         cfg.data.root = 'test_data/'
-        cfg.data.type = 'movielens1m'
-        cfg.data.batch_size = 8
+        cfg.data.type = 'vflmovielens1m'
+        cfg.data.batch_size = 32
 
-        cfg.model.type = 'MFNet'
+        cfg.model.type = 'VMFNet'
         cfg.model.hidden = 20
 
-        cfg.optimizer.lr = 0.1
+        cfg.optimizer.lr = 1.
         cfg.optimizer.weight_decay = 0.0
 
         cfg.criterion.type = 'MSELoss'
         cfg.trainer.type = 'mftrainer'
         cfg.seed = 123
-
-        cfg.sgdmf.use = True
 
         return backup_cfg
 
@@ -53,15 +51,15 @@ class MFTest(unittest.TestCase):
         cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
-        Fed_runner = DAILFed(data=data,
-                             server_class=get_server_cls(cfg),
-                             client_class=get_client_cls(cfg),
-                             config=cfg.clone())
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(cfg),
+                               client_class=get_client_cls(cfg),
+                               config=cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
         cfg.merge_from_other_cfg(backup_cfg)
-        print(test_results)
-        self.assertLess(test_results['client_individual']['avg_loss'], 20)
+
+        self.assertLess(test_results['client_individual']['test_avg_loss'], 20)
 
 
 if __name__ == '__main__':

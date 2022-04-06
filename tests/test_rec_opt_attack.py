@@ -4,7 +4,7 @@ import unittest
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
 from federatedscope.config import cfg, assert_cfg
-from federatedscope.core.DAIL_fed_api import DAILFed
+from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -16,7 +16,6 @@ class RECTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         cfg.use_gpu = True
-        cfg.device = 0
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc', 'loss_regular']
 
@@ -61,16 +60,16 @@ class RECTest(unittest.TestCase):
         self.assertIsNotNone(data)
         assert_cfg(cfg)
 
-#         if cfg.attack.attack_method.lower() == 'dlg':
-#             from flpackage.attack.worker_as_attacker.server_attacker import PassiveServer
-#             server_class = PassiveServer
-#         else:
-#             server_class = Server
+        #         if cfg.attack.attack_method.lower() == 'dlg':
+        #             from federatedscope.attack.worker_as_attacker.server_attacker import PassiveServer
+        #             server_class = PassiveServer
+        #         else:
+        #             server_class = Server
 
-        Fed_runner = DAILFed(data=data,
-                             server_class=get_server_cls(cfg),
-                             client_class=get_client_cls(cfg),
-                             config=cfg.clone())
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(cfg),
+                               client_class=get_client_cls(cfg),
+                               config=cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)

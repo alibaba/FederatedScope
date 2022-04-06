@@ -22,7 +22,6 @@ class Aggregator(ABC):
 class ClientsAvgAggregator(Aggregator):
     """Implementation of vanilla FedAvg refer to `Communication-efficient learning of deep networks from decentralized data` [McMahan et al., 2017]
         (http://proceedings.mlr.press/v54/mcmahan17a.html)
-
     """
     def __init__(self, model=None, device='cpu'):
         super(Aggregator, self).__init__()
@@ -30,6 +29,14 @@ class ClientsAvgAggregator(Aggregator):
         self.device = device
 
     def aggregate(self, agg_info):
+        """
+        To preform aggregation
+
+        Arguments:
+        agg_info (dict): the feedbacks from clients
+        :returns: the aggregated results
+        :rtype: dict
+        """
 
         models = agg_info["client_feedback"]
         recover_fun = agg_info['recover_fun'] if (
@@ -80,10 +87,11 @@ class ClientsAvgAggregator(Aggregator):
                 else:
                     weight = local_sample_size / training_set_size
 
-                if isinstance(local_model[key], torch.Tensor):
-                    local_model[key] = local_model[key].float()
-                else:
-                    local_model[key] = torch.FloatTensor(local_model[key])
+                if not cfg.federate.use_ss:
+                    if isinstance(local_model[key], torch.Tensor):
+                        local_model[key] = local_model[key].float()
+                    else:
+                        local_model[key] = torch.FloatTensor(local_model[key])
 
                 if i == 0:
                     avg_model[key] = local_model[key] * weight
@@ -94,6 +102,7 @@ class ClientsAvgAggregator(Aggregator):
                 avg_model[key] = recover_fun(avg_model[key])
                 # When using secret sharing, what the server receives are sample_size * model_para
                 avg_model[key] /= training_set_size
+                avg_model[key] = torch.FloatTensor(avg_model[key])
 
         return avg_model
 
@@ -183,7 +192,8 @@ class FedOptAggregator(ClientsAvgAggregator):
 
         self.optimizer.zero_grad()
         for key, p in self.model.named_parameters():
-            p.grad = grads[key]
+            if key in new_model.keys():
+                p.grad = grads[key]
         self.optimizer.step()
 
         return self.model.state_dict()

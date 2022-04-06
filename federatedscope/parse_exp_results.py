@@ -36,12 +36,16 @@ def main():
                 line = line.replace("\'", "\"")
                 line = json.loads(s=line)
                 if line['Round'] == 'Final' and line['Role'] == 'Server #':
-                    if 'Results_weighted_avg' in line.keys():
-                        result_list_wavg.append(line['Results_weighted_avg'])
-                    if 'Results_avg' in line.keys():
-                        result_list_avg.append(line['Results_avg'])
-                    if 'Results_raw' in line.keys() and 'server_global_eval' in line['Results_raw'].keys():
-                        result_list_global.append(line['Results_raw']['server_global_eval'])
+                    res = line['Results_raw']
+                    if 'Results_raw' in line.keys():
+                        if 'server_global_eval' in res.keys():
+                            result_list_global.append(res['server_global_eval'])
+                        if 'client_summarized_weighted_avg' in res.keys():
+                            result_list_wavg.append(res['client_summarized_weighted_avg'])
+                        if 'client_summarized_avg' in res.keys():
+                            result_list_avg.append(res['client_summarized_avg'])
+                            
+
 
     print(args.input)
     if len(result_list_wavg):

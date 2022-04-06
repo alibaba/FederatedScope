@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-
 import torch
 import torch.nn.functional as F
 from torch.nn import Parameter, Linear, ModuleList
@@ -13,6 +9,16 @@ from federatedscope.register import register_model
 
 
 class GCN_Net(torch.nn.Module):
+    r""" GCN model from the "Semi-supervised Classification with Graph Convolutional Networks" paper, in ICLR'17.
+    
+    Arguments:
+        in_channels (int): dimension of input.
+        out_channels (int): dimension of output.
+        hidden (int): dimension of hidden units, default=64.
+        max_depth (int): layers of GNN, default=2.
+        dropout (float): dropout ratio, default=.0.
+    
+    """
     def __init__(self,
                  in_channels,
                  out_channels,

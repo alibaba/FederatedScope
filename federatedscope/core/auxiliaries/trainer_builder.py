@@ -1,7 +1,7 @@
-from federatedscope.core.trainers import GeneralTrainer
-import federatedscope.register as register
-import importlib
 import logging
+import importlib
+
+import federatedscope.register as register
 
 TRAINER_CLASS_DICT = {
     "cvtrainer": "CVTrainer",
@@ -22,33 +22,43 @@ def get_trainer(model=None,
                 only_for_eval=False,
                 is_attacker=False):
     if config.trainer.type == 'general':
-        # we should only use this branch now
-        trainer = GeneralTrainer(model=model,
-                                 data=data,
-                                 device=device,
-                                 config=config,
-                                 only_for_eval=only_for_eval)
+        if config.backend == 'torch':
+            from federatedscope.core.trainers import GeneralTorchTrainer
+            trainer = GeneralTorchTrainer(model=model,
+                                          data=data,
+                                          device=device,
+                                          config=config,
+                                          only_for_eval=only_for_eval)
+        elif config.backend == 'tensorflow':
+            from federatedscope.core.trainers.tf_trainer import GeneralTFTrainer
+            trainer = GeneralTFTrainer(model=model,
+                                       data=data,
+                                       device=device,
+                                       config=config,
+                                       only_for_eval=only_for_eval)
+        else:
+            raise ValueError
     elif config.trainer.type == 'none':
         return None
     elif config.trainer.type.lower() in TRAINER_CLASS_DICT:
         if config.trainer.type.lower() in ['cvtrainer']:
-            dict_path = "flpackage.cv.trainer.trainer"
+            dict_path = "federatedscope.cv.trainer.trainer"
         elif config.trainer.type.lower() in ['nlptrainer']:
-            dict_path = "flpackage.nlp.trainer.trainer"
+            dict_path = "federatedscope.nlp.trainer.trainer"
         elif config.trainer.type.lower() in [
                 'graphminibatch_trainer',
         ]:
-            dict_path = "flpackage.gfl.trainer.graphtrainer"
+            dict_path = "federatedscope.gfl.trainer.graphtrainer"
         elif config.trainer.type.lower() in [
                 'linkfullbatch_trainer', 'linkminibatch_trainer'
         ]:
-            dict_path = "flpackage.gfl.trainer.linktrainer"
+            dict_path = "federatedscope.gfl.trainer.linktrainer"
         elif config.trainer.type.lower() in [
                 'nodefullbatch_trainer', 'nodeminibatch_trainer'
         ]:
-            dict_path = "flpackage.gfl.trainer.nodetrainer"
+            dict_path = "federatedscope.gfl.trainer.nodetrainer"
         elif config.trainer.type.lower() in ['mftrainer']:
-            dict_path = "flpackage.mf.trainer.trainer"
+            dict_path = "federatedscope.mf.trainer.trainer"
         else:
             raise ValueError
 
@@ -80,8 +90,8 @@ def get_trainer(model=None,
         from federatedscope.core.trainers.trainer_nbafl import wrap_nbafl_trainer
         trainer = wrap_nbafl_trainer(trainer)
     if config.sgdmf.use:
-        from federatedscope.mf.trainer.trainer_vgl_sgdmf import wrap_VFLTrainer
-        trainer = wrap_VFLTrainer(trainer)
+        from federatedscope.mf.trainer.trainer_sgdmf import wrap_MFTrainer
+        trainer = wrap_MFTrainer(trainer)
 
     # personalization plug-in
     if config.federate.method.lower() == "pfedme":

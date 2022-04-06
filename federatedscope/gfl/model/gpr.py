@@ -12,7 +12,7 @@ from torch_geometric.nn import MessagePassing, APPNP
 class GPR_prop(MessagePassing):
     '''
     propagation class for GPR_GNN
-    sourse: https://github.com/jianhao2016/GPRGNN/blob/master/src/GNN_models.py
+    source: https://github.com/jianhao2016/GPRGNN/blob/master/src/GNN_models.py
     '''
     def __init__(self, K, alpha, Init, Gamma=None, bias=True, **kwargs):
         super(GPR_prop, self).__init__(aggr='add', **kwargs)
@@ -73,6 +73,18 @@ class GPR_prop(MessagePassing):
 
 
 class GPR_Net(torch.nn.Module):
+    r"""GPR-GNN model from the "Adaptive Universal Generalized PageRank Graph Neural Network" paper, in ICLR'21
+    
+    Arguments:
+        in_channels (int): dimension of input.
+        out_channels (int): dimension of output.
+        hidden (int): dimension of hidden units, default=64.
+        K (int): power of GPR-GNN, default=10.
+        dropout (float): dropout ratio, default=.0.
+        ppnp (str): propagation method in ['PPNP', 'GPR_prop']
+        Init (str): init method in ['SGC', 'PPR', 'NPPR', 'Random', 'WS']
+    
+    """
     def __init__(self,
                  in_channels,
                  out_channels,

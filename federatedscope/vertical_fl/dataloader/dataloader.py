@@ -2,6 +2,15 @@ import numpy as np
 
 
 def load_vertical_data(config=None, generate=False):
+    """
+    To generate the synthetic data for vertical FL
+
+    Arguments:
+        config: configuration
+        generate (bool): whether to generate the synthetic data
+    :returns: The synthetic data, the modified config
+    :rtype: dict
+    """
 
     if generate:
         # generate toy data for running a vertical FL example

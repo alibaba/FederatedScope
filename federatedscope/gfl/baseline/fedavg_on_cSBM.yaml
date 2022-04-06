@@ -1,6 +1,8 @@
 use_gpu: True
 device: 2
-early_stopping: 200
+early_stop:
+  patience: 200
+  improve_indicator_mode: mean
 monitoring: ['dissim']
 federate:
   mode: standalone

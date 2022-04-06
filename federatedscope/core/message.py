@@ -3,6 +3,15 @@ import json
 
 
 class Message(object):
+    """
+    The data exchanged during an FL course are abstracted as 'Message' in FederatedScope.
+    A message object includes:
+        msg_type: The type of message, which is used to trigger the corresponding handlers of server/client
+        sender: The sender's ID
+        receiver: The receiver's ID
+        state: The training round of the message, which is determined by the sender and used to filter out the outdated messages.
+        strategy: redundant attribute
+    """
     def __init__(self,
                  msg_type=None,
                  sender=0,

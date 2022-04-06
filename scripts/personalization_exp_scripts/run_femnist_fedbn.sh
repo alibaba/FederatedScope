@@ -20,7 +20,7 @@ do
     do
         for (( j=0; j<${#local_updates[@]}; j++ ))
         do
-            for k in {1..1}
+            for k in {1..3}
             do
                 python flpackage/main.py --cfg flpackage/cv/baseline/fedbn_convnet2_on_femnist.yaml data.batch_size ${bs} device ${cudaid} optimizer.lr ${lrs[$i]} federate.local_update_steps ${local_updates[$j]} model.type ${models[$g]} seed $k outdir ${outdir}/${models[$g]}_${lrs[$i]}_${local_updates[$j]}_bs${bs}_on_${dataset}
             done

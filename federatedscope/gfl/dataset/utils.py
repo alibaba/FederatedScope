@@ -13,10 +13,6 @@ def random_planetoid_splits(data,
                             percls_trn=20,
                             val_lb=500,
                             Flag=0):
-    # Set new random planetoid splits:
-    # * round(train_rate*len(data)/num_classes) * num_classes labels for training
-    # * val_rate*len(data) labels for validation
-    # * rest labels for testing
 
     indices = []
     for i in range(num_classes):
@@ -26,7 +22,7 @@ def random_planetoid_splits(data,
 
     train_index = torch.cat([i[:percls_trn] for i in indices], dim=0)
 
-    if Flag is 0:
+    if Flag == 0:
         rest_index = torch.cat([i[percls_trn:] for i in indices], dim=0)
         rest_index = rest_index[torch.randperm(rest_index.size(0))]
 

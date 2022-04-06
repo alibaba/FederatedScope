@@ -1,6 +1,10 @@
-from torch.nn import Module
 from federatedscope.register import register_regularizer
-import torch
+try:
+    from torch.nn import Module
+    import torch
+except ImportError:
+    Module = object
+    torch = None
 
 REGULARIZER_NAME = "proximal_regularizer"
 
@@ -23,7 +27,7 @@ class ProximalRegularizer(Module):
         norm = 0.
         for w_init, w in zip(ctx.weight_init, ctx.model.parameters()):
             norm += torch.pow(torch.norm(w - w_init, p), p)
-        return norm * 1 / float(p)
+        return norm * 1. / float(p)
 
 
 def call_proximal_regularizer(type):
