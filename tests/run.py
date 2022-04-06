@@ -2,7 +2,11 @@
 
 import argparse
 import os
+import sys
 import unittest
+
+file_dir = os.path.join(os.path.dirname(__file__), '..')
+sys.path.append(file_dir)
 
 parser = argparse.ArgumentParser('test runner')
 parser.add_argument('--list_tests', action='store_true', help='list all tests')
@@ -37,7 +41,9 @@ def main():
     test_suite = gather_test_cases(os.path.abspath(args.test_dir),
                                    args.pattern, args.list_tests)
     if not args.list_tests:
-        runner.run(test_suite)
+        res = runner.run(test_suite)
+        if not res.wasSuccessful():
+            exit(1)
 
 
 if __name__ == '__main__':
