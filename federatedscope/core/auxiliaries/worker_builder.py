@@ -46,7 +46,7 @@ def get_server_cls(cfg):
         from federatedscope.attack.worker_as_attacker.server_attacker import PassiveServer
         return PassiveServer
     elif cfg.attack.attack_method.lower() in ['passivepia']:
-        from federatedscope.attack.worker_as_attacker import PassivePIAServer
+        from federatedscope.attack.worker_as_attacker.server_attacker import PassivePIAServer
         return PassivePIAServer
 
     if cfg.vertical.use:
