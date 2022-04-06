@@ -6,11 +6,11 @@
 
 FederatedScope is a comprehensive federated learning platform that provides convenient usage and supports flexible custom for various federated learning tasks in both academic and industrial.  Based on a message-oriented framework, FederatedScope integrates rich collections of fundamental functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
-**A detailed tutorial is coming soon!**
+A detailed tutorial is ptovided in [Tutorial](https://federatedscope.io/).
 
 ## Quick Start
 
-We provide an end-to-end example for users to start running a standard FL task with FederatedScope.
+We provide an end-to-end example for users to start running a standard FL course with FederatedScope.
 
 ### Step 1. Installation
 
@@ -145,7 +145,7 @@ As a comprehensive FL platform, FederatedScope provides the fundamental implemen
 - **Differential Privacy**: Different from the encrypted algorithms that require powerful computation ability,  differential privacy is an economical yet flexible technique to protect privacy, which has achieved great success in database and is ever-growing in federated learning.
 - ...
 
-More supports are coming soon! We are also preparing a tutorial to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning.
+More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning.
 
 ## Documentation
 
@@ -156,7 +156,7 @@ pip install -r requirements-doc.txt
 make html
 ```
 
-We shall put the API references and comprehensive tutorials on our website (coming soon).
+We put the API references and comprehensive tutorials on our [website](https://federatedscope.io/).
 
 ## License
 
