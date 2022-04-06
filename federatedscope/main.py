@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 
@@ -11,7 +10,7 @@ from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
-from federatedscope.config import cfg, assert_cfg
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 
 if os.environ.get('https_proxy'):
@@ -22,26 +21,21 @@ if os.environ.get('http_proxy'):
 if __name__ == '__main__':
 
     args = parse_args()
-    cfg.merge_from_file(args.cfg_file)
-    cfg.merge_from_list(args.opts)
+    global_cfg.merge_from_file(args.cfg_file)
+    global_cfg.merge_from_list(args.opts)
 
-    setup_logger(cfg)
-    setup_seed(cfg.seed)
+    setup_logger(global_cfg)
+    setup_seed(global_cfg.seed)
 
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global cfg object
-    data, modified_cfg = get_data(config=cfg.clone())
-    cfg.merge_from_other_cfg(modified_cfg)
+    data, modified_cfg = get_data(config=global_cfg.clone())
+    global_cfg.merge_from_other_cfg(modified_cfg)
 
-    assert_cfg(cfg)
-    # save the final cfg
-    with open(os.path.join(cfg.outdir, "config.yaml"), 'w') as outfile:
-        from contextlib import redirect_stdout
-        with redirect_stdout(outfile):
-            print(cfg.dump())
+    global_cfg.freeze()
 
     runner = FedRunner(data=data,
-                       server_class=get_server_cls(cfg),
-                       client_class=get_client_cls(cfg),
-                       config=cfg.clone())
+                       server_class=get_server_cls(global_cfg),
+                       client_class=get_client_cls(global_cfg),
+                       config=global_cfg.clone())
     _ = runner.run()

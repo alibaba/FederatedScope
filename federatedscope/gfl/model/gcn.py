@@ -1,11 +1,8 @@
 import torch
 import torch.nn.functional as F
-from torch.nn import Parameter, Linear, ModuleList
+from torch.nn import ModuleList
 from torch_geometric.data import Data
 from torch_geometric.nn import GCNConv
-
-from federatedscope.config import cfg
-from federatedscope.register import register_model
 
 
 class GCN_Net(torch.nn.Module):

@@ -7,7 +7,7 @@ from torch_geometric.utils import to_networkx, from_networkx
 import networkx as nx
 import numpy as np
 
-from federatedscope.config import cfg
+from federatedscope.core.configs.config import global_cfg
 
 
 class HideGraph(BaseTransform):
@@ -127,4 +127,4 @@ def GraphMender(model, impaired_data, original_data):
     pred_missing, pred_feats, _ = model(impaired_data)
 
     return FillGraph(impaired_data, original_data, pred_missing, pred_feats,
-                     cfg.fedsageplus.num_pred)
+                     global_cfg.fedsageplus.num_pred)

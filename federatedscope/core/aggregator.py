@@ -1,13 +1,10 @@
-import logging
-from copy import deepcopy
 from abc import ABC, abstractmethod
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 
-import collections
 import torch
 import os
 
-from federatedscope.config import cfg
+from federatedscope.core.configs.config import global_cfg
 
 
 class Aggregator(ABC):
@@ -40,7 +37,7 @@ class ClientsAvgAggregator(Aggregator):
 
         models = agg_info["client_feedback"]
         recover_fun = agg_info['recover_fun'] if (
-                'recover_fun' in agg_info and cfg.federate.use_ss) else None
+            'recover_fun' in agg_info and global_cfg.federate.use_ss) else None
         avg_model = self._para_weighted_avg(models, recover_fun=recover_fun)
 
         return avg_model
@@ -79,15 +76,15 @@ class ClientsAvgAggregator(Aggregator):
             for i in range(len(models)):
                 local_sample_size, local_model = models[i]
 
-                if cfg.federate.ignore_weight:
+                if global_cfg.federate.ignore_weight:
                     weight = 1.0 / len(models)
-                elif cfg.federate.use_ss:
+                elif global_cfg.federate.use_ss:
                     # When using secret sharing, what the server receives are sample_size * model_para
                     weight = 1.0
                 else:
                     weight = local_sample_size / training_set_size
 
-                if not cfg.federate.use_ss:
+                if not global_cfg.federate.use_ss:
                     if isinstance(local_model[key], torch.Tensor):
                         local_model[key] = local_model[key].float()
                     else:
@@ -98,7 +95,7 @@ class ClientsAvgAggregator(Aggregator):
                 else:
                     avg_model[key] += local_model[key] * weight
 
-            if cfg.federate.use_ss and recover_fun:
+            if global_cfg.federate.use_ss and recover_fun:
                 avg_model[key] = recover_fun(avg_model[key])
                 # When using secret sharing, what the server receives are sample_size * model_para
                 avg_model[key] /= training_set_size

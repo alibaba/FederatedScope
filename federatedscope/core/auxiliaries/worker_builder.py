@@ -1,6 +1,6 @@
 import logging
 
-from federatedscope.core import constants
+from federatedscope.core.configs import constants
 from federatedscope.core.worker import Server, Client
 
 
@@ -19,6 +19,7 @@ def get_client_cls(cfg):
 
     if client_type == 'fedsageplus':
         from federatedscope.gfl.fedsageplus.worker import FedSagePlusClient
+        client_class = FedSagePlusClient
     elif client_type == 'gcflplus':
         from federatedscope.gfl.gcflplus.worker import GCFLPlusClient
         client_class = GCFLPlusClient

@@ -7,7 +7,7 @@ import yaml
 
 import numpy as np
 
-from federatedscope.config import cfg
+from federatedscope.core.configs.config import global_cfg
 
 
 def discretize(contd_choices, num_bkt):
@@ -19,7 +19,7 @@ def discretize(contd_choices, num_bkt):
     :returns: discritized choices.
     :rtype: Discrete
     '''
-    if contd_choices[0] >= .0 and cfg.hpo.log_scale:
+    if contd_choices[0] >= .0 and global_cfg.hpo.log_scale:
         loglb, logub = math.log(
             np.clip(contd_choices[0], 1e-8,
                     contd_choices[1])), math.log(contd_choices[1])
@@ -58,7 +58,7 @@ class Continuous(tuple):
         :returns: the sampled value.
         :rtype: float
         """
-        if self[0] >= .0 and cfg.hpo.log_scale:
+        if self[0] >= .0 and global_cfg.hpo.log_scale:
             loglb, logub = math.log(np.clip(self[0], 1e-8,
                                             self[1])), math.log(self[1])
             return math.exp(loglb + np.random.rand() * (logub - loglb))

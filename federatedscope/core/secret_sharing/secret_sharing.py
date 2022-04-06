@@ -5,7 +5,6 @@ try:
 except ImportError:
     torch = None
 from math import fmod
-from federatedscope.config import cfg
 
 
 class SecretSharing(ABC):
