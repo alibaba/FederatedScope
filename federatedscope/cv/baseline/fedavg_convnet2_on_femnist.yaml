@@ -1,11 +1,7 @@
 use_gpu: True
 device: 0
-<<<<<<< HEAD
-early_stopping: 1000
-=======
 early_stop:
   patience: 5
->>>>>>> be synchronized with gitlab
 seed: 12345
 federate:
   mode: standalone
@@ -34,8 +30,4 @@ trainer:
   type: cvtrainer
 eval:
   freq: 10
-<<<<<<< HEAD
   metrics: ['acc', 'correct']
-=======
-  metrics: ['acc', 'correct']
->>>>>>> be synchronized with gitlab

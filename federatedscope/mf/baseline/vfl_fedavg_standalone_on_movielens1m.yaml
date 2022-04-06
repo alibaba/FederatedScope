@@ -1,31 +1,14 @@
 use_gpu: True
 device: 0
-<<<<<<< HEAD
-early_stopping: 100
-federate:
-  mode: standalone
-  local_update_steps: 10
-=======
 early_stop:
   patience: 10
 federate:
   mode: standalone
   local_update_steps: 20
->>>>>>> be synchronized with gitlab
   total_round_num: 100
   client_num: 5
 data:
   root: data/
-<<<<<<< HEAD
-  type: movielens1m
-  batch_size: 8
-  num_workers: 0
-model:
-  type: MFNet
-  hidden: 20
-optimizer:
-  lr: 0.01
-=======
   type: VFLMovieLens1M
   batch_size: 64
   num_workers: 0
@@ -34,18 +17,12 @@ model:
   hidden: 20
 optimizer:
   lr: 1.
->>>>>>> be synchronized with gitlab
 criterion:
   type: MSELoss
 trainer:
   type: mftrainer
 eval:
-<<<<<<< HEAD
-  freq: 10
-  metrics: []
-=======
   freq: 100
   metrics: []
 sgdmf:
   use: False
->>>>>>> be synchronized with gitlab

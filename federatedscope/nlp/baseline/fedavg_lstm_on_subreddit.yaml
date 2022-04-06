@@ -1,11 +1,7 @@
 use_gpu: True
 device: 0
-<<<<<<< HEAD
-early_stopping: 100
-=======
 early_stop:
   patience: 10
->>>>>>> be synchronized with gitlab
 federate:
   mode: standalone
   local_update_steps: 10

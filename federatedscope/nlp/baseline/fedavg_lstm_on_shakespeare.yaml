@@ -1,10 +1,7 @@
 use_gpu: True
 device: 0
-<<<<<<< HEAD
-=======
 early_stop:
   patience: 10
->>>>>>> be synchronized with gitlab
 federate:
   mode: standalone
   local_update_steps: 1
@@ -17,11 +14,7 @@ data:
   batch_size: 64
   subsample: 0.2
   num_workers: 0
-<<<<<<< HEAD
-  splits: [0.8,0.0,0.2]
-=======
   splits: [0.6,0.2,0.2]
->>>>>>> be synchronized with gitlab
 model:
   type: lstm
   in_channels: 80
@@ -37,8 +30,4 @@ trainer:
   type: nlptrainer
 eval:
   freq: 10
-<<<<<<< HEAD
   metrics: ['acc', 'correct']
-=======
-  metrics: ['acc', 'correct']
->>>>>>> be synchronized with gitlab
