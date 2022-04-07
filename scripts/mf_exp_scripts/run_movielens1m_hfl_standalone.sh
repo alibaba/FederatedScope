@@ -20,7 +20,7 @@ do
     for ((il=0; il<${#lrs[@]}; il++ ))
     do
       round=$[1000/${steps[$is]}]
-      python flpackage/main.py --cfg flpackage/mf/baseline/hfl_fedavg_standalone_on_movielens1m.yaml device ${cudaid} \
+      python federatedscope/main.py --cfg federatedscope/mf/baseline/hfl_fedavg_standalone_on_movielens1m.yaml device ${cudaid} \
       data.root /mnt/gaodawei.gdw/data/ \
       sgdmf.use False \
       optimizer.lr ${lrs[$il]} \
@@ -40,7 +40,7 @@ do
     round=$[1000/${steps[$is]}]
     for ((il=0; il<${#lrs[@]}; il++ ))
     do
-      python flpackage/../scripts/mf_exp_scripts/parse_mf_results.py --input out_hfl1m/batch_${batchs[$ib]}_round_${round}_steps_${steps[$is]}_lr_${lrs[$il]}.log \
+      python federatedscope/../scripts/mf_exp_scripts/parse_mf_results.py --input out_hfl1m/batch_${batchs[$ib]}_round_${round}_steps_${steps[$is]}_lr_${lrs[$il]}.log \
       --round ${round} \
       >>out_hfl1m/parse.log
     done

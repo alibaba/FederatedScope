@@ -2,7 +2,6 @@ import copy
 from types import FunctionType
 from typing import Type
 
-from federatedscope.config import cfg
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
@@ -60,7 +59,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                    isinstance(base_trainer, GeneralTorchTrainer) or \
                    issubclass(type(base_trainer), GeneralTorchTrainer) or \
                    "can only copy instances of `GeneralMultiModelTrainer` and its subclasses, or " \
-                   "`GeneralTrainer` and its subclasses"
+                   "`GeneralTorchTrainer` and its subclasses"
             self.__dict__ = copy.deepcopy(base_trainer.__dict__)
 
         assert models_interact_mode in ["sequential", "parallel"], \
@@ -97,10 +96,10 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         self.ctx.models = [self.ctx.model] + additional_models
 
         additional_optimizers = [
-            get_optimizer(cfg.optimizer.type,
+            get_optimizer(self.cfg.optimizer.type,
                           self.ctx.models[i],
-                          cfg.optimizer.lr,
-                          weight_decay=cfg.optimizer.weight_decay)
+                          self.cfg.optimizer.lr,
+                          weight_decay=self.cfg.optimizer.weight_decay)
             for i in range(1, self.model_nums)
         ]
         self.ctx.optimizers = [self.ctx.optimizer] + additional_optimizers

@@ -1,20 +1,20 @@
 Graph FL Module References
 =======================
 
-flpackage.gfl.dataset
+federatedscope.gfl.dataset
 -----------------------
 
-.. automodule:: flpackage.gfl.dataset
+.. automodule:: federatedscope.gfl.dataset
     :members:
 
-flpackage.gfl.trainer
+federatedscope.gfl.trainer
 -----------------------
 
-.. automodule:: flpackage.gfl.trainer
+.. automodule:: federatedscope.gfl.trainer
     :members:
 
-flpackage.gfl.model
+federatedscope.gfl.model
 -----------------------
 
-.. automodule:: flpackage.gfl.model
+.. automodule:: federatedscope.gfl.model
     :members:

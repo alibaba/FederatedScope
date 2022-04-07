@@ -1,15 +1,15 @@
 Auto-tuning Module References
 =======================
 
-flpackage.autotune.choice_types
+federatedscope.autotune.choice_types
 -----------------------
 
-.. automodule:: flpackage.autotune.choice_types
+.. automodule:: federatedscope.autotune.choice_types
     :members:
 
-flpackage.autotune.algos
+federatedscope.autotune.algos
 -----------------------
 
-.. automodule:: flpackage.autotune.algos
+.. automodule:: federatedscope.autotune.algos
     :show-inheritance:
     :members:

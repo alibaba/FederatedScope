@@ -7,7 +7,7 @@ from itertools import product
 import numpy as np
 import torch
 
-from federatedscope.config import cfg
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.worker import Server, Client
@@ -85,11 +85,11 @@ class TrialExecutor(threading.Thread):
 
 
 def get_scheduler(raw_search_space):
-    if cfg.hpo.scheduler == 'bruteforce':
+    if global_cfg.hpo.scheduler == 'bruteforce':
         scheduler = BruteForce(raw_search_space)
-    elif cfg.hpo.scheduler == 'sha':
+    elif global_cfg.hpo.scheduler == 'sha':
         scheduler = SuccessiveHalvingAlgo(raw_search_space)
-    elif cfg.hpo.scheduler == 'pbt':
+    elif global_cfg.hpo.scheduler == 'pbt':
         scheduler = PBT(raw_search_space)
     return scheduler
 
@@ -127,16 +127,19 @@ class BruteForce(Scheduler):
     def _setup(self, raw_search_space):
         self._original_search_space = raw_search_space
 
-        if cfg.hpo.init_strategy == 'grid':
-            init_configs = grid_search(raw_search_space, cfg.hpo.init_cand_num)
-        elif cfg.hpo.init_strategy == 'random':
+        if global_cfg.hpo.init_strategy == 'grid':
+            init_configs = grid_search(raw_search_space,
+                                       global_cfg.hpo.init_cand_num)
+        elif global_cfg.hpo.init_strategy == 'random':
             init_configs = random_search(raw_search_space,
-                                         cfg.hpo.init_cand_num)
+                                         global_cfg.hpo.init_cand_num)
         else:
             raise ValueError(
                 "BruteForce needs to use random/grid search to pick {} configs from the search space as initial candidates, but `{}` is specified as `hpo.init_strategy`"
-                .format(cfg.hpo.sha.elim_rate**cfg.hpo.sha.elim_round_num,
-                        cfg.hpo.init_strategy))
+                .format(
+                    global_cfg.hpo.sha.elim_rate**
+                    global_cfg.hpo.sha.elim_round_num,
+                    global_cfg.hpo.init_strategy))
 
         return init_configs
 
@@ -172,14 +175,14 @@ class BruteForce(Scheduler):
                     # update the plots
                     consumed_bgt += configs[cfg_idx][
                         'federate.total_round_num'] if 'federate.total_round_num' in configs[
-                            cfg_idx] else cfg.federate.total_round_num
-                    if consumed_bgt - cfg.hpo.plot_interval >= last_plot:
+                            cfg_idx] else global_cfg.federate.total_round_num
+                    if consumed_bgt - global_cfg.hpo.plot_interval >= last_plot:
                         plots.append(
                             max(
                                 completed_trial_results['perf'],
                                 max(plots)
                                 if plots else completed_trial_results['perf']
-                            ) if cfg.hpo.larger_better else min(
+                            ) if global_cfg.hpo.larger_better else min(
                                 completed_trial_results['perf'],
                                 min(plots)
                                 if plots else completed_trial_results['perf']))
@@ -187,7 +190,7 @@ class BruteForce(Scheduler):
             device_flags[available_device].clear()
             thread_results[available_device] = dict()
 
-            trial_cfg = cfg.clone()
+            trial_cfg = global_cfg.clone()
             trial_cfg.merge_from_list(config2cmdargs(config))
             trial_cfg.merge_from_list(['device', available_device])
             trial = TrialExecutor(i, device_flags[available_device],
@@ -205,14 +208,14 @@ class BruteForce(Scheduler):
                     # update the plots
                     consumed_bgt += configs[cfg_idx][
                         'federate.total_round_num'] if 'federate.total_round_num' in configs[
-                            cfg_idx] else cfg.federate.total_round_num
-                    if consumed_bgt - cfg.hpo.plot_interval >= last_plot:
+                            cfg_idx] else global_cfg.federate.total_round_num
+                    if consumed_bgt - global_cfg.hpo.plot_interval >= last_plot:
                         plots.append(
                             max(
                                 completed_trial_results['perf'],
                                 max(plots)
                                 if plots else completed_trial_results['perf']
-                            ) if cfg.hpo.larger_better else min(
+                            ) if global_cfg.hpo.larger_better else min(
                                 completed_trial_results['perf'],
                                 min(plots)
                                 if plots else completed_trial_results['perf']))
@@ -226,7 +229,7 @@ class BruteForce(Scheduler):
             self._init_configs,
             perfs,
             white_list=set(self._original_search_space.keys()),
-            desc=cfg.hpo.larger_better)
+            desc=global_cfg.hpo.larger_better)
         logging.info(
             "====================================== Final ========================================"
         )
@@ -292,7 +295,7 @@ class IterativeScheduler(BruteForce):
                 current_configs,
                 current_perfs,
                 white_list=set(self._original_search_space.keys()),
-                desc=cfg.hpo.larger_better)
+                desc=global_cfg.hpo.larger_better)
             self._stage += 1
             logging.info(
                 "====================================== Stage{} ========================================"
@@ -315,29 +318,35 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
     def _setup(self, raw_search_space):
         _ = super(SuccessiveHalvingAlgo, self)._setup(raw_search_space)
 
-        if cfg.hpo.init_strategy == 'random':
+        if global_cfg.hpo.init_strategy == 'random':
             init_configs = random_search(
                 raw_search_space,
-                sample_size=cfg.hpo.sha.elim_rate**cfg.hpo.sha.elim_round_num)
-        elif cfg.hpo.init_strategy == 'grid':
-            init_configs = grid_search(
-                raw_search_space,
-                sample_size=cfg.hpo.sha.elim_rate**cfg.hpo.sha.elim_round_num)
+                sample_size=global_cfg.hpo.sha.elim_rate**
+                global_cfg.hpo.sha.elim_round_num)
+        elif global_cfg.hpo.init_strategy == 'grid':
+            init_configs = grid_search(raw_search_space,
+                                       sample_size=global_cfg.hpo.sha.elim_rate
+                                       **global_cfg.hpo.sha.elim_round_num)
         else:
             raise ValueError(
                 "SHA needs to use random/grid search to pick {} configs from the search space as initial candidates, but `{}` is specified as `hpo.init_strategy`"
-                .format(cfg.hpo.sha.elim_rate**cfg.hpo.sha.elim_round_num,
-                        cfg.hpo.init_strategy))
+                .format(
+                    global_cfg.hpo.sha.elim_rate**
+                    global_cfg.hpo.sha.elim_round_num,
+                    global_cfg.hpo.init_strategy))
 
         for trial_cfg in init_configs:
             trial_cfg['federate.save_to'] = os.path.join(
-                cfg.hpo.working_folder, "{}.pth".format(config2str(trial_cfg)))
+                global_cfg.hpo.working_folder,
+                "{}.pth".format(config2str(trial_cfg)))
 
-        if cfg.hpo.sha.budgets:
+        if global_cfg.hpo.sha.budgets:
             for trial_cfg in init_configs:
-                trial_cfg['federate.total_round_num'] = cfg.hpo.sha.budgets[
+                trial_cfg[
+                    'federate.total_round_num'] = global_cfg.hpo.sha.budgets[
+                        self._stage]
+                trial_cfg['eval.freq'] = global_cfg.hpo.sha.budgets[
                     self._stage]
-                trial_cfg['eval.freq'] = cfg.hpo.sha.budgets[self._stage]
 
         return init_configs
 
@@ -346,20 +355,23 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
 
     def _generate_next_population(self, configs, perfs):
         indices = [(i, val) for i, val in enumerate(perfs)]
-        indices.sort(key=lambda x: x[1], reverse=cfg.hpo.larger_better)
+        indices.sort(key=lambda x: x[1], reverse=global_cfg.hpo.larger_better)
         next_population = [
             configs[tp[0]]
-            for tp in indices[:len(indices) // cfg.hpo.sha.elim_rate]
+            for tp in indices[:len(indices) // global_cfg.hpo.sha.elim_rate]
         ]
 
         for trial_cfg in next_population:
             if 'federate.restore_from' not in trial_cfg:
                 trial_cfg['federate.restore_from'] = trial_cfg[
                     'federate.save_to']
-            if cfg.hpo.sha.budgets and self._stage < len(cfg.hpo.sha.budgets):
-                trial_cfg['federate.total_round_num'] = cfg.hpo.sha.budgets[
+            if global_cfg.hpo.sha.budgets and self._stage < len(
+                    global_cfg.hpo.sha.budgets):
+                trial_cfg[
+                    'federate.total_round_num'] = global_cfg.hpo.sha.budgets[
+                        self._stage]
+                trial_cfg['eval.freq'] = global_cfg.hpo.sha.budgets[
                     self._stage]
-                trial_cfg['eval.freq'] = cfg.hpo.sha.budgets[self._stage]
 
         return next_population
 
@@ -370,35 +382,40 @@ class PBT(IterativeScheduler):
     def _setup(self, raw_search_space):
         _ = super(PBT, self)._setup(raw_search_space)
 
-        if cfg.hpo.init_strategy == 'random':
+        if global_cfg.hpo.init_strategy == 'random':
             init_configs = random_search(
                 raw_search_space,
-                sample_size=cfg.hpo.sha.elim_rate**cfg.hpo.sha.elim_round_num)
-        elif cfg.hpo.init_strategy == 'grid':
-            init_configs = grid_search(
-                raw_search_space,
-                sample_size=cfg.hpo.sha.elim_rate**cfg.hpo.sha.elim_round_num)
+                sample_size=global_cfg.hpo.sha.elim_rate**
+                global_cfg.hpo.sha.elim_round_num)
+        elif global_cfg.hpo.init_strategy == 'grid':
+            init_configs = grid_search(raw_search_space,
+                                       sample_size=global_cfg.hpo.sha.elim_rate
+                                       **global_cfg.hpo.sha.elim_round_num)
         else:
             raise ValueError(
                 "SHA needs to use random/grid search to pick {} configs from the search space as initial candidates, but `{}` is specified as `hpo.init_strategy`"
-                .format(cfg.hpo.sha.elim_rate**cfg.hpo.sha.elim_round_num,
-                        cfg.hpo.init_strategy))
+                .format(
+                    global_cfg.hpo.sha.elim_rate**
+                    global_cfg.hpo.sha.elim_round_num,
+                    global_cfg.hpo.init_strategy))
 
         for trial_cfg in init_configs:
             trial_cfg['federate.save_to'] = os.path.join(
-                cfg.hpo.working_folder, "{}.pth".format(config2str(trial_cfg)))
+                global_cfg.hpo.working_folder,
+                "{}.pth".format(config2str(trial_cfg)))
 
         return init_configs
 
     def _stop_criterion(self, configs, last_results):
         if last_results is not None:
-            if (cfg.hpo.larger_better and last_results.iloc[0]['performance']
-                    >= cfg.hpo.pbt.perf_threshold) or (
-                        (not cfg.hpo.larger_better)
+            if (global_cfg.hpo.larger_better
+                    and last_results.iloc[0]['performance'] >=
+                    global_cfg.hpo.pbt.perf_threshold) or (
+                        (not global_cfg.hpo.larger_better)
                         and last_results.iloc[0]['performance'] <=
-                        cfg.hpo.pbt.perf_threshold):
+                        global_cfg.hpo.pbt.perf_threshold):
                 return True
-        return self._stage >= cfg.hpo.pbt.max_stage
+        return self._stage >= global_cfg.hpo.pbt.max_stage
 
     def _generate_next_population(self, configs, perfs):
         next_generation = []
@@ -406,8 +423,9 @@ class PBT(IterativeScheduler):
             new_cfg = deepcopy(configs[i])
             # exploit
             j = np.random.randint(len(configs))
-            if i != j and ((cfg.hpo.larger_better and perfs[j] > perfs[i]) or (
-                (not cfg.hpo.larger_better) and perfs[j] < perfs[i])):
+            if i != j and (
+                (global_cfg.hpo.larger_better and perfs[j] > perfs[i]) or
+                ((not global_cfg.hpo.larger_better) and perfs[j] < perfs[i])):
                 new_cfg['federate.restore_from'] = configs[j][
                     'federate.save_to']
                 # explore
@@ -425,7 +443,8 @@ class PBT(IterativeScheduler):
                 if k in self._original_search_space:
                     tmp_cfg[k] = new_cfg[k]
             new_cfg['federate.save_to'] = os.path.join(
-                cfg.hpo.working_folder, "{}.pth".format(config2str(tmp_cfg)))
+                global_cfg.hpo.working_folder,
+                "{}.pth".format(config2str(tmp_cfg)))
 
             next_generation.append(new_cfg)
 

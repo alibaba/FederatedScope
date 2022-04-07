@@ -45,8 +45,8 @@
 wget 'http://xxxshare.oss-cn-hangzhou-zmf.aliyuncs.com/gfl/test_data.tar.gz'>oss.out 2>oss.err
 tar -xzvf test_data.tar.gz>tar.out
 mkdir -p test_data/femnist/raw
-cp /home/xxx/dev/FLPackage/data/femnist_all_data.zip test_data/femnist/raw
-cp -rf /home/xxx/dev/FLPackage/data/MoviesLens1M test_data/
+cp /home/xxx/dev/federatedscope/data/femnist_all_data.zip test_data/femnist/raw
+cp -rf /home/xxx/dev/federatedscope/data/MovieLens1M test_data/
 #export PYTHONPATH=.
 #export TEST_DIR="/tmp/ev_torch_test_${USER}_`date +%s`"
 

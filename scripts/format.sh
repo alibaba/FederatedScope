@@ -1,12 +1,12 @@
 # Copyright 2017 The Ray Authors.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
-# 
+#
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ builtin cd "$ROOT" || exit 1
 
 # Add the upstream branch if it doesn't exist
 #if ! [[ -e "$ROOT/.git/refs/remotes/upstream" ]]; then
-#    git remote add 'upstream' 'http://gitlab.alibaba-inc.com/DAILFed/FLPackage.git'
+#    git remote add 'upstream' 'https://github.com/alibaba/FederatedScope.git'
 #fi
 
 
@@ -45,7 +45,7 @@ YAPF_VERSION=$(yapf --version | awk '{print $2}')
 # params: tool name, tool version, required version
 tool_version_check() {
     if [[ $2 != $3 ]]; then
-        echo "WARNING: FLPackage uses $1 $3, You currently are using $2. This might generate different results."
+        echo "WARNING: federatedscope uses $1 $3, You currently are using $2. This might generate different results."
     fi
 }
 
@@ -102,8 +102,8 @@ format_changed() {
 
 # Format all files, and print the diff to stdout for travis.
 format_all() {
-    yapf --diff "${YAPF_FLAGS[@]}" "${YAPF_EXCLUDES[@]}" flpackage tests
-    #yapf --in-place "${YAPF_FLAGS[@]}" "${YAPF_EXCLUDES[@]}" flpackage tests
+    yapf --diff "${YAPF_FLAGS[@]}" "${YAPF_EXCLUDES[@]}" federatedscope tests
+    #yapf --in-place "${YAPF_FLAGS[@]}" "${YAPF_EXCLUDES[@]}" federatedscope tests
 }
 
 # This flag formats individual files. --files *must* be the first command line

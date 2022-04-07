@@ -5,15 +5,15 @@ from federatedscope.attack.privacy_attacks.GAN_based_attack import GANCRA
 
 
 def wrap_GANTrainer(
-        base_trainer: Type[GeneralTrainer]) -> Type[GeneralTrainer]:
+        base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
     '''
     Warp the trainer for gan_based class representative attack.
 
     Args:
-        base_trainer: Type: core.trainers.GeneralTrainer
+        base_trainer: Type: core.trainers.GeneralTorchTrainer
 
     Returns:
-        The wrapped trainer; Type: core.trainers.GeneralTrainer
+        The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
 
     '''
 

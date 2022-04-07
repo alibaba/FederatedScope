@@ -4,6 +4,7 @@ import logging
 from torch_geometric.loader import NeighborSampler
 
 from federatedscope.core.message import Message
+from federatedscope.core.monitor import calc_blocal_dissim
 from federatedscope.core.worker.server import Server
 from federatedscope.core.worker.client import Client
 from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
@@ -186,7 +187,7 @@ class FedSagePlusServer(Server):
                     msg_list.append(train_msg_buffer[client_id])
 
                 # Trigger the monitor here (for training)
-                if 'dissim' in self._cfg.monitoring:
+                if 'dissim' in self._cfg.eval.monitoring:
                     B_val = calc_blocal_dissim(self.model.load_state_dict(),
                                                msg_list)
                     formatted_logs = formatted_logging(B_val,

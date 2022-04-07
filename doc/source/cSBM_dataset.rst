@@ -1,8 +1,8 @@
 cSBM Dataset Module Reference
 =======================
 
-flpackage.gfl.dataset.cSBM_dataset
+federatedscope.gfl.dataset.cSBM_dataset
 -----------------------
 
-.. automodule:: flpackage.gfl.dataset.cSBM_dataset
+.. automodule:: federatedscope.gfl.dataset.cSBM_dataset
     :members:

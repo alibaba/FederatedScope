@@ -1,6 +1,6 @@
 import logging
 
-from federatedscope.core import constants
+from federatedscope.core.configs import constants
 
 
 def get_aggregator(method, model=None, device=None, online=False, config=None):

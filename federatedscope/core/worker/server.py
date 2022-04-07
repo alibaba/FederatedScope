@@ -223,9 +223,8 @@ class Server(Worker):
                             msg_list.append((train_data_size,
                                              model_para_multiple[model_idx]))
 
-
                     # Trigger the monitor here (for training)
-                    if 'dissim' in self._cfg.monitoring:
+                    if 'dissim' in self._cfg.eval.monitoring:
                         B_val = calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
                         formatted_eval_res = formatted_logging(B_val,
@@ -283,15 +282,15 @@ class Server(Worker):
         should_stop = False
 
         if "Results_weighted_avg" in self.history_results and \
-                self._cfg.best_res_update_round_wise_key in self.history_results['Results_weighted_avg']:
+                self._cfg.eval.best_res_update_round_wise_key in self.history_results['Results_weighted_avg']:
             should_stop = self.early_stopper.track_and_check(
                 self.history_results['Results_weighted_avg'][
-                    self._cfg.best_res_update_round_wise_key])
+                    self._cfg.eval.best_res_update_round_wise_key])
         elif "Results_avg" in self.history_results and \
-                self._cfg.best_res_update_round_wise_key in self.history_results['Results_avg']:
+                self._cfg.eval.best_res_update_round_wise_key in self.history_results['Results_avg']:
             should_stop = self.early_stopper.track_and_check(
                 self.history_results['Results_avg'][
-                    self._cfg.best_res_update_round_wise_key])
+                    self._cfg.eval.best_res_update_round_wise_key])
         else:
             should_stop = False
 
@@ -347,10 +346,10 @@ class Server(Worker):
                                            role='Server #',
                                            forms=self._cfg.eval.report)
         logging.info(formatted_logs)
-        self.update_best_result(
-            metrics_all_clients,
-            results_type="client_individual",
-            round_wise_update_key=self._cfg.best_res_update_round_wise_key)
+        self.update_best_result(metrics_all_clients,
+                                results_type="client_individual",
+                                round_wise_update_key=self._cfg.eval.
+                                best_res_update_round_wise_key)
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
             outfile.write(str(formatted_logs) + "\n")
@@ -359,7 +358,7 @@ class Server(Worker):
                 self.update_best_result(
                     formatted_logs[f"Results_{form}"],
                     results_type=f"client_summarized_{form}",
-                    round_wise_update_key=self._cfg.
+                    round_wise_update_key=self._cfg.eval.
                     best_res_update_round_wise_key)
         return formatted_logs
 
@@ -569,7 +568,7 @@ class Server(Worker):
                     forms=self._cfg.eval.report)
                 self.update_best_result(formatted_eval_res['Results_raw'],
                                         results_type="server_global_eval",
-                                        round_wise_update_key=self._cfg.
+                                        round_wise_update_key=self._cfg.eval.
                                         best_res_update_round_wise_key)
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
