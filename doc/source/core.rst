@@ -1,6 +1,12 @@
 Core Module References
 =======================
 
+federatedscope.core.configs
+-----------------------
+
+.. automodule:: federatedscope.core.configs
+    :members:
+
 federatedscope.core.DAIL_fed_api
 -----------------------
 
