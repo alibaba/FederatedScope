@@ -14,18 +14,32 @@ We provide an end-to-end example for users to start running a standard FL course
 
 ### Step 1. Installation
 
-First of all, users need to clone the source code and install the required packages. 
+First of all, users need to clone the source code and install the required packages.
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
-python setup.py install
+```
+You can either install from the requirement files
+```
+pip install -r 
+
+# if 
+# pip install -r enviroment/requirements-torch1.10-application.txt
+```
+or build docker images
+```
+docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
+docker run --gpus device=all --rm --it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash"
+```
+If you need to run down-stream tasks such as graph FL, change the requirement file or docker file into another ones in the above commands
+```
+# enviroment/requirements-torch1.10.txt -> 
+requirements-torch1.10-application.txt
+# enviroment/docker_files/federatedscope-torch1.10.Dockerfile ->
+enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ```
 
-And the suggested running environments are:
-
-- Python version 3.7 or above
-- Torch version 1.7.0 or above
 
 ### Step 2. Prepare datasets
 
