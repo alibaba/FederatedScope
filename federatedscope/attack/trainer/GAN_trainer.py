@@ -59,11 +59,11 @@ def hood_on_fit_start_generator(ctx):
 
 def hook_on_batch_forward_injected_data(ctx):
     # inject the generated data into training batch loss
-    x, label = [_.to(ctx.device) for _ in ctx.data_batch]
+    x, label = [_.to(ctx.device) for _ in ctx.injected_data]
     pred = ctx.model(x)
     if len(label.size()) == 0:
         label = label.unsqueeze(0)
-    ctx.loss_batch += ctx.criterion(pred, label)
+    ctx.loss_task += ctx.criterion(pred, label)
     ctx.y_true_injected = label
     ctx.y_prob_injected = pred
 
