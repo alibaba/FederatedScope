@@ -20,7 +20,7 @@ First of all, users need to clone the source code and install the required packa
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
 ```
-You can install from the requirement files
+You can install from the requirement file
 ```
 pip3 install -r enviroment/requirements-torch1.10.txt
 ```
@@ -29,7 +29,7 @@ or build docker image and run with docker env
 docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
 docker run --gpus device=all --rm --it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash"
 ```
-If you need to run down-stream tasks such as graph FL, change the requirement file or docker file into another ones in the above commands.
+Note: if you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when execute the above commands.
 ```
 # enviroment/requirements-torch1.10.txt -> 
 requirements-torch1.10-application.txt
