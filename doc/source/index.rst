@@ -16,22 +16,11 @@ Welcome to FederatedScope's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting Started
-
-   installation.rst
-   examples.rst
-   leaf.rst
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Developer Guidelines
-
-   contributors.rst
-
-.. toctree::
-   :maxdepth: 1
    :caption: References
 
    core.rst
+   cv.rst
+   nlp.rst
    gfl.rst
    autotune.rst
+   attack.rst
