@@ -22,7 +22,8 @@ cd FederatedScope
 ```
 You can install from the requirement file
 ```
-pip3 install -r enviroment/requirements-torch1.10.txt
+conda install --file enviroment/requirements-torch1.10.txt
+ -c pytorch -c conda-forge -c nvidia
 ```
 or build docker image and run with docker env
 ```
