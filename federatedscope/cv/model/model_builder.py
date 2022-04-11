@@ -25,19 +25,22 @@ def get_cnn(model_config, local_data):
                          h=x.shape[2],
                          w=x.shape[3],
                          hidden=model_config.hidden,
-                         class_num=model_config.out_channels)
+                         class_num=model_config.out_channels,
+                         dropout=model_config.dropout)
     elif model_config.type == 'convnet5':
         model = ConvNet5(in_channels=x.shape[1],
                          h=x.shape[2],
                          w=x.shape[3],
                          hidden=model_config.hidden,
-                         class_num=model_config.out_channels)
+                         class_num=model_config.out_channels,
+                         dropout=model_config.dropout)
     elif model_config.type == 'vgg11':
         model = VGG11(in_channels=x.shape[1],
                       h=x.shape[2],
                       w=x.shape[3],
                       hidden=model_config.hidden,
-                      class_num=model_config.out_channels)
+                      class_num=model_config.out_channels,
+                      dropout=model_config.dropout)
     else:
         raise ValueError(f'No model named {model_config.type}!')
 

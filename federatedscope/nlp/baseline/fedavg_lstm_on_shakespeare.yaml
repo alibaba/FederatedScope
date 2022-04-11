@@ -21,6 +21,7 @@ model:
   out_channels: 80
   embed_size: 8
   hidden: 256
+  dropout: 0.0
 optimizer:
   lr: 0.8
   weight_decay: 0.0

@@ -264,7 +264,12 @@ class Client(Worker):
             logging.info(
                 'Client #{:d}: (Evaluation (val set) at Round #{:d}) {:s} is {:.6f}'
                 .format(self.ID, self.state, key, val_metrics[key]))
-        metrics = {**test_metrics, **val_metrics}
+        train_metrics = self.trainer.evaluate(target_data_split_name='train')
+        for key in train_metrics:
+            logging.info(
+                'Client #{:d}: (Evaluation (train set) at Round #{:d}) {:s} is {:.6f}'
+                .format(self.ID, self.state, key, train_metrics[key]))
+        metrics = {**test_metrics, **val_metrics, **train_metrics}
         self.comm_manager.send(
             Message(msg_type='metrics',
                     sender=self.ID,
