@@ -8,6 +8,7 @@ federate:
   local_update_steps: 50
   total_round_num: 1000
   sample_client_num: 20
+  client_num: 10
 data:
   root: data/
   type: femnist
@@ -31,5 +32,5 @@ eval:
   metrics: ['acc', 'correct']
 attack:
   attack_method: gan_attack
-  attacker_id: 50
+  attacker_id: 5
   target_label_ind: 3
