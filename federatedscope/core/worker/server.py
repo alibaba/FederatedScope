@@ -559,11 +559,11 @@ class Server(Worker):
                 trainer = self.trainers[i]
                 # Preform evaluation in server
                 test_metrics, val_metrics, train_metrics = {}, {}, {}
-                if 'test' in self.self._cfg.split:
+                if 'test' in self._cfg.split:
                     test_metrics = trainer.evaluate()
-                if 'val' in self.self._cfg.split:
+                if 'val' in self._cfg.split:
                     val_metrics = trainer.validate()
-                if 'train' in self.self._cfg.split:
+                if 'train' in self._cfg.split:
                     train_metrics = trainer.evaluate(target_data_split_name='train')
                 metrics = {**test_metrics, **val_metrics, **train_metrics}
                 formatted_eval_res = formatted_logging(
