@@ -178,8 +178,8 @@ We put the API references on our [website](https://federatedscope.io/refs/index)
 
 FederatedScope is released under Apache License 2.0.
 
-## Publication
-If you find FederatedScope useful for your research or development, please cite the following [paper](https://arxiv.org/abs/2204.05011):
+## Publications
+If you find FederatedScope useful for your research or development, please cite the following <a href='https://arxiv.org/abs/2204.05011' target='_blank'>paper</a>:
 ```
 @article{federatedscope,
   title = {FederatedScope: A Comprehensive and Flexible Federated Learning Platform via Message Passing},
@@ -187,8 +187,8 @@ If you find FederatedScope useful for your research or development, please cite 
   journal={arXiv preprint arXiv:2204.05011},
   year = {2022},
 }
-
 ```
+More publications can be found in the [Publications](https://federatedscope.io/year-archive/).
 
 ## Contributing
 
