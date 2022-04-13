@@ -36,18 +36,19 @@ def setup_seed(seed):
 
 def setup_logger(cfg):
     if cfg.verbose > 0:
-        logging.basicConfig(
-            level=logging.INFO,
-            format=
-            "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-        )
+        logging_level = logging.INFO
     else:
-        logging.basicConfig(
-            level=logging.WARN,
-            format=
-            "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-        )
+        logging_level = logging.WARN
         logging.warning("Skip DEBUG/INFO messages")
+
+    logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+    try:
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging_level)
+        root_handler = root_logger.handlers[0]
+        root_handler.setFormatter(logging.Formatter(logging_fmt))
+    except IndexError:
+        logging.basicConfig(level=logging_level, format=logging_fmt)
 
     # ================ create outdir to save log, exp_config, models, etc,.
 
