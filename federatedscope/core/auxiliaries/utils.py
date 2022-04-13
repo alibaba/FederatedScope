@@ -57,8 +57,9 @@ def setup_logger(cfg):
 
     # if exist, make directory with given name and time
     if os.path.isdir(cfg.outdir) and os.path.exists(cfg.outdir):
-        cfg.outdir = os.path.join(
-            cfg.outdir, "sub_exp" + datetime.now().strftime('_%Y%m%d%H%M%S'))  # e.g., sub_exp_20220411030524
+        cfg.outdir = os.path.join(cfg.outdir, "sub_exp" +
+                                  datetime.now().strftime('_%Y%m%d%H%M%S')
+                                  )  # e.g., sub_exp_20220411030524
         while os.path.exists(cfg.outdir):
             time.sleep(1)
             cfg.outdir = os.path.join(
