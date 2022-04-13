@@ -558,14 +558,11 @@ class Server(Worker):
             for i in range(self.model_num):
                 trainer = self.trainers[i]
                 # Preform evaluation in server
-                test_metrics, val_metrics, train_metrics = {}, {}, {}
-                if 'test' in self._cfg.eval.split:
-                    test_metrics = trainer.evaluate()
-                if 'val' in self._cfg.eval.split:
-                    val_metrics = trainer.validate()
-                if 'train' in self._cfg.eval.split:
-                    train_metrics = trainer.evaluate(target_data_split_name='train')
-                metrics = {**test_metrics, **val_metrics, **train_metrics}
+                metrics = {}
+                for split in self._cfg.eval.split:
+                    eval_metrics = trainer.evaluate(
+                        target_data_split_name=split)
+                    metrics.update(**eval_metrics)
                 formatted_eval_res = formatted_logging(
                     metrics,
                     rnd=self.state,

@@ -254,27 +254,15 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        test_metrics, val_metrics, train_metrics = {}, {}, {}
-        if 'test' in self._cfg.eval.split:
-            test_metrics = self.trainer.evaluate()
-            for key in test_metrics:
+        metrics = {}
+        for split in self._cfg.eval.split:
+            eval_metrics = self.trainer.evaluate(target_data_split_name=split)
+            for key in eval_metrics:
                 logging.info(
-                    'Client #{:d}: (Evaluation (test set) at Round #{:d}) {:s} is {:.6f}'
-                    .format(self.ID, self.state, key, test_metrics[key]))
-        if 'val' in self._cfg.eval.split:
-            val_metrics = self.trainer.validate()
-            for key in val_metrics:
-                logging.info(
-                    'Client #{:d}: (Evaluation (val set) at Round #{:d}) {:s} is {:.6f}'
-                    .format(self.ID, self.state, key, val_metrics[key]))
-        if 'train' in self._cfg.eval.split:
-            train_metrics = self.trainer.evaluate(
-                target_data_split_name='train')
-            for key in train_metrics:
-                logging.info(
-                    'Client #{:d}: (Evaluation (train set) at Round #{:d}) {:s} is {:.6f}'
-                    .format(self.ID, self.state, key, train_metrics[key]))
-        metrics = {**test_metrics, **val_metrics, **train_metrics}
+                    'Client #{:d}: (Evaluation ({:s}} set) at Round #{:d}) {:s} is {:.6f}'
+                    .format(self.ID, split, self.state, key,
+                            eval_metrics[key]))
+            metrics.update(**eval_metrics)
         self.comm_manager.send(
             Message(msg_type='metrics',
                     sender=self.ID,
