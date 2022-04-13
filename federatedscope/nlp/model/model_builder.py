@@ -25,7 +25,8 @@ def get_rnn(model_config, local_data):
                      else model_config.in_channels,
                      hidden=model_config.hidden,
                      out_channels=model_config.out_channels,
-                     embed_size=model_config.embed_size)
+                     embed_size=model_config.embed_size,
+                     dropout=model_config.dropout)
     else:
         raise ValueError(f'No model named {model_config.type}!')
 

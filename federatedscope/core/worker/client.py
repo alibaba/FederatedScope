@@ -254,17 +254,15 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        test_metrics = self.trainer.evaluate()
-        for key in test_metrics:
-            logging.info(
-                'Client #{:d}: (Evaluation (test set) at Round #{:d}) {:s} is {:.6f}'
-                .format(self.ID, self.state, key, test_metrics[key]))
-        val_metrics = self.trainer.validate()
-        for key in val_metrics:
-            logging.info(
-                'Client #{:d}: (Evaluation (val set) at Round #{:d}) {:s} is {:.6f}'
-                .format(self.ID, self.state, key, val_metrics[key]))
-        metrics = {**test_metrics, **val_metrics}
+        metrics = {}
+        for split in self._cfg.eval.split:
+            eval_metrics = self.trainer.evaluate(target_data_split_name=split)
+            for key in eval_metrics:
+                logging.info(
+                    'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
+                    .format(self.ID, split, self.state, key,
+                            eval_metrics[key]))
+            metrics.update(**eval_metrics)
         self.comm_manager.send(
             Message(msg_type='metrics',
                     sender=self.ID,

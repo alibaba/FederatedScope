@@ -2,6 +2,7 @@ import federatedscope.register as register
 
 try:
     from torch import nn
+    from federatedscope.nlp.loss import *
 except ImportError:
     nn = None
 

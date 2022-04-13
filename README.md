@@ -22,8 +22,11 @@ cd FederatedScope
 ```
 You can install from the requirement file
 ```
-conda install --file enviroment/requirements-torch1.10.txt
- -c pytorch -c conda-forge -c nvidia
+# For minimal version
+conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-forge -c nvidia
+
+# For application version
+conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
 ```
 or build docker image and run with docker env
 ```
@@ -178,4 +181,3 @@ FederatedScope is released under Apache License 2.0.
 ## Contributing
 
 We appreciate any contribution to FederatedScope. You can refer to Contributing to FederatedScope for more details.
-

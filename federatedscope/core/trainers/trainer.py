@@ -182,22 +182,6 @@ class Trainer(object):
 
         return self.ctx.eval_metrics
 
-    def validate(self, target_data_split_name="val", hooks_set=None):
-        # By default, the actions in validation is the same as the ones in evaluation
-        hooks_set = self.hooks_in_eval if hooks_set is None else hooks_set
-        if self.ctx.get(
-                f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
-            logging.warning(
-                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer, will skip evaluation"
-                f"If this is not the case you want, please check whether there is typo for the name"
-            )
-            self.ctx.eval_metrics = {}
-        else:
-            self._run_routine("val", hooks_set, target_data_split_name)
-
-        return self.ctx.eval_metrics
-
     def _run_routine(self, mode, hooks_set, dataset_name=None):
         """Run the hooks_set and maintain the mode
 

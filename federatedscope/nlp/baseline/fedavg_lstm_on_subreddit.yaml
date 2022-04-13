@@ -18,6 +18,7 @@ model:
   out_channels: 10000
   hidden: 256
   embed_size: 200
+  dropout: 0.0
 optimizer:
   lr: 8.0
   weight_decay: 0.0
