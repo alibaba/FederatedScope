@@ -10,7 +10,9 @@ def check_gpus():
 
 class GPUManager():
     """
-        The implementation of GPUManager is referred to https://github.com/QuantumLiu/tf_gpu_manager
+    To automatic allocate the gpu, which returns the gpu with the largest free memory rate, unless the specified_device has been set up
+    When gpus is unavailable, return 'cpu';
+    The implementation of GPUManager is referred to https://github.com/QuantumLiu/tf_gpu_manager
     """
     def __init__(self, gpu_available=False, specified_device=-1):
         self.gpu_avaiable = gpu_available and check_gpus()
@@ -52,6 +54,9 @@ class GPUManager():
         }
 
     def auto_choice(self):
+        """
+        To allocate a device
+        """
         if self.gpus == None:
             return 'cpu'
         elif self.specified_device >= 0:

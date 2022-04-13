@@ -20,9 +20,9 @@ do
     do
         for (( j=0; j<${#local_updates[@]}; j++ ))
         do
-            for k in {1..1}
+            for k in {1..3}
             do
-                python flpackage/main.py --cfg flpackage/nlp/baseline/fedavg_lr_on_synthetic.yaml federate.method ${method} data.batch_size ${bs} device ${cudaid} optimizer.lr ${lrs[$i]} federate.local_update_steps ${local_updates[$j]} model.type ${models[$g]} seed $k outdir ${outdir}/${models[$g]}_${lrs[$i]}_${local_updates[$j]}_bs${bs}_on_${dataset}
+                python federatedscope/main.py --cfg federatedscope/nlp/baseline/fedavg_lr_on_synthetic.yaml federate.method ${method} data.batch_size ${bs} device ${cudaid} optimizer.lr ${lrs[$i]} federate.local_update_steps ${local_updates[$j]} model.type ${models[$g]} seed $k outdir ${outdir}/${models[$g]}_${lrs[$i]}_${local_updates[$j]}_bs${bs}_on_${dataset}
             done
         done
     done

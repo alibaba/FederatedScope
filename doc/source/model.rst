@@ -1,8 +1,8 @@
 Model Module References
 =======================
 
-flpackage.gfl.model
+federatedscope.gfl.model
 -----------------------
 
-.. automodule:: flpackage.gfl.model
+.. automodule:: federatedscope.gfl.model
     :members:

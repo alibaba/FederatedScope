@@ -3,14 +3,14 @@ import sys
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='DAIL FedML')
+    parser = argparse.ArgumentParser(description='FederatedScope')
     parser.add_argument('--cfg',
                         dest='cfg_file',
                         help='Config file path',
                         required=True,
                         type=str)
     parser.add_argument('opts',
-                        help='See flpackage/core/config.py for all options',
+                        help='See federatedscope/core/config.py for all options',
                         default=None,
                         nargs=argparse.REMAINDER)
     if len(sys.argv) == 1:

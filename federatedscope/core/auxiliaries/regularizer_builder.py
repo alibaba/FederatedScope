@@ -1,6 +1,9 @@
 from federatedscope.register import regularizer_dict
 from federatedscope.core.regularizer.proximal_regularizer import *
-from torch.nn import Module
+try:
+    from torch.nn import Module
+except ImportError:
+    Module = object
 
 
 def get_regularizer(type):

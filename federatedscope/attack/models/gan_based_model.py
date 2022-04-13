@@ -5,7 +5,7 @@ from copy import deepcopy
 
 class GeneratorFemnist(nn.Module):
     '''
-    The generator for dataset femnist.
+    The generator for Femnist dataset
     '''
     def __init__(self, noise_dim=100):
         super(GeneratorFemnist, self).__init__()

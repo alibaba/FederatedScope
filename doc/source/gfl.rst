@@ -1,20 +1,26 @@
-Graph FL Module References
+Federated Graph Learning  Module References
 =======================
 
-flpackage.gfl.dataset
+federatedscope.gfl.dataset
 -----------------------
 
-.. automodule:: flpackage.gfl.dataset
+.. automodule:: federatedscope.gfl.dataloader
     :members:
 
-flpackage.gfl.trainer
+federatedscope.gfl.dataset
 -----------------------
 
-.. automodule:: flpackage.gfl.trainer
+.. automodule:: federatedscope.gfl.dataloader
     :members:
 
-flpackage.gfl.model
+federatedscope.gfl.model
 -----------------------
 
-.. automodule:: flpackage.gfl.model
+.. automodule:: federatedscope.gfl.model
+    :members:
+
+federatedscope.gfl.trainer
+-----------------------
+
+.. automodule:: federatedscope.gfl.trainer
     :members:

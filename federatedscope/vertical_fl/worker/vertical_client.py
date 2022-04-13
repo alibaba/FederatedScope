@@ -8,6 +8,7 @@ from federatedscope.vertical_fl.dataloader.utils import batch_iter
 
 class vFLClient(Client):
     """
+    The client class for vertical FL, which customizes the handled functions. Please refer to the tutorial for more details about the implementation algorithm
     Implementation of Vertical FL refer to `Private federated learning on vertically partitioned data via entity resolution and additively homomorphic encryption` [Hardy, et al., 2017]
     (https://arxiv.org/abs/1711.10677)
     """

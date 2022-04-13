@@ -23,13 +23,30 @@ def softmax(x):
 
 
 class LEAF_SYNTHETIC(LEAF):
+    """SYNTHETIC dataset from "Federated Multi-Task Learning under a Mixture of Distributions"
+    
+    Source: https://github.com/omarfoq/FedEM/tree/main/data/synthetic
+    
+    Arguments:
+        root (str): root path.
+        name (str): name of dataset, `SYNTHETIC`.
+        n_components (int): number of mixture components, default=3.
+        n_task (int): number of tasks/clients, default = 300.
+        n_test (int): size of test set, default=5,000.
+        n_val (int): size of validation set, default=5,000.
+        dim (int): dimension of the data, default=150.
+        noise_level (float): proportion of noise, default=0.1.
+        alpha (float): alpha of LDA, default=0.4.
+        box (list): box of `x`, default=(-1.0, 1.0).
+    
+    """
     def __init__(self,
                  root,
                  name='synthetic',
                  n_components=3,
                  n_tasks=300,
                  n_test=5000,
-                 n_val=0,
+                 n_val=5000,
                  dim=150,
                  noise_level=0.1,
                  alpha=0.4,
@@ -55,8 +72,6 @@ class LEAF_SYNTHETIC(LEAF):
         self.generate_components()
 
         super(LEAF_SYNTHETIC, self).__init__(root, name, None, None)
-
-        self.data_dict = {}
         files = os.listdir(self.processed_dir)
         files = [f for f in files if f.startswith('task_')]
         if len(files):
@@ -87,12 +102,9 @@ class LEAF_SYNTHETIC(LEAF):
     def extract(self):
         pass
 
-    def __len__(self):
-        return len(self.data_dict)
-
     def __getitem__(self, index):
         """
-        Args:
+        Arguments:
             index (int): Index
 
         Returns:
@@ -175,7 +187,7 @@ class LEAF_SYNTHETIC(LEAF):
             test_data, test_targets = self.generate_data(task_id, self.n_test)
 
             if self.n_val > 0:
-                val_data, val_targets = self.generate_data(task_id, self.val)
+                val_data, val_targets = self.generate_data(task_id, self.n_val)
             else:
                 val_data, val_targets = None, None
             save_local_data(dir_path=save_path,

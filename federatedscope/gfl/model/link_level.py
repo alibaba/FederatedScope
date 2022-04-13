@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-
 import torch
 import torch.nn.functional as F
 from torch.nn import Linear, Sequential
@@ -25,6 +21,7 @@ class GNN_Net_Link(torch.nn.Module):
                  gnn='gcn',
                  layers=2):
         r"""GNN model with LinkPredictor for link prediction tasks.
+
         Arguments:
             in_channels (int): input channels.
             out_channels (int): output channels.
@@ -33,6 +30,7 @@ class GNN_Net_Link(torch.nn.Module):
             dropout (float): dropout probability.
             gnn (str): name of gnn type, use ("gcn" or "gin").
             layers (int): number of layers for LinkPredictor.
+
         """
         super(GNN_Net_Link, self).__init__()
         self.dropout = dropout

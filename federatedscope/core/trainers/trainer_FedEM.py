@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch.nn.functional import softmax as f_softmax
 
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.trainers.trainer_multi_model import GeneralMultiModelTrainer
 
 
@@ -20,13 +20,13 @@ class FedEMTrainer(GeneralMultiModelTrainer):
                  data=None,
                  device=None,
                  config=None,
-                 base_trainer: Type[GeneralTrainer] = None):
+                 base_trainer: Type[GeneralTorchTrainer] = None):
         super(FedEMTrainer,
               self).__init__(model_nums, models_interact_mode, model, data,
                              device, config, base_trainer)
+        device = self.ctx.device
 
         # ---------------- attribute-level modifications -----------------------
-        device = self.ctx.device
         # used to mixture the internal models
         self.weights_internal_models = (torch.ones(self.model_nums) /
                                         self.model_nums).to(device)
@@ -37,7 +37,10 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         self.ctx.all_losses_model_batch = torch.zeros(
             self.model_nums, self.ctx.num_train_batch).to(device)
         self.ctx.cur_batch_idx = -1
-        self.ctx.test_y_prob_ensemble = 0
+        # `ctx[f"{cur_data}_y_prob_ensemble"] = 0` in func `_hook_on_fit_end_ensemble_eval`
+        #   -> self.ctx.test_y_prob_ensemble = 0
+        #   -> self.ctx.train_y_prob_ensemble = 0
+        #   -> self.ctx.val_y_prob_ensemble = 0
 
         # ---------------- action-level modifications -----------------------
         # see register_multiple_model_hooks(), which is called in the __init__ of `GeneralMultiModelTrainer`
@@ -71,12 +74,9 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             trigger="on_batch_start",
             insert_pos=0)  # insert at the front
         # replace the original evaluation into the ensemble one
-        del_one_hook_idx = self.reset_hook_in_eval(
-            target_trigger="on_fit_end", target_hook_name="_hook_on_fit_end")
-        self.register_hook_in_eval(
-            new_hook=self._hook_on_fit_end_ensemble_eval,
-            trigger="on_fit_end",
-            insert_pos=del_one_hook_idx)
+        self.replace_hook_in_eval(new_hook=self._hook_on_fit_end_ensemble_eval,
+                                  target_trigger="on_fit_end",
+                                  target_hook_name="_hook_on_fit_end")
 
         # Then for other models, set the same hooks as model 0
         # since we differentiate different models in the hook implementations via ctx.cur_model_idx
@@ -113,7 +113,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             # gathers losses for all sample in iterator for each internal model, calling *evaluate()*
             for model_idx in range(self.model_nums):
                 self._switch_model_ctx(model_idx)
-                self.evaluate(target_data_name="train")
+                self.evaluate(target_data_split_name="train")
 
             self.weights_data_sample = f_softmax(
                 (torch.log(self.weights_internal_models) -
@@ -128,15 +128,20 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
             Ensemble evaluation
         """
-        ctx.test_y_prob_ensemble += np.concatenate(ctx.test_y_prob) * \
+        cur_data = ctx.cur_data_split
+        if f"{cur_data}_y_prob_ensemble" not in ctx:
+            ctx[f"{cur_data}_y_prob_ensemble"] = 0
+        ctx[f"{cur_data}_y_prob_ensemble"] += np.concatenate(ctx[f"{cur_data}_y_prob"]) * \
                                     self.weights_internal_models[ctx.cur_model_idx].item()
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:
-            ctx.test_y_true = np.concatenate(ctx.test_y_true)
-            ctx.test_y_prob = ctx.test_y_prob_ensemble
+            ctx[f"{cur_data}_y_true"] = np.concatenate(
+                ctx[f"{cur_data}_y_true"])
+            ctx[f"{cur_data}_y_prob"] = ctx[f"{cur_data}_y_prob_ensemble"]
             ctx.eval_metrics = self.evaluator.eval(ctx)
-            ctx.test_y_prob_ensemble = 0  # reset for next run_routine that may have different len(test_y_prob)
+            # reset for next run_routine that may have different len([f"{cur_data}_y_prob"])
+            ctx[f"{cur_data}_y_prob_ensemble"] = 0
 
-        ctx.test_y_prob = []
-        ctx.test_y_true = []
+        ctx[f"{cur_data}_y_prob"] = []
+        ctx[f"{cur_data}_y_true"] = []

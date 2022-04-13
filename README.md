@@ -6,26 +6,42 @@
 
 FederatedScope is a comprehensive federated learning platform that provides convenient usage and supports flexible custom for various federated learning tasks in both academic and industrial.  Based on a message-oriented framework, FederatedScope integrates rich collections of fundamental functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
-**A detailed tutorial is coming soon!**
+A detailed tutorial is ptovided in [Tutorial](https://federatedscope.io/).
 
 ## Quick Start
 
-We provide an end-to-end example for users to start running a standard FL task with FederatedScope.
+We provide an end-to-end example for users to start running a standard FL course with FederatedScope.
 
 ### Step 1. Installation
 
-First of all, users need to clone the source code and install the required packages. 
+First of all, users need to clone the source code and install the required packages (we suggest python version >= 3.9).
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
-python setup.py install
+```
+You can install from the requirement file
+```
+# For minimal version
+conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-forge -c nvidia
+
+# For application version
+conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
+```
+or build docker image and run with docker env
+```
+docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
+docker run --gpus device=all --rm --it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash"
+```
+Note: if you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when execute the above commands.
+```
+# enviroment/requirements-torch1.10.txt -> 
+requirements-torch1.10-application.txt
+
+# enviroment/docker_files/federatedscope-torch1.10.Dockerfile ->
+enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ```
 
-And the suggested running environments are:
-
-- Python version 3.7 or above
-- Torch version 1.7.0 or above
 
 ### Step 2. Prepare datasets
  
@@ -145,7 +161,7 @@ As a comprehensive FL platform, FederatedScope provides the fundamental implemen
 - **Differential Privacy**: Different from the encrypted algorithms that require powerful computation ability,  differential privacy is an economical yet flexible technique to protect privacy, which has achieved great success in database and is ever-growing in federated learning.
 - ...
 
-More supports are coming soon! We are also preparing a tutorial to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning.
+More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning.
 
 ## Documentation
 
@@ -156,7 +172,7 @@ pip install -r requirements-doc.txt
 make html
 ```
 
-We shall put the API references and comprehensive tutorials on our website (coming soon).
+We put the API references and comprehensive tutorials on our [website](https://federatedscope.io/).
 
 ## License
 
@@ -165,4 +181,3 @@ FederatedScope is released under Apache License 2.0.
 ## Contributing
 
 We appreciate any contribution to FederatedScope. You can refer to Contributing to FederatedScope for more details.
-

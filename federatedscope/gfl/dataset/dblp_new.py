@@ -4,19 +4,13 @@ import os.path as osp
 import numpy as np
 import networkx as nx
 import torch
-from torch_geometric.data import InMemoryDataset, download_url, Data
+from torch_geometric.data import InMemoryDataset, download_url
 from torch_geometric.utils import from_networkx
-from torch_geometric.utils import remove_self_loops, to_undirected
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS as sklearn_stopwords
-import nltk
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords as nltk_stopwords
-
-from federatedscope.config import cfg
-from federatedscope.register import register_data
-from federatedscope.gfl.dataset.utils import random_planetoid_splits
 
 
 class LemmaTokenizer(object):
@@ -109,7 +103,7 @@ class DBLPNew(InMemoryDataset):
     r"""
     Args:
         root (string): Root directory where the dataset should be saved.
-        FL (Bool): Federated setting.
+        FL (Bool): Federated setting, `0` for DBLP, `1` for FLDBLPbyConf, `2` for FLDBLPbyOrg
         transform (callable, optional): A function/transform that takes in an
             :obj:`torch_geometric.data.Data` object and returns a transformed
             version. The data object will be transformed before every access.

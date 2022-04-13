@@ -6,6 +6,13 @@ from torch_geometric.utils import to_networkx, to_dense_adj, dense_to_sparse
 
 
 class Analyzer(object):
+    r"""Analyzer for raw graph and split subgraphs.
+
+    Arguments:
+        raw_data (PyG.data): raw graph.
+        split_data (list): the list for subgraphs split by splitter.
+
+    """
     def __init__(self, raw_data: Data, split_data: List[Data]):
 
         self.raw_data = raw_data
@@ -18,7 +25,10 @@ class Analyzer(object):
 
     def num_missing_edge(self):
         r"""
-        return the number of missing edge and the rate of missing edge.
+
+        Returns:
+            the number of missing edge and the rate of missing edge.
+        
         """
         missing_edge = len(self.raw_graph.edges) - self.fl_adj().shape[1] // 2
         rate_missing_edge = missing_edge / len(self.raw_graph.edges)
@@ -27,7 +37,10 @@ class Analyzer(object):
 
     def fl_adj(self):
         r"""
-        return the adj for missing edge ADJ.
+
+        Returns:
+            the adj for missing edge ADJ.
+        
         """
         raw_adj = to_dense_adj(self.raw_data.edge_index)[0]
         adj = torch.zeros_like(raw_adj)
@@ -44,7 +57,10 @@ class Analyzer(object):
 
     def fl_data(self):
         r"""
-        return the split edge index.
+
+        Returns:
+            the split edge index.
+        
         """
         fl_data = Data()
         for key, item in self.raw_data:
@@ -57,7 +73,10 @@ class Analyzer(object):
 
     def missing_data(self):
         r"""
-        return the graph data built by missing edge index.
+
+        Returns:
+            the graph data built by missing edge index.
+        
         """
         ms_data = Data()
         raw_edge_set = {tuple(x) for x in self.raw_data.edge_index.T.numpy()}
@@ -77,7 +96,10 @@ class Analyzer(object):
 
     def portion_ms_node(self):
         r"""
-        return the proportion of nodes who miss egde.
+
+        Returns: 
+            the proportion of nodes who miss egde.
+        
         """
         cnt_list = []
         ms_set = {x.item() for x in set(self.missing_data().edge_index[0])}
@@ -91,7 +113,10 @@ class Analyzer(object):
 
     def average_clustering(self):
         r"""
-        return the average clustering coefficient for the raw G and split G
+
+        Returns:
+            the average clustering coefficient for the raw G and split G
+        
         """
         import networkx.algorithms.cluster as cluster
 
@@ -101,7 +126,10 @@ class Analyzer(object):
 
     def homophily_value(self, edge_index, y):
         r"""
-        return homophily_value
+
+        Returns:
+            calculate homophily_value
+        
         """
         from torch_sparse import SparseTensor
 
@@ -114,7 +142,10 @@ class Analyzer(object):
 
     def homophily(self):
         r"""
-        return the homophily for the raw G and split G
+
+        Returns:
+            the homophily for the raw G and split G
+        
         """
 
         return self.homophily_value(self.raw_data.edge_index,
@@ -124,7 +155,10 @@ class Analyzer(object):
 
     def hamming_distance_graph(self, data):
         r"""
-        return the hamming distance of graph data
+
+        Returns: 
+            calculate the hamming distance of graph data
+        
         """
         edge_index, x = data.edge_index, data.x
         cnt = 0
@@ -136,7 +170,10 @@ class Analyzer(object):
 
     def hamming(self):
         r"""
-        return the average hamming distance of feature for the raw G, split G and missing edge G
+
+        Returns: 
+            the average hamming distance of feature for the raw G, split G and missing edge G
+        
         """
         return self.hamming_distance_graph(
             self.raw_data), self.hamming_distance_graph(

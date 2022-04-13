@@ -1,25 +1,28 @@
 use_gpu: True
 device: 0
-early_stopping: 100
+early_stop:
+  patience: 10
 federate:
   mode: standalone
-  local_update_steps: 10
+  local_update_steps: 20
   total_round_num: 100
   client_num: 5
 data:
   root: data/
-  type: movielens1m
-  batch_size: 8
+  type: VFLMovieLens1M
+  batch_size: 64
   num_workers: 0
 model:
-  type: MFNet
+  type: VMFNet
   hidden: 20
 optimizer:
-  lr: 0.01
+  lr: 1.
 criterion:
   type: MSELoss
 trainer:
   type: mftrainer
 eval:
-  freq: 10
+  freq: 100
   metrics: []
+sgdmf:
+  use: False

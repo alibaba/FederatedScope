@@ -11,6 +11,19 @@ from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
 
 class Client(Worker):
+    """
+    The Client class, which describes the behaviors of client in an FL course.
+    The attributes include:
+        ID: The unique ID of the client, which is assigned by the server when joining the FL course
+        server_id: (Default) 0
+        state: The training round
+        config: the configuration
+        data: The data owned by the client
+        model: The local model
+        device: The device to run local training and evaluation
+        strategy: redundant attribute
+    The behaviors are described by the handled functions (named as callback_funcs_for_xxx)
+    """
     def __init__(self,
                  ID=-1,
                  server_id=None,
@@ -71,6 +84,9 @@ class Client(Worker):
             }
 
     def register_handlers(self, msg_type, callback_func):
+        """
+        To bind a message type with a handled function
+        """
         self.msg_handlers[msg_type] = callback_func
 
     def _register_default_handlers(self):
@@ -87,6 +103,9 @@ class Client(Worker):
         self.register_handlers('finish', self.callback_funcs_for_finish)
 
     def join_in(self):
+        """
+        To send 'join_in' message to the server
+        """
         self.comm_manager.send(
             Message(msg_type='join_in',
                     sender=self.ID,
@@ -94,6 +113,9 @@ class Client(Worker):
                     content=self.local_address))
 
     def run(self):
+        """
+        To wait for the messages and handle them (for distributed mode)
+        """
         while True:
             msg = self.comm_manager.receive()
             if self.state <= msg.state:
@@ -232,11 +254,15 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        metrics = self.trainer.evaluate()
-        for key in metrics:
-            logging.info(
-                'Client #{:d}: (Evaluation at Round #{:d}) {:s} is {:.6f}'.
-                format(self.ID, self.state, key, metrics[key]))
+        metrics = {}
+        for split in self._cfg.eval.split:
+            eval_metrics = self.trainer.evaluate(target_data_split_name=split)
+            for key in eval_metrics:
+                logging.info(
+                    'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
+                    .format(self.ID, split, self.state, key,
+                            eval_metrics[key]))
+            metrics.update(**eval_metrics)
         self.comm_manager.send(
             Message(msg_type='metrics',
                     sender=self.ID,
@@ -245,5 +271,9 @@ class Client(Worker):
                     content=metrics))
 
     def callback_funcs_for_finish(self, message: Message):
+        logging.info(
+            "================= receiving Finish Message ============================"
+        )
+
         if message.content != None:
             self.trainer.update(message.content)

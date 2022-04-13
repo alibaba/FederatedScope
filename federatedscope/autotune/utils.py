@@ -3,7 +3,6 @@ import math
 
 import pandas as pd
 
-from federatedscope.config import cfg
 from federatedscope.autotune.choice_types import Continuous, Discrete
 
 

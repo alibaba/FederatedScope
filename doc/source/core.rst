@@ -1,20 +1,26 @@
 Core Module References
 =======================
 
-flpackage.core.DAIL_fed_api
+federatedscope.core.configs
 -----------------------
 
-.. automodule:: flpackage.core.DAIL_fed_api
+.. automodule:: federatedscope.core.configs
     :members:
 
-flpackage.core.worker
+federatedscope.core.DAIL_fed_api
 -----------------------
 
-.. automodule:: flpackage.core.worker
+.. automodule:: federatedscope.core.DAIL_fed_api
     :members:
 
-flpackage.core.trainers
+federatedscope.core.worker
 -----------------------
 
-.. automodule:: flpackage.core.trainers
+.. automodule:: federatedscope.core.worker
+    :members:
+
+federatedscope.core.trainers
+-----------------------
+
+.. automodule:: federatedscope.core.trainers
     :members:

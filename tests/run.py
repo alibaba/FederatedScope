@@ -1,7 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import argparse
+
 import os
+
+
 import sys
 import unittest
 
@@ -42,8 +44,7 @@ def main():
                                    args.pattern, args.list_tests)
     if not args.list_tests:
         res = runner.run(test_suite)
-        if len(res.failures) > 0:
-            exit(1)
+
 
 
 if __name__ == '__main__':

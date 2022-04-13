@@ -21,7 +21,7 @@ do
         do
             for ((ic=0; ic<${#constants[@]}; ic++ ))
             do
-                python flpackage/main.py --cfg flpackage/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} nbafl.use True \
+                python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} nbafl.use True \
                 nbafl.mu ${mus[$im]} \
                 nbafl.epsilon ${epsilons[$ie]} \
                 nbafl.constant ${constants[$ic]} \

@@ -3,13 +3,13 @@ import copy
 import torch
 
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
 from typing import Type
 
 
 def wrap_DittoTrainer(
-        base_trainer: Type[GeneralTrainer]) -> Type[GeneralTrainer]:
+        base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
     """
     Build a `DittoTrainer` with a plug-in manner, by registering new functions into specific `BaseTrainer`
 

@@ -1,7 +1,12 @@
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 def get_optimizer(type, model, lr, **kwargs):
+    if torch is None:
+        return None
     if isinstance(type, str):
         if hasattr(torch.optim, type):
             if isinstance(model, torch.nn.Module):

@@ -7,7 +7,7 @@ def generate_data(client_num=2,
                    feature_num=5,
                    save_data=True):
     """
-    Generate data in DAILFed format
+    Generate data in FedRunner format
     Args:
         client_num:
         instance_num:

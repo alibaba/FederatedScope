@@ -1,5 +1,8 @@
 import numpy as np
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 def calc_blocal_dissim(last_model, local_updated_models):

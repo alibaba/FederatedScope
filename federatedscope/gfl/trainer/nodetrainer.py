@@ -5,11 +5,11 @@ from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.register import register_trainer
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 
 
-class NodeFullBatchTrainer(GeneralTrainer):
+class NodeFullBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
 
@@ -28,17 +28,17 @@ class NodeFullBatchTrainer(GeneralTrainer):
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
-        pred = ctx.model(batch)[batch['{}_mask'.format(ctx.cur_mode)]]
-        label = batch.y[batch['{}_mask'.format(ctx.cur_mode)]]
+        pred = ctx.model(batch)[batch['{}_mask'.format(ctx.cur_data_split)]]
+        label = batch.y[batch['{}_mask'.format(ctx.cur_data_split)]]
         ctx.batch_size = torch.sum(ctx.data_batch['{}_mask'.format(
-            ctx.cur_mode)]).item()
+            ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
         ctx.y_true = label
         ctx.y_prob = pred
 
 
-class NodeMiniBatchTrainer(GeneralTrainer):
+class NodeMiniBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
 
@@ -73,24 +73,22 @@ class NodeMiniBatchTrainer(GeneralTrainer):
         return init_dict
 
     def _hook_on_epoch_start(self, ctx):
-        if ctx.get("{}_loader".format(ctx.cur_mode)) is None:
-            loader = get_dataloader(
-                WrapDataset(ctx.get("{}_data".format(ctx.cur_mode))), self.cfg)
-            setattr(ctx, "{}_loader".format(ctx.cur_mode), ReIterator(loader))
-        elif not isinstance(ctx.get("{}_loader".format(ctx.cur_mode)),
-                            ReIterator):
-            if isinstance(ctx.get("{}_loader".format(ctx.cur_mode)),
+        # TODO: blind torch
+        if not isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
+                          ReIterator):
+            if isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
                           NeighborSampler):
                 self.is_NeighborSampler = True
                 ctx.data['data'].x = ctx.data['data'].x.to(ctx.device)
                 ctx.data['data'].y = ctx.data['data'].y.to(ctx.device)
             else:
                 self.is_NeighborSampler = False
-            setattr(ctx, "{}_loader".format(ctx.cur_mode),
-                    ReIterator(ctx.get("{}_loader".format(ctx.cur_mode))))
+            setattr(
+                ctx, "{}_loader".format(ctx.cur_data_split),
+                ReIterator(ctx.get("{}_loader".format(ctx.cur_data_split))))
 
     def _hook_on_batch_forward(self, ctx):
-        if ctx.cur_mode == 'train':
+        if ctx.cur_data_split == 'train':
             # For training
             if self.is_NeighborSampler:
                 # For NeighborSamper
@@ -104,18 +102,18 @@ class NodeMiniBatchTrainer(GeneralTrainer):
                 batch = ctx.data_batch.to(ctx.device)
                 pred = ctx.model(batch.x,
                                  batch.edge_index)[batch['{}_mask'.format(
-                                     ctx.cur_mode)]]
-                label = batch.y[batch['{}_mask'.format(ctx.cur_mode)]]
+                                     ctx.cur_data_split)]]
+                label = batch.y[batch['{}_mask'.format(ctx.cur_data_split)]]
                 ctx.batch_size = torch.sum(ctx.data_batch['train_mask']).item()
         else:
             # For inference
             subgraph_loader = ctx.data_batch
-            mask = ctx.data['data']['{}_mask'.format(ctx.cur_mode)]
+            mask = ctx.data['data']['{}_mask'.format(ctx.cur_data_split)]
             pred = ctx.model.inference(ctx.data['data'].x, subgraph_loader,
                                        ctx.device)[mask]
             label = ctx.data['data'].y[mask]
             ctx.batch_size = torch.sum(ctx.data['data']['{}_mask'.format(
-                ctx.cur_mode)]).item()
+                ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
         ctx.y_true = label

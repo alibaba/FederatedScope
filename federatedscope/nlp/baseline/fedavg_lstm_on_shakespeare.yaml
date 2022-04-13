@@ -1,5 +1,7 @@
 use_gpu: True
 device: 0
+early_stop:
+  patience: 10
 federate:
   mode: standalone
   local_update_steps: 1
@@ -12,13 +14,14 @@ data:
   batch_size: 64
   subsample: 0.2
   num_workers: 0
-  splits: [0.8,0.0,0.2]
+  splits: [0.6,0.2,0.2]
 model:
   type: lstm
   in_channels: 80
   out_channels: 80
   embed_size: 8
   hidden: 256
+  dropout: 0.0
 optimizer:
   lr: 0.8
   weight_decay: 0.0

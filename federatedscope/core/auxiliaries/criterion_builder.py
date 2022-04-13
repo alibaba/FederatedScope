@@ -1,7 +1,10 @@
-import torch
 import federatedscope.register as register
 
-from federatedscope.nlp.loss import *
+try:
+    from torch import nn
+    from federatedscope.nlp.loss import *
+except ImportError:
+    nn = None
 
 
 def get_criterion(type, device):
@@ -11,8 +14,8 @@ def get_criterion(type, device):
             return criterion
 
     if isinstance(type, str):
-        if hasattr(torch.nn, type):
-            return getattr(torch.nn, type)()
+        if hasattr(nn, type):
+            return getattr(nn, type)()
         else:
             raise NotImplementedError(
                 'Criterion {} not implement'.format(type))

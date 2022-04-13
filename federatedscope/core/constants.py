@@ -18,15 +18,7 @@ CLIENTS_TYPE = {
     "ditto": "normal",  # Ditto, + local training for distinct personalized models
     "fedsageplus": "fedsageplus",  # FedSage+ for graph data
     "gcflplus": "gcflplus",  # GCFL+ for graph data
-}
-
-SERVER_TYPE = {
-    "local": "normal",
-    "fedavg": "normal",  # FedAvg
-    "pfedme": "normal",  # pFedMe, + regularization-based local loss
-    "ditto": "normal",  # Ditto, + local training for distinct personalized models
-    "fedsageplus": "fedsageplus",  # FedSage+ for graph data
-    "gcflplus": "gcflplus",  # GCFL+ for graph data
+    "gradascent": "gradascent"
 }
 
 SERVER_TYPE = {

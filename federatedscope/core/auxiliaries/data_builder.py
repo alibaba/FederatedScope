@@ -13,7 +13,7 @@ def load_toy_data(config=None):
                        feature_num=5,
                        save_data=False):
         """
-        Generate data in DAILFed format
+        Generate data in FedRunner format
         Args:
             client_num:
             instance_num:
@@ -106,7 +106,7 @@ def load_toy_data(config=None):
 
     if generate:
         data = _generate_data(client_num=config.federate.client_num,
-                              save_data=config.save_data)
+                              save_data=config.eval.save_data)
     else:
         with open(config.distribute.data_file, 'rb') as f:
             data = pickle.load(f)
@@ -120,9 +120,9 @@ def load_toy_data(config=None):
 
 def get_data(config):
     for func in register.data_dict.values():
-        data = func()
-        if data is not None:
-            return data
+        data_and_config = func(config)
+        if data_and_config is not None:
+            return data_and_config
     if config.data.type.lower() == 'toy':
         data, modified_config = load_toy_data(config)
     elif config.data.type.lower() in ['femnist', 'celeba']:
@@ -142,9 +142,7 @@ def get_data(config):
     ] or config.data.type.lower().startswith('csbm'):
         from federatedscope.gfl.dataloader import load_nodelevel_dataset
         data, modified_config = load_nodelevel_dataset(config)
-    elif config.data.type.lower() in [
-            'ciao', 'epinions', 'fb15k-237', 'wn18'
-    ]:
+    elif config.data.type.lower() in ['ciao', 'epinions', 'fb15k-237', 'wn18']:
         from federatedscope.gfl.dataloader import load_linklevel_dataset
         data, modified_config = load_linklevel_dataset(config)
     elif config.data.type.lower() in [
@@ -155,7 +153,7 @@ def get_data(config):
     elif config.data.type.lower() == 'vertical_fl_data':
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         data, modified_config = load_vertical_data(config, generate=True)
-    elif config.data.type.lower() in ['movielens1m']:
+    elif 'movielens' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)
     else:

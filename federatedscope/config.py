@@ -42,9 +42,21 @@ def set_cfg(cfg):
 
     # For test
     cfg.save_data = False
+    cfg.best_res_update_round_wise_key = "val_loss"
 
-    # Early stopping
-    cfg.early_stopping = 0
+    # ------------------------------------------------------------------------ #
+    # Early stopping related options
+    # ------------------------------------------------------------------------ #
+    cfg.early_stop = CN()
+
+    # patience (int): How long to wait after last time the monitored metric improved.
+    # Note that the actual_checking_round = patience * cfg.eval.freq
+    # To disable the early stop, set the early_stop.patience a integer <=0
+    cfg.early_stop.patience = 5
+    # delta (float): Minimum change in the monitored metric to indicate an improvement.
+    cfg.early_stop.delta = 0.0
+    cfg.early_stop.improve_indicator_mode = 'best'  # Early stop when no improve to last `patience` round, in ['mean', 'best']
+    cfg.early_stop.the_smaller_the_better = True
 
     # Monitoring, e.g., 'dissim' for B-local dissimilarity
     cfg.monitoring = []
@@ -52,6 +64,8 @@ def set_cfg(cfg):
     # The dir used to save log, exp_config, models, etc,.
     cfg.outdir = 'exp'
     cfg.expname = ''  # detailed exp name to distinguish different sub-exp
+
+    cfg.backend = 'torch'
 
     # ------------------------------------------------------------------------ #
     # Federate learning related options
@@ -235,12 +249,17 @@ def set_cfg(cfg):
     cfg.hpo = CN()
     cfg.hpo.working_folder = 'hpo'
     cfg.hpo.init_strategy = 'random'
+    cfg.hpo.init_cand_num = 16
     cfg.hpo.log_scale = False
     cfg.hpo.larger_better = False
     cfg.hpo.scheduler = 'bruteforce'
+    # plot the performanc
+    cfg.hpo.plot_interval = 1
+    cfg.hpo.metric = 'client_summarized_weighted_avg.test_loss'
     cfg.hpo.sha = CN()
     cfg.hpo.sha.elim_round_num = 3
     cfg.hpo.sha.elim_rate = 3
+    cfg.hpo.sha.budgets = []
     cfg.hpo.pbt = CN()
     cfg.hpo.pbt.max_stage = 5
     cfg.hpo.pbt.perf_threshold = 0.1
@@ -268,6 +287,15 @@ def set_cfg(cfg):
     cfg.attack.info_diff_type = 'l2'
     cfg.attack.max_ite = 400
     cfg.attack.alpha_TV = 0.001
+
+    # for active PIA attack
+    cfg.attack.alpha_prop_loss = 0
+
+    # for passive PIA attack
+    cfg.attack.classifier_PIA = 'randomforest'
+
+    # for gradient Ascent --- MIA attack
+    cfg.attack.inject_round = 0
 
     # ------------------------------------------------------------------------ #
     # Vertical FL related options (for demo)
@@ -303,6 +331,7 @@ def set_cfg(cfg):
     # ------------------------------------------------------------------------ #
     cfg.fedopt = CN()
 
+    cfg.fedopt.use = False
     cfg.fedopt.lr_server = 0.01
     cfg.fedopt.type_optimizer = 'SGD'
 
@@ -319,13 +348,12 @@ def set_cfg(cfg):
     # ------------------------------------------------------------------------ #
     cfg.sgdmf = CN()
 
-    cfg.sgdmf.use = False
-    cfg.sgdmf.R = 5.
-    cfg.sgdmf.epsilon = 1.
-    cfg.sgdmf.delta = 0.5
-    cfg.sgdmf.constant = 1.
-    cfg.sgdmf.local_finetune_steps = 0
-    cfg.sgdmf.theta = 2
+    cfg.sgdmf.use = False  # if use sgdmf algorithm
+    cfg.sgdmf.R = 5.  # The upper bound of rating
+    cfg.sgdmf.epsilon = 4.  # \epsilon in dp
+    cfg.sgdmf.delta = 0.5  # \delta in dp
+    cfg.sgdmf.constant = 1.  # constant
+    cfg.sgdmf.theta = -1  # -1 means per-rating privacy, otherwise per-user privacy
 
     #### Set user customized cfgs
     for func in register.config_dict.values():
@@ -346,6 +374,18 @@ def assert_cfg(cfg):
         raise ValueError(
             "Value of 'cfg.federate.batch_or_epoch' must be chosen from ['batch', 'epoch']."
         )
+
+    if cfg.backend not in ['torch', 'tensorflow']:
+        raise ValueError(
+            "Value of 'cfg.backend' must be chosen from ['torch', 'tensorflow']."
+        )
+    if cfg.backend == 'tensorflow' and cfg.federate.mode == 'standalone':
+        raise ValueError(
+            "We only support run with distribued mode when backend is tensorflow"
+        )
+    if cfg.backend == 'tensorflow' and cfg.use_gpu == True:
+        raise ValueError(
+            "We only support run with cpu when backend is tensorflow")
 
     # client num related
     assert not (cfg.federate.client_num == 0
@@ -390,6 +430,10 @@ def assert_cfg(cfg):
     assert cfg.hpo.scheduler in ['bruteforce', 'sha',
                                  'pbt'], "No HPO scheduler named {}".format(
                                      cfg.hpo.scheduler)
+    assert len(cfg.hpo.sha.budgets) == 0 or len(
+        cfg.hpo.sha.budgets
+    ) == cfg.hpo.sha.elim_round_num, "Either do NOT specify the budgets or specify the budget for each SHA iteration, but the given budgets is {}".format(
+        cfg.hpo.sha.budgets)
 
     # aggregator related
     assert (not cfg.federate.online_aggr) or (

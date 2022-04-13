@@ -1,22 +1,28 @@
 import collections
 import copy
 import logging
-import torch
 import os
 import numpy as np
 
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
-from torch.utils.data import DataLoader, Dataset
 from federatedscope.core.auxiliaries import utils
-from federatedscope.core.context import Context
+from federatedscope.core.trainers.context import Context
 from federatedscope.core.evaluator import Evaluator
+
+try:
+    import torch
+    from torch.utils.data import DataLoader, Dataset
+except ImportError:
+    torch = None
+    DataLoader = None
+    Dataset = None
 
 
 class Trainer(object):
-    """Register, organize and run the train/test/val process
-
+    """
+        Register, organize and run the train/test/val procedures
     """
 
     HOOK_TRIGGER = [
@@ -48,34 +54,7 @@ class Trainer(object):
         self.print_trainer_meta_info()
 
     def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
-
-        """
-        init_dict = dict()
-        if isinstance(data, dict):
-            for mode in ["train", "val", "test"]:
-                init_dict["{}_data".format(mode)] = None
-                init_dict["{}_loader".format(mode)] = None
-                init_dict["num_{}_data".format(mode)] = 0
-                if data.get(mode, None) is not None:
-                    if isinstance(data.get(mode), Dataset):
-                        init_dict["{}_data".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode))
-                    elif isinstance(data.get(mode), DataLoader):
-                        init_dict["{}_loader".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode).dataset)
-                    elif isinstance(data.get(mode), dict):
-                        init_dict["{}_data".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode)['y'])
-                    else:
-                        raise TypeError("Type {} is not supported.".format(
-                            type(data.get(mode))))
-        else:
-            raise TypeError("Type of data should be dict.")
-        return init_dict
+        pass
 
     def register_default_hooks_train(self):
         pass
@@ -96,6 +75,21 @@ class Trainer(object):
                                                        target_hook_name,
                                                        target_trigger)
         return del_one_hook_idx
+
+    def replace_hook_in_train(self, new_hook, target_trigger,
+                              target_hook_name):
+        del_one_hook_idx = self.reset_hook_in_train(
+            target_trigger=target_trigger, target_hook_name=target_hook_name)
+        self.register_hook_in_train(new_hook=new_hook,
+                                    trigger=target_trigger,
+                                    insert_pos=del_one_hook_idx)
+
+    def replace_hook_in_eval(self, new_hook, target_trigger, target_hook_name):
+        del_one_hook_idx = self.reset_hook_in_eval(
+            target_trigger=target_trigger, target_hook_name=target_hook_name)
+        self.register_hook_in_eval(new_hook=new_hook,
+                                   trigger=target_trigger,
+                                   insert_pos=del_one_hook_idx)
 
     def _reset_hook_in_trigger(self, hooks_dict, target_hook_name,
                                target_trigger):
@@ -170,40 +164,21 @@ class Trainer(object):
         else:
             hooks_dict[trigger].insert(insert_pos, new_hook)
 
-    def train(self, target_data_name="train", hooks_set=None):
-        hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
-        if self.ctx.get(f"{target_data_name}_data") is None and self.ctx.get(
-                f"{target_data_name}_loader") is None:
-            raise ValueError(
-                f"No {target_data_name}_data or {target_data_name}_loader in the trainer"
-            )
-        self._run_routine("train", hooks_set, target_data_name)
+    def train(self, target_data_split_name="train", hooks_set=None):
+        pass
 
-
-        return self.ctx.num_samples_train, self._param_filter(
-            self.ctx.model.state_dict() if self.cfg.federate.share_local_model
-            else self.ctx.model.cpu().state_dict()), self.ctx.eval_metrics
-
-    def evaluate(self, target_data_name="test", hooks_set=None):
+    def evaluate(self, target_data_split_name="test", hooks_set=None):
         hooks_set = self.hooks_in_eval if hooks_set is None else hooks_set
-        if self.ctx.get(f"{target_data_name}_data") is None and self.ctx.get(
-                f"{target_data_name}_loader") is None:
-            raise ValueError(
-                f"No {target_data_name}_data or {target_data_name}_loader in the trainer"
+        if self.ctx.get(
+                f"{target_data_split_name}_data") is None and self.ctx.get(
+                    f"{target_data_split_name}_loader") is None:
+            logging.warning(
+                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer, will skip evaluation"
+                f"If this is not the case you want, please check whether there is typo for the name"
             )
-        self._run_routine("test", hooks_set, target_data_name)
-
-        return self.ctx.eval_metrics
-
-    def validate(self, target_data_name="val", hooks_set=None):
-        # By default, the actions in validation is the same as the ones in evaluation
-        hooks_set = self.hooks_in_eval if hooks_set is None else hooks_set
-        if self.ctx.get(f"{target_data_name}_data") is None and self.ctx.get(
-                f"{target_data_name}_loader") is None:
-            raise ValueError(
-                f"No {target_data_name}_data or {target_data_name}_loader in the trainer"
-            )
-        self._run_routine("val", hooks_set, target_data_name)
+            self.ctx.eval_metrics = {}
+        else:
+            self._run_routine("test", hooks_set, target_data_split_name)
 
         return self.ctx.eval_metrics
 
@@ -259,19 +234,18 @@ class Trainer(object):
         self.ctx.reset_used_dataset()
         # Avoid memory leak
         if not self.cfg.federate.share_local_model:
-            self.ctx.model.to(torch.device("cpu"))
+            if torch is None:
+                pass
+            else:
+                self.ctx.model.to(torch.device("cpu"))
 
     def update(self, model_parameters):
         '''
+            Called by the FL client to update the model parameters
         Arguments:
             model_parameters (dict): PyTorch Module object's state_dict.
         '''
-        for key in model_parameters:
-            if isinstance(model_parameters[key], list):
-                model_parameters[key] = torch.FloatTensor(
-                    model_parameters[key])
-        self.ctx.model.load_state_dict(self._param_filter(model_parameters),
-                                       strict=False)
+        pass
 
     def print_trainer_meta_info(self):
         '''
@@ -334,16 +308,77 @@ class Trainer(object):
         )
 
 
-class GeneralTrainer(Trainer):
-    def evaluate(self, target_data_name="test"):
+class GeneralTorchTrainer(Trainer):
+    def parse_data(self, data):
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
+
+        """
+        # TODO: more robust for different data
+        init_dict = dict()
+        if isinstance(data, dict):
+            for mode in ["train", "val", "test"]:
+                init_dict["{}_data".format(mode)] = None
+                init_dict["{}_loader".format(mode)] = None
+                init_dict["num_{}_data".format(mode)] = 0
+                if data.get(mode, None) is not None:
+                    if isinstance(data.get(mode), Dataset):
+                        init_dict["{}_data".format(mode)] = data.get(mode)
+                        init_dict["num_{}_data".format(mode)] = len(
+                            data.get(mode))
+                    elif isinstance(data.get(mode), DataLoader):
+                        init_dict["{}_loader".format(mode)] = data.get(mode)
+                        init_dict["num_{}_data".format(mode)] = len(
+                            data.get(mode).dataset)
+                    elif isinstance(data.get(mode), dict):
+                        init_dict["{}_data".format(mode)] = data.get(mode)
+                        init_dict["num_{}_data".format(mode)] = len(
+                            data.get(mode)['y'])
+                    else:
+                        raise TypeError("Type {} is not supported.".format(
+                            type(data.get(mode))))
+        else:
+            raise TypeError("Type of data should be dict.")
+        return init_dict
+
+    def train(self, target_data_split_name="train", hooks_set=None):
+        hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
+        if self.ctx.get(
+                f"{target_data_split_name}_data") is None and self.ctx.get(
+                    f"{target_data_split_name}_loader") is None:
+            raise ValueError(
+                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
+            )
+        self._run_routine("train", hooks_set, target_data_split_name)
+
+        # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
+
+        return self.ctx.num_samples_train, self._param_filter(
+            self.ctx.model.state_dict() if self.cfg.federate.share_local_model
+            else self.ctx.model.cpu().state_dict()), self.ctx.eval_metrics
+
+    def update(self, model_parameters):
+        '''
+            Called by the FL client to update the model parameters
+        Arguments:
+            model_parameters (dict): PyTorch Module object's state_dict.
+        '''
+        # TODO: blind torch
+        for key in model_parameters:
+            if isinstance(model_parameters[key], list):
+                model_parameters[key] = torch.FloatTensor(
+                    model_parameters[key])
+        self.ctx.model.load_state_dict(self._param_filter(model_parameters),
+                                       strict=False)
+
+    def evaluate(self, target_data_split_name="test"):
         with torch.no_grad():
-            super().evaluate(target_data_name)
+            super().evaluate(target_data_split_name)
 
         return self.ctx.eval_metrics
 
-    def validate(self, target_data_name="val"):
+    def validate(self, target_data_split_name="val"):
         with torch.no_grad():
-            super().evaluate(target_data_name)
+            super().evaluate(target_data_split_name)
 
         return self.ctx.eval_metrics
 
@@ -380,31 +415,33 @@ class GeneralTrainer(Trainer):
         ctx.model.to(ctx.device)
 
         # prepare statistics
-        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_mode), 0)
-        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_mode), 0)
-        setattr(ctx, "num_samples_{}".format(ctx.cur_mode), 0)
-        setattr(ctx, "{}_y_true".format(ctx.cur_mode), [])
-        setattr(ctx, "{}_y_prob".format(ctx.cur_mode), [])
+        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
+        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_data_split), 0)
+        setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
+        setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
+        setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
 
     def _hook_on_epoch_start(self, ctx):
         # prepare dataloader
-        if ctx.get("{}_loader".format(ctx.cur_dataset)) is None:
+        if ctx.get("{}_loader".format(ctx.cur_data_split)) is None:
             loader = get_dataloader(
-                WrapDataset(ctx.get("{}_data".format(ctx.cur_dataset))),
+                WrapDataset(ctx.get("{}_data".format(ctx.cur_data_split))),
                 self.cfg)
-            setattr(ctx, "{}_loader".format(ctx.cur_dataset),
+            setattr(ctx, "{}_loader".format(ctx.cur_data_split),
                     ReIterator(loader))
-        elif not isinstance(ctx.get("{}_loader".format(ctx.cur_dataset)),
+        elif not isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
                             ReIterator):
-            setattr(ctx, "{}_loader".format(ctx.cur_dataset),
-                    ReIterator(ctx.get("{}_loader".format(ctx.cur_dataset))))
+            setattr(
+                ctx, "{}_loader".format(ctx.cur_data_split),
+                ReIterator(ctx.get("{}_loader".format(ctx.cur_data_split))))
         else:
-            ctx.get("{}_loader".format(ctx.cur_dataset)).reset()
+            ctx.get("{}_loader".format(ctx.cur_data_split)).reset()
 
     def _hook_on_batch_start_init(self, ctx):
         # prepare data batch
         try:
-            ctx.data_batch = next(ctx.get("{}_loader".format(ctx.cur_dataset)))
+            ctx.data_batch = next(
+                ctx.get("{}_loader".format(ctx.cur_data_split)))
         except StopIteration:
             raise StopIteration
 
@@ -435,8 +472,8 @@ class GeneralTrainer(Trainer):
     def _hook_on_batch_end(self, ctx):
         # update statistics
         setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_mode),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_mode)) +
+            ctx, "loss_batch_total_{}".format(ctx.cur_data_split),
+            ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) +
             ctx.loss_batch.item() * ctx.batch_size)
 
         if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
@@ -444,18 +481,19 @@ class GeneralTrainer(Trainer):
         else:
             loss_regular = ctx.loss_regular.item()
         setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_mode),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_mode)) +
+            ctx, "loss_regular_total_{}".format(ctx.cur_data_split),
+            ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
             loss_regular)
         setattr(
-            ctx, "num_samples_{}".format(ctx.cur_mode),
-            ctx.get("num_samples_{}".format(ctx.cur_mode)) + ctx.batch_size)
+            ctx, "num_samples_{}".format(ctx.cur_data_split),
+            ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
+            ctx.batch_size)
 
         # cache label for evaluate
-        ctx.get("{}_y_true".format(ctx.cur_mode)).append(
+        ctx.get("{}_y_true".format(ctx.cur_data_split)).append(
             ctx.y_true.detach().cpu().numpy())
 
-        ctx.get("{}_y_prob".format(ctx.cur_mode)).append(
+        ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
             ctx.y_prob.detach().cpu().numpy())
 
         # clean temp ctx
@@ -471,10 +509,12 @@ class GeneralTrainer(Trainer):
         """Evaluate metrics.
 
         """
-        setattr(ctx, "{}_y_true".format(ctx.cur_mode),
-                np.concatenate(ctx.get("{}_y_true".format(ctx.cur_mode))))
-        setattr(ctx, "{}_y_prob".format(ctx.cur_mode),
-                np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_mode))))
+        setattr(
+            ctx, "{}_y_true".format(ctx.cur_data_split),
+            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_data_split))))
+        setattr(
+            ctx, "{}_y_prob".format(ctx.cur_data_split),
+            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
         results = self.evaluator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 

@@ -16,13 +16,16 @@
 import grpc
 from concurrent import futures
 
-from federatedscope.config import cfg
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.proto import gRPC_comm_manager_pb2, gRPC_comm_manager_pb2_grpc
 from federatedscope.core.gRPC_server import gRPCComServeFunc
 from federatedscope.core.message import Message
 
 
 class StandaloneCommManager(object):
+    """
+    The communicator used for standalone mode
+    """
     def __init__(self, comm_queue):
         self.comm_queue = comm_queue
         self.neighbors = dict()
@@ -58,10 +61,11 @@ class gRPCCommManager(object):
     def __init__(self, host='0.0.0.0', port='50050', client_num=2):
         grpc_opts = [
             ("grpc.max_send_message_length",
-             cfg.distribute.grpc_max_send_message_length),
+             global_cfg.distribute.grpc_max_send_message_length),
             ("grpc.max_receive_message_length",
-             cfg.distribute.grpc_max_receive_message_length),
-            ("grpc.enable_http_proxy", cfg.distribute.grpc_enable_http_proxy),
+             global_cfg.distribute.grpc_max_receive_message_length),
+            ("grpc.enable_http_proxy",
+             global_cfg.distribute.grpc_enable_http_proxy),
         ]
         self.grpc_server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=client_num),

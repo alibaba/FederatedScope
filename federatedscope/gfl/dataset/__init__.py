@@ -2,11 +2,11 @@
 #from __future__ import print_function
 #from __future__ import division
 #
-#from flpackage.gfl.dataset.acm import ACM
-#from flpackage.gfl.dataset.recsys import RecSys
-#from flpackage.gfl.dataset.dblp import DBLP
-#from flpackage.gfl.dataset.dblpfull import DBLPfull
-#from flpackage.gfl.dataset.dblp_new import DBLPNew
+#from federatedscope.gfl.dataset.acm import ACM
+#from federatedscope.gfl.dataset.recsys import RecSys
+#from federatedscope.gfl.dataset.dblp import DBLP
+#from federatedscope.gfl.dataset.dblpfull import DBLPfull
+#from federatedscope.gfl.dataset.dblp_new import DBLPNew
 #
 #
 #__all__ = ['ACM', 'RecSys', 'DBLP', 'DBLPfull', 'DBLPNew']

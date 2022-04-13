@@ -1,16 +1,22 @@
-import torch
-import torchvision.transforms
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
+try:
+    import torch
+    from torch.utils.data import Dataset
+except ImportError:
+    torch = None
+    Dataset = object
 
 
 def get_dataloader(dataset, config):
-    dataloader = DataLoader(dataset,
-                            batch_size=config.data.batch_size,
-                            shuffle=config.data.shuffle,
-                            num_workers=config.data.num_workers,
-                            pin_memory=True)
-    return dataloader
+    if config.backend == 'torch':
+        from torch.utils.data import DataLoader
+        dataloader = DataLoader(dataset,
+                                batch_size=config.data.batch_size,
+                                shuffle=config.data.shuffle,
+                                num_workers=config.data.num_workers,
+                                pin_memory=True)
+        return dataloader
+    else:
+        return None
 
 
 class WrapDataset(Dataset):

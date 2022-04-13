@@ -20,7 +20,7 @@ setuptools.setup(
         package for package in setuptools.find_packages()
         if package.startswith('federatedscope')
     ],
-    install_requires=['torch', 'networkx', 'numpy', 'grpcio', 'grpcio-tools'],
+    install_requires=['torch', 'networkx', 'numpy', 'grpcio>=1.45.0', 'grpcio-tools'],
     setup_requires=[],
     extras_require={'yaml': ['yaml>=5.1']},
     license="Apache License 2.0",
@@ -31,5 +31,5 @@ setuptools.setup(
     ],
     test_suite='nose.collector',
     test_require=['nose'],
-    python_requires='>=3.7',
+    python_requires='>=3.9',
 )

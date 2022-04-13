@@ -93,25 +93,33 @@ class Context(dict):
         self.data = data
         self.device = device
         self.cur_mode = None
-        self.cur_dataset = None
+        self.cur_data_split = None
 
         if init_attr:
             # setup static variables for training/evaluation
             self._setup_vars()
 
     def _setup_vars(self):
-        self.trainable_para_names = get_trainable_para_names(self.model)
-        self.criterion = get_criterion(self.cfg.criterion.type, self.device)
-        self.regularizer = get_regularizer(self.cfg.regularizer.type)
-        self.optimizer = get_optimizer(
-            self.cfg.optimizer.type,
-            self.model,
-            self.cfg.optimizer.lr,
-            weight_decay=self.cfg.optimizer.weight_decay)
-        self.grad_clip = self.cfg.optimizer.grad_clip
+        if self.cfg.backend == 'torch':
+            self.trainable_para_names = get_trainable_para_names(self.model)
+            self.criterion = get_criterion(self.cfg.criterion.type,
+                                           self.device)
+            self.regularizer = get_regularizer(self.cfg.regularizer.type)
+            self.optimizer = get_optimizer(
+                self.cfg.optimizer.type,
+                self.model,
+                self.cfg.optimizer.lr,
+                weight_decay=self.cfg.optimizer.weight_decay)
+            self.grad_clip = self.cfg.optimizer.grad_clip
+        elif self.cfg.backend == 'tensorflow':
+            self.trainable_para_names = self.model.trainable_variables()
+            self.criterion = None
+            self.regularizer = None
+            self.optimizer = None
+            self.grad_clip = None
 
         self.mode = list()
-        self.cur_datasets_used_by_routine = list()
+        self.cur_data_splits_used_by_routine = list()
 
         # Process training data
         if self.train_data is not None or self.train_loader is not None:
@@ -165,14 +173,17 @@ class Context(dict):
 
     def change_mode(self, mode):
         # change state
-        getattr(self.model, mode if mode == 'train' else 'eval')()
+        if self.cfg.backend == 'torch':
+            getattr(self.model, mode if mode == 'train' else 'eval')()
+        else:
+            pass
 
     def track_used_dataset(self, dataset):
         # stack-style to enable mixture usage such as evaluation on train dataset
-        self.cur_datasets_used_by_routine.append(dataset)
-        self.cur_dataset = self.cur_datasets_used_by_routine[-1]
+        self.cur_data_splits_used_by_routine.append(dataset)
+        self.cur_data_split = self.cur_data_splits_used_by_routine[-1]
 
     def reset_used_dataset(self):
-        self.cur_datasets_used_by_routine.pop()
-        self.cur_dataset = self.cur_datasets_used_by_routine[-1] if \
-            len(self.cur_datasets_used_by_routine) != 0 else None
+        self.cur_data_splits_used_by_routine.pop()
+        self.cur_data_split = self.cur_data_splits_used_by_routine[-1] if \
+            len(self.cur_data_splits_used_by_routine) != 0 else None

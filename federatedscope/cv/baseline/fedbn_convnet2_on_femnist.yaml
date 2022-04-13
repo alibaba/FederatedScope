@@ -1,6 +1,7 @@
 use_gpu: True
 device: 0
-early_stopping: 1000
+early_stop:
+  patience: 5
 seed: 12345
 federate:
   mode: standalone
@@ -19,6 +20,7 @@ model:
   type: convnet2
   hidden: 2048
   out_channels: 62
+  dropout: 0.0
 personalization:
   local_param: [ 'bn', 'norms' ]  # FedBN
 optimizer:

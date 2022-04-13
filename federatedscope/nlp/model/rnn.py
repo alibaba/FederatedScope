@@ -8,7 +8,8 @@ class LSTM(nn.Module):
                  hidden,
                  out_channels,
                  n_layers=2,
-                 embed_size=8):
+                 embed_size=8,
+                 dropout=.0):
         super(LSTM, self).__init__()
         self.in_channels = in_channels
         self.hidden = hidden
@@ -23,7 +24,8 @@ class LSTM(nn.Module):
                 input_size=embed_size,
                 hidden_size=hidden,
                 num_layers=n_layers,
-                batch_first=True
+                batch_first=True,
+                dropout=dropout
             )
 
         self.decoder = nn.Linear(hidden, out_channels)

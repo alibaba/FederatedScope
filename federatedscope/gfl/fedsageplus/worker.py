@@ -4,9 +4,10 @@ import logging
 from torch_geometric.loader import NeighborSampler
 
 from federatedscope.core.message import Message
+from federatedscope.core.monitor import calc_blocal_dissim
 from federatedscope.core.worker.server import Server
 from federatedscope.core.worker.client import Client
-from federatedscope.core.auxiliaries.utils import formatted_logging
+from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
 
 from federatedscope.gfl.trainer.nodetrainer import NodeMiniBatchTrainer
 from federatedscope.gfl.model.fedsageplus import LocalSage_Plus, FedSage_Plus
@@ -36,7 +37,7 @@ class FedSagePlusServer(Server):
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
 
-        assert self.model_num==1, "Not supported multi-model for FedSagePlusServer"
+        assert self.model_num == 1, "Not supported multi-model for FedSagePlusServer"
 
         # If state < fedgen_epoch and state % 2 == 0:
         #     Server receive [model, embedding, label]
@@ -186,7 +187,7 @@ class FedSagePlusServer(Server):
                     msg_list.append(train_msg_buffer[client_id])
 
                 # Trigger the monitor here (for training)
-                if 'dissim' in self._cfg.monitoring:
+                if 'dissim' in self._cfg.eval.monitoring:
                     B_val = calc_blocal_dissim(self.model.load_state_dict(),
                                                msg_list)
                     formatted_logs = formatted_logging(B_val,
@@ -225,44 +226,13 @@ class FedSagePlusServer(Server):
                         'Server #{:d}: Training is finished! Starting evaluation.'
                         .format(self.ID))
                     self.eval()
-                    if self._cfg.federate.save_to != '':
-                        self.aggregator.save_model(self._cfg.federate.save_to,
-                                                   self.state)
-                    formatted_best_res = formatted_logging(self.best_results,
-                                                           rnd="Final",
-                                                           role='Server #',
-                                                           forms=["raw"])
-                    logging.info(formatted_best_res)
 
             else:  # in the evaluation process
                 # Get all the message & aggregate
-                eval_msg_buffer = self.msg_buffer['eval'][self.state]
-                metrics_all_clients = dict()
-                for each_client in eval_msg_buffer:
-                    client_eval_results = eval_msg_buffer[each_client]
-                    for key in client_eval_results.keys():
-                        if key not in metrics_all_clients:
-                            metrics_all_clients[key] = list()
-                        metrics_all_clients[key].append(
-                            float(client_eval_results[key]))
-
-                formatted_logs = formatted_logging(metrics_all_clients,
-                                                   rnd=self.state,
-                                                   role='Server #',
-                                                   forms=self._cfg.eval.report)
-                self.history_results.append(formatted_logs)
-                logging.info(formatted_logs)
-                self.update_best_result(metrics_all_clients,
-                                        results_type="client_individual")
-                for form in self._cfg.eval.report:
-                    if form != "raw":
-                        self.update_best_result(
-                            formatted_logs[f"Results_{form}"],
-                            results_type=f"client_summarized_{form}")
-
-                if self.state == self.total_round_num:
-                    #break out the loop for distributed mode
-                    self.state += 1
+                formatted_eval_res = self.merge_eval_results_from_all_clients()
+                self.history_results = merge_dict(self.history_results,
+                                                  formatted_eval_res)
+                self.check_and_save()
 
 
 class FedSagePlusClient(Client):
@@ -340,7 +310,8 @@ class FedSagePlusClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=[gen_grad, ID]))
-        logging.info(f'\tClient #{self.ID}: send gradient to Server #{sender}.')
+        logging.info(
+            f'\tClient #{self.ID}: send gradient to Server #{sender}.')
 
     def callback_funcs_for_gradient(self, message):
         # Aggregate gen_grad on server
@@ -356,7 +327,8 @@ class FedSagePlusClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=[gen_para, embedding, self.hide_data.num_missing]))
-        logging.info(f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
+        logging.info(
+            f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
 
     def callback_funcs_for_setup_fedsage(self, message: Message):
         round, sender, content = message.state, message.sender, message.content

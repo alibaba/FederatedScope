@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 from math import fmod
-from federatedscope.config import cfg
 
 
 class SecretSharing(ABC):
@@ -19,6 +21,9 @@ class SecretSharing(ABC):
 
 
 class AdditiveSecretSharing(SecretSharing):
+    """
+    AdditiveSecretSharing class, which can split a number into frames and recover it by summing up
+    """
     def __init__(self, shared_party_num, size=60):
         super(SecretSharing, self).__init__()
         assert shared_party_num > 1, "AdditiveSecretSharing require shared_party_num > 1"
@@ -31,6 +36,9 @@ class AdditiveSecretSharing(SecretSharing):
         self.fixedpoint2float = np.vectorize(self._fixedpoint2float)
 
     def secret_split(self, secret):
+        """
+        To split the secret into frames according to the shared_party_num
+        """
         if isinstance(secret, dict):
             secret_list = [dict() for _ in range(self.shared_party_num)]
             for key in secret:
@@ -59,6 +67,9 @@ class AdditiveSecretSharing(SecretSharing):
         return secret_seq
 
     def secret_reconstruct(self, secret_seq):
+        """
+        To recover the secret
+        """
         assert len(secret_seq) == self.shared_party_num
         merge_model = secret_seq[0].copy()
         if isinstance(merge_model, dict):

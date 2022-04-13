@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-
 import torch
 import torch.nn.functional as F
 from torch.nn import ModuleList
@@ -10,10 +6,17 @@ from torch_geometric.nn import SAGEConv
 
 
 class SAGE_Net(torch.nn.Module):
-    r"""
-    https://arxiv.org/pdf/1706.02216.pdf
-    GraphSAGE model from the "Inductive Representation Learning on Large Graphs" paper, in NeurIPS'17
+    r"""GraphSAGE model from the "Inductive Representation Learning on Large Graphs" paper, in NeurIPS'17
+
     Source: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/ogbn_products_sage.py
+
+    Arguments:
+        in_channels (int): dimension of input.
+        out_channels (int): dimension of output.
+        hidden (int): dimension of hidden units, default=64.
+        max_depth (int): layers of GNN, default=2.
+        dropout (float): dropout ratio, default=.0.
+
     """
     def __init__(self,
                  in_channels,

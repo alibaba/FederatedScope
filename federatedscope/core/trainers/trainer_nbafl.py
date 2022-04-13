@@ -1,9 +1,6 @@
-import logging
-
 from federatedscope.core.auxiliaries.utils import get_random
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.worker.server import Server
-from federatedscope.core.message import Message
 from typing import Type
 from copy import deepcopy
 
@@ -12,7 +9,7 @@ import torch
 
 
 def wrap_nbafl_trainer(
-        base_trainer: Type[GeneralTrainer]) -> Type[GeneralTrainer]:
+        base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
     """Implementation of NbAFL refer to `Federated Learning with Differential Privacy: Algorithms and Performance Analysis` [et al., 2020]
         (https://ieeexplore.ieee.org/abstract/document/9069945/)
 
@@ -50,20 +47,20 @@ def wrap_nbafl_trainer(
 
 
 def init_nbafl_ctx(base_trainer):
+    """Set proximal regularizer, and the scale of gaussian noise
+
+    """
     ctx = base_trainer.ctx
     cfg = base_trainer.cfg
 
+    # set proximal regularizer
     cfg.regularizer.type = 'proximal_regularizer'
     cfg.regularizer.mu = cfg.nbafl.mu
-
     from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
 
-    ctx.nbafl_epsilon = cfg.nbafl.epsilon
-    ctx.nbafl_w_clip = cfg.nbafl.w_clip
-    ctx.nbafl_constant = cfg.nbafl.constant
-
-    ctx.nbafl_total_round_num = cfg.federate.total_round_num
+    # set noise scale during upload
+    ctx.nbafl_scale_u = cfg.nbafl.w_clip * cfg.federate.total_round_num * cfg.nbafl.constant / ctx.num_train_data / cfg.nbafl.epsilon
 
 
 # ------------------------------------------------------------------------ #
@@ -73,11 +70,17 @@ def init_nbafl_ctx(base_trainer):
 
 # Trainer
 def record_initialization(ctx):
+    """Record the initialized weights within local updates
+
+    """
     ctx.weight_init = deepcopy(
         [_.data.detach() for _ in ctx.model.parameters()])
 
 
 def del_initialization(ctx):
+    """Clear the variable to avoid memory leakage
+
+    """
     ctx.weight_init = None
 
 
@@ -85,12 +88,10 @@ def inject_noise_in_upload(ctx):
     """Inject noise into weights before the client upload them to server
 
     """
-    scale_u = ctx.nbafl_w_clip * ctx.nbafl_total_round_num * 2 * ctx.nbafl_constant / ctx.num_train_data / ctx.nbafl_epsilon
-    # logging.info({"Role": "Client", "Noise": {"mean": 0, "scale": scale_u}})
     for p in ctx.model.parameters():
         noise = get_random("Normal", p.shape, {
             "loc": 0,
-            "scale": scale_u
+            "scale": ctx.nbafl_scale_u
         }, p.device)
         p.data += noise
 
@@ -100,9 +101,6 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
     """Inject noise into weights before the server broadcasts them
 
     """
-
-    if len(sample_client_num) == 0:
-        return
 
     # Clip weight
     for p in model.parameters():
@@ -127,4 +125,7 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
 
 
 def wrap_nbafl_server(server: Type[Server]) -> Type[Server]:
+    """Register noise injector for the server
+
+    """
     server.register_noise_injector(inject_noise_in_broadcast)

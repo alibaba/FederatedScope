@@ -1,51 +1,74 @@
-from torch.nn import Module
 from torch.nn import Parameter
-import torch
+from torch.nn import Module
 
 import numpy as np
+import torch
 
 
-class MFNet(Module):
+class BasicMFNet(Module):
+    """Basic model for MF task
+
+    Arguments:
+        num_user (int): the number of users
+        num_item (int): the number of items
+        num_hidden (int): the dimension of embedding vector
+    """
     def __init__(self, num_user, num_item, num_hidden):
-        super(MFNet, self).__init__()
+        super(BasicMFNet, self).__init__()
 
-        # Init parameters
-        # Only share user embedding
         self.embed_user = Parameter(
             torch.normal(mean=0,
                          std=0.1,
                          size=(num_user, num_hidden),
-                         requires_grad=True))
+                         requires_grad=True,
+                         dtype=torch.float32))
         self.register_parameter('embed_user', self.embed_user)
         self.embed_item = Parameter(
             torch.normal(mean=0,
                          std=0.1,
                          size=(num_item, num_hidden),
-                         requires_grad=True))
+                         requires_grad=True,
+                         dtype=torch.float32))
         self.register_parameter('embed_item', self.embed_item)
 
-    def forward(self, idx_user, item_sets, rating_sets):
+    def forward(self, indices, ratings):
         pred = torch.matmul(self.embed_user, self.embed_item.T)
+        label = torch.sparse_coo_tensor(indices,
+                                        ratings,
+                                        size=pred.shape,
+                                        device=pred.device,
+                                        dtype=torch.float32).to_dense()
+        mask = torch.sparse_coo_tensor(indices,
+                                       np.ones(len(ratings)),
+                                       size=pred.shape,
+                                       device=pred.device,
+                                       dtype=torch.float32).to_dense()
 
-        label = torch.zeros(size=pred.size(), device=pred.device)
-        mask = torch.zeros(size=pred.size(), device=pred.device)
-        for id_user, items, ratings in zip(idx_user, item_sets, rating_sets):
-            for id_item, rating in zip(items, ratings):
-                mask[id_user][id_item] = 1.
-                label[id_user][id_item] = rating
-
-        pred_mask = pred * mask
-        return pred_mask, label, np.prod(mask.shape) / torch.sum(mask)
+        return mask * pred, label, float(np.prod(pred.size())) / len(ratings)
 
     def load_state_dict(self,
                         state_dict: 'OrderedDict[str, Tensor]',
                         strict: bool = True):
-        # Mask embed_item
-        state_dict["embed_item"] = self.embed_item
+
+        state_dict[self.name_reserve] = getattr(self, self.name_reserve)
         super().load_state_dict(state_dict, strict)
 
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         state_dict = super().state_dict(destination, prefix, keep_vars)
         # Mask embed_item
-        del state_dict["embed_item"]
+        del state_dict[self.name_reserve]
         return state_dict
+
+
+class VMFNet(BasicMFNet):
+    """MF model for vertical federated learning
+
+    """
+    name_reserve = "embed_item"
+
+
+class HMFNet(BasicMFNet):
+    """MF model for horizontal federated learning
+
+    """
+    name_reserve = "embed_user"

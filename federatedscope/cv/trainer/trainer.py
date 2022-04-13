@@ -1,8 +1,8 @@
 from federatedscope.register import register_trainer
-from federatedscope.core.trainers.trainer import GeneralTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
 
-class CVTrainer(GeneralTrainer):
+class CVTrainer(GeneralTorchTrainer):
     pass
 
 
