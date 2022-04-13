@@ -1,17 +1,25 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 from torch.nn import Module
 from torch.nn import Sequential
 from torch.nn import Conv2d, BatchNorm2d
-from torch.nn import Flatten, Dropout
+from torch.nn import Flatten
 from torch.nn import Linear
 from torch.nn import MaxPool2d
 from torch.nn import ReLU
-import torch.nn as nn
-
-import torch
 
 
 class ConvNet2(Module):
-    def __init__(self, in_channels, h=32, w=32, hidden=2048, class_num=10, use_bn=True):
+    def __init__(self,
+                 in_channels,
+                 h=32,
+                 w=32,
+                 hidden=2048,
+                 class_num=10,
+                 use_bn=True,
+                 dropout=.0):
         super(ConvNet2, self).__init__()
 
         self.conv1 = Conv2d(in_channels, 32, 5, padding=2)
@@ -26,6 +34,7 @@ class ConvNet2(Module):
 
         self.relu = ReLU(inplace=True)
         self.maxpool = MaxPool2d(2)
+        self.dropout = dropout
 
     def forward(self, x):
         x = self.bn1(self.conv1(x)) if self.use_bn else self.conv1(x)
@@ -33,14 +42,22 @@ class ConvNet2(Module):
         x = self.bn2(self.conv2(x)) if self.use_bn else self.conv2(x)
         x = self.maxpool(self.relu(x))
         x = Flatten()(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.relu(self.fc1(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.fc2(x)
 
         return x
 
 
 class ConvNet5(Module):
-    def __init__(self, in_channels, h=32, w=32, hidden=2048, class_num=10):
+    def __init__(self,
+                 in_channels,
+                 h=32,
+                 w=32,
+                 hidden=2048,
+                 class_num=10,
+                 dropout=.0):
         super(ConvNet5, self).__init__()
 
         self.conv1 = Conv2d(in_channels, 32, 5, padding=2)
@@ -66,6 +83,8 @@ class ConvNet5(Module):
             hidden)
         self.fc2 = Linear(hidden, class_num)
 
+        self.dropout = dropout
+
     def forward(self, x):
         x = self.relu(self.bn1(self.conv1(x)))
         x = self.maxpool(x)
@@ -83,14 +102,22 @@ class ConvNet5(Module):
         x = self.maxpool(x)
 
         x = Flatten()(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.relu(self.fc1(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.fc2(x)
 
         return x
 
 
 class VGG11(Module):
-    def __init__(self, in_channels, h=32, w=32, hidden=128, class_num=10):
+    def __init__(self,
+                 in_channels,
+                 h=32,
+                 w=32,
+                 hidden=128,
+                 class_num=10,
+                 dropout=.0):
         super(VGG11, self).__init__()
 
         cfg = [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
@@ -128,6 +155,8 @@ class VGG11(Module):
         self.fc2 = Linear(hidden, hidden)
         self.fc3 = Linear(hidden, class_num)
 
+        self.dropout = dropout
+
     def forward(self, x):
         x = self.relu(self.bn1(self.conv1(x)))
         x = self.maxpool(x)
@@ -154,8 +183,11 @@ class VGG11(Module):
         x = self.maxpool(x)
 
         x = Flatten()(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.relu(self.fc1(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.relu(self.fc2(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.fc3(x)
 
         return x

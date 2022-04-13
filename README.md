@@ -4,9 +4,9 @@
 
 ![](https://img.shields.io/badge/language-python-blue.svg) ![](https://img.shields.io/badge/license-Apache-000000.svg)
 
-FederatedScope is a comprehensive federated learning platform that provides convenient usage and supports flexible custom for various federated learning tasks in both academic and industrial.  Based on a message-oriented framework, FederatedScope integrates rich collections of fundamental functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
+FederatedScope is a comprehensive federated learning platform that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on a message-oriented framework, FederatedScope integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
-A detailed tutorial is ptovided in [Tutorial](https://federatedscope.io/).
+A detailed tutorial is ptovided on [Tutorial](https://federatedscope.io/).
 
 ## Quick Start
 
@@ -20,17 +20,20 @@ First of all, users need to clone the source code and install the required packa
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
 ```
-You can install from the requirement file
+You can install from the requirement file:
 ```
-conda install --file enviroment/requirements-torch1.10.txt
- -c pytorch -c conda-forge -c nvidia
+# For minimal version
+conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-forge -c nvidia
+
+# For application version
+conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
 ```
-or build docker image and run with docker env
+or build docker image and run with docker env:
 ```
 docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
 docker run --gpus device=all --rm --it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash"
 ```
-Note: if you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when execute the above commands.
+Note: if you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when executing the above commands:
 ```
 # enviroment/requirements-torch1.10.txt -> 
 requirements-torch1.10-application.txt
@@ -43,24 +46,24 @@ enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ### Step 2. Prepare datasets
 
 To run an FL task, users should prepare a dataset. 
-The DataZoo provided in FederatedScope can help to automatically download and preprocess widely-used public datasets from various FL applications, including CV, NLP, graph learning, recommendation, etc. Users can directly specify `cfg.data.type = DATASET_NAME`in the configuration. For example, 
+The DataZoo provided in FederatedScope can help to automatically download and preprocess widely-used public datasets for various FL applications, including CV, NLP, graph learning, recommendation, etc. Users can directly specify `cfg.data.type = DATASET_NAME`in the configuration. For example, 
 
 ```bash
 cfg.data.type = 'femnist'
 ```
 
-To use customized datasets, you need to prepare the dataset following a certain format and register it. Please refer to Custom Dataset for more details.
+To use customized datasets, you need to prepare the dataset following a certain format and register it. Please refer to [Customized Datasets](https://federatedscope.io/docs/own-case/#data) for more details.
 
 ### Step 3. Prepare models
 
 Then, users should specify the model architecture that will be trained in the FL course.
-FederatedScope includes the ModelZoo to provide the implementation of famous model architectures for various FL applications. Users can set up `cfg.model.type = MODEL_NAME` to apply a specific model architecture in FL tasks. For example,
+FederatedScope provides a ModelZoo that contains the implementation of widely adopted model architectures for various FL applications. Users can set up `cfg.model.type = MODEL_NAME` to apply a specific model architecture in FL tasks. For example,
 
 ```yaml
 cfg.model.type = 'convnet2'
 ```
 
-FederatedScope allows users to use custom models via registering. Please refer to Custom Model  for more details about how to customize a model architecture.
+FederatedScope allows users to use customized models via registering. Please refer to [Customized Models](https://federatedscope.io/docs/own-case/#model) for more details about how to customize a model architecture.
 
 ### Step 4. Start running an FL task
 
@@ -68,9 +71,9 @@ Note that FederatedScope provides a unified interface for both standalone mode a
 
 #### Standalone mode
 
-The standalone mode in FederatedScope means to simulate multiple participants (servers and clients) in a single device, while the data and models of each participant are isolated from each other and only be shared via message passing. 
+The standalone mode in FederatedScope means to simulate multiple participants (servers and clients) in a single device, while participants' data are isolated from each other and their models might be shared via message passing. 
 
-Here we demonstrate how to run a standard FL task with FederatedScope as an example, with setting `cfg.data.type = 'FEMNIST'`and `cfg.model.type = 'ConvNet2'` to run vanilla FedAvg for an image classification task. Users can customize training configurations, such as `cfg.federated.total_round_num`, `cfg.data.batch_size`, and `cfg.optimizer.lr`, in the configuration (a .yaml file), and run a standard FL task as: 
+Here we demonstrate how to run a standard FL task with FederatedScope, with setting `cfg.data.type = 'FEMNIST'`and `cfg.model.type = 'ConvNet2'` to run vanilla FedAvg for an image classification task. Users can customize training configurations, such as `cfg.federated.total_round_num`, `cfg.data.batch_size`, and `cfg.optimizer.lr`, in the configuration (a .yaml file), and run a standard FL task as: 
 
 ```bash
 # Run with default configurations
@@ -148,34 +151,46 @@ INFO: Server #0: Final evaluation is finished! Starting merging results.
 
 ## Advanced
 
-As a comprehensive FL platform, FederatedScope provides the fundamental implementation to support requirements of various FL applications and promising exploration, towards both convenient usage and flexible extension, including:
+As a comprehensive FL platform, FederatedScope provides the fundamental implementation to support requirements of various FL applications and frontier studies, towards both convenient usage and flexible extension, including:
 
-- **Personalized Federated Learning**: To apply client-specific model architectures and training configurations to handle the non-IID issues caused by the various data distributions and system resources of clients.
-- **Federated Hyperparameter Optimization**: When Hyperparameter optimization (HPO) comes to Federated Learning, each attempt is extremely costly due to more or fewer rounds of communication across participants. It is worth noting that HPO under the FL is unique and more techniques should be promoted such as low-fidelity HPO.
+- **Personalized Federated Learning**: Client-specific model architectures and training configurations are applied to handle the non-IID issues caused by the diverse data distributions and heterogeneous system resources.
+- **Federated Hyperparameter Optimization**: When Hyperparameter optimization (HPO) comes to Federated Learning, each attempt is extremely costly due to multiple rounds of communication across participants. It is worth noting that HPO under the FL is unique and more techniques should be promoted such as low-fidelity HPO.
 - **Privacy Attacker**: The privacy attack algorithms are important and convenient to verify the privacy protection strength of the design FL systems and algorithms, which is growing along with Federated Learning.
-- **Graph Federated Learning**: Working on the ubiquitous graph data, Federated Graph Learning aims to exploit isolated sub-graph data to learn a global and comprehensive model, and has attracted increasing popularity.
+- **Graph Federated Learning**: Working on the ubiquitous graph data, Graph Federated Learning aims to exploit isolated sub-graph data to learn a global model, and has attracted increasing popularity.
 - **Recommendation**: As a number of laws and regulations go into effect all over the world, more and more people are aware of the importance of privacy protection, which urges the recommender system to learn from user data in a privacy-preserving manner.
-- **Differential Privacy**: Different from the encrypted algorithms that require powerful computation ability,  differential privacy is an economical yet flexible technique to protect privacy, which has achieved great success in database and is ever-growing in federated learning.
+- **Differential Privacy**: Different from the encryption algorithms that require a large amount of computation resources,  differential privacy is an economical yet flexible technique to protect privacy, which has achieved great success in database and is ever-growing in federated learning.
 - ...
 
-More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning.
+More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning!
 
 ## Documentation
 
-Most classes and methods of FederatedScope have been well documented so that users can generate the API references by:
+The classes and methods of FederatedScope have been well documented so that users can generate the API references by:
 
 ```shell
 pip install -r requirements-doc.txt
 make html
 ```
 
-We put the API references and comprehensive tutorials on our [website](https://federatedscope.io/).
+We put the API references on our [website](https://federatedscope.io/refs/index).
 
 ## License
 
 FederatedScope is released under Apache License 2.0.
 
+## Publications
+If you find FederatedScope useful for your research or development, please cite the following <a href="https://arxiv.org/abs/2204.05011" target="_blank">paper</a>:
+```
+@article{federatedscope,
+  title = {FederatedScope: A Comprehensive and Flexible Federated Learning Platform via Message Passing},
+  author = {Xie, Yuexiang and Wang, Zhen and Chen, Daoyuan and Gao, Dawei and Yao, Liuyi and Kuang, Weirui and Li, Yaliang and Ding, Bolin and Zhou, Jingren},
+  journal={arXiv preprint arXiv:2204.05011},
+  year = {2022},
+}
+```
+More publications can be found in the [Publications](https://federatedscope.io/year-archive/).
+
 ## Contributing
 
-We appreciate any contribution to FederatedScope. You can refer to Contributing to FederatedScope for more details.
+We **greatly appreciate** any contribution to FederatedScope! You can refer to [Contributing to FederatedScope](https://federatedscope.io/docs/contributor/) for more details.
 

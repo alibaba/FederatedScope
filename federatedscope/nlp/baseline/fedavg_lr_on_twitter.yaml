@@ -16,6 +16,7 @@ data:
 model:
   type: lr
   out_channels: 2
+  dropout: 0.0
 optimizer:
   lr: 0.0003
   weight_decay: 0.0
