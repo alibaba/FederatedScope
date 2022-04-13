@@ -259,7 +259,7 @@ class Client(Worker):
             eval_metrics = self.trainer.evaluate(target_data_split_name=split)
             for key in eval_metrics:
                 logging.info(
-                    'Client #{:d}: (Evaluation ({:s}} set) at Round #{:d}) {:s} is {:.6f}'
+                    'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
                     .format(self.ID, split, self.state, key,
                             eval_metrics[key]))
             metrics.update(**eval_metrics)
