@@ -87,7 +87,8 @@ def assert_fl_setting_cfg(cfg):
                 f"Users specify both valid sample_client_rate as {cfg.federate.sample_client_rate} "
                 f"and sample_client_num as {old_sample_client_num}.\n"
                 f"\t\tWe will use the sample_client_rate value to calculate "
-                f"the actual number of participated clients as {cfg.federate.sample_client_num}.")
+                f"the actual number of participated clients as {cfg.federate.sample_client_num}."
+            )
     # (a.2) use sample_client_num, commented since the below two lines do not change anything
     # elif sample_client_num_valid:
     #     cfg.federate.sample_client_num = cfg.federate.sample_client_num
