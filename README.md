@@ -28,7 +28,7 @@ And the suggested running environments are:
 - Torch version 1.7.0 or above
 
 ### Step 2. Prepare datasets
-
+ 
 To run an FL task, users should prepare a dataset. 
 The DataZoo provided in FederatedScope can help to automatically download and preprocess widely-used public datasets from various FL applications, including CV, NLP, graph learning, recommendation, etc. Users can directly specify `cfg.data.type = DATASET_NAME`in the configuration. For example, 
 
