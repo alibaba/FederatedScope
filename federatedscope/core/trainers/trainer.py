@@ -20,6 +20,22 @@ except ImportError:
     Dataset = None
 
 
+
+def ctx_manager(lifecycle):
+    """Manage the lifecycle of the variables within context, and blind these operations from user.
+
+    Args:
+        lifecycle: the type of lifecycle, choose from "batch/epoch/routine"
+    """
+    def decorate(func):
+        def wrapper(self, *args, **kwargs):
+            res = func(self, *args, **kwargs)
+            # Clear the corresponding variables
+            self.ctx.clear(lifecycle)
+            return res
+        return wrapper
+    return decorate
+
 class Trainer(object):
     """
         Register, organize and run the train/test/val procedures
@@ -164,11 +180,14 @@ class Trainer(object):
         else:
             hooks_dict[trigger].insert(insert_pos, new_hook)
 
-    def train(self, target_data_split_name="train", hooks_set=None):
+    def train(self, target_data_split_name="train"):
         pass
 
-    def evaluate(self, target_data_split_name="test", hooks_set=None):
-        hooks_set = self.hooks_in_eval if hooks_set is None else hooks_set
+    def _get_hooks(self, trigger):
+        name = "train" if self.ctx.cur_mode == "train" else "eval"
+        return getattr(self, "hooks_in_{}".format(name))[trigger]
+
+    def evaluate(self, target_data_split_name="test"):
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
                     f"{target_data_split_name}_loader") is None:
@@ -178,11 +197,44 @@ class Trainer(object):
             )
             self.ctx.eval_metrics = {}
         else:
-            self._run_routine("test", hooks_set, target_data_split_name)
+            self._run_routine("test", target_data_split_name)
 
         return self.ctx.eval_metrics
 
-    def _run_routine(self, mode, hooks_set, dataset_name=None):
+    @ctx_manager("batch")
+    def _run_batch(self):
+        for batch_i in range(self.ctx.get("num_{}_batch".format(self.ctx.cur_data_split))):
+            self.ctx.cur_batch_i = batch_i
+            for hook in self._get_hooks("on_batch_start"):
+                hook(self.ctx)
+            for hook in self._get_hooks("on_batch_forward"):
+                hook(self.ctx)
+            if self.ctx.cur_mode == 'train':
+                for hook in self._get_hooks("on_batch_backward"):
+                    hook(self.ctx)
+            for hook in self._get_hooks("on_batch_end"):
+                hook(self.ctx)
+
+            # Break in the final epoch
+            if self.ctx.cur_mode == 'train' and self.ctx.cur_epoch_i == self.ctx.num_train_epoch - 1:
+                if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
+                    break
+
+    @ctx_manager("epoch")
+    def _run_epoch(self):
+        for epoch_i in range(self.ctx.get("num_{}_epoch".format(self.ctx.cur_data_split))):
+            self.ctx.cur_epoch_i = epoch_i
+
+            for hook in self._get_hooks("on_epoch_start"):
+                hook(self.ctx)
+
+            self._run_batch()
+
+            for hook in self._get_hooks("on_epoch_end"):
+                hook(self.ctx)
+
+    @ctx_manager("routine")
+    def _run_routine(self, mode, dataset_name=None):
         """Run the hooks_set and maintain the mode
 
         Arguments:
@@ -198,36 +250,12 @@ class Trainer(object):
         self.ctx.append_mode(mode)
         self.ctx.track_used_dataset(dataset_name)
 
-        for hook in hooks_set["on_fit_start"]:
+        for hook in self._get_hooks("on_fit_start"):
             hook(self.ctx)
 
-        for epoch_i in range(self.ctx.get(
-                "num_{}_epoch".format(dataset_name))):
-            self.ctx.cur_epoch_i = epoch_i
-            for hook in hooks_set["on_epoch_start"]:
-                hook(self.ctx)
+        self._run_epoch()
 
-            for batch_i in range(
-                    self.ctx.get("num_{}_batch".format(dataset_name))):
-                self.ctx.cur_batch_i = batch_i
-                for hook in hooks_set["on_batch_start"]:
-                    hook(self.ctx)
-                for hook in hooks_set["on_batch_forward"]:
-                    hook(self.ctx)
-                if self.ctx.cur_mode == 'train':
-                    for hook in hooks_set["on_batch_backward"]:
-                        hook(self.ctx)
-                for hook in hooks_set["on_batch_end"]:
-                    hook(self.ctx)
-
-                # Break in the final epoch
-                if self.ctx.cur_mode == 'train' and epoch_i == self.ctx.num_train_epoch - 1:
-                    if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
-                        break
-
-            for hook in hooks_set["on_epoch_end"]:
-                hook(self.ctx)
-        for hook in hooks_set["on_fit_end"]:
+        for hook in self._get_hooks("on_fit_end"):
             hook(self.ctx)
 
         self.ctx.pop_mode()
@@ -340,7 +368,7 @@ class GeneralTorchTrainer(Trainer):
             raise TypeError("Type of data should be dict.")
         return init_dict
 
-    def train(self, target_data_split_name="train", hooks_set=None):
+    def train(self, target_data_split_name="train"):
         hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
@@ -348,7 +376,7 @@ class GeneralTorchTrainer(Trainer):
             raise ValueError(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
             )
-        self._run_routine("train", hooks_set, target_data_split_name)
+        self._run_routine("train", target_data_split_name)
 
         # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
 

@@ -7,15 +7,14 @@ import logging
 
 
 class GeneralTFTrainer(Trainer):
-    def train(self, target_data_split_name="train", hooks_set=None):
-        hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
+    def train(self, target_data_split_name="train"):
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
                     f"{target_data_split_name}_loader") is None:
             raise ValueError(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
             )
-        self._run_routine("train", hooks_set, target_data_split_name)
+        self._run_routine("train", target_data_split_name)
 
         # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
 

@@ -5,6 +5,19 @@ from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.model_builder import get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 
+class StatsVar(float):
+    def __init__(self):
+        super(StatsVar, self).__init__()
+        if self.__name__.startswith("avg_"):
+            self.cnt = 1.
+
+    def upt(self, value):
+        if self.__name__.startswith("sum_"):
+            self = self + value
+        elif self.__name__.startswith("avg_"):
+            self += (value-self) / (self.cnt + 1.)
+            self.cnt += 1.
+
 
 class Context(dict):
     """Record and pass variables among different hook functions.
@@ -64,9 +77,44 @@ class Context(dict):
         num_samples_val (float): accumulated regular loss during val
 
         eval_metrics (dict): evaluation results
+
+    Two types of variables
+        1. statistic variables
+            prefix:
+                "sum_": sum
+                "avg_": average
+                "cus_": custom
+        3. maintained variables
+            we should manage their lifecycle to avoid leakage of memory
+            [prefix, lifecycle]:
+                - "bobj_", batch
+                - "eobj_", epoch
+                - "robj_", routine
+        Note:
+            They are distinguished by the prefix "sum", "avg" and "bobj_", "eobj_" and "robj_"
+            We provide clear function to del the corresponding variables, such as `clear_statistic()`, `clear_bobj`, ...
+
+    Example:
+        Init a statistic variable to `ctx`
+            ctx.sum_loss.update(1.0)
+            ctx.avg_loss.upt(1.0)
+        Accumulate a statistic variable within `ctx`
+            ctx.sum_loss = 1.0 # ctx.sum_loss == 1.0
+            ctx.sum_loss = 2.0 # ctx.sum_loss == 3.0
+
+            ctx.avg_loss = 1.0 # ctx.avg_loss == 1.0
+            ctx.avg_loss = 2.0 # ctx.avg_loss == 1.5
+
+        Add a variable to maintain object in `ctx`
+            ctx.bobj_model = obj # lifecycle: batch
+            ctx.eobj_model = obj # lifecycle: epoch
+            ctx.robj_model = obj # lifecycle: routine
+
+
     """
-
-
+    PREFIX_ATTR_BATCH = "bobj_"
+    PREFIX_ATTR_EPOCH = "eobj_"
+    PREFIX_ATTR_ROUTINE = "robj_"
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
@@ -74,7 +122,35 @@ class Context(dict):
         try:
             return self[item]
         except KeyError:
-            raise AttributeError("Attribute {} is not found".format(item))
+            if item.startswith("sum_") or item.startswith("avg_"):
+                self[item] = StatsVar[type()]()
+                return self[item]
+            else:
+                raise KeyError()
+
+
+    def clear(self, lifecycle=None):
+        if lifecycle is None:
+            super(Context, self).clear()
+        elif lifecycle == "batch":
+            for var in self.vars_stats:
+                if var.startswith(Context.PREFIX_ATTR_BATCH):
+                    del self[var]
+        elif lifecycle == "epoch":
+            for var in self.vars_stats:
+                if var.startswith(Context.PREFIX_ATTR_EPOCH):
+                    del self[var]
+        elif lifecycle == "routine":
+            for var in self.vars_stats:
+                if var.startswith(Context.PREFIX_ATTR_ROUTINE):
+                    del self[var]
+
+
+    # def __getattr__(self, item):
+    #     try:
+    #         return self[item]
+    #     except KeyError:
+    #         raise AttributeError("Attribute {} is not found".format(item))
 
     def __init__(self,
                  model,
@@ -98,6 +174,11 @@ class Context(dict):
         if init_attr:
             # setup static variables for training/evaluation
             self._setup_vars()
+
+        # Statistic variables
+        self.vars_stats = list()
+        # Reference variables
+        self.vars_refer = list()
 
     def _setup_vars(self):
         if self.cfg.backend == 'torch':
@@ -158,7 +239,6 @@ class Context(dict):
             num_train_batch_last_epoch = local_update_steps % num_train_batch
             num_total_train_batch = local_update_steps
         return num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch
-
 
     def append_mode(self, mode):
         self.mode.append(mode)
