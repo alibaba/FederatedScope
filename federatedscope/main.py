@@ -17,12 +17,6 @@ if os.environ.get('https_proxy'):
     del os.environ['https_proxy']
 if os.environ.get('http_proxy'):
     del os.environ['http_proxy']
-
-def fpass():
-    s      =5+1
-
-    
-    return s
     
 if __name__ == '__main__':
 
