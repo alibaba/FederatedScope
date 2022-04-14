@@ -38,4 +38,6 @@ if __name__ == '__main__':
                        server_class=get_server_cls(global_cfg),
                        client_class=get_client_cls(global_cfg),
                        config=global_cfg.clone())
+    pass
     _ = runner.run()
+    
