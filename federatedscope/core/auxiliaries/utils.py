@@ -4,8 +4,10 @@ import os.path as osp
 import random
 import copy
 import sys
+import ssl
 import time
 import math
+import urllib.request
 from datetime import datetime
 
 import numpy as np
@@ -335,3 +337,31 @@ def merge_dict(dict1, dict2):
             else:
                 dict1[key].append(value)
     return dict1
+
+
+def download_url(url: str, folder='folder'):
+    r"""Downloads the content of an url to a folder.
+
+    Args:
+        url (string): The url of target file.
+        folder (string): The target folder.
+
+    Returns:
+        path (string): File path of downloaded files.
+    """
+
+    file = url.rpartition('/')[2]
+    file = file if file[0] == '?' else file.split('?')[0]
+    path = osp.join(folder, file)
+    if osp.exists(path):
+        logging.info(f'File {file} exists, use existing file.')
+        return path
+
+    logging.info(f'Downloading {url}')
+    os.makedirs(folder, exist_ok=True)
+    ctx = ssl._create_unverified_context()
+    data = urllib.request.urlopen(url, context=ctx)
+    with open(path, 'wb') as f:
+        f.write(data.read())
+
+    return path

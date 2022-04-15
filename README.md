@@ -20,7 +20,7 @@ First of all, users need to clone the source code and install the required packa
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
 ```
-You can install from the requirement file:
+You can install the dependencies from the requirement file:
 ```
 # For minimal version
 conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-forge -c nvidia
@@ -41,7 +41,10 @@ requirements-torch1.10-application.txt
 # enviroment/docker_files/federatedscope-torch1.10.Dockerfile ->
 enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ```
-
+Finally, after all the dependencies are installed, run:
+```bash
+python setup.py install
+```
 
 ### Step 2. Prepare datasets
 

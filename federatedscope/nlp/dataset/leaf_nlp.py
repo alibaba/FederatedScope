@@ -1,24 +1,20 @@
 import os
-import re
 import random
 import pickle
 import json
 import torch
 import math
 
-import numpy as np
 import os.path as osp
 
 from tqdm import tqdm
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 
 from sklearn.model_selection import train_test_split
-from torch_geometric.data import download_url
 
-from federatedscope.core.auxiliaries.utils import save_local_data
+from federatedscope.core.auxiliaries.utils import save_local_data, download_url
 from federatedscope.cv.dataset.leaf import LEAF
 from federatedscope.nlp.dataset.utils import *
-# from federatedscope.config import cfg
 
 
 class LEAF_NLP(LEAF):
@@ -37,16 +33,15 @@ class LEAF_NLP(LEAF):
         target_transform: transform for y.
 
     """
-    def __init__(
-            self,
-            root,
-            name,
-            s_frac=0.3,
-            tr_frac=0.8,
-            val_frac=0.0,
-            seed=123,
-            transform=None,
-            target_transform=None):
+    def __init__(self,
+                 root,
+                 name,
+                 s_frac=0.3,
+                 tr_frac=0.8,
+                 val_frac=0.0,
+                 seed=123,
+                 transform=None,
+                 target_transform=None):
         self.s_frac = s_frac
         self.tr_frac = tr_frac
         self.val_frac = val_frac
