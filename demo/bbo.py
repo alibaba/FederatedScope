@@ -17,8 +17,6 @@ LEGEND_SIZE = 15
 
 
 def eval_fl_algo(x):
-    logging.info("======> try {}".format(x))
-
     from federatedscope.core.cmd_args import parse_args
     from federatedscope.core.auxiliaries.data_builder import get_data
     from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
@@ -32,6 +30,7 @@ def eval_fl_algo(x):
 
     setup_logger(init_cfg)
     setup_seed(init_cfg.seed)
+    logging.info("======> try {}".format(x))
 
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global cfg object
