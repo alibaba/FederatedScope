@@ -2,6 +2,8 @@
 Specifically, we apply Black-Box Optimization (BBO) to search the optimal hyperparameters of the considered federated learning algorithms.
 emukit can be installed by `pip install emukit`
 """
+import logging
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
@@ -15,7 +17,7 @@ LEGEND_SIZE = 15
 
 
 def eval_fl_algo(x):
-    print("======> try {}".format(x))
+    logging.info("======> try {}".format(x))
 
     from federatedscope.core.cmd_args import parse_args
     from federatedscope.core.auxiliaries.data_builder import get_data
