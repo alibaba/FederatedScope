@@ -6,8 +6,9 @@ federate:
   make_global_eval: False
   online_aggr: False
 distribute:
-  server_host: ''xx.xx.xx.xx
-  server_port: x
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051
   role: 'server'
   data_file: 'toy_data/server_data'
 trainer:
