@@ -25,7 +25,8 @@ def eval_fl_algo(x):
     from federatedscope.core.fed_runner import FedRunner
 
     init_cfg = global_cfg.clone()
-    init_cfg.merge_from_file("federatedscope/example_configs/single_process.yaml")
+    init_cfg.merge_from_file(
+        "federatedscope/example_configs/single_process.yaml")
     init_cfg.merge_from_list(["optimizer.lr", float(x[0])])
 
     setup_logger(init_cfg)
@@ -59,42 +60,54 @@ def main():
     #target_function, space = forrester_function()
     target_function = our_target_func
     space = ParameterSpace([ContinuousParameter('lr', 1e-4, .75)])
-    x_plot = np.linspace(space.parameters[0].min, space.parameters[0].max, 200)[:, None]
+    x_plot = np.linspace(space.parameters[0].min, space.parameters[0].max,
+                         200)[:, None]
     #y_plot = target_function(x_plot)
-    X_init = np.array([[0.005],[0.05], [0.5]])
+    X_init = np.array([[0.005], [0.05], [0.5]])
     Y_init = target_function(X_init)
 
     bo = GPBayesianOptimization(variables_list=space.parameters,
-                                X=X_init, Y=Y_init)
+                                X=X_init,
+                                Y=Y_init)
     bo.run_optimization(target_function, 15)
 
     mu_plot, var_plot = bo.model.predict(x_plot)
 
     plt.figure(figsize=(12, 8))
-    plt.plot(bo.loop_state.X, bo.loop_state.Y, "ro", markersize=10, label="Observations")
+    plt.plot(bo.loop_state.X,
+             bo.loop_state.Y,
+             "ro",
+             markersize=10,
+             label="Observations")
     #plt.plot(x_plot, y_plot, "k", label="Objective Function")
     #plt.plot(x_plot, mu_plot, "C0", label="Model")
     plt.fill_between(x_plot[:, 0],
                      mu_plot[:, 0] + np.sqrt(var_plot)[:, 0],
-                     mu_plot[:, 0] - np.sqrt(var_plot)[:, 0], color="C0", alpha=0.6)
-    
+                     mu_plot[:, 0] - np.sqrt(var_plot)[:, 0],
+                     color="C0",
+                     alpha=0.6)
+
     plt.fill_between(x_plot[:, 0],
                      mu_plot[:, 0] + 2 * np.sqrt(var_plot)[:, 0],
-                     mu_plot[:, 0] - 2 * np.sqrt(var_plot)[:, 0], color="C0", alpha=0.4)
-    
+                     mu_plot[:, 0] - 2 * np.sqrt(var_plot)[:, 0],
+                     color="C0",
+                     alpha=0.4)
+
     plt.fill_between(x_plot[:, 0],
                      mu_plot[:, 0] + 3 * np.sqrt(var_plot)[:, 0],
-                     mu_plot[:, 0] - 3 * np.sqrt(var_plot)[:, 0], color="C0", alpha=0.2)
+                     mu_plot[:, 0] - 3 * np.sqrt(var_plot)[:, 0],
+                     color="C0",
+                     alpha=0.2)
     plt.legend(loc=2, prop={'size': LEGEND_SIZE})
     plt.xlabel(r"$x$")
     plt.ylabel(r"$f(x)$")
     plt.grid(True)
     plt.xlim(0, 0.75)
-    
+
     #plt.show()
     plt.savefig("bbo.pdf", bbox_inches='tight')
     plt.close()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
