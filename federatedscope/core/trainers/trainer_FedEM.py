@@ -113,7 +113,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             # gathers losses for all sample in iterator for each internal model, calling *evaluate()*
             for model_idx in range(self.model_nums):
                 self._switch_model_ctx(model_idx)
-                self.evaluate(target_data_split_name="train")
+                self.evaluate(mode='test', target_data_split_name="train")
 
             self.weights_data_sample = f_softmax(
                 (torch.log(self.weights_internal_models) -

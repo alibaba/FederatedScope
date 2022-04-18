@@ -560,7 +560,7 @@ class Server(Worker):
                 # Preform evaluation in server
                 metrics = {}
                 for split in self._cfg.eval.split:
-                    eval_metrics = trainer.evaluate(
+                    eval_metrics = trainer.evaluate(mode=split,
                         target_data_split_name=split)
                     metrics.update(**eval_metrics)
                 formatted_eval_res = formatted_logging(
