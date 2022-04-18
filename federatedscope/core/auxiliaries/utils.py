@@ -342,6 +342,8 @@ def merge_dict(dict1, dict2):
 def download_url(url: str, folder='folder'):
     r"""Downloads the content of an url to a folder.
 
+    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master/torch_geometric/data/download.py`
+
     Args:
         url (string): The url of target file.
         folder (string): The target folder.
