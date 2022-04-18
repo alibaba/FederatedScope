@@ -167,7 +167,7 @@ class Trainer(object):
     def train(self, target_data_split_name="train", hooks_set=None):
         pass
 
-    def evaluate(self, target_data_split_name="test", hooks_set=None):
+    def evaluate(self, mode, target_data_split_name="test", hooks_set=None):
         hooks_set = self.hooks_in_eval if hooks_set is None else hooks_set
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
@@ -178,7 +178,7 @@ class Trainer(object):
             )
             self.ctx.eval_metrics = {}
         else:
-            self._run_routine("test", hooks_set, target_data_split_name)
+            self._run_routine(mode, hooks_set, target_data_split_name)
 
         return self.ctx.eval_metrics
 
@@ -370,15 +370,15 @@ class GeneralTorchTrainer(Trainer):
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=False)
 
-    def evaluate(self, target_data_split_name="test"):
+    def evaluate(self, mode, target_data_split_name="test"):
         with torch.no_grad():
-            super().evaluate(target_data_split_name)
+            super().evaluate(mode, target_data_split_name)
 
         return self.ctx.eval_metrics
 
-    def validate(self, target_data_split_name="val"):
+    def validate(self, mode, target_data_split_name="val"):
         with torch.no_grad():
-            super().evaluate(target_data_split_name)
+            super().evaluate(mode, target_data_split_name)
 
         return self.ctx.eval_metrics
 
