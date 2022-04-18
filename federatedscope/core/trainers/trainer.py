@@ -415,11 +415,11 @@ class GeneralTorchTrainer(Trainer):
         ctx.model.to(ctx.device)
 
         # prepare statistics
-        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
-        setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
+        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_mode), 0)
+        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_mode), 0)
+        setattr(ctx, "num_samples_{}".format(ctx.cur_mode), 0)
+        setattr(ctx, "{}_y_true".format(ctx.cur_mode), [])
+        setattr(ctx, "{}_y_prob".format(ctx.cur_mode), [])
 
     def _hook_on_epoch_start(self, ctx):
         # prepare dataloader
@@ -472,8 +472,8 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_batch_end(self, ctx):
         # update statistics
         setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) +
+            ctx, "loss_batch_total_{}".format(ctx.cur_mode),
+            ctx.get("loss_batch_total_{}".format(ctx.cur_mode)) +
             ctx.loss_batch.item() * ctx.batch_size)
 
         if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
@@ -481,19 +481,19 @@ class GeneralTorchTrainer(Trainer):
         else:
             loss_regular = ctx.loss_regular.item()
         setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
+            ctx, "loss_regular_total_{}".format(ctx.cur_mode),
+            ctx.get("loss_regular_total_{}".format(ctx.cur_mode)) +
             loss_regular)
         setattr(
-            ctx, "num_samples_{}".format(ctx.cur_data_split),
-            ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
+            ctx, "num_samples_{}".format(ctx.cur_mode),
+            ctx.get("num_samples_{}".format(ctx.cur_mode)) +
             ctx.batch_size)
 
         # cache label for evaluate
-        ctx.get("{}_y_true".format(ctx.cur_data_split)).append(
+        ctx.get("{}_y_true".format(ctx.cur_mode)).append(
             ctx.y_true.detach().cpu().numpy())
 
-        ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
+        ctx.get("{}_y_prob".format(ctx.cur_mode)).append(
             ctx.y_prob.detach().cpu().numpy())
 
         # clean temp ctx
@@ -510,11 +510,11 @@ class GeneralTorchTrainer(Trainer):
 
         """
         setattr(
-            ctx, "{}_y_true".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_data_split))))
+            ctx, "{}_y_true".format(ctx.cur_mode),
+            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_mode))))
         setattr(
-            ctx, "{}_y_prob".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
+            ctx, "{}_y_prob".format(ctx.cur_mode),
+            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_mode))))
         results = self.evaluator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
