@@ -47,13 +47,20 @@ class Evaluator(object):
         return results
 
     def _check_and_parse(self, ctx):
-        if not '{}_y_true'.format(ctx.cur_data_split) in ctx:
+        ctx.y_true
+        if ctx.get("y_true") is None:
             raise KeyError('Missing key y_true!')
-        if not '{}_y_prob'.format(ctx.cur_data_split) in ctx:
+        if ctx.get("y_prob") is None:
             raise KeyError('Missing key y_prob!')
+        # if not '{}_y_true'.format(ctx.cur_data_split) in ctx:
+        #     raise KeyError('Missing key y_true!')
+        # if not '{}_y_prob'.format(ctx.cur_data_split) in ctx:
+        #     raise KeyError('Missing key y_prob!')
 
-        y_true = ctx.get("{}_y_true".format(ctx.cur_data_split))
-        y_prob = ctx.get("{}_y_prob".format(ctx.cur_data_split))
+        # y_true = ctx.get("{}_y_true".format(ctx.cur_data_split))
+        # y_prob = ctx.get("{}_y_prob".format(ctx.cur_data_split))
+        y_true = ctx.y_true
+        y_prob = ctx.y_prob
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()

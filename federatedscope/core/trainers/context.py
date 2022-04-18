@@ -1,4 +1,6 @@
+import collections
 import math
+from abc import abstractmethod
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
@@ -6,7 +8,15 @@ from federatedscope.core.auxiliaries.model_builder import get_trainable_para_nam
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 
 
-class Context(dict):
+class BasicDict(dict):
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+    __getattr__ = dict.__getitem__
+
+
+
+
+class Context(BasicDict):
     """Record and pass variables among different hook functions.
 
     Arguments:
@@ -66,14 +76,38 @@ class Context(dict):
         eval_metrics (dict): evaluation results
     """
 
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
     def __getattr__(self, item):
-        try:
-            return self[item]
-        except KeyError:
+        """Fetch a general attribute or an instance of class `CtxStatsVar` from the scope of `self.cur_mode`
+
+        Args:
+            item: the name of attribute
+
+        Returns:
+
+        """
+        if item in self:
+            if isinstance(self[item], BasicCtxVar):
+                return self[item].obj
+            else:
+                return self[item]
+        elif item in self.get(self.cur_mode, list()):
+            value = self[self.cur_mode][item]
+            if isinstance(value, CtxStatsVar):
+                return value
+            elif isinstance(value, CtxReferVar):
+                return value.obj
+        else:
             raise AttributeError("Attribute {} is not found".format(item))
+
+    def __setattr__(self, key, value):
+        if isinstance(value, BasicCtxVar):
+            if self.cur_mode not in self:
+                self[self.cur_mode] = dict()
+            self[self.cur_mode][key] = value
+        # elif self.cur_mode in self and key in self[self.cur_mode]:
+        #     self[self.cur_mode][key].obj = value
+        else:
+            self[key] = value
 
     def __init__(self,
                  model,
@@ -87,11 +121,19 @@ class Context(dict):
         else:
             super(Context, self).__init__(init_dict)
 
+        self['train'] = dict()
+        self['test'] = dict()
+        self['eval'] = dict()
+
         self.cfg = cfg
         self.model = model
         self.data = data
         self.device = device
+        self.mode = list()
         self.cur_mode = None
+
+        self.lifecycles = collections.defaultdict(set)
+
         self.cur_data_split = None
 
         if init_attr:
@@ -117,7 +159,6 @@ class Context(dict):
             self.optimizer = None
             self.grad_clip = None
 
-        self.mode = list()
         self.cur_data_splits_used_by_routine = list()
 
         # Process training data
@@ -144,6 +185,18 @@ class Context(dict):
                         getattr(self, "num_{}_data".format(mode)) %
                         self.cfg.data.batch_size)))
 
+    def get_variable(self, mode, key):
+        """To support the access of variables that doesn't belong the current mode
+
+        Args:
+            mode: which mode that the variable belongs to
+            key: the name of variable
+
+        Returns: the wanted variable
+
+        """
+        return self[mode][key]
+
     def pre_calculate_batch_epoch_num(self, local_update_steps):
         num_train_batch = self.num_train_data // self.cfg.data.batch_size + int(
             not self.cfg.data.drop_last
@@ -159,9 +212,15 @@ class Context(dict):
         return num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch
 
     def append_mode(self, mode):
+        if mode in self.mode:
+            raise RuntimeError(
+                "FederatedScope doesn't support nested routine with the same mode {}, variables could be covered.".format(
+                    mode))
         self.mode.append(mode)
         self.cur_mode = self.mode[-1]
         self.change_mode(self.cur_mode)
+        if self.cur_mode not in self:
+            self[self.cur_mode] = dict()
 
     def pop_mode(self):
         self.mode.pop()
@@ -185,3 +244,116 @@ class Context(dict):
         self.cur_data_splits_used_by_routine.pop()
         self.cur_data_split = self.cur_data_splits_used_by_routine[-1] if \
             len(self.cur_data_splits_used_by_routine) != 0 else None
+
+    def clear(self, lifecycle):
+        """Clear the variables at the end of their lifecycle
+
+        Args:
+            lifecycle: the type of lifecycle
+
+        Returns:
+
+        """
+        for var in self.lifecycles[lifecycle]:
+            if self[var].efunc is not None:
+                self[var].clear()
+            if not self[var].maintain:
+                del self[var]
+
+
+class BasicCtxVar(object):
+    LIEFTCYCLES = [
+        "batch",
+        "epoch",
+        "routine",
+        None
+    ]
+
+    def __init__(self, lifecycle=None, efunc=None, maintain=False):
+        """Basic variable class
+
+        Args:
+            maintain: if maintain the variable when calling `clear` function
+            lifecycle: specific lifecycle of the attribute
+            efunc: specific the calling function when the lifecycle of the attribute ends
+        """
+        assert lifecycle in BasicCtxVar.LIEFTCYCLES
+        assert efunc is None or callable(efunc)
+
+        self.maintain = maintain
+        self.lifecycle = lifecycle
+        self.efunc = efunc
+
+    def clear(self):
+        if self.efunc is not None:
+            self.efunc(self.obj)
+
+
+
+class CtxReferVar(BasicCtxVar):
+    def __init__(self, obj, lifecycle=None, efunc=None, maintain=False):
+        super(CtxReferVar, self).__init__(maintain=maintain, lifecycle=lifecycle, efunc=efunc)
+        self.obj = obj
+
+
+class CtxStatsVar(BasicCtxVar, float):
+    def __new__(cls, init=0., *args, **kwargs):
+        return super(CtxStatsVar, cls).__new__(cls, init)
+
+    def __init__(self, init=0., lifecycle='routine', efunc=None):
+        BasicCtxVar.__init__(self, lifecycle=lifecycle, efunc=efunc)
+        float.__init__(self)
+
+    def upt(self, value):
+        pass
+
+
+class CtxSumVar(CtxStatsVar):
+    def __init__(self, efunc=None, lifecycle="routine"):
+        super(CtxSumVar, self).__init__(efunc=efunc, lifecycle=lifecycle)
+
+    def upt(self, value):
+        self += value
+
+
+class CtxAvgVar(CtxStatsVar):
+    def __init__(self, efunc=None, lifecycle="routine"):
+        super(CtxAvgVar, self).__init__(efunc=efunc, lifecycle=lifecycle)
+        self.cnt = 1.
+
+    def upt(self, value):
+        self += (value - self) / (self.cnt + 1.)
+
+
+def ctx_manager(lifecycle):
+    """Manage the lifecycle of the variables within context, and blind these operations from user.
+
+    Args:
+        lifecycle: the type of lifecycle, choose from "batch/epoch/routine"
+    """
+    if lifecycle == "routine":
+        def decorate(func):
+            def wrapper(self, mode, dataset_name=None):
+                self.ctx.append_mode(mode)
+                self.ctx.track_used_dataset(dataset_name or mode)
+
+                res = func(self, mode, dataset_name)
+
+                self.ctx.pop_mode()
+                self.ctx.reset_used_dataset()
+
+                # Clear the variables at the end of lifecycles
+                self.ctx.clear(lifecycle)
+                return res
+
+            return wrapper
+    else:
+        def decorate(func):
+            def wrapper(self):
+                res = func(self)
+                # Clear the variables at the end of lifecycles
+                self.ctx.clear(lifecycle)
+                return res
+
+            return wrapper
+    return decorate

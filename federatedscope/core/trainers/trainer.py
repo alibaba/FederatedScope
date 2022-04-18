@@ -9,6 +9,11 @@ from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 from federatedscope.core.auxiliaries import utils
 from federatedscope.core.trainers.context import Context
+from federatedscope.core.trainers.context import CtxReferVar
+from federatedscope.core.trainers.context import CtxSumVar
+from federatedscope.core.trainers.context import CtxAvgVar
+from federatedscope.core.trainers.context import CtxStatsVar
+from federatedscope.core.trainers.context import ctx_manager
 from federatedscope.core.evaluator import Evaluator
 
 try:
@@ -19,22 +24,6 @@ except ImportError:
     DataLoader = None
     Dataset = None
 
-
-
-def ctx_manager(lifecycle):
-    """Manage the lifecycle of the variables within context, and blind these operations from user.
-
-    Args:
-        lifecycle: the type of lifecycle, choose from "batch/epoch/routine"
-    """
-    def decorate(func):
-        def wrapper(self, *args, **kwargs):
-            res = func(self, *args, **kwargs)
-            # Clear the corresponding variables
-            self.ctx.clear(lifecycle)
-            return res
-        return wrapper
-    return decorate
 
 class Trainer(object):
     """
@@ -205,13 +194,16 @@ class Trainer(object):
     def _run_batch(self):
         for batch_i in range(self.ctx.get("num_{}_batch".format(self.ctx.cur_data_split))):
             self.ctx.cur_batch_i = batch_i
+
             for hook in self._get_hooks("on_batch_start"):
                 hook(self.ctx)
+
             for hook in self._get_hooks("on_batch_forward"):
                 hook(self.ctx)
-            if self.ctx.cur_mode == 'train':
-                for hook in self._get_hooks("on_batch_backward"):
-                    hook(self.ctx)
+
+            for hook in self._get_hooks("on_batch_backward"):
+                hook(self.ctx)
+
             for hook in self._get_hooks("on_batch_end"):
                 hook(self.ctx)
 
@@ -245,11 +237,6 @@ class Trainer(object):
         self.ctx, we must tell the running hooks which data_loader to call and which num_samples to count
 
         """
-        if dataset_name is None:
-            dataset_name = mode
-        self.ctx.append_mode(mode)
-        self.ctx.track_used_dataset(dataset_name)
-
         for hook in self._get_hooks("on_fit_start"):
             hook(self.ctx)
 
@@ -258,8 +245,6 @@ class Trainer(object):
         for hook in self._get_hooks("on_fit_end"):
             hook(self.ctx)
 
-        self.ctx.pop_mode()
-        self.ctx.reset_used_dataset()
         # Avoid memory leak
         if not self.cfg.federate.share_local_model:
             if torch is None:
@@ -369,7 +354,6 @@ class GeneralTorchTrainer(Trainer):
         return init_dict
 
     def train(self, target_data_split_name="train"):
-        hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
                     f"{target_data_split_name}_loader") is None:
@@ -380,7 +364,7 @@ class GeneralTorchTrainer(Trainer):
 
         # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
 
-        return self.ctx.num_samples_train, self._param_filter(
+        return self.ctx.num_samples, self._param_filter(
             self.ctx.model.state_dict() if self.cfg.federate.share_local_model
             else self.ctx.model.cpu().state_dict()), self.ctx.eval_metrics
 
@@ -442,15 +426,15 @@ class GeneralTorchTrainer(Trainer):
         # prepare model
         ctx.model.to(ctx.device)
 
-        # prepare statistics
-        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
-        setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
+        # Prepare variables
+        ctx.loss_batch_total = CtxSumVar()
+        ctx.loss_regular_total = CtxSumVar()
+        ctx.num_samples = CtxSumVar()
+        ctx.ys_true = CtxReferVar(list(), "routine")
+        ctx.ys_prob = CtxReferVar(list(), "routine")
 
     def _hook_on_epoch_start(self, ctx):
-        # prepare dataloader
+        # Prepare dataloader
         if ctx.get("{}_loader".format(ctx.cur_data_split)) is None:
             loader = get_dataloader(
                 WrapDataset(ctx.get("{}_data".format(ctx.cur_data_split))),
@@ -466,10 +450,10 @@ class GeneralTorchTrainer(Trainer):
             ctx.get("{}_loader".format(ctx.cur_data_split)).reset()
 
     def _hook_on_batch_start_init(self, ctx):
-        # prepare data batch
+        # Prepare data batch
         try:
-            ctx.data_batch = next(
-                ctx.get("{}_loader".format(ctx.cur_data_split)))
+            # TODO: modify prepare function
+            ctx.data_batch = CtxReferVar(next(ctx.get("{}_loader".format(ctx.cur_data_split))), "batch")
         except StopIteration:
             raise StopIteration
 
@@ -478,16 +462,19 @@ class GeneralTorchTrainer(Trainer):
         pred = ctx.model(x)
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
-        ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
 
-        ctx.batch_size = len(label)
+        ctx.loss_batch = CtxReferVar(ctx.criterion(pred, label), "batch")
+        ctx.batch_size = CtxStatsVar(len(label), "batch")
+
+        # Cache label for evaluate
+        ctx.ys_true.append(label.detach().cpu().numpy())
+        ctx.ys_prob.append(pred.detach().cpu().numpy())
+
 
     def _hook_on_batch_forward_regularizer(self, ctx):
-        ctx.loss_regular = float(
-            self.cfg.regularizer.mu) * ctx.regularizer(ctx)
-        ctx.loss_task = ctx.loss_batch + ctx.loss_regular
+        ctx.loss_regular = CtxReferVar(self.cfg.regularizer.mu*ctx.regularizer(ctx), "batch")
+        ctx.loss_task = CtxReferVar(ctx.loss_batch+ctx.loss_regular, "batch")
+
 
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
@@ -498,51 +485,19 @@ class GeneralTorchTrainer(Trainer):
         ctx.optimizer.step()
 
     def _hook_on_batch_end(self, ctx):
-        # update statistics
-        setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) +
-            ctx.loss_batch.item() * ctx.batch_size)
+        # Update statistics
+        ctx.loss_batch_total.upt(ctx.loss_batch.item() * ctx.batch_size)
+        ctx.loss_regular_total.upt(ctx.loss_regular)
+        ctx.num_samples.upt(ctx.batch_size)
 
-        if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
-            loss_regular = 0.
-        else:
-            loss_regular = ctx.loss_regular.item()
-        setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
-            loss_regular)
-        setattr(
-            ctx, "num_samples_{}".format(ctx.cur_data_split),
-            ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
-            ctx.batch_size)
-
-        # cache label for evaluate
-        ctx.get("{}_y_true".format(ctx.cur_data_split)).append(
-            ctx.y_true.detach().cpu().numpy())
-
-        ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
-            ctx.y_prob.detach().cpu().numpy())
-
-        # clean temp ctx
-        ctx.data_batch = None
-        ctx.batch_size = None
-        ctx.loss_task = None
-        ctx.loss_batch = None
-        ctx.loss_regular = None
-        ctx.y_true = None
-        ctx.y_prob = None
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
 
         """
-        setattr(
-            ctx, "{}_y_true".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_data_split))))
-        setattr(
-            ctx, "{}_y_prob".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
+        ctx.y_true = CtxReferVar(np.concatenate(ctx.ys_true), "routine")
+        ctx.y_prob = CtxReferVar(np.concatenate(ctx.ys_prob), "routine")
+
         results = self.evaluator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
