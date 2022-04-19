@@ -418,8 +418,6 @@ class GeneralTorchTrainer(Trainer):
                                    "on_batch_start")
         self.register_hook_in_eval(self._hook_on_batch_forward,
                                    "on_batch_forward")
-        self.register_hook_in_eval(self._hook_on_batch_forward_regularizer,
-                                   "on_batch_forward")
         self.register_hook_in_eval(self._hook_on_batch_end, "on_batch_end")
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
@@ -485,9 +483,11 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_batch_end(self, ctx):
         # Update statistics
-        ctx.mode.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
-        ctx.mode.loss_regular_total += ctx.loss_regular
         ctx.mode.num_samples += ctx.batch_size
+        ctx.mode.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
+        if hasattr(ctx, "loss_regular"):
+            ctx.mode.loss_regular_total += float(ctx.loss_regular)
+
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.

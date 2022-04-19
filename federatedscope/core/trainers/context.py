@@ -7,14 +7,17 @@ from federatedscope.core.auxiliaries.model_builder import get_trainable_para_nam
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 
 
-class BasicDict(dict):
+class LifecycleDict(dict):
+    """A customized dict that provides lifecycle management
 
-    __setattr__ = dict.__setitem__
+    Arguments:
+        init_dict: initialized dict
+    """
     __delattr__ = dict.__delitem__
 
     def __init__(self, init_dict=None):
         if init_dict is not None:
-            super(BasicDict, self).__init__(init_dict)
+            super(LifecycleDict, self).__init__(init_dict)
         self.lifecycles = collections.defaultdict(set)
 
     def __setattr__(self, key, value):
@@ -37,8 +40,53 @@ class BasicDict(dict):
                 del self[var]
 
 
-class Context(BasicDict):
+class Context(LifecycleDict):
+    """Record and pass variables among different hook functions
+
+    Arguments:
+        model: training model
+        cfg: config
+        data (dict): a dict contains train/val/test dataset or dataloader
+        device: running device
+        init_dict (dict): a dict used to initialize the instance of Context
+        init_attr (bool): if set up the static variables
+
+    Note:
+        There are two ways to set/get the variables within an instance `ctx`:
+            - `ctx.${NAME}`: the variable is assigned to `ctx` as an attribute without additional operations
+            - `ctx.mode.${NAME}`: the variable is stored in `ctx["mode"][ctx.cur_mode][${NAME}]`, and is only accessible \
+            when `ctx.cur_mode` is correct.
+        The setting of `ctx.mode.${NAME}` means you can nest test routine in the training routine. The record \
+        variables with the same name will be stored according to `ctx.cur_mode` and won't influence each other. For \
+        now, the `Context` class only permits nested routine with different `ctx.cur_mode`.
+    """
+
     __delattr__ = dict.__delitem__
+
+    def __init__(self,
+                 model,
+                 cfg,
+                 data=None,
+                 device=None,
+                 init_dict=None,
+                 init_attr=True):
+        super(Context, self).__init__(init_dict)
+
+        self.cfg = cfg
+        self.model = model
+        self.data = data
+        self.device = device
+        self.cur_mode = None
+        self.mode_stack = list()
+        self.mode = collections.defaultdict(LifecycleDict)
+
+        self.lifecycles = collections.defaultdict(set)
+
+        self.cur_data_split = None
+
+        if init_attr:
+            # setup static variables for training/evaluation
+            self._setup_vars()
 
     def __getattr__(self, item):
         try:
@@ -53,32 +101,6 @@ class Context(BasicDict):
             return value.obj
         else:
             return value
-
-    def __init__(self,
-                 model,
-                 cfg,
-                 data=None,
-                 device=None,
-                 init_dict=None,
-                 init_attr=True):
-
-        super(Context, self).__init__(init_dict)
-
-        self.cfg = cfg
-        self.model = model
-        self.data = data
-        self.device = device
-        self.cur_mode = None
-        self.mode_stack = list()
-        self.mode = collections.defaultdict(BasicDict)
-
-        self.lifecycles = collections.defaultdict(set)
-
-        self.cur_data_split = None
-
-        if init_attr:
-            # setup static variables for training/evaluation
-            self._setup_vars()
 
     def _setup_vars(self):
         if self.cfg.backend == 'torch':
@@ -206,6 +228,12 @@ class Context(BasicDict):
 
 
 class BasicCtxVar(object):
+    """Basic variable class
+
+    Arguments:
+        lifecycle: specific lifecycle of the attribute
+    """
+
     LIEFTCYCLES = [
         "batch",
         "epoch",
@@ -213,22 +241,23 @@ class BasicCtxVar(object):
         None
     ]
 
-    def __init__(self, lifecycle=None, maintain=False):
-        """Basic variable class
-
-        Args:
-            maintain: if maintain the variable when calling `clear` function
-            lifecycle: specific lifecycle of the attribute
-            efunc: specific the calling function when the lifecycle of the attribute ends
-        """
+    def __init__(self, lifecycle=None):
         assert lifecycle in BasicCtxVar.LIEFTCYCLES
 
-        self.maintain = maintain
         self.lifecycle = lifecycle
 
+
 class CtxReferVar(BasicCtxVar):
-    def __init__(self, obj, lifecycle=None, efunc=None, maintain=False):
-        super(CtxReferVar, self).__init__(maintain=maintain, lifecycle=lifecycle)
+    """To store the reference variables with specific lifecycle and clear function, e.g. model, data, dataloader
+
+    Arguments:
+        obj: the stored obj
+        lifecycle: the specific lifecycle of the variable
+        efunc: a function that will be called when the lifecycle ends
+
+    """
+    def __init__(self, obj, lifecycle=None, efunc=None):
+        super(CtxReferVar, self).__init__(lifecycle=lifecycle)
         self.obj = obj
         self.efunc = efunc
 
@@ -237,12 +266,20 @@ class CtxReferVar(BasicCtxVar):
             self.efunc(self.obj)
 
 class CtxStatsVar(BasicCtxVar, float):
+    """To store the statistic digits with specific lifecycle, e.g. loss_batch, loss_total, and the default type is float
+
+    Arguments:
+        init: the initialized value
+        lifecycle: the specific lifecycle of the variable
+
+    """
     def __new__(cls, init=0., *args, **kwargs):
         return super(CtxStatsVar, cls).__new__(cls, init)
 
     def __init__(self, init=0., lifecycle='routine'):
         BasicCtxVar.__init__(self, lifecycle=lifecycle)
         float.__init__(self)
+
 
 def lifecycle(lifecycle):
     """Manage the lifecycle of the variables within context, and blind these operations from user.
