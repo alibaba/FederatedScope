@@ -81,7 +81,7 @@ def hook_on_batch_backward_invert_gradient(ctx):
         ctx.loss_batch.backward()
         original_grad = []
 
-        for param in ctx["model"].parameters():
+        for param in ctx.model.parameters():
             original_grad.append(param.grad.detach())
             param.grad = -1 * param.grad
 

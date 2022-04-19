@@ -47,20 +47,12 @@ class Evaluator(object):
         return results
 
     def _check_and_parse(self, ctx):
-        ctx.y_true
-        if ctx.get("y_true") is None:
+        if ctx.mode.y_true is None:
             raise KeyError('Missing key y_true!')
-        if ctx.get("y_prob") is None:
+        if ctx.mode.y_prob is None:
             raise KeyError('Missing key y_prob!')
-        # if not '{}_y_true'.format(ctx.cur_data_split) in ctx:
-        #     raise KeyError('Missing key y_true!')
-        # if not '{}_y_prob'.format(ctx.cur_data_split) in ctx:
-        #     raise KeyError('Missing key y_prob!')
-
-        # y_true = ctx.get("{}_y_true".format(ctx.cur_data_split))
-        # y_prob = ctx.get("{}_y_prob".format(ctx.cur_data_split))
-        y_true = ctx.y_true
-        y_prob = ctx.y_prob
+        y_true = ctx.mode.y_true
+        y_prob = ctx.mode.y_prob
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
@@ -178,20 +170,19 @@ def eval_rmse(y_true, y_pred, **kwargs):
 
 
 def eval_loss(ctx, **kwargs):
-    return ctx.get('loss_batch_total_{}'.format(ctx.cur_data_split))
+    return ctx.mode.loss_batch_total
 
 
 def eval_avg_loss(ctx, **kwargs):
-    return ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) / ctx.get(
-        "num_samples_{}".format(ctx.cur_data_split))
+    return ctx.mode.loss_batch_total / ctx.mode.num_samples
 
 
 def eval_total(ctx, **kwargs):
-    return ctx.get("num_samples_{}".format(ctx.cur_data_split))
+    return ctx.mode.num_samples
 
 
 def eval_regular(ctx, **kwargs):
-    return ctx.get("loss_regular_total_{}".format(ctx.cur_data_split))
+    return ctx.mode.loss_regular_total
 
 
 SUPPORT_METRICS = {

@@ -9,105 +9,48 @@ from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 
 
 class BasicDict(dict):
+
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
-    __getattr__ = dict.__getitem__
 
-
-
-
-class Context(BasicDict):
-    """Record and pass variables among different hook functions.
-
-    Arguments:
-        model (Module): training model
-        data (dict): a dict contains train/val/test dataset or dataloader
-        # blind
-        device: running device
-
-    Record attributes:
-        model (Module): the training model
-        data (dict): a dict contains train/val/test dataset or dataloader
-        device (torch.device): specific device to running to
-        criterion: specific loss function
-        optimizer: specific optimizer
-        mode: maintain the current mode of the model
-
-        data_batch: current batch data from train/test/val data loader
-
-        # train
-        trainable_para_names (list): a list of the names of the trainable parameters within ```ctx.model```
-        train_data: training dataset
-        train_loader: training dataloader
-        num_train_data (int): the number of training samples within one epoch
-        num_train_epoch (int): the number of total training epochs
-        num_train_batch (int): the number of batches within one completed training epoch
-        num_train_batch_last_epoch (int): the number of batches within the last epoch
-
-        # test
-        test_data: test data
-        test_loader: test dataloader
-        num_test_data (int): the number of test samples within one epoch
-        num_test_epoch (int): the number of test epochs, default 1
-        num_test_batch (int): the number of batches within one completed test epoch
-
-        # val
-        val_data: val data
-        val_loader: val dataloader
-        num_val_data (int): the number of val samples within one epoch
-        num_val_epoch (int): the number of val epochs, default 1
-        num_val_batch (int): the number of batches within one completed val epoch
-
-    Statistical variables:
-        loss_batch (float): loss of the current data_batch, shared by train/test/val
-        loss_regular (float): loss of the regularizer
-        loss_task (float): the sum of loss_batch and loss_regular
-
-        loss_total_batch_train (float): accumulated batch loss during training
-        loss_total_regular_train (float): accumulated regular loss during training
-        num_samples_train (int): accumulated number of training samples involved at present
-
-        loss_total_test (float): accumulated batch loss during test
-        num_samples_test (float): accumulated regular loss during test
-
-        loss_total_val (float): accumulated batch loss during val
-        num_samples_val (float): accumulated regular loss during val
-
-        eval_metrics (dict): evaluation results
-    """
-
-    def __getattr__(self, item):
-        """Fetch a general attribute or an instance of class `CtxStatsVar` from the scope of `self.cur_mode`
-
-        Args:
-            item: the name of attribute
-
-        Returns:
-
-        """
-        if item in self:
-            if isinstance(self[item], BasicCtxVar):
-                return self[item].obj
-            else:
-                return self[item]
-        elif item in self.get(self.cur_mode, list()):
-            value = self[self.cur_mode][item]
-            if isinstance(value, CtxStatsVar):
-                return value
-            elif isinstance(value, CtxReferVar):
-                return value.obj
-        else:
-            raise AttributeError("Attribute {} is not found".format(item))
+    def __init__(self, init_dict=None):
+        if init_dict is not None:
+            super(BasicDict, self).__init__(init_dict)
+        self.lifecycles = collections.defaultdict(set)
 
     def __setattr__(self, key, value):
         if isinstance(value, BasicCtxVar):
-            if self.cur_mode not in self:
-                self[self.cur_mode] = dict()
-            self[self.cur_mode][key] = value
-        # elif self.cur_mode in self and key in self[self.cur_mode]:
-        #     self[self.cur_mode][key].obj = value
+            self.lifecycles[value.lifecycle].add(key)
+        self[key] = value
+
+    def __getattr__(self, item):
+        value = self[item]
+        if isinstance(value, CtxReferVar):
+            return value.obj
         else:
-            self[key] = value
+            return value
+
+    def clear(self, lifecycle):
+        for var in self.lifecycles[lifecycle]:
+            if hasattr(self[var], "clear"):
+                self[var].clear()
+            else:
+                del self[var]
+
+
+class Context(BasicDict):
+    __delattr__ = dict.__delitem__
+
+    def __getattr__(self, item):
+        if item == "mode":
+            value = self["mode"][self.cur_mode]
+        else:
+            value = self[item]
+
+        if isinstance(value, CtxReferVar):
+            return value.obj
+        else:
+            return value
 
     def __init__(self,
                  model,
@@ -116,21 +59,16 @@ class Context(BasicDict):
                  device=None,
                  init_dict=None,
                  init_attr=True):
-        if init_dict is None:
-            super(Context, self).__init__()
-        else:
-            super(Context, self).__init__(init_dict)
 
-        self['train'] = dict()
-        self['test'] = dict()
-        self['eval'] = dict()
+        super(Context, self).__init__(init_dict)
 
         self.cfg = cfg
         self.model = model
         self.data = data
         self.device = device
-        self.mode = list()
         self.cur_mode = None
+        self.mode_stack = list()
+        self.mode = collections.defaultdict(BasicDict)
 
         self.lifecycles = collections.defaultdict(set)
 
@@ -212,20 +150,20 @@ class Context(BasicDict):
         return num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch
 
     def append_mode(self, mode):
-        if mode in self.mode:
+        if mode in self.mode_stack:
             raise RuntimeError(
                 "FederatedScope doesn't support nested routine with the same mode {}, variables could be covered.".format(
                     mode))
-        self.mode.append(mode)
-        self.cur_mode = self.mode[-1]
+        self.mode_stack.append(mode)
+        self.cur_mode = self.mode_stack[-1]
         self.change_mode(self.cur_mode)
         if self.cur_mode not in self:
             self[self.cur_mode] = dict()
 
     def pop_mode(self):
-        self.mode.pop()
-        self.cur_mode = self.mode[-1] if len(self.mode) != 0 else None
-        if len(self.mode) != 0:
+        self.mode_stack.pop()
+        self.cur_mode = self.mode_stack[-1] if len(self.mode_stack) != 0 else None
+        if len(self.mode_stack) != 0:
             self.change_mode(self.cur_mode)
 
     def change_mode(self, mode):
@@ -254,11 +192,15 @@ class Context(BasicDict):
         Returns:
 
         """
+        # Clear general attributes
         for var in self.lifecycles[lifecycle]:
-            if self[var].efunc is not None:
+            if hasattr(self[var], "clear"):
                 self[var].clear()
-            if not self[var].maintain:
+            else:
                 del self[var]
+        # Also clear the attributes under the current mode
+        self.mode.clear(lifecycle)
+
 
 
 class BasicCtxVar(object):
@@ -269,7 +211,7 @@ class BasicCtxVar(object):
         None
     ]
 
-    def __init__(self, lifecycle=None, efunc=None, maintain=False):
+    def __init__(self, lifecycle=None, maintain=False):
         """Basic variable class
 
         Args:
@@ -278,52 +220,27 @@ class BasicCtxVar(object):
             efunc: specific the calling function when the lifecycle of the attribute ends
         """
         assert lifecycle in BasicCtxVar.LIEFTCYCLES
-        assert efunc is None or callable(efunc)
 
         self.maintain = maintain
         self.lifecycle = lifecycle
+
+class CtxReferVar(BasicCtxVar):
+    def __init__(self, obj, lifecycle=None, efunc=None, maintain=False):
+        super(CtxReferVar, self).__init__(maintain=maintain, lifecycle=lifecycle)
+        self.obj = obj
         self.efunc = efunc
 
     def clear(self):
         if self.efunc is not None:
             self.efunc(self.obj)
 
-
-
-class CtxReferVar(BasicCtxVar):
-    def __init__(self, obj, lifecycle=None, efunc=None, maintain=False):
-        super(CtxReferVar, self).__init__(maintain=maintain, lifecycle=lifecycle, efunc=efunc)
-        self.obj = obj
-
-
 class CtxStatsVar(BasicCtxVar, float):
     def __new__(cls, init=0., *args, **kwargs):
         return super(CtxStatsVar, cls).__new__(cls, init)
 
-    def __init__(self, init=0., lifecycle='routine', efunc=None):
-        BasicCtxVar.__init__(self, lifecycle=lifecycle, efunc=efunc)
+    def __init__(self, init=0., lifecycle='routine'):
+        BasicCtxVar.__init__(self, lifecycle=lifecycle)
         float.__init__(self)
-
-    def upt(self, value):
-        pass
-
-
-class CtxSumVar(CtxStatsVar):
-    def __init__(self, efunc=None, lifecycle="routine"):
-        super(CtxSumVar, self).__init__(efunc=efunc, lifecycle=lifecycle)
-
-    def upt(self, value):
-        self += value
-
-
-class CtxAvgVar(CtxStatsVar):
-    def __init__(self, efunc=None, lifecycle="routine"):
-        super(CtxAvgVar, self).__init__(efunc=efunc, lifecycle=lifecycle)
-        self.cnt = 1.
-
-    def upt(self, value):
-        self += (value - self) / (self.cnt + 1.)
-
 
 def ctx_manager(lifecycle):
     """Manage the lifecycle of the variables within context, and blind these operations from user.
@@ -339,11 +256,12 @@ def ctx_manager(lifecycle):
 
                 res = func(self, mode, dataset_name)
 
+                # Clear the variables at the end of lifecycles
+                self.ctx.clear(lifecycle)
+
                 self.ctx.pop_mode()
                 self.ctx.reset_used_dataset()
 
-                # Clear the variables at the end of lifecycles
-                self.ctx.clear(lifecycle)
                 return res
 
             return wrapper
@@ -357,3 +275,4 @@ def ctx_manager(lifecycle):
 
             return wrapper
     return decorate
+
