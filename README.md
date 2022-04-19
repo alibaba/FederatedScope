@@ -2,7 +2,10 @@
     <img src="https://img.alicdn.com/imgextra/i1/O1CN01P4ImT91Yj6B2WPQVK_!!6000000003094-2-tps-1207-625.png" width="400" alt="federatedscope-logo">
 </h1>
 
-![](https://img.shields.io/badge/language-python-blue.svg) ![](https://img.shields.io/badge/license-Apache-000000.svg)
+![](https://img.shields.io/badge/language-python-blue.svg)
+![](https://img.shields.io/badge/license-Apache-000000.svg)
+[![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
+[![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
 
 FederatedScope is a comprehensive federated learning platform that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on a message-oriented framework, FederatedScope integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
