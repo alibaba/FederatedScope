@@ -1,6 +1,5 @@
 import collections
 import math
-from abc import abstractmethod
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
@@ -42,10 +41,13 @@ class Context(BasicDict):
     __delattr__ = dict.__delitem__
 
     def __getattr__(self, item):
-        if item == "mode":
-            value = self["mode"][self.cur_mode]
-        else:
-            value = self[item]
+        try:
+            if item == "mode":
+                value = self["mode"][self.cur_mode]
+            else:
+                value = self[item]
+        except KeyError:
+            raise AttributeError(item)
 
         if isinstance(value, CtxReferVar):
             return value.obj
@@ -242,7 +244,7 @@ class CtxStatsVar(BasicCtxVar, float):
         BasicCtxVar.__init__(self, lifecycle=lifecycle)
         float.__init__(self)
 
-def ctx_manager(lifecycle):
+def lifecycle(lifecycle):
     """Manage the lifecycle of the variables within context, and blind these operations from user.
 
     Args:

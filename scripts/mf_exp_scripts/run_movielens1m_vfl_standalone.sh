@@ -21,7 +21,7 @@ do
     do
       round=$[1000/${steps[$is]}]
       python federatedscope/main.py --cfg federatedscope/mf/baseline/vfl_fedavg_standalone_on_movielens1m.yaml device ${cudaid} \
-      data.root /mnt/gaodawei.gdw/data/ \
+      data.root data \
       sgdmf.use False \
       optimizer.lr ${lrs[$il]} \
       federate.local_update_steps ${steps[$is]} \

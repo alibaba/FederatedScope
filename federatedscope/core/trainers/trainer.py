@@ -11,7 +11,7 @@ from federatedscope.core.auxiliaries import utils
 from federatedscope.core.trainers.context import Context
 from federatedscope.core.trainers.context import CtxReferVar
 from federatedscope.core.trainers.context import CtxStatsVar
-from federatedscope.core.trainers.context import ctx_manager
+from federatedscope.core.trainers.context import lifecycle
 from federatedscope.core.evaluator import Evaluator
 
 try:
@@ -107,7 +107,7 @@ class Trainer(object):
         else:
             for hook_idx in range(len(hooks_dict[target_trigger])):
                 if target_hook_name == hooks_dict[target_trigger][
-                        hook_idx].__name__:
+                    hook_idx].__name__:
                     del_one = hooks_dict[target_trigger].pop(hook_idx)
                     logging.info(
                         f"Remove the hook `{del_one}` from hooks_set at trigger `{target_trigger}`"
@@ -170,25 +170,25 @@ class Trainer(object):
     def train(self, target_data_split_name="train"):
         pass
 
-    def _get_hooks(self, trigger):
+    def _get_hooks(self, trigger=None):
         name = "train" if self.ctx.cur_mode == "train" else "eval"
         return getattr(self, "hooks_in_{}".format(name))[trigger]
 
-    def evaluate(self, target_data_split_name="test"):
+    def evaluate(self, mode, target_data_split_name="test"):
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
+            f"{target_data_split_name}_loader") is None:
             logging.warning(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer, will skip evaluation"
                 f"If this is not the case you want, please check whether there is typo for the name"
             )
             self.ctx.eval_metrics = {}
         else:
-            self._run_routine("test", target_data_split_name)
+            self._run_routine(mode, target_data_split_name)
 
         return self.ctx.eval_metrics
 
-    @ctx_manager("batch")
+    @lifecycle("batch")
     def _run_batch(self):
         for batch_i in range(self.ctx.get("num_{}_batch".format(self.ctx.cur_data_split))):
             self.ctx.cur_batch_i = CtxStatsVar(batch_i)
@@ -210,7 +210,7 @@ class Trainer(object):
                 if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
                     break
 
-    @ctx_manager("epoch")
+    @lifecycle("epoch")
     def _run_epoch(self):
         # TODO: epoch mode or split
         for epoch_i in range(self.ctx.get("num_{}_epoch".format(self.ctx.cur_data_split))):
@@ -224,7 +224,7 @@ class Trainer(object):
             for hook in self._get_hooks("on_epoch_end"):
                 hook(self.ctx)
 
-    @ctx_manager("routine")
+    @lifecycle("routine")
     def _run_routine(self, mode, dataset_name=None):
         """Run the hooks_set and maintain the mode
 
@@ -355,7 +355,7 @@ class GeneralTorchTrainer(Trainer):
     def train(self, target_data_split_name="train"):
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
+            f"{target_data_split_name}_loader") is None:
             raise ValueError(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
             )
@@ -381,15 +381,15 @@ class GeneralTorchTrainer(Trainer):
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=False)
 
-    def evaluate(self, target_data_split_name="test"):
+    def evaluate(self, mode, target_data_split_name="test"):
         with torch.no_grad():
-            super().evaluate(target_data_split_name)
+            super().evaluate(mode, target_data_split_name)
 
         return self.ctx.eval_metrics
 
-    def validate(self, target_data_split_name="val"):
+    def validate(self, mode, target_data_split_name="val"):
         with torch.no_grad():
-            super().evaluate(target_data_split_name)
+            super().evaluate(mode, target_data_split_name)
 
         return self.ctx.eval_metrics
 
@@ -417,6 +417,8 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_batch_start_init,
                                    "on_batch_start")
         self.register_hook_in_eval(self._hook_on_batch_forward,
+                                   "on_batch_forward")
+        self.register_hook_in_eval(self._hook_on_batch_forward_regularizer,
                                    "on_batch_forward")
         self.register_hook_in_eval(self._hook_on_batch_end, "on_batch_end")
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
@@ -469,11 +471,9 @@ class GeneralTorchTrainer(Trainer):
         ctx.mode.ys_true.append(label.detach().cpu().numpy())
         ctx.mode.ys_prob.append(pred.detach().cpu().numpy())
 
-
     def _hook_on_batch_forward_regularizer(self, ctx):
-        ctx.loss_regular = CtxReferVar(self.cfg.regularizer.mu*ctx.regularizer(ctx), "batch")
-        ctx.loss_task = CtxReferVar(ctx.loss_batch+ctx.loss_regular, "batch")
-
+        ctx.loss_regular = CtxReferVar(self.cfg.regularizer.mu * ctx.regularizer(ctx), "batch")
+        ctx.loss_task = CtxReferVar(ctx.loss_batch + ctx.loss_regular, "batch")
 
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
@@ -488,7 +488,6 @@ class GeneralTorchTrainer(Trainer):
         ctx.mode.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
         ctx.mode.loss_regular_total += ctx.loss_regular
         ctx.mode.num_samples += ctx.batch_size
-
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.

@@ -27,7 +27,7 @@ do
         for ((il=0; il<${#lrs[@]}; il++ ))
         do
           python federatedscope/main.py --cfg federatedscope/mf/baseline/hfl-sgdmf_fedavg_standalone_on_movielens1m.yaml device ${cudaid} \
-          data.root /mnt/gaodawei.gdw/data/ \
+          data.root data \
           sgdmf.use True \
           sgdmf.epsilon ${epsilons[$ie]} \
           sgdmf.delta ${deltas[$id]} \

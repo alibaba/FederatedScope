@@ -134,8 +134,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         if self.models_interact_mode == "sequential":
             # hooks_in_xxx is a list of dict, hooks_in_xxx[i] stores specific set for i-th internal model;
             # for each dict, the key indicates point-in-time and the value indicates specific hook
-            self.hooks_in_train = self.hooks_in_train_multiple_models
-            self.hooks_in_eval = self.hooks_in_eval_multiple_models
+            pass
         elif self.models_interact_mode == "parallel":
             # hooks_in_xxx is a dict whose key indicates point-in-time and value indicates specific hook
             for trigger in list(self.hooks_in_train.keys()):
@@ -186,7 +185,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         self.ctx.model = self.ctx.models[next_model_idx]
         self.ctx.optimizer = self.ctx.optimizers[next_model_idx]
 
-    def _run_routine(self, mode, hooks_set, dataset_name=None):
+    def _run_routine(self, mode, dataset_name=None):
         """Run the hooks_set and maintain the mode for multiple internal models
 
         Arguments:
@@ -197,7 +196,9 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         self.ctx, we must tell the running hooks which data_loader to call and which num_samples to count
 
         """
+        hooks_name = "hooks_in_train" if mode == "train" else "hooks_in_eval"
         if self.models_interact_mode == "sequential":
+            hooks_set = getattr(self, "{}_multiple_models".format(hooks_name))
             assert isinstance(hooks_set, list) and isinstance(hooks_set[0], dict), \
                 "When models_interact_mode=sequential, hooks_set should be a list of dict" \
                 "hooks_set[i] stores specific set for i-th internal model." \
@@ -213,8 +214,10 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 #     -> (on_fit_end, _interact_to_other_models)
                 #     -> run_routine_model_i+1
                 #     -> ...
-                super()._run_routine(mode, hooks_set_model_i, dataset_name)
+                setattr(self, hooks_name, hooks_set_model_i)
+                super()._run_routine(mode, dataset_name)
         elif self.models_interact_mode == "parallel":
+            hooks_set = getattr(self, hooks_name)
             assert isinstance(hooks_set, dict), \
                 "When models_interact_mode=parallel, hooks_set should be a dict " \
                 "whose key indicates point-in-time and value indicates specific hook"
@@ -225,7 +228,8 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
             #     ->  (on_xxx_point, _switch_model_ctx)
             #     ->  (on_xxx_point, hook_xxx_model_i+1)
             #     -> ...
-            super()._run_routine(mode, hooks_set, dataset_name)
+            setattr(self, hooks_name, hooks_set)
+            super()._run_routine(mode, dataset_name)
         else:
             raise RuntimeError(
                 f"Invalid models_interact_mode, should be `sequential` or `parallel`,"
@@ -252,7 +256,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
 
     def train(self, target_data_split_name="train"):
         # return multiple model paras
-        sample_size, _, results = super().train(target_data_split_name)
+        sample_size, _, results = super().train(target_data_split_name=target_data_split_name)
 
         trained_model_para = []
         for model_idx in range(self.model_nums):

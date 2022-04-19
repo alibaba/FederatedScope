@@ -84,7 +84,6 @@ class LEAF_NLP(LEAF):
     def download(self):
         # Download to `self.raw_dir`.
         url = '/xxx/xxx/share'
-        url = "/mnt/gaodawei.gdw/data/"
         from shutil import copyfile
 
         os.makedirs(self.raw_dir, exist_ok=True)

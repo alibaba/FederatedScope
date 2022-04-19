@@ -22,7 +22,7 @@ do
             for ((ic=0; ic<${#constants[@]}; ic++ ))
             do
                 python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} nbafl.use True \
-                data.root /mnt/gaodawei.gdw/data/ \
+                data.root data \
                 nbafl.mu ${mus[$im]} \
                 nbafl.epsilon ${epsilons[$ie]} \
                 nbafl.constant ${constants[$ic]} \

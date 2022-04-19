@@ -13,7 +13,7 @@ mus=(0.01 0.1 1. 10. 100.)
 for ((im=0; im<${#mus[@]}; im++ ))
 do
   python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml device ${cudaid} \
-  data.root /mnt/gaodawei.gdw/data/ \
+  data.root data \
   fedprox.use True \
   fedprox.mu ${mus[$im]} \
   >>out_fedprox_femnist/nothing.out \

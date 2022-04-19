@@ -13,7 +13,7 @@ mus=(0.01 0.1 1. 10. 100.)
 for ((im=0; im<${#mus[@]}; im++ ))
 do
   python federatedscope/main.py --cfg federatedscope/nlp/baseline/fedavg_lr_on_synthetic.yaml device ${cudaid} \
-  data.root /mnt/gaodawei.gdw/data/ \
+  data.root data \
   fedprox.use True \
   fedprox.mu ${mus[$im]} \
   >>out_fedprox_lr/nothing.out \

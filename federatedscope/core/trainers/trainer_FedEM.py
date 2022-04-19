@@ -113,7 +113,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             # gathers losses for all sample in iterator for each internal model, calling *evaluate()*
             for model_idx in range(self.model_nums):
                 self._switch_model_ctx(model_idx)
-                self.evaluate(target_data_split_name="train")
+                self.evaluate(mode="test", target_data_split_name="train")
 
             self.weights_data_sample = f_softmax(
                 (torch.log(self.weights_internal_models) -
@@ -128,20 +128,17 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
             Ensemble evaluation
         """
-        cur_data = ctx.cur_data_split
-        if f"{cur_data}_y_prob_ensemble" not in ctx:
-            ctx[f"{cur_data}_y_prob_ensemble"] = 0
-        ctx[f"{cur_data}_y_prob_ensemble"] += np.concatenate(ctx[f"{cur_data}_y_prob"]) * \
-                                    self.weights_internal_models[ctx.cur_model_idx].item()
+        if "y_prob_ensemble" not in ctx.mode:
+            ctx.mode.y_prob_ensemble = 0
+        ctx.mode.y_prob_ensemble += np.concatenate(ctx.mode.ys_prob) * self.weights_internal_models[ctx.cur_model_idx].item()
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:
-            ctx[f"{cur_data}_y_true"] = np.concatenate(
-                ctx[f"{cur_data}_y_true"])
-            ctx[f"{cur_data}_y_prob"] = ctx[f"{cur_data}_y_prob_ensemble"]
+            ctx.mode.y_true = np.concatenate(ctx.mode.ys_true)
+            ctx.mode.y_prob = ctx.mode.y_prob_ensemble
             ctx.eval_metrics = self.evaluator.eval(ctx)
             # reset for next run_routine that may have different len([f"{cur_data}_y_prob"])
-            ctx[f"{cur_data}_y_prob_ensemble"] = 0
+            ctx.mode.y_prob_ensemble = 0
 
-        ctx[f"{cur_data}_y_prob"] = []
-        ctx[f"{cur_data}_y_true"] = []
+        ctx.mode.ys_prob = []
+        ctx.mode.ys_true = []

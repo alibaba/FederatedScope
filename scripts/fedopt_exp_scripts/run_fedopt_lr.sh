@@ -13,7 +13,7 @@ lrs=(0.1 0.5 0.75 1. 1.25 1.5)
 for ((il=0; il<${#lrs[@]}; il++ ))
 do
   python federatedscope/main.py --cfg federatedscope/nlp/baseline/fedavg_lr_on_synthetic.yaml device ${cudaid} \
-  data.root /mnt/gaodawei.gdw/data/ \
+  data.root data \
   fedopt.use True \
   federate.method FedOpt \
   fedopt.lr_server ${lrs[$il]} \
