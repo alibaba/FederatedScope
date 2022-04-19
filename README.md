@@ -1,5 +1,5 @@
 <h1 align="center">
-    FederatedScope
+    <img src="https://img.alicdn.com/imgextra/i1/O1CN01P4ImT91Yj6B2WPQVK_!!6000000003094-2-tps-1207-625.png" width="400" alt="federatedscope-logo">
 </h1>
 
 ![](https://img.shields.io/badge/language-python-blue.svg) ![](https://img.shields.io/badge/license-Apache-000000.svg)
