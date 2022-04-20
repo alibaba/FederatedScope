@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-import torch_geometric.transforms
+import torch_geometric.transforms as transforms
 
 from torch_geometric.datasets import Planetoid
 from torch_geometric.utils import add_self_loops, remove_self_loops, to_undirected

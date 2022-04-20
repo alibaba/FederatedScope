@@ -1,10 +1,18 @@
-import torch
 import numpy as np
 
 
 def get_splitter(config):
-    # TODO: Fix this
-    return None
+    client_num = config.federate.client_num
+    args = eval(config.data.splitter_args)
+
+    # Delay import
+    if config.data.splitter == 'LDA':
+        from federatedscope.core.splitters import LDASplitter
+        splitter = LDASplitter(client_num, **args)
+    else:
+        splitter = None
+
+    return splitter
 
 
 def dirichlet_distribution_noniid_slice(label, client_num, alpha):
@@ -12,16 +20,16 @@ def dirichlet_distribution_noniid_slice(label, client_num, alpha):
     https://github.com/FedML-AI/FedML/blob/master/fedml_core/non_iid_partition/noniid_partition.py
 
     Arguments:
-        label (torch.Tensor): Label list to be split.
+        label (np.array): Label list to be split.
         client_num (int): Split label into client_num parts.
-        alpha (torch.Tensor): number of predicted missing node.
+        alpha (float): alpha of LDA.
     Returns:
         idx_slice (List): List of splited label index slice.
     """
-    if len(label.size()) != 1:
+    if len(label.shape) != 1:
         raise ValueError('Only support single-label tasks!')
-    num = label.size(0)
-    classes = len(torch.unique(label))
+    num = len(label)
+    classes = len(np.unique(label))
     # min number of sample in each client
     min_size = 0
     while min_size < 10:

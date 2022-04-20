@@ -119,6 +119,7 @@ def load_toy_data(config=None):
 
 
 def load_external_data(config=None):
+    import torch
     import inspect
     import logging
     from importlib import import_module
@@ -136,36 +137,28 @@ def load_external_data(config=None):
         filtered_dict = {key: kwarg[key] for key in common_args}
         return filtered_dict
 
-    def build_transforms(T_names, T):
+    def build_transforms(T_names, transforms):
         transform_funcs = {}
         for name in T_names:
             if config.data[name]:
+                # return composed transform or return list
                 try:
-                    # Compose might go wrong
-                    transform_funcs[name] = T.Compose(eval(config.data[name]))
+                    transform_funcs[name] = transforms.Compose(
+                        eval(config.data[name]))
                 except:
-                    logging.warning(
-                        f"Import {config.data[name]} failed, please check the args again."
-                    )
-                    return None
+                    transform_funcs[name] = eval(config.data[name])
             else:
                 transform_funcs[name] = None
-
         return transform_funcs
 
     def load_torchvision_data(name, splits=None, config=None):
         import torchvision
 
         dataset_func = getattr(import_module('torchvision.datasets'), name)
-        try:
-            transforms = getattr(import_module('torchvision'), 'transforms')
-            transform_funcs = build_transforms(
-                ['transform', 'target_transform'])
-            transform_funcs = filter_dict(dataset_func.__init__,
-                                          transform_funcs)
-        except:
-            transform_funcs = {}
-
+        transforms = getattr(import_module('torchvision'), 'transforms')
+        transform_funcs = build_transforms(['transform', 'target_transform'],
+                                           transforms)
+        transform_funcs = filter_dict(dataset_func.__init__, transform_funcs)
         raw_args = eval(config.data.args)
         raw_args.update({'download': True})
         filtered_args = filter_dict(dataset_func.__init__, raw_args)
@@ -183,6 +176,13 @@ def load_external_data(config=None):
                                         train=False,
                                         **filtered_args,
                                         **transform_funcs)
+            if splits:
+                train_size = int(splits[0] * len(dataset_train))
+                val_size = len(dataset_train) - train_size
+                lengths = [train_size, val_size]
+                dataset_train, dataset_val = torch.utils.data.dataset.random_split(
+                    dataset_train, lengths)
+
         elif 'split' in func_args:
             # Use raw split
             dataset_train = dataset_func(root=config.data.root,
@@ -216,6 +216,13 @@ def load_external_data(config=None):
             dataset = dataset_func(root=config.data.root,
                                    **filtered_args,
                                    **transform_funcs)
+            train_size = int(splits[0] * len(dataset))
+            val_size = int(splits[1] * len(dataset))
+            test_size = len(dataset) - train_size - val_size
+            lengths = [train_size, val_size, test_size]
+            dataset_train, dataset_val, dataset_test = torch.utils.data.dataset.random_split(
+                dataset, lengths)
+
         data_dict = {
             'train': dataset_train,
             'val': dataset_val,
@@ -253,55 +260,29 @@ def load_external_data(config=None):
     splits = config.data.splits
     name, package = config.data.type.split('@')
 
-    logging.info('Loading dataset...')
-    dataset_dict = load_data[package.lower()](name, splits, config)
-
+    logging.info('Loading external dataset...')
+    dataset = load_data[package.lower()](name, splits, config)
     splitter = get_splitter(config)
 
-    # Apply Splitter to dataset_dict
-    dataset_dict = {
-        key: splitter(value)
-        for key, value in dataset_dict.items()
-    }
+    data_local_dict = {x: {} for x in range(1, config.federate.client_num + 1)}
 
     # Build dict of Dataloader
-    data_local_dict = dict()
-    for client_idx, subdataset in enumerate(dataset):
-        index = np.random.permutation(np.arange(len(subdataset)))
-        if eval_dataset:
-            train_idx = index[:int(
-                len(subdataset) * splits[0] / (splits[0] + splits[1]))]
-            valid_idx = index[
-                int(len(subdataset) * splits[0] / (splits[0] + splits[1])):]
-            dataloader = {
-                'test':
-                DataLoader(eval_dataset[client_idx],
-                           batch_size=config.data.batch_size,
-                           shuffle=False,
-                           num_workers=config.data.num_workers)
-            }
-        else:
-            train_idx = index[:int(len(subdataset) * splits[0])]
-            valid_idx = index[int(len(subdataset) * splits[0]
-                                  ):int(len(subdataset) * sum(splits[:2]))]
-            test_idx = index[int(len(subdataset) * sum(splits[:2])):]
-            dataloader = {
-                'test':
-                DataLoader([subdataset[idx] for idx in test_idx],
-                           batch_size=config.data.batch_size,
-                           shuffle=False,
-                           num_workers=config.data.num_workers)
-            }
-        dataloader['train'] = DataLoader(
-            [subdataset[idx] for idx in train_idx],
-            batch_size=config.data.batch_size,
-            shuffle=True,
-            num_workers=config.data.num_workers)
-        dataloader['val'] = DataLoader([subdataset[idx] for idx in valid_idx],
-                                       batch_size=config.data.batch_size,
-                                       shuffle=True,
-                                       num_workers=config.data.num_workers)
-        data_local_dict[client_idx + 1] = dataloader
+    for split in dataset:
+        if dataset[split] is None:
+            continue
+        for i, ds in enumerate(splitter(dataset[split])):
+            if split == 'train':
+                data_local_dict[i + 1][split] = DataLoader(
+                    ds,
+                    batch_size=config.data.batch_size,
+                    shuffle=True,
+                    num_workers=config.data.num_workers)
+            else:
+                data_local_dict[i + 1][split] = DataLoader(
+                    ds,
+                    batch_size=config.data.batch_size,
+                    shuffle=False,
+                    num_workers=config.data.num_workers)
 
     return data_local_dict, config
 

@@ -1,5 +1,5 @@
 import torch
-import torch_geometric.transforms
+import torch_geometric.transforms as transforms
 
 from copy import deepcopy
 from torch_geometric.data import Data
