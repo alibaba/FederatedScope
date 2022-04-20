@@ -1,9 +1,8 @@
+import zipfile
 import os
-import torch
 import os.path as osp
 
 from torch.utils.data import Dataset
-from torch_geometric.data import download_url, extract_zip
 
 LEAF_NAMES = [
     'femnist', 'celeba', 'synthetic', 'shakespeare', 'twitter', 'subreddit'
@@ -71,7 +70,8 @@ class LEAF(Dataset):
 
     def extract(self):
         for name in self.raw_file_names:
-            extract_zip(osp.join(self.raw_dir, name), self.raw_dir)
+            with zipfile.ZipFile(osp.join(self.raw_dir, name), 'r') as f:
+                f.extractall(self.raw_dir)
 
     def process_file(self):
         os.makedirs(self.processed_dir, exist_ok=True)

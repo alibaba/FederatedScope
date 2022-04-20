@@ -6,6 +6,9 @@ import time
 import math
 from datetime import datetime
 from os import path as osp
+import ssl
+import urllib.request
+
 
 import numpy as np
 # Blind torch
@@ -33,18 +36,19 @@ def setup_seed(seed):
 
 def setup_logger(cfg):
     if cfg.verbose > 0:
-        logging.basicConfig(
-            level=logging.INFO,
-            format=
-            "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-        )
+        logging_level = logging.INFO
     else:
-        logging.basicConfig(
-            level=logging.WARN,
-            format=
-            "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-        )
+        logging_level = logging.WARN
         logging.warning("Skip DEBUG/INFO messages")
+
+    logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+    try:
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging_level)
+        root_handler = root_logger.handlers[0]
+        root_handler.setFormatter(logging.Formatter(logging_fmt))
+    except IndexError:
+        logging.basicConfig(level=logging_level, format=logging_fmt)
 
     # ================ create outdir to save log, exp_config, models, etc,.
 
@@ -148,32 +152,31 @@ def merge_dict(dict1, dict2):
     return dict1
 
 
-def save_local_data(dir_path,
-                    train_data=None,
-                    train_targets=None,
-                    test_data=None,
-                    test_targets=None,
-                    val_data=None,
-                    val_targets=None):
-    r"""
-    https://github.com/omarfoq/FedEM/blob/main/data/femnist/generate_data.py
+def download_url(url: str, folder='folder'):
+    r"""Downloads the content of an url to a folder.
 
-    save (`train_data`, `train_targets`) in {dir_path}/train.pt,
-    (`val_data`, `val_targets`) in {dir_path}/val.pt
-    and (`test_data`, `test_targets`) in {dir_path}/test.pt
-    :param dir_path:
-    :param train_data:
-    :param train_targets:
-    :param test_data:
-    :param test_targets:
-    :param val_data:
-    :param val_targets
+    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master/torch_geometric/data/download.py`
+
+    Args:
+        url (string): The url of target file.
+        folder (string): The target folder.
+
+    Returns:
+        path (string): File path of downloaded files.
     """
-    if (train_data is not None) and (train_targets is not None):
-        torch.save((train_data, train_targets), osp.join(dir_path, "train.pt"))
 
-    if (test_data is not None) and (test_targets is not None):
-        torch.save((test_data, test_targets), osp.join(dir_path, "test.pt"))
+    file = url.rpartition('/')[2]
+    file = file if file[0] == '?' else file.split('?')[0]
+    path = osp.join(folder, file)
+    if osp.exists(path):
+        logging.info(f'File {file} exists, use existing file.')
+        return path
 
-    if (val_data is not None) and (val_targets is not None):
-        torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
+    logging.info(f'Downloading {url}')
+    os.makedirs(folder, exist_ok=True)
+    ctx = ssl._create_unverified_context()
+    data = urllib.request.urlopen(url, context=ctx)
+    with open(path, 'wb') as f:
+        f.write(data.read())
+
+    return path
