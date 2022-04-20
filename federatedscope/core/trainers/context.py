@@ -225,12 +225,14 @@ class Context(LifecycleDict):
         Returns:
 
         """
+        attrs = list(self.lifecycles[lifecycle])
         # Clear general attributes
-        for var in self.lifecycles[lifecycle]:
+        for var in attrs:
             if hasattr(self[var], "clear"):
                 self[var].clear()
             else:
                 del self[var]
+            self.lifecycles[lifecycle].remove(var)
         # Also clear the attributes under the current mode
         self.mode.clear(lifecycle)
 
