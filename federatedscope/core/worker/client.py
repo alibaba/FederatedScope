@@ -256,7 +256,7 @@ class Client(Worker):
             self.trainer.update(message.content)
         metrics = {}
         for split in self._cfg.eval.split:
-            eval_metrics = self.trainer.evaluate(mode=split, target_data_split_name=split)
+            eval_metrics = self.trainer.evaluate(mode="test", target_data_split_name=split)
             for key in eval_metrics:
                 logging.info(
                     'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'

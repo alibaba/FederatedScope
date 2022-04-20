@@ -376,12 +376,6 @@ class GeneralTorchTrainer(Trainer):
 
         return self.ctx.eval_metrics
 
-    def validate(self, mode, target_data_split_name="val"):
-        with torch.no_grad():
-            super().evaluate(mode, target_data_split_name)
-
-        return self.ctx.eval_metrics
-
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,
                                     "on_fit_start")
