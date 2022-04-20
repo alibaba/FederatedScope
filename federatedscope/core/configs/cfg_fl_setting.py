@@ -21,7 +21,6 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is the number of training samples in dataset.
     cfg.federate.online_aggr = False
     cfg.federate.make_global_eval = False
-    cfg.federate.standalone = 'local'
 
     # the method name is used to internally determine composition of different aggregators, messages, handlers, etc.,
     cfg.federate.method = "FedAvg"
@@ -66,6 +65,9 @@ def assert_fl_setting_cfg(cfg):
         raise ValueError(
             "Value of 'cfg.federate.batch_or_epoch' must be chosen from ['batch', 'epoch']."
         )
+
+    assert cfg.federate.mode in ["standalone", "distributed"], \
+        f"Please specify the cfg.federate.mode as the string standalone or distributed. But got {cfg.federate.mode}."
 
     # client num related
     assert not (cfg.federate.client_num == 0

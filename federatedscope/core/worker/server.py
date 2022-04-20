@@ -9,9 +9,8 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
-from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
-from federatedscope.core.monitor import calc_blocal_dissim
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
 
@@ -225,11 +224,11 @@ class Server(Worker):
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
-                        B_val = calc_blocal_dissim(
+                        B_val = self._monitor.calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
-                        formatted_eval_res = formatted_logging(B_val,
-                                                               rnd=self.state,
-                                                               role='Server #')
+                        formatted_eval_res = self._monitor.format_eval_res(B_val,
+                                                             rnd=self.state,
+                                                             role='Server #')
                         logging.info(formatted_eval_res)
 
                     # Aggregate
@@ -302,18 +301,7 @@ class Server(Worker):
                 'Server #{:d}: Final evaluation is finished! Starting merging results.'
                 .format(self.ID))
             # last round
-            # TODO: call save with a specified frequency
-            if self._cfg.federate.save_to != '':
-                self.aggregator.save_model(self._cfg.federate.save_to,
-                                           self.state)
-            formatted_best_res = formatted_logging(self.best_results,
-                                                   rnd="Final",
-                                                   role='Server #',
-                                                   forms=["raw"])
-            with open(os.path.join(self._cfg.outdir, "eval_results.log"),
-                      "a") as outfile:
-                outfile.write(str(formatted_best_res) + "\n")
-            logging.info(formatted_best_res)
+            self.save_best_results()
 
             if self.model_num > 1:
                 model_para = [model.state_dict() for model in self.models]
@@ -330,7 +318,30 @@ class Server(Worker):
             #break out the loop for distributed mode
             self.state += 1
 
+    def save_best_results(self):
+        if self._cfg.federate.save_to != '':
+            self.aggregator.save_model(self._cfg.federate.save_to,
+                                       self.state)
+        formatted_best_res = self._monitor.format_eval_res(self.best_results,
+                                             rnd="Final",
+                                             role='Server #',
+                                             forms=["raw"])
+        logging.info(formatted_best_res)
+        self.save_formatted_results(formatted_best_res)
+
+    def save_formatted_results(self, formatted_res):
+        with open(os.path.join(self._cfg.outdir, "eval_results.log"),
+                  "a") as outfile:
+            outfile.write(str(formatted_res) + "\n")
+
     def merge_eval_results_from_all_clients(self, final_round=False):
+        """
+        Merge evaluation results from all clients,
+        update best, log the merged results and save then into eval_results.log
+
+        :param final_round:
+        :return:
+        """
         state = self.state if not final_round else self.state - 1
         eval_msg_buffer = self.msg_buffer['eval'][state]
         metrics_all_clients = dict()
@@ -341,18 +352,16 @@ class Server(Worker):
                     metrics_all_clients[key] = list()
                 metrics_all_clients[key].append(float(
                     client_eval_results[key]))
-        formatted_logs = formatted_logging(metrics_all_clients,
-                                           rnd=self.state,
-                                           role='Server #',
-                                           forms=self._cfg.eval.report)
+        formatted_logs = self._monitor.format_eval_res(metrics_all_clients,
+                                         rnd=self.state,
+                                         role='Server #',
+                                         forms=self._cfg.eval.report)
         logging.info(formatted_logs)
         self.update_best_result(metrics_all_clients,
                                 results_type="client_individual",
                                 round_wise_update_key=self._cfg.eval.
                                 best_res_update_round_wise_key)
-        with open(os.path.join(self._cfg.outdir, "eval_results.log"),
-                  "a") as outfile:
-            outfile.write(str(formatted_logs) + "\n")
+        self.save_formatted_results(formatted_logs)
         for form in self._cfg.eval.report:
             if form != "raw":
                 self.update_best_result(
@@ -563,7 +572,7 @@ class Server(Worker):
                     eval_metrics = trainer.evaluate(
                         target_data_split_name=split)
                     metrics.update(**eval_metrics)
-                formatted_eval_res = formatted_logging(
+                formatted_eval_res = self._monitor.format_eval_res(
                     metrics,
                     rnd=self.state,
                     role='Global-Eval-Server #',
@@ -574,6 +583,7 @@ class Server(Worker):
                                         best_res_update_round_wise_key)
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
+                self.save_formatted_results(formatted_eval_res)
                 logging.info(formatted_eval_res)
             self.check_and_save()
         else:

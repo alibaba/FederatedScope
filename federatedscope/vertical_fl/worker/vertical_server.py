@@ -4,7 +4,6 @@ import logging
 from federatedscope.core.worker import Server
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
-from federatedscope.core.auxiliaries.utils import formatted_logging
 
 
 class vFLServer(Server):
@@ -81,10 +80,10 @@ class vFLServer(Server):
                                     results_type='server_global_eval',
                                     round_wise_update_key=self._cfg.eval.
                                     best_res_update_round_wise_key)
-            formatted_logs = formatted_logging(metrics,
-                                               rnd=self.state,
-                                               role='Global-Eval-Server #',
-                                               forms=self._cfg.eval.report)
+            formatted_logs = self._monitor.format_eval_res(metrics,
+                                             rnd=self.state,
+                                             role='Global-Eval-Server #',
+                                             forms=self._cfg.eval.report)
             logging.info(formatted_logs)
 
         if self.state < self.total_round_num:
@@ -99,10 +98,10 @@ class vFLServer(Server):
                                     results_type='server_global_eval',
                                     round_wise_update_key=self._cfg.eval.
                                     best_res_update_round_wise_key)
-            formatted_logs = formatted_logging(metrics,
-                                               rnd=self.state,
-                                               role='Server #',
-                                               forms=self._cfg.eval.report)
+            formatted_logs = self._monitor.format_eval_res(metrics,
+                                             rnd=self.state,
+                                             role='Server #',
+                                             forms=self._cfg.eval.report)
             logging.info(formatted_logs)
 
     def evaluate(self):

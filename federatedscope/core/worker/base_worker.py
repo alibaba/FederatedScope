@@ -1,3 +1,6 @@
+from federatedscope.core.monitor import Monitor
+
+
 class Worker(object):
     """
     The base worker class
@@ -9,6 +12,7 @@ class Worker(object):
         self._cfg = config
         self._strategy = strategy
         self._mode = self._cfg.federate.mode.lower()
+        self._monitor = Monitor(config)
 
     @property
     def ID(self):

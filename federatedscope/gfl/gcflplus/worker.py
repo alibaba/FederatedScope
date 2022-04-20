@@ -6,7 +6,7 @@ import numpy as np
 from federatedscope.core.message import Message
 from federatedscope.core.worker.server import Server
 from federatedscope.core.worker.client import Client
-from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.gfl.gcflplus.utils import compute_pairwise_distances, min_cut, norm
 
 
@@ -181,9 +181,9 @@ class GCFLPlusClient(Client):
         self.state = round
         sample_size, model_para, results = self.trainer.train()
         logging.info(
-            formatted_logging(results,
-                              rnd=self.state,
-                              role='Client #{}'.format(self.ID)))
+            self._monitor.format_eval_res(results,
+                            rnd=self.state,
+                            role='Client #{}'.format(self.ID)))
 
         # Compute norm of W & norm of grad
         dW = dict()

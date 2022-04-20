@@ -28,6 +28,8 @@ class FedRunner(object):
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
             self._setup_for_standalone()
+            # in standalone mode, by default, we print the trainer info only once for better logs readability
+            self.client[0].print_trainer_meta_info()
         elif self.mode == 'distributed':
             self._setup_for_distributed()
 
@@ -209,7 +211,8 @@ class FedRunner(object):
             logging.info('Client (address {}:{}) has been set up ... '.format(
                 self.client_address['host'], self.client_address['port']))
         else:
-            logging.info('Client has been set up ... '.format(client_id))
+            logging.info(f'Client {client_id} has been set up ... ')
+
 
         return client
 

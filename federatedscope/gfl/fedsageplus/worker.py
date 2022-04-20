@@ -4,10 +4,9 @@ import logging
 from torch_geometric.loader import NeighborSampler
 
 from federatedscope.core.message import Message
-from federatedscope.core.monitor import calc_blocal_dissim
 from federatedscope.core.worker.server import Server
 from federatedscope.core.worker.client import Client
-from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict
 
 from federatedscope.gfl.trainer.nodetrainer import NodeMiniBatchTrainer
 from federatedscope.gfl.model.fedsageplus import LocalSage_Plus, FedSage_Plus
@@ -188,11 +187,11 @@ class FedSagePlusServer(Server):
 
                 # Trigger the monitor here (for training)
                 if 'dissim' in self._cfg.eval.monitoring:
-                    B_val = calc_blocal_dissim(self.model.load_state_dict(),
+                    B_val = self._monitor.calc_blocal_dissim(self.model.load_state_dict(),
                                                msg_list)
-                    formatted_logs = formatted_logging(B_val,
-                                                       rnd=self.state,
-                                                       role='Server #')
+                    formatted_logs = self._monitor.format_eval_res(B_val,
+                                                     rnd=self.state,
+                                                     role='Server #')
                     logging.info(formatted_logs)
 
                 # Aggregate
@@ -358,9 +357,9 @@ class FedSagePlusClient(Client):
         sample_size, clf_para, results = self.trainer_clf.train()
         self.state = round
         logging.info(
-            formatted_logging(results,
-                              rnd=self.state,
-                              role='Client #{}'.format(self.ID)))
+            self._monitor.format_eval_res(results,
+                            rnd=self.state,
+                            role='Client #{}'.format(self.ID)))
         self.comm_manager.send(
             Message(msg_type='clf_para',
                     sender=self.ID,
@@ -374,9 +373,9 @@ class FedSagePlusClient(Client):
         self.state = round
         sample_size, clf_para, results = self.trainer_clf.train()
         logging.info(
-            formatted_logging(results,
-                              rnd=self.state,
-                              role='Client #{}'.format(self.ID)))
+            self._monitor.format_eval_res(results,
+                            rnd=self.state,
+                            role='Client #{}'.format(self.ID)))
         self.comm_manager.send(
             Message(msg_type='clf_para',
                     sender=self.ID,

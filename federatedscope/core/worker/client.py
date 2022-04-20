@@ -4,9 +4,7 @@ import logging
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
 from federatedscope.core.worker import Worker
-from federatedscope.core.auxiliaries.utils import formatted_logging
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
-from federatedscope.core.optimizer import wrap_regularized_optimizer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
 
@@ -169,9 +167,9 @@ class Client(Worker):
             self.state = round
             sample_size, model_para_all, results = self.trainer.train()
             logging.info(
-                formatted_logging(results,
-                                  rnd=self.state,
-                                  role='Client #{}'.format(self.ID)))
+                self._monitor.format_eval_res(results,
+                                rnd=self.state,
+                                role='Client #{}'.format(self.ID)))
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
@@ -257,11 +255,13 @@ class Client(Worker):
         metrics = {}
         for split in self._cfg.eval.split:
             eval_metrics = self.trainer.evaluate(target_data_split_name=split)
-            for key in eval_metrics:
+
+            if self._cfg.federate.mode == 'distributed':
                 logging.info(
-                    'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
-                    .format(self.ID, split, self.state, key,
-                            eval_metrics[key]))
+                    self._monitor.format_eval_res(eval_metrics,
+                                    rnd=self.state,
+                                    role='Client #{}'.format(self.ID)))
+
             metrics.update(**eval_metrics)
         self.comm_manager.send(
             Message(msg_type='metrics',
