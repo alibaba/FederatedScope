@@ -273,8 +273,8 @@ class Trainer(object):
             f"Filtered para names in local update: {filtered_para_names}.")
 
         logger.info(f"After register default hooks,\n"
-                     f"\tthe hooks_in_train is: {self.hooks_in_train};\n"
-                     f"\tthe hooks_in_eval is {self.hooks_in_eval}")
+                    f"\tthe hooks_in_train is: {self.hooks_in_train};\n"
+                    f"\tthe hooks_in_eval is {self.hooks_in_eval}")
 
     def finetune(self):
         pass

@@ -86,7 +86,6 @@ def get_trainer(model=None,
             raise ValueError('Trainer {} is not provided'.format(
                 config.trainer.type))
 
-
     # differential privacy plug-in
     if config.nbafl.use:
         from federatedscope.core.trainers.trainer_nbafl import wrap_nbafl_trainer

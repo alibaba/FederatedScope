@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 def register(key, module, module_dict):
     if key in module_dict:
-        logger.warning('Key {} is already pre-defined, overwritten.'.format(key))
+        logger.warning(
+            'Key {} is already pre-defined, overwritten.'.format(key))
     module_dict[key] = module
 
 

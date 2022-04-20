@@ -50,8 +50,7 @@ def update_logger(cfg, clear_before_add=False):
         root_logger.handlers = []
         handler = logging.StreamHandler()
         logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-        handler.setFormatter(
-            logging.Formatter(logging_fmt))
+        handler.setFormatter(logging.Formatter(logging_fmt))
         root_logger.addHandler(handler)
 
     # update level

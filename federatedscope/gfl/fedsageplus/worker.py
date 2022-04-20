@@ -312,8 +312,7 @@ class FedSagePlusClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=[gen_grad, ID]))
-        logger.info(
-            f'\tClient #{self.ID}: send gradient to Server #{sender}.')
+        logger.info(f'\tClient #{self.ID}: send gradient to Server #{sender}.')
 
     def callback_funcs_for_gradient(self, message):
         # Aggregate gen_grad on server
@@ -329,8 +328,7 @@ class FedSagePlusClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=[gen_para, embedding, self.hide_data.num_missing]))
-        logger.info(
-            f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
+        logger.info(f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
 
     def callback_funcs_for_setup_fedsage(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
