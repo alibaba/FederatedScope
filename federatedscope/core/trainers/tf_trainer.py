@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from federatedscope.core.trainers import Trainer
 from federatedscope.core.auxiliaries.utils import batch_iter
-
+from federatedscope.core.trainers.context import CtxReferVar
 import logging
 
 
@@ -109,8 +109,9 @@ class GeneralTFTrainer(Trainer):
                     ],
                     feed_dict=feed_dict)
                 ctx.loss_batch = batch_loss
-                ctx.y_true = y_true
-                ctx.y_prob = y_prob
+                ctx.mode.y_true = CtxReferVar(y_true, "batch")
+                ctx.mode.y_prob = CtxReferVar(y_prob, "batch")
+
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         pass
@@ -136,9 +137,8 @@ class GeneralTFTrainer(Trainer):
             ctx.batch_size)
 
         # cache label for evaluate
-        ctx.get("{}_y_true".format(ctx.cur_data_split)).append(ctx.y_true)
-
-        ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(ctx.y_prob)
+        ctx.mode.ys_true.append(ctx.mode.y_true)
+        ctx.mode.ys_prob.append(ctx.mode.y_prob)
 
         # clean temp ctx
         ctx.data_batch = None
@@ -146,8 +146,6 @@ class GeneralTFTrainer(Trainer):
         ctx.loss_task = None
         ctx.loss_batch = None
         ctx.loss_regular = None
-        ctx.y_true = None
-        ctx.y_prob = None
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.

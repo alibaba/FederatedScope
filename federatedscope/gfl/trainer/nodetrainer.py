@@ -7,7 +7,7 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
-
+from federatedscope.core.trainers.context import CtxReferVar
 
 class NodeFullBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
@@ -34,8 +34,8 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
             ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.mode.y_true = CtxReferVar(label, "batch")
+        ctx.mode.y_prob = CtxReferVar(pred, "batch")
 
 
 class NodeMiniBatchTrainer(GeneralTorchTrainer):
@@ -116,8 +116,8 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                 ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.mode.y_true = CtxReferVar(label, "batch")
+        ctx.mode.y_prob = CtxReferVar(pred, "batch")
 
 
 def call_node_level_trainer(trainer_type):

@@ -20,17 +20,33 @@ class LifecycleDict(dict):
             super(LifecycleDict, self).__init__(init_dict)
         self.lifecycles = collections.defaultdict(set)
 
-    def __setattr__(self, key, value):
-        if isinstance(value, BasicCtxVar):
-            self.lifecycles[value.lifecycle].add(key)
-        self[key] = value
-
-    def __getattr__(self, item):
-        value = self[item]
+    def __getitem__(self, item):
+        value = super(LifecycleDict, self).__getitem__(item)
         if isinstance(value, CtxReferVar):
             return value.obj
         else:
             return value
+
+    def __setitem__(self, key, value):
+        if isinstance(value, BasicCtxVar):
+            self.lifecycles[value.lifecycle].add(key)
+        super(LifecycleDict, self).__setitem__(key, value)
+
+    def get(self, *args, **kwargs):
+        value = super(LifecycleDict, self).get(*args, **kwargs)
+        if isinstance(value, CtxReferVar):
+            return value.obj
+        else:
+            return value
+
+    def __delattr__(self, item):
+        self.__delitem__(item)
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __getattr__(self, item):
+        return self.__getitem__(item)
 
     def clear(self, lifecycle):
         for var in self.lifecycles[lifecycle]:
@@ -61,8 +77,6 @@ class Context(LifecycleDict):
         now, the `Context` class only permits nested routine with different `ctx.cur_mode`.
     """
 
-    __delattr__ = dict.__delitem__
-
     def __init__(self,
                  model,
                  cfg,
@@ -91,16 +105,11 @@ class Context(LifecycleDict):
     def __getattr__(self, item):
         try:
             if item == "mode":
-                value = self["mode"][self.cur_mode]
+                return self["mode"][self.cur_mode]
             else:
-                value = self[item]
+                return self[item]
         except KeyError:
             raise AttributeError(item)
-
-        if isinstance(value, CtxReferVar):
-            return value.obj
-        else:
-            return value
 
     def _setup_vars(self):
         if self.cfg.backend == 'torch':

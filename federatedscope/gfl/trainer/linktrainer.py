@@ -8,6 +8,7 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
+from federatedscope.core.trainers.context import CtxReferVar
 
 MODE2MASK = {
     'train': 'train_edge_mask',
@@ -77,8 +78,8 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.mode.y_true = CtxReferVar(label, "batch")
+        ctx.mode.y_prob = CtxReferVar(pred, "batch")
 
 
 class LinkMiniBatchTrainer(GeneralTorchTrainer):
@@ -147,8 +148,8 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
                 ctx.data['data'][MODE2MASK[ctx.cur_data_split]]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.mode.y_true = CtxReferVar(label, "batch")
+        ctx.mode.y_prob = CtxReferVar(pred, "batch")
 
 
 def call_link_level_trainer(trainer_type):

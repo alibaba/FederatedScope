@@ -464,10 +464,8 @@ class GeneralTorchTrainer(Trainer):
 
         ctx.loss_batch = CtxReferVar(ctx.criterion(pred, label), "batch")
         ctx.batch_size = CtxStatsVar(len(label), "batch")
-
-        # Cache label for evaluate
-        ctx.mode.ys_true.append(label.detach().cpu().numpy())
-        ctx.mode.ys_prob.append(pred.detach().cpu().numpy())
+        ctx.mode.y_true = CtxReferVar(label, "batch")
+        ctx.mode.y_prob = CtxReferVar(pred, "batch")
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         ctx.loss_regular = CtxReferVar(self.cfg.regularizer.mu * ctx.regularizer(ctx), "batch")
@@ -485,9 +483,10 @@ class GeneralTorchTrainer(Trainer):
         # Update statistics
         ctx.mode.num_samples += ctx.batch_size
         ctx.mode.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
-        if hasattr(ctx, "loss_regular"):
-            ctx.mode.loss_regular_total += float(ctx.loss_regular)
-
+        ctx.mode.loss_regular_total += float(ctx.get("loss_regular", 0.))
+        # Cache label for evaluate
+        ctx.mode.ys_true.append(ctx.mode.y_true.detach().cpu().numpy())
+        ctx.mode.ys_prob.append(ctx.mode.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.

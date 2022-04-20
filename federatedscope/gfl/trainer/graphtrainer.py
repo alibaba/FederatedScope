@@ -1,5 +1,6 @@
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers.context import CtxReferVar
 
 
 class GraphMiniBatchTrainer(GeneralTorchTrainer):
@@ -12,8 +13,8 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.mode.y_true = CtxReferVar(label, "batch")
+        ctx.mode.y_prob = CtxReferVar(pred, "batch")
 
 
 def call_graph_level_trainer(trainer_type):
