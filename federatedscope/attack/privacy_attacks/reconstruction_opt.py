@@ -3,6 +3,9 @@ import torch.nn.functional as F
 from federatedscope.attack.auxiliary.utils import iDLG_trick, total_variation, get_info_diff_loss
 import logging
 
+logger = logging.getLogger(__name__)
+
+
 class DLG(object):
     '''
     Implementation of the paper "Deep Leakage from Gradients": https://papers.nips.cc/paper/2019/file/60a6c4002cc7b29142def8871531281a-Paper.pdf
@@ -99,7 +102,7 @@ class DLG(object):
             info_diff = optimizer.step(closure)
 
             if (ite + 1 == self.max_ite) or ite % 20 == 0:
-                logging.info('Ite: {}, gradient difference: {:.4f}'.format(
+                logger.info('Ite: {}, gradient difference: {:.4f}'.format(
                     ite, info_diff))
         return dummy_data.detach(), label.detach()
 
@@ -194,7 +197,7 @@ class InvertGradient(DLG):
                                              info_diff_type=info_diff_type)
         self.alpha_TV = alpha_TV
         if self.info_diff_type != 'sim':
-            logging.info('Force the info_diff_type to be cosine similarity loss in InvertGradient attack method!')
+            logger.info('Force the info_diff_type to be cosine similarity loss in InvertGradient attack method!')
             self.info_diff_type = 'sim'
             self.info_diff_loss = get_info_diff_loss(self.info_diff_type)
 

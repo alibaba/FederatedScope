@@ -2,7 +2,7 @@
 import unittest
 
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
+from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
@@ -52,7 +52,7 @@ class GradAscentTest(unittest.TestCase):
     def test_GradAscent_femnist_standalone(self):
         backup_cfg = self.set_config_femnist(global_cfg)
         setup_seed(global_cfg.seed)
-        setup_logger(global_cfg)
+        update_logger(global_cfg)
 
         data, modified_cfg = get_data(global_cfg.clone())
         global_cfg.merge_from_other_cfg(modified_cfg)

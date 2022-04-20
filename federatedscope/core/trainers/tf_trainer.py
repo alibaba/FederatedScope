@@ -3,8 +3,6 @@ import numpy as np
 from federatedscope.core.trainers import Trainer
 from federatedscope.core.auxiliaries.utils import batch_iter
 
-import logging
-
 
 class GeneralTFTrainer(Trainer):
     def train(self, target_data_split_name="train", hooks_set=None):

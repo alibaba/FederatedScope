@@ -7,6 +7,8 @@ import numpy as np
 
 import torch
 
+logger = logging.getLogger(__name__)
+
 
 def wrap_MFTrainer(base_trainer: Type[MFTrainer]) -> Type[MFTrainer]:
     """Build `SGDMFTrainer` with a plug-in manner, by registering new functions into specific `MFTrainer`
@@ -38,7 +40,7 @@ def init_sgdmf_ctx(base_trainer):
             cfg.federate.total_round_num * ctx.num_total_train_batch) * np.log(1. / cfg.sgdmf.delta)
     noise_multipler = np.sqrt(tmp / np.power(cfg.sgdmf.epsilon, 2))
     ctx.scale = max(cfg.sgdmf.theta, 1.) * noise_multipler * np.power(cfg.sgdmf.R, 1.5)
-    logging.info("Inject noise: (loc=0, scale={})".format(ctx.scale))
+    logger.info("Inject noise: (loc=0, scale={})".format(ctx.scale))
     ctx.sgdmf_R = cfg.sgdmf.R
 
 

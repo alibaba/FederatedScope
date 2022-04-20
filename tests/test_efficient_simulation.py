@@ -2,7 +2,7 @@
 import unittest
 
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
+from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
@@ -18,7 +18,7 @@ class EfficientSimulationTest(unittest.TestCase):
             'federatedscope/example_configs/single_process.yaml')
 
         setup_seed(case_cfg.seed)
-        setup_logger(case_cfg)
+        update_logger(case_cfg)
 
         data, _ = get_data(case_cfg.clone())
         Fed_runner = FedRunner(data=data,

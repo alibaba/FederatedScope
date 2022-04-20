@@ -6,6 +6,8 @@ from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
 
+logger = logging.getLogger(__name__)
+
 
 class FedRunner(object):
     """
@@ -169,7 +171,7 @@ class FedRunner(object):
         else:
             raise ValueError
 
-        logging.info('Server #{:d} has been set up ... '.format(
+        logger.info('Server #{:d} has been set up ... '.format(
             self.server_id))
 
         return server
@@ -206,10 +208,10 @@ class FedRunner(object):
             raise ValueError
 
         if client_id == -1:
-            logging.info('Client (address {}:{}) has been set up ... '.format(
+            logger.info('Client (address {}:{}) has been set up ... '.format(
                 self.client_address['host'], self.client_address['port']))
         else:
-            logging.info('Client has been set up ... '.format(client_id))
+            logger.info('Client has been set up ... '.format(client_id))
 
         return client
 
