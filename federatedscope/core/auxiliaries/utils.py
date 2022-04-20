@@ -45,7 +45,7 @@ def setup_logger(cfg):
 
     logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
     try:
-        root_logger = logging.getLogger()
+        root_logger = logging.getLogger("federatedscope")
         root_logger.setLevel(logging_level)
         root_handler = root_logger.handlers[0]
         root_handler.setFormatter(logging.Formatter(logging_fmt))
@@ -60,18 +60,19 @@ def setup_logger(cfg):
 
     # if exist, make directory with given name and time
     if os.path.isdir(cfg.outdir) and os.path.exists(cfg.outdir):
-        cfg.outdir = os.path.join(cfg.outdir, "sub_exp" +
-                                  datetime.now().strftime('_%Y%m%d%H%M%S')
-                                  )  # e.g., sub_exp_20220411030524
-        while os.path.exists(cfg.outdir):
+        outdir = os.path.join(cfg.outdir, "sub_exp" +
+                              datetime.now().strftime('_%Y%m%d%H%M%S')
+                              )  # e.g., sub_exp_20220411030524
+        while os.path.exists(outdir):
             time.sleep(1)
-            cfg.outdir = os.path.join(
+            outdir = os.path.join(
                 cfg.outdir,
                 "sub_exp" + datetime.now().strftime('_%Y%m%d%H%M%S'))
+        cfg.outdir = outdir
     # if not, make directory with given name
     os.makedirs(cfg.outdir)
 
-    logger = logging.getLogger()
+    logger = logging.getLogger("federatedscope")
     # create file handler which logs even debug messages
     fh = logging.FileHandler(os.path.join(cfg.outdir, 'exp_print.log'))
     fh.setLevel(logging.DEBUG)
