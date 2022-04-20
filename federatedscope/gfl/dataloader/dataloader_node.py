@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-import torch_geometric.transforms as T
+import torch_geometric.transforms
 
 from torch_geometric.datasets import Planetoid
 from torch_geometric.utils import add_self_loops, remove_self_loops, to_undirected
@@ -90,10 +90,8 @@ def load_nodelevel_dataset(config=None):
         splitter = None
 
     # Transforms
-    if config.data.transforms == 'normalize_feat':
-        transform = T.NormalizeFeatures()
-    else:
-        transform = None
+    transform = transforms.Compose(eval(config.data.transform))
+    pre_transform = transforms.Compose(eval(config.data.pre_transform))
 
     # Dataset
     if name in ["cora", "citeseer", "pubmed"]:
@@ -109,7 +107,8 @@ def load_nodelevel_dataset(config=None):
                             num_train_per_class=num_split[name][0],
                             num_val=num_split[name][1],
                             num_test=num_split[name][2],
-                            transform=transform)
+                            transform=transform,
+                            pre_transform=pre_transform)
         dataset = splitter(dataset[0])
         global_dataset = Planetoid(path,
                                    name,
@@ -117,16 +116,19 @@ def load_nodelevel_dataset(config=None):
                                    num_train_per_class=num_split[name][0],
                                    num_val=num_split[name][1],
                                    num_test=num_split[name][2],
-                                   transform=transform)
+                                   transform=transform,
+                                   pre_transform=pre_transform)
     elif name == "dblp_conf":
         dataset = DBLPNew(path,
                           FL=1,
                           splits=config.data.splits,
-                          transform=transform)
+                          transform=transform,
+                          pre_transform=pre_transform)
         global_dataset = DBLPNew(path,
                                  FL=0,
                                  splits=config.data.splits,
-                                 transform=transform)
+                                 transform=transform,
+                                 pre_transform=pre_transform)
     elif name == "dblp_org":
         dataset = DBLPNew(path,
                           FL=2,
@@ -135,7 +137,8 @@ def load_nodelevel_dataset(config=None):
         global_dataset = DBLPNew(path,
                                  FL=0,
                                  splits=config.data.splits,
-                                 transform=transform)
+                                 transform=transform,
+                                 pre_transform=pre_transform)
     elif name.startswith("csbm"):
         dataset = dataset_ContextualSBM(
             root=path,

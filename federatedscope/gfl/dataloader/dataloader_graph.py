@@ -1,7 +1,7 @@
 import torch
 import random
 import numpy as np
-import torch_geometric.transforms as T
+import torch_geometric.transforms
 
 from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
@@ -46,18 +46,8 @@ def load_graphlevel_dataset(config=None):
         splitter = None
 
     # Transforms
-    if config.data.transforms == 'normalize_feat':
-        transform = T.NormalizeFeatures()
-    else:
-        transform = None
-
-    # Pre-Transforms
-    if config.data.pre_transforms == 'constant_feat':
-        pre_transform = T.Constant(value=1.0, cat=False)
-    elif config.data.pre_transforms == 'degree_feat':
-        pre_transform = T.OneHotDegree(max_degree=1000, cat=False)
-    else:
-        pre_transform = None
+    transform = transforms.Compose(eval(config.data.transform))
+    pre_transform = transforms.Compose(eval(config.data.pre_transform))
 
     if name in [
             'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',

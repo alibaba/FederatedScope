@@ -8,10 +8,6 @@ from federatedscope.nlp.dataset.leaf_nlp import LEAF_NLP
 from federatedscope.nlp.dataset.leaf_synthetic import LEAF_SYNTHETIC
 
 
-def get_transforms():
-    return None
-
-
 def load_nlp_dataset(config=None):
     r"""
     return {
@@ -29,16 +25,19 @@ def load_nlp_dataset(config=None):
     client_num = config.federate.client_num
     batch_size = config.data.batch_size
 
-    transform = get_transforms()
+    # TODO: fix this
+    transform = None
+    target_transform = None
 
-    if name in ['shakespeare', 'subreddit', 'twitter']:
+if name in ['shakespeare', 'subreddit', 'twitter']:
         dataset = LEAF_NLP(root=path,
                            name=name,
                            s_frac=config.data.subsample,
                            tr_frac=splits[0],
                            val_frac=splits[1],
                            seed=1234,
-                           transform=transform)
+                           transform=transform,
+                           target_transform=target_transform)
     elif name == 'synthetic':
         dataset = LEAF_SYNTHETIC(root=path)
     else:

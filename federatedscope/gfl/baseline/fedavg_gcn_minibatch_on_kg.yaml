@@ -13,7 +13,7 @@ data:
   root: data/
   type: wn18
   splitter: rel_type
-  pre_transforms: constant_feat
+  pre_transforms: '[transforms.Constant(value=1.0, cat=False)]'
 model:
   type: gcn
   hidden: 64
