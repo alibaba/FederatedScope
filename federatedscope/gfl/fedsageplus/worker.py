@@ -187,11 +187,10 @@ class FedSagePlusServer(Server):
 
                 # Trigger the monitor here (for training)
                 if 'dissim' in self._cfg.eval.monitoring:
-                    B_val = self._monitor.calc_blocal_dissim(self.model.load_state_dict(),
-                                               msg_list)
-                    formatted_logs = self._monitor.format_eval_res(B_val,
-                                                     rnd=self.state,
-                                                     role='Server #')
+                    B_val = self._monitor.calc_blocal_dissim(
+                        self.model.load_state_dict(), msg_list)
+                    formatted_logs = self._monitor.format_eval_res(
+                        B_val, rnd=self.state, role='Server #')
                     logging.info(formatted_logs)
 
                 # Aggregate
@@ -358,8 +357,8 @@ class FedSagePlusClient(Client):
         self.state = round
         logging.info(
             self._monitor.format_eval_res(results,
-                            rnd=self.state,
-                            role='Client #{}'.format(self.ID)))
+                                          rnd=self.state,
+                                          role='Client #{}'.format(self.ID)))
         self.comm_manager.send(
             Message(msg_type='clf_para',
                     sender=self.ID,
@@ -374,8 +373,8 @@ class FedSagePlusClient(Client):
         sample_size, clf_para, results = self.trainer_clf.train()
         logging.info(
             self._monitor.format_eval_res(results,
-                            rnd=self.state,
-                            role='Client #{}'.format(self.ID)))
+                                          rnd=self.state,
+                                          role='Client #{}'.format(self.ID)))
         self.comm_manager.send(
             Message(msg_type='clf_para',
                     sender=self.ID,

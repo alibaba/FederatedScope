@@ -80,10 +80,11 @@ class vFLServer(Server):
                                     results_type='server_global_eval',
                                     round_wise_update_key=self._cfg.eval.
                                     best_res_update_round_wise_key)
-            formatted_logs = self._monitor.format_eval_res(metrics,
-                                             rnd=self.state,
-                                             role='Global-Eval-Server #',
-                                             forms=self._cfg.eval.report)
+            formatted_logs = self._monitor.format_eval_res(
+                metrics,
+                rnd=self.state,
+                role='Global-Eval-Server #',
+                forms=self._cfg.eval.report)
             logging.info(formatted_logs)
 
         if self.state < self.total_round_num:
@@ -98,10 +99,11 @@ class vFLServer(Server):
                                     results_type='server_global_eval',
                                     round_wise_update_key=self._cfg.eval.
                                     best_res_update_round_wise_key)
-            formatted_logs = self._monitor.format_eval_res(metrics,
-                                             rnd=self.state,
-                                             role='Server #',
-                                             forms=self._cfg.eval.report)
+            formatted_logs = self._monitor.format_eval_res(
+                metrics,
+                rnd=self.state,
+                role='Server #',
+                forms=self._cfg.eval.report)
             logging.info(formatted_logs)
 
     def evaluate(self):

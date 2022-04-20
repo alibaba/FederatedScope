@@ -226,9 +226,8 @@ class Server(Worker):
                     if 'dissim' in self._cfg.eval.monitoring:
                         B_val = self._monitor.calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
-                        formatted_eval_res = self._monitor.format_eval_res(B_val,
-                                                             rnd=self.state,
-                                                             role='Server #')
+                        formatted_eval_res = self._monitor.format_eval_res(
+                            B_val, rnd=self.state, role='Server #')
                         logging.info(formatted_eval_res)
 
                     # Aggregate
@@ -320,12 +319,11 @@ class Server(Worker):
 
     def save_best_results(self):
         if self._cfg.federate.save_to != '':
-            self.aggregator.save_model(self._cfg.federate.save_to,
-                                       self.state)
+            self.aggregator.save_model(self._cfg.federate.save_to, self.state)
         formatted_best_res = self._monitor.format_eval_res(self.best_results,
-                                             rnd="Final",
-                                             role='Server #',
-                                             forms=["raw"])
+                                                           rnd="Final",
+                                                           role='Server #',
+                                                           forms=["raw"])
         logging.info(formatted_best_res)
         self.save_formatted_results(formatted_best_res)
 
@@ -352,10 +350,11 @@ class Server(Worker):
                     metrics_all_clients[key] = list()
                 metrics_all_clients[key].append(float(
                     client_eval_results[key]))
-        formatted_logs = self._monitor.format_eval_res(metrics_all_clients,
-                                         rnd=self.state,
-                                         role='Server #',
-                                         forms=self._cfg.eval.report)
+        formatted_logs = self._monitor.format_eval_res(
+            metrics_all_clients,
+            rnd=self.state,
+            role='Server #',
+            forms=self._cfg.eval.report)
         logging.info(formatted_logs)
         self.update_best_result(metrics_all_clients,
                                 results_type="client_individual",

@@ -145,9 +145,9 @@ class FedRunner(object):
             kw = {'shared_comm_queue': self.shared_comm_queue}
         elif self.mode == 'distributed':
             server_data = self.data
-            model = get_model(
-                self.cfg.model, server_data,
-                backend=self.cfg.backend)
+            model = get_model(self.cfg.model,
+                              server_data,
+                              backend=self.cfg.backend)
             kw = self.server_address
         else:
             raise ValueError('Mode {} is not provided'.format(
@@ -212,7 +212,6 @@ class FedRunner(object):
                 self.client_address['host'], self.client_address['port']))
         else:
             logging.info(f'Client {client_id} has been set up ... ')
-
 
         return client
 

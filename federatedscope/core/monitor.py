@@ -12,9 +12,10 @@ except ImportError:
 class Monitor(object):
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
-    def __init__(self,
-                 cfg,
-                 ):
+    def __init__(
+        self,
+        cfg,
+    ):
         self.outdir = cfg.outdir
         self.use_wandb = cfg.use_wandb
         # self.use_tensorboard = cfg.use_tensorboard
@@ -81,13 +82,17 @@ class Monitor(object):
                             "Results to be formatted should be include the dataset_num in the dict,"
                             f"with key = {dataset_name}_total")
                     else:
-                        dataset_num = np.array(results[f'{dataset_name}_total'])
+                        dataset_num = np.array(
+                            results[f'{dataset_name}_total'])
                         if key in [
-                            f'{dataset_name}_total', f'{dataset_name}_correct'
+                                f'{dataset_name}_total',
+                                f'{dataset_name}_correct'
                         ]:
                             new_results[key] = np.mean(new_results[key])
 
-                    if key in [f'{dataset_name}_total', f'{dataset_name}_correct']:
+                    if key in [
+                            f'{dataset_name}_total', f'{dataset_name}_correct'
+                    ]:
                         new_results[key] = np.mean(new_results[key])
                     else:
                         all_res = np.array(copy.copy(results[key]))
@@ -102,11 +107,12 @@ class Monitor(object):
                             new_results.pop(
                                 key, None)  # delete the redundant original one
                             all_res.sort()
-                            new_results[f"{key}_std"] = np.std(np.array(all_res))
+                            new_results[f"{key}_std"] = np.std(
+                                np.array(all_res))
                             new_results[f"{key}_bottom_decile"] = all_res[
                                 all_res.size // 10]
-                            new_results[f"{key}_top_decile"] = all_res[all_res.size
-                                                                       * 9 // 10]
+                            new_results[f"{key}_top_decile"] = all_res[
+                                all_res.size * 9 // 10]
                 round_formatted_results[f'Results_{form}'] = new_results
 
         with open(os.path.join(self.outdir, "eval_results.raw"),
@@ -137,7 +143,7 @@ class Monitor(object):
             for k, v in tp[1].items():
                 grad = v - last_model[k]
                 grads[k] = grad
-                gnorms[k] = torch.sum(grad ** 2)
+                gnorms[k] = torch.sum(grad**2)
             local_grads.append(grads)
             local_gnorms.append(gnorms)
         weights = np.asarray(weights)
@@ -158,5 +164,5 @@ class Monitor(object):
         b_local_dissimilarity = dict()
         for k in avg_gnorms:
             b_local_dissimilarity[k] = np.sqrt(
-                avg_gnorms[k].item() / torch.sum(global_grads[k] ** 2).item())
+                avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
         return b_local_dissimilarity

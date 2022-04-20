@@ -168,8 +168,9 @@ class Client(Worker):
             sample_size, model_para_all, results = self.trainer.train()
             logging.info(
                 self._monitor.format_eval_res(results,
-                                rnd=self.state,
-                                role='Client #{}'.format(self.ID)))
+                                              rnd=self.state,
+                                              role='Client #{}'.format(
+                                                  self.ID)))
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
@@ -259,8 +260,9 @@ class Client(Worker):
             if self._cfg.federate.mode == 'distributed':
                 logging.info(
                     self._monitor.format_eval_res(eval_metrics,
-                                    rnd=self.state,
-                                    role='Client #{}'.format(self.ID)))
+                                                  rnd=self.state,
+                                                  role='Client #{}'.format(
+                                                      self.ID)))
 
             metrics.update(**eval_metrics)
         self.comm_manager.send(

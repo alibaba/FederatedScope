@@ -182,8 +182,8 @@ class GCFLPlusClient(Client):
         sample_size, model_para, results = self.trainer.train()
         logging.info(
             self._monitor.format_eval_res(results,
-                            rnd=self.state,
-                            role='Client #{}'.format(self.ID)))
+                                          rnd=self.state,
+                                          role='Client #{}'.format(self.ID)))
 
         # Compute norm of W & norm of grad
         dW = dict()
