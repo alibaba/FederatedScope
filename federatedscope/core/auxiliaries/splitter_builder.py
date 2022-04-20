@@ -2,7 +2,7 @@ import federatedscope.register as  register
 
 def get_splitter(config):
     client_num = config.federate.client_num
-    args = eval(config.data.splitter_args)
+    args = config.data.splitter_args
 
     for func in register.splitter_dict.values():
         splitter = func(config)

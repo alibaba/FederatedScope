@@ -159,7 +159,7 @@ def load_external_data(config=None):
         transform_funcs = build_transforms(['transform', 'target_transform'],
                                            transforms)
         transform_funcs = filter_dict(dataset_func.__init__, transform_funcs)
-        raw_args = eval(config.data.args)
+        raw_args = config.data.args
         raw_args.update({'download': True})
         filtered_args = filter_dict(dataset_func.__init__, raw_args)
         func_args = get_func_args(dataset_func.__init__)
