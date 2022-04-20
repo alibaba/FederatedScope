@@ -7,7 +7,7 @@ from torch_geometric.utils import add_self_loops, remove_self_loops, to_undirect
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.core.splitters import splitter_builder
+from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.gfl.dataset.dblp_new import DBLPNew
 from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
 
@@ -82,7 +82,7 @@ def load_nodelevel_dataset(config=None):
     name = config.data.type.lower()
 
     # Splitter
-    splitter = splitter_builder(config)
+    splitter = get_splitter(config)
 
     # Transforms
     transform = transforms.Compose(eval(config.data.transform))

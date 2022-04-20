@@ -4,7 +4,7 @@ from torch_geometric import transforms
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.core.splitters import splitter_builder
+from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.gfl.dataset.recsys import RecSys
 from federatedscope.gfl.dataset.kg import KG
 
@@ -52,7 +52,7 @@ def load_linklevel_dataset(config=None):
     name = config.data.type.lower()
 
     # Splitter
-    splitter = splitter_builder(config)
+    splitter = get_splitter(config)
 
     # Transforms
     transform = transforms.Compose(eval(config.data.transform))

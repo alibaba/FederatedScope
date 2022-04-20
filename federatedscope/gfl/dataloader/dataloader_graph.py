@@ -4,7 +4,7 @@ from torch_geometric import transforms
 from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
-from federatedscope.core.splitters import splitter_builder
+from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 
 
 def get_numGraphLabels(dataset):
@@ -32,7 +32,7 @@ def load_graphlevel_dataset(config=None):
     batch_size = config.data.batch_size
 
     # Splitter
-    splitter = splitter_builder(config)
+    splitter = get_splitter(config)
 
     # Transforms
     transform = transforms.Compose(eval(config.data.transform))
