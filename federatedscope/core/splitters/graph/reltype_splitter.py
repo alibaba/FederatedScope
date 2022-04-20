@@ -1,11 +1,10 @@
 import torch
-import networkx as nx
 
 from torch_geometric.data import Data
 from torch_geometric.utils import from_networkx, to_undirected
 from torch_geometric.transforms import BaseTransform, RemoveIsolatedNodes
 
-from federatedscope.gfl.dataset.utils import dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
 
 
 class RelTypeSplitter(BaseTransform):
@@ -25,7 +24,7 @@ class RelTypeSplitter(BaseTransform):
 
     def __call__(self, data):
         data_list = []
-        label = data.edge_type
+        label = data.edge_type.numpy()
         idx_slice = dirichlet_distribution_noniid_slice(
             label, self.client_num, self.alpha)
         # Reallocation train/val/test mask

@@ -4,7 +4,7 @@ from torch_geometric import transforms
 from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
-from federatedscope.gfl.dataset.splitter import GraphTypeSplitter, ScaffoldSplitter, RandChunkSplitter
+from federatedscope.core.splitters.graph import GraphTypeSplitter, ScaffoldSplitter, RandChunkSplitter
 
 
 def get_numGraphLabels(dataset):
@@ -59,7 +59,7 @@ def load_graphlevel_dataset(config=None):
                             pre_transform=pre_transform,
                             transform=transform)
         if splitter is None:
-            raise ValueError('Please set the splitter.')
+            raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
 
     elif name in [
@@ -71,7 +71,7 @@ def load_graphlevel_dataset(config=None):
                               pre_transform=pre_transform,
                               transform=transform)
         if splitter is None:
-            raise ValueError('Please set the splitter.')
+            raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
     elif name.startswith('graph_multi_domain'.upper()):
         if name.endswith('mol'.upper()):

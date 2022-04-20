@@ -1,5 +1,5 @@
-import torch
-from federatedscope.gfl.dataset.utils import dirichlet_distribution_noniid_slice
+import numpy as np
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
 
 
 class GraphTypeSplitter:
@@ -16,9 +16,8 @@ class GraphTypeSplitter:
         Returns:
             data_list (List(List(PyG.data))): Splited dataset via dirichlet.
         """
-        data_list = []
         dataset = [ds for ds in dataset]
-        label = torch.LongTensor([ds.y.item() for ds in dataset])
+        label = np.array([ds.y.item() for ds in dataset])
         idx_slice = dirichlet_distribution_noniid_slice(
             label, self.client_num, self.alpha)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]

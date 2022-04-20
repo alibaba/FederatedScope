@@ -5,7 +5,7 @@ from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 from federatedscope.gfl.dataset.recsys import RecSys
 from federatedscope.gfl.dataset.kg import KG
-from federatedscope.gfl.dataset.splitter import RelTypeSplitter
+from federatedscope.core.splitters.graph import RelTypeSplitter
 
 
 def raw2loader(raw_data, config=None):
@@ -26,7 +26,6 @@ def raw2loader(raw_data, config=None):
             walk_length=config.data.graphsaint.walk_length,
             num_steps=config.data.graphsaint.num_steps,
             sample_coverage=0)
-        #save_dir=dataset.processed_dir)
         subgraph_sampler = NeighborSampler(raw_data.edge_index,
                                            sizes=[-1],
                                            batch_size=4096,

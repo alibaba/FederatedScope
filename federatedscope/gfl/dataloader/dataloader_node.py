@@ -9,7 +9,7 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.gfl.dataset.dblp_new import DBLPNew
 from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
-from federatedscope.gfl.dataset.splitter import LouvainSplitter, RandomSplitter
+from federatedscope.core.splitters.graph import LouvainSplitter, RandomSplitter
 
 INF = np.iinfo(np.int64).max
 

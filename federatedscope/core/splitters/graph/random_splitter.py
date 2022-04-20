@@ -1,6 +1,5 @@
 import torch
 
-from torch_geometric.data import Data
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.utils import to_networkx, from_networkx
 
