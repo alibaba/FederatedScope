@@ -1,5 +1,8 @@
 import copy
+import logging
 import os
+import gzip
+import shutil
 
 import numpy as np
 
@@ -7,6 +10,8 @@ try:
     import torch
 except ImportError:
     torch = None
+
+logger = logging.getLogger(__name__)
 
 
 class Monitor(object):
@@ -17,23 +22,26 @@ class Monitor(object):
         cfg,
     ):
         self.outdir = cfg.outdir
-        self.use_wandb = cfg.use_wandb
+        self.use_wandb = cfg.wandb.use
         # self.use_tensorboard = cfg.use_tensorboard
 
-    def __del__(self):
-        self.compress_raw_res_file()
-
     def compress_raw_res_file(self):
-        import gzip
-        import shutil
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
         if os.path.exists(old_f_name):
+            logger.info(
+                "We will compress the file eval_results.raw into a .gz file, and delete the old one"
+            )
             with open(old_f_name, 'rb') as f_in:
                 with gzip.open(old_f_name + ".gz", 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
             os.remove(old_f_name)
 
-    def format_eval_res(self, results, rnd, role=-1, forms=None):
+    def format_eval_res(self,
+                        results,
+                        rnd,
+                        role=-1,
+                        forms=None,
+                        return_raw=False):
         """
         format the evaluation results from trainer.ctx.eval_results
 
@@ -42,6 +50,7 @@ class Monitor(object):
             rnd (int|string): FL round
             role (int|string): the output role
             forms (list): format type
+            return_raw (bool): return either raw results, or other results
 
         Returns:
             round_formatted_results (dict): a formatted results with different forms and roles,
@@ -119,7 +128,7 @@ class Monitor(object):
                   "a") as outfile:
             outfile.write(str(round_formatted_results_raw) + "\n")
 
-        return round_formatted_results
+        return round_formatted_results_raw if return_raw else round_formatted_results
 
     def calc_blocal_dissim(last_model, local_updated_models):
         '''
@@ -127,7 +136,8 @@ class Monitor(object):
             last_model (dict): the state of last round.
             local_updated_models (list): each element is ooxx.
         Returns:
-            b_local_dissimilarity (dict): the measurements.
+            b_local_dissimilarity (dict): the measurements proposed in
+            "Tian Li, Anit Kumar Sahu, Manzil Zaheer, and et al. Federated Optimization in Heterogeneous Networks".
         '''
         # for k, v in last_model.items():
         #    print(k, v)
