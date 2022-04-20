@@ -256,7 +256,8 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
 
     def train(self, target_data_split_name="train"):
         # return multiple model paras
-        sample_size, _, results = super().train(target_data_split_name=target_data_split_name)
+        sample_size, _, results = super().train(
+            target_data_split_name=target_data_split_name)
 
         trained_model_para = []
         for model_idx in range(self.model_nums):

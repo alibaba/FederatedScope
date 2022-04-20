@@ -130,7 +130,9 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
         if "y_prob_ensemble" not in ctx.mode:
             ctx.mode.y_prob_ensemble = 0
-        ctx.mode.y_prob_ensemble += np.concatenate(ctx.mode.ys_prob) * self.weights_internal_models[ctx.cur_model_idx].item()
+        ctx.mode.y_prob_ensemble += np.concatenate(
+            ctx.mode.ys_prob) * self.weights_internal_models[
+                ctx.cur_model_idx].item()
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:

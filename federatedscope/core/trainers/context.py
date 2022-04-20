@@ -76,7 +76,6 @@ class Context(LifecycleDict):
         variables with the same name will be stored according to `ctx.cur_mode` and won't influence each other. For \
         now, the `Context` class only permits nested routine with different `ctx.cur_mode`.
     """
-
     def __init__(self,
                  model,
                  cfg,
@@ -185,8 +184,8 @@ class Context(LifecycleDict):
     def append_mode(self, mode):
         if mode in self.mode_stack:
             raise RuntimeError(
-                "FederatedScope doesn't support nested routine with the same mode {}, variables could be covered.".format(
-                    mode))
+                "FederatedScope doesn't support nested routine with the same mode {}, variables could be covered."
+                .format(mode))
         self.mode_stack.append(mode)
         self.cur_mode = self.mode_stack[-1]
         self.change_mode(self.cur_mode)
@@ -195,7 +194,8 @@ class Context(LifecycleDict):
 
     def pop_mode(self):
         self.mode_stack.pop()
-        self.cur_mode = self.mode_stack[-1] if len(self.mode_stack) != 0 else None
+        self.cur_mode = self.mode_stack[-1] if len(
+            self.mode_stack) != 0 else None
         if len(self.mode_stack) != 0:
             self.change_mode(self.cur_mode)
 
@@ -237,7 +237,6 @@ class Context(LifecycleDict):
         self.mode.clear(lifecycle)
 
 
-
 class BasicCtxVar(object):
     """Basic variable class
 
@@ -245,12 +244,7 @@ class BasicCtxVar(object):
         lifecycle: specific lifecycle of the attribute
     """
 
-    LIEFTCYCLES = [
-        "batch",
-        "epoch",
-        "routine",
-        None
-    ]
+    LIEFTCYCLES = ["batch", "epoch", "routine", None]
 
     def __init__(self, lifecycle=None):
         assert lifecycle in BasicCtxVar.LIEFTCYCLES
@@ -286,6 +280,7 @@ def CtxStatsVar(init=0., lifecycle="routine"):
 
     """
     fcls = type(init)
+
     class TemplateVar(BasicCtxVar, fcls):
         def __new__(cls, init=0., *args, **kwargs):
             return super(TemplateVar, cls).__new__(cls, init)
@@ -293,6 +288,7 @@ def CtxStatsVar(init=0., lifecycle="routine"):
         def __init__(self, init=0., lifecycle='routine'):
             BasicCtxVar.__init__(self, lifecycle=lifecycle)
             fcls.__init__(self)
+
     return TemplateVar(init, lifecycle)
 
 
@@ -303,6 +299,7 @@ def lifecycle(lifecycle):
         lifecycle: the type of lifecycle, choose from "batch/epoch/routine"
     """
     if lifecycle == "routine":
+
         def decorate(func):
             def wrapper(self, mode, dataset_name=None):
                 self.ctx.append_mode(mode)
@@ -320,6 +317,7 @@ def lifecycle(lifecycle):
 
             return wrapper
     else:
+
         def decorate(func):
             def wrapper(self):
                 res = func(self)
@@ -328,5 +326,5 @@ def lifecycle(lifecycle):
                 return res
 
             return wrapper
-    return decorate
 
+    return decorate

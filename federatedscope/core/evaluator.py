@@ -38,12 +38,11 @@ class Evaluator(object):
         results = {}
         y_true, y_pred, y_prob = self._check_and_parse(ctx)
         for metric, func in self.eval_metric.items():
-            results["{}_{}".format(ctx.cur_mode,
-                                   metric)] = func(ctx=ctx,
-                                                   y_true=y_true,
-                                                   y_pred=y_pred,
-                                                   y_prob=y_prob,
-                                                   metric=metric)
+            results["{}_{}".format(ctx.cur_mode, metric)] = func(ctx=ctx,
+                                                                 y_true=y_true,
+                                                                 y_pred=y_pred,
+                                                                 y_prob=y_prob,
+                                                                 metric=metric)
         return results
 
     def _check_and_parse(self, ctx):

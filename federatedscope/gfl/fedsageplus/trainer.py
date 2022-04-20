@@ -7,6 +7,7 @@ from federatedscope.gfl.loss import GreedyLoss
 from federatedscope.gfl.trainer.nodetrainer import NodeFullBatchTrainer
 from federatedscope.core.trainers.context import CtxReferVar
 
+
 class LocalGenTrainer(NodeFullBatchTrainer):
     def __init__(self, model, data, device, config, only_for_eval=False):
         super(LocalGenTrainer, self).__init__(model, data, device, config,

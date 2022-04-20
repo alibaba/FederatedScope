@@ -112,7 +112,6 @@ class GeneralTFTrainer(Trainer):
                 ctx.mode.y_true = CtxReferVar(y_true, "batch")
                 ctx.mode.y_prob = CtxReferVar(y_prob, "batch")
 
-
     def _hook_on_batch_forward_regularizer(self, ctx):
         pass
 

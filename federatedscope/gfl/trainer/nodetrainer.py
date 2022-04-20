@@ -9,6 +9,7 @@ from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 from federatedscope.core.trainers.context import CtxReferVar
 
+
 class NodeFullBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
