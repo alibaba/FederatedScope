@@ -276,20 +276,24 @@ class CtxReferVar(BasicCtxVar):
         if self.efunc is not None:
             self.efunc(self.obj)
 
-class CtxStatsVar(BasicCtxVar, float):
-    """To store the statistic digits with specific lifecycle, e.g. loss_batch, loss_total, and the default type is float
+
+def CtxStatsVar(init=0., lifecycle="routine"):
+    """To store the statistic digits with specific lifecycle, e.g. loss_batch, loss_total. The type is the same with `init`
 
     Arguments:
         init: the initialized value
         lifecycle: the specific lifecycle of the variable
 
     """
-    def __new__(cls, init=0., *args, **kwargs):
-        return super(CtxStatsVar, cls).__new__(cls, init)
+    fcls = type(init)
+    class TemplateVar(BasicCtxVar, fcls):
+        def __new__(cls, init=0., *args, **kwargs):
+            return super(TemplateVar, cls).__new__(cls, init)
 
-    def __init__(self, init=0., lifecycle='routine'):
-        BasicCtxVar.__init__(self, lifecycle=lifecycle)
-        float.__init__(self)
+        def __init__(self, init=0., lifecycle='routine'):
+            BasicCtxVar.__init__(self, lifecycle=lifecycle)
+            fcls.__init__(self)
+    return TemplateVar(init, lifecycle)
 
 
 def lifecycle(lifecycle):

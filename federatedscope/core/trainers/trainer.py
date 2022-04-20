@@ -428,7 +428,7 @@ class GeneralTorchTrainer(Trainer):
         # Prepare variables
         ctx.mode.loss_batch_total = CtxStatsVar()
         ctx.mode.loss_regular_total = CtxStatsVar()
-        ctx.mode.num_samples = CtxStatsVar(lifecycle=None)
+        ctx.mode.num_samples = CtxStatsVar(0, lifecycle=None)
         ctx.mode.ys_true = CtxReferVar(list(), "routine")
         ctx.mode.ys_prob = CtxReferVar(list(), "routine")
 
