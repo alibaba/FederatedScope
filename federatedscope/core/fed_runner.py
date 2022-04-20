@@ -29,7 +29,7 @@ class FedRunner(object):
             self.shared_comm_queue = deque()
             self._setup_for_standalone()
             # in standalone mode, by default, we print the trainer info only once for better logs readability
-            self.client[0].print_trainer_meta_info()
+            self.client[1].trainer.print_trainer_meta_info()
         elif self.mode == 'distributed':
             self._setup_for_distributed()
 
@@ -116,6 +116,9 @@ class FedRunner(object):
                 while len(self.shared_comm_queue) > 0:
                     msg = self.shared_comm_queue.popleft()
                     self._handle_msg(msg)
+
+            self.server._monitor.compress_raw_res_file()
+
             return self.server.best_results
 
         elif self.mode == 'distributed':

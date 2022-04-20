@@ -167,10 +167,11 @@ class Client(Worker):
             self.state = round
             sample_size, model_para_all, results = self.trainer.train()
             logging.info(
-                self._monitor.format_eval_res(results,
-                                              rnd=self.state,
-                                              role='Client #{}'.format(
-                                                  self.ID)))
+                self._monitor.format_eval_res(
+                    results,
+                    rnd=self.state,
+                    role='Client #{}'.format(self.ID),
+                    return_raw=self._cfg.federate.make_global_eval))
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:

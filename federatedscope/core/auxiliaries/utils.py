@@ -9,7 +9,6 @@ from os import path as osp
 import ssl
 import urllib.request
 
-
 import numpy as np
 # Blind torch
 try:
@@ -61,7 +60,7 @@ def setup_logger(cfg):
         outdir = os.path.join(cfg.outdir, "sub_exp" +
                               datetime.now().strftime('_%Y%m%d%H%M%S')
                               )  # e.g., sub_exp_20220411030524
-        while os.path.exists(cfg.outdir):
+        while os.path.exists(outdir):
             time.sleep(1)
             outdir = os.path.join(
                 cfg.outdir,
@@ -79,6 +78,8 @@ def setup_logger(cfg):
     fh.setFormatter(logger_formatter)
     logger.addHandler(fh)
     sys.stderr = sys.stdout
+
+    logger.info(f"the output dir is {cfg.outdir}")
 
 
 def get_dataset(type, root, transform, target_transform, download=True):

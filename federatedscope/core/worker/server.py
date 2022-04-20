@@ -320,10 +320,12 @@ class Server(Worker):
     def save_best_results(self):
         if self._cfg.federate.save_to != '':
             self.aggregator.save_model(self._cfg.federate.save_to, self.state)
-        formatted_best_res = self._monitor.format_eval_res(self.best_results,
-                                                           rnd="Final",
-                                                           role='Server #',
-                                                           forms=["raw"])
+        formatted_best_res = self._monitor.format_eval_res(
+            self.best_results,
+            rnd="Final",
+            role='Server #',
+            forms=["raw"],
+            return_raw=self._cfg.federate.make_global_eval)
         logging.info(formatted_best_res)
         self.save_formatted_results(formatted_best_res)
 
@@ -466,6 +468,7 @@ class Server(Worker):
             update best evaluation results.
             by default, the update is based on validation loss with `round_wise_update_key="val_loss" `
         """
+        update_best_this_round = False
         if not isinstance(results, dict):
             raise ValueError(
                 f"update best results require `results` a dict, but got {type(results)}"
@@ -484,18 +487,15 @@ class Server(Worker):
                         if key not in best_result or cur_result < best_result[
                                 key]:
                             best_result[key] = cur_result
-                            logging.info(
-                                f"Find new best result for {results_type}.{key} with value {cur_result}"
-                            )
+                            update_best_this_round = True
+
                     elif 'acc' in key:  # the larger, the better
                         if results_type == "client_individual":
                             cur_result = max(cur_result)
                         if key not in best_result or cur_result > best_result[
                                 key]:
                             best_result[key] = cur_result
-                            logging.info(
-                                f"Find new best result for {results_type}.{key} with value {cur_result}"
-                            )
+                            update_best_this_round = True
                     else:
                         # unconcerned metric
                         pass
@@ -526,7 +526,6 @@ class Server(Worker):
                         f"Your round_wise_update_key={round_wise_update_key}, "
                         f"the keys of results are {list(results.keys())}")
 
-                update_best_this_round = False
                 for key in sorted_keys:
                     cur_result = results[key]
                     if update_best_this_round or \
@@ -537,9 +536,6 @@ class Server(Worker):
                         if update_best_this_round or \
                                 key not in best_result or cur_result < best_result[key]:
                             best_result[key] = cur_result
-                            logging.info(
-                                f"Find new best result for {results_type}.{key} with value {cur_result}"
-                            )
                             update_best_this_round = True
                     elif update_best_this_round or \
                             'acc' in round_wise_update_key and 'acc' in key:
@@ -548,13 +544,13 @@ class Server(Worker):
                         if update_best_this_round or \
                                 key not in best_result or cur_result > best_result[key]:
                             best_result[key] = cur_result
-                            logging.info(
-                                f"Find new best result for {results_type}.{key} with value {cur_result}"
-                            )
                             update_best_this_round = True
                     else:
                         # unconcerned metric
                         pass
+
+        if update_best_this_round:
+            logging.info(f"Find new best result: {self.best_results}")
 
     def eval(self):
         """
@@ -574,8 +570,9 @@ class Server(Worker):
                 formatted_eval_res = self._monitor.format_eval_res(
                     metrics,
                     rnd=self.state,
-                    role='Global-Eval-Server #',
-                    forms=self._cfg.eval.report)
+                    role='Server #',
+                    forms=self._cfg.eval.report,
+                    return_raw=self._cfg.federate.make_global_eval)
                 self.update_best_result(formatted_eval_res['Results_raw'],
                                         results_type="server_global_eval",
                                         round_wise_update_key=self._cfg.eval.
