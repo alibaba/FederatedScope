@@ -4,7 +4,7 @@ from torch_geometric import transforms
 from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
-from federatedscope.core.splitters.graph import GraphTypeSplitter, ScaffoldSplitter, RandChunkSplitter
+from federatedscope.core.splitters import splitter_builder
 
 
 def get_numGraphLabels(dataset):
@@ -32,15 +32,7 @@ def load_graphlevel_dataset(config=None):
     batch_size = config.data.batch_size
 
     # Splitter
-    if config.data.splitter == 'graph_type':
-        alpha = 0.5
-        splitter = GraphTypeSplitter(config.federate.client_num, alpha)
-    elif config.data.splitter == 'scaffold':
-        splitter = ScaffoldSplitter(config.federate.client_num)
-    elif config.data.splitter == 'rand_chunk':
-        splitter = RandChunkSplitter(config.federate.client_num)
-    else:
-        splitter = None
+    splitter = splitter_builder(config)
 
     # Transforms
     transform = transforms.Compose(eval(config.data.transform))

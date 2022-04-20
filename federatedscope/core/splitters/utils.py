@@ -1,20 +1,6 @@
 import numpy as np
 
 
-def get_splitter(config):
-    client_num = config.federate.client_num
-    args = eval(config.data.splitter_args)
-
-    # Delay import
-    if config.data.splitter == 'LDA':
-        from federatedscope.core.splitters import LDASplitter
-        splitter = LDASplitter(client_num, **args)
-    else:
-        splitter = None
-
-    return splitter
-
-
 def dirichlet_distribution_noniid_slice(label, client_num, alpha):
     r"""Get sample index list for each client from the Dirichlet distribution.
     https://github.com/FedML-AI/FedML/blob/master/fedml_core/non_iid_partition/noniid_partition.py

@@ -29,7 +29,7 @@ def load_nlp_dataset(config=None):
     transform = None
     target_transform = None
 
-if name in ['shakespeare', 'subreddit', 'twitter']:
+    if name in ['shakespeare', 'subreddit', 'twitter']:
         dataset = LEAF_NLP(root=path,
                            name=name,
                            s_frac=config.data.subsample,

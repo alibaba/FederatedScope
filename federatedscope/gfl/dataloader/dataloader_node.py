@@ -7,9 +7,9 @@ from torch_geometric.utils import add_self_loops, remove_self_loops, to_undirect
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
+from federatedscope.core.splitters import splitter_builder
 from federatedscope.gfl.dataset.dblp_new import DBLPNew
 from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
-from federatedscope.core.splitters.graph import LouvainSplitter, RandomSplitter
 
 INF = np.iinfo(np.int64).max
 
@@ -82,12 +82,7 @@ def load_nodelevel_dataset(config=None):
     name = config.data.type.lower()
 
     # Splitter
-    if config.data.splitter == 'louvain':
-        splitter = LouvainSplitter(config.federate.client_num)
-    elif config.data.splitter == 'random':
-        splitter = RandomSplitter(config.federate.client_num)
-    else:
-        splitter = None
+    splitter = splitter_builder(config)
 
     # Transforms
     transform = transforms.Compose(eval(config.data.transform))

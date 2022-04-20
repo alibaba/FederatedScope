@@ -3,9 +3,10 @@ import torch
 from torch_geometric import transforms
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
+
+from federatedscope.core.splitters import splitter_builder
 from federatedscope.gfl.dataset.recsys import RecSys
 from federatedscope.gfl.dataset.kg import KG
-from federatedscope.core.splitters.graph import RelTypeSplitter
 
 
 def raw2loader(raw_data, config=None):
@@ -51,11 +52,7 @@ def load_linklevel_dataset(config=None):
     name = config.data.type.lower()
 
     # Splitter
-    if config.data.splitter == 'rel_type':
-        alpha = 0.5
-        splitter = RelTypeSplitter(config.federate.client_num, alpha)
-    else:
-        splitter = None
+    splitter = splitter_builder(config)
 
     # Transforms
     transform = transforms.Compose(eval(config.data.transform))

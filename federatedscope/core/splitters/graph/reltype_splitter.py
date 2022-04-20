@@ -17,7 +17,7 @@ class RelTypeSplitter(BaseTransform):
         alpha (float): parameter controlling the identicalness among clients.
         
     """
-    def __init__(self, client_num, alpha, realloc_mask=False):
+    def __init__(self, client_num, alpha=0.5, realloc_mask=False):
         self.client_num = client_num
         self.alpha = alpha
         self.realloc_mask = realloc_mask

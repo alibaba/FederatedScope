@@ -124,7 +124,7 @@ def load_external_data(config=None):
     import logging
     from importlib import import_module
     from torch.utils.data import DataLoader
-    from federatedscope.core.splitters.utils import get_splitter
+    from federatedscope.core.splitters import get_splitter
 
     def get_func_args(func):
         sign = inspect.signature(func).parameters.values()
