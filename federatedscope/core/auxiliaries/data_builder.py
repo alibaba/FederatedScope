@@ -118,6 +118,194 @@ def load_toy_data(config=None):
     return data, config
 
 
+def load_external_data(config=None):
+    import inspect
+    import logging
+    from importlib import import_module
+    from torch.utils.data import DataLoader
+    from federatedscope.core.splitters.utils import get_splitter
+
+    def get_func_args(func):
+        sign = inspect.signature(func).parameters.values()
+        sign = set([val.name for val in sign])
+        return sign
+
+    def filter_dict(func, kwarg):
+        sign = get_func_args(func)
+        common_args = sign.intersection(kwarg.keys())
+        filtered_dict = {key: kwarg[key] for key in common_args}
+        return filtered_dict
+
+    def build_transforms(T_names, T):
+        transform_funcs = {}
+        for name in T_names:
+            if config.data[name]:
+                try:
+                    # Compose might go wrong
+                    transform_funcs[name] = T.Compose(eval(config.data[name]))
+                except:
+                    logging.warning(
+                        f"Import {config.data[name]} failed, please check the args again."
+                    )
+                    return None
+            else:
+                transform_funcs[name] = None
+
+        return transform_funcs
+
+    def load_torchvision_data(name, splits=None, config=None):
+        import torchvision
+
+        dataset_func = getattr(import_module('torchvision.datasets'), name)
+        try:
+            transforms = getattr(import_module('torchvision'), 'transforms')
+            transform_funcs = build_transforms(
+                ['transform', 'target_transform'])
+            transform_funcs = filter_dict(dataset_func.__init__,
+                                          transform_funcs)
+        except:
+            transform_funcs = {}
+
+        raw_args = eval(config.data.args)
+        raw_args.update({'download': True})
+        filtered_args = filter_dict(dataset_func.__init__, raw_args)
+        func_args = get_func_args(dataset_func.__init__)
+
+        # Perform split on different dataset
+        if 'train' in func_args:
+            # Split train to (train, val)
+            dataset_train = dataset_func(root=config.data.root,
+                                         train=True,
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = None
+            dataset_test = dataset_func(root=config.data.root,
+                                        train=False,
+                                        **filtered_args,
+                                        **transform_funcs)
+        elif 'split' in func_args:
+            # Use raw split
+            dataset_train = dataset_func(root=config.data.root,
+                                         split='train',
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = dataset_func(root=config.data.root,
+                                       split='valid',
+                                       **filtered_args,
+                                       **transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        split='test',
+                                        **filtered_args,
+                                        **transform_funcs)
+        elif 'classes' in func_args:
+            # Use raw split
+            dataset_train = dataset_func(root=config.data.root,
+                                         classes='train',
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = dataset_func(root=config.data.root,
+                                       classes='valid',
+                                       **filtered_args,
+                                       **transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        classes='test',
+                                        **filtered_args,
+                                        **transform_funcs)
+        else:
+            # Use config.data.splits
+            dataset = dataset_func(root=config.data.root,
+                                   **filtered_args,
+                                   **transform_funcs)
+        data_dict = {
+            'train': dataset_train,
+            'val': dataset_val,
+            'test': dataset_test
+        }
+
+        return data_dict
+
+    def load_torchtext_data(name, splits=None, config=None):
+        import torchtext
+
+        dataset_func = getattr(import_module('torchtext.datasets'), name)
+        raise NotImplementedError
+
+    def load_torchaudio_data(name, splits=None, config=None):
+        import torchaudio
+
+        dataset_func = getattr(import_module('torchaudio.datasets'), name)
+        raise NotImplementedError
+
+    def load_torch_geometric_data(name, splits=None, config=None):
+        import torch_geometric
+
+        dataset_func = getattr(import_module('torch_geometric.datasets'), name)
+        raise NotImplementedError
+
+    load_data = {
+        'torchvision': load_torchvision_data,
+        'torchtext': load_torchtext_data,
+        'torchaudio': load_torchaudio_data,
+        'torch_geometric': load_torch_geometric_data
+    }
+
+    # Load dataset
+    splits = config.data.splits
+    name, package = config.data.type.split('@')
+
+    logging.info('Loading dataset...')
+    dataset_dict = load_data[package.lower()](name, splits, config)
+
+    splitter = get_splitter(config)
+
+    # Apply Splitter to dataset_dict
+    dataset_dict = {
+        key: splitter(value)
+        for key, value in dataset_dict.items()
+    }
+
+    # Build dict of Dataloader
+    data_local_dict = dict()
+    for client_idx, subdataset in enumerate(dataset):
+        index = np.random.permutation(np.arange(len(subdataset)))
+        if eval_dataset:
+            train_idx = index[:int(
+                len(subdataset) * splits[0] / (splits[0] + splits[1]))]
+            valid_idx = index[
+                int(len(subdataset) * splits[0] / (splits[0] + splits[1])):]
+            dataloader = {
+                'test':
+                DataLoader(eval_dataset[client_idx],
+                           batch_size=config.data.batch_size,
+                           shuffle=False,
+                           num_workers=config.data.num_workers)
+            }
+        else:
+            train_idx = index[:int(len(subdataset) * splits[0])]
+            valid_idx = index[int(len(subdataset) * splits[0]
+                                  ):int(len(subdataset) * sum(splits[:2]))]
+            test_idx = index[int(len(subdataset) * sum(splits[:2])):]
+            dataloader = {
+                'test':
+                DataLoader([subdataset[idx] for idx in test_idx],
+                           batch_size=config.data.batch_size,
+                           shuffle=False,
+                           num_workers=config.data.num_workers)
+            }
+        dataloader['train'] = DataLoader(
+            [subdataset[idx] for idx in train_idx],
+            batch_size=config.data.batch_size,
+            shuffle=True,
+            num_workers=config.data.num_workers)
+        dataloader['val'] = DataLoader([subdataset[idx] for idx in valid_idx],
+                                       batch_size=config.data.batch_size,
+                                       shuffle=True,
+                                       num_workers=config.data.num_workers)
+        data_local_dict[client_idx + 1] = dataloader
+
+    return data_local_dict, config
+
+
 def get_data(config):
     for func in register.data_dict.values():
         data_and_config = func(config)
@@ -157,6 +345,10 @@ def get_data(config):
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)
     else:
-        raise ValueError('Data {} is not provided'.format(config.data.type))
+        # Try to import external data
+        try:
+            data, modified_config = load_external_data(config)
+        except:
+            raise ValueError('Data {} not found.'.format(config.data.type))
 
     return data, modified_config

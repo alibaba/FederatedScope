@@ -1,5 +1,5 @@
 import torch
-from federatedscope.gfl.dataset.utils import dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
 
 
 class LDASplitter(object):
