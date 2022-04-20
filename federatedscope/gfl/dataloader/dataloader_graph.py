@@ -1,12 +1,9 @@
-import torch
-import random
 import numpy as np
-import torch_geometric.transforms as transforms
 
+from torch_geometric import transforms
 from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
-from federatedscope.gfl.dataset.utils import get_maxDegree
 from federatedscope.gfl.dataset.splitter import GraphTypeSplitter, ScaffoldSplitter, RandChunkSplitter
 
 

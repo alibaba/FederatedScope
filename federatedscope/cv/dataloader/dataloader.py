@@ -1,7 +1,3 @@
-import torch
-import numpy as np
-
-from collections import Iterable
 from torchvision import transforms
 from torch.utils.data import DataLoader
 

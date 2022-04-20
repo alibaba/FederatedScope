@@ -1,7 +1,6 @@
 import torch
-import torch_geometric.transforms as transforms
 
-from copy import deepcopy
+from torch_geometric import transforms
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 from federatedscope.gfl.dataset.recsys import RecSys
