@@ -176,8 +176,7 @@ class FedRunner(object):
         else:
             raise ValueError
 
-        logger.info('Server #{:d} has been set up ... '.format(
-            self.server_id))
+        logger.info('Server #{:d} has been set up ... '.format(self.server_id))
 
         return server
 

@@ -20,7 +20,6 @@ except ImportError:
     torchvision = None
     distributions = None
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -133,7 +132,6 @@ def save_local_data(dir_path,
 
     if (val_data is not None) and (val_targets is not None):
         torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
-
 
 
 def filter_by_specified_keywords(param_name, config):
