@@ -63,7 +63,7 @@ class FedSagePlusTest(unittest.TestCase):
         Fed_runner = FedRunner(data=data,
                                server_class=get_server_cls(init_cfg),
                                client_class=get_client_cls(init_cfg),
-                               config=global_cfg.clone())
+                               config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
