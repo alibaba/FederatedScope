@@ -63,7 +63,7 @@ class FedProxTest(unittest.TestCase):
                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
-        global_cfg.merge_from_other_cfg(backup_cfg)
+        init_cfg.merge_from_other_cfg(backup_cfg)
 
         self.assertLess(
             test_results['client_summarized_weighted_avg']['test_loss'], 600)

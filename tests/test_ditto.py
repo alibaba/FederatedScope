@@ -66,7 +66,7 @@ class FEMNISTTest(unittest.TestCase):
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
-        global_cfg.merge_from_other_cfg(backup_cfg)
+        init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertLess(
             test_best_results["client_summarized_weighted_avg"]
             ['test_avg_loss'], 10)

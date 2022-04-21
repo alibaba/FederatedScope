@@ -50,22 +50,23 @@ class FedSagePlusTest(unittest.TestCase):
         return backup_cfg
 
     def test_fedsageplus_standalone(self):
-        backup_cfg = self.set_config_fedsageplus(global_cfg)
-        setup_seed(global_cfg.seed)
-        update_logger(global_cfg)
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_fedsageplus(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg)
 
-        data, modified_cfg = get_data(global_cfg.clone())
-        global_cfg.merge_from_other_cfg(modified_cfg)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
 
         self.assertIsNotNone(data)
 
         Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(global_cfg),
-                               client_class=get_client_cls(global_cfg),
+                               server_class=get_server_cls(init_cfg),
+                               client_class=get_client_cls(init_cfg),
                                config=global_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
-        global_cfg.merge_from_other_cfg(backup_cfg)
+        init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertGreater(test_best_results["server_global_eval"]['test_acc'],
                            0.7)
 

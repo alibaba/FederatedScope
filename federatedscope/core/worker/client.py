@@ -173,7 +173,7 @@ class Client(Worker):
                     results,
                     rnd=self.state,
                     role='Client #{}'.format(self.ID),
-                    return_raw=self._cfg.federate.make_global_eval))
+                    return_raw=True))
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:

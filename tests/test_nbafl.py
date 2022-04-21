@@ -51,6 +51,7 @@ class NbAFLTest(unittest.TestCase):
         return backup_cfg
 
     def test_nbafl_standalone(self):
+        # TODO, no need to backup the cfg in all test_xxx.py, as we are now using the init_cfg style
         init_cfg = global_cfg.clone()
         backup_cfg = self.set_config_femnist(init_cfg)
         setup_seed(init_cfg.seed)
@@ -65,11 +66,11 @@ class NbAFLTest(unittest.TestCase):
         Fed_runner = FedRunner(data=data,
                                server_class=get_server_cls(init_cfg),
                                client_class=get_client_cls(init_cfg),
-                               config=global_cfg.clone())
+                               config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
-        global_cfg.merge_from_other_cfg(backup_cfg)
+        init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertLess(
             test_best_results["client_summarized_weighted_avg"]['test_loss'],
             500)
