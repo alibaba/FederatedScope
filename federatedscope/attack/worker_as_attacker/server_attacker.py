@@ -11,6 +11,8 @@ import logging
 import torch
 from federatedscope.attack.privacy_attacks.passive_PIA import PassivePropertyInference
 
+logger = logging.getLogger(__name__)
+
 
 class PassiveServer(Server):
     '''
@@ -96,7 +98,7 @@ class PassiveServer(Server):
             if sender_list is None:
                 sender_list = self.msg_buffer['train'][state].keys()
             for sender in sender_list:
-                logging.info(
+                logger.info(
                     '------------- reconstruct round:{}, client:{}-----------'.
                     format(state, sender))
 

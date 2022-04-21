@@ -6,6 +6,8 @@ from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class PassivePropertyInference():
     '''
@@ -157,7 +159,7 @@ class PassivePropertyInference():
         y_pred = self.property_inference(x_test)
         from sklearn.metrics import accuracy_score
         accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
-        logging.info(
+        logger.info(
             '=============== PIA accuracy on auxiliary test dataset: {}'.
             format(accuracy))
 

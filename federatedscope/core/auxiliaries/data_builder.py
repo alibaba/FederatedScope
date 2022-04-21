@@ -1,5 +1,5 @@
-import numpy as np
 import pickle
+import numpy as np
 
 import federatedscope.register as register
 
@@ -121,7 +121,6 @@ def load_toy_data(config=None):
 def load_external_data(config=None):
     import torch
     import inspect
-    import logging
     from importlib import import_module
     from torch.utils.data import DataLoader
     from federatedscope.core.auxiliaries.splitter_builder import get_splitter
@@ -259,7 +258,6 @@ def load_external_data(config=None):
     splits = config.data.splits
     name, package = config.data.type.split('@')
 
-    logging.info('Loading external dataset...')
     dataset = load_data[package.lower()](name, splits, config)
     splitter = get_splitter(config)
 
