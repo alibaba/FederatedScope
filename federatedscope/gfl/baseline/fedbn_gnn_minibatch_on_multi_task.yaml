@@ -12,7 +12,7 @@ federate:
 data:
   root: data/
   type: graph_multi_domain_mix
-  pre_transforms: '[transforms.Constant(value=1.0, cat=False)]'
+  pre_transform: 'transforms.Constant(value=1.0, cat=False)'
 model:
   type: gin
   hidden: 64

@@ -1,8 +1,9 @@
-import federatedscope.register as  register
+import federatedscope.register as register
+
 
 def get_splitter(config):
     client_num = config.federate.client_num
-    args = config.data.splitter_args
+    args = eval('{' + config.data.splitter_args + '}')
 
     for func in register.splitter_dict.values():
         splitter = func(config)

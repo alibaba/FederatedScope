@@ -55,8 +55,10 @@ def load_linklevel_dataset(config=None):
     splitter = get_splitter(config)
 
     # Transforms
-    transform = transforms.Compose(eval(config.data.transform))
-    pre_transform = transforms.Compose(eval(config.data.pre_transform))
+    transform = transforms.Compose(eval(
+        config.data.transform)) if config.data.transform else None
+    pre_transform = transforms.Compose(eval(
+        config.data.pre_transform)) if config.data.pre_transform else None
 
     if name in ['epinions', 'ciao']:
         dataset = RecSys(path,
