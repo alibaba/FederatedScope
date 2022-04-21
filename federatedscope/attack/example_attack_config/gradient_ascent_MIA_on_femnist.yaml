@@ -1,7 +1,8 @@
 use_gpu: True
 device: 0
 seed: 12345
-early_stop_patience: 0
+early_stop:
+  patience: 0
 federate:
   mode: standalone
   local_update_steps: 1

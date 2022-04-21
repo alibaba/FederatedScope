@@ -1,6 +1,7 @@
 use_gpu: True
 device: 0
-early_stop_patience: 20
+early_stop:
+    patience: 20
 federate:
   mode: 'standalone'
   make_global_eval: False
