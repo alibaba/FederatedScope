@@ -17,12 +17,14 @@ class ExternalDatasetTest(unittest.TestCase):
 
         cfg.use_gpu = True
         cfg.eval.freq = 10
-        cfg.eval.metrics = ['acc', 'loss_regular']
+        cfg.eval.metrics = ['acc']
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 5
+        cfg.federate.local_update_steps = 1
         cfg.federate.total_round_num = 20
+        cfg.federate.batch_or_epoch = 'epoch'
         cfg.federate.client_num = 5
+        cfg.federate.sample_client_rate = 0.2
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'MNIST@torchvision'
@@ -36,13 +38,13 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.model.hidden = 2048
         cfg.model.out_channels = 10
 
-        cfg.optimizer.lr = 0.001
+        cfg.optimizer.lr = 0.01
         cfg.optimizer.weight_decay = 0.0
         cfg.optimizer.grad_clip = 5.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'cvtrainer'
-        cfg.seed = 123
+        cfg.seed = 12345
 
         return backup_cfg
 
