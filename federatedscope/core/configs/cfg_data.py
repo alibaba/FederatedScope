@@ -40,7 +40,8 @@ def assert_data_cfg(cfg):
         assert cfg.model.gnn_layer == len(
             cfg.data.sizes), 'Sample size mismatch'
     if '@' in cfg.data.type:
-        assert cfg.federate.client_num > 0, 'Client_num should be greater than 0 when using external data'
+        assert cfg.federate.client_num > 0, '`federate.client_num` should be greater than 0 when using external data'
+        assert cfg.data.splitter, '`data.splitter` should not be empty when using external data'
 
 
 register_config("data", extend_data_cfg)

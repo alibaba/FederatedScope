@@ -1,10 +1,10 @@
 import torch
 
-from torch_geometric import transforms
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 from federatedscope.gfl.dataset.recsys import RecSys
 from federatedscope.gfl.dataset.kg import KG
 
@@ -55,38 +55,32 @@ def load_linklevel_dataset(config=None):
     splitter = get_splitter(config)
 
     # Transforms
-    transform = eval(config.data.transform) if config.data.transform else None
-    pre_transform = eval(
-        config.data.pre_transform) if config.data.pre_transform else None
-
-    if isinstance(transform, tuple):
-        transform = transforms.Compose(transform)
-    if isinstance(pre_transform, tuple):
-        pre_transform = transforms.Compose(pre_transform)
+    transforms_funcs = get_transform(config, 'torch_geometric')
 
     if name in ['epinions', 'ciao']:
         dataset = RecSys(path,
                          name,
                          FL=True,
                          splits=config.data.splits,
-                         transform=transform,
-                         pre_transform=pre_transform)
-        global_dataset = RecSys(path,
-                                name,
-                                FL=False,
-                                splits=config.data.splits,
-                                transform=transform,
-                                pre_transform=pre_transform)
+                         transform=transforms_funcs['transform'],
+                         pre_transform=transforms_funcs['pre_transform'])
+        global_dataset = RecSys(
+            path,
+            name,
+            FL=False,
+            splits=config.data.splits,
+            transform=transforms_funcs['transform'],
+            pre_transform=transforms_funcs['pre_transform'])
     elif name in ['fb15k-237', 'wn18', 'fb15k', 'toy']:
         dataset = KG(path,
                      name,
-                     transform=transform,
-                     pre_transform=pre_transform)
+                     transform=transforms_funcs['transform'],
+                     pre_transform=transforms_funcs['pre_transform'])
         dataset = splitter(dataset[0])
         global_dataset = KG(path,
                             name,
-                            transform=transform,
-                            pre_transform=pre_transform)
+                            transform=transforms_funcs['transform'],
+                            pre_transform=transforms_funcs['pre_transform'])
     else:
         raise ValueError(f'No dataset named: {name}!')
 

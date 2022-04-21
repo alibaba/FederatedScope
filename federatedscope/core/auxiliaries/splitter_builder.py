@@ -1,4 +1,7 @@
+import logging
 import federatedscope.register as register
+
+logger = logging.getLogger(__name__)
 
 
 def get_splitter(config):
@@ -34,5 +37,6 @@ def get_splitter(config):
         from federatedscope.core.splitters.graph import RandChunkSplitter
         splitter = RandChunkSplitter(client_num, **args)
     else:
+        logger.warning(f'Splitter is none or not found.')
         splitter = None
     return splitter

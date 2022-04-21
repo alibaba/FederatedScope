@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-from torch_geometric import transforms
 
 from torch_geometric.datasets import Planetoid
 from torch_geometric.utils import add_self_loops, remove_self_loops, to_undirected
@@ -8,6 +7,7 @@ from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 from federatedscope.gfl.dataset.dblp_new import DBLPNew
 from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
 
@@ -85,14 +85,7 @@ def load_nodelevel_dataset(config=None):
     splitter = get_splitter(config)
 
     # Transforms
-    transform = eval(config.data.transform) if config.data.transform else None
-    pre_transform = eval(
-        config.data.pre_transform) if config.data.pre_transform else None
-
-    if isinstance(transform, tuple):
-        transform = transforms.Compose(transform)
-    if isinstance(pre_transform, tuple):
-        pre_transform = transforms.Compose(pre_transform)
+    transforms_funcs = get_transform(config, 'torch_geometric')
 
     # Dataset
     if name in ["cora", "citeseer", "pubmed"]:
@@ -108,38 +101,42 @@ def load_nodelevel_dataset(config=None):
                             num_train_per_class=num_split[name][0],
                             num_val=num_split[name][1],
                             num_test=num_split[name][2],
-                            transform=transform,
-                            pre_transform=pre_transform)
+                            transform=transforms_funcs['transform'],
+                            pre_transform=transforms_funcs['pre_transform'])
         dataset = splitter(dataset[0])
-        global_dataset = Planetoid(path,
-                                   name,
-                                   split='random',
-                                   num_train_per_class=num_split[name][0],
-                                   num_val=num_split[name][1],
-                                   num_test=num_split[name][2],
-                                   transform=transform,
-                                   pre_transform=pre_transform)
+        global_dataset = Planetoid(
+            path,
+            name,
+            split='random',
+            num_train_per_class=num_split[name][0],
+            num_val=num_split[name][1],
+            num_test=num_split[name][2],
+            transform=transforms_funcs['transform'],
+            pre_transform=transforms_funcs['pre_transform'])
     elif name == "dblp_conf":
         dataset = DBLPNew(path,
                           FL=1,
                           splits=config.data.splits,
-                          transform=transform,
-                          pre_transform=pre_transform)
-        global_dataset = DBLPNew(path,
-                                 FL=0,
-                                 splits=config.data.splits,
-                                 transform=transform,
-                                 pre_transform=pre_transform)
+                          transform=transforms_funcs['transform'],
+                          pre_transform=transforms_funcs['pre_transform'])
+        global_dataset = DBLPNew(
+            path,
+            FL=0,
+            splits=config.data.splits,
+            transform=transforms_funcs['transform'],
+            pre_transform=transforms_funcs['pre_transform'])
     elif name == "dblp_org":
         dataset = DBLPNew(path,
                           FL=2,
                           splits=config.data.splits,
-                          transform=transform)
-        global_dataset = DBLPNew(path,
-                                 FL=0,
-                                 splits=config.data.splits,
-                                 transform=transform,
-                                 pre_transform=pre_transform)
+                          transform=transforms_funcs['transform'],
+                          pre_transform=transforms_funcs['pre_transform'])
+        global_dataset = DBLPNew(
+            path,
+            FL=0,
+            splits=config.data.splits,
+            transform=transforms_funcs['transform'],
+            pre_transform=transforms_funcs['pre_transform'])
     elif name.startswith("csbm"):
         dataset = dataset_ContextualSBM(
             root=path,

@@ -5,6 +5,7 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def get_numGraphLabels(dataset):
@@ -35,14 +36,7 @@ def load_graphlevel_dataset(config=None):
     splitter = get_splitter(config)
 
     # Transforms
-    transform = eval(config.data.transform) if config.data.transform else None
-    pre_transform = eval(
-        config.data.pre_transform) if config.data.pre_transform else None
-
-    if isinstance(transform, tuple):
-        transform = transforms.Compose(transform)
-    if isinstance(pre_transform, tuple):
-        pre_transform = transforms.Compose(pre_transform)
+    transforms_funcs = get_transform(config, 'torch_geometric')
 
     if name in [
             'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
@@ -50,12 +44,14 @@ def load_graphlevel_dataset(config=None):
             'REDDIT-BINARY'
     ]:
         # Add feat for datasets without attrubute
-        if name in ['IMDB-BINARY', 'IMDB-MULTI'] and pre_transform is None:
-            pre_transform = transforms.Constant(value=1.0, cat=False)
+        if name in ['IMDB-BINARY', 'IMDB-MULTI'
+                    ] and transforms_funcs['pre_transform'] is None:
+            transforms_funcs['pre_transform'] = transforms.Constant(value=1.0,
+                                                                    cat=False)
         dataset = TUDataset(path,
                             name,
-                            pre_transform=pre_transform,
-                            transform=transform)
+                            pre_transform=transforms_funcs['pre_transform'],
+                            transform=transforms_funcs['transform'])
         if splitter is None:
             raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
@@ -66,8 +62,8 @@ def load_graphlevel_dataset(config=None):
     ]:
         dataset = MoleculeNet(path,
                               name,
-                              pre_transform=pre_transform,
-                              transform=transform)
+                              pre_transform=transforms_funcs['pre_transform'],
+                              transform=transforms_funcs['transform'])
         if splitter is None:
             raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
@@ -80,7 +76,7 @@ def load_graphlevel_dataset(config=None):
                 'PROTEINS'
             ]
         elif name.endswith('mix'.upper()):
-            if not pre_transform:
+            if not transforms_funcs['pre_transform']:
                 raise ValueError(f'pre_transform is None!')
             dnames = [
                 'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
@@ -106,15 +102,17 @@ def load_graphlevel_dataset(config=None):
         # Some datasets contain x
         for dname in dnames:
             if dname.startswith('IMDB') or dname == 'COLLAB':
-                tmp_dataset = TUDataset(path,
-                                        dname,
-                                        pre_transform=pre_transform,
-                                        transform=transform)
+                tmp_dataset = TUDataset(
+                    path,
+                    dname,
+                    pre_transform=transforms_funcs['pre_transform'],
+                    transform=transforms_funcs['transform'])
             else:
-                tmp_dataset = TUDataset(path,
-                                        dname,
-                                        pre_transform=None,
-                                        transform=transform)
+                tmp_dataset = TUDataset(
+                    path,
+                    dname,
+                    pre_transform=None,
+                    transform=transforms_funcs['transform'])
             #tmp_dataset = [ds for ds in tmp_dataset]
             dataset.append(tmp_dataset)
     else:
