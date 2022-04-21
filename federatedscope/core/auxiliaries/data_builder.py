@@ -141,7 +141,8 @@ def load_external_data(config=None):
         transform_funcs = {}
         for name in T_names:
             # return composed transform or return list
-            transform_funcs[name] = eval(config.data[name]) if config.data[name] else None
+            transform_funcs[name] = eval(
+                config.data[name]) if config.data[name] else None
             if isinstance(transform, tuple):
                 try:
                     transform = transforms.Compose(transform)

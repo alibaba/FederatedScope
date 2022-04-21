@@ -86,7 +86,8 @@ def load_nodelevel_dataset(config=None):
 
     # Transforms
     transform = eval(config.data.transform) if config.data.transform else None
-    pre_transform = eval(config.data.pre_transform) if config.data.pre_transform else None
+    pre_transform = eval(
+        config.data.pre_transform) if config.data.pre_transform else None
 
     if isinstance(transform, tuple):
         transform = transforms.Compose(transform)

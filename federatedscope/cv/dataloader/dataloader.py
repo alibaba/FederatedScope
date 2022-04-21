@@ -21,7 +21,8 @@ def load_cv_dataset(config=None):
     batch_size = config.data.batch_size
 
     transform = eval(config.data.transform) if config.data.transform else None
-    target_transform = eval(config.data.target_transform) if config.data.target_transform else None
+    target_transform = eval(
+        config.data.target_transform) if config.data.target_transform else None
 
     if isinstance(transform, tuple):
         transform = transforms.Compose(transform)
