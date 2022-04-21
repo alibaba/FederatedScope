@@ -3,7 +3,6 @@ import numpy as np
 from federatedscope.core.trainers import Trainer
 from federatedscope.core.auxiliaries.utils import batch_iter
 from federatedscope.core.trainers.context import CtxReferVar
-import logging
 
 
 class GeneralTFTrainer(Trainer):

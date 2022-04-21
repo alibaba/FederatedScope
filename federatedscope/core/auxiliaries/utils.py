@@ -4,8 +4,10 @@ import os.path as osp
 import random
 import copy
 import sys
+import ssl
 import time
 import math
+import urllib.request
 from datetime import datetime
 
 import numpy as np
@@ -21,6 +23,8 @@ except ImportError:
 
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
+
 
 def setup_seed(seed):
     np.random.seed(seed)
@@ -34,49 +38,56 @@ def setup_seed(seed):
         tf.set_random_seed(seed)
 
 
-def setup_logger(cfg):
+def update_logger(cfg, clear_before_add=False):
+    import os
+    import sys
+    import logging
+
+    root_logger = logging.getLogger("federatedscope")
+
+    # clear all existing handlers and add the default stream
+    if clear_before_add:
+        root_logger.handlers = []
+        handler = logging.StreamHandler()
+        logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+        handler.setFormatter(logging.Formatter(logging_fmt))
+        root_logger.addHandler(handler)
+
+    # update level
     if cfg.verbose > 0:
-        logging.basicConfig(
-            level=logging.INFO,
-            format=
-            "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-        )
+        logging_level = logging.INFO
     else:
-        logging.basicConfig(
-            level=logging.WARN,
-            format=
-            "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-        )
-        logging.warning("Skip DEBUG/INFO messages")
+        logging_level = logging.WARN
+        logger.warning("Skip DEBUG/INFO messages")
+    root_logger.setLevel(logging_level)
 
     # ================ create outdir to save log, exp_config, models, etc,.
-
     if cfg.outdir == "":
         cfg.outdir = os.path.join(os.getcwd(), "exp")
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
 
     # if exist, make directory with given name and time
     if os.path.isdir(cfg.outdir) and os.path.exists(cfg.outdir):
-        cfg.outdir = os.path.join(cfg.outdir, "sub_exp" +
-                                  datetime.now().strftime('_%Y%m%d%H%M%S')
-                                  )  # e.g., sub_exp_20220411030524
-        while os.path.exists(cfg.outdir):
+        outdir = os.path.join(cfg.outdir, "sub_exp" +
+                              datetime.now().strftime('_%Y%m%d%H%M%S')
+                              )  # e.g., sub_exp_20220411030524
+        while os.path.exists(outdir):
             time.sleep(1)
-            cfg.outdir = os.path.join(
+            outdir = os.path.join(
                 cfg.outdir,
                 "sub_exp" + datetime.now().strftime('_%Y%m%d%H%M%S'))
+        cfg.outdir = outdir
     # if not, make directory with given name
     os.makedirs(cfg.outdir)
 
-    logger = logging.getLogger()
     # create file handler which logs even debug messages
     fh = logging.FileHandler(os.path.join(cfg.outdir, 'exp_print.log'))
     fh.setLevel(logging.DEBUG)
     logger_formatter = logging.Formatter(
         "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s")
     fh.setFormatter(logger_formatter)
-    logger.addHandler(fh)
-    sys.stderr = sys.stdout
+    root_logger.addHandler(fh)
+    #sys.stderr = sys.stdout
 
 
 def get_dataset(type, root, transform, target_transform, download=True):
@@ -335,3 +346,33 @@ def merge_dict(dict1, dict2):
             else:
                 dict1[key].append(value)
     return dict1
+
+
+def download_url(url: str, folder='folder'):
+    r"""Downloads the content of an url to a folder.
+
+    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master/torch_geometric/data/download.py`
+
+    Args:
+        url (string): The url of target file.
+        folder (string): The target folder.
+
+    Returns:
+        path (string): File path of downloaded files.
+    """
+
+    file = url.rpartition('/')[2]
+    file = file if file[0] == '?' else file.split('?')[0]
+    path = osp.join(folder, file)
+    if osp.exists(path):
+        logger.info(f'File {file} exists, use existing file.')
+        return path
+
+    logger.info(f'Downloading {url}')
+    os.makedirs(folder, exist_ok=True)
+    ctx = ssl._create_unverified_context()
+    data = urllib.request.urlopen(url, context=ctx)
+    with open(path, 'wb') as f:
+        f.write(data.read())
+
+    return path

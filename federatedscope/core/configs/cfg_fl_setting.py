@@ -3,6 +3,8 @@ import logging
 from federatedscope.core.configs.config import CN
 from federatedscope.register import register_config
 
+logger = logging.getLogger(__name__)
+
 
 def extend_fl_setting_cfg(cfg):
     # ------------------------------------------------------------------------ #
@@ -79,12 +81,16 @@ def assert_fl_setting_cfg(cfg):
     # (a) sampling case
     if sample_client_rate_valid:
         # (a.1) use sample_client_rate
+        old_sample_client_num = cfg.federate.sample_client_num
         cfg.federate.sample_client_num = max(
             1, int(cfg.federate.sample_client_rate * cfg.federate.client_num))
         if sample_client_num_valid:
-            logging.warning(
-                "Users specify both valid sample_client_rate and sample_client_num, "
-                "we will use sample_client_rate")
+            logger.warning(
+                f"Users specify both valid sample_client_rate as {cfg.federate.sample_client_rate} "
+                f"and sample_client_num as {old_sample_client_num}.\n"
+                f"\t\tWe will use the sample_client_rate value to calculate "
+                f"the actual number of participated clients as {cfg.federate.sample_client_num}."
+            )
     # (a.2) use sample_client_num, commented since the below two lines do not change anything
     # elif sample_client_num_valid:
     #     cfg.federate.sample_client_num = cfg.federate.sample_client_num

@@ -2,6 +2,8 @@ import logging
 
 from federatedscope.core.configs import constants
 
+logger = logging.getLogger(__name__)
+
 
 def get_aggregator(method, model=None, device=None, online=False, config=None):
     if config.backend == 'tensorflow':
@@ -14,7 +16,7 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
     else:
         aggregator_type = "clients_avg"
-        logging.warning(
+        logger.warning(
             'Aggregator for method {} is not implemented. Will use default one'
             .format(method))
 

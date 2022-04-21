@@ -6,6 +6,8 @@ from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
 from federatedscope.core.auxiliaries.utils import formatted_logging
 
+logger = logging.getLogger(__name__)
+
 
 class vFLServer(Server):
     """
@@ -85,11 +87,11 @@ class vFLServer(Server):
                                                rnd=self.state,
                                                role='Global-Eval-Server #',
                                                forms=self._cfg.eval.report)
-            logging.info(formatted_logs)
+            logger.info(formatted_logs)
 
         if self.state < self.total_round_num:
             # Move to next round of training
-            logging.info(
+            logger.info(
                 '----------- Starting a new training round (Round #{:d}) -------------'
                 .format(self.state))
             self.broadcast_model_para()
@@ -103,7 +105,7 @@ class vFLServer(Server):
                                                rnd=self.state,
                                                role='Server #',
                                                forms=self._cfg.eval.report)
-            logging.info(formatted_logs)
+            logger.info(formatted_logs)
 
     def evaluate(self):
         test_x = self.data['test']['x']

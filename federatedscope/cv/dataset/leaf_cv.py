@@ -1,6 +1,5 @@
 import os
 import random
-import pickle
 import json
 import torch
 import math
@@ -10,15 +9,11 @@ import os.path as osp
 
 from PIL import Image
 from tqdm import tqdm
-from collections import OrderedDict
 
 from sklearn.model_selection import train_test_split
-from torch_geometric.data import download_url
-from torchvision.transforms import Compose, ToTensor, Normalize
 
-from federatedscope.core.auxiliaries.utils import save_local_data
+from federatedscope.core.auxiliaries.utils import save_local_data, download_url
 from federatedscope.cv.dataset.leaf import LEAF
-# from federatedscope.config import cfg
 
 IMAGE_SIZE = {'femnist': (28, 28), 'celeba': (84, 84, 3)}
 MODE = {'femnist': 'L', 'celeba': 'RGB'}

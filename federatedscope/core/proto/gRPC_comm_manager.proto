@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 service gRPCComServeFunc {
-    rpc sendMessage (MessageRequest) returns (MessageResponse);
+    rpc sendMessage (MessageRequest) returns (MessageResponse) {};
 }
 
 message MessageRequest{

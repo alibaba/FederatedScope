@@ -1,9 +1,10 @@
-import numpy as np
 import logging
-
 from typing import Optional, Union, List, Set
+
+import numpy as np
 from scipy.special import softmax
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score
+
 from federatedscope.core.auxiliaries.metric_builder import get_metric
 
 # Blind torch
@@ -11,6 +12,8 @@ try:
     import torch
 except ImportError:
     torch = None
+
+logger = logging.getLogger(__name__)
 
 
 class Evaluator(object):
@@ -112,7 +115,7 @@ def eval_ap(y_true, y_pred, **kwargs):
             ap_list.append(ap)
 
     if len(ap_list) == 0:
-        logging.warning('No positively labeled data available. ')
+        logger.warning('No positively labeled data available. ')
         return 0.0
 
     return sum(ap_list) / len(ap_list)
@@ -150,7 +153,7 @@ def eval_roc_auc(y_true, y_prob, **kwargs):
                 roc_auc_score(y_true_one_hot,
                               softmax(y_prob[is_labeled, :, i], axis=-1)))
     if len(rocauc_list) == 0:
-        logging.warning('No positively labeled data available.')
+        logger.warning('No positively labeled data available.')
         return 0.5
 
     return sum(rocauc_list) / len(rocauc_list)

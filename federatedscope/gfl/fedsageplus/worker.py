@@ -14,6 +14,8 @@ from federatedscope.gfl.model.fedsageplus import LocalSage_Plus, FedSage_Plus
 from federatedscope.gfl.fedsageplus.utils import GraphMender, HideGraph
 from federatedscope.gfl.fedsageplus.trainer import LocalGenTrainer, FedGenTrainer
 
+logger = logging.getLogger(__name__)
+
 
 class FedSagePlusServer(Server):
     def __init__(self,
@@ -61,7 +63,7 @@ class FedSagePlusServer(Server):
             for key in self._cfg.federate.join_in_info:
                 assert key in info
             self.join_in_info[sender] = info
-            logging.info('Server #{:d}: Client #{:d} has joined in !'.format(
+            logger.info('Server #{:d}: Client #{:d} has joined in !'.format(
                 self.ID, sender))
         else:
             self.join_in_client_num += 1
@@ -142,7 +144,7 @@ class FedSagePlusServer(Server):
                             receiver=receiver_IDs,
                             state=self.state + 1,
                             content=[gen_para, embedding, label, sender]))
-                logging.info(
+                logger.info(
                     f'\tServer #{self.ID}: Transmit gen_para to {receiver_IDs} @{self.state//2}.'
                 )
             self.state += 1
@@ -193,7 +195,7 @@ class FedSagePlusServer(Server):
                     formatted_logs = formatted_logging(B_val,
                                                        rnd=self.state,
                                                        role='Server #')
-                    logging.info(formatted_logs)
+                    logger.info(formatted_logs)
 
                 # Aggregate
                 agg_info = {
@@ -207,14 +209,14 @@ class FedSagePlusServer(Server):
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
-                    logging.info(
+                    logger.info(
                         'Server #{:d}: Starting evaluation at round {:d}.'.
                         format(self.ID, self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:
                     # Move to next round of training
-                    logging.info(
+                    logger.info(
                         '----------- Starting a new training round (Round #{:d}) -------------'
                         .format(self.state))
                     self.broadcast_model_para(
@@ -222,7 +224,7 @@ class FedSagePlusServer(Server):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logging.info(
+                    logger.info(
                         'Server #{:d}: Training is finished! Starting evaluation.'
                         .format(self.ID))
                     self.eval()
@@ -274,10 +276,10 @@ class FedSagePlusClient(Client):
     def callback_funcs_for_local_pre_train(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
         # Local pre-train
-        logging.info(f'\tClient #{self.ID} pre-train start...')
+        logger.info(f'\tClient #{self.ID} pre-train start...')
         for i in range(self._cfg.fedsageplus.loc_epoch):
             num_samples_train, _, _ = self.trainer_loc.train()
-            logging.info(f'\tClient #{self.ID} local pre-train @Epoch {i}.')
+            logger.info(f'\tClient #{self.ID} local pre-train @Epoch {i}.')
         # Build fedgen base on locgen
         self.fedgen = FedSage_Plus(self.gen)
         # Build trainer for fedgen
@@ -287,7 +289,7 @@ class FedSagePlusClient(Client):
         gen_para = self.fedgen.cpu().state_dict()
         embedding = self.trainer_fedgen.embedding()
         self.state = round
-        logging.info(f'\tClient #{self.ID} pre-train finish!')
+        logger.info(f'\tClient #{self.ID} pre-train finish!')
         # Start the training of fedgen
         self.comm_manager.send(
             Message(msg_type='gen_para',
@@ -295,7 +297,7 @@ class FedSagePlusClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=[gen_para, embedding, self.hide_data.num_missing]))
-        logging.info(f'\tClient #{self.ID} send gen_para to Server #{sender}.')
+        logger.info(f'\tClient #{self.ID} send gen_para to Server #{sender}.')
 
     def callback_funcs_for_gen_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
@@ -310,8 +312,7 @@ class FedSagePlusClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=[gen_grad, ID]))
-        logging.info(
-            f'\tClient #{self.ID}: send gradient to Server #{sender}.')
+        logger.info(f'\tClient #{self.ID}: send gradient to Server #{sender}.')
 
     def callback_funcs_for_gradient(self, message):
         # Aggregate gen_grad on server
@@ -327,8 +328,7 @@ class FedSagePlusClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=[gen_para, embedding, self.hide_data.num_missing]))
-        logging.info(
-            f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
+        logger.info(f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
 
     def callback_funcs_for_setup_fedsage(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
@@ -357,7 +357,7 @@ class FedSagePlusClient(Client):
                                                 self.device, self._cfg)
         sample_size, clf_para, results = self.trainer_clf.train()
         self.state = round
-        logging.info(
+        logger.info(
             formatted_logging(results,
                               rnd=self.state,
                               role='Client #{}'.format(self.ID)))
@@ -373,7 +373,7 @@ class FedSagePlusClient(Client):
         self.trainer_clf.update(content)
         self.state = round
         sample_size, clf_para, results = self.trainer_clf.train()
-        logging.info(
+        logger.info(
             formatted_logging(results,
                               rnd=self.state,
                               role='Client #{}'.format(self.ID)))

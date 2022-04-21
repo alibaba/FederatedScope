@@ -6,6 +6,8 @@ import os
 import numpy as np
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
+
 
 def label_to_onehot(target, num_classes=100):
     return torch.nn.functional.one_hot(target, num_classes)
@@ -131,7 +133,7 @@ def get_data_sav_fn(dataset_name):
     if dataset_name.lower() == 'femnist':
         return sav_femnist_image
     else:
-        logging.info(
+        logger.info(
             "Reconstructed data saving function is not provided for dataset: {}"
             .format(dataset_name))
         return None
@@ -189,7 +191,7 @@ def get_reconstructor(atk_method, **kwargs):
 
     if atk_method.lower() == 'dlg':
         from federatedscope.attack.privacy_attacks.reconstruction_opt import DLG
-        logging.info(
+        logger.info(
             '--------- Getting reconstructor: DLG --------------------')
 
         return DLG(max_ite=kwargs['max_ite'],
@@ -202,7 +204,7 @@ def get_reconstructor(atk_method, **kwargs):
                    federate_method=kwargs['federate_method'])
     elif atk_method.lower() == 'ig':
         from federatedscope.attack.privacy_attacks.reconstruction_opt import InvertGradient
-        logging.info(
+        logger.info(
             '--------- Getting reconstructor: InvertGradient --------------------'
         )
         return InvertGradient(max_ite=kwargs['max_ite'],

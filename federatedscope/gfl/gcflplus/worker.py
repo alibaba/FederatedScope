@@ -9,6 +9,8 @@ from federatedscope.core.worker.client import Client
 from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
 from federatedscope.gfl.gcflplus.utils import compute_pairwise_distances, min_cut, norm
 
+logger = logging.getLogger(__name__)
+
 
 class GCFLPlusServer(Server):
     def __init__(self,
@@ -121,7 +123,7 @@ class GCFLPlusServer(Server):
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
-                    logging.info(
+                    logger.info(
                         'Server #{:d}: Starting evaluation at round {:d}.'.
                         format(self.ID, self.state))
                     self.eval()
@@ -151,7 +153,7 @@ class GCFLPlusServer(Server):
                                     content=result))
 
                     # Move to next round of training
-                    logging.info(
+                    logger.info(
                         '----------- Starting a new training round (Round #{:d}) -------------'
                         .format(self.state))
                     # Clean the msg_buffer
@@ -159,7 +161,7 @@ class GCFLPlusServer(Server):
 
                 else:
                     # Final Evaluate
-                    logging.info(
+                    logger.info(
                         'Server #{:d}: Training is finished! Starting evaluation.'
                         .format(self.ID))
                     self.eval()
@@ -180,7 +182,7 @@ class GCFLPlusClient(Client):
         self.trainer.update(content)
         self.state = round
         sample_size, model_para, results = self.trainer.train()
-        logging.info(
+        logger.info(
             formatted_logging(results,
                               rnd=self.state,
                               role='Client #{}'.format(self.ID)))

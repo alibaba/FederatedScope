@@ -4,6 +4,8 @@ import os
 from federatedscope.core.message import Message
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def plot_target_loss(loss_list, outdir):
     '''
@@ -17,7 +19,7 @@ def plot_target_loss(loss_list, outdir):
     '''
 
     target_data_loss = np.vstack(loss_list)
-    logging.info(target_data_loss.shape)
+    logger.info(target_data_loss.shape)
     plt.plot(target_data_loss)
     plt.savefig(os.path.join(outdir, 'target_loss.png'))
     plt.close()
@@ -31,14 +33,14 @@ def sav_target_loss(loss_list, outdir):
 
 
 def callback_funcs_for_finish(self, message: Message):
-    logging.info(
+    logger.info(
         "================= receiving Finish Message ============================"
     )
     if message.content != None:
         self.trainer.update(message.content)
     if self.is_attacker and self._cfg.attack.attack_method.lower(
     ) == "gradascent":
-        logging.info(
+        logger.info(
             "================= start attack post-processing ======================="
         )
         plot_target_loss(self.trainer.ctx.target_data_loss,

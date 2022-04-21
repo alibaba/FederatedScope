@@ -5,6 +5,8 @@ import logging
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.attack.auxiliary.MIA_get_target_data import get_target_data
 
+logger = logging.getLogger(__name__)
+
 
 def wrap_GradientAscentTrainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
@@ -58,7 +60,7 @@ def wrap_GradientAscentTrainer(
 
 def hook_on_fit_start_count_round(ctx):
     ctx.round += 1
-    logging.info("============== round: {} ====================".format(
+    logger.info("============== round: {} ====================".format(
         ctx.round))
 
 
@@ -66,10 +68,10 @@ def hook_on_batch_start_replace_data_batch(ctx):
     # replace the data batch to the target data
     # check whether need to replace the data; if yes, replace the current batch to target batch
     if ctx.finish_injected == False and ctx.round >= ctx.inject_round:
-        logging.info("---------- inject the target data ---------")
+        logger.info("---------- inject the target data ---------")
         ctx["data_batch"] = ctx.target_data
         ctx.is_target_batch = True
-        logging.info(ctx.target_data[0].size())
+        logger.info(ctx.target_data[0].size())
     else:
         ctx.is_target_batch = False
 
@@ -90,7 +92,7 @@ def hook_on_batch_backward_invert_gradient(ctx):
             modified_grad.append(param.grad.detach())
 
         ctx["optimizer"].step()
-        logging.info('-------------- Gradient ascent finished -------------')
+        logger.info('-------------- Gradient ascent finished -------------')
         ctx.finish_injected = True
 
     else:
@@ -107,7 +109,7 @@ def hook_on_fit_start_loss_on_target_data(ctx):
     if ctx.finish_injected:
         tmp_loss = []
         x, label = [_.to(ctx.device) for _ in ctx.target_data]
-        logging.info(x.size())
+        logger.info(x.size())
         num_target = x.size()[0]
 
         for i in range(num_target):

@@ -9,6 +9,8 @@ from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
+logger = logging.getLogger(__name__)
+
 
 class Client(Worker):
     """
@@ -72,7 +74,7 @@ class Client(Worker):
             server_port = kwargs['server_port']
             self.comm_manager = gRPCCommManager(
                 host=host, port=port, client_num=self._cfg.federate.client_num)
-            logging.info('Client: Listen to {}:{}...'.format(host, port))
+            logger.info('Client: Listen to {}:{}...'.format(host, port))
             self.comm_manager.add_neighbors(neighbor_id=server_id,
                                             address={
                                                 'host': server_host,
@@ -168,7 +170,7 @@ class Client(Worker):
             #self.model.load_state_dict(content)
             self.state = round
             sample_size, model_para_all, results = self.trainer.train()
-            logging.info(
+            logger.info(
                 formatted_logging(results,
                                   rnd=self.state,
                                   role='Client #{}'.format(self.ID)))
@@ -219,7 +221,7 @@ class Client(Worker):
     def callback_funcs_for_assign_id(self, message: Message):
         content = message.content
         self.ID = int(content)
-        logging.info('Client (address {}:{}) is assigned with #{:d}.'.format(
+        logger.info('Client (address {}:{}) is assigned with #{:d}.'.format(
             self.comm_manager.host, self.comm_manager.port, self.ID))
 
     def callback_funcs_for_join_in_info(self, message: Message):
@@ -259,7 +261,7 @@ class Client(Worker):
             eval_metrics = self.trainer.evaluate(mode=split,
                                                  target_data_split_name=split)
             for key in eval_metrics:
-                logging.info(
+                logger.info(
                     'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
                     .format(self.ID, split, self.state, key,
                             eval_metrics[key]))
@@ -272,7 +274,7 @@ class Client(Worker):
                     content=metrics))
 
     def callback_funcs_for_finish(self, message: Message):
-        logging.info(
+        logger.info(
             "================= receiving Finish Message ============================"
         )
 
