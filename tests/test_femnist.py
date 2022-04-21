@@ -51,18 +51,18 @@ class FEMNISTTest(unittest.TestCase):
         setup_seed(init_cfg.seed)
         update_logger(init_cfg)
 
-        data, modified_cfg = get_data(global_cfg.clone())
-        global_cfg.merge_from_other_cfg(modified_cfg)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
         Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(global_cfg),
-                               client_class=get_client_cls(global_cfg),
-                               config=global_cfg.clone())
+                               server_class=get_server_cls(init_cfg),
+                               client_class=get_client_cls(init_cfg),
+                               config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
-        global_cfg.merge_from_other_cfg(backup_cfg)
+        init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertLess(
             test_best_results["client_summarized_weighted_avg"]['test_loss'],
             600)
