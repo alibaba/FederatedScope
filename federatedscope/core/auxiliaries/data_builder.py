@@ -124,6 +124,7 @@ def load_external_data(config=None):
     from importlib import import_module
     from torch.utils.data import DataLoader
     from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+    from federatedscope.core.auxiliaries.transform_builder import get_transform
 
     def get_func_args(func):
         sign = inspect.signature(func).parameters.values()
@@ -136,26 +137,9 @@ def load_external_data(config=None):
         filtered_dict = {key: kwarg[key] for key in common_args}
         return filtered_dict
 
-    def build_transforms(T_names, transforms):
-        transform_funcs = {}
-        for name in T_names:
-            # return composed transform or return list
-            transform_funcs[name] = eval(
-                config.data[name]) if config.data[name] else None
-            if isinstance(transform, tuple):
-                try:
-                    transform = transforms.Compose(transform)
-                except AttributeError:
-                    continue
-        return transform_funcs
-
     def load_torchvision_data(name, splits=None, config=None):
-        import torchvision
-
         dataset_func = getattr(import_module('torchvision.datasets'), name)
-        transforms = getattr(import_module('torchvision'), 'transforms')
-        transform_funcs = build_transforms(['transform', 'target_transform'],
-                                           transforms)
+        transform_funcs = get_transform(config, 'torchvision')
         transform_funcs = filter_dict(dataset_func.__init__, transform_funcs)
         raw_args = eval('{' + config.data.args + '}')
         raw_args.update({'download': True})

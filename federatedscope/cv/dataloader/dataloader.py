@@ -1,7 +1,7 @@
-from torchvision import transforms
 from torch.utils.data import DataLoader
 
 from federatedscope.cv.dataset.leaf_cv import LEAF_CV
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def load_cv_dataset(config=None):
@@ -19,25 +19,18 @@ def load_cv_dataset(config=None):
     path = config.data.root
     name = config.data.type.lower()
     batch_size = config.data.batch_size
-
-    transform = eval(config.data.transform) if config.data.transform else None
-    target_transform = eval(
-        config.data.target_transform) if config.data.target_transform else None
-
-    if isinstance(transform, tuple):
-        transform = transforms.Compose(transform)
-    if isinstance(target_transform, tuple):
-        target_transform = transforms.Compose(target_transform)
+    transforms_funcs = get_transform(config, 'torchvision')
 
     if name in ['femnist', 'celeba']:
-        dataset = LEAF_CV(root=path,
-                          name=name,
-                          s_frac=config.data.subsample,
-                          tr_frac=splits[0],
-                          val_frac=splits[1],
-                          seed=1234,
-                          transform=transform,
-                          target_transform=target_transform)
+        dataset = LEAF_CV(
+            root=path,
+            name=name,
+            s_frac=config.data.subsample,
+            tr_frac=splits[0],
+            val_frac=splits[1],
+            seed=1234,
+            transform=transforms_funcs['transform'],
+            target_transform=transforms_funcs['target_transform'])
     else:
         raise ValueError(f'No dataset named: {name}!')
 
