@@ -61,7 +61,7 @@ class FEMNISTTest(unittest.TestCase):
         Fed_runner = FedRunner(data=data,
                                server_class=get_server_cls(init_cfg),
                                client_class=get_client_cls(init_cfg),
-                               config=global_cfg.clone())
+                               config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
