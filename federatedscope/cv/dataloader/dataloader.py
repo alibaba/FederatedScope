@@ -20,11 +20,13 @@ def load_cv_dataset(config=None):
     name = config.data.type.lower()
     batch_size = config.data.batch_size
 
-    transform = transforms.Compose(eval(
-        config.data.transform)) if config.data.transform else None
-    target_transform = transforms.Compose(
-        eval(config.data.target_transform
-             )) if config.data.target_transform else None
+    transform = eval(config.data.transform) if config.data.transform else None
+    target_transform = eval(config.data.target_transform) if config.data.target_transform else None
+
+    if isinstance(transform, tuple):
+        transform = transforms.Compose(transform)
+    if isinstance(target_transform, tuple):
+        target_transform = transforms.Compose(target_transform)
 
     if name in ['femnist', 'celeba']:
         dataset = LEAF_CV(root=path,

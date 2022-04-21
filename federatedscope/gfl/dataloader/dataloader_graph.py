@@ -35,10 +35,13 @@ def load_graphlevel_dataset(config=None):
     splitter = get_splitter(config)
 
     # Transforms
-    transform = transforms.Compose(eval(
-        config.data.transform)) if config.data.transform else None
-    pre_transform = transforms.Compose(eval(
-        config.data.pre_transform)) if config.data.pre_transform else None
+    transform = eval(config.data.transform) if config.data.transform else None
+    pre_transform = eval(config.data.pre_transform) if config.data.pre_transform else None
+
+    if isinstance(transform, tuple):
+        transform = transforms.Compose(transform)
+    if isinstance(pre_transform, tuple):
+        pre_transform = transforms.Compose(pre_transform)
 
     if name in [
             'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
@@ -47,7 +50,7 @@ def load_graphlevel_dataset(config=None):
     ]:
         # Add feat for datasets without attrubute
         if name in ['IMDB-BINARY', 'IMDB-MULTI'] and pre_transform is None:
-            pre_transform = T.Constant(value=1.0, cat=False)
+            pre_transform = transforms.Constant(value=1.0, cat=False)
         dataset = TUDataset(path,
                             name,
                             pre_transform=pre_transform,

@@ -140,15 +140,13 @@ def load_external_data(config=None):
     def build_transforms(T_names, transforms):
         transform_funcs = {}
         for name in T_names:
-            if config.data[name]:
-                # return composed transform or return list
+            # return composed transform or return list
+            transform_funcs[name] = eval(config.data[name]) if config.data[name] else None
+            if isinstance(transform, tuple):
                 try:
-                    transform_funcs[name] = transforms.Compose(
-                        eval(config.data[name])) if config.data[name] else None
+                    transform = transforms.Compose(transform)
                 except:
-                    transform_funcs[name] = eval(config.data[name])
-            else:
-                transform_funcs[name] = None
+                    continue
         return transform_funcs
 
     def load_torchvision_data(name, splits=None, config=None):
