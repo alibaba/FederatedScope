@@ -96,9 +96,9 @@ class Context(dict):
 
         if init_attr:
             # setup static variables for training/evaluation
-            self._setup_vars()
+            self.setup_vars()
 
-    def _setup_vars(self):
+    def setup_vars(self):
         if self.cfg.backend == 'torch':
             self.trainable_para_names = get_trainable_para_names(self.model)
             self.criterion = get_criterion(self.cfg.criterion.type,
@@ -108,7 +108,8 @@ class Context(dict):
                 self.cfg.optimizer.type,
                 self.model,
                 self.cfg.optimizer.lr,
-                weight_decay=self.cfg.optimizer.weight_decay)
+                weight_decay=self.cfg.optimizer.weight_decay,
+                momentum=self.cfg.optimizer.mmt)
             self.grad_clip = self.cfg.optimizer.grad_clip
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
