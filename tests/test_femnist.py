@@ -46,9 +46,10 @@ class FEMNISTTest(unittest.TestCase):
         return backup_cfg
 
     def test_femnist_standalone(self):
-        backup_cfg = self.set_config_femnist(global_cfg)
-        setup_seed(global_cfg.seed)
-        update_logger(global_cfg)
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_femnist(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg)
 
         data, modified_cfg = get_data(global_cfg.clone())
         global_cfg.merge_from_other_cfg(modified_cfg)
