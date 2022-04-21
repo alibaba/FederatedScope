@@ -5,8 +5,6 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.gfl.dataset.recsys import RecSys
-from federatedscope.gfl.dataset.kg import KG
 
 
 def raw2loader(raw_data, config=None):
@@ -58,6 +56,7 @@ def load_linklevel_dataset(config=None):
     transforms_funcs = get_transform(config, 'torch_geometric')
 
     if name in ['epinions', 'ciao']:
+        from federatedscope.gfl.dataset.recsys import RecSys
         dataset = RecSys(path,
                          name,
                          FL=True,
@@ -72,6 +71,7 @@ def load_linklevel_dataset(config=None):
             transform=transforms_funcs['transform'],
             pre_transform=transforms_funcs['pre_transform'])
     elif name in ['fb15k-237', 'wn18', 'fb15k', 'toy']:
+        from federatedscope.gfl.dataset.kg import KG
         dataset = KG(path,
                      name,
                      transform=transforms_funcs['transform'],

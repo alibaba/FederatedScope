@@ -8,8 +8,6 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.gfl.dataset.dblp_new import DBLPNew
-from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
 
 INF = np.iinfo(np.int64).max
 
@@ -114,6 +112,7 @@ def load_nodelevel_dataset(config=None):
             transform=transforms_funcs['transform'],
             pre_transform=transforms_funcs['pre_transform'])
     elif name == "dblp_conf":
+        from federatedscope.gfl.dataset.dblp_new import DBLPNew
         dataset = DBLPNew(path,
                           FL=1,
                           splits=config.data.splits,
@@ -126,6 +125,7 @@ def load_nodelevel_dataset(config=None):
             transform=transforms_funcs['transform'],
             pre_transform=transforms_funcs['pre_transform'])
     elif name == "dblp_org":
+        from federatedscope.gfl.dataset.dblp_new import DBLPNew
         dataset = DBLPNew(path,
                           FL=2,
                           splits=config.data.splits,
@@ -138,6 +138,7 @@ def load_nodelevel_dataset(config=None):
             transform=transforms_funcs['transform'],
             pre_transform=transforms_funcs['pre_transform'])
     elif name.startswith("csbm"):
+        from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
         dataset = dataset_ContextualSBM(
             root=path,
             name=name if len(name) > len("csbm") else None,
