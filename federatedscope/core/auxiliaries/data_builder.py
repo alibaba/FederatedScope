@@ -146,7 +146,7 @@ def load_external_data(config=None):
             if isinstance(transform, tuple):
                 try:
                     transform = transforms.Compose(transform)
-                except:
+                except AttributeError:
                     continue
         return transform_funcs
 
@@ -324,11 +324,9 @@ def get_data(config):
     elif 'movielens' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)
+    elif '@' in config.data.type.lower():
+        data, modified_config = load_external_data(config)
     else:
-        # Try to import external data
-        try:
-            data, modified_config = load_external_data(config)
-        except:
-            raise ValueError('Data {} not found.'.format(config.data.type))
+        raise ValueError('Data {} not found.'.format(config.data.type))
 
     return data, modified_config
