@@ -480,8 +480,7 @@ class GeneralTorchTrainer(Trainer):
             loss_regular)
         setattr(
             ctx, "num_samples_{}".format(ctx.cur_mode),
-            ctx.get("num_samples_{}".format(ctx.cur_mode)) +
-            ctx.batch_size)
+            ctx.get("num_samples_{}".format(ctx.cur_mode)) + ctx.batch_size)
 
         # cache label for evaluate
         ctx.get("{}_y_true".format(ctx.cur_mode)).append(
@@ -503,12 +502,10 @@ class GeneralTorchTrainer(Trainer):
         """Evaluate metrics.
 
         """
-        setattr(
-            ctx, "{}_y_true".format(ctx.cur_mode),
-            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_mode))))
-        setattr(
-            ctx, "{}_y_prob".format(ctx.cur_mode),
-            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_mode))))
+        setattr(ctx, "{}_y_true".format(ctx.cur_mode),
+                np.concatenate(ctx.get("{}_y_true".format(ctx.cur_mode))))
+        setattr(ctx, "{}_y_prob".format(ctx.cur_mode),
+                np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_mode))))
         results = self.evaluator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 

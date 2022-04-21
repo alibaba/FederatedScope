@@ -257,7 +257,8 @@ class Client(Worker):
         metrics = {}
         for split in self._cfg.eval.split:
             mode = split if split != "train" else "test"
-            eval_metrics = self.trainer.evaluate(mode=mode, target_data_split_name=split)
+            eval_metrics = self.trainer.evaluate(mode=mode,
+                                                 target_data_split_name=split)
             for key in eval_metrics:
                 logging.info(
                     'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'

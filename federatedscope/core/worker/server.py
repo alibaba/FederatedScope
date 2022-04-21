@@ -561,8 +561,8 @@ class Server(Worker):
                 metrics = {}
                 for split in self._cfg.eval.split:
                     mode = split if split != "train" else "test"
-                    eval_metrics = trainer.evaluate(mode=mode,
-                        target_data_split_name=split)
+                    eval_metrics = trainer.evaluate(
+                        mode=mode, target_data_split_name=split)
                     metrics.update(**eval_metrics)
                 formatted_eval_res = formatted_logging(
                     metrics,
