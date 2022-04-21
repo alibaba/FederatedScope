@@ -47,7 +47,7 @@ class ExternalDatasetTest(unittest.TestCase):
         return backup_cfg
 
     def test_external_dataset_standalone(self):
-        backup_cfg = self.external_dataset(global_cfg)
+        backup_cfg = self.set_config_external_dataset(global_cfg)
         setup_seed(global_cfg.seed)
         update_logger(global_cfg)
 
