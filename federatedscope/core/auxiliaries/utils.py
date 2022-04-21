@@ -21,6 +21,9 @@ except ImportError:
     distributions = None
 
 
+logger = logging.getLogger(__name__)
+
+
 def setup_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
@@ -33,24 +36,30 @@ def setup_seed(seed):
         tf.set_random_seed(seed)
 
 
-def setup_logger(cfg):
+def update_logger(cfg, clear_before_add=False):
+    import os
+    import sys
+    import logging
+
+    root_logger = logging.getLogger("federatedscope")
+
+    # clear all existing handlers and add the default stream
+    if clear_before_add:
+        root_logger.handlers = []
+        handler = logging.StreamHandler()
+        logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+        handler.setFormatter(logging.Formatter(logging_fmt))
+        root_logger.addHandler(handler)
+
+    # update level
     if cfg.verbose > 0:
         logging_level = logging.INFO
     else:
         logging_level = logging.WARN
-        logging.warning("Skip DEBUG/INFO messages")
-
-    logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-    try:
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging_level)
-        root_handler = root_logger.handlers[0]
-        root_handler.setFormatter(logging.Formatter(logging_fmt))
-    except IndexError:
-        logging.basicConfig(level=logging_level, format=logging_fmt)
+        logger.warning("Skip DEBUG/INFO messages")
+    root_logger.setLevel(logging_level)
 
     # ================ create outdir to save log, exp_config, models, etc,.
-
     if cfg.outdir == "":
         cfg.outdir = os.path.join(os.getcwd(), "exp")
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
@@ -69,20 +78,16 @@ def setup_logger(cfg):
     # if not, make directory with given name
     os.makedirs(cfg.outdir)
 
-    if cfg.outdir == "":
-        cfg.outdir = os.path.join(os.getcwd(), "exp")
-
-    logger = logging.getLogger()
     # create file handler which logs even debug messages
     fh = logging.FileHandler(os.path.join(cfg.outdir, 'exp_print.log'))
     fh.setLevel(logging.DEBUG)
     logger_formatter = logging.Formatter(
         "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s")
     fh.setFormatter(logger_formatter)
-    logger.addHandler(fh)
-    sys.stderr = sys.stdout
+    root_logger.addHandler(fh)
+    #sys.stderr = sys.stdout
 
-    logger.info(f"the output dir is {cfg.outdir}")
+    root_logger.info(f"the output dir is {cfg.outdir}")
 
 
 def get_dataset(type, root, transform, target_transform, download=True):
@@ -205,10 +210,10 @@ def download_url(url: str, folder='folder'):
     file = file if file[0] == '?' else file.split('?')[0]
     path = osp.join(folder, file)
     if osp.exists(path):
-        logging.info(f'File {file} exists, use existing file.')
+        logger.info(f'File {file} exists, use existing file.')
         return path
 
-    logging.info(f'Downloading {url}')
+    logger.info(f'Downloading {url}')
     os.makedirs(folder, exist_ok=True)
     ctx = ssl._create_unverified_context()
     data = urllib.request.urlopen(url, context=ctx)

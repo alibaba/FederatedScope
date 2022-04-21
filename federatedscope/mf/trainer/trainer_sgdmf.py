@@ -7,6 +7,8 @@ import numpy as np
 
 import torch
 
+logger = logging.getLogger(__name__)
+
 
 def wrap_MFTrainer(base_trainer: Type[MFTrainer]) -> Type[MFTrainer]:
     """Build `SGDMFTrainer` with a plug-in manner, by registering new functions into specific `MFTrainer`
@@ -17,9 +19,10 @@ def wrap_MFTrainer(base_trainer: Type[MFTrainer]) -> Type[MFTrainer]:
     init_sgdmf_ctx(base_trainer)
 
     # ---------------- action-level plug-in -----------------------
-    base_trainer.replace_hook_in_train(new_hook=hook_on_batch_backward,
-                                       target_trigger="on_batch_backward",
-                                       target_hook_name="_hook_on_batch_backward")
+    base_trainer.replace_hook_in_train(
+        new_hook=hook_on_batch_backward,
+        target_trigger="on_batch_backward",
+        target_hook_name="_hook_on_batch_backward")
 
     return base_trainer
 
@@ -35,10 +38,12 @@ def init_sgdmf_ctx(base_trainer):
     sample_ratio = float(cfg.data.batch_size) / cfg.model.num_user
     # Noise multiplier
     tmp = cfg.sgdmf.constant * np.power(sample_ratio, 2) * (
-            cfg.federate.total_round_num * ctx.num_total_train_batch) * np.log(1. / cfg.sgdmf.delta)
+        cfg.federate.total_round_num * ctx.num_total_train_batch) * np.log(
+            1. / cfg.sgdmf.delta)
     noise_multipler = np.sqrt(tmp / np.power(cfg.sgdmf.epsilon, 2))
-    ctx.scale = max(cfg.sgdmf.theta, 1.) * noise_multipler * np.power(cfg.sgdmf.R, 1.5)
-    logging.info("Inject noise: (loc=0, scale={})".format(ctx.scale))
+    ctx.scale = max(cfg.sgdmf.theta, 1.) * noise_multipler * np.power(
+        cfg.sgdmf.R, 1.5)
+    logger.info("Inject noise: (loc=0, scale={})".format(ctx.scale))
     ctx.sgdmf_R = cfg.sgdmf.R
 
 
@@ -54,7 +59,9 @@ def embedding_clip(param, R: int):
     # Clip tensor
     norms = torch.linalg.norm(param.data, dim=1)
     threshold = np.sqrt(R)
-    param.data[norms > threshold] *= (threshold / norms[norms > threshold]).reshape((-1, 1))
+    param.data[norms > threshold] *= (threshold /
+                                      norms[norms > threshold]).reshape(
+                                          (-1, 1))
     param.data[param.data < 0] = 0.
 
 

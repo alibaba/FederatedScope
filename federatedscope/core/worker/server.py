@@ -13,6 +13,8 @@ from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
+logger = logging.getLogger(__name__)
+
 
 class Server(Worker):
     """
@@ -64,7 +66,7 @@ class Server(Worker):
         if self._cfg.federate.restore_from != '':
             cur_round = self.aggregator.load_model(
                 self._cfg.federate.restore_from)
-            logging.info("Restored the model from {}-th round's ckpt")
+            logger.info("Restored the model from {}-th round's ckpt")
 
         if int(config.model.model_num_per_trainer) != config.model.model_num_per_trainer or \
                 config.model.model_num_per_trainer < 1:
@@ -128,7 +130,7 @@ class Server(Worker):
             self.comm_manager = gRPCCommManager(host=host,
                                                 port=port,
                                                 client_num=client_num)
-            logging.info('Server #{:d}: Listen to {}:{}...'.format(
+            logger.info('Server #{:d}: Listen to {}:{}...'.format(
                 self.ID, host, port))
 
         # inject noise before broadcast
@@ -228,7 +230,7 @@ class Server(Worker):
                             model.load_state_dict(strict=False), msg_list)
                         formatted_eval_res = self._monitor.format_eval_res(
                             B_val, rnd=self.state, role='Server #')
-                        logging.info(formatted_eval_res)
+                        logger.info(formatted_eval_res)
 
                     # Aggregate
                     agg_info = {
@@ -242,14 +244,14 @@ class Server(Worker):
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
-                    logging.info(
+                    logger.info(
                         'Server #{:d}: Starting evaluation at round {:d}.'.
                         format(self.ID, self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:
                     # Move to next round of training
-                    logging.info(
+                    logger.info(
                         '----------- Starting a new training round (Round #{:d}) -------------'
                         .format(self.state))
                     # Clean the msg_buffer
@@ -260,7 +262,7 @@ class Server(Worker):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logging.info(
+                    logger.info(
                         'Server #{:d}: Training is finished! Starting evaluation.'
                         .format(self.ID))
                     self.eval()
@@ -296,7 +298,7 @@ class Server(Worker):
             self.state = self.total_round_num + 1
 
         if should_stop or self.state == self.total_round_num:
-            logging.info(
+            logger.info(
                 'Server #{:d}: Final evaluation is finished! Starting merging results.'
                 .format(self.ID))
             # last round
@@ -326,7 +328,7 @@ class Server(Worker):
             role='Server #',
             forms=["raw"],
             return_raw=self._cfg.federate.make_global_eval)
-        logging.info(formatted_best_res)
+        logger.info(formatted_best_res)
         self.save_formatted_results(formatted_best_res)
 
     def save_formatted_results(self, formatted_res):
@@ -357,7 +359,7 @@ class Server(Worker):
             rnd=self.state,
             role='Server #',
             forms=self._cfg.eval.report)
-        logging.info(formatted_logs)
+        logger.info(formatted_logs)
         self.update_best_result(metrics_all_clients,
                                 results_type="client_individual",
                                 round_wise_update_key=self._cfg.eval.
@@ -580,7 +582,7 @@ class Server(Worker):
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.save_formatted_results(formatted_eval_res)
-                logging.info(formatted_eval_res)
+                logger.info(formatted_eval_res)
             self.check_and_save()
         else:
             # Preform evaluation in clients
@@ -604,7 +606,7 @@ class Server(Worker):
             for key in self._cfg.federate.join_in_info:
                 assert key in info
             self.join_in_info[sender] = info
-            logging.info('Server #{:d}: Client #{:d} has joined in !'.format(
+            logger.info('Server #{:d}: Client #{:d} has joined in !'.format(
                 self.ID, sender))
         else:
             self.join_in_client_num += 1

@@ -3,6 +3,9 @@ import torch.nn.functional as F
 from federatedscope.attack.auxiliary.utils import iDLG_trick, total_variation, get_info_diff_loss
 import logging
 
+logger = logging.getLogger(__name__)
+
+
 class DLG(object):
     '''
     Implementation of the paper "Deep Leakage from Gradients": https://papers.nips.cc/paper/2019/file/60a6c4002cc7b29142def8871531281a-Paper.pdf
@@ -77,7 +80,7 @@ class DLG(object):
             loss = self.federate_loss_fn(
                 model(dummy_data),
                 dummy_label.view(-1, ).type(torch.LongTensor).to(
-                torch.device(self.device)))
+                    torch.device(self.device)))
 
             gradient = torch.autograd.grad(loss,
                                            model.parameters(),
@@ -99,15 +102,15 @@ class DLG(object):
             info_diff = optimizer.step(closure)
 
             if (ite + 1 == self.max_ite) or ite % 20 == 0:
-                logging.info('Ite: {}, gradient difference: {:.4f}'.format(
+                logger.info('Ite: {}, gradient difference: {:.4f}'.format(
                     ite, info_diff))
         return dummy_data.detach(), label.detach()
 
     def get_original_gradient_from_para(self, model, original_info,
                                         model_para_name):
         original_gradient = [
-            ((original_para - original_info[name].to(
-                torch.device(self.device))) /
+            ((original_para -
+              original_info[name].to(torch.device(self.device))) /
              self.federate_lr).detach()
             for original_para, name in zip(model.parameters(), model_para_name)
         ]
@@ -134,8 +137,8 @@ class DLG(object):
         # inital dummy data and label
         dummy_data_dim = [batch_size]
         dummy_data_dim.extend(data_feature_dim)
-        dummy_data = torch.randn(dummy_data_dim).to(
-                torch.device(self.device)).requires_grad_(True)
+        dummy_data = torch.randn(dummy_data_dim).to(torch.device(
+            self.device)).requires_grad_(True)
 
         para_trainable_name = []
         for p in model.named_parameters():
@@ -145,14 +148,14 @@ class DLG(object):
             original_gradient = self.get_original_gradient_from_para(
                 model, original_info, model_para_name=para_trainable_name)
         else:
-            original_gradient = [grad.to(
-                torch.device(self.device)) for k, grad in original_info]
+            original_gradient = [
+                grad.to(torch.device(self.device)) for k, grad in original_info
+            ]
 
         label = iDLG_trick(original_gradient,
                            num_class=num_class,
                            is_one_hot_label=self.is_one_hot_label)
-        label = label.to(
-                torch.device(self.device))
+        label = label.to(torch.device(self.device))
 
         # setup optimizer
         optimizer = self._setup_optimizer([dummy_data])
@@ -165,6 +168,7 @@ class DLG(object):
                                      closure_fn=self._gradient_closure)
 
         return dummy_data.detach(), label.detach()
+
 
 class InvertGradient(DLG):
     '''
@@ -194,21 +198,21 @@ class InvertGradient(DLG):
                                              info_diff_type=info_diff_type)
         self.alpha_TV = alpha_TV
         if self.info_diff_type != 'sim':
-            logging.info('Force the info_diff_type to be cosine similarity loss in InvertGradient attack method!')
+            logger.info(
+                'Force the info_diff_type to be cosine similarity loss in InvertGradient attack method!'
+            )
             self.info_diff_type = 'sim'
             self.info_diff_loss = get_info_diff_loss(self.info_diff_type)
 
-
-
     def _gradient_closure(self, model, optimizer, dummy_data, dummy_label,
-                             original_gradient):
+                          original_gradient):
         def closure():
             optimizer.zero_grad()
             model.zero_grad()
             loss = self.federate_loss_fn(
                 model(dummy_data),
                 dummy_label.view(-1, ).type(torch.LongTensor).to(
-                torch.device(self.device)))
+                    torch.device(self.device)))
 
             gradient = torch.autograd.grad(loss,
                                            model.parameters(),
@@ -225,4 +229,3 @@ class InvertGradient(DLG):
             return gradient_diff
 
         return closure
-

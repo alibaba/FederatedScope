@@ -19,6 +19,8 @@ except ImportError:
     DataLoader = None
     Dataset = None
 
+logger = logging.getLogger(__name__)
+
 
 class Trainer(object):
     """
@@ -110,13 +112,13 @@ class Trainer(object):
                 if target_hook_name == hooks_dict[target_trigger][
                         hook_idx].__name__:
                     del_one = hooks_dict[target_trigger].pop(hook_idx)
-                    logging.info(
+                    logger.info(
                         f"Remove the hook `{del_one}` from hooks_set at trigger `{target_trigger}`"
                     )
                     del_one_hook_idx = hook_idx
                     break
             if del_one_hook_idx is None:
-                logging.warning(
+                logger.warning(
                     f"In hook del procedure, can't find the target hook named {target_hook_name}"
                 )
         return del_one_hook_idx
@@ -176,7 +178,7 @@ class Trainer(object):
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
                     f"{target_data_split_name}_loader") is None:
-            logging.warning(
+            logger.warning(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer, will skip evaluation"
                 f"If this is not the case you want, please check whether there is typo for the name"
             )
@@ -255,28 +257,28 @@ class Trainer(object):
         '''
             print some meta info for code-users, e.g., model type; the para names will be filtered out, etc.,
         '''
-        logging.info(f"Model meta-info: {type(self.ctx.model)}.")
-        logging.debug(f"Model meta-info: {self.ctx.model}.")
-        # logging.info(f"Data meta-info: {self.ctx['data']}.")
+        logger.info(f"Model meta-info: {type(self.ctx.model)}.")
+        logger.debug(f"Model meta-info: {self.ctx.model}.")
+        # logger.info(f"Data meta-info: {self.ctx['data']}.")
 
         ori_para_names = set(self.ctx.model.state_dict().keys())
         preserved_paras = self._param_filter(self.ctx.model.state_dict())
         preserved_para_names = set(preserved_paras.keys())
         filtered_para_names = ori_para_names - preserved_para_names
-        logging.info(f"Num of original para names: {len(ori_para_names)}.")
-        logging.info(
+        logger.info(f"Num of original para names: {len(ori_para_names)}.")
+        logger.info(
             f"Num of original trainable para names: {len(self.ctx['trainable_para_names'])}."
         )
-        logging.info(
+        logger.info(
             f"Num of preserved para names in local update: {len(preserved_para_names)}. \n"
             f"Preserved para names in local update: {preserved_para_names}.")
-        logging.info(
+        logger.info(
             f"Num of filtered para names in local update: {len(filtered_para_names)}. \n"
             f"Filtered para names in local update: {filtered_para_names}.")
 
-        logging.info(f"After register default hooks,\n"
-                     f"\tthe hooks_in_train is: {self.hooks_in_train};\n"
-                     f"\tthe hooks_in_eval is {self.hooks_in_eval}")
+        logger.info(f"After register default hooks,\n"
+                    f"\tthe hooks_in_train is: {self.hooks_in_train};\n"
+                    f"\tthe hooks_in_eval is {self.hooks_in_eval}")
 
     def finetune(self):
         pass

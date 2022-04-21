@@ -8,7 +8,7 @@ if DEV_MODE:
 
 from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.utils import setup_seed, setup_logger
+from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     init_cfg.merge_from_file(args.cfg_file)
     init_cfg.merge_from_list(args.opts)
 
-    setup_logger(init_cfg)
+    update_logger(init_cfg)
     setup_seed(init_cfg.seed)
 
     # federated dataset might change the number of clients

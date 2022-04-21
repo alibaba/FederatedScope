@@ -10,7 +10,6 @@ if DEV_MODE:
     sys.path.append(file_dir)
 
 from federatedscope.core.cmd_args import parse_args
-from federatedscope.core.auxiliaries.utils import setup_logger
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.autotune import split_raw_config, config2cmdargs, get_scheduler
 
@@ -20,8 +19,6 @@ if os.environ.get('http_proxy'):
     del os.environ['http_proxy']
 
 if __name__ == '__main__':
-    setup_logger(global_cfg)
-
     args = parse_args()
     with open(args.cfg_file, 'r') as ips:
         config = yaml.load(ips, Loader=yaml.FullLoader)

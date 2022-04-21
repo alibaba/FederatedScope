@@ -1,18 +1,3 @@
-# Copyright [FedML] [Chaoyang He, Salman Avestimehr]
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-#
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import grpc
 from concurrent import futures
 
@@ -56,10 +41,12 @@ class StandaloneCommManager(object):
 
 class gRPCCommManager(object):
     """
-        The implementation of gRPCCommManager is referred to https://github.com/FedML-AI/FedML/tree/master/fedml_core/distributed/communication/gRPC
+        The implementation of gRPCCommManager is referred to the tutorial on https://grpc.io/docs/languages/python/
     """
     def __init__(self, host='0.0.0.0', port='50050', client_num=2):
-        grpc_opts = [
+        self.host = host
+        self.port = port
+        options = [
             ("grpc.max_send_message_length",
              global_cfg.distribute.grpc_max_send_message_length),
             ("grpc.max_receive_message_length",
@@ -67,18 +54,21 @@ class gRPCCommManager(object):
             ("grpc.enable_http_proxy",
              global_cfg.distribute.grpc_enable_http_proxy),
         ]
-        self.grpc_server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=client_num),
-            options=grpc_opts)
-        self.servicer = gRPCComServeFunc()
-        gRPC_comm_manager_pb2_grpc.add_gRPCComServeFuncServicer_to_server(
-            servicer=self.servicer, server=self.grpc_server)
-        self.grpc_server.add_insecure_port("{}:{}".format(host, port))
-        self.host = host
-        self.port = port
-        self.grpc_server.start()
-
+        self.server_funcs = gRPCComServeFunc()
+        self.grpc_server = self.serve(max_workers=client_num, host=host, port=port, options=options)
         self.neighbors = dict()
+
+    def serve(self, max_workers, host, port, options):
+        """
+        This function is referred to https://grpc.io/docs/languages/python/basics/#starting-the-server
+        """
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers), options=options)
+        gRPC_comm_manager_pb2_grpc.add_gRPCComServeFuncServicer_to_server(
+            self.server_funcs, server)
+        server.add_insecure_port("{}:{}".format(host, port))
+        server.start()
+
+        return server
 
     def add_neighbors(self, neighbor_id, address):
         self.neighbors[neighbor_id] = '{}:{}'.format(address['host'],
@@ -98,10 +88,16 @@ class gRPCCommManager(object):
             return self.neighbors
 
     def _send(self, receiver_address, message):
-        channel = grpc.insecure_channel(receiver_address,
+        def _create_stub(receiver_address):
+            """
+            This part is referred to https://grpc.io/docs/languages/python/basics/#creating-a-stub
+            """
+            channel = grpc.insecure_channel(receiver_address,
                                         options=(('grpc.enable_http_proxy',
                                                   0), ))
-        stub = gRPC_comm_manager_pb2_grpc.gRPCComServeFuncStub(channel)
+            stub = gRPC_comm_manager_pb2_grpc.gRPCComServeFuncStub(channel)
+            return stub, channel
+        stub, channel = _create_stub(receiver_address)
         request = message.msg_to_json(to_list=True)
         stub.sendMessage(gRPC_comm_manager_pb2.MessageRequest(msg=request))
         channel.close()
@@ -121,7 +117,7 @@ class gRPCCommManager(object):
                 self._send(receiver_address, message)
 
     def receive(self):
-        received_msg = self.servicer.receive()
+        received_msg = self.server_funcs.receive()
         message = Message()
         message.json_to_msg(received_msg.msg)
         return message
