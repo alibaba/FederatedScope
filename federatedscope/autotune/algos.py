@@ -15,6 +15,8 @@ from federatedscope.core.fed_runner import FedRunner
 from federatedscope.autotune.choice_types import Discrete, Continuous
 from federatedscope.autotune.utils import generate_candidates, config2cmdargs, config2str, summarize_hpo_results
 
+logger = logging.getLogger(__name__)
+
 
 def grid_search(search_space, sample_size=None):
     '''To produce a given nunber of configurations from a given (producted) search space with grid search strategy.
@@ -103,7 +105,7 @@ class Scheduler(object):
                 raw_search_space (dict): each key-value pair corresponds to a field and its choices.
         """
         self._init_configs = self._setup(raw_search_space)
-        logging.info(self._init_configs)
+        logger.info(self._init_configs)
 
     def _setup(self):
         """Record the search space and prepare the initial configurations.
@@ -147,7 +149,7 @@ class BruteForce(Scheduler):
         device_flags = [
             threading.Event() for _ in range(torch.cuda.device_count())
         ]
-        logging.info("Conduct HPO with {} devices in-parallel".format(
+        logger.info("Conduct HPO with {} devices in-parallel".format(
             len(device_flags)))
         for i in range(len(device_flags)):
             device_flags[i].set()
@@ -230,14 +232,14 @@ class BruteForce(Scheduler):
             perfs,
             white_list=set(self._original_search_space.keys()),
             desc=global_cfg.hpo.larger_better)
-        logging.info(
+        logger.info(
             "====================================== Final ========================================"
         )
-        logging.info("\n{}".format(results))
-        logging.info(
+        logger.info("\n{}".format(results))
+        logger.info(
             "====================================================================================="
         )
-        logging.info("The performance changes as {}".format(plots))
+        logger.info("The performance changes as {}".format(plots))
         return results
 
 
@@ -297,17 +299,17 @@ class IterativeScheduler(BruteForce):
                 white_list=set(self._original_search_space.keys()),
                 desc=global_cfg.hpo.larger_better)
             self._stage += 1
-            logging.info(
+            logger.info(
                 "====================================== Stage{} ========================================"
                 .format(self._stage))
-            logging.info("\n{}".format(last_results))
-            logging.info(
+            logger.info("\n{}".format(last_results))
+            logger.info(
                 "======================================================================================="
             )
             current_configs = self._generate_next_population(
                 current_configs, current_perfs)
         # output the performance v.s. consumed budget
-        logging.info("Performance changes as {}".format(
+        logger.info("Performance changes as {}".format(
             [elem for stg_plts in self._accum_plots for elem in stg_plts]))
         return current_configs
 

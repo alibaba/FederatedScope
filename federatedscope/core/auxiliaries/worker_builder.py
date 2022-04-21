@@ -3,6 +3,8 @@ import logging
 from federatedscope.core.configs import constants
 from federatedscope.core.worker import Server, Client
 
+logger = logging.getLogger(__name__)
+
 
 def get_client_cls(cfg):
     if cfg.vertical.use:
@@ -13,7 +15,7 @@ def get_client_cls(cfg):
         client_type = constants.CLIENTS_TYPE[cfg.federate.method.lower()]
     else:
         client_type = "normal"
-        logging.warning(
+        logger.warning(
             'Clients for method {} is not implemented. Will use default one'.
             format(cfg.federate.method))
 
@@ -36,7 +38,7 @@ def get_client_cls(cfg):
 
     if client_atk_type == 'gradascent':
         from federatedscope.attack.worker_as_attacker.active_client import add_atk_method_to_Client_GradAscent
-        logging.info("=========== add method to current client class ")
+        logger.info("=========== add method to current client class ")
         client_class = add_atk_method_to_Client_GradAscent(client_class)
     return client_class
 
@@ -57,7 +59,7 @@ def get_server_cls(cfg):
         client_type = constants.SERVER_TYPE[cfg.federate.method.lower()]
     else:
         client_type = "normal"
-        logging.warning(
+        logger.warning(
             'Server for method {} is not implemented. Will use default one'.
             format(cfg.federate.method))
 

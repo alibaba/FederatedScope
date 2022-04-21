@@ -116,7 +116,6 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
                 np.power(L, 2) * cfg.federate.client_num) / (
                     min(sample_client_num.values()) * cfg.federate.client_num *
                     cfg.nbafl.epsilon)
-            # logging.info({"Role": "Server", "Noise": {"mean": 0, "scale": scale_d}})
             for p in model.parameters():
                 p.data += get_random("Normal", p.shape, {
                     "loc": 0,

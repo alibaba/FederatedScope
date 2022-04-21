@@ -6,6 +6,8 @@ from yacs.config import CfgNode as CN
 
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
+
 # Global config object
 cfg = CN()
 
@@ -402,7 +404,7 @@ def assert_cfg(cfg):
         cfg.federate.sample_client_num = max(
             1, int(cfg.federate.sample_client_rate * cfg.federate.client_num))
         if sample_client_num_valid:
-            logging.warning(
+            logger.warning(
                 "Users specify both valid sample_client_rate and sample_client_num, "
                 "we will use sample_client_rate")
     # (a.2) use sample_client_num, commented since the below two lines do not change anything

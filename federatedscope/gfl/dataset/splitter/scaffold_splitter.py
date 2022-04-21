@@ -5,6 +5,8 @@ from rdkit import Chem
 from rdkit import RDLogger
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
+logger = logging.getLogger(__name__)
+
 RDLogger.DisableLog('rdApp.*')
 
 
@@ -20,7 +22,7 @@ def gen_scaffold_split(dataset, client_num=5):
     r"""
     return dict{ID:[idxs]}
     """
-    logging.info('Scaffold split might take minutes, please wait...')
+    logger.info('Scaffold split might take minutes, please wait...')
     scaffolds = {}
     for idx, data in enumerate(dataset):
         smiles = data.smiles

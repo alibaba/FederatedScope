@@ -3,6 +3,8 @@ import importlib
 
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
+
 TRAINER_CLASS_DICT = {
     "cvtrainer": "CVTrainer",
     "nlptrainer": "NLPTrainer",
@@ -84,7 +86,6 @@ def get_trainer(model=None,
             raise ValueError('Trainer {} is not provided'.format(
                 config.trainer.type))
 
-
     # differential privacy plug-in
     if config.nbafl.use:
         from federatedscope.core.trainers.trainer_nbafl import wrap_nbafl_trainer
@@ -110,7 +111,7 @@ def get_trainer(model=None,
 
     # attacker plug-in
     if is_attacker:
-        logging.info(
+        logger.info(
             '---------------- This client is an attacker --------------------')
         from federatedscope.attack.auxiliary.attack_trainer_builder import wrap_attacker_trainer
         trainer = wrap_attacker_trainer(trainer, config)

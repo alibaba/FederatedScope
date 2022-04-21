@@ -9,6 +9,8 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import csc_matrix
 import numpy as np
 
+logger = logging.getLogger(__name__)
+
 
 class VMFDataset:
     """Dataset of matrix factorization task in vertical federated learning.
@@ -109,7 +111,7 @@ class MovieLensData(object):
     def _load_meta(self):
         meta_path = os.path.join(self.root, self.base_folder, "ratings.pkl")
         if not os.path.exists(meta_path):
-            logging.info("Processing data into {} parties.")
+            logger.info("Processing data into {} parties.")
             fpath = os.path.join(self.root, self.base_folder, self.filename,
                                  self.raw_file)
             data = pd.read_csv(fpath,
@@ -141,7 +143,7 @@ class MovieLensData(object):
 
             with open(meta_path, 'wb') as f:
                 pickle.dump(ratings, f)
-            logging.info("Done.")
+            logger.info("Done.")
         else:
             with open(meta_path, 'rb') as f:
                 ratings = pickle.load(f)
@@ -156,7 +158,7 @@ class MovieLensData(object):
 
     def download(self):
         if self._check_integrity():
-            logging.info("Files already downloaded and verified")
+            logger.info("Files already downloaded and verified")
             return
         download_and_extract_archive(self.url,
                                      os.path.join(self.root, self.base_folder),
