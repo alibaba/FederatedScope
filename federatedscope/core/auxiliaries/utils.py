@@ -69,6 +69,9 @@ def setup_logger(cfg):
     # if not, make directory with given name
     os.makedirs(cfg.outdir)
 
+    if cfg.outdir == "":
+        cfg.outdir = os.path.join(os.getcwd(), "exp")
+
     logger = logging.getLogger()
     # create file handler which logs even debug messages
     fh = logging.FileHandler(os.path.join(cfg.outdir, 'exp_print.log'))
@@ -94,6 +97,38 @@ def get_dataset(type, root, transform, target_transform, download=True):
             raise NotImplementedError('Dataset {} not implement'.format(type))
     else:
         raise TypeError()
+
+
+def save_local_data(dir_path,
+                    train_data=None,
+                    train_targets=None,
+                    test_data=None,
+                    test_targets=None,
+                    val_data=None,
+                    val_targets=None):
+    r"""
+    https://github.com/omarfoq/FedEM/blob/main/data/femnist/generate_data.py
+
+    save (`train_data`, `train_targets`) in {dir_path}/train.pt,
+    (`val_data`, `val_targets`) in {dir_path}/val.pt
+    and (`test_data`, `test_targets`) in {dir_path}/test.pt
+    :param dir_path:
+    :param train_data:
+    :param train_targets:
+    :param test_data:
+    :param test_targets:
+    :param val_data:
+    :param val_targets
+    """
+    if (train_data is not None) and (train_targets is not None):
+        torch.save((train_data, train_targets), osp.join(dir_path, "train.pt"))
+
+    if (test_data is not None) and (test_targets is not None):
+        torch.save((test_data, test_targets), osp.join(dir_path, "test.pt"))
+
+    if (val_data is not None) and (val_targets is not None):
+        torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
+
 
 
 def filter_by_specified_keywords(param_name, config):
