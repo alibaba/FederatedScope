@@ -6,10 +6,11 @@ federate:
   make_global_eval: False
   online_aggr: False
 distribute:
-  server_host: 'xx.xx.xx.xx'
-  server_port: x
-  client_host: 'xx.xx.xx.xx'
-  client_port: x
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051
+  client_host: '127.0.0.1'
+  client_port: 50053
   role: 'client'
   data_file: 'toy_data/client_2_data'
 trainer:

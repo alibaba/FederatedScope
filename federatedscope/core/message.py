@@ -1,5 +1,7 @@
 import sys
 import json
+import numpy as np
+from federatedscope.core.proto import gRPC_comm_manager_pb2
 
 
 class Message(object):
@@ -109,3 +111,94 @@ class Message(object):
         self.state = json_msg['state']
         self.content = json_msg['content']
         self.strategy = json_msg['strategy']
+
+    def create_by_type(self, value, nested=False):
+        if isinstance(value, dict):
+            m_dict = gRPC_comm_manager_pb2.mDict()
+            for key in value.keys():
+                m_dict.dict_value[key].MergeFrom(
+                    self.create_by_type(value[key], nested=True))
+            if nested:
+                msg_value = gRPC_comm_manager_pb2.MsgValue()
+                msg_value.dict_msg.MergeFrom(m_dict)
+                return msg_value
+            else:
+                return m_dict
+        elif isinstance(value, list) or isinstance(value, tuple):
+            m_list = gRPC_comm_manager_pb2.mList()
+            for each in value:
+                m_list.list_value.append(self.create_by_type(each,
+                                                             nested=True))
+            if nested:
+                msg_value = gRPC_comm_manager_pb2.MsgValue()
+                msg_value.list_msg.MergeFrom(m_list)
+                return msg_value
+            else:
+                return m_list
+        else:
+            m_single = gRPC_comm_manager_pb2.mSingle()
+            if type(value) in [int, np.int32]:
+                m_single.int_value = value
+            elif type(value) in [str]:
+                m_single.str_value = value
+            elif type(value) in [float, np.float32]:
+                m_single.float_value = value
+            else:
+                raise ValueError(
+                    'The data type {} has not been supported.'.format(
+                        type(value)))
+
+            if nested:
+                msg_value = gRPC_comm_manager_pb2.MsgValue()
+                msg_value.single_msg.MergeFrom(m_single)
+                return msg_value
+            else:
+                return m_single
+
+    def build_msg_value(self, value):
+        msg_value = gRPC_comm_manager_pb2.MsgValue()
+
+        if isinstance(value, list) or isinstance(value, tuple):
+            msg_value.list_msg.MergeFrom(self.create_by_type(value))
+        elif isinstance(value, dict):
+            msg_value.dict_msg.MergeFrom(self.create_by_type(value))
+        else:
+            msg_value.single_msg.MergeFrom(self.create_by_type(value))
+
+        return msg_value
+
+    def transform(self, to_list=False):
+        if to_list:
+            self.content = self.transform_to_list(self.content)
+
+        splited_msg = gRPC_comm_manager_pb2.MessageRequest()  # map/dict
+        splited_msg.msg['sender'].MergeFrom(self.build_msg_value(self.sender))
+        splited_msg.msg['receiver'].MergeFrom(
+            self.build_msg_value(self.receiver))
+        splited_msg.msg['state'].MergeFrom(self.build_msg_value(self.state))
+        splited_msg.msg['msg_type'].MergeFrom(
+            self.build_msg_value(self.msg_type))
+        splited_msg.msg['content'].MergeFrom(self.build_msg_value(
+            self.content))
+        return splited_msg
+
+    def _parse_msg(self, value):
+        if isinstance(value, gRPC_comm_manager_pb2.MsgValue) or isinstance(
+                value, gRPC_comm_manager_pb2.mSingle):
+            return self._parse_msg(getattr(value, value.WhichOneof("type")))
+        elif isinstance(value, gRPC_comm_manager_pb2.mList):
+            return [self._parse_msg(each) for each in value.list_value]
+        elif isinstance(value, gRPC_comm_manager_pb2.mDict):
+            return {
+                k: self._parse_msg(value.dict_value[k])
+                for k in value.dict_value
+            }
+        else:
+            return value
+
+    def parse(self, received_msg):
+        self.sender = self._parse_msg(received_msg['sender'])
+        self.receiver = self._parse_msg(received_msg['receiver'])
+        self.msg_type = self._parse_msg(received_msg['msg_type'])
+        self.state = self._parse_msg(received_msg['state'])
+        self.content = self._parse_msg(received_msg['content'])
