@@ -28,7 +28,10 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex = CN()
     cfg.hpo.fedex.use = False
     cfg.hpo.fedex.ss = ''
+    cfg.hpo.fedex.flatten_ss = True
     cfg.hpo.fedex.num_arms = 16
+    cfg.hpo.fedex.diff = False
+    cfg.hpo.fedex.sched = 'auto'
 
 
 def assert_hpo_cfg(cfg):
@@ -48,6 +51,7 @@ def assert_hpo_cfg(cfg):
 
     assert not (cfg.hpo.fedex.use and cfg.federate.use_ss), "Cannot use secret sharing and FedEx at the same time"
     assert cfg.optimizer.type == 'SGD' or not cfg.hpo.fedex.use, "SGD is required if FedEx is considered"
+    assert cfg.hpo.fedex.sched in ['adaptive', 'aggressive', 'auto', 'constant', 'scale'], "schedule of FedEx must be choice from {}".format(['adaptive', 'aggressive', 'auto', 'constant', 'scale'])
 
 
 register_config("hpo", extend_hpo_cfg)
