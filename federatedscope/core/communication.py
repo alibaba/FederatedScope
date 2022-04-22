@@ -99,8 +99,10 @@ class gRPCCommManager(object):
             return stub, channel
         stub, channel = _create_stub(receiver_address)
         request = message.transform(to_list=True)
-        #msg_test = gRPC_comm_manager_pb2.MessageRequest(msg=request)
-        stub.sendMessage(request)
+        try:
+            stub.sendMessage(request)
+        except grpc._channel._InactiveRpcError:
+            pass
         channel.close()
 
     def send(self, message):

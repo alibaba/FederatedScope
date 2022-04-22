@@ -8,6 +8,7 @@ from datetime import datetime
 from os import path as osp
 import ssl
 import urllib.request
+import signal
 
 import numpy as np
 # Blind torch
@@ -219,3 +220,27 @@ def download_url(url: str, folder='folder'):
         f.write(data.read())
 
     return path
+
+class Timeout(object):
+
+    def __init__(self, seconds):
+        self.seconds = seconds
+
+    def __enter__(self):
+        def signal_handler(signum, frame):
+            raise TimeoutError()
+
+        if self.seconds > 0:
+            signal.signal(signal.SIGALRM, signal_handler)
+            signal.alarm(self.seconds)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        signal.alarm(0)
+
+    def reset(self):
+        signal.alarm(self.seconds)
+
+    def block(self):
+        signal.alarm(0)
+

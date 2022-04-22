@@ -9,7 +9,7 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
-from federatedscope.core.auxiliaries.utils import merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict, Timeout
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
@@ -178,9 +178,30 @@ class Server(Worker):
             self.msg_handlers[msg.msg_type](msg)
 
         # Running: listen for message (updates from clients), aggregate and broadcast feedbacks (aggregated model parameters)
-        while self.state <= self.total_round_num:
-            msg = self.comm_manager.receive()
-            self.msg_handlers[msg.msg_type](msg)
+        min_received_num = self._cfg.asyn.min_received_num if hasattr(self._cfg, 'asyn') else self._cfg.federate.sample_client_num
+        with Timeout(self._cfg.asyn.timeout) as time_counter:
+            while self.state <= self.total_round_num:
+                try:
+                    msg = self.comm_manager.receive()
+                    move_on_flag = self.msg_handlers[msg.msg_type](msg)
+                    if move_on_flag:
+                        time_counter.reset()
+                except TimeoutError:
+                    print('Time out!')
+                    move_on_flag_eval = self.check_and_move_on(min_received_num=min_received_num, check_eval_result=True)
+                    move_on_flag = self.check_and_move_on(min_received_num=min_received_num)
+                    if not move_on_flag and not move_on_flag_eval:
+                        ## Time out, broadcast the model para and re-start the training round
+                        logging.info(
+                            '----------- Re-starting the training round (Round #{:d}) -------------'
+                                .format(self.state))
+                        # Clean the msg_buffer
+                        self.msg_buffer['train'][self.state].clear()
+
+                        self.broadcast_model_para(
+                            msg_type='model_para',
+                            sample_client_num=self.sample_client_num)
+                    time_counter.reset()
 
         if self.model_num > 1:
             model_para = [model.state_dict() for model in self.models]
@@ -194,19 +215,16 @@ class Server(Worker):
                     state=self.state,
                     content=model_para))
 
-    def check_and_move_on(self, check_eval_result=False):
+    def check_and_move_on(self, check_eval_result=False, min_received_num=None):
         """
         To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
         """
+        if min_received_num is None:
+            min_received_num = self._cfg.federate.sample_client_num
+        assert min_received_num <= self.sample_client_num
 
-        if check_eval_result:
-            # all clients are participating in evaluation
-            minimal_number = self.client_num
-        else:
-            # sampled clients are participating in training
-            minimal_number = self.sample_client_num
-
-        if self.check_buffer(self.state, minimal_number, check_eval_result):
+        move_on_flag = True # To record whether moving to a new training round or finishing the evaluation
+        if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:  # in the training process
                 # Get all the message
@@ -244,9 +262,9 @@ class Server(Worker):
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
-                    logger.info(
-                        'Server #{:d}: Starting evaluation at round {:d}.'.
-                        format(self.ID, self.state))
+                    logging.info(
+                        'Server #{:d}: Starting evaluation at the end of round {:d}.'.
+                        format(self.ID, self.state-1))
                     self.eval()
 
                 if self.state < self.total_round_num:
@@ -273,6 +291,11 @@ class Server(Worker):
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+
+        else:
+            move_on_flag = False
+
+        return move_on_flag
 
     def check_and_save(self):
         """
@@ -344,8 +367,8 @@ class Server(Worker):
         :param final_round:
         :return:
         """
-        state = self.state if not final_round else self.state - 1
-        eval_msg_buffer = self.msg_buffer['eval'][state]
+        round = max(self.msg_buffer['eval'].keys())
+        eval_msg_buffer = self.msg_buffer['eval'][round]
         metrics_all_clients = dict()
         for each_client in eval_msg_buffer:
             client_eval_results = eval_msg_buffer[each_client]
@@ -372,6 +395,9 @@ class Server(Worker):
                     results_type=f"client_summarized_{form}",
                     round_wise_update_key=self._cfg.eval.
                     best_res_update_round_wise_key)
+
+        #Clean the buffer
+        self.msg_buffer['eval'][round].clear()
         return formatted_logs
 
     def broadcast_model_para(self,
@@ -406,7 +432,7 @@ class Server(Worker):
             Message(msg_type=msg_type,
                     sender=self.ID,
                     receiver=receiver,
-                    state=self.state,
+                    state=min(self.state, self.total_round_num),
                     content=model_para))
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
@@ -423,25 +449,26 @@ class Server(Worker):
                     state=self.state,
                     content=self.comm_manager.get_neighbors()))
 
-    def check_buffer(self, cur_round, minimal_number, check_eval_result=False):
+    def check_buffer(self, cur_round, min_received_num, check_eval_result=False):
         """
         To check the message buffer
 
         Arguments:
         cur_round (int): The current round number
-        minimal_number (int): The minimal number of the receiving messages
+        min_received_num (int): The minimal number of the receiving messages
         check_eval_result (bool): To check training results for evaluation results
         :returns: Whether enough messages have been received or not
         :rtype: bool
         """
         if check_eval_result:
-            if 'eval' not in self.msg_buffer.keys():
+            if 'eval' not in self.msg_buffer.keys() or len(self.msg_buffer['eval'].keys()) == 0 :
                 return False
             buffer = self.msg_buffer['eval']
+            cur_round = max(buffer.keys())
         else:
             buffer = self.msg_buffer['train']
 
-        if cur_round not in buffer or len(buffer[cur_round]) < minimal_number:
+        if cur_round not in buffer or len(buffer[cur_round]) < min_received_num:
             return False
         else:
             return True
@@ -459,6 +486,9 @@ class Server(Worker):
         if self.check_client_join_in():
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
+            logging.info(
+                '----------- Starting training (Round #{:d}) -------------'
+                    .format(self.state))
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 
@@ -598,7 +628,8 @@ class Server(Worker):
 
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(content)
-        self.check_and_move_on()
+
+        return self.check_and_move_on()
 
     def callback_funcs_for_join_in(self, message: Message):
         if 'info' in message.msg_type:
@@ -643,4 +674,4 @@ class Server(Worker):
 
         self.msg_buffer['eval'][round][sender] = content
 
-        self.check_and_move_on(check_eval_result=True)
+        return self.check_and_move_on(check_eval_result=True)
