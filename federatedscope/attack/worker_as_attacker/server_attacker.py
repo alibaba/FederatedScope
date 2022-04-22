@@ -2,7 +2,6 @@ from federatedscope.core.worker import Server
 from federatedscope.core.message import Message
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
-from federatedscope.core.configs.config import global_cfg
 import copy
 from federatedscope.attack.auxiliary.utils import get_data_sav_fn, get_reconstructor
 
@@ -45,7 +44,7 @@ class PassiveServer(Server):
         self.reconstruct_data = dict()
 
         # the loss function of the global model; the global model can be obtained in self.aggregator.model
-        self.model_criterion = get_criterion(global_cfg.criterion.type,
+        self.model_criterion = get_criterion(self._cfg.criterion.type,
                                              device=self.device)
 
         from federatedscope.attack.auxiliary.utils import get_data_info
@@ -62,15 +61,15 @@ class PassiveServer(Server):
 
         return get_reconstructor(
             self.atk_method,
-            max_ite=global_cfg.attack.max_ite,
-            lr=global_cfg.attack.reconstruct_lr,
+            max_ite=self._cfg.attack.max_ite,
+            lr=self._cfg.attack.reconstruct_lr,
             federate_loss_fn=self.model_criterion,
             device=self.device,
-            federate_lr=global_cfg.optimizer.lr,
-            optim=global_cfg.attack.reconstruct_optim,
-            info_diff_type=global_cfg.attack.info_diff_type,
+            federate_lr=self._cfg.optimizer.lr,
+            optim=self._cfg.attack.reconstruct_optim,
+            info_diff_type=self._cfg.attack.info_diff_type,
             federate_method=self._cfg.federate.method,
-            alpha_TV=global_cfg.attack.alpha_TV)
+            alpha_TV=self._cfg.attack.alpha_TV)
 
     def _reconstruct(self, state, sender):
         # print(self.msg_buffer['train'][state].keys())
