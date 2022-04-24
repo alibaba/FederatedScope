@@ -27,7 +27,7 @@ class FedExTest(unittest.TestCase):
                                config=case_cfg.clone())
         results = Fed_runner.run()
 
-        self.assertLess(results["client_summarized_weighted_avg"]['test_loss'],
+        self.assertLess(results["client_summarized_weighted_avg"]['test_avg_loss'],
                         0.3)
 
 
