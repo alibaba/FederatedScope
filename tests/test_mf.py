@@ -23,7 +23,7 @@ class MFTest(unittest.TestCase):
 
         cfg.federate.mode = 'standalone'
         cfg.federate.local_update_steps = 20
-        cfg.federate.total_round_num = 200
+        cfg.federate.total_round_num = 50
         cfg.federate.client_num = 5
 
         cfg.data.root = 'test_data/'
@@ -60,7 +60,7 @@ class MFTest(unittest.TestCase):
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
 
-        self.assertLess(test_results['client_individual']['test_avg_loss'], 20)
+        self.assertLess(test_results['client_individual']['test_avg_loss'], 50)
 
 
 if __name__ == '__main__':
