@@ -53,10 +53,15 @@ def assert_hpo_cfg(cfg):
         "Either do NOT specify the budgets or specify the budget for each SHA iteration, but the given budgets is {}".\
             format(cfg.hpo.sha.budgets)
 
-    assert not (cfg.hpo.fedex.use and cfg.federate.use_ss), "Cannot use secret sharing and FedEx at the same time"
+    assert not (cfg.hpo.fedex.use and cfg.federate.use_ss
+                ), "Cannot use secret sharing and FedEx at the same time"
     assert cfg.optimizer.type == 'SGD' or not cfg.hpo.fedex.use, "SGD is required if FedEx is considered"
-    assert cfg.hpo.fedex.sched in ['adaptive', 'aggressive', 'auto', 'constant', 'scale'], "schedule of FedEx must be choice from {}".format(['adaptive', 'aggressive', 'auto', 'constant', 'scale'])
-    assert cfg.hpo.fedex.gamma >= .0 and cfg.hpo.fedex.gamma <= 1.0, "{} must be in [0, 1]".format(cfg.hpo.fedex.gamma)
+    assert cfg.hpo.fedex.sched in [
+        'adaptive', 'aggressive', 'auto', 'constant', 'scale'
+    ], "schedule of FedEx must be choice from {}".format(
+        ['adaptive', 'aggressive', 'auto', 'constant', 'scale'])
+    assert cfg.hpo.fedex.gamma >= .0 and cfg.hpo.fedex.gamma <= 1.0, "{} must be in [0, 1]".format(
+        cfg.hpo.fedex.gamma)
 
 
 register_config("hpo", extend_hpo_cfg)

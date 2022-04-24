@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def discounted_mean(trace, factor=1.0):
 
-    weight = factor ** np.flip(np.arange(len(trace)), axis=0)
+    weight = factor**np.flip(np.arange(len(trace)), axis=0)
 
     return np.inner(trace, weight) / weight.sum()
 
@@ -26,7 +26,6 @@ def discounted_mean(trace, factor=1.0):
 class FedExServer(Server):
     """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
     """
-
     def __init__(self,
                  ID=-1,
                  state=0,
@@ -52,25 +51,35 @@ class FedExServer(Server):
         sizes = [len(cand_set) for cand_set in self._cfsp]
         # TODO: support other step size
         eta0 = 'auto'
-        self._eta0 = [np.sqrt(2.0 * np.log(size)) if eta0 == 'auto' else eta0 for size in sizes]
+        self._eta0 = [
+            np.sqrt(2.0 * np.log(size)) if eta0 == 'auto' else eta0
+            for size in sizes
+        ]
         self._z = [np.full(size, -np.log(size)) for size in sizes]
         self._theta = [np.exp(z) for z in self._z]
         self._store = [0.0 for _ in sizes]
-        self._trace = {'global': [], 'refine': [], 'entropy': [self.entropy()], 'mle': [self.mle()]}
+        self._trace = {
+            'global': [],
+            'refine': [],
+            'entropy': [self.entropy()],
+            'mle': [self.mle()]
+        }
         self._stop_exploration = False
 
-        super(FedExServer, self).__init__(ID, state, config, data, model, client_num, total_round_num, device, strategy, **kwargs)
+        super(FedExServer,
+              self).__init__(ID, state, config, data, model, client_num,
+                             total_round_num, device, strategy, **kwargs)
 
     def entropy(self):
 
         entropy = 0.0
-        for probs in product(*(theta[theta>0.0] for theta in self._theta)):
+        for probs in product(*(theta[theta > 0.0] for theta in self._theta)):
             prob = np.prod(probs)
             entropy -= prob * np.log(prob)
         return entropy
 
     def mle(self):
-    
+
         return np.prod([theta.max() for theta in self._theta])
 
     def trace(self, key):
@@ -87,7 +96,9 @@ class FedExServer(Server):
         if self._stop_exploration:
             cfg_idx = [theta.argmax() for theta in self._theta]
         else:
-            cfg_idx = [np.random.choice(len(theta), p=theta) for theta in self._theta]
+            cfg_idx = [
+                np.random.choice(len(theta), p=theta) for theta in self._theta
+            ]
         sampled_cfg = [sps[i] for i, sps in zip(cfg_idx, self._cfsp)]
         return cfg_idx, sampled_cfg
 
@@ -120,10 +131,14 @@ class FedExServer(Server):
             model_para = self.model.state_dict()
 
         # sample the hyper-parameter config specific to the clients
-        
+
         for rcv_idx in receiver:
             cfg_idx, sampled_cfg = self.sample()
-            content = {'model_param': model_para, "arms": cfg_idx, 'hyperparam': sampled_cfg}
+            content = {
+                'model_param': model_para,
+                "arms": cfg_idx,
+                'hyperparam': sampled_cfg
+            }
             self.comm_manager.send(
                 Message(msg_type=msg_type,
                         sender=self.ID,
@@ -175,20 +190,25 @@ class FedExServer(Server):
 
         for i, (z, theta) in enumerate(zip(self._z, self._theta)):
             grad = np.zeros(len(z))
-            for idx, s, w in zip(index, after-before if self._cfg.hpo.fedex.diff else after, weight):
+            for idx, s, w in zip(
+                    index,
+                    after - before if self._cfg.hpo.fedex.diff else after,
+                    weight):
                 grad[idx[i]] += w * (s - baseline) / theta[idx[i]]
             if self._cfg.hpo.fedex.sched == 'adaptive':
-                self._store[i] += norm(grad, float('inf')) ** 2
+                self._store[i] += norm(grad, float('inf'))**2
                 denom = np.sqrt(self._store[i])
             elif self._cfg.hpo.fedex.sched == 'aggressive':
-                denom = 1.0 if np.all(grad == 0.0) else norm(grad, float('inf'))
+                denom = 1.0 if np.all(
+                    grad == 0.0) else norm(grad, float('inf'))
             elif self._cfg.hpo.fedex.sched == 'auto':
                 self._store[i] += 1.0
                 denom = np.sqrt(self._store[i])
             elif self._cfg.hpo.fedex.sched == 'constant':
                 denom = 1.0
             elif self._cfg.hpo.fedex.sched == 'scale':
-                denom = 1.0 / np.sqrt(2.0 * np.log(len(grad))) if len(grad) > 1 else float('inf')
+                denom = 1.0 / np.sqrt(
+                    2.0 * np.log(len(grad))) if len(grad) > 1 else float('inf')
             else:
                 raise NotImplementedError
             eta = self._eta0[i] / denom
@@ -201,7 +221,10 @@ class FedExServer(Server):
         if self._trace['entropy'][-1] < self._cfg.hpo.fedex.cutoff:
             self._stop_exploration = True
 
-        logger.info('Server #{:d}: Updated policy as {} with entropy {:f} and mle {:f}'.format(self.ID, self._theta, self._trace['entropy'][-1], self._trace['mle'][-1]))
+        logger.info(
+            'Server #{:d}: Updated policy as {} with entropy {:f} and mle {:f}'
+            .format(self.ID, self._theta, self._trace['entropy'][-1],
+                    self._trace['mle'][-1]))
 
     def check_and_move_on(self, check_eval_result=False):
         """
@@ -227,7 +250,8 @@ class FedExServer(Server):
                     msg_list = list()
                     for client_id in train_msg_buffer:
                         if self.model_num == 1:
-                            msg_list.append(tuple(train_msg_buffer[client_id][0:2]))
+                            msg_list.append(
+                                tuple(train_msg_buffer[client_id][0:2]))
                         else:
                             train_data_size, model_para_multiple = train_msg_buffer[
                                 client_id][0:2]
@@ -237,7 +261,10 @@ class FedExServer(Server):
                         if model_idx == 0:
                             # temporarily, we consider training loss
                             # TODO: use validation loss and sample size
-                            mab_feedbacks.append((train_msg_buffer[client_id][0], train_msg_buffer[client_id][2], train_msg_buffer[client_id][3]))
+                            mab_feedbacks.append(
+                                (train_msg_buffer[client_id][0],
+                                 train_msg_buffer[client_id][2],
+                                 train_msg_buffer[client_id][3]))
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
@@ -324,7 +351,8 @@ class FedExServer(Server):
 
             if self._cfg.federate.save_to != '':
                 # save the policy
-                with open(os.path.join(self._cfg.outdir, "policy.npy"), 'wb') as ops:
+                with open(os.path.join(self._cfg.outdir, "policy.npy"),
+                          'wb') as ops:
                     np.save(ops, self._z)
 
             if self.model_num > 1:

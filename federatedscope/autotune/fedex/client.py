@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 class FedExClient(Client):
     """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
     """
-
     def _apply_hyperparams(self, hyperparams):
         """Apply the given hyperparameters
         Arguments:
@@ -30,8 +29,10 @@ class FedExClient(Client):
 
     def callback_funcs_for_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
-        model_params, arms, hyperparams = content["model_param"], content["arms"], content["hyperparam"]
-        logger.info("Client #{:d}: try {} at Round #{:d}".format(self.ID, hyperparams, self.state))
+        model_params, arms, hyperparams = content["model_param"], content[
+            "arms"], content["hyperparam"]
+        logger.info("Client #{:d}: try {} at Round #{:d}".format(
+            self.ID, hyperparams, self.state))
 
         self._apply_hyperparams(hyperparams)
 
@@ -41,14 +42,14 @@ class FedExClient(Client):
         self.state = round
         sample_size, model_para_all, results = self.trainer.train()
         logger.info(
-                self._monitor.format_eval_res(results,
-                                              rnd=self.state,
-                                              role='Client #{}'.format(
-                                                  self.ID),
-                                              return_raw=True))
+            self._monitor.format_eval_res(results,
+                                          rnd=self.state,
+                                          role='Client #{}'.format(self.ID),
+                                          return_raw=True))
 
         # TODO: using validation loss as feedback and validation set size as weight
-        content = (sample_size, model_para_all, arms, results["train_avg_loss"])
+        content = (sample_size, model_para_all, arms,
+                   results["train_avg_loss"])
         self.comm_manager.send(
             Message(msg_type='model_para',
                     sender=self.ID,
