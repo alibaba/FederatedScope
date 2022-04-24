@@ -1,6 +1,7 @@
 use_gpu: True
 device: 0
-early_stop_patience: 5
+early_stop:
+  patience: 5
 seed: 2
 federate:
   mode: standalone

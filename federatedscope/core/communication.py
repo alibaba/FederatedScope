@@ -98,8 +98,9 @@ class gRPCCommManager(object):
             stub = gRPC_comm_manager_pb2_grpc.gRPCComServeFuncStub(channel)
             return stub, channel
         stub, channel = _create_stub(receiver_address)
-        request = message.msg_to_json(to_list=True)
-        stub.sendMessage(gRPC_comm_manager_pb2.MessageRequest(msg=request))
+        request = message.transform(to_list=True)
+        #msg_test = gRPC_comm_manager_pb2.MessageRequest(msg=request)
+        stub.sendMessage(request)
         channel.close()
 
     def send(self, message):
@@ -119,5 +120,5 @@ class gRPCCommManager(object):
     def receive(self):
         received_msg = self.server_funcs.receive()
         message = Message()
-        message.json_to_msg(received_msg.msg)
+        message.parse(received_msg.msg)
         return message
