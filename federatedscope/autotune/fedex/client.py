@@ -2,7 +2,6 @@ import logging
 
 from federatedscope.core.message import Message
 from federatedscope.core.worker import Client
-from federatedscope.core.auxiliaries.utils import formatted_logging
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +41,11 @@ class FedExClient(Client):
         self.state = round
         sample_size, model_para_all, results = self.trainer.train()
         logger.info(
-            formatted_logging(results,
-                              rnd=self.state,
-                              role='Client #{}'.format(self.ID)))
+                self._monitor.format_eval_res(results,
+                                              rnd=self.state,
+                                              role='Client #{}'.format(
+                                                  self.ID),
+                                              return_raw=True))
 
         # TODO: using validation loss as feedback and validation set size as weight
         content = (sample_size, model_para_all, arms, results["train_avg_loss"])

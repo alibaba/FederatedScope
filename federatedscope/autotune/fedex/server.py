@@ -1,5 +1,6 @@
 import os
 import logging
+from itertools import product
 
 import yaml
 
@@ -10,9 +11,16 @@ from federatedscope.core.message import Message
 from federatedscope.core.worker import Server
 from federatedscope.autotune import Continuous, Discrete, split_raw_config
 from federatedscope.autotune.algos import random_search
-from federatedscope.core.auxiliaries.utils import formatted_logging, merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict
 
 logger = logging.getLogger(__name__)
+
+
+def discounted_mean(trace, factor=1.0):
+
+    weight = factor ** np.flip(np.arange(len(trace)), axis=0)
+
+    return np.inner(trace, weight) / weight.sum()
 
 
 class FedExServer(Server):
@@ -48,8 +56,40 @@ class FedExServer(Server):
         self._z = [np.full(size, -np.log(size)) for size in sizes]
         self._theta = [np.exp(z) for z in self._z]
         self._store = [0.0 for _ in sizes]
+        self._trace = {'global': [], 'refine': [], 'entropy': [self.entropy()], 'mle': [self.mle()]}
+        self._stop_exploration = False
 
         super(FedExServer, self).__init__(ID, state, config, data, model, client_num, total_round_num, device, strategy, **kwargs)
+
+    def entropy(self):
+
+        entropy = 0.0
+        for probs in product(*(theta[theta>0.0] for theta in self._theta)):
+            prob = np.prod(probs)
+            entropy -= prob * np.log(prob)
+        return entropy
+
+    def mle(self):
+    
+        return np.prod([theta.max() for theta in self._theta])
+
+    def trace(self, key):
+        '''returns trace of one of three tracked quantities
+        Args:
+            key (str): 'entropy', 'global', or 'refine'
+        Returns:
+            numpy vector with length equal to number of rounds up to now.
+        '''
+
+        return np.array(self._trace[key])
+
+    def sample(self):
+        if self._stop_exploration:
+            cfg_idx = [theta.argmax() for theta in self._theta]
+        else:
+            cfg_idx = [np.random.choice(len(theta), p=theta) for theta in self._theta]
+        sampled_cfg = [sps[i] for i, sps in zip(cfg_idx, self._cfsp)]
+        return cfg_idx, sampled_cfg
 
     def broadcast_model_para(self,
                              msg_type='model_para',
@@ -82,8 +122,7 @@ class FedExServer(Server):
         # sample the hyper-parameter config specific to the clients
         
         for rcv_idx in receiver:
-            cfg_idx = [np.random.choice(len(theta), p=theta) for theta in self._theta]
-            sampled_cfg = [sps[i] for i, sps in zip(cfg_idx, self._cfsp)]
+            cfg_idx, sampled_cfg = self.sample()
             content = {'model_param': model_para, "arms": cfg_idx, 'hyperparam': sampled_cfg}
             self.comm_manager.send(
                 Message(msg_type=msg_type,
@@ -116,13 +155,23 @@ class FedExServer(Server):
         index = [tp[1] for tp in feedbacks]
         weight = np.asarray([tp[0] for tp in feedbacks], dtype=np.float64)
         weight /= np.sum(weight)
-        if self._cfg.hpo.fedex.diff:
-            # TODO: let the client provide before loss and after loss together
-            before, after = None, None
+        # TODO: acquire client-wise validation loss before local updates
+        before = np.asarray([tp[2] for tp in feedbacks])
+        after = np.asarray([tp[2] for tp in feedbacks])
+
+        if self._trace['refine']:
+            trace = self.trace('refine')
+            if self._cfg.hpo.fedex.diff:
+                trace -= self.trace('global')
+            baseline = discounted_mean(trace, self._cfg.hpo.fedex.gamma)
         else:
-            after = [tp[2] for tp in feedbacks]
-        # TODO: enable baseline for variance reduction
-        baseline = .0
+            baseline = 0.0
+        self._trace['global'].append(np.inner(before, weight))
+        self._trace['refine'].append(np.inner(after, weight))
+        if self._stop_exploration:
+            self._trace['entropy'].append(0.0)
+            self._trace['mle'].append(1.0)
+            return
 
         for i, (z, theta) in enumerate(zip(self._z, self._theta)):
             grad = np.zeros(len(z))
@@ -146,6 +195,13 @@ class FedExServer(Server):
             z -= eta * grad
             z -= logsumexp(z)
             self._theta[i] = np.exp(z)
+
+        self._trace['entropy'].append(self.entropy())
+        self._trace['mle'].append(self.mle())
+        if self._trace['entropy'][-1] < self._cfg.hpo.fedex.cutoff:
+            self._stop_exploration = True
+
+        logger.info('Server #{:d}: Updated policy as {} with entropy {:f} and mle {:f}'.format(self.ID, self._theta, self._trace['entropy'][-1], self._trace['mle'][-1]))
 
     def check_and_move_on(self, check_eval_result=False):
         """
@@ -187,9 +243,8 @@ class FedExServer(Server):
                     if 'dissim' in self._cfg.eval.monitoring:
                         B_val = calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
-                        formatted_eval_res = formatted_logging(B_val,
-                                                               rnd=self.state,
-                                                               role='Server #')
+                        formatted_eval_res = self._monitor.format_eval_res(
+                            B_val, rnd=self.state, role='Server #')
                         logger.info(formatted_eval_res)
 
                     # Aggregate
@@ -265,21 +320,12 @@ class FedExServer(Server):
                 'Server #{:d}: Final evaluation is finished! Starting merging results.'
                 .format(self.ID))
             # last round
-            # TODO: call save with a specified frequency
+            self.save_best_results()
+
             if self._cfg.federate.save_to != '':
-                self.aggregator.save_model(self._cfg.federate.save_to,
-                                           self.state)
                 # save the policy
                 with open(os.path.join(self._cfg.outdir, "policy.npy"), 'wb') as ops:
                     np.save(ops, self._z)
-            formatted_best_res = formatted_logging(self.best_results,
-                                                   rnd="Final",
-                                                   role='Server #',
-                                                   forms=["raw"])
-            with open(os.path.join(self._cfg.outdir, "eval_results.log"),
-                      "a") as outfile:
-                outfile.write(str(formatted_best_res) + "\n")
-            logger.info(formatted_best_res)
 
             if self.model_num > 1:
                 model_para = [model.state_dict() for model in self.models]

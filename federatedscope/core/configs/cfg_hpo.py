@@ -32,6 +32,10 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex.num_arms = 16
     cfg.hpo.fedex.diff = False
     cfg.hpo.fedex.sched = 'auto'
+    # discount factor; 0.0 is most recent, 1.0 is mean
+    cfg.hpo.fedex.gamma = .0
+    # cutoff: entropy level below which to stop updating the config probability and use MLE
+    cfg.hpo.fedex.cutoff = .0
 
 
 def assert_hpo_cfg(cfg):
@@ -52,6 +56,7 @@ def assert_hpo_cfg(cfg):
     assert not (cfg.hpo.fedex.use and cfg.federate.use_ss), "Cannot use secret sharing and FedEx at the same time"
     assert cfg.optimizer.type == 'SGD' or not cfg.hpo.fedex.use, "SGD is required if FedEx is considered"
     assert cfg.hpo.fedex.sched in ['adaptive', 'aggressive', 'auto', 'constant', 'scale'], "schedule of FedEx must be choice from {}".format(['adaptive', 'aggressive', 'auto', 'constant', 'scale'])
+    assert cfg.hpo.fedex.gamma >= .0 and cfg.hpo.fedex.gamma <= 1.0, "{} must be in [0, 1]".format(cfg.hpo.fedex.gamma)
 
 
 register_config("hpo", extend_hpo_cfg)
