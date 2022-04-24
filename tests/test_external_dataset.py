@@ -28,11 +28,12 @@ class ExternalDatasetTest(unittest.TestCase):
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'MNIST@torchvision'
+        cfg.data.args = [{'download': True}]
         cfg.data.splits = [0.6, 0.2, 0.2]
         cfg.data.batch_size = 10
-        cfg.data.transform = 'transforms.ToTensor(), transforms.Normalize(mean=[0.1307], std=[0.3081])'
+        cfg.data.transform = [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
         cfg.data.splitter = 'lda'
-        cfg.data.splitter_args = "'alpha':0.5"
+        cfg.data.splitter_args = [{'alpha': 0.5}]
 
         cfg.model.type = 'convnet2'
         cfg.model.hidden = 2048

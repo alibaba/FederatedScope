@@ -10,12 +10,12 @@ def extend_data_cfg(cfg):
 
     cfg.data.root = 'data'
     cfg.data.type = 'toy'
-    cfg.data.args = ''
+    cfg.data.args = []
     cfg.data.splitter = ''
-    cfg.data.splitter_args = ''
-    cfg.data.transform = ''
-    cfg.data.pre_transform = ''
-    cfg.data.target_transform = ''
+    cfg.data.splitter_args = []
+    cfg.data.transform = []
+    cfg.data.pre_transform = []
+    cfg.data.target_transform = []
     cfg.data.batch_size = 64
     cfg.data.drop_last = False
     cfg.data.sizes = [10, 5]

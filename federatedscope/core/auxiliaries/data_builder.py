@@ -141,8 +141,12 @@ def load_external_data(config=None):
         dataset_func = getattr(import_module('torchvision.datasets'), name)
         transform_funcs = get_transform(config, 'torchvision')
         transform_funcs = filter_dict(dataset_func.__init__, transform_funcs)
-        raw_args = eval('{' + config.data.args + '}')
-        raw_args.update({'download': True})
+        if config.data.args:
+            raw_args = config.data.args[0]
+        else:
+            raw_args = {}
+        if 'download' not in raw_args.keys():
+            raw_args.update({'download': True})
         filtered_args = filter_dict(dataset_func.__init__, raw_args)
         func_args = get_func_args(dataset_func.__init__)
 

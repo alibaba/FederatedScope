@@ -16,7 +16,7 @@ data:
   batch_size: 10
   subsample: 0.001
   num_workers: 0
-  transform: 'transforms.ToTensor(), transforms.Normalize(mean=[0.1307], std=[0.3081])'
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
 model:
   type: convnet2
   hidden: 2048

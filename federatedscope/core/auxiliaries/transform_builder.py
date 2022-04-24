@@ -7,18 +7,33 @@ def get_transform(config, package):
         for name in ['transform', 'target_transform', 'pre_transform']
     }
 
+    # Transform are all None, do not import package and return dict with None value
     if not any(transform_funcs.values()):
-        # Transform are all None, do not import package and return dict with None value
         return transform_funcs
 
     transforms = getattr(import_module(package), 'transforms')
+
+    def convert(transform):
+        # Recursively converting expressions to functions
+        if isinstance(transform[0], str):
+            if len(transform) == 1:
+                transform.append({})
+            transform_type, transform_args = transform
+            transform_func = getattr(transforms,
+                                     transform_type)(**transform_args)
+            return transform_func
+        else:
+            transform = (convert(x) for x in transform)
+            if hasattr(transforms, 'Compose'):
+                return transforms.Compose(transform)
+            elif hasattr(transforms, 'Sequential'):
+                return transforms.Sequential(transform)
+            else:
+                return transform
+
+    # return composed transform or return list of transform
     for key in transform_funcs:
-        # return composed transform or return list of transform
-        transform_funcs[key] = eval(
-            transform_funcs[key]) if transform_funcs[key] else None
-        if isinstance(transform_funcs[key], tuple):
-            try:
-                transform_funcs[key] = transforms.Compose(transform_funcs[key])
-            except AttributeError:
-                continue
+        if not config.data[key]:
+            continue
+        transform_funcs[key] = convert(config.data[key])
     return transform_funcs

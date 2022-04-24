@@ -16,4 +16,4 @@ class LDASplitter(object):
         return data_list
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.num_client}, {self.alpha})'
+        return f'{self.__class__.__name__}(client_num={self.client_num}, alpha={self.alpha})'

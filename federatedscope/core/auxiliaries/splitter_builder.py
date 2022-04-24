@@ -6,7 +6,10 @@ logger = logging.getLogger(__name__)
 
 def get_splitter(config):
     client_num = config.federate.client_num
-    args = eval('{' + config.data.splitter_args + '}')
+    if config.data.splitter_args:
+        args = config.data.splitter_args[0]
+    else:
+        args = {}
 
     for func in register.splitter_dict.values():
         splitter = func(config)

@@ -64,4 +64,4 @@ class RelTypeSplitter(BaseTransform):
         return data_list
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.num_client})'
+        return f'{self.__class__.__name__}({self.client_num})'
