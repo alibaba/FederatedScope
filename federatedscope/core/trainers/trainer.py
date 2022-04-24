@@ -53,7 +53,11 @@ class Trainer(object):
             self.register_default_hooks_train()
         self.register_default_hooks_eval()
 
-        self.print_trainer_meta_info()
+        if self.cfg.federate.mode == 'distributed':
+            self.print_trainer_meta_info()
+        else:
+            # in standalone mode, by default, we print the trainer info only once for better logs readability
+            pass
 
     def parse_data(self, data):
         pass

@@ -30,19 +30,20 @@ class PIA_ToyLRTest(unittest.TestCase):
         return backup_cfg
 
     def test_PIA_toy_standalone(self):
-        backup_cfg = self.set_config_standalone(global_cfg)
-        setup_seed(global_cfg.seed)
-        update_logger(global_cfg)
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_standalone(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg)
 
-        data, modified_config = get_data(global_cfg.clone())
-        global_cfg.merge_from_other_cfg(modified_config)
+        data, modified_config = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_config)
 
         self.assertIsNotNone(data)
 
         Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(global_cfg),
-                               client_class=get_client_cls(global_cfg),
-                               config=global_cfg.clone())
+                               server_class=get_server_cls(init_cfg),
+                               client_class=get_client_cls(init_cfg),
+                               config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
@@ -52,7 +53,7 @@ class PIA_ToyLRTest(unittest.TestCase):
             0.3)
         self.assertIsNotNone(Fed_runner.server.pia_results)
 
-        global_cfg.merge_from_other_cfg(backup_cfg)
+        init_cfg.merge_from_other_cfg(backup_cfg)
 
 
 if __name__ == '__main__':
