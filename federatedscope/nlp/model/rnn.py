@@ -21,7 +21,7 @@ class LSTM(nn.Module):
 
         self.rnn =\
             nn.LSTM(
-                input_size=embed_size,
+                input_size=embed_size if embed_size else in_channels,
                 hidden_size=hidden,
                 num_layers=n_layers,
                 batch_first=True,
@@ -31,8 +31,9 @@ class LSTM(nn.Module):
         self.decoder = nn.Linear(hidden, out_channels)
 
     def forward(self, input_):
-        encoded = self.encoder(input_)
-        output, _ = self.rnn(encoded)
+        if self.embed_size:
+            input_ = self.encoder(input_)
+        output, _ = self.rnn(input_)
         output = self.decoder(output)
         output = output.permute(0, 2, 1)  # change dimension to (B, C, T)
         final_word = output[:, :, -1]

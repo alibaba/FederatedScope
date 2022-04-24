@@ -3,7 +3,7 @@ from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_sl
 
 
 class LDASplitter(object):
-    def __init__(self, client_num, alpha):
+    def __init__(self, client_num, alpha=0.5):
         self.client_num = client_num
         self.alpha = alpha
 

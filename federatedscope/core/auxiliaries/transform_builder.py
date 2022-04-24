@@ -13,17 +13,17 @@ def get_transform(config, package):
 
     transforms = getattr(import_module(package), 'transforms')
 
-    def convert(transform):
+    def convert(trans):
         # Recursively converting expressions to functions
-        if isinstance(transform[0], str):
-            if len(transform) == 1:
-                transform.append({})
-            transform_type, transform_args = transform
+        if isinstance(trans[0], str):
+            if len(trans) == 1:
+                trans.append({})
+            transform_type, transform_args = trans
             transform_func = getattr(transforms,
                                      transform_type)(**transform_args)
             return transform_func
         else:
-            transform = (convert(x) for x in transform)
+            transform = [convert(x) for x in trans]
             if hasattr(transforms, 'Compose'):
                 return transforms.Compose(transform)
             elif hasattr(transforms, 'Sequential'):

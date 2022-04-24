@@ -218,10 +218,88 @@ def load_external_data(config=None):
         return data_dict
 
     def load_torchtext_data(name, splits=None, config=None):
-        import torchtext
+        from torch.nn.utils.rnn import pad_sequence
+        from torchtext.data import get_tokenizer
+        from federatedscope.nlp.dataset.utils import label_to_index
 
         dataset_func = getattr(import_module('torchtext.datasets'), name)
-        raise NotImplementedError
+        if config.data.args:
+            raw_args = config.data.args[0]
+        else:
+            raw_args = {}
+        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
+        filtered_args = filter_dict(dataset_func.__init__, raw_args)
+        dataset = dataset_func(root=config.data.root, **filtered_args)
+
+        # torchtext.transforms requires >= 0.12.0 and torch = 1.11.0,
+        # so we do not use `get_transform` in torchtext.
+        tokenizer = get_tokenizer("basic_english")
+        if len(config.data.transform) == 0:
+            raise ValueError(
+                "`transform` must be one pretrained Word Embeddings from \
+                ['GloVe', 'FastText', 'CharNGram']")
+        if len(config.data.transform) == 1:
+            config.data.transform.append({})
+        vocab = getattr(import_module('torchtext.vocab'),
+                        config.data.transform[0])(dim=config.model.in_channels,
+                                                  **config.data.transform[1])
+        data_list = []
+        for data_iter in dataset:
+            data, targets = [], []
+            if config.model.task == 'seq2seq':
+                for item in data_iter:
+                    data.append(
+                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
+                                                 lower_case_backup=True))
+                    targets.append(
+                        vocab.get_vecs_by_tokens(tokenizer(item[0]),
+                                                 lower_case_backup=True))
+                targets = pad_sequence(targets).transpose(
+                    0, 1)[:, :raw_args['max_len'], :]
+            else:
+                for item in data_iter:
+                    data.append(
+                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
+                                                 lower_case_backup=True))
+                    targets.append(item[0])
+                targets = label_to_index(targets)
+            data = pad_sequence(data).transpose(0,
+                                                1)[:, :raw_args['max_len'], :]
+            data_list.append([(x, y) for x, y in zip(data, targets)])
+
+        if len(data_list) == 3:
+            # Use raw splits
+            data_dict = {
+                'train': data_list[0],
+                'val': data_list[1],
+                'test': data_list[2]
+            }
+        elif len(data_list) == 2:
+            # Split train to (train, val)
+            data_dict = {
+                'train': data_list[0],
+                'val': None,
+                'test': data_list[1]
+            }
+            if splits:
+                train_size = int(splits[0] * len(data_dict['train']))
+                val_size = len(data_dict['train']) - train_size
+                lengths = [train_size, val_size]
+                data_dict['train'], data_dict[
+                    'val'] = torch.utils.data.dataset.random_split(
+                        data_dict['train'], lengths)
+        else:
+            # Use config.data.splits
+            data_dict = {}
+            train_size = int(splits[0] * len(data_list[0]))
+            val_size = int(splits[1] * len(data_list[0]))
+            test_size = len(data_list[0]) - train_size - val_size
+            lengths = [train_size, val_size, test_size]
+            data_dict['train'], data_dict['val'], data_dict[
+                'test'] = torch.utils.data.dataset.random_split(
+                    data_list[0], lengths)
+
+        return data_dict
 
     def load_torchaudio_data(name, splits=None, config=None):
         import torchaudio
