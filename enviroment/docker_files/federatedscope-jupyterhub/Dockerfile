@@ -206,6 +206,7 @@ RUN conda install -y numpy=1.21.2 scikit-learn=1.0.2 scipy=1.7.3 pandas=1.4.1 -c
     && conda clean -a -y
 # basic torch env
 RUN conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge \
+    && conda install -y torchtext -c pytorch \
     && conda clean -a -y
 # gfl
 RUN conda install -y pyg=2.0.4 -c pyg  \

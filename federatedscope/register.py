@@ -76,3 +76,9 @@ splitter_dict = {}
 def register_splitter(key, module):
     register(key, module, splitter_dict)
 
+
+transform_dict = {}
+
+
+def register_transform(key, module):
+    register(key, module, transform_dict)

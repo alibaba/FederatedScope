@@ -20,5 +20,6 @@ sentencepiece
 textgrid
 typeguard
 nltk
+torchtext
 
 

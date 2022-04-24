@@ -1,4 +1,5 @@
 from importlib import import_module
+import federatedscope.register as register
 
 
 def get_transform(config, package):
@@ -19,6 +20,10 @@ def get_transform(config, package):
             if len(trans) == 1:
                 trans.append({})
             transform_type, transform_args = trans
+            for func in register.transform_dict.values():
+                transform_func = func(transform_type, transform_args)
+                if transform_func is not None:
+                    return transform_func
             transform_func = getattr(transforms,
                                      transform_type)(**transform_args)
             return transform_func
