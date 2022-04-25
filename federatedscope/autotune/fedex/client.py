@@ -32,7 +32,12 @@ class FedExClient(Client):
         round, sender, content = message.state, message.sender, message.content
         model_params, arms, hyperparams = content["model_param"], content[
             "arms"], content["hyperparam"]
-        attempt = {'Role': 'Client #{:d}'.format(self.ID), 'Round': self.state+1, 'Arms': arms, 'Hyperparams': hyperparams}
+        attempt = {
+            'Role': 'Client #{:d}'.format(self.ID),
+            'Round': self.state + 1,
+            'Arms': arms,
+            'Hyperparams': hyperparams
+        }
         logger.info(json.dumps(attempt))
 
         self._apply_hyperparams(hyperparams)
