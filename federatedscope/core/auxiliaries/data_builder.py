@@ -119,9 +119,8 @@ def load_toy_data(config=None):
 
 
 def load_external_data(config=None):
-    r""" Based on the configuration file, this function imports external
-    datasets and applies train/valid/test splits and split by some specific `splitter`
-    into the standard FederatedScope input data format.
+    r""" Based on the configuration file, this function imports external datasets and applies train/valid/test splits
+    and split by some specific `splitter` into the standard FederatedScope input data format.
 
     Args:
         config: `CN` from `federatedscope/core/configs/config.py`
@@ -136,7 +135,7 @@ def load_external_data(config=None):
                                     'val': DataLoader()
                                 }
                             }
-        config: `CN` from `federatedscope/core/configs/config.py`
+        modified_config: `CN` from `federatedscope/core/configs/config.py`, which might be modified in the function.
 
     """
 
@@ -341,14 +340,19 @@ def load_external_data(config=None):
         'torch_geometric': load_torch_geometric_data
     }
 
+    modified_config = config.clone()
+
     # Load dataset
-    splits = config.data.splits
-    name, package = config.data.type.split('@')
+    splits = modified_config.data.splits
+    name, package = modified_config.data.type.split('@')
 
-    dataset = DATA_LOAD_FUNCS[package.lower()](name, splits, config)
-    splitter = get_splitter(config)
+    dataset = DATA_LOAD_FUNCS[package.lower()](name, splits, modified_config)
+    splitter = get_splitter(modified_config)
 
-    data_local_dict = {x: {} for x in range(1, config.federate.client_num + 1)}
+    data_local_dict = {
+        x: {}
+        for x in range(1, modified_config.federate.client_num + 1)
+    }
 
     # Build dict of Dataloader
     for split in dataset:
@@ -358,17 +362,17 @@ def load_external_data(config=None):
             if split == 'train':
                 data_local_dict[i + 1][split] = DataLoader(
                     ds,
-                    batch_size=config.data.batch_size,
+                    batch_size=modified_config.data.batch_size,
                     shuffle=True,
-                    num_workers=config.data.num_workers)
+                    num_workers=modified_config.data.num_workers)
             else:
                 data_local_dict[i + 1][split] = DataLoader(
                     ds,
-                    batch_size=config.data.batch_size,
+                    batch_size=modified_config.data.batch_size,
                     shuffle=False,
-                    num_workers=config.data.num_workers)
+                    num_workers=modified_config.data.num_workers)
 
-    return data_local_dict, config
+    return data_local_dict, modified_config
 
 
 def get_data(config):
