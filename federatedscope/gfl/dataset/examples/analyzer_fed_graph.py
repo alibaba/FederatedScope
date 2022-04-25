@@ -1,5 +1,5 @@
 from torch_geometric.datasets import Planetoid
-from federatedscope.gfl.dataset.splitter import LouvainSplitter, Analyzer
+from federatedscope.core.splitters.graph import LouvainSplitter, Analyzer
 
 raw_dataset = Planetoid('data', 'cora')
 split_dataset = Planetoid('data', 'cora', transform=LouvainSplitter(3))

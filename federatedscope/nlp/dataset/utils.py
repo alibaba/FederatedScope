@@ -5,6 +5,7 @@ from https://github.com/litian96/FedProx/blob/master/flearn/utils/language_utils
 
 import re
 import numpy as np
+from collections import Counter
 
 # ------------------------
 # utils for shakespeare dataset
@@ -21,22 +22,16 @@ def _one_hot(index, size):
     return vec
 
 
-# def letter_to_vec(letter):
-#     '''returns one-hot representation of given letter
-#     '''
-#     index = ALL_LETTERS.find(letter)
-#     return _one_hot(index, NUM_LETTERS)
 def letter_to_vec(letter):
     index = ALL_LETTERS.find(letter)
     return index
-
 
 
 def word_to_indices(word):
     '''returns a list of character indices
     Args:
         word: string
-    
+
     Return:
         indices: int list with length len(word)
     '''
@@ -54,48 +49,11 @@ def split_line(line):
     '''split given line/phrase into list of words
     Args:
         line: string representing phrase to be split
-    
+
     Return:
         list of strings, with each string representing a word
     '''
     return re.findall(r"[\w']+|[.,!?;]", line)
-
-
-def _word_to_index(word, indd):
-    '''returns index of given word based on given lookup dictionary
-    returns the length of the lookup dictionary if word not found
-    Args:
-        word: string
-        indd: dictionary with string words as keys and int indices as values
-    '''
-    if word in indd:
-        return indd[word]
-    else:
-        return len(indd)
-
-
-def line_to_indices(line, word2id, max_words=25):
-    '''converts given phrase into list of word indices
-    
-    if the phrase has more than max_words words, returns a list containing
-    indices of the first max_words words
-    if the phrase has less than max_words words, repeatedly appends integer 
-    representing unknown index to returned list until the list's length is 
-    max_words
-    Args:
-        line: string representing phrase/sequence of words
-        word2id: dictionary with string words as keys and int indices as values
-        max_words: maximum number of word indices in returned list
-    Return:
-        indl: list of word indices, one index for each word in phrase
-    '''
-    unk_id = len(word2id)
-    line_list = split_line(line)  # split phrase in words
-    indl = [
-        word2id[w] if w in word2id else unk_id for w in line_list[:max_words]
-    ]
-    indl += [unk_id] * (max_words - len(indl))
-    return indl
 
 
 def bag_of_words(line, vocab):
@@ -121,3 +79,10 @@ def target_to_binary(label):
 def token_to_ids(texts, vocab):
     to_ret = [[vocab[word] for word in line] for line in texts]
     return np.array(to_ret)
+
+
+def label_to_index(labels):
+    counter = Counter(labels)
+    sorted_tuples = sorted(counter.items(), key=lambda x: x[1], reverse=True)
+    label_list = [x[0] for x in sorted_tuples]
+    return [label_list.index(x) for x in labels]

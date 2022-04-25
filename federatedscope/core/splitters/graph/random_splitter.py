@@ -1,6 +1,5 @@
 import torch
 
-from torch_geometric.data import Data
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.utils import to_networkx, from_networkx
 
@@ -15,14 +14,14 @@ class RandomSplitter(BaseTransform):
     Split Data into small data via random sampling.
     
     Args:
-        num_client (int): Split data into num_client of pieces.
+        client_num (int): Split data into client_num of pieces.
         sampling_rate (str): Samples of the unique nodes for each client, eg. '0.2,0.2,0.2'.
         overlapping_rate(float): Additional samples of overlapping data, eg. '0.4'
-        drop_edge(float): Drop edges (drop_edge / num_client) for each client whthin overlapping part.
+        drop_edge(float): Drop edges (drop_edge / client_num) for each client whthin overlapping part.
         
     """
     def __init__(self,
-                 num_client,
+                 client_num,
                  sampling_rate=None,
                  overlapping_rate=0,
                  drop_edge=0):
@@ -34,12 +33,12 @@ class RandomSplitter(BaseTransform):
                 [float(val) for val in sampling_rate.split(',')])
         else:
             # Default: Average
-            self.sampling_rate = (np.ones(num_client) -
-                                  self.ovlap) / num_client
+            self.sampling_rate = (np.ones(client_num) -
+                                  self.ovlap) / client_num
 
-        if len(self.sampling_rate) != num_client:
+        if len(self.sampling_rate) != client_num:
             raise ValueError(
-                f'The num_client ({num_client}) should be equal to the lenghth of sampling_rate and overlapping_rate.'
+                f'The client_num ({client_num}) should be equal to the lenghth of sampling_rate and overlapping_rate.'
             )
 
         if abs((sum(self.sampling_rate) + self.ovlap) - 1) > EPSILON:
@@ -47,7 +46,7 @@ class RandomSplitter(BaseTransform):
                 f'The sum of sampling_rate:{self.sampling_rate} and overlapping_rate({self.ovlap}) should be 1.'
             )
 
-        self.num_client = num_client
+        self.client_num = client_num
         self.drop_edge = drop_edge
 
     def __call__(self, data):
@@ -62,7 +61,7 @@ class RandomSplitter(BaseTransform):
                                      for nid in range(nx.number_of_nodes(G))]),
                                name="index_orig")
 
-        client_node_idx = {idx: [] for idx in range(self.num_client)}
+        client_node_idx = {idx: [] for idx in range(self.client_num)}
 
         indices = np.random.permutation(data.num_nodes)
         sum_rate = 0
@@ -87,9 +86,9 @@ class RandomSplitter(BaseTransform):
             drop_all = ovlap_edge_ind[:round(ovlap_graph.number_of_edges() *
                                              self.drop_edge)]
             drop_client = [
-                drop_all[s:s + round(len(drop_all) / self.num_client)]
+                drop_all[s:s + round(len(drop_all) / self.client_num)]
                 for s in range(0, len(drop_all),
-                               round(len(drop_all) / self.num_client))
+                               round(len(drop_all) / self.client_num))
             ]
 
         graphs = []
@@ -104,4 +103,4 @@ class RandomSplitter(BaseTransform):
         return graphs
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.num_client})'
+        return f'{self.__class__.__name__}({self.client_num})'

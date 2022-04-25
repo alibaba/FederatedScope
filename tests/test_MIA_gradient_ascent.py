@@ -31,6 +31,7 @@ class GradAscentTest(unittest.TestCase):
         cfg.data.splits = [0.6, 0.2, 0.2]
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.01
+        cfg.data.transform = [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
 
         cfg.model.type = 'convnet2'
         cfg.model.hidden = 2048
