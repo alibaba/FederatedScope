@@ -45,13 +45,10 @@ def load_graphlevel_dataset(config=None):
     ]:
         # Add feat for datasets without attrubute
         if name in ['IMDB-BINARY', 'IMDB-MULTI'
-                    ] and transforms_funcs['pre_transform'] is None:
+                    ] and 'pre_transform' not in transforms_funcs:
             transforms_funcs['pre_transform'] = transforms.Constant(value=1.0,
                                                                     cat=False)
-        dataset = TUDataset(path,
-                            name,
-                            pre_transform=transforms_funcs['pre_transform'],
-                            transform=transforms_funcs['transform'])
+        dataset = TUDataset(path, name, **transforms_funcs)
         if splitter is None:
             raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
@@ -60,10 +57,7 @@ def load_graphlevel_dataset(config=None):
             'HIV', 'ESOL', 'FREESOLV', 'LIPO', 'PCBA', 'MUV', 'BACE', 'BBBP',
             'TOX21', 'TOXCAST', 'SIDER', 'CLINTOX'
     ]:
-        dataset = MoleculeNet(path,
-                              name,
-                              pre_transform=transforms_funcs['pre_transform'],
-                              transform=transforms_funcs['transform'])
+        dataset = MoleculeNet(path, name, **transforms_funcs)
         if splitter is None:
             raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
@@ -76,7 +70,7 @@ def load_graphlevel_dataset(config=None):
                 'PROTEINS'
             ]
         elif name.endswith('mix'.upper()):
-            if not transforms_funcs['pre_transform']:
+            if 'pre_transform' not in transforms_funcs:
                 raise ValueError(f'pre_transform is None!')
             dnames = [
                 'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
@@ -102,18 +96,14 @@ def load_graphlevel_dataset(config=None):
         # Some datasets contain x
         for dname in dnames:
             if dname.startswith('IMDB') or dname == 'COLLAB':
-                tmp_dataset = TUDataset(
-                    path,
-                    dname,
-                    pre_transform=transforms_funcs['pre_transform'],
-                    transform=transforms_funcs['transform'])
+                tmp_dataset = TUDataset(path, dname, **transforms_funcs)
             else:
                 tmp_dataset = TUDataset(
                     path,
                     dname,
                     pre_transform=None,
-                    transform=transforms_funcs['transform'])
-            #tmp_dataset = [ds for ds in tmp_dataset]
+                    transform=transforms_funcs['transform']
+                    if 'transform' in transforms_funcs else None)
             dataset.append(tmp_dataset)
     else:
         raise ValueError(f'No dataset named: {name}!')

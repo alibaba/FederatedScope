@@ -119,6 +119,27 @@ def load_toy_data(config=None):
 
 
 def load_external_data(config=None):
+    r""" Based on the configuration file, this function imports external
+    datasets and applies train/valid/test splits and split by some specific `splitter`
+    into the standard FederatedScope input data format.
+
+    Args:
+        config: `CN` from `federatedscope/core/configs/config.py`
+
+    Returns:
+        data_local_dict: dict of split dataloader.
+                        Format:
+                            {
+                                'client_id': {
+                                    'train': DataLoader(),
+                                    'test': DataLoader(),
+                                    'val': DataLoader()
+                                }
+                            }
+        config: `CN` from `federatedscope/core/configs/config.py`
+
+    """
+
     import torch
     import inspect
     from importlib import import_module
@@ -140,7 +161,6 @@ def load_external_data(config=None):
     def load_torchvision_data(name, splits=None, config=None):
         dataset_func = getattr(import_module('torchvision.datasets'), name)
         transform_funcs = get_transform(config, 'torchvision')
-        transform_funcs = filter_dict(dataset_func.__init__, transform_funcs)
         if config.data.args:
             raw_args = config.data.args[0]
         else:
@@ -245,6 +265,7 @@ def load_external_data(config=None):
                                                   **config.data.transform[1])
         data_list = []
         for data_iter in dataset:
+            # TODO: we may need a more general and principled load function for the `IterableDataset`.
             data, targets = [], []
             if config.model.task == 'seq2seq':
                 for item in data_iter:
@@ -313,7 +334,7 @@ def load_external_data(config=None):
         dataset_func = getattr(import_module('torch_geometric.datasets'), name)
         raise NotImplementedError
 
-    load_data = {
+    DATA_LOAD_FUNCS = {
         'torchvision': load_torchvision_data,
         'torchtext': load_torchtext_data,
         'torchaudio': load_torchaudio_data,
@@ -324,7 +345,7 @@ def load_external_data(config=None):
     splits = config.data.splits
     name, package = config.data.type.split('@')
 
-    dataset = load_data[package.lower()](name, splits, config)
+    dataset = DATA_LOAD_FUNCS[package.lower()](name, splits, config)
     splitter = get_splitter(config)
 
     data_local_dict = {x: {} for x in range(1, config.federate.client_num + 1)}

@@ -23,15 +23,13 @@ def load_nlp_dataset(config=None):
     transforms_funcs = get_transform(config, 'torchtext')
 
     if name in ['shakespeare', 'subreddit', 'twitter']:
-        dataset = LEAF_NLP(
-            root=path,
-            name=name,
-            s_frac=config.data.subsample,
-            tr_frac=splits[0],
-            val_frac=splits[1],
-            seed=1234,
-            transform=transforms_funcs['transform'],
-            target_transform=transforms_funcs['target_transform'])
+        dataset = LEAF_NLP(root=path,
+                           name=name,
+                           s_frac=config.data.subsample,
+                           tr_frac=splits[0],
+                           val_frac=splits[1],
+                           seed=1234,
+                           **transforms_funcs)
     elif name == 'synthetic':
         dataset = LEAF_SYNTHETIC(root=path)
     else:

@@ -3,13 +3,23 @@ import federatedscope.register as register
 
 
 def get_transform(config, package):
-    transform_funcs = {
-        name: config.data[name] if config.data[name] else None
-        for name in ['transform', 'target_transform', 'pre_transform']
-    }
+    r"""
+
+    Args:
+        config: `CN` from `federatedscope/core/configs/config.py`
+        package: one of package from ['torchvision', 'torch_geometric', 'torchtext', 'torchaudio']
+
+    Returns:
+        dict of transform functions.
+
+    """
+    transform_funcs = {}
+    for name in ['transform', 'target_transform', 'pre_transform']:
+        if config.data[name]:
+            transform_funcs[name] = config.data[name]
 
     # Transform are all None, do not import package and return dict with None value
-    if not any(transform_funcs.values()):
+    if not transform_funcs:
         return transform_funcs
 
     transforms = getattr(import_module(package), 'transforms')
@@ -38,7 +48,5 @@ def get_transform(config, package):
 
     # return composed transform or return list of transform
     for key in transform_funcs:
-        if not config.data[key]:
-            continue
         transform_funcs[key] = convert(config.data[key])
     return transform_funcs

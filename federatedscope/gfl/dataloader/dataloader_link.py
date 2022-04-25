@@ -61,26 +61,17 @@ def load_linklevel_dataset(config=None):
                          name,
                          FL=True,
                          splits=config.data.splits,
-                         transform=transforms_funcs['transform'],
-                         pre_transform=transforms_funcs['pre_transform'])
-        global_dataset = RecSys(
-            path,
-            name,
-            FL=False,
-            splits=config.data.splits,
-            transform=transforms_funcs['transform'],
-            pre_transform=transforms_funcs['pre_transform'])
+                         **transforms_funcs)
+        global_dataset = RecSys(path,
+                                name,
+                                FL=False,
+                                splits=config.data.splits,
+                                **transforms_funcs)
     elif name in ['fb15k-237', 'wn18', 'fb15k', 'toy']:
         from federatedscope.gfl.dataset.kg import KG
-        dataset = KG(path,
-                     name,
-                     transform=transforms_funcs['transform'],
-                     pre_transform=transforms_funcs['pre_transform'])
+        dataset = KG(path, name, **transforms_funcs)
         dataset = splitter(dataset[0])
-        global_dataset = KG(path,
-                            name,
-                            transform=transforms_funcs['transform'],
-                            pre_transform=transforms_funcs['pre_transform'])
+        global_dataset = KG(path, name, **transforms_funcs)
     else:
         raise ValueError(f'No dataset named: {name}!')
 

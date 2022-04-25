@@ -22,15 +22,13 @@ def load_cv_dataset(config=None):
     transforms_funcs = get_transform(config, 'torchvision')
 
     if name in ['femnist', 'celeba']:
-        dataset = LEAF_CV(
-            root=path,
-            name=name,
-            s_frac=config.data.subsample,
-            tr_frac=splits[0],
-            val_frac=splits[1],
-            seed=1234,
-            transform=transforms_funcs['transform'],
-            target_transform=transforms_funcs['target_transform'])
+        dataset = LEAF_CV(root=path,
+                          name=name,
+                          s_frac=config.data.subsample,
+                          tr_frac=splits[0],
+                          val_frac=splits[1],
+                          seed=1234,
+                          **transforms_funcs)
     else:
         raise ValueError(f'No dataset named: {name}!')
 

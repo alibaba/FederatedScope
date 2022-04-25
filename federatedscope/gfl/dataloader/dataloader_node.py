@@ -99,44 +99,35 @@ def load_nodelevel_dataset(config=None):
                             num_train_per_class=num_split[name][0],
                             num_val=num_split[name][1],
                             num_test=num_split[name][2],
-                            transform=transforms_funcs['transform'],
-                            pre_transform=transforms_funcs['pre_transform'])
+                            **transforms_funcs)
         dataset = splitter(dataset[0])
-        global_dataset = Planetoid(
-            path,
-            name,
-            split='random',
-            num_train_per_class=num_split[name][0],
-            num_val=num_split[name][1],
-            num_test=num_split[name][2],
-            transform=transforms_funcs['transform'],
-            pre_transform=transforms_funcs['pre_transform'])
+        global_dataset = Planetoid(path,
+                                   name,
+                                   split='random',
+                                   num_train_per_class=num_split[name][0],
+                                   num_val=num_split[name][1],
+                                   num_test=num_split[name][2],
+                                   **transforms_funcs)
     elif name == "dblp_conf":
         from federatedscope.gfl.dataset.dblp_new import DBLPNew
         dataset = DBLPNew(path,
                           FL=1,
                           splits=config.data.splits,
-                          transform=transforms_funcs['transform'],
-                          pre_transform=transforms_funcs['pre_transform'])
-        global_dataset = DBLPNew(
-            path,
-            FL=0,
-            splits=config.data.splits,
-            transform=transforms_funcs['transform'],
-            pre_transform=transforms_funcs['pre_transform'])
+                          **transforms_funcs)
+        global_dataset = DBLPNew(path,
+                                 FL=0,
+                                 splits=config.data.splits,
+                                 **transforms_funcs)
     elif name == "dblp_org":
         from federatedscope.gfl.dataset.dblp_new import DBLPNew
         dataset = DBLPNew(path,
                           FL=2,
                           splits=config.data.splits,
-                          transform=transforms_funcs['transform'],
-                          pre_transform=transforms_funcs['pre_transform'])
-        global_dataset = DBLPNew(
-            path,
-            FL=0,
-            splits=config.data.splits,
-            transform=transforms_funcs['transform'],
-            pre_transform=transforms_funcs['pre_transform'])
+                          **transforms_funcs)
+        global_dataset = DBLPNew(path,
+                                 FL=0,
+                                 splits=config.data.splits,
+                                 **transforms_funcs)
     elif name.startswith("csbm"):
         from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
         dataset = dataset_ContextualSBM(
