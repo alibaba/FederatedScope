@@ -1,4 +1,5 @@
 import logging
+import json
 
 from federatedscope.core.message import Message
 from federatedscope.core.worker import Client
@@ -31,8 +32,8 @@ class FedExClient(Client):
         round, sender, content = message.state, message.sender, message.content
         model_params, arms, hyperparams = content["model_param"], content[
             "arms"], content["hyperparam"]
-        logger.info("Client #{:d}: try {} at Round #{:d}".format(
-            self.ID, hyperparams, self.state))
+        attempt = {'Role': 'Client #{:d}'.format(self.ID), 'Round': self.state+1, 'Arms': arms, 'Hyperparams': hyperparams}
+        logger.info(json.dumps(attempt))
 
         self._apply_hyperparams(hyperparams)
 
@@ -67,11 +68,13 @@ class FedExClient(Client):
         for split in self._cfg.eval.split:
             eval_metrics = self.trainer.evaluate(target_data_split_name=split)
             for key in eval_metrics:
-                logger.info(
-                    'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
-                    .format(self.ID, split, self.state, key,
-                            eval_metrics[key]))
-            metrics.update(**eval_metrics)
+
+                if self._cfg.federate.mode == 'distributed':
+                    logger.info(
+                        'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
+                        .format(self.ID, split, self.state, key,
+                                eval_metrics[key]))
+                metrics.update(**eval_metrics)
         self.comm_manager.send(
             Message(msg_type='metrics',
                     sender=self.ID,

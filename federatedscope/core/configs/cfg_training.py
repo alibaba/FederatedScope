@@ -22,7 +22,7 @@ def extend_training_cfg(cfg):
     cfg.optimizer.type = 'SGD'
     cfg.optimizer.lr = 0.1
     cfg.optimizer.weight_decay = .0
-    cfg.optimizer.mmt = .0
+    cfg.optimizer.momentum = .0
     cfg.optimizer.grad_clip = -1.0  # negative numbers indicate we do not clip grad
 
     # ------------------------------------------------------------------------ #
