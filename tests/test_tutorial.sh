@@ -1,4 +1,5 @@
 #!/bin/bash
+# Please update tutorials if the test failed.
 
 jupyter nbconvert --to notebook --execute --inplace notebooks/01_quick_start.ipynb
 return=$?
