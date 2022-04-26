@@ -179,6 +179,7 @@ class Server(Worker):
 
         # Running: listen for message (updates from clients), aggregate and broadcast feedbacks (aggregated model parameters)
         min_received_num = self._cfg.asyn.min_received_num if hasattr(self._cfg, 'asyn') else self._cfg.federate.sample_client_num
+        num_failure = 0
         with Timeout(self._cfg.asyn.timeout) as time_counter:
             while self.state <= self.total_round_num:
                 try:
@@ -187,33 +188,33 @@ class Server(Worker):
                     if move_on_flag:
                         time_counter.reset()
                 except TimeoutError:
-                    print('Time out!')
+                    logger.info('Time out at the training round #{}'.format(self.state))
                     move_on_flag_eval = self.check_and_move_on(min_received_num=min_received_num, check_eval_result=True)
                     move_on_flag = self.check_and_move_on(min_received_num=min_received_num)
                     if not move_on_flag and not move_on_flag_eval:
+                        num_failure += 1
+                        ## Terminate the training if the number of failure exceeds the maximum number (default value: 10)
+                        if time_counter.exceed_max_failure(num_failure):
+                            logger.info(
+                                '----------- Training fails at round #{:d} -------------'
+                                    .format(self.state))
+                            break
+
                         ## Time out, broadcast the model para and re-start the training round
-                        logging.info(
-                            '----------- Re-starting the training round (Round #{:d}) -------------'
-                                .format(self.state))
+                        logger.info(
+                            '----------- Re-starting the training round (Round #{:d}) for {:d} time -------------'
+                                .format(self.state, num_failure))
                         # Clean the msg_buffer
                         self.msg_buffer['train'][self.state].clear()
 
                         self.broadcast_model_para(
                             msg_type='model_para',
                             sample_client_num=self.sample_client_num)
+                    else:
+                        num_failure = 0
                     time_counter.reset()
 
-        if self.model_num > 1:
-            model_para = [model.state_dict() for model in self.models]
-        else:
-            model_para = self.model.state_dict()
-
-        self.comm_manager.send(
-            Message(msg_type='finish',
-                    sender=self.ID,
-                    receiver=list(self.comm_manager.neighbors.keys()),
-                    state=self.state,
-                    content=model_para))
+        self.terminate(msg_type='finish')
 
     def check_and_move_on(self, check_eval_result=False, min_received_num=None):
         """
@@ -262,7 +263,7 @@ class Server(Worker):
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
-                    logging.info(
+                    logger.info(
                         'Server #{:d}: Starting evaluation at the end of round {:d}.'.
                         format(self.ID, self.state-1))
                     self.eval()
@@ -326,17 +327,7 @@ class Server(Worker):
                 .format(self.ID))
             # last round
             self.save_best_results()
-
-            if self.model_num > 1:
-                model_para = [model.state_dict() for model in self.models]
-            else:
-                model_para = self.model.state_dict()
-            self.comm_manager.send(
-                Message(msg_type='finish',
-                        sender=self.ID,
-                        receiver=list(self.comm_manager.neighbors.keys()),
-                        state=self.state,
-                        content=model_para))
+            self.terminate(msg_type='finish')
 
         if self.state == self.total_round_num:
             #break out the loop for distributed mode
@@ -486,11 +477,27 @@ class Server(Worker):
         if self.check_client_join_in():
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
-            logging.info(
+            logger.info(
                 '----------- Starting training (Round #{:d}) -------------'
                     .format(self.state))
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
+
+    def terminate(self, msg_type='finish'):
+        """
+        To terminate the FL course
+        """
+        if self.model_num > 1:
+            model_para = [model.state_dict() for model in self.models]
+        else:
+            model_para = self.model.state_dict()
+
+        self.comm_manager.send(
+            Message(msg_type=msg_type,
+                    sender=self.ID,
+                    receiver=list(self.comm_manager.neighbors.keys()),
+                    state=self.state,
+                    content=model_para))
 
     def update_best_result(self,
                            results,
@@ -582,7 +589,7 @@ class Server(Worker):
                         pass
 
         if update_best_this_round:
-            logging.info(f"Find new best result: {self.best_results}")
+            logger.info(f"Find new best result: {self.best_results}")
 
     def eval(self):
         """

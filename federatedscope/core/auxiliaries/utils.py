@@ -223,8 +223,9 @@ def download_url(url: str, folder='folder'):
 
 class Timeout(object):
 
-    def __init__(self, seconds):
+    def __init__(self, seconds, max_failure=5):
         self.seconds = seconds
+        self.max_failure = max_failure
 
     def __enter__(self):
         def signal_handler(signum, frame):
@@ -243,4 +244,7 @@ class Timeout(object):
 
     def block(self):
         signal.alarm(0)
+
+    def exceed_max_failure(self, num_failure):
+        return num_failure > self.max_failure
 
