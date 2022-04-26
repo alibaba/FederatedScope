@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd ..
-
 jupyter nbconvert --to notebook --execute --inplace notebooks/01_quick_start.ipynb
 return=$?
 if [ $return = 1 ];
