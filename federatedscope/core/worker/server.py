@@ -178,7 +178,8 @@ class Server(Worker):
             self.msg_handlers[msg.msg_type](msg)
 
         # Running: listen for message (updates from clients), aggregate and broadcast feedbacks (aggregated model parameters)
-        min_received_num = self._cfg.asyn.min_received_num if hasattr(self._cfg, 'asyn') else self._cfg.federate.sample_client_num
+        min_received_num = self._cfg.asyn.min_received_num if hasattr(
+            self._cfg, 'asyn') else self._cfg.federate.sample_client_num
         num_failure = 0
         with Timeout(self._cfg.asyn.timeout) as time_counter:
             while self.state <= self.total_round_num:
@@ -188,22 +189,26 @@ class Server(Worker):
                     if move_on_flag:
                         time_counter.reset()
                 except TimeoutError:
-                    logger.info('Time out at the training round #{}'.format(self.state))
-                    move_on_flag_eval = self.check_and_move_on(min_received_num=min_received_num, check_eval_result=True)
-                    move_on_flag = self.check_and_move_on(min_received_num=min_received_num)
+                    logger.info('Time out at the training round #{}'.format(
+                        self.state))
+                    move_on_flag_eval = self.check_and_move_on(
+                        min_received_num=min_received_num,
+                        check_eval_result=True)
+                    move_on_flag = self.check_and_move_on(
+                        min_received_num=min_received_num)
                     if not move_on_flag and not move_on_flag_eval:
                         num_failure += 1
                         ## Terminate the training if the number of failure exceeds the maximum number (default value: 10)
                         if time_counter.exceed_max_failure(num_failure):
                             logger.info(
                                 '----------- Training fails at round #{:d} -------------'
-                                    .format(self.state))
+                                .format(self.state))
                             break
 
                         ## Time out, broadcast the model para and re-start the training round
                         logger.info(
                             '----------- Re-starting the training round (Round #{:d}) for {:d} time -------------'
-                                .format(self.state, num_failure))
+                            .format(self.state, num_failure))
                         # Clean the msg_buffer
                         self.msg_buffer['train'][self.state].clear()
 
@@ -216,7 +221,9 @@ class Server(Worker):
 
         self.terminate(msg_type='finish')
 
-    def check_and_move_on(self, check_eval_result=False, min_received_num=None):
+    def check_and_move_on(self,
+                          check_eval_result=False,
+                          min_received_num=None):
         """
         To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
         """
@@ -224,7 +231,7 @@ class Server(Worker):
             min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        move_on_flag = True # To record whether moving to a new training round or finishing the evaluation
+        move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:  # in the training process
@@ -264,8 +271,8 @@ class Server(Worker):
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server #{:d}: Starting evaluation at the end of round {:d}.'.
-                        format(self.ID, self.state-1))
+                        'Server #{:d}: Starting evaluation at the end of round {:d}.'
+                        .format(self.ID, self.state - 1))
                     self.eval()
 
                 if self.state < self.total_round_num:
@@ -440,7 +447,10 @@ class Server(Worker):
                     state=self.state,
                     content=self.comm_manager.get_neighbors()))
 
-    def check_buffer(self, cur_round, min_received_num, check_eval_result=False):
+    def check_buffer(self,
+                     cur_round,
+                     min_received_num,
+                     check_eval_result=False):
         """
         To check the message buffer
 
@@ -452,14 +462,16 @@ class Server(Worker):
         :rtype: bool
         """
         if check_eval_result:
-            if 'eval' not in self.msg_buffer.keys() or len(self.msg_buffer['eval'].keys()) == 0 :
+            if 'eval' not in self.msg_buffer.keys() or len(
+                    self.msg_buffer['eval'].keys()) == 0:
                 return False
             buffer = self.msg_buffer['eval']
             cur_round = max(buffer.keys())
         else:
             buffer = self.msg_buffer['train']
 
-        if cur_round not in buffer or len(buffer[cur_round]) < min_received_num:
+        if cur_round not in buffer or len(
+                buffer[cur_round]) < min_received_num:
             return False
         else:
             return True
@@ -478,8 +490,8 @@ class Server(Worker):
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
             logger.info(
-                '----------- Starting training (Round #{:d}) -------------'
-                    .format(self.state))
+                '----------- Starting training (Round #{:d}) -------------'.
+                format(self.state))
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 

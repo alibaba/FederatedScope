@@ -221,8 +221,8 @@ def download_url(url: str, folder='folder'):
 
     return path
 
-class Timeout(object):
 
+class Timeout(object):
     def __init__(self, seconds, max_failure=5):
         self.seconds = seconds
         self.max_failure = max_failure
@@ -247,4 +247,3 @@ class Timeout(object):
 
     def exceed_max_failure(self, num_failure):
         return num_failure > self.max_failure
-

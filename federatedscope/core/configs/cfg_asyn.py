@@ -21,18 +21,22 @@ def extend_asyn_cfg(cfg):
 
 def assert_asyn_cfg(cfg):
     # to ensure a valid timeout seconds
-    assert isinstance(cfg.asyn.timeout, int) or isinstance(cfg.asyn.timeout, float), "The timeout (seconds) must be an int or a float value, but {} is got".format(type(cfg.asyn.timeout))
+    assert isinstance(cfg.asyn.timeout, int) or isinstance(
+        cfg.asyn.timeout, float
+    ), "The timeout (seconds) must be an int or a float value, but {} is got".format(
+        type(cfg.asyn.timeout))
 
     # min received num pre-process
     min_received_num_valid = (0 < cfg.asyn.min_received_num <=
-                               cfg.federate.sample_client_num)
+                              cfg.federate.sample_client_num)
     min_received_rate_valid = (0 < cfg.asyn.min_received_rate <= 1)
     # (a) sampling case
     if min_received_rate_valid:
         # (a.1) use min_received_rate
         old_min_received_num = cfg.asyn.min_received_num
         cfg.asyn.min_received_num = max(
-            1, int(cfg.asyn.min_received_rate * cfg.federate.sample_client_num))
+            1,
+            int(cfg.asyn.min_received_rate * cfg.federate.sample_client_num))
         if min_received_num_valid:
             logging.warning(
                 f"Users specify both valid min_received_rate as {cfg.asyn.min_received_rate} "
