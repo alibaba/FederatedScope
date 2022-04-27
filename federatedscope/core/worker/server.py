@@ -327,7 +327,7 @@ class Server(Worker):
             rnd="Final",
             role='Server #',
             forms=["raw"],
-            return_raw=self._cfg.federate.make_global_eval)
+            return_raw=True)
         logger.info(formatted_best_res)
         self.save_formatted_results(formatted_best_res)
 
