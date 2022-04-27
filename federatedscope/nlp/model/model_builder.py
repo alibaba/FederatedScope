@@ -2,10 +2,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-from federatedscope.nlp.model.rnn import LSTM
-
 
 def get_rnn(model_config, local_data):
+    from federatedscope.nlp.model.rnn import LSTM
     if isinstance(local_data, dict):
         if 'data' in local_data.keys():
             data = local_data['data']
@@ -29,5 +28,24 @@ def get_rnn(model_config, local_data):
                      dropout=model_config.dropout)
     else:
         raise ValueError(f'No model named {model_config.type}!')
+
+    return model
+
+
+def get_transformer(model_config, local_data):
+    from transformers import AutoModelForPreTraining, AutoModelForQuestionAnswering, AutoModelForSequenceClassification, AutoModelForTokenClassification, AutoModelWithLMHead, AutoModel
+
+    model_func_dict = {
+        'PreTraining'.lower(): AutoModelForPreTraining,
+        'QuestionAnswering'.lower(): AutoModelForQuestionAnswering,
+        'SequenceClassification'.lower(): AutoModelForSequenceClassification,
+        'TokenClassification'.lower(): AutoModelForTokenClassification,
+        'WithLMHead'.lower(): AutoModelWithLMHead,
+        'Auto'.lower(): AutoModel
+    }
+    assert model_config.task.lower(
+    ) in model_func_dict, f'model_config.task should be in {model_func_dict.keys()} when using pre_trained transformer model '
+    path, _ = model_config.type.split('@')
+    model = model_func_dict[model_config.task.lower()].from_pretrained(path)
 
     return model

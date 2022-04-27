@@ -238,7 +238,6 @@ def load_external_data(config=None):
 
     def load_torchtext_data(name, splits=None, config=None):
         from torch.nn.utils.rnn import pad_sequence
-        from torchtext.data import get_tokenizer
         from federatedscope.nlp.dataset.utils import label_to_index
 
         dataset_func = getattr(import_module('torchtext.datasets'), name)
@@ -246,46 +245,78 @@ def load_external_data(config=None):
             raw_args = config.data.args[0]
         else:
             raw_args = {}
-        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
         filtered_args = filter_dict(dataset_func.__init__, raw_args)
         dataset = dataset_func(root=config.data.root, **filtered_args)
 
         # torchtext.transforms requires >= 0.12.0 and torch = 1.11.0,
         # so we do not use `get_transform` in torchtext.
-        tokenizer = get_tokenizer("basic_english")
-        if len(config.data.transform) == 0:
-            raise ValueError(
-                "`transform` must be one pretrained Word Embeddings from \
-                ['GloVe', 'FastText', 'CharNGram']")
-        if len(config.data.transform) == 1:
-            config.data.transform.append({})
-        vocab = getattr(import_module('torchtext.vocab'),
-                        config.data.transform[0])(dim=config.model.in_channels,
-                                                  **config.data.transform[1])
-        data_list = []
-        for data_iter in dataset:
-            # TODO: we may need a more general and principled load function for the `IterableDataset`.
-            data, targets = [], []
-            if config.model.task == 'seq2seq':
-                for item in data_iter:
-                    data.append(
-                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
-                                                 lower_case_backup=True))
-                    targets.append(
-                        vocab.get_vecs_by_tokens(tokenizer(item[0]),
-                                                 lower_case_backup=True))
-                targets = pad_sequence(targets).transpose(
-                    0, 1)[:, :raw_args['max_len'], :]
-            else:
-                for item in data_iter:
-                    data.append(
-                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
-                                                 lower_case_backup=True))
+        if config.model.type.endswith('transformers'):
+            from transformers import AutoTokenizer
+            tokenizer = AutoTokenizer.from_pretrained(
+                config.model.type.split('@')[0])
+            data_list = []
+            for data_iter in dataset:
+                data, targets = [], []
+                for i, item in enumerate(data_iter):
+                    data.append(item[1])
                     targets.append(item[0])
-                targets = label_to_index(targets)
-            data = pad_sequence(data).transpose(0,
-                                                1)[:, :raw_args['max_len'], :]
-            data_list.append([(x, y) for x, y in zip(data, targets)])
+                full_data = tokenizer(data,
+                                      return_tensors='pt',
+                                      padding=True,
+                                      truncation=True)
+                data = [{key: value[i]
+                         for key, value in full_data.items()}
+                        for i in range(len(next(iter(full_data.values()))))]
+                if 'classification' in config.model.task.lower():
+                    targets = label_to_index(targets)
+                else:
+                    full_targets = tokenizer(targets,
+                                             return_tensors='pt',
+                                             padding=True,
+                                             truncation=True)
+                    targets = [{
+                        key: value[i]
+                        for key, value in full_targets.items()
+                    } for i in range(len(next(iter(full_targets.values()))))]
+                data_list.append([(x, y) for x, y in zip(data, targets)])
+        else:
+            from torchtext.data import get_tokenizer
+            assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
+            tokenizer = get_tokenizer("basic_english")
+            if len(config.data.transform) == 0:
+                raise ValueError(
+                    "`transform` must be one pretrained Word Embeddings from \
+                    ['GloVe', 'FastText', 'CharNGram']")
+            if len(config.data.transform) == 1:
+                config.data.transform.append({})
+            vocab = getattr(import_module('torchtext.vocab'),
+                            config.data.transform[0])(
+                                dim=config.model.in_channels,
+                                **config.data.transform[1])
+            data_list = []
+            for data_iter in dataset:
+                # TODO: we may need a more general and principled load function for the `IterableDataset`.
+                data, targets = [], []
+                if 'classification' in config.model.task.lower():
+                    for item in data_iter:
+                        data.append(
+                            vocab.get_vecs_by_tokens(tokenizer(item[1]),
+                                                     lower_case_backup=True))
+                        targets.append(item[0])
+                    targets = label_to_index(targets)
+                else:
+                    for item in data_iter:
+                        data.append(
+                            vocab.get_vecs_by_tokens(tokenizer(item[1]),
+                                                     lower_case_backup=True))
+                        targets.append(
+                            vocab.get_vecs_by_tokens(tokenizer(item[0]),
+                                                     lower_case_backup=True))
+                    targets = pad_sequence(targets).transpose(
+                        0, 1)[:, :raw_args['max_len'], :]
+                data = pad_sequence(data).transpose(
+                    0, 1)[:, :raw_args['max_len'], :]
+                data_list.append([(x, y) for x, y in zip(data, targets)])
 
         if len(data_list) == 3:
             # Use raw splits

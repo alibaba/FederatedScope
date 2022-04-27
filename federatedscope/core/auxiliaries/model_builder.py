@@ -55,6 +55,9 @@ def get_model(model_config, local_data, backend='torch'):
     elif model_config.type.lower() in ['lstm']:
         from federatedscope.nlp.model import get_rnn
         model = get_rnn(model_config, local_data)
+    elif model_config.type.lower().endswith('transformers'):
+        from federatedscope.nlp.model import get_transformer
+        model = get_transformer(model_config, local_data)
     elif model_config.type.lower() in ['gcn', 'sage', 'gpr', 'gat', 'gin']:
         from federatedscope.gfl.model import get_gnn
         model = get_gnn(model_config, local_data)
