@@ -12,7 +12,7 @@ def wrap_GANTrainer(
     Args:
         base_trainer: Type: core.trainers.GeneralTorchTrainer
 
-    Returns:
+    :returns:
         The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
 
     '''

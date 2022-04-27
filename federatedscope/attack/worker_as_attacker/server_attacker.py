@@ -134,6 +134,7 @@ class PassivePIAServer(Server):
     The implementation of the batch property classifier, the algorithm 3 in paper: Exploiting Unintended Feature Leakage in Collaborative Learning
 
     References:
+
     Melis, Luca, Congzheng Song, Emiliano De Cristofaro and Vitaly Shmatikov. “Exploiting Unintended Feature Leakage in Collaborative Learning.” 2019 IEEE Symposium on Security and Privacy (SP) (2019): 691-706
     '''
     def __init__(self,

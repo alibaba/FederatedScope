@@ -50,7 +50,6 @@ def callback_funcs_for_finish(self, message: Message):
 
 
 def add_atk_method_to_Client_GradAscent(client_class):
-    # setattr(client_class, 'callback_funcs_for_evaluate', callback_funcs_for_evaluate)
 
     setattr(client_class, 'callback_funcs_for_finish',
             callback_funcs_for_finish)

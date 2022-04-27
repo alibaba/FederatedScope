@@ -14,11 +14,13 @@ def wrap_GradientAscentTrainer(
     wrap the gradient_invert trainer
 
     Args:
-        base_trainer:
+        base_trainer: Type: core.trainers.GeneralTorchTrainer
 
-    Returns:
+    :returns:
+        The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
 
     '''
+
 
     # base_trainer.ctx.target_data = get_target_data()
     base_trainer.ctx.target_data_dataloader = WrapDataset(
