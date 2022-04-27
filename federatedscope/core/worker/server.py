@@ -323,11 +323,11 @@ class Server(Worker):
         if self._cfg.federate.save_to != '':
             self.aggregator.save_model(self._cfg.federate.save_to, self.state)
         formatted_best_res = self._monitor.format_eval_res(
-            self.best_results,
+            results=self.best_results,
             rnd="Final",
             role='Server #',
             forms=["raw"],
-            return_raw=self._cfg.federate.make_global_eval)
+            return_raw=True)
         logger.info(formatted_best_res)
         self.save_formatted_results(formatted_best_res)
 
