@@ -67,6 +67,15 @@ def extend_fl_algo_cfg(cfg):
     cfg.gcflplus.seq_length = 5
     cfg.gcflplus.standardize = False
 
+    # ------------------------------------------------------------------------ #
+    # FLIT+ related options, flit
+    # ------------------------------------------------------------------------ #
+    cfg.flitplus = CN()
+
+    cfg.flitplus.alpha = 0.1 # alpha in lda
+    cfg.flitplus.tmpFed = 0.5 # gamma in focal loss
+    cfg.flitplus.lambdavat = 0.01 # lambda in phi
+
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_algo_cfg)
 

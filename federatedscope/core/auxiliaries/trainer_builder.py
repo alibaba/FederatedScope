@@ -13,6 +13,8 @@ TRAINER_CLASS_DICT = {
     "linkminibatch_trainer": "LinkMiniBatchTrainer",
     "nodefullbatch_trainer": "NodeFullBatchTrainer",
     "nodeminibatch_trainer": "NodeMiniBatchTrainer",
+    "flitplustrainer": "FLITPlusTrainer",
+    "flittrainer": "FLITTrainer",
     "mftrainer": "MFTrainer",
 }
 
@@ -59,6 +61,10 @@ def get_trainer(model=None,
                 'nodefullbatch_trainer', 'nodeminibatch_trainer'
         ]:
             dict_path = "federatedscope.gfl.trainer.nodetrainer"
+        elif config.trainer.type.lower() in [
+                'flitplustrainer', 'flittrainer'
+        ]:
+            dict_path = "federatedscope.gfl.flitplus.trainer"
         elif config.trainer.type.lower() in ['mftrainer']:
             dict_path = "federatedscope.mf.trainer.trainer"
         else:

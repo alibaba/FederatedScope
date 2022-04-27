@@ -24,7 +24,7 @@ optimizer:
 criterion:
   type: CrossEntropyLoss
 trainer:
-  type: flitplus_trainer
+  type: flitplustrainer
 eval:
   freq: 5
   metrics: ['acc', 'correct', 'roc_auc']

@@ -36,6 +36,10 @@ def get_splitter(config):
     elif config.data.splitter == 'scaffold':
         from federatedscope.core.splitters.graph import ScaffoldSplitter
         splitter = ScaffoldSplitter(client_num, **args)
+    elif config.data.splitter == 'scaffold_lda':
+        from federatedscope.gfl.dataset.splitter import ScaffoldLdaSplitter
+        # TODO: consistent args
+        splitter = ScaffoldLdaSplitter(client_num, config.flitplus.alpha)
     elif config.data.splitter == 'rand_chunk':
         from federatedscope.core.splitters.graph import RandChunkSplitter
         splitter = RandChunkSplitter(client_num, **args)

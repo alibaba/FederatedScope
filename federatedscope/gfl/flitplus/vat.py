@@ -2,6 +2,7 @@ import contextlib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch_geometric.data.batch import Batch
 
 
 @contextlib.contextmanager
@@ -25,6 +26,7 @@ class VATLoss(nn.Module):
 
     def __init__(self, xi=1e-3, eps=2.5, ip=1):
         """VAT loss
+        https://github.com/lyakaap/VAT-pytorch
         :param xi: hyperparameter of VAT (default: 10.0)
         :param eps: hyperparameter of VAT (default: 1.0)
         :param ip: iteration times of computing adv noise (default: 1)
@@ -34,29 +36,36 @@ class VATLoss(nn.Module):
         self.eps = eps
         self.ip = ip
 
-    def forward(self, model, x):
-        with torch.no_grad():
-            pred = F.softmax(model(x), dim=1)
+    def forward(self, model, graph):
+        pred = model(graph)
+        logp = F.log_softmax(pred, dim=1)
 
         # prepare random unit tensor
-        d = torch.rand(x.shape).sub(0.5).to(x.device)
-        d = _l2_normalize(d)
+        nodefea = graph.x
+        dn = torch.rand(nodefea.shape).sub(0.5).to(nodefea.device)
+        dn = _l2_normalize(dn)
 
         with _disable_tracking_bn_stats(model):
             # calc adversarial direction
-            for _ in range(self.ip):
-                d.requires_grad_()
-                pred_hat = model(x + self.xi * d)
-                logp_hat = F.log_softmax(pred_hat, dim=1)
-                adv_distance = F.kl_div(logp_hat, pred, reduction='batchmean')
-                adv_distance.backward()
-                d = _l2_normalize(d.grad)
-                model.zero_grad()
+            with torch.enable_grad():
+                for _ in range(self.ip):
+                    dn.requires_grad_()
+                    x_neighbor = Batch(x=nodefea + self.xi * dn, edge_index=graph.edge_index,
+                                      y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
+                    pred_hat = model(x_neighbor)
+                    logp_hat = F.log_softmax(pred_hat, dim=1)
+                    adv_distance = F.kl_div(logp_hat, logp, reduction='batchmean')
+                    # adv_distance.backward()
+                    # dn = _l2_normalize(dn.grad)
+                    dn = _l2_normalize(torch.autograd.grad(outputs=adv_distance, inputs=dn, retain_graph=True)[0])
+                    model.zero_grad()
 
             # calc LDS
-            r_adv = d * self.eps
-            pred_hat = model(x + r_adv)
+            rn_adv = dn * self.eps
+            x_adv = Batch(x=nodefea + rn_adv, edge_index=graph.edge_index,
+                              y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
+            pred_hat = model(x_adv)
             logp_hat = F.log_softmax(pred_hat, dim=1)
-            lds = F.kl_div(logp_hat, pred, reduction='batchmean')
+            lds = F.kl_div(logp_hat, logp, reduction='batchmean')
 
         return lds

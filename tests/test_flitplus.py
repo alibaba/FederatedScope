@@ -5,68 +5,54 @@ from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
+def set_config_flitplus(cfg):
+    backup_cfg = cfg.clone()
 
-class FedSagePlusTest(unittest.TestCase):
-    def setUp(self):
-        print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
+    cfg.use_gpu = False
+    cfg.device = 0
+    # cfg.early_stop.patience = 20
+    # cfg.early_stop.improve_indicator_mode = 'mean'
 
-    def set_config_fedsageplus(self, cfg):
-        backup_cfg = cfg.clone()
+    cfg.federate.mode = 'standalone'
+    cfg.federate.make_global_eval = True
+    cfg.federate.client_num = 5
+    cfg.federate.total_round_num = 400
+    cfg.federate.local_update_steps = 16
 
-        cfg.use_gpu = True
+    cfg.data.root = 'data/'
+    # Cls: ['bbbp', 'bace', 'tox21', 'sider', 'clintox'], Reg: ['esol', 'freesolv', 'lipo']
+    cfg.data.type = 'esol'
+    cfg.data.splitter = 'scaffold_lda'
 
-        cfg.federate.mode = 'standalone'
-        cfg.federate.make_global_eval = True
-        cfg.federate.client_num = 3
-        cfg.federate.total_round_num = 10
-        cfg.federate.method = 'fedsageplus'
-        cfg.federate.batch_or_epoch = 'epoch'
+    cfg.model.type = 'sage'
+    cfg.model.hidden = 64
+    cfg.model.out_channels = 1
+    cfg.model.task = 'graph'
 
-        cfg.data.root = 'test_data/'
-        cfg.data.type = 'cora'
-        cfg.data.splitter = 'louvain'
-        cfg.data.batch_size = 1
+    cfg.flitplus.alpha = 0.1
+    cfg.flitplus.tmpFed = 0.5
+    cfg.flitplus.lambdavat = 0.01
 
-        cfg.model.type = 'sage'
-        cfg.model.hidden = 64
-        cfg.model.dropout = 0.5
-        cfg.model.out_channels = 7
+    cfg.optimizer.lr = 0.25
+    cfg.optimizer.weight_decay = 0.0005
 
-        cfg.fedsageplus.num_pred = 5
-        cfg.fedsageplus.gen_hidden = 64
-        cfg.fedsageplus.hide_portion = 0.5
-        cfg.fedsageplus.fedgen_epoch = 2
-        cfg.fedsageplus.loc_epoch = 1
-        cfg.fedsageplus.a = 1.0
-        cfg.fedsageplus.b = 1.0
-        cfg.fedsageplus.c = 1.0
+    cfg.criterion.type = 'CrossEntropyLoss'
+    cfg.trainer.type = 'flitplustrainer'
+    cfg.eval.freq = 5
+    cfg.eval.metrics = ['acc', 'correct']
 
-        cfg.criterion.type = 'CrossEntropyLoss'
-        cfg.trainer.type = 'nodefullbatch_trainer'
-        cfg.eval.metrics = ['acc', 'correct']
-
-        return backup_cfg
-
-    def test_fedsageplus_standalone(self):
-        backup_cfg = self.set_config_fedsageplus(global_cfg)
-        setup_seed(global_cfg.seed)
-        update_logger(global_cfg)
-
-        data, modified_cfg = get_data(global_cfg.clone())
-        global_cfg.merge_from_other_cfg(modified_cfg)
-
-        self.assertIsNotNone(data)
-
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(global_cfg),
-                               client_class=get_client_cls(global_cfg),
-                               config=global_cfg.clone())
-        self.assertIsNotNone(Fed_runner)
-        test_best_results = Fed_runner.run()
-        global_cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_best_results["server_global_eval"]['test_acc'],
-                           0.7)
-
+    return backup_cfg
 
 if __name__ == '__main__':
-    test_fedsageplus_standalone()
+    backup_cfg = set_config_flitplus(global_cfg)
+    setup_seed(global_cfg.seed)
+    update_logger(global_cfg)
+
+    data, modified_cfg = get_data(global_cfg.clone())
+    global_cfg.merge_from_other_cfg(modified_cfg)
+
+    Fed_runner = FedRunner(data=data,
+                           server_class=get_server_cls(global_cfg),
+                           client_class=get_client_cls(global_cfg),
+                           config=global_cfg.clone())
+    test_best_results = Fed_runner.run()

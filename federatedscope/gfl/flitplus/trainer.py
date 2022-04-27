@@ -1,19 +1,37 @@
 import torch
-import copy
+from copy import deepcopy
 import numpy as np
 import torch.nn.functional as F
 
-from vat import VATLoss
+from federatedscope.gfl.flitplus.vat import VATLoss
 from federatedscope.register import register_trainer
-from federatedscope.gfl.trainer.graphtrainer import GraphMiniBatchTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
 
-class FLITTrainer(GraphMiniBatchTrainer):
+class FLITTrainer(GeneralTorchTrainer):
+    def register_default_hooks_train(self):
+        super(FLITTrainer, self).register_default_hooks_train()
+        self.register_hook_in_train(new_hook=record_initialization,
+                                    trigger='on_fit_start',
+                                    insert_pos=-1)
+        self.register_hook_in_train(new_hook=del_initialization,
+                                    trigger='on_fit_end',
+                                    insert_pos=-1)
+
+    def register_default_hooks_eval(self):
+        super(FLITTrainer, self).register_default_hooks_eval()
+        self.register_hook_in_eval(new_hook=record_initialization,
+                                   trigger='on_fit_start',
+                                   insert_pos=-1)
+        self.register_hook_in_eval(new_hook=del_initialization,
+                                   trigger='on_fit_end',
+                                   insert_pos=-1)
+
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)
-        # TODO: 怎么插入，把def当成property？怎么调用？
-        predG = ctx.weight_init(batch)
+        ctx.global_model.to(ctx.device)
+        predG = ctx.global_model(batch)
         label = batch.y.squeeze(-1).long()
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
@@ -24,7 +42,6 @@ class FLITTrainer(GraphMiniBatchTrainer):
         weightloss = lossLocalLabel + torch.relu(lossLocalLabel - lossGlobalLabel.detach())
         weight_denomaitor = weightloss.mean(dim=0, keepdim=True).detach()
 
-        # TODO: 在config里补充 cfg.flitplus.tmpFed = 0.5 ???
         loss = (1 - torch.exp(-weightloss / (weight_denomaitor + 1e-7)) + 1e-7) ** self.cfg.flitplus.tmpFed * (
             lossLocalLabel)
         ctx.loss_batch = loss.mean()
@@ -33,33 +50,43 @@ class FLITTrainer(GraphMiniBatchTrainer):
         ctx.y_true = label
         ctx.y_prob = pred
 
-
-class FLITPlusTrainer(FLITTrainer):
-    def _hook_on_batch_forward(self, ctx):
-        # TODO: 在FLITTrainer的基础上增加
+    def _hook_on_batch_forward_eval(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)
-        predG = ctx.weight_init(batch)
         label = batch.y.squeeze(-1).long()
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
+        ctx.loss_batch = ctx.criterion(pred, label)
 
+        ctx.batch_size = len(label)
+        ctx.y_true = label
+        ctx.y_prob = pred
+
+
+class FLITPlusTrainer(FLITTrainer):
+    def _hook_on_batch_forward(self, ctx):
+        # LDS should be calculated before the forward for cross entropy
+        batch = ctx.data_batch.to(ctx.device)
+        ctx.global_model.to(ctx.device)
+        vat_loss = VATLoss()  # xi, and eps
+        lossLocalVAT = vat_loss(deepcopy(ctx.model), batch)
+        lossGlobalVAT = vat_loss(deepcopy(ctx.global_model), batch)
+
+        pred = ctx.model(batch)
+        predG = ctx.global_model(batch)
+        label = batch.y.squeeze(-1).long()
+        if len(label.size()) == 0:
+            label = label.unsqueeze(0)
         lossGlobalLabel = ctx.criterion(predG, label)
         lossLocalLabel = ctx.criterion(pred, label)
-        # TODO: LDS should be calculated before the forward for cross entropy
-        vat_loss = VATLoss()  # xi, and eps
-        lossLocalVAT = vat_loss(ctx.model, batch)
-        lossGlobalVAT = vat_loss(ctx.weight_init, batch)
 
         weightloss_loss = lossLocalLabel + torch.relu(lossLocalLabel - lossGlobalLabel.detach())
         weightloss_vat = (lossLocalVAT + torch.relu(lossLocalVAT - lossGlobalVAT.detach()))
-        # TODO: 在config里补充 cfg.flitplus.lambdavat = 0.01 ???
         weightloss = weightloss_loss + self.cfg.flitplus.lambdavat * weightloss_vat
         weight_denomaitor = weightloss.mean(dim=0, keepdim=True).detach()
 
-        # TODO:weightReg可以删除？
         loss = (1 - torch.exp(-weightloss / (weight_denomaitor + 1e-7)) + 1e-7) ** self.cfg.flitplus.tmpFed * (
-                lossLocalLabel + lossLocalVAT)
+                lossLocalLabel + lossLocalVAT)  # weightReg: balance lossLocalLabel and lossLocalVAT
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
@@ -67,29 +94,15 @@ class FLITPlusTrainer(FLITTrainer):
         ctx.y_prob = pred
 
 
-# TODO:这两个函数定义应该放在哪里？
 def record_initialization(ctx):
-    """Record the initialized weights within local updates
+    """Record the shared global model to cpu
 
     """
-    ctx.weight_init = deepcopy(
-        [_.data.detach() for _ in ctx.model.parameters()])
+    ctx.global_model = deepcopy(ctx.model)
+    ctx.global_model.to(torch.device("cpu"))
 
 def del_initialization(ctx):
     """Clear the variable to avoid memory leakage
 
     """
-    ctx.weight_init = None
-
-# TODO:这个应该放在哪？
-def call_graph_level_trainer(trainer_type):
-    if trainer_type == 'flit_trainer':
-        trainer_builder = FLITTrainer
-        return trainer_builder
-    elif trainer_type == 'flitplus_trainer':
-        trainer_builder = FLITPlusTrainer
-        return trainer_builder
-
-
-register_trainer('flit_trainer', call_graph_level_trainer)
-register_trainer('flitplus_trainer', call_graph_level_trainer)
+    ctx.global_model = None
