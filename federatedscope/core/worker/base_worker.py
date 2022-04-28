@@ -1,4 +1,5 @@
 from federatedscope.core.monitor import Monitor
+from federatedscope.core.early_stopper import EarlyStopper
 
 
 class Worker(object):
@@ -13,6 +14,12 @@ class Worker(object):
         self._strategy = strategy
         self._mode = self._cfg.federate.mode.lower()
         self._monitor = Monitor(config)
+        self._best_results = dict()
+        self._history_results = dict()
+        self._early_stopper = EarlyStopper(
+            self._cfg.early_stop.patience, self._cfg.early_stop.delta,
+            self._cfg.early_stop.improve_indicator_mode,
+            self._cfg.early_stop.the_smaller_the_better)
 
     @property
     def ID(self):

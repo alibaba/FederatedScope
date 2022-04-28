@@ -1,7 +1,6 @@
 import logging
 import os
 import random
-import sys
 import time
 import math
 from datetime import datetime
@@ -219,3 +218,94 @@ def download_url(url: str, folder='folder'):
         f.write(data.read())
 
     return path
+
+
+def update_best_result(best_results,
+                       results,
+                       results_type,
+                       round_wise_update_key="val_loss"):
+    """
+        update best evaluation results.
+        by default, the update is based on validation loss with `round_wise_update_key="val_loss" `
+    """
+    update_best_this_round = False
+    if not isinstance(results, dict):
+        raise ValueError(
+            f"update best results require `results` a dict, but got {type(results)}"
+        )
+    else:
+        if results_type not in best_results:
+            best_results[results_type] = dict()
+        best_result = best_results[results_type]
+        # update different keys separately: the best values can be in different rounds
+        if round_wise_update_key is None:
+            for key in results:
+                cur_result = results[key]
+                if 'loss' in key or 'std' in key:  # the smaller, the better
+                    if results_type == "client_individual":
+                        cur_result = min(cur_result)
+                    if key not in best_result or cur_result < best_result[key]:
+                        best_result[key] = cur_result
+                        update_best_this_round = True
+
+                elif 'acc' in key:  # the larger, the better
+                    if results_type == "client_individual":
+                        cur_result = max(cur_result)
+                    if key not in best_result or cur_result > best_result[key]:
+                        best_result[key] = cur_result
+                        update_best_this_round = True
+                else:
+                    # unconcerned metric
+                    pass
+        # update different keys round-wise: if find better round_wise_update_key, update others at the same time
+        else:
+            if round_wise_update_key not in [
+                    "val_loss", "val_acc", "val_std", "test_loss", "test_acc",
+                    "test_std", "test_avg_loss", "loss"
+            ]:
+                raise NotImplementedError(
+                    f"We currently support round_wise_update_key as one of "
+                    f"['val_loss', 'val_acc', 'val_std', 'test_loss', 'test_acc', 'test_std'] "
+                    f"for round-wise best results update, but got {round_wise_update_key}."
+                )
+
+            found_round_wise_update_key = False
+            sorted_keys = []
+            for key in results:
+                if round_wise_update_key in key:
+                    sorted_keys.insert(0, key)
+                    found_round_wise_update_key = True
+                else:
+                    sorted_keys.append(key)
+            if not found_round_wise_update_key:
+                raise ValueError(
+                    "The round_wise_update_key is not in target results, "
+                    "use another key or check the name. \n"
+                    f"Your round_wise_update_key={round_wise_update_key}, "
+                    f"the keys of results are {list(results.keys())}")
+
+            for key in sorted_keys:
+                cur_result = results[key]
+                if update_best_this_round or \
+                        ('loss' in round_wise_update_key and 'loss' in key) or \
+                        ('std' in round_wise_update_key and 'std' in key):
+                    if results_type == "client_individual":
+                        cur_result = min(cur_result)
+                    if update_best_this_round or \
+                            key not in best_result or cur_result < best_result[key]:
+                        best_result[key] = cur_result
+                        update_best_this_round = True
+                elif update_best_this_round or \
+                        'acc' in round_wise_update_key and 'acc' in key:
+                    if results_type == "client_individual":
+                        cur_result = max(cur_result)
+                    if update_best_this_round or \
+                            key not in best_result or cur_result > best_result[key]:
+                        best_result[key] = cur_result
+                        update_best_this_round = True
+                else:
+                    # unconcerned metric
+                    pass
+
+    if update_best_this_round:
+        logging.info(f"Find new best result: {best_results}")

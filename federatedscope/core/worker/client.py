@@ -1,9 +1,9 @@
-import copy
 import logging
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
 from federatedscope.core.worker import Worker
+from federatedscope.core.auxiliaries.utils import merge_dict, update_best_result
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
@@ -61,7 +61,7 @@ class Client(Worker):
 
         # Initialize communication manager
         self.server_id = server_id
-        if self.mode == 'standalone':
+        if self.mode in ['standalone', 'local']:
             comm_queue = kwargs['shared_comm_queue']
             self.comm_manager = StandaloneCommManager(comm_queue=comm_queue)
             self.local_address = None
@@ -100,6 +100,7 @@ class Client(Worker):
         self.register_handlers('ss_model_para',
                                self.callback_funcs_for_model_para)
         self.register_handlers('evaluate', self.callback_funcs_for_evaluate)
+        self.register_handlers('local', self.callback_funcs_for_local)
         self.register_handlers('finish', self.callback_funcs_for_finish)
 
     def join_in(self):
@@ -165,7 +166,7 @@ class Client(Worker):
         else:
             round, sender, content = message.state, message.sender, message.content
             self.trainer.update(content)
-            #self.model.load_state_dict(content)
+            # self.model.load_state_dict(content)
             self.state = round
             sample_size, model_para_all, results = self.trainer.train()
             logger.info(
@@ -274,6 +275,52 @@ class Client(Worker):
                     receiver=[sender],
                     state=self.state,
                     content=metrics))
+
+    def callback_funcs_for_local(self, message: Message):
+        round, sender, content = message.state, message.sender, message.content
+        self.trainer.update(content)
+        self.state = round
+
+        for epoch in range(self._cfg.federate.local_update_steps):
+            _, _, results = self.trainer.train()
+            logger.info(
+                self._monitor.format_eval_res(results,
+                                              rnd=epoch,
+                                              role='Client #{}'.format(
+                                                  self.ID),
+                                              return_raw=True))
+            # Evaluate
+            if epoch % self._cfg.eval.freq == 0:
+                metrics = {}
+                for split in self._cfg.eval.split:
+                    eval_metrics = self.trainer.evaluate(
+                        target_data_split_name=split)
+                    metrics.update(**eval_metrics)
+                formatted_logs = self._monitor.format_eval_res(
+                    metrics,
+                    rnd=epoch,
+                    role='Client #{}'.format(self.ID),
+                    return_raw=self._cfg.federate.make_global_eval)
+                logger.info(formatted_logs)
+                update_best_result(self._best_results,
+                                   metrics,
+                                   results_type="Results_raw",
+                                   round_wise_update_key=self._cfg.eval.
+                                   best_res_update_round_wise_key)
+                self._history_results = merge_dict(self._history_results,
+                                                   formatted_logs)
+                should_stop = self._early_stopper.track_and_check(
+                    self._history_results['Results_raw'][
+                        self._cfg.eval.best_res_update_round_wise_key])
+
+                if should_stop:
+                    break
+        self.comm_manager.send(
+            Message(msg_type='metrics',
+                    sender=self.ID,
+                    receiver=[sender],
+                    state=self.state,
+                    content=self._best_results['Results_raw']))
 
     def callback_funcs_for_finish(self, message: Message):
         logger.info(

@@ -27,7 +27,7 @@ class FedRunner(object):
         self.gpu_manager = GPUManager(gpu_available=self.cfg.use_gpu,
                                       specified_device=self.cfg.device)
 
-        if self.mode == 'standalone':
+        if self.mode in ['standalone', 'local']:
             self.shared_comm_queue = deque()
             self._setup_for_standalone()
             # in standalone mode, by default, we print the trainer info only once for better logs readability
@@ -78,7 +78,7 @@ class FedRunner(object):
         """
         To run an FL course, which is called after server/client has been set up
         """
-        if self.mode == 'standalone':
+        if self.mode in ['standalone', 'local']:
             # trigger the FL course
             for each_client in self.client:
                 self.client[each_client].join_in()
@@ -123,12 +123,12 @@ class FedRunner(object):
 
             self.server._monitor.compress_raw_res_file()
 
-            return self.server.best_results
+            return self.server._best_results
 
         elif self.mode == 'distributed':
             if self.cfg.distribute.role == 'server':
                 self.server.run()
-                return self.server.best_results
+                return self.server._best_results
             elif self.cfg.distribute.role == 'client':
                 self.client.join_in()
                 self.client.run()
@@ -138,7 +138,7 @@ class FedRunner(object):
         Set up the server
         """
         self.server_id = 0
-        if self.mode == 'standalone':
+        if self.mode in ['standalone', 'local']:
             if self.server_id in self.data:
                 server_data = self.data[self.server_id]
                 model = get_model(self.cfg.model,
@@ -187,7 +187,7 @@ class FedRunner(object):
         Set up the client
         """
         self.server_id = 0
-        if self.mode == 'standalone':
+        if self.mode in ['standalone', 'local']:
             client_data = self.data[client_id]
             kw = {'shared_comm_queue': self.shared_comm_queue}
         elif self.mode == 'distributed':

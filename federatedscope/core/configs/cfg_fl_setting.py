@@ -17,7 +17,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.sample_client_rate = -1.0
     cfg.federate.total_round_num = 50
     cfg.federate.mode = 'standalone'
-    cfg.federate.local_update_steps = 1
+    cfg.federate.local_update_steps = 1  # If the mode is `local`, `local_update_steps` is the epochs.
     cfg.federate.batch_or_epoch = 'batch'
     cfg.federate.share_local_model = False
     cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is the number of training samples in dataset.
@@ -68,8 +68,8 @@ def assert_fl_setting_cfg(cfg):
             "Value of 'cfg.federate.batch_or_epoch' must be chosen from ['batch', 'epoch']."
         )
 
-    assert cfg.federate.mode in ["standalone", "distributed"], \
-        f"Please specify the cfg.federate.mode as the string standalone or distributed. But got {cfg.federate.mode}."
+    assert cfg.federate.mode in ["standalone", "distributed", "local"], \
+        f"Please specify the cfg.federate.mode as the string standalone, distributed or local. But got {cfg.federate.mode}."
 
     # client num related
     assert not (cfg.federate.client_num == 0
