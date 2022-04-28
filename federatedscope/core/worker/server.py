@@ -360,7 +360,8 @@ class Server(Worker):
             role='Server #',
             forms=self._cfg.eval.report)
         logger.info(formatted_logs)
-        update_best_result(self.best_results, metrics_all_clients,
+        update_best_result(self.best_results,
+                           metrics_all_clients,
                            results_type="client_individual",
                            round_wise_update_key=self._cfg.eval.
                            best_res_update_round_wise_key)
@@ -399,7 +400,8 @@ class Server(Worker):
 
         skip_broadcast = self._cfg.federate.method == "local"
         if self.model_num > 1:
-            model_para = [{} if skip_broadcast else model.state_dict() for model in self.models]
+            model_para = [{} if skip_broadcast else model.state_dict()
+                          for model in self.models]
         else:
             model_para = {} if skip_broadcast else self.model.state_dict()
 
@@ -484,7 +486,8 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
-                update_best_result(self.best_results, formatted_eval_res['Results_raw'],
+                update_best_result(self.best_results,
+                                   formatted_eval_res['Results_raw'],
                                    results_type="server_global_eval",
                                    round_wise_update_key=self._cfg.eval.
                                    best_res_update_round_wise_key)

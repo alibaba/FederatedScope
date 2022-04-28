@@ -81,7 +81,8 @@ def assert_fl_setting_cfg(cfg):
                                cfg.federate.client_num)
     sample_client_rate_valid = (0 < cfg.federate.sample_client_rate <= 1)
 
-    if cfg.federate.method == "local" and (sample_client_rate_valid or sample_client_num_valid):
+    if cfg.federate.method == "local" and (sample_client_rate_valid
+                                           or sample_client_num_valid):
         logger.warning("In local training mode, we will use all clients. ")
     else:
         # (a) sampling case
@@ -89,7 +90,8 @@ def assert_fl_setting_cfg(cfg):
             # (a.1) use sample_client_rate
             old_sample_client_num = cfg.federate.sample_client_num
             cfg.federate.sample_client_num = max(
-                1, int(cfg.federate.sample_client_rate * cfg.federate.client_num))
+                1,
+                int(cfg.federate.sample_client_rate * cfg.federate.client_num))
             if sample_client_num_valid:
                 logger.warning(
                     f"Users specify both valid sample_client_rate as {cfg.federate.sample_client_rate} "

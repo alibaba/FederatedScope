@@ -10,7 +10,6 @@ from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -181,8 +180,11 @@ class Client(Worker):
             self.trainer.update(content)
             self.state = round
             if self.early_stopper.early_stopped:
-                sample_size, model_para_all, results = 0, self.trainer.get_model_para(), {}
-                logger.info(f"Client #{self.ID} has been early stopped, we will skip the local training")
+                sample_size, model_para_all, results = 0, self.trainer.get_model_para(
+                ), {}
+                logger.info(
+                    f"Client #{self.ID} has been early stopped, we will skip the local training"
+                )
             else:
                 sample_size, model_para_all, results = self.trainer.train()
                 logger.info(
@@ -278,7 +280,8 @@ class Client(Worker):
         else:
             metrics = {}
             for split in self._cfg.eval.split:
-                eval_metrics = self.trainer.evaluate(target_data_split_name=split)
+                eval_metrics = self.trainer.evaluate(
+                    target_data_split_name=split)
 
                 if self._cfg.federate.mode == 'distributed':
                     logger.info(
@@ -295,14 +298,15 @@ class Client(Worker):
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)
-            update_best_result(self.best_results, formatted_eval_res['Results_raw'],
+            update_best_result(self.best_results,
+                               formatted_eval_res['Results_raw'],
                                results_type=f"client #{self.ID}",
                                round_wise_update_key=self._cfg.eval.
                                best_res_update_round_wise_key)
-            self.history_results = merge_dict(self.history_results,
-                                              formatted_eval_res['Results_raw'])
-            self.early_stopper.track_and_check_best(
-                self.history_results[self._cfg.eval.best_res_update_round_wise_key])
+            self.history_results = merge_dict(
+                self.history_results, formatted_eval_res['Results_raw'])
+            self.early_stopper.track_and_check_best(self.history_results[
+                self._cfg.eval.best_res_update_round_wise_key])
 
         self.comm_manager.send(
             Message(msg_type='metrics',
