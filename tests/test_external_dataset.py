@@ -25,8 +25,6 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.federate.batch_or_epoch = 'epoch'
         cfg.federate.client_num = 5
         cfg.federate.sample_client_rate = 0.2
-        cfg.federate.share_local_model = True
-        cfg.federate.online_aggr = True
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'MNIST@torchvision'
