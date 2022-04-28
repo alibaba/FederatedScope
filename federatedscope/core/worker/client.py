@@ -3,9 +3,13 @@ import logging
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
+from federatedscope.core.monitors.early_stopper import EarlyStopper
+from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
+from federatedscope.core.auxiliaries.utils import merge_dict
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +52,16 @@ class Client(Worker):
                                    device=device,
                                    config=self._cfg,
                                    is_attacker=self.is_attacker)
+
+        # For client-side evaluation
+        self.best_results = dict()
+        self.history_results = dict()
+        # in non-local training mode, we do not use the early stopper, i.e., patience=0
+        patience = self._cfg.early_stop.patience if self._cfg.federate.method == "local" else 0
+        self.early_stopper = EarlyStopper(
+            patience, self._cfg.early_stop.delta,
+            self._cfg.early_stop.improve_indicator_mode,
+            self._cfg.early_stop.the_smaller_the_better)
 
         # Secret Sharing Manager and message buffer
         self.ss_manager = AdditiveSecretSharing(
@@ -165,15 +179,18 @@ class Client(Worker):
         else:
             round, sender, content = message.state, message.sender, message.content
             self.trainer.update(content)
-            #self.model.load_state_dict(content)
             self.state = round
-            sample_size, model_para_all, results = self.trainer.train()
-            logger.info(
-                self._monitor.format_eval_res(results,
-                                              rnd=self.state,
-                                              role='Client #{}'.format(
-                                                  self.ID),
-                                              return_raw=True))
+            if self.early_stopper.early_stopped:
+                sample_size, model_para_all, results = 0, self.trainer.get_model_para(), {}
+                logger.info(f"Client #{self.ID} has been early stopped, we will skip the local training")
+            else:
+                sample_size, model_para_all, results = self.trainer.train()
+                logger.info(
+                    self._monitor.format_eval_res(results,
+                                                  rnd=self.state,
+                                                  role='Client #{}'.format(
+                                                      self.ID),
+                                                  return_raw=True))
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
@@ -256,18 +273,37 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        metrics = {}
-        for split in self._cfg.eval.split:
-            eval_metrics = self.trainer.evaluate(target_data_split_name=split)
+        if self.early_stopper.early_stopped:
+            metrics = self.best_results
+        else:
+            metrics = {}
+            for split in self._cfg.eval.split:
+                eval_metrics = self.trainer.evaluate(target_data_split_name=split)
 
-            if self._cfg.federate.mode == 'distributed':
-                logger.info(
-                    self._monitor.format_eval_res(eval_metrics,
-                                                  rnd=self.state,
-                                                  role='Client #{}'.format(
-                                                      self.ID)))
+                if self._cfg.federate.mode == 'distributed':
+                    logger.info(
+                        self._monitor.format_eval_res(eval_metrics,
+                                                      rnd=self.state,
+                                                      role='Client #{}'.format(
+                                                          self.ID)))
 
-            metrics.update(**eval_metrics)
+                metrics.update(**eval_metrics)
+
+            formatted_eval_res = self._monitor.format_eval_res(
+                metrics,
+                rnd=self.state,
+                role='Client #{}'.format(self.ID),
+                forms='raw',
+                return_raw=True)
+            update_best_result(self.best_results, formatted_eval_res['Results_raw'],
+                               results_type=f"client #{self.ID}",
+                               round_wise_update_key=self._cfg.eval.
+                               best_res_update_round_wise_key)
+            self.history_results = merge_dict(self.history_results,
+                                              formatted_eval_res['Results_raw'])
+            self.early_stopper.track_and_check_best(
+                self.history_results[self._cfg.eval.best_res_update_round_wise_key])
+
         self.comm_manager.send(
             Message(msg_type='metrics',
                     sender=self.ID,

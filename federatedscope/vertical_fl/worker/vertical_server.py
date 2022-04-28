@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 
+from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Server
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
@@ -78,10 +79,10 @@ class vFLServer(Server):
         self.state += 1
         if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
             metrics = self.evaluate()
-            self.update_best_result(metrics,
-                                    results_type='server_global_eval',
-                                    round_wise_update_key=self._cfg.eval.
-                                    best_res_update_round_wise_key)
+            update_best_result(self.best_results, metrics,
+                               results_type='server_global_eval',
+                               round_wise_update_key=self._cfg.eval.
+                               best_res_update_round_wise_key)
             formatted_logs = self._monitor.format_eval_res(
                 metrics,
                 rnd=self.state,
@@ -97,10 +98,10 @@ class vFLServer(Server):
             self.broadcast_model_para()
         else:
             metrics = self.evaluate()
-            self.update_best_result(metrics,
-                                    results_type='server_global_eval',
-                                    round_wise_update_key=self._cfg.eval.
-                                    best_res_update_round_wise_key)
+            update_best_result(self.best_results, metrics,
+                               results_type='server_global_eval',
+                               round_wise_update_key=self._cfg.eval.
+                               best_res_update_round_wise_key)
             formatted_logs = self._monitor.format_eval_res(
                 metrics,
                 rnd=self.state,

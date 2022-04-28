@@ -80,29 +80,36 @@ def assert_fl_setting_cfg(cfg):
     sample_client_num_valid = (0 < cfg.federate.sample_client_num <=
                                cfg.federate.client_num)
     sample_client_rate_valid = (0 < cfg.federate.sample_client_rate <= 1)
-    # (a) sampling case
-    if sample_client_rate_valid:
-        # (a.1) use sample_client_rate
-        old_sample_client_num = cfg.federate.sample_client_num
-        cfg.federate.sample_client_num = max(
-            1, int(cfg.federate.sample_client_rate * cfg.federate.client_num))
-        if sample_client_num_valid:
-            logger.warning(
-                f"Users specify both valid sample_client_rate as {cfg.federate.sample_client_rate} "
-                f"and sample_client_num as {old_sample_client_num}.\n"
-                f"\t\tWe will use the sample_client_rate value to calculate "
-                f"the actual number of participated clients as {cfg.federate.sample_client_num}."
-            )
-    # (a.2) use sample_client_num, commented since the below two lines do not change anything
-    # elif sample_client_num_valid:
-    #     cfg.federate.sample_client_num = cfg.federate.sample_client_num
-    if not (sample_client_rate_valid or sample_client_num_valid):
-        # (b) non-sampling case, use all clients
-        cfg.federate.sample_client_num = cfg.federate.client_num
+
+    if cfg.federate.method == "local" and (sample_client_rate_valid or sample_client_num_valid):
+        logger.warning("In local training mode, we will use all clients. ")
+    else:
+        # (a) sampling case
+        if sample_client_rate_valid:
+            # (a.1) use sample_client_rate
+            old_sample_client_num = cfg.federate.sample_client_num
+            cfg.federate.sample_client_num = max(
+                1, int(cfg.federate.sample_client_rate * cfg.federate.client_num))
+            if sample_client_num_valid:
+                logger.warning(
+                    f"Users specify both valid sample_client_rate as {cfg.federate.sample_client_rate} "
+                    f"and sample_client_num as {old_sample_client_num}.\n"
+                    f"\t\tWe will use the sample_client_rate value to calculate "
+                    f"the actual number of participated clients as {cfg.federate.sample_client_num}."
+                )
+            # (a.2) use sample_client_num, commented since the below two lines do not change anything
+            # elif sample_client_num_valid:
+            #     cfg.federate.sample_client_num = cfg.federate.sample_client_num
+            if not (sample_client_rate_valid or sample_client_num_valid):
+                # (b) non-sampling case, use all clients
+                cfg.federate.sample_client_num = cfg.federate.client_num
 
     if cfg.federate.use_ss:
         assert cfg.federate.client_num == cfg.federate.sample_client_num, \
             "Currently, we support secret sharing only in all-client-participation case"
+
+        assert cfg.federate.method != "local", \
+            "Secret sharing is not supported in local training mode"
 
     # aggregator related
     assert (not cfg.federate.online_aggr) or (

@@ -1,7 +1,11 @@
-"""Configuration file for composition of different aggregators, messages, handlers, etc."""
+"""Configuration file for composition of different aggregators, messages, handlers, etc.
+
+    The method `local` indicates that the clients only locally train their model without sharing any training related information
+
+"""
 
 AGGREGATOR_TYPE = {
-    "local": "no_communication",
+    "local": "no_communication",  # the clients locally train their model without sharing any training related info
     "fedavg": "clients_avg",  # FedAvg
     "pfedme": "server_clients_interpolation",  # pFedMe,  + server-clients interpolation
     "ditto": "clients_avg",  # Ditto

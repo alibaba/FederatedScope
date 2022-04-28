@@ -108,7 +108,8 @@ class NoCommunicationAggregator(Aggregator):
     """"Clients do not communicate. Each client work locally
     """
     def aggregate(self, agg_info):
-        return
+        # do nothing
+        return {}
 
 
 class OnlineClientsAvgAggregator(ClientsAvgAggregator):
