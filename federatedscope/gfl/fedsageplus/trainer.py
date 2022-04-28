@@ -34,8 +34,8 @@ class LocalGenTrainer(NodeFullBatchTrainer):
                           self.cfg.fedsageplus.b * loss_feat +
                           self.cfg.fedsageplus.c * loss_clf).float()
 
-        ctx.mode.y_true = CtxReferVar(batch.num_missing[mask], "batch")
-        ctx.mode.y_prob = CtxReferVar(pred_missing, "batch")
+        ctx.var.y_true = CtxReferVar(batch.num_missing[mask], "batch")
+        ctx.var.y_prob = CtxReferVar(pred_missing, "batch")
 
 
 class FedGenTrainer(LocalGenTrainer):
@@ -58,8 +58,8 @@ class FedGenTrainer(LocalGenTrainer):
                           self.cfg.fedsageplus.c *
                           loss_clf).float() / self.cfg.federate.client_num
 
-        ctx.mode.y_true = CtxReferVar(batch.num_missing[mask])
-        ctx.mode.y_prob = CtxReferVar(pred_missing)
+        ctx.var.y_true = CtxReferVar(batch.num_missing[mask])
+        ctx.var.y_prob = CtxReferVar(pred_missing)
 
     def update_by_grad(self, grads):
         """

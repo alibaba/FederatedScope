@@ -128,19 +128,19 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
             Ensemble evaluation
         """
-        if "y_prob_ensemble" not in ctx.mode:
-            ctx.mode.y_prob_ensemble = 0
-        ctx.mode.y_prob_ensemble += np.concatenate(
-            ctx.mode.ys_prob) * self.weights_internal_models[
+        if "y_prob_ensemble" not in ctx.var:
+            ctx.var.y_prob_ensemble = 0
+        ctx.var.y_prob_ensemble += np.concatenate(
+            ctx.var.ys_prob) * self.weights_internal_models[
                 ctx.cur_model_idx].item()
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:
-            ctx.mode.y_true = np.concatenate(ctx.mode.ys_true)
-            ctx.mode.y_prob = ctx.mode.y_prob_ensemble
+            ctx.var.y_true = np.concatenate(ctx.var.ys_true)
+            ctx.var.y_prob = ctx.var.y_prob_ensemble
             ctx.eval_metrics = self.evaluator.eval(ctx)
             # reset for next run_routine that may have different len([f"{cur_data}_y_prob"])
-            ctx.mode.y_prob_ensemble = 0
+            ctx.var.y_prob_ensemble = 0
 
-        ctx.mode.ys_prob = []
-        ctx.mode.ys_true = []
+        ctx.var.ys_prob = []
+        ctx.var.ys_true = []

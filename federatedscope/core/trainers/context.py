@@ -70,11 +70,11 @@ class Context(LifecycleDict):
     Note:
         There are two ways to set/get the variables within an instance `ctx`:
             - `ctx.${NAME}`: the variable is assigned to `ctx` as an attribute without additional operations
-            - `ctx.mode.${NAME}`: the variable is stored in `ctx["mode"][ctx.cur_mode][${NAME}]`, and is only accessible \
-            when `ctx.cur_mode` is correct.
-        The setting of `ctx.mode.${NAME}` means you can nest test routine in the training routine. The record \
-        variables with the same name will be stored according to `ctx.cur_mode` and won't influence each other. For \
-        now, the `Context` class only permits nested routine with different `ctx.cur_mode`.
+            - `ctx.var.${NAME}`: the variable is stored in `ctx["var"][${ctx.cur_mode}_${ctx.cur_data_split}][${NAME}]`, \
+            and is only accessible when `ctx.cur_mode` and `ctx.cur_data_split` is correct.
+        The setting of `ctx.var.${NAME}` means you can nest test routine in the training routine. The record \
+        variables with the same name will be stored according to `ctx.cur_mode` and `ctx.cur_data_split`, and won't \
+        influence each other.
     """
     def __init__(self,
                  model,
@@ -91,7 +91,7 @@ class Context(LifecycleDict):
         self.device = device
         self.cur_mode = None
         self.mode_stack = list()
-        self.mode = collections.defaultdict(LifecycleDict)
+        self.var = collections.defaultdict(LifecycleDict)
 
         self.lifecycles = collections.defaultdict(set)
 
@@ -103,8 +103,8 @@ class Context(LifecycleDict):
 
     def __getattr__(self, item):
         try:
-            if item == "mode":
-                return self["mode"][self.cur_mode]
+            if item == "var":
+                return self["var"]["{}_{}".format(self.cur_mode, self.cur_data_split)]
             else:
                 return self[item]
         except KeyError:
@@ -235,7 +235,7 @@ class Context(LifecycleDict):
                 del self[var]
             self.lifecycles[lifecycle].remove(var)
         # Also clear the attributes under the current mode
-        self.mode.clear(lifecycle)
+        self.var.clear(lifecycle)
 
 
 class BasicCtxVar(object):

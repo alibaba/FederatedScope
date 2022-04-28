@@ -13,8 +13,8 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
-        ctx.mode.y_true = CtxReferVar(label, "batch")
-        ctx.mode.y_prob = CtxReferVar(pred, "batch")
+        ctx.var.y_true = CtxReferVar(label, "batch")
+        ctx.var.y_prob = CtxReferVar(pred, "batch")
 
 
 def call_graph_level_trainer(trainer_type):

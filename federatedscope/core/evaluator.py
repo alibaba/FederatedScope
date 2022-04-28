@@ -41,7 +41,7 @@ class Evaluator(object):
         results = {}
         y_true, y_pred, y_prob = self._check_and_parse(ctx)
         for metric, func in self.eval_metric.items():
-            results["{}_{}".format(ctx.cur_mode, metric)] = func(ctx=ctx,
+            results["{}_{}".format(ctx.cur_data_split, metric)] = func(ctx=ctx,
                                                                  y_true=y_true,
                                                                  y_pred=y_pred,
                                                                  y_prob=y_prob,
@@ -49,12 +49,12 @@ class Evaluator(object):
         return results
 
     def _check_and_parse(self, ctx):
-        if ctx.mode.y_true is None:
+        if ctx.var.y_true is None:
             raise KeyError('Missing key y_true!')
-        if ctx.mode.y_prob is None:
+        if ctx.var.y_prob is None:
             raise KeyError('Missing key y_prob!')
-        y_true = ctx.mode.y_true
-        y_prob = ctx.mode.y_prob
+        y_true = ctx.var.y_true
+        y_prob = ctx.var.y_prob
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
@@ -172,19 +172,19 @@ def eval_rmse(y_true, y_pred, **kwargs):
 
 
 def eval_loss(ctx, **kwargs):
-    return ctx.mode.loss_batch_total
+    return ctx.var.loss_batch_total
 
 
 def eval_avg_loss(ctx, **kwargs):
-    return ctx.mode.loss_batch_total / ctx.mode.num_samples
+    return ctx.var.loss_batch_total / ctx.var.num_samples
 
 
 def eval_total(ctx, **kwargs):
-    return ctx.mode.num_samples
+    return ctx.var.num_samples
 
 
 def eval_regular(ctx, **kwargs):
-    return ctx.mode.loss_regular_total
+    return ctx.var.loss_regular_total
 
 
 SUPPORT_METRICS = {

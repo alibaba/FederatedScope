@@ -35,8 +35,8 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
             ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.mode.y_true = CtxReferVar(label, "batch")
-        ctx.mode.y_prob = CtxReferVar(pred, "batch")
+        ctx.var.y_true = CtxReferVar(label, "batch")
+        ctx.var.y_prob = CtxReferVar(pred, "batch")
 
 
 class NodeMiniBatchTrainer(GeneralTorchTrainer):
@@ -117,8 +117,8 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                 ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.mode.y_true = CtxReferVar(label, "batch")
-        ctx.mode.y_prob = CtxReferVar(pred, "batch")
+        ctx.var.y_true = CtxReferVar(label, "batch")
+        ctx.var.y_prob = CtxReferVar(pred, "batch")
 
 
 def call_node_level_trainer(trainer_type):

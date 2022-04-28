@@ -108,8 +108,8 @@ class GeneralTFTrainer(Trainer):
                     ],
                     feed_dict=feed_dict)
                 ctx.loss_batch = batch_loss
-                ctx.mode.y_true = CtxReferVar(y_true, "batch")
-                ctx.mode.y_prob = CtxReferVar(y_prob, "batch")
+                ctx.var.y_true = CtxReferVar(y_true, "batch")
+                ctx.var.y_prob = CtxReferVar(y_prob, "batch")
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         pass
@@ -135,8 +135,8 @@ class GeneralTFTrainer(Trainer):
             ctx.batch_size)
 
         # cache label for evaluate
-        ctx.mode.ys_true.append(ctx.mode.y_true)
-        ctx.mode.ys_prob.append(ctx.mode.y_prob)
+        ctx.var.ys_true.append(ctx.var.y_true)
+        ctx.var.ys_prob.append(ctx.var.y_prob)
 
         # clean temp ctx
         ctx.data_batch = None

@@ -372,7 +372,7 @@ class GeneralTorchTrainer(Trainer):
 
         # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
         # TODO: self.ctx should not fetch variables here (since the lifecycle of the variables should end in the routine)
-        return self.ctx["mode"]["train"].num_samples, self._param_filter(
+        return self.ctx["var"]["train_{}".format(target_data_split_name)].num_samples, self._param_filter(
             self.ctx.model.state_dict() if self.cfg.federate.share_local_model
             else self.ctx.model.cpu().state_dict()), self.ctx.eval_metrics
 
@@ -429,11 +429,11 @@ class GeneralTorchTrainer(Trainer):
         ctx.model.to(ctx.device)
 
         # Prepare variables
-        ctx.mode.loss_batch_total = CtxStatsVar()
-        ctx.mode.loss_regular_total = CtxStatsVar()
-        ctx.mode.num_samples = CtxStatsVar(0, lifecycle=None)
-        ctx.mode.ys_true = CtxReferVar(list(), "routine")
-        ctx.mode.ys_prob = CtxReferVar(list(), "routine")
+        ctx.var.loss_batch_total = CtxStatsVar()
+        ctx.var.loss_regular_total = CtxStatsVar()
+        ctx.var.num_samples = CtxStatsVar(0, lifecycle=None)
+        ctx.var.ys_true = CtxReferVar(list(), "routine")
+        ctx.var.ys_prob = CtxReferVar(list(), "routine")
 
     def _hook_on_epoch_start(self, ctx):
         # Prepare dataloader
@@ -468,8 +468,8 @@ class GeneralTorchTrainer(Trainer):
 
         ctx.loss_batch = CtxReferVar(ctx.criterion(pred, label), "batch")
         ctx.batch_size = CtxStatsVar(len(label), "batch")
-        ctx.mode.y_true = CtxReferVar(label, "batch")
-        ctx.mode.y_prob = CtxReferVar(pred, "batch")
+        ctx.var.y_true = CtxReferVar(label, "batch")
+        ctx.var.y_prob = CtxReferVar(pred, "batch")
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         ctx.loss_regular = CtxReferVar(
@@ -486,20 +486,20 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_batch_end(self, ctx):
         # Update statistics
-        ctx.mode.num_samples += ctx.batch_size
-        ctx.mode.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
-        ctx.mode.loss_regular_total += float(ctx.get("loss_regular", 0.))
+        ctx.var.num_samples += ctx.batch_size
+        ctx.var.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
+        ctx.var.loss_regular_total += float(ctx.get("loss_regular", 0.))
         # Cache label for evaluate
-        ctx.mode.ys_true.append(ctx.mode.y_true.detach().cpu().numpy())
-        ctx.mode.ys_prob.append(ctx.mode.y_prob.detach().cpu().numpy())
+        ctx.var.ys_true.append(ctx.var.y_true.detach().cpu().numpy())
+        ctx.var.ys_prob.append(ctx.var.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
 
         """
-        ctx.mode.y_true = CtxReferVar(np.concatenate(ctx.mode.ys_true),
+        ctx.var.y_true = CtxReferVar(np.concatenate(ctx.var.ys_true),
                                       "routine")
-        ctx.mode.y_prob = CtxReferVar(np.concatenate(ctx.mode.ys_prob),
+        ctx.var.y_prob = CtxReferVar(np.concatenate(ctx.var.ys_prob),
                                       "routine")
 
         results = self.evaluator.eval(ctx)
