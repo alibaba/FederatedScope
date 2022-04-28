@@ -85,9 +85,13 @@ class EarlyStopper(object):
         return self.early_stopped
 
     def track_and_check(self, new_result):
-        if self.patience:
-            if self.improve_indicator_mode == 'best':
-                return self.track_and_check_best(new_result)
-            elif self.improve_indicator_mode == 'mean':
-                return self.track_and_check_mean(new_result)
-        return self.track_and_check_dummy(new_result)
+
+        track_method = self.track_and_check_dummy  # do nothing
+        if self.patience == 0:
+            track_method = self.track_and_check_dummy
+        elif self.improve_indicator_mode == 'best':
+            track_method = self.track_and_check_best
+        elif self.improve_indicator_mode == 'mean':
+            track_method = self.track_and_check_mean
+
+        return track_method(new_result)
