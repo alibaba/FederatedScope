@@ -102,9 +102,10 @@ def assert_fl_setting_cfg(cfg):
             # (a.2) use sample_client_num, commented since the below two lines do not change anything
             # elif sample_client_num_valid:
             #     cfg.federate.sample_client_num = cfg.federate.sample_client_num
-            if not (sample_client_rate_valid or sample_client_num_valid):
-                # (b) non-sampling case, use all clients
-                cfg.federate.sample_client_num = cfg.federate.client_num
+
+        # (b) non-sampling case, use all clients
+        if not (sample_client_rate_valid or sample_client_num_valid):
+            cfg.federate.sample_client_num = cfg.federate.client_num
 
     if cfg.federate.use_ss:
         assert cfg.federate.client_num == cfg.federate.sample_client_num, \
