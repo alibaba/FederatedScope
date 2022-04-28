@@ -242,7 +242,8 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 self._param_filter(
                     self.ctx.models[model_idx].cpu().state_dict()))
 
-        return trained_model_para[0] if self.model_nums == 1 else trained_model_para
+        return trained_model_para[
+            0] if self.model_nums == 1 else trained_model_para
 
     def update(self, model_parameters):
         # update multiple model paras

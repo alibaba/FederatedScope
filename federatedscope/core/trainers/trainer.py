@@ -326,8 +326,8 @@ class Trainer(object):
 class GeneralTorchTrainer(Trainer):
     def get_model_para(self):
         return self._param_filter(
-            self.ctx.model.state_dict() if self.cfg.federate.share_local_model
-            else self.ctx.model.cpu().state_dict())
+            self.ctx.model.state_dict() if self.cfg.federate.
+            share_local_model else self.ctx.model.cpu().state_dict())
 
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
@@ -372,7 +372,8 @@ class GeneralTorchTrainer(Trainer):
 
         # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
 
-        return self.ctx.num_samples_train, self.get_model_para(), self.ctx.eval_metrics
+        return self.ctx.num_samples_train, self.get_model_para(
+        ), self.ctx.eval_metrics
 
     def update(self, model_parameters):
         '''

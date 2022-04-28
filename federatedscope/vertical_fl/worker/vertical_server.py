@@ -79,7 +79,8 @@ class vFLServer(Server):
         self.state += 1
         if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
             metrics = self.evaluate()
-            update_best_result(self.best_results, metrics,
+            update_best_result(self.best_results,
+                               metrics,
                                results_type='server_global_eval',
                                round_wise_update_key=self._cfg.eval.
                                best_res_update_round_wise_key)
@@ -98,7 +99,8 @@ class vFLServer(Server):
             self.broadcast_model_para()
         else:
             metrics = self.evaluate()
-            update_best_result(self.best_results, metrics,
+            update_best_result(self.best_results,
+                               metrics,
                                results_type='server_global_eval',
                                round_wise_update_key=self._cfg.eval.
                                best_res_update_round_wise_key)
