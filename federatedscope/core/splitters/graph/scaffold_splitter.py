@@ -43,7 +43,6 @@ def gen_scaffold_split(dataset, client_num=5):
     ]
     scaffold_idxs = sum(scaffold_list, [])
     # Split data to list
-    idx_dict = {}
     splits = np.array_split(scaffold_idxs, client_num)
     return [splits[ID] for ID in range(client_num)]
 

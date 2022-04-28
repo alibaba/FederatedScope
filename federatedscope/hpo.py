@@ -4,6 +4,7 @@ import logging
 
 import yaml
 
+logger = logging.getLogger(__name__)
 DEV_MODE = True  # simplify the federatedscope re-setup everytime we change the source codes of federatedscope
 if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
@@ -28,4 +29,4 @@ if __name__ == '__main__':
 
     scheduler = get_scheduler(tbd_config)
     results = scheduler.optimize()
-    logging.info(results)
+    logger.info(results)

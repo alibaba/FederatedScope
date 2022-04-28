@@ -119,16 +119,17 @@ To run with distributed mode, you only need to:
 
 - Prepare isolated data file and set up `cfg.distribute.data_file = PATH/TO/DATA` for each participant;
 - Change `cfg.federate.model = 'distributed'`, and specify the role of each participant  by `cfg.distributed.role = 'server'/'client'`.
-- Set up a valid address by `cfg.distribute.host = x.x.x.x` and `cfg.distribute.host = xxxx`. (Note that for a server, you need to set up server_host/server_port for listening messge, while for a client, you need to set up client_host/client_port for listening and server_host/server_port for sending join-in applications when building up an FL course)
+- Set up a valid address by `cfg.distribute.host = x.x.x.x` and `cfg.distribute.port = xxxx`. (Note that for a server, you need to set up server_host/server_port for listening messge, while for a client, you need to set up client_host/client_port for listening and server_host/server_port for sending join-in applications when building up an FL course)
 
 We prepare a synthetic example for running with distributed mode:
 
 ```bash
 # For server
-python main.py --cfg federatedscope/example_configs/distributed_server.yaml data_path 'PATH/TO/DATA' server.host x.x.x.x client.port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_server.yaml data_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
 
-# For client
-python main.py --cfg federatedscope/example_configs/distributed_client.yaml data_path 'PATH/TO/DATA' server.host x.x.x.x server.port xxxx client.host x.x.x.x client.port xxxx
+# For clients
+python main.py --cfg federatedscope/example_configs/distributed_client_1.yaml data_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_client_2.yaml data_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
 ```
 
 And you can observe the results as (the IP addresses are anonymized with 'x.x.x.x'):

@@ -3,6 +3,7 @@
 # source: gRPC_comm_manager.proto
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
+from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
@@ -10,107 +11,85 @@ from google.protobuf import symbol_database as _symbol_database
 
 _sym_db = _symbol_database.Default()
 
-DESCRIPTOR = _descriptor.FileDescriptor(
-    name='gRPC_comm_manager.proto',
-    package='',
-    syntax='proto3',
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-    serialized_pb=
-    b'\n\x17gRPC_comm_manager.proto\"\x1d\n\x0eMessageRequest\x12\x0b\n\x03msg\x18\x01 \x01(\t\"\x1e\n\x0fMessageResponse\x12\x0b\n\x03msg\x18\x01 \x01(\t2D\n\x10gRPCComServeFunc\x12\x30\n\x0bsendMessage\x12\x0f.MessageRequest\x1a\x10.MessageResponseb\x06proto3'
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\x17gRPC_comm_manager.proto\"n\n\x0eMessageRequest\x12%\n\x03msg\x18\x01 \x03(\x0b\x32\x18.MessageRequest.MsgEntry\x1a\x35\n\x08MsgEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x18\n\x05value\x18\x02 \x01(\x0b\x32\t.MsgValue:\x02\x38\x01\"j\n\x08MsgValue\x12\x1e\n\nsingle_msg\x18\x01 \x01(\x0b\x32\x08.mSingleH\x00\x12\x1a\n\x08list_msg\x18\x02 \x01(\x0b\x32\x06.mListH\x00\x12\x1a\n\x08\x64ict_msg\x18\x03 \x01(\x0b\x32\x06.mDictH\x00\x42\x06\n\x04type\"R\n\x07mSingle\x12\x15\n\x0b\x66loat_value\x18\x01 \x01(\x02H\x00\x12\x13\n\tint_value\x18\x02 \x01(\x05H\x00\x12\x13\n\tstr_value\x18\x03 \x01(\tH\x00\x42\x06\n\x04type\"&\n\x05mList\x12\x1d\n\nlist_value\x18\x01 \x03(\x0b\x32\t.MsgValue\"o\n\x05mDict\x12)\n\ndict_value\x18\x01 \x03(\x0b\x32\x15.mDict.DictValueEntry\x1a;\n\x0e\x44ictValueEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x18\n\x05value\x18\x02 \x01(\x0b\x32\t.MsgValue:\x02\x38\x01\"\x1e\n\x0fMessageResponse\x12\x0b\n\x03msg\x18\x01 \x01(\t2D\n\x10gRPCComServeFunc\x12\x30\n\x0bsendMessage\x12\x0f.MessageRequest\x1a\x10.MessageResponseb\x06proto3'
 )
 
-_MESSAGEREQUEST = _descriptor.Descriptor(
-    name='MessageRequest',
-    full_name='MessageRequest',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='msg',
-            full_name='MessageRequest.msg',
-            index=0,
-            number=1,
-            type=9,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"".decode('utf-8'),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=27,
-    serialized_end=56,
-)
-
-_MESSAGERESPONSE = _descriptor.Descriptor(
-    name='MessageResponse',
-    full_name='MessageResponse',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='msg',
-            full_name='MessageResponse.msg',
-            index=0,
-            number=1,
-            type=9,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"".decode('utf-8'),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=58,
-    serialized_end=88,
-)
-
-DESCRIPTOR.message_types_by_name['MessageRequest'] = _MESSAGEREQUEST
-DESCRIPTOR.message_types_by_name['MessageResponse'] = _MESSAGERESPONSE
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
-
+_MESSAGEREQUEST = DESCRIPTOR.message_types_by_name['MessageRequest']
+_MESSAGEREQUEST_MSGENTRY = _MESSAGEREQUEST.nested_types_by_name['MsgEntry']
+_MSGVALUE = DESCRIPTOR.message_types_by_name['MsgValue']
+_MSINGLE = DESCRIPTOR.message_types_by_name['mSingle']
+_MLIST = DESCRIPTOR.message_types_by_name['mList']
+_MDICT = DESCRIPTOR.message_types_by_name['mDict']
+_MDICT_DICTVALUEENTRY = _MDICT.nested_types_by_name['DictValueEntry']
+_MESSAGERESPONSE = DESCRIPTOR.message_types_by_name['MessageResponse']
 MessageRequest = _reflection.GeneratedProtocolMessageType(
     'MessageRequest',
     (_message.Message, ),
     {
+        'MsgEntry': _reflection.GeneratedProtocolMessageType(
+            'MsgEntry',
+            (_message.Message, ),
+            {
+                'DESCRIPTOR': _MESSAGEREQUEST_MSGENTRY,
+                '__module__': 'gRPC_comm_manager_pb2'
+                # @@protoc_insertion_point(class_scope:MessageRequest.MsgEntry)
+            }),
         'DESCRIPTOR': _MESSAGEREQUEST,
         '__module__': 'gRPC_comm_manager_pb2'
         # @@protoc_insertion_point(class_scope:MessageRequest)
     })
 _sym_db.RegisterMessage(MessageRequest)
+_sym_db.RegisterMessage(MessageRequest.MsgEntry)
+
+MsgValue = _reflection.GeneratedProtocolMessageType(
+    'MsgValue',
+    (_message.Message, ),
+    {
+        'DESCRIPTOR': _MSGVALUE,
+        '__module__': 'gRPC_comm_manager_pb2'
+        # @@protoc_insertion_point(class_scope:MsgValue)
+    })
+_sym_db.RegisterMessage(MsgValue)
+
+mSingle = _reflection.GeneratedProtocolMessageType(
+    'mSingle',
+    (_message.Message, ),
+    {
+        'DESCRIPTOR': _MSINGLE,
+        '__module__': 'gRPC_comm_manager_pb2'
+        # @@protoc_insertion_point(class_scope:mSingle)
+    })
+_sym_db.RegisterMessage(mSingle)
+
+mList = _reflection.GeneratedProtocolMessageType(
+    'mList',
+    (_message.Message, ),
+    {
+        'DESCRIPTOR': _MLIST,
+        '__module__': 'gRPC_comm_manager_pb2'
+        # @@protoc_insertion_point(class_scope:mList)
+    })
+_sym_db.RegisterMessage(mList)
+
+mDict = _reflection.GeneratedProtocolMessageType(
+    'mDict',
+    (_message.Message, ),
+    {
+        'DictValueEntry': _reflection.GeneratedProtocolMessageType(
+            'DictValueEntry',
+            (_message.Message, ),
+            {
+                'DESCRIPTOR': _MDICT_DICTVALUEENTRY,
+                '__module__': 'gRPC_comm_manager_pb2'
+                # @@protoc_insertion_point(class_scope:mDict.DictValueEntry)
+            }),
+        'DESCRIPTOR': _MDICT,
+        '__module__': 'gRPC_comm_manager_pb2'
+        # @@protoc_insertion_point(class_scope:mDict)
+    })
+_sym_db.RegisterMessage(mDict)
+_sym_db.RegisterMessage(mDict.DictValueEntry)
 
 MessageResponse = _reflection.GeneratedProtocolMessageType(
     'MessageResponse',
@@ -122,29 +101,30 @@ MessageResponse = _reflection.GeneratedProtocolMessageType(
     })
 _sym_db.RegisterMessage(MessageResponse)
 
-_GRPCCOMSERVEFUNC = _descriptor.ServiceDescriptor(
-    name='gRPCComServeFunc',
-    full_name='gRPCComServeFunc',
-    file=DESCRIPTOR,
-    index=0,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-    serialized_start=90,
-    serialized_end=158,
-    methods=[
-        _descriptor.MethodDescriptor(
-            name='sendMessage',
-            full_name='gRPCComServeFunc.sendMessage',
-            index=0,
-            containing_service=None,
-            input_type=_MESSAGEREQUEST,
-            output_type=_MESSAGERESPONSE,
-            serialized_options=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ])
-_sym_db.RegisterServiceDescriptor(_GRPCCOMSERVEFUNC)
+_GRPCCOMSERVEFUNC = DESCRIPTOR.services_by_name['gRPCComServeFunc']
+if _descriptor._USE_C_DESCRIPTORS == False:
 
-DESCRIPTOR.services_by_name['gRPCComServeFunc'] = _GRPCCOMSERVEFUNC
-
+    DESCRIPTOR._options = None
+    _MESSAGEREQUEST_MSGENTRY._options = None
+    _MESSAGEREQUEST_MSGENTRY._serialized_options = b'8\001'
+    _MDICT_DICTVALUEENTRY._options = None
+    _MDICT_DICTVALUEENTRY._serialized_options = b'8\001'
+    _MESSAGEREQUEST._serialized_start = 27
+    _MESSAGEREQUEST._serialized_end = 137
+    _MESSAGEREQUEST_MSGENTRY._serialized_start = 84
+    _MESSAGEREQUEST_MSGENTRY._serialized_end = 137
+    _MSGVALUE._serialized_start = 139
+    _MSGVALUE._serialized_end = 245
+    _MSINGLE._serialized_start = 247
+    _MSINGLE._serialized_end = 329
+    _MLIST._serialized_start = 331
+    _MLIST._serialized_end = 369
+    _MDICT._serialized_start = 371
+    _MDICT._serialized_end = 482
+    _MDICT_DICTVALUEENTRY._serialized_start = 423
+    _MDICT_DICTVALUEENTRY._serialized_end = 482
+    _MESSAGERESPONSE._serialized_start = 484
+    _MESSAGERESPONSE._serialized_end = 514
+    _GRPCCOMSERVEFUNC._serialized_start = 516
+    _GRPCCOMSERVEFUNC._serialized_end = 584
 # @@protoc_insertion_point(module_scope)

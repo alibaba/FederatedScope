@@ -22,9 +22,9 @@ MODE = {'femnist': 'L', 'celeba': 'RGB'}
 class LEAF_CV(LEAF):
     """
     LEAF CV dataset from "LEAF: A Benchmark for Federated Settings"
-    
+
     leaf.cmu.edu
-    
+
     Arguments:
         root (str): root path.
         name (str): name of dataset, ‘femnist’ or ‘celeba’.
@@ -46,8 +46,6 @@ class LEAF_CV(LEAF):
                  seed=123,
                  transform=None,
                  target_transform=None):
-        # self.transform = Compose(
-        #     [ToTensor(), Normalize((0.1307, ), (0.3081, ))])
         self.s_frac = s_frac
         self.tr_frac = tr_frac
         self.val_frac = val_frac
@@ -99,9 +97,9 @@ class LEAF_CV(LEAF):
             index (int): Index
 
         Returns:
-            dict: {'train':[(image, target)], 
-                   'test':[(image, target)], 
-                   'val':[(image, target)]} 
+            dict: {'train':[(image, target)],
+                   'test':[(image, target)],
+                   'val':[(image, target)]}
             where target is the target class.
         """
         img_dict = {}
@@ -113,7 +111,7 @@ class LEAF_CV(LEAF):
                 img = np.resize(imgs[idx].numpy().astype(np.uint8),
                                 IMAGE_SIZE[self.name])
                 img = Image.fromarray(img, mode=MODE[self.name])
-
+                target = targets[idx]
                 if self.transform is not None:
                     img = self.transform(img)
 

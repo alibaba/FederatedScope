@@ -23,7 +23,7 @@ class MFTest(unittest.TestCase):
 
         cfg.federate.mode = 'standalone'
         cfg.federate.local_update_steps = 20
-        cfg.federate.total_round_num = 200
+        cfg.federate.total_round_num = 50
         cfg.federate.client_num = 5
 
         cfg.data.root = 'test_data/'
@@ -43,23 +43,24 @@ class MFTest(unittest.TestCase):
         return backup_cfg
 
     def test_mf_standalone(self):
-        backup_cfg = self.set_config_movielens1m(global_cfg)
-        setup_seed(global_cfg.seed)
-        update_logger(global_cfg)
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_movielens1m(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg)
 
-        data, modified_cfg = get_data(global_cfg.clone())
-        global_cfg.merge_from_other_cfg(modified_cfg)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
         Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(global_cfg),
-                               client_class=get_client_cls(global_cfg),
-                               config=global_cfg.clone())
+                               server_class=get_server_cls(init_cfg),
+                               client_class=get_client_cls(init_cfg),
+                               config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
-        global_cfg.merge_from_other_cfg(backup_cfg)
+        init_cfg.merge_from_other_cfg(backup_cfg)
 
-        self.assertLess(test_results['client_individual']['test_avg_loss'], 20)
+        self.assertLess(test_results['client_individual']['test_avg_loss'], 50)
 
 
 if __name__ == '__main__':

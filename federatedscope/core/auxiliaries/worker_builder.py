@@ -7,6 +7,10 @@ logger = logging.getLogger(__name__)
 
 
 def get_client_cls(cfg):
+    if cfg.hpo.fedex.use:
+        from federatedscope.autotune.fedex import FedExClient
+        return FedExClient
+
     if cfg.vertical.use:
         from federatedscope.vertical_fl.worker import vFLClient
         return vFLClient
@@ -44,6 +48,10 @@ def get_client_cls(cfg):
 
 
 def get_server_cls(cfg):
+    if cfg.hpo.fedex.use:
+        from federatedscope.autotune.fedex import FedExServer
+        return FedExServer
+
     if cfg.attack.attack_method.lower() in ['dlg', 'ig']:
         from federatedscope.attack.worker_as_attacker.server_attacker import PassiveServer
         return PassiveServer

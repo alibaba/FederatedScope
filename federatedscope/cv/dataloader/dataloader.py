@@ -1,37 +1,7 @@
-import torch
-import numpy as np
-
-from collections.abc import Iterable
-from torchvision import transforms
 from torch.utils.data import DataLoader
 
 from federatedscope.cv.dataset.leaf_cv import LEAF_CV
-
-
-def get_transforms(config):
-
-    return transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.1307], std=[0.3081])
-    ])
-
-    if config.data.transforms is None:
-        return None
-    else:
-        if isinstance(config.data.transforms, Iterable):
-            trans = list()
-            for type in config.data.transforms:
-                if isinstance(type, str):
-                    if hasattr(transforms, type):
-                        trans.append(getattr(transforms, type)())
-                    else:
-                        raise NotImplementedError(
-                            'Transform {} not implement'.format(type))
-                elif isinstance(type, list):
-                    pass
-            return transforms.Compose(trans)
-        else:
-            raise TypeError()
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def load_cv_dataset(config=None):
@@ -48,10 +18,8 @@ def load_cv_dataset(config=None):
 
     path = config.data.root
     name = config.data.type.lower()
-    client_num = config.federate.client_num
     batch_size = config.data.batch_size
-
-    transform = get_transforms(config)
+    transforms_funcs = get_transform(config, 'torchvision')
 
     if name in ['femnist', 'celeba']:
         dataset = LEAF_CV(root=path,
@@ -60,7 +28,7 @@ def load_cv_dataset(config=None):
                           tr_frac=splits[0],
                           val_frac=splits[1],
                           seed=1234,
-                          transform=transform)
+                          **transforms_funcs)
     else:
         raise ValueError(f'No dataset named: {name}!')
 

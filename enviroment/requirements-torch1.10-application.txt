@@ -19,5 +19,7 @@ rdkit=2021.09.4
 sentencepiece
 textgrid
 typeguard
+nltk
+torchtext
 
 
