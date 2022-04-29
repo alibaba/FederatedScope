@@ -71,7 +71,7 @@ class FedExClient(Client):
             self.trainer.update(model_params)
         metrics = {}
         for split in self._cfg.eval.split:
-            eval_metrics = self.trainer.evaluate(target_data_split_name=split)
+            eval_metrics = self.trainer.evaluate(mode=split, target_data_split_name=split)
             for key in eval_metrics:
 
                 if self._cfg.federate.mode == 'distributed':
