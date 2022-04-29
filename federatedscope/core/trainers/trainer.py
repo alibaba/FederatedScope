@@ -408,7 +408,9 @@ class GeneralTorchTrainer(Trainer):
         # freeze the parameters during the fine-tune stage
         require_grad_changed_paras = set()
         if self.cfg.trainer.finetune.freeze_param != "":
-            preserved_paras = self._param_filter(self.ctx.model.state_dict(), self.cfg.trainer.finetune.freeze_param)
+            preserved_paras = self._param_filter(
+                self.ctx.model.state_dict(),
+                self.cfg.trainer.finetune.freeze_param)
             for name, param in self.ctx.model.named_parameters():
                 if name not in preserved_paras and param.requires_grad is True:
                     param.requires_grad = False

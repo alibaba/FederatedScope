@@ -67,7 +67,9 @@ def assert_training_cfg(cfg):
             "We only support run with cpu when backend is tensorflow")
 
     if cfg.trainer.finetune.before_eval is False and cfg.trainer.finetune.steps <= 0:
-        raise ValueError(f"When adopting fine-tuning, please set a valid local fine-tune steps, got {cfg.trainer.finetune.steps}")
+        raise ValueError(
+            f"When adopting fine-tuning, please set a valid local fine-tune steps, got {cfg.trainer.finetune.steps}"
+        )
 
 
 register_config("fl_training", extend_training_cfg)

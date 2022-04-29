@@ -53,5 +53,6 @@ class ToyLRTest(unittest.TestCase):
             test_best_results["client_summarized_weighted_avg"]['test_loss'],
             0.3)
 
+
 if __name__ == '__main__':
     unittest.main()
