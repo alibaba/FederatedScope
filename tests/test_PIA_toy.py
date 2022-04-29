@@ -15,8 +15,7 @@ class PIA_ToyLRTest(unittest.TestCase):
     def set_config_standalone(self, cfg):
         backup_cfg = cfg.clone()
 
-        import torch
-        cfg.use_gpu = torch.cuda.is_available()
+        cfg.use_gpu = False
         cfg.federate.mode = 'standalone'
         cfg.federate.total_round_num = 20
         cfg.federate.client_num = 5
