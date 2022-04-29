@@ -9,7 +9,7 @@ from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 from federatedscope.core.auxiliaries import utils
 from federatedscope.core.trainers.context import Context
-from federatedscope.core.evaluator import Evaluator
+from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
 try:
     import torch
@@ -34,7 +34,7 @@ class Trainer(object):
 
     def __init__(self, model, data, device, config, only_for_eval=False):
         self.cfg = config
-        self.evaluator = Evaluator(config.eval.metrics)
+        self.metric_calculator = MetricCalculator(config.eval.metrics)
 
         self.ctx = Context(model,
                            self.cfg,
@@ -249,7 +249,14 @@ class Trainer(object):
         '''
             Called by the FL client to update the model parameters
         Arguments:
-            model_parameters (dict): PyTorch Module object's state_dict.
+            model_parameters (dict): {model_name: model_val}
+        '''
+        pass
+
+    def get_model_para(self):
+        '''
+
+        :return: model_parameters (dict): {model_name: model_val}
         '''
         pass
 
@@ -283,18 +290,20 @@ class Trainer(object):
     def finetune(self):
         pass
 
-    # model parameter personalization.
-    # e.g., setting cfg.personalization.local_param= ['bn', 'norms']
-    # indicates the implementation of
-    # "FedBN: Federated Learning on Non-IID Features via Local Batch Normalization, ICML2021", which can be found in
-    # https://openreview.net/forum?id=6YEQUn0QICG
     def _param_filter(self, state_dict):
         '''
+        model parameter filter when transmit between local and gloabl, which is useful in personalization.
+        e.g., setting cfg.personalization.local_param= ['bn', 'norms'] indicates the implementation of
+        "FedBN: Federated Learning on Non-IID Features via Local Batch Normalization, ICML2021", which can be found in https://openreview.net/forum?id=6YEQUn0QICG
+
         Arguments:
             state_dict (dict): PyTorch Module object's state_dict.
         Returns:
             state_dict (dict): remove the keys that match any of the given keywords.
         '''
+        if self.cfg.federate.method == "local":
+            return {}
+
         trainable_filter = lambda p: True if self.cfg.personalization.share_non_trainable_para else \
             lambda p: p in self.ctx.trainable_para_names
         keyword_filter = utils.filter_by_specified_keywords
@@ -315,6 +324,11 @@ class Trainer(object):
 
 
 class GeneralTorchTrainer(Trainer):
+    def get_model_para(self):
+        return self._param_filter(
+            self.ctx.model.state_dict() if self.cfg.federate.
+            share_local_model else self.ctx.model.cpu().state_dict())
+
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
 
@@ -358,9 +372,8 @@ class GeneralTorchTrainer(Trainer):
 
         # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
 
-        return self.ctx.num_samples_train, self._param_filter(
-            self.ctx.model.state_dict() if self.cfg.federate.share_local_model
-            else self.ctx.model.cpu().state_dict()), self.ctx.eval_metrics
+        return self.ctx.num_samples_train, self.get_model_para(
+        ), self.ctx.eval_metrics
 
     def update(self, model_parameters):
         '''
@@ -368,7 +381,6 @@ class GeneralTorchTrainer(Trainer):
         Arguments:
             model_parameters (dict): PyTorch Module object's state_dict.
         '''
-        # TODO: blind torch
         for key in model_parameters:
             if isinstance(model_parameters[key], list):
                 model_parameters[key] = torch.FloatTensor(
@@ -521,7 +533,7 @@ class GeneralTorchTrainer(Trainer):
         setattr(
             ctx, "{}_y_prob".format(ctx.cur_data_split),
             np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
-        results = self.evaluator.eval(ctx)
+        results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
     def save_model(self, path, cur_round=-1):
