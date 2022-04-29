@@ -16,17 +16,21 @@ def set_config_flitplus(cfg):
     cfg.federate.mode = 'standalone'
     cfg.federate.make_global_eval = True
     cfg.federate.client_num = 5
-    cfg.federate.total_round_num = 400
-    cfg.federate.local_update_steps = 16
+    # cfg.federate.total_round_num = 400
+    # cfg.federate.local_update_steps = 16
 
     cfg.data.root = 'data/'
-    # Cls: ['bbbp', 'bace', 'tox21', 'sider', 'clintox'], Reg: ['esol', 'freesolv', 'lipo']
-    cfg.data.type = 'esol'
+    # TODO: Cls: Multi-task ['tox21', 'sider', 'clintox'], Reg: Non convergence, QM9: dataloader
+    # cfg.data.type = 'freesolv'  # ['esol', 'freesolv', 'lipo']
+    cfg.data.type = 'hiv'  # ['hiv', 'bbbp', 'bace']
+    cfg.data.batch_size = 64
     cfg.data.splitter = 'scaffold_lda'
 
-    cfg.model.type = 'sage'
+    cfg.model.type = 'mpnn'
+    # cfg.model.type = 'gin'
     cfg.model.hidden = 64
-    cfg.model.out_channels = 1
+    # cfg.model.out_channels = 1
+    cfg.model.out_channels = 2
     cfg.model.task = 'graph'
 
     cfg.flitplus.alpha = 0.1
@@ -36,9 +40,13 @@ def set_config_flitplus(cfg):
     cfg.optimizer.lr = 0.25
     cfg.optimizer.weight_decay = 0.0005
 
+    # cfg.criterion.type = 'MSELoss'
     cfg.criterion.type = 'CrossEntropyLoss'
+
     cfg.trainer.type = 'flitplustrainer'
+
     cfg.eval.freq = 5
+    # cfg.eval.metrics = []
     cfg.eval.metrics = ['acc', 'correct']
 
     return backup_cfg

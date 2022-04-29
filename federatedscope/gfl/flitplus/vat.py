@@ -36,36 +36,65 @@ class VATLoss(nn.Module):
         self.eps = eps
         self.ip = ip
 
-    def forward(self, model, graph):
-        pred = model(graph)
-        logp = F.log_softmax(pred, dim=1)
+    def forward(self, model, graph, criterion_type):
+        if criterion_type == 'CrossEntropyLoss':
+            pred = model(graph)
+            logp = F.log_softmax(pred, dim=1)
 
-        # prepare random unit tensor
-        nodefea = graph.x
-        dn = torch.rand(nodefea.shape).sub(0.5).to(nodefea.device)
-        dn = _l2_normalize(dn)
+            # prepare random unit tensor
+            nodefea = graph.x
+            dn = torch.rand(nodefea.shape).sub(0.5).to(nodefea.device)
+            dn = _l2_normalize(dn)
 
-        with _disable_tracking_bn_stats(model):
-            # calc adversarial direction
-            with torch.enable_grad():
-                for _ in range(self.ip):
-                    dn.requires_grad_()
-                    x_neighbor = Batch(x=nodefea + self.xi * dn, edge_index=graph.edge_index,
-                                      y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
-                    pred_hat = model(x_neighbor)
-                    logp_hat = F.log_softmax(pred_hat, dim=1)
-                    adv_distance = F.kl_div(logp_hat, logp, reduction='batchmean')
-                    # adv_distance.backward()
-                    # dn = _l2_normalize(dn.grad)
-                    dn = _l2_normalize(torch.autograd.grad(outputs=adv_distance, inputs=dn, retain_graph=True)[0])
-                    model.zero_grad()
+            with _disable_tracking_bn_stats(model):
+                # calc adversarial direction
+                with torch.enable_grad():
+                    for _ in range(self.ip):
+                        dn.requires_grad_()
+                        x_neighbor = Batch(x=nodefea + self.xi * dn, edge_index=graph.edge_index,
+                                          y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
+                        pred_hat = model(x_neighbor)
+                        logp_hat = F.log_softmax(pred_hat, dim=1)
+                        adv_distance = F.kl_div(logp_hat, logp, reduction='batchmean')
+                        # adv_distance.backward()
+                        # dn = _l2_normalize(dn.grad)
+                        dn = _l2_normalize(torch.autograd.grad(outputs=adv_distance, inputs=dn, retain_graph=True)[0])
+                        model.zero_grad()
 
-            # calc LDS
-            rn_adv = dn * self.eps
-            x_adv = Batch(x=nodefea + rn_adv, edge_index=graph.edge_index,
-                              y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
-            pred_hat = model(x_adv)
-            logp_hat = F.log_softmax(pred_hat, dim=1)
-            lds = F.kl_div(logp_hat, logp, reduction='batchmean')
+                # calc LDS
+                rn_adv = dn * self.eps
+                x_adv = Batch(x=nodefea + rn_adv, edge_index=graph.edge_index,
+                                  y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
+                pred_hat = model(x_adv)
+                logp_hat = F.log_softmax(pred_hat, dim=1)
+                lds = F.kl_div(logp_hat, logp, reduction='batchmean')
+        elif criterion_type == 'MSELoss':
+            pred = model(graph)
+
+            # prepare random unit tensor
+            nodefea = graph.x
+            dn = torch.rand(nodefea.shape).sub(0.5).to(nodefea.device)
+            dn = _l2_normalize(dn)
+
+            with _disable_tracking_bn_stats(model):
+                # calc adversarial direction
+                with torch.enable_grad():
+                    for _ in range(self.ip):
+                        dn.requires_grad_()
+                        x_neighbor = Batch(x=nodefea + self.xi * dn, edge_index=graph.edge_index,
+                                          y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
+                        pred_hat = model(x_neighbor)
+                        adv_distance = ((pred-pred_hat)**2).sum(axis=0).sqrt()
+                        dn = _l2_normalize(torch.autograd.grad(outputs=adv_distance, inputs=dn, retain_graph=True)[0])
+                        model.zero_grad()
+
+                # calc LDS
+                rn_adv = dn * self.eps
+                x_adv = Batch(x=nodefea + rn_adv, edge_index=graph.edge_index,
+                                  y=graph.y, edge_attr=graph.edge_attr, batch=graph.batch)
+                pred_hat = model(x_adv)
+                lds = ((pred-pred_hat)**2).sum(axis=0).sqrt()
+        else:
+            raise ValueError(f'FLIT trainer not support {ctx.criterion._get_name()}.')
 
         return lds

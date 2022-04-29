@@ -32,7 +32,12 @@ class FLITTrainer(GeneralTorchTrainer):
         pred = ctx.model(batch)
         ctx.global_model.to(ctx.device)
         predG = ctx.global_model(batch)
-        label = batch.y.squeeze(-1).long()
+        if ctx.criterion._get_name() == 'CrossEntropyLoss':
+            label = batch.y.squeeze(-1).long()
+        elif ctx.criterion._get_name() == 'MSELoss':
+            label = batch.y.squeeze(-1).float()
+        else:
+            raise ValueError(f'FLIT trainer not support {ctx.criterion._get_name()}.')
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
 
@@ -50,18 +55,6 @@ class FLITTrainer(GeneralTorchTrainer):
         ctx.y_true = label
         ctx.y_prob = pred
 
-    def _hook_on_batch_forward_eval(self, ctx):
-        batch = ctx.data_batch.to(ctx.device)
-        pred = ctx.model(batch)
-        label = batch.y.squeeze(-1).long()
-        if len(label.size()) == 0:
-            label = label.unsqueeze(0)
-        ctx.loss_batch = ctx.criterion(pred, label)
-
-        ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
-
 
 class FLITPlusTrainer(FLITTrainer):
     def _hook_on_batch_forward(self, ctx):
@@ -69,12 +62,15 @@ class FLITPlusTrainer(FLITTrainer):
         batch = ctx.data_batch.to(ctx.device)
         ctx.global_model.to(ctx.device)
         vat_loss = VATLoss()  # xi, and eps
-        lossLocalVAT = vat_loss(deepcopy(ctx.model), batch)
-        lossGlobalVAT = vat_loss(deepcopy(ctx.global_model), batch)
+        lossLocalVAT = vat_loss(deepcopy(ctx.model), batch, ctx.criterion._get_name())
+        lossGlobalVAT = vat_loss(deepcopy(ctx.global_model), batch, ctx.criterion._get_name())
 
         pred = ctx.model(batch)
         predG = ctx.global_model(batch)
-        label = batch.y.squeeze(-1).long()
+        if ctx.criterion._get_name() == 'CrossEntropyLoss':
+            label = batch.y.squeeze(-1).long()
+        else:
+            label = batch.y.float()
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
         lossGlobalLabel = ctx.criterion(predG, label)
