@@ -10,9 +10,11 @@ def extend_training_cfg(cfg):
 
     cfg.trainer.type = 'general'
     cfg.trainer.finetune = CN()
-    cfg.trainer.finetune.steps = 0
-    cfg.trainer.finetune.only_psn = True
-    cfg.trainer.finetune.stepsize = 0.01
+    cfg.trainer.finetune.before_eval = False
+    cfg.trainer.finetune.steps = 5
+    cfg.trainer.finetune.lr = 0.01
+    cfg.trainer.finetune.freeze_param = ""  # parameters frozen in fine-tuning stage
+    # cfg.trainer.finetune.only_psn = True
 
     # ------------------------------------------------------------------------ #
     # Optimizer related options
@@ -60,9 +62,12 @@ def assert_training_cfg(cfg):
         raise ValueError(
             "We only support run with distribued mode when backend is tensorflow"
         )
-    if cfg.backend == 'tensorflow' and cfg.use_gpu == True:
+    if cfg.backend == 'tensorflow' and cfg.use_gpu is True:
         raise ValueError(
             "We only support run with cpu when backend is tensorflow")
+
+    if cfg.trainer.finetune.before_eval is False and cfg.trainer.finetune.steps <= 0:
+        raise ValueError(f"When adopting fine-tuning, please set a valid local fine-tune steps, got {cfg.trainer.finetune.steps}")
 
 
 register_config("fl_training", extend_training_cfg)
