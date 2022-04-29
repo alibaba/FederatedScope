@@ -55,8 +55,10 @@ class Client(Worker):
         # For client-side evaluation
         self.best_results = dict()
         self.history_results = dict()
-        # in non-local training mode, we do not use the early stopper, i.e., patience=0
-        patience = self._cfg.early_stop.patience if self._cfg.federate.method == "local" else 0
+        # in local or global training mode, we do use the early stopper. Otherwise, we set patience=0 to deactivate the local early-stopper
+        patience = self._cfg.early_stop.patience if self._cfg.federate.method in [
+            "local", "global"
+        ] else 0
         self.early_stopper = EarlyStopper(
             patience, self._cfg.early_stop.delta,
             self._cfg.early_stop.improve_indicator_mode,
@@ -305,7 +307,7 @@ class Client(Worker):
                                best_res_update_round_wise_key)
             self.history_results = merge_dict(
                 self.history_results, formatted_eval_res['Results_raw'])
-            if self._cfg.federate.method == "local":
+            if self._cfg.federate.method in ["local", "global"]:
                 self.early_stopper.track_and_check_best(self.history_results[
                     self._cfg.eval.best_res_update_round_wise_key])
 

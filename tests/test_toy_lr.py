@@ -15,7 +15,8 @@ class ToyLRTest(unittest.TestCase):
     def set_config_standalone(self, cfg, make_global_eval=False):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = False
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
         cfg.federate.mode = 'standalone'
         cfg.federate.total_round_num = 20
         cfg.federate.make_global_eval = make_global_eval
