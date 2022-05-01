@@ -41,7 +41,7 @@ class FSContestDataset(InMemoryDataset):
 
 
 def load_fs_contest_data(config):
-    from torch.utils.data import DataLoader
+    from torch_geometric.loader import DataLoader
 
     # Build data
     dataset = FSContestDataset(config.data.root)

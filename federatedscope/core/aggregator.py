@@ -43,10 +43,10 @@ class ClientsAvgAggregator(Aggregator):
         return avg_model
 
     def update(self, model_parameters):
-        '''
+        """
         Arguments:
             model_parameters (dict): PyTorch Module object's state_dict.
-        '''
+        """
         self.model.load_state_dict(model_parameters, strict=False)
 
     def save_model(self, path, cur_round=-1):
