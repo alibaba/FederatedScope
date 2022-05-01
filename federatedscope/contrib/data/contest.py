@@ -42,6 +42,7 @@ class FSContestDataset(InMemoryDataset):
 
 def load_fs_contest_data(config):
     from torch_geometric.loader import DataLoader
+    from federatedscope.gfl.dataloader.dataloader_graph import get_numGraphLabels
 
     # Build data
     dataset = FSContestDataset(config.data.root)
@@ -51,20 +52,26 @@ def load_fs_contest_data(config):
     # Build DataLoader dict
     for client_idx in range(1, config.federate.client_num + 1):
         dataloader_dict = {}
+        tmp_dataset = []
         if 'train' in dataset[client_idx - 1]:
             dataloader_dict['train'] = DataLoader(dataset[client_idx -
                                                           1]['train'],
                                                   config.data.batch_size,
                                                   shuffle=config.data.shuffle)
+            tmp_dataset += dataset[client_idx - 1]['train']
         if 'val' in dataset[client_idx - 1]:
             dataloader_dict['val'] = DataLoader(dataset[client_idx - 1]['val'],
                                                 config.data.batch_size,
                                                 shuffle=False)
+            tmp_dataset += dataset[client_idx - 1]['val']
         if 'test' in dataset[client_idx - 1]:
             dataloader_dict['test'] = DataLoader(dataset[client_idx -
                                                          1]['test'],
                                                  config.data.batch_size,
                                                  shuffle=False)
+            tmp_dataset += dataset[client_idx - 1]['test']
+        if tmp_dataset:
+            dataloader_dict['num_label'] = get_numGraphLabels(tmp_dataset)
         data_dict[client_idx] = dataloader_dict
 
     return data_dict, config
