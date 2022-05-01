@@ -71,7 +71,7 @@ def assert_fl_setting_cfg(cfg):
     assert cfg.federate.mode in ["standalone", "distributed"], \
         f"Please specify the cfg.federate.mode as the string standalone or distributed. But got {cfg.federate.mode}."
 
-    # client num related
+    # =============  client num related  ==============
     assert not (cfg.federate.client_num == 0
                 and cfg.federate.mode == 'distributed'
                 ), "Please configure the cfg.federate. in distributed mode. "
@@ -81,13 +81,31 @@ def assert_fl_setting_cfg(cfg):
                                cfg.federate.client_num)
     sample_client_rate_valid = (0 < cfg.federate.sample_client_rate <= 1)
 
-    if cfg.federate.method == "local" and (sample_client_rate_valid
-                                           or sample_client_num_valid):
-        logger.warning("In local training mode, we will use all clients. ")
+    sample_cfg_valid = sample_client_rate_valid or sample_client_num_valid
+    non_sample_case = cfg.federate.method in ["local", "global"]
+    if non_sample_case and sample_cfg_valid:
+        logger.warning(
+            "In local/global training mode, the sampling related configs are in-valid, we will use all clients. "
+        )
+
+    if cfg.federate.method == "global":
+        cfg.federate.client_num = 1
+        logger.info(
+            "In global training mode, we will put all data in a proxy client. "
+        )
+        if cfg.federate.make_global_eval:
+            cfg.federate.make_global_eval = False
+            logger.warning(
+                "In global training mode, we will conduct global evaluation in a proxy client rather than the server. The configuration cfg.federate.make_global_eval will be False."
+            )
+
+    if non_sample_case or not sample_cfg_valid:
+        # (a) use all clients
+        cfg.federate.sample_client_num = cfg.federate.client_num
     else:
-        # (a) sampling case
+        # (b) sampling case
         if sample_client_rate_valid:
-            # (a.1) use sample_client_rate
+            # (b.1) use sample_client_rate
             old_sample_client_num = cfg.federate.sample_client_num
             cfg.federate.sample_client_num = max(
                 1,
@@ -99,13 +117,9 @@ def assert_fl_setting_cfg(cfg):
                     f"\t\tWe will use the sample_client_rate value to calculate "
                     f"the actual number of participated clients as {cfg.federate.sample_client_num}."
                 )
-            # (a.2) use sample_client_num, commented since the below two lines do not change anything
+            # (b.2) use sample_client_num, commented since the below two lines do not change anything
             # elif sample_client_num_valid:
             #     cfg.federate.sample_client_num = cfg.federate.sample_client_num
-
-        # (b) non-sampling case, use all clients
-        if not (sample_client_rate_valid or sample_client_num_valid):
-            cfg.federate.sample_client_num = cfg.federate.client_num
 
     if cfg.federate.use_ss:
         assert cfg.federate.client_num == cfg.federate.sample_client_num, \
@@ -114,7 +128,7 @@ def assert_fl_setting_cfg(cfg):
         assert cfg.federate.method != "local", \
             "Secret sharing is not supported in local training mode"
 
-    # aggregator related
+    # =============   aggregator related   ================
     assert (not cfg.federate.online_aggr) or (
         not cfg.federate.use_ss
     ), "Have not supported to use online aggregator and secrete sharing at the same time"

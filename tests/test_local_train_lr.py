@@ -13,7 +13,8 @@ class ToyLRTest(unittest.TestCase):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
 
     def set_config_standalone(self, cfg, make_global_eval=False):
-        cfg.use_gpu = False
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
         cfg.federate.mode = 'standalone'
         cfg.federate.total_round_num = 100
         cfg.federate.make_global_eval = make_global_eval

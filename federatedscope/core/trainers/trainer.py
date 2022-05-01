@@ -301,7 +301,7 @@ class Trainer(object):
         Returns:
             state_dict (dict): remove the keys that match any of the given keywords.
         '''
-        if self.cfg.federate.method == "local":
+        if self.cfg.federate.method in ["local", "global"]:
             return {}
 
         trainable_filter = lambda p: True if self.cfg.personalization.share_non_trainable_para else \

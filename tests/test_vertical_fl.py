@@ -15,7 +15,8 @@ class vFLTest(unittest.TestCase):
     def set_config(self, cfg):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = False
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
 
         cfg.federate.mode = 'standalone'
         cfg.federate.total_round_num = 30

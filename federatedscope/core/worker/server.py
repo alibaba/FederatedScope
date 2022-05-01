@@ -398,7 +398,7 @@ class Server(Worker):
                 self._noise_injector(self._cfg, num_sample_clients,
                                      self.models[model_idx_i])
 
-        skip_broadcast = self._cfg.federate.method == "local"
+        skip_broadcast = self._cfg.federate.method in ["local", "global"]
         if self.model_num > 1:
             model_para = [{} if skip_broadcast else model.state_dict()
                           for model in self.models]
