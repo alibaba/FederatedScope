@@ -290,7 +290,7 @@ class Trainer(object):
     def finetune(self):
         pass
 
-    def _param_filter(self, state_dict):
+    def _param_filter(self, state_dict, filter_keywords=None):
         '''
         model parameter filter when transmit between local and gloabl, which is useful in personalization.
         e.g., setting cfg.personalization.local_param= ['bn', 'norms'] indicates the implementation of
@@ -304,13 +304,16 @@ class Trainer(object):
         if self.cfg.federate.method in ["local", "global"]:
             return {}
 
+        if filter_keywords is None:
+            filter_keywords = self.cfg.personalization.local_param
+
         trainable_filter = lambda p: True if self.cfg.personalization.share_non_trainable_para else \
             lambda p: p in self.ctx.trainable_para_names
         keyword_filter = utils.filter_by_specified_keywords
         return dict(
             filter(
                 lambda elem: trainable_filter(elem[1]) and keyword_filter(
-                    elem[0], config=self.cfg), state_dict.items()))
+                    elem[0], filter_keywords), state_dict.items()))
 
     def save_model(self, path, cur_round=-1):
         raise NotImplementedError(
@@ -399,6 +402,44 @@ class GeneralTorchTrainer(Trainer):
             super().evaluate(target_data_split_name)
 
         return self.ctx.eval_metrics
+
+    def finetune(self, target_data_split_name="train", hooks_set=None):
+
+        # freeze the parameters during the fine-tune stage
+        require_grad_changed_paras = set()
+        if self.cfg.trainer.finetune.freeze_param != "":
+            preserved_paras = self._param_filter(
+                self.ctx.model.state_dict(),
+                self.cfg.trainer.finetune.freeze_param)
+            for name, param in self.ctx.model.named_parameters():
+                if name not in preserved_paras and param.requires_grad is True:
+                    param.requires_grad = False
+                    require_grad_changed_paras.add(name)
+
+        # change the optimization configs
+        original_lrs = []
+        for g in self.ctx.optimizer.param_groups:
+            original_lrs.append(g['lr'])
+            g['lr'] = self.cfg.trainer.finetune.lr
+        original_epoch_num = self.ctx["num_train_epoch"]
+        original_batch_num = self.ctx["num_train_batch"]
+        self.ctx["num_train_epoch"] = 1
+        self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
+
+        # do the fine-tuning process
+        self.train(target_data_split_name, hooks_set)
+
+        # restore the state before fine-tuning
+        if len(require_grad_changed_paras) > 0:
+            for name, param in self.ctx.model.named_parameters():
+                if name in require_grad_changed_paras:
+                    param.requires_grad = True
+
+        for i, g in enumerate(self.ctx.optimizer.param_groups):
+            g['lr'] = original_lrs[i]
+
+        self.ctx["num_train_epoch"] = original_epoch_num
+        self.ctx["num_train_batch"] = original_batch_num
 
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,
