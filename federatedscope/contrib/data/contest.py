@@ -1,0 +1,79 @@
+import torch
+import os
+from torch_geometric.data import InMemoryDataset
+from federatedscope.register import register_data
+
+
+class FSContestDataset(InMemoryDataset):
+    def __init__(self, root):
+        self.root = root
+        super().__init__(root)
+
+    @property
+    def processed_dir(self):
+        return os.path.join(self.root, 'fscontest', 'processed')
+
+    @property
+    def processed_file_names(self):
+        return ['pre_transform.pt', 'pre_filter.pt']
+
+    def __len__(self):
+        return len([
+            x for x in os.listdir(self.processed_dir)
+            if not x.startswith('pre')
+        ])
+
+    def _load(self, idx, split):
+        try:
+            data = torch.load(
+                os.path.join(self.processed_dir, str(idx), f'{split}.pt'))
+        except:
+            data = None
+        return data
+
+    def __getitem__(self, idx):
+        data = {}
+        for split in ['train', 'val', 'test']:
+            split_data = self._load(idx, split)
+            if split_data:
+                data[split] = split_data
+        return data
+
+
+def load_fs_contest_data(config):
+    from torch.utils.data import DataLoader
+
+    # Build data
+    dataset = FSContestDataset(config.data.root)
+    config.merge_from_list(['federate.client_num', len(dataset)])
+
+    data_dict = {}
+    # Build DataLoader dict
+    for client_idx in range(1, config.federate.client_num + 1):
+        dataloader_dict = {}
+        if 'train' in dataset[client_idx - 1]:
+            dataloader_dict['train'] = DataLoader(dataset[client_idx -
+                                                          1]['train'],
+                                                  config.data.batch_size,
+                                                  shuffle=config.data.shuffle)
+        if 'val' in dataset[client_idx - 1]:
+            dataloader_dict['val'] = DataLoader(dataset[client_idx - 1]['val'],
+                                                config.data.batch_size,
+                                                shuffle=False)
+        if 'test' in dataset[client_idx - 1]:
+            dataloader_dict['test'] = DataLoader(dataset[client_idx -
+                                                         1]['test'],
+                                                 config.data.batch_size,
+                                                 shuffle=False)
+        data_dict[client_idx] = dataloader_dict
+
+    return data_dict, config
+
+
+def call_fs_contest_data(config):
+    if config.data.type == "fs_contest_data":
+        data, modified_config = load_fs_contest_data(config)
+        return data, modified_config
+
+
+register_data("fs_contest_data", call_fs_contest_data)

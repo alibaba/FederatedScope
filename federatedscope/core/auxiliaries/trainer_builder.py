@@ -2,6 +2,7 @@ import logging
 import importlib
 
 import federatedscope.register as register
+from federatedscope.contrib.model import *
 
 logger = logging.getLogger(__name__)
 
