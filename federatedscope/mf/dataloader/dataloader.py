@@ -16,7 +16,7 @@ MFDATA_CLASS_DICT = {
 
 
 def load_mf_dataset(config=None):
-    """Return dataset of matrix factorization
+    """Return the dataset of matrix factorization
 
     Format:
         {
@@ -66,7 +66,7 @@ def load_mf_dataset(config=None):
 class MFDataLoader(object):
     """DataLoader for MF dataset
 
-    Arguments:
+    Args:
         data (csc_matrix): sparse MF dataset
         batch_size (int): the size of batch data
         shuffle (bool): shuffle the dataset
@@ -150,6 +150,8 @@ class MFDataLoader(object):
     def __next__(self, theta=None):
         """Get the next batch of data
 
+        Args:
+            theta (int): the maximal number of ratings for each user
         """
         idx_end = self._idx_cur + self.batch_size
         if self._idx_cur == len(
