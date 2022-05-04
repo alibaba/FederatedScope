@@ -30,7 +30,6 @@ class GANCRA():
             - round_num (int): the FL round that starting the attack; default: -1.
 
     '''
-
     def __init__(self,
                  target_label_ind,
                  fl_model,
@@ -42,8 +41,6 @@ class GANCRA():
                  lr=0.001,
                  sav_pth='data/',
                  round_num=-1):
-
-
 
         # get dataset's corresponding generator
         self.generator = get_generator(dataset_name=dataset_name)().to(device)
@@ -164,9 +161,8 @@ class GANCRA():
 
     def sav_plot_gan_loss(self):
         plt.plot(self.generator_loss_summary)
-        plt.savefig(
-            self.sav_pth + '/' +
-            'generator_loss_round_{}.png'.format(self.round_num))
+        plt.savefig(self.sav_pth + '/' +
+                    'generator_loss_round_{}.png'.format(self.round_num))
         plt.close()
 
     def generate_and_save_images(self):

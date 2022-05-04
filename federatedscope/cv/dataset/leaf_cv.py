@@ -91,10 +91,10 @@ class LEAF_CV(LEAF):
 
     def __getitem__(self, index):
         """
-        Args:
+        Arguments:
             index (int): Index
 
-        Returns:
+        :returns:
             dict: {'train':[(image, target)],
                    'test':[(image, target)],
                    'val':[(image, target)]}
