@@ -7,6 +7,11 @@ import federatedscope.register as register
 
 
 class CN(CfgNode):
+    """
+        An extended configuration system based on [yacs](https://github.com/rbgirshick/yacs).
+        The two-level tree structure consists of several internal dict-like containers to allow simple key-value access and management.
+
+    """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
         super().__init__(init_dict, key_list, new_allowed)
         self.cfg_check_funcs = []  # to check the config values validity
@@ -15,28 +20,56 @@ class CN(CfgNode):
         self.cfg_check_funcs.append(cfg_check_fun)
 
     def merge_from_file(self, cfg_filename):
+        """
+            load configs from a yaml file, another cfg instance or a list stores the keys and values.
+
+        :param cfg_filename (string):
+        :return:
+        """
         cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         super(CN, self).merge_from_file(cfg_filename)
         self.cfg_check_funcs = cfg_check_funcs
         self.assert_cfg()
 
     def merge_from_other_cfg(self, cfg_other):
+        """
+            load configs from another cfg instance
+
+        :param cfg_other (CN):
+        :return:
+        """
         cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         super(CN, self).merge_from_other_cfg(cfg_other)
         self.cfg_check_funcs = cfg_check_funcs
         self.assert_cfg()
 
     def merge_from_list(self, cfg_list):
+        """
+           load configs from a list stores the keys and values.
+
+        :param cfg_list (list):
+        :return:
+        """
         cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         super(CN, self).merge_from_list(cfg_list)
         self.cfg_check_funcs = cfg_check_funcs
         self.assert_cfg()
 
     def assert_cfg(self):
+        """
+            check the validness of the configuration instance
+
+        :return:
+        """
         for check_func in self.cfg_check_funcs:
             check_func(self)
 
     def clean_unused_sub_cfgs(self):
+        """
+            Clean the un-used secondary-level CfgNode, whose `.use` attribute is `True`
+
+        :return:
+        """
         for v in self.values():
             if isinstance(v, CfgNode) or isinstance(v, CN):
                 # sub-config
@@ -49,6 +82,11 @@ class CN(CfgNode):
                             del v[k]
 
     def freeze(self):
+        """
+            make the cfg attributes immutable, and save the freezed cfg_check_funcs into "self.outdir/config.yaml" for better reproducibility
+
+        :return:
+        """
         self.assert_cfg()
         self.clean_unused_sub_cfgs()
         # save the final cfg

@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class Monitor(object):
+    """
+        provide the monitoring functionalities such as formatting the evaluation results into diverse metrics
+    """
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
     def __init__(
