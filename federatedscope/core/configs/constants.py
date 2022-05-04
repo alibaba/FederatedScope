@@ -1,7 +1,15 @@
-"""Configuration file for composition of different aggregators, messages, handlers, etc."""
+"""Configuration file for composition of different aggregators, messages, handlers, etc.
+
+    - The method `local` indicates that the clients only locally train their model without sharing any training related information
+    - The method `global` indicates that the only one client locally trains using all data
+    # TODO: add fine-tune, allowing freezing para name, and be called whenever need
+
+
+"""
 
 AGGREGATOR_TYPE = {
-    "local": "no_communication",
+    "local": "no_communication",  # the clients locally train their model without sharing any training related info
+    "global": "no_communication",  # only one client locally train all data, i.e., totally global training
     "fedavg": "clients_avg",  # FedAvg
     "pfedme": "server_clients_interpolation",  # pFedMe,  + server-clients interpolation
     "ditto": "clients_avg",  # Ditto

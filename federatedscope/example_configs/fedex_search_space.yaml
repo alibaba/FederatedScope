@@ -1,0 +1,4 @@
+optimizer:
+  lr: !contd '0.01,0.2'
+  weight_decay: !disc [0.0, 0.0005]
+  momentum: !contd '0.0,0.9'

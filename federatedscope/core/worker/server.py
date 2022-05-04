@@ -4,9 +4,10 @@ import os
 
 import numpy as np
 
-from federatedscope.core.early_stopper import EarlyStopper
+from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
+from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.utils import merge_dict
@@ -239,7 +240,6 @@ class Server(Worker):
                     }
                     result = aggregator.aggregate(agg_info)
                     model.load_state_dict(result, strict=False)
-                    #aggregator.update(result)
 
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
@@ -316,18 +316,18 @@ class Server(Worker):
                         content=model_para))
 
         if self.state == self.total_round_num:
-            #break out the loop for distributed mode
+            # break out the loop for distributed mode
             self.state += 1
 
     def save_best_results(self):
         if self._cfg.federate.save_to != '':
             self.aggregator.save_model(self._cfg.federate.save_to, self.state)
         formatted_best_res = self._monitor.format_eval_res(
-            self.best_results,
+            results=self.best_results,
             rnd="Final",
             role='Server #',
             forms=["raw"],
-            return_raw=self._cfg.federate.make_global_eval)
+            return_raw=True)
         logger.info(formatted_best_res)
         self.save_formatted_results(formatted_best_res)
 
@@ -360,18 +360,19 @@ class Server(Worker):
             role='Server #',
             forms=self._cfg.eval.report)
         logger.info(formatted_logs)
-        self.update_best_result(metrics_all_clients,
-                                results_type="client_individual",
-                                round_wise_update_key=self._cfg.eval.
-                                best_res_update_round_wise_key)
+        update_best_result(self.best_results,
+                           metrics_all_clients,
+                           results_type="client_individual",
+                           round_wise_update_key=self._cfg.eval.
+                           best_res_update_round_wise_key)
         self.save_formatted_results(formatted_logs)
         for form in self._cfg.eval.report:
             if form != "raw":
-                self.update_best_result(
-                    formatted_logs[f"Results_{form}"],
-                    results_type=f"client_summarized_{form}",
-                    round_wise_update_key=self._cfg.eval.
-                    best_res_update_round_wise_key)
+                update_best_result(self.best_results,
+                                   formatted_logs[f"Results_{form}"],
+                                   results_type=f"client_summarized_{form}",
+                                   round_wise_update_key=self._cfg.eval.
+                                   best_res_update_round_wise_key)
         return formatted_logs
 
     def broadcast_model_para(self,
@@ -397,10 +398,12 @@ class Server(Worker):
                 self._noise_injector(self._cfg, num_sample_clients,
                                      self.models[model_idx_i])
 
+        skip_broadcast = self._cfg.federate.method in ["local", "global"]
         if self.model_num > 1:
-            model_para = [model.state_dict() for model in self.models]
+            model_para = [{} if skip_broadcast else model.state_dict()
+                          for model in self.models]
         else:
-            model_para = self.model.state_dict()
+            model_para = {} if skip_broadcast else self.model.state_dict()
 
         self.comm_manager.send(
             Message(msg_type=msg_type,
@@ -462,98 +465,6 @@ class Server(Worker):
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 
-    def update_best_result(self,
-                           results,
-                           results_type,
-                           round_wise_update_key="val_loss"):
-        """
-            update best evaluation results.
-            by default, the update is based on validation loss with `round_wise_update_key="val_loss" `
-        """
-        update_best_this_round = False
-        if not isinstance(results, dict):
-            raise ValueError(
-                f"update best results require `results` a dict, but got {type(results)}"
-            )
-        else:
-            if results_type not in self.best_results:
-                self.best_results[results_type] = dict()
-            best_result = self.best_results[results_type]
-            # update different keys separately: the best values can be in different rounds
-            if round_wise_update_key is None:
-                for key in results:
-                    cur_result = results[key]
-                    if 'loss' in key or 'std' in key:  # the smaller, the better
-                        if results_type == "client_individual":
-                            cur_result = min(cur_result)
-                        if key not in best_result or cur_result < best_result[
-                                key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-
-                    elif 'acc' in key:  # the larger, the better
-                        if results_type == "client_individual":
-                            cur_result = max(cur_result)
-                        if key not in best_result or cur_result > best_result[
-                                key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    else:
-                        # unconcerned metric
-                        pass
-            # update different keys round-wise: if find better round_wise_update_key, update others at the same time
-            else:
-                if round_wise_update_key not in [
-                        "val_loss", "val_acc", "val_std", "test_loss",
-                        "test_acc", "test_std", "test_avg_loss", "loss"
-                ]:
-                    raise NotImplementedError(
-                        f"We currently support round_wise_update_key as one of "
-                        f"['val_loss', 'val_acc', 'val_std', 'test_loss', 'test_acc', 'test_std'] "
-                        f"for round-wise best results update, but got {round_wise_update_key}."
-                    )
-
-                found_round_wise_update_key = False
-                sorted_keys = []
-                for key in results:
-                    if round_wise_update_key in key:
-                        sorted_keys.insert(0, key)
-                        found_round_wise_update_key = True
-                    else:
-                        sorted_keys.append(key)
-                if not found_round_wise_update_key:
-                    raise ValueError(
-                        "The round_wise_update_key is not in target results, "
-                        "use another key or check the name. \n"
-                        f"Your round_wise_update_key={round_wise_update_key}, "
-                        f"the keys of results are {list(results.keys())}")
-
-                for key in sorted_keys:
-                    cur_result = results[key]
-                    if update_best_this_round or \
-                            ('loss' in round_wise_update_key and 'loss' in key) or \
-                            ('std' in round_wise_update_key and 'std' in key):
-                        if results_type == "client_individual":
-                            cur_result = min(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result < best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    elif update_best_this_round or \
-                            'acc' in round_wise_update_key and 'acc' in key:
-                        if results_type == "client_individual":
-                            cur_result = max(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result > best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    else:
-                        # unconcerned metric
-                        pass
-
-        if update_best_this_round:
-            logging.info(f"Find new best result: {self.best_results}")
-
     def eval(self):
         """
         To conduct evaluation. When cfg.federate.make_global_eval=True, a global evaluation is conducted by the server.
@@ -575,10 +486,11 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
-                self.update_best_result(formatted_eval_res['Results_raw'],
-                                        results_type="server_global_eval",
-                                        round_wise_update_key=self._cfg.eval.
-                                        best_res_update_round_wise_key)
+                update_best_result(self.best_results,
+                                   formatted_eval_res['Results_raw'],
+                                   results_type="server_global_eval",
+                                   round_wise_update_key=self._cfg.eval.
+                                   best_res_update_round_wise_key)
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.save_formatted_results(formatted_eval_res)

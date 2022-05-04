@@ -134,7 +134,7 @@ def save_local_data(dir_path,
         torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
 
 
-def filter_by_specified_keywords(param_name, config):
+def filter_by_specified_keywords(param_name, filter_keywords):
     '''
     Arguments:
         param_name (str): parameter name.
@@ -142,7 +142,7 @@ def filter_by_specified_keywords(param_name, config):
         preserve (bool): whether to preserve this parameter.
     '''
     preserve = True
-    for kw in config.personalization.local_param:
+    for kw in filter_keywords:
         if kw in param_name:
             preserve = False
             break
