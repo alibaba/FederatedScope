@@ -8,6 +8,7 @@ federate:
   local_update_steps: 1
   total_round_num: 1000
   sample_client_num: 10
+  client_num: 10
 data:
   root: data/
   type: femnist
@@ -32,7 +33,7 @@ eval:
   metrics: ['acc', 'correct']
 attack:
   attack_method: DLG
-  max_ite: 500
+  max_ite: 1500
   reconstruct_lr: 0.1
 
 

@@ -11,10 +11,8 @@ def plot_target_loss(loss_list, outdir):
     '''
 
     Args:
-        loss_list: the list of
-        outdir:
-
-    Returns:
+        loss_list: the list of loss regrading the target data
+        outdir: the directory to store the loss
 
     '''
 
@@ -50,7 +48,6 @@ def callback_funcs_for_finish(self, message: Message):
 
 
 def add_atk_method_to_Client_GradAscent(client_class):
-    # setattr(client_class, 'callback_funcs_for_evaluate', callback_funcs_for_evaluate)
 
     setattr(client_class, 'callback_funcs_for_finish',
             callback_funcs_for_finish)

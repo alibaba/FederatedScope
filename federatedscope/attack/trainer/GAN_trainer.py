@@ -2,7 +2,9 @@ from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from typing import Type
 
 from federatedscope.attack.privacy_attacks.GAN_based_attack import GANCRA
+import logging
 
+logger = logging.getLogger(__name__)
 
 def wrap_GANTrainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
@@ -12,7 +14,7 @@ def wrap_GANTrainer(
     Args:
         base_trainer: Type: core.trainers.GeneralTorchTrainer
 
-    Returns:
+    :returns:
         The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
 
     '''
@@ -52,13 +54,28 @@ def wrap_GANTrainer(
 
 
 def hood_on_fit_start_generator(ctx):
+    '''
+    count the FL training round before fitting
+    Args:
+        ctx ():
+
+    Returns:
+
+    '''
     ctx.gan_cra.round_num += 1
-    print('----- Round {}: GAN training ............'.format(
+    logger.info('----- Round {}: GAN training ............'.format(
         ctx.gan_cra.round_num))
 
 
 def hook_on_batch_forward_injected_data(ctx):
-    # inject the generated data into training batch loss
+    '''
+    inject the generated data into training batch loss
+    Args:
+        ctx ():
+
+    Returns:
+
+    '''
     x, label = [_.to(ctx.device) for _ in ctx.injected_data]
     pred = ctx.model(x)
     if len(label.size()) == 0:
@@ -69,7 +86,8 @@ def hook_on_batch_forward_injected_data(ctx):
 
 
 def hook_on_batch_injected_data_generation(ctx):
-    # generate the injected data
+    '''generate the injected data
+    '''
     ctx.injected_data = ctx.gan_cra.generate_fake_data()
 
 

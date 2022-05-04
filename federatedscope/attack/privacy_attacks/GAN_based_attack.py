@@ -10,9 +10,25 @@ class GANCRA():
     The implementation of GAN based class representative attack. https://dl.acm.org/doi/abs/10.1145/3133956.3134012
 
     References:
+
         Hitaj, Briland, Giuseppe Ateniese, and Fernando Perez-Cruz.
     "Deep models under the GAN: information leakage from collaborative deep learning."
     Proceedings of the 2017 ACM SIGSAC conference on computer and communications security. 2017.
+
+
+
+        Args:
+            - target_label_ind (int): the label index whose representative
+            - fl_model (object):
+            - device (str or int): the device to run; 'cpu' or the device index to select; default: 'cpu'.
+            - dataset_name (str): the dataset name; default: None
+            - noise_dim (int): the dimension of the noise that fed into the generator; default: 100
+            - batch_size (int): the number of data generated into training; default: 16
+            - generator_train_epoch (int): the number of training steps when training the generator; default: 10
+            - lr (float): the learning rate of the generator training; default: 0.001
+            - sav_pth (str): the path to save the generated data; default: 'data/'
+            - round_num (int): the FL round that starting the attack; default: -1.
+
     '''
 
     def __init__(self,
@@ -26,6 +42,8 @@ class GANCRA():
                  lr=0.001,
                  sav_pth='data/',
                  round_num=-1):
+
+
 
         # get dataset's corresponding generator
         self.generator = get_generator(dataset_name=dataset_name)().to(device)
@@ -51,12 +69,32 @@ class GANCRA():
         self.generator_loss_summary = []
 
     def update_discriminator(self, model):
+        '''
+        Copy the model of the server as the discriminator
+
+        Args:
+            model (object): the model in the server
+
+        Returns: the discriminator
+
+        '''
+
         self.discriminator = deepcopy(model)
 
     def discriminator_loss(self):
         pass
 
     def generator_loss(self, discriminator_output):
+        '''
+        Get the generator loss based on the discriminator's output
+
+        Args:
+            discriminator_output (Tensor): the discriminator's output; size: batch_size * n_class
+
+        Returns: generator_loss
+
+        '''
+
         self.num_class = discriminator_output.size()[1]
         ideal_results = self.target_label_ind * torch.ones(
             discriminator_output.size()[0], dtype=torch.long)
@@ -132,6 +170,11 @@ class GANCRA():
         plt.close()
 
     def generate_and_save_images(self):
+        '''
+
+        Save the generated data and the generator training loss
+
+        '''
 
         generated_data, _ = self.generate_fake_data()
         generated_data = generated_data.detach().to('cpu')
