@@ -15,8 +15,10 @@ def GreedyLoss(pred_feats, true_feats, pred_missing, true_missing, num_pred):
         pred_missing (torch.Tensor): number of predicted missing node
         true_missing (torch.Tensor): number of missing node
         num_pred (int): hyperparameters which limit the maximum value of the prediction
-    Returns:
-        loss (torch.FloatTensor): the Greedy Loss
+    :returns:
+        loss : the Greedy Loss
+    :rtype:
+        torch.FloatTensor
     """
     CUDA, device = (pred_feats.device.type != 'cpu'), pred_feats.device
     if CUDA:

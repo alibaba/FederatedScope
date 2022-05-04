@@ -16,15 +16,16 @@ def get_numGraphLabels(dataset):
 
 
 def load_graphlevel_dataset(config=None):
-    r"""
-    Returns:
-         data_local_dict (Dict): {
-                                  'client_id': {
-                                      'train': DataLoader(),
-                                      'val': DataLoader(),
-                                      'test': DataLoader()
-                                               }
-                                  }
+    r"""Convert dataset to Dataloader.
+    :returns:
+         data_local_dict
+    :rtype: Dict {
+                  'client_id': {
+                      'train': DataLoader(),
+                      'val': DataLoader(),
+                      'test': DataLoader()
+                               }
+                  }
     """
     splits = config.data.splits
     path = config.data.root

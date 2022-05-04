@@ -21,7 +21,6 @@ def wrap_GradientAscentTrainer(
 
     '''
 
-
     # base_trainer.ctx.target_data = get_target_data()
     base_trainer.ctx.target_data_dataloader = WrapDataset(
         get_target_data(base_trainer.cfg.data.type))

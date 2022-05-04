@@ -86,10 +86,10 @@ class LEAF_NLP(LEAF):
 
     def __getitem__(self, index):
         """
-        Args:
+        Arguments:
             index (int): Index
 
-        Returns:
+        :returns:
             dict: {'train':[(text, target)], 
                    'test':[(text, target)], 
                    'val':[(text, target)]} 

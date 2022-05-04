@@ -37,7 +37,6 @@ class DLG(object):
                  info_diff_type='l2',
                  is_one_hot_label=False):
 
-
         if federate_method.lower() == "fedavg":
             # check whether the received info is parameter. If yes, the reconstruction attack requires the learning rate of FL
             assert federate_lr is not None

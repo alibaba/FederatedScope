@@ -12,7 +12,7 @@ def raw2loader(raw_data, config=None):
     or still a graph for full-batch training.
     Arguments:
         raw_data (PyG.Data): a raw graph.
-    Returns:
+    :returns:
         sampler (object): a Dict containing loader and subgraph_sampler or still a PyG.Data object.
     """
 
@@ -43,8 +43,10 @@ def raw2loader(raw_data, config=None):
 
 def load_linklevel_dataset(config=None):
     r"""
-    Returns:
-        data_local_dict (Dict): dict{'client_id': Data()}
+    :returns:
+        data_local_dict
+    :rtype:
+        (Dict): dict{'client_id': Data()}
     """
     path = config.data.root
     name = config.data.type.lower()
