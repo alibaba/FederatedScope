@@ -3,7 +3,6 @@ from federatedscope.attack.auxiliary.utils import get_data_info
 
 
 def get_target_data(dataset_name, pth=None):
-
     '''
 
     Args:
