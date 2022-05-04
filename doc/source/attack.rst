@@ -1,6 +1,19 @@
 Attack Module References
 ======================
 
+federatedscope.attack.privacy_attacks
+-------------------------------------------
+
+.. automodule:: federatedscope.attack.privacy_attacks
+    :members:
+
+
+federatedscope.attack.worker_as_attacker
+-------------------------------------------
+
+.. automodule:: federatedscope.attack.worker_as_attacker
+    :members:
+
 federatedscope.attack.auxiliary
 --------------------------------
 
@@ -18,17 +31,6 @@ federatedscope.attack.trainer
 
 
 
-federatedscope.attack.privacy_attacks
--------------------------------------------
 
-.. automodule:: federatedscope.attack.privacy_attacks
-    :members:
-
-
-federatedscope.attack.worker_as_attacker
--------------------------------------------
-
-.. automodule:: federatedscope.attack.worker_as_attacker
-    :members:
 
 

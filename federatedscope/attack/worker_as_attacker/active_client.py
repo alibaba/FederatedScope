@@ -11,10 +11,8 @@ def plot_target_loss(loss_list, outdir):
     '''
 
     Args:
-        loss_list: the list of
-        outdir:
-
-    Returns:
+        loss_list: the list of loss regrading the target data
+        outdir: the directory to store the loss
 
     '''
 

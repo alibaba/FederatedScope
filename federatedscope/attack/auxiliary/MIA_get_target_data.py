@@ -3,6 +3,16 @@ from federatedscope.attack.auxiliary.utils import get_data_info
 
 
 def get_target_data(dataset_name, pth=None):
+
+    '''
+
+    Args:
+        dataset_name (str): the dataset name
+        pth (str): the path storing the target data
+
+    Returns:
+
+    '''
     # JUST FOR SHOWCASE
     if pth is not None:
         pass
