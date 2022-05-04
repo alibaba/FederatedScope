@@ -2,8 +2,6 @@
 
     - The method `local` indicates that the clients only locally train their model without sharing any training related information
     - The method `global` indicates that the only one client locally trains using all data
-    # TODO: add fine-tune, allowing freezing para name, and be called whenever need
-
 
 """
 
