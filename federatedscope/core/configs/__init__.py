@@ -1,7 +1,7 @@
 import copy
 from os.path import dirname, basename, isfile, join
 import glob
-from federatedscope.core.configs.config import CN
+from federatedscope.core.configs.config import CN, init_global_cfg
 
 modules = glob.glob(join(dirname(__file__), "*.py"))
 __all__ = [
@@ -9,7 +9,11 @@ __all__ = [
     if isfile(f) and not f.endswith('__init__.py')
 ]
 
-__all__ = __all__ + ['CN']
+__all__ = __all__ + \
+          [
+              'CN',
+              'init_global_cfg'
+           ]
 
 # to ensure the sub-configs registered before set up the global config
 all_sub_configs = copy.copy(__all__)
