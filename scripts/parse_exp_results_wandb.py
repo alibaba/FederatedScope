@@ -95,7 +95,7 @@ def main():
                     if res['Role'] == 'Server #':
                         cur_round = res['Round']
                     res.pop('Role')
-                    if cur_round != "Final":
+                    if cur_round != "Final" and 'Results_raw' in res:
                         res.pop('Results_raw')
 
                     log_res = {}
