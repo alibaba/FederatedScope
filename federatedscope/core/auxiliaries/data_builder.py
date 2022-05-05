@@ -246,43 +246,55 @@ def load_external_data(config=None):
             raw_args = config.data.args[0]
         else:
             raw_args = {}
+        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
         filtered_args = filter_dict(dataset_func.__init__, raw_args)
         dataset = dataset_func(root=config.data.root, **filtered_args)
 
         # torchtext.transforms requires >= 0.12.0 and torch = 1.11.0,
         # so we do not use `get_transform` in torchtext.
+
+        # Merge all data and tokenize
+        x_list = []
+        y_list = []
+        for data_iter in dataset:
+            data, targets = [], []
+            for i, item in enumerate(data_iter):
+                data.append(item[1])
+                targets.append(item[0])
+            x_list.append(data)
+            y_list.append(targets)
+
+        x_all, y_all = [], []
+        for i in range(len(x_list)):
+            x_all += x_list[i]
+            y_all += y_list[i]
+
         if config.model.type.endswith('transformers'):
             from transformers import AutoTokenizer
             tokenizer = AutoTokenizer.from_pretrained(
                 config.model.type.split('@')[0])
-            data_list = []
-            for data_iter in dataset:
-                data, targets = [], []
-                for i, item in enumerate(data_iter):
-                    data.append(item[1])
-                    targets.append(item[0])
-                full_data = tokenizer(data,
-                                      return_tensors='pt',
-                                      padding=True,
-                                      truncation=True)
-                data = [{key: value[i]
-                         for key, value in full_data.items()}
-                        for i in range(len(next(iter(full_data.values()))))]
-                if 'classification' in config.model.task.lower():
-                    targets = label_to_index(targets)
-                else:
-                    full_targets = tokenizer(targets,
-                                             return_tensors='pt',
-                                             padding=True,
-                                             truncation=True)
-                    targets = [{
-                        key: value[i]
-                        for key, value in full_targets.items()
-                    } for i in range(len(next(iter(full_targets.values()))))]
-                data_list.append([(x, y) for x, y in zip(data, targets)])
+
+            x_all = tokenizer(x_all,
+                              return_tensors='pt',
+                              padding=True,
+                              truncation=True,
+                              max_length=raw_args['max_len'])
+            data = [{key: value[i]
+                     for key, value in x_all.items()}
+                    for i in range(len(next(iter(x_all.values()))))]
+            if 'classification' in config.model.task.lower():
+                targets = label_to_index(y_all)
+            else:
+                y_all = tokenizer(y_all,
+                                  return_tensors='pt',
+                                  padding=True,
+                                  truncation=True,
+                                  max_length=raw_args['max_len'])
+                targets = [{key: value[i]
+                            for key, value in y_all.items()}
+                           for i in range(len(next(iter(y_all.values()))))]
         else:
             from torchtext.data import get_tokenizer
-            assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
             tokenizer = get_tokenizer("basic_english")
             if len(config.data.transform) == 0:
                 raise ValueError(
@@ -294,30 +306,38 @@ def load_external_data(config=None):
                             config.data.transform[0])(
                                 dim=config.model.in_channels,
                                 **config.data.transform[1])
-            data_list = []
-            for data_iter in dataset:
-                # TODO: we may need a more general and principled load function for the `IterableDataset`.
-                data, targets = [], []
-                if 'classification' in config.model.task.lower():
-                    for item in data_iter:
-                        data.append(
-                            vocab.get_vecs_by_tokens(tokenizer(item[1]),
-                                                     lower_case_backup=True))
-                        targets.append(item[0])
-                    targets = label_to_index(targets)
-                else:
-                    for item in data_iter:
-                        data.append(
-                            vocab.get_vecs_by_tokens(tokenizer(item[1]),
-                                                     lower_case_backup=True))
-                        targets.append(
-                            vocab.get_vecs_by_tokens(tokenizer(item[0]),
-                                                     lower_case_backup=True))
-                    targets = pad_sequence(targets).transpose(
-                        0, 1)[:, :raw_args['max_len'], :]
-                data = pad_sequence(data).transpose(
+
+            if 'classification' in config.model.task.lower():
+                data = [
+                    vocab.get_vecs_by_tokens(
+                        tokenizer(x, lower_case_backup=True)) for x in x_all
+                ]
+                targets = label_to_index(y_all)
+            else:
+                for item in data_iter:
+                    data = [
+                        vocab.get_vecs_by_tokens(
+                            tokenizer(x, lower_case_backup=True))
+                        for x in x_all
+                    ]
+                    targets = [
+                        vocab.get_vecs_by_tokens(
+                            tokenizer(y, lower_case_backup=True))
+                        for y in y_all
+                    ]
+                targets = pad_sequence(targets).transpose(
                     0, 1)[:, :raw_args['max_len'], :]
-                data_list.append([(x, y) for x, y in zip(data, targets)])
+            data = pad_sequence(data).transpose(0,
+                                                1)[:, :raw_args['max_len'], :]
+        # Split data to raw
+        num_items = [len(ds) for ds in x_list]
+        data_list, cnt = [], 0
+        for num in num_items:
+            data_list.append([
+                (x, y)
+                for x, y in zip(data[cnt:cnt + num], targets[cnt:cnt + num])
+            ])
+            cnt += num
 
         if len(data_list) == 3:
             # Use raw splits
