@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 class Server(Worker):
     """
     The Server class, which describes the behaviors of server in an FL course.
-    The attributes include:
+    The behaviors are described by the handled functions (named as callback_funcs_for_xxx).
+
+    Arguments:
         ID: The unique ID of the server, which is set to 0 by default
         state: The training round
         config: the configuration
@@ -30,7 +32,6 @@ class Server(Worker):
         total_round_num: The total number of the training round
         device: The device to run local training and evaluation
         strategy: redundant attribute
-    The behaviors are described by the handled functions (named as callback_funcs_for_xxx)
     """
     def __init__(self,
                  ID=-1,
@@ -158,7 +159,11 @@ class Server(Worker):
 
     def register_handlers(self, msg_type, callback_func):
         """
-        To bind a message type with a handled function
+        To bind a message type with a handling function.
+
+        Arguments:
+            msg_type (str): The defined message type
+            callback_func: The handling functions to handle the received message
         """
         self.msg_handlers[msg_type] = callback_func
 
@@ -170,7 +175,7 @@ class Server(Worker):
 
     def run(self):
         """
-        To start the FL course, listen and handle messages (for distributed mode)
+        To start the FL course, listen and handle messages (for distributed mode).
         """
 
         # Begin: Broadcast model parameters and start to FL train
@@ -226,7 +231,10 @@ class Server(Worker):
                           check_eval_result=False,
                           min_received_num=None):
         """
-        To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
+        To check the message_buffer. When enough messages are receiving, some events (such as perform aggregation, evaluation, and move to the next training round) would be triggered.
+
+        Arguments:
+            check_eval_result (bool): If True, check the message buffer for evaluation; and check the message buffer for training otherwise.
         """
         if min_received_num is None:
             min_received_num = self._cfg.federate.sample_client_num
@@ -307,8 +315,9 @@ class Server(Worker):
 
     def check_and_save(self):
         """
-        To save the results and save model after each evaluation
+        To save the results and save model after each evaluation.
         """
+
         # early stopping
         should_stop = False
 
@@ -341,6 +350,10 @@ class Server(Worker):
             self.state += 1
 
     def save_best_results(self):
+        """
+        To Save the best evaluation results.
+        """
+
         if self._cfg.federate.save_to != '':
             self.aggregator.save_model(self._cfg.federate.save_to, self.state)
         formatted_best_res = self._monitor.format_eval_res(
@@ -359,12 +372,13 @@ class Server(Worker):
 
     def merge_eval_results_from_all_clients(self, final_round=False):
         """
-        Merge evaluation results from all clients,
-        update best, log the merged results and save then into eval_results.log
+        Merge evaluation results from all clients, update best, log the merged results and save then into eval_results.log
 
-        :param final_round:
-        :return:
+        Arguments:
+            final_round (bool): Whether it is the final round of training
+        :returns: the formatted merged results
         """
+
         round = max(self.msg_buffer['eval'].keys())
         eval_msg_buffer = self.msg_buffer['eval'][round]
         metrics_all_clients = dict()
@@ -403,7 +417,12 @@ class Server(Worker):
                              sample_client_num=-1):
         """
         To broadcast the message to all clients or sampled clients
+
+        Arguments:
+            msg_type: 'model_para' or other user defined msg_type
+            sample_client_num: the number of sampled clients in the broadcast behavior. And sample_client_num = -1 denotes to broadcast to all the clients.
         """
+
         if sample_client_num > 0:
             receiver = np.random.choice(np.arange(1, self.client_num + 1),
                                         size=sample_client_num,
@@ -442,6 +461,7 @@ class Server(Worker):
         """
         To broadcast the communication addresses of clients (used for additive secret sharing)
         """
+
         self.comm_manager.send(
             Message(msg_type='address',
                     sender=self.ID,
@@ -463,6 +483,7 @@ class Server(Worker):
         :returns: Whether enough messages have been received or not
         :rtype: bool
         """
+
         if check_eval_result:
             if 'eval' not in self.msg_buffer.keys() or len(
                     self.msg_buffer['eval'].keys()) == 0:
@@ -479,6 +500,10 @@ class Server(Worker):
             return True
 
     def check_client_join_in(self):
+        """
+        To check whether all the clients have joined in the FL course.
+        """
+
         if len(self._cfg.federate.join_in_info) != 0:
             return len(self.join_in_info) == self.client_num
         else:
@@ -488,6 +513,7 @@ class Server(Worker):
         """
         To start the FL course when the expected number of clients have joined
         """
+
         if self.check_client_join_in():
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
@@ -518,6 +544,7 @@ class Server(Worker):
         """
         To conduct evaluation. When cfg.federate.make_global_eval=True, a global evaluation is conducted by the server.
         """
+
         if self._cfg.federate.make_global_eval:
             # By default, the evaluation is conducted one-by-one for all internal models;
             # for other cases such as ensemble, override the eval function
@@ -550,6 +577,14 @@ class Server(Worker):
             self.broadcast_model_para(msg_type='evaluate')
 
     def callback_funcs_model_para(self, message: Message):
+        """
+        The handling function for receiving model parameters, which triggers check_and_move_on (perform aggregation when enough feedback has been received).
+        This handling function is widely used in various FL courses.
+
+        Arguments:
+            message: The received message, which includes sender, receiver, state, and content. More detail can be found in federatedscope.core.message
+        """
+
         round, sender, content = message.state, message.sender, message.content
         # For a new round
         if round not in self.msg_buffer['train'].keys():
@@ -563,6 +598,14 @@ class Server(Worker):
         return self.check_and_move_on()
 
     def callback_funcs_for_join_in(self, message: Message):
+        """
+        The handling function for receiving the join in information. The server might request for some information (such as num_of_samples) if necessary, assign IDs for the servers.
+        If all the clients have joined in, the training process will be triggered.
+
+        Arguments:
+            message: The received message
+        """
+
         if 'info' in message.msg_type:
             sender, info = message.sender, message.content
             for key in self._cfg.federate.join_in_info:
@@ -598,6 +641,13 @@ class Server(Worker):
         self.trigger_for_start()
 
     def callback_funcs_for_metrics(self, message: Message):
+        """
+        The handling function for receiving the evaluation results, which triggers check_and_move_on (perform aggregation when enough feedback has been received).
+
+        Arguments:
+            message: The received message
+        """
+
         round, sender, content = message.state, message.sender, message.content
 
         if round not in self.msg_buffer['eval'].keys():
