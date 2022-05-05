@@ -68,8 +68,10 @@ class SAGE_Net(torch.nn.Module):
             edge_index (torch.Tensor): edge index.
             edge_weight (torch.Tensor): edge weight.
             adjs (List[PyG.loader.neighbor_sampler.EdgeIndex]): batched edge index
-        Returns:
-            x (torch.Tensor): output 
+        :returns:
+            x: output
+        :rtype:
+            torch.Tensor
         """
         if isinstance(x, torch.Tensor):
             if edge_index is None:
@@ -103,7 +105,7 @@ class SAGE_Net(torch.nn.Module):
             x_all (torch.Tensor): all node features
             subgraph_loader (PyG.dataloader): dataloader
             device (str): device
-        Returns:
+        :returns:
             x_all: output
         """
         total_edges = 0

@@ -15,7 +15,8 @@ class FedSagePlusTest(unittest.TestCase):
     def set_config_fedsageplus(self, cfg):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = True
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
 
         cfg.federate.mode = 'standalone'
         cfg.federate.make_global_eval = True

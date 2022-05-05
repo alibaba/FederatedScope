@@ -29,10 +29,10 @@ def letter_to_vec(letter):
 
 def word_to_indices(word):
     '''returns a list of character indices
-    Args:
+    Arguments:
         word: string
 
-    Return:
+    :returns:
         indices: int list with length len(word)
     '''
     indices = []
@@ -47,10 +47,10 @@ def word_to_indices(word):
 
 def split_line(line):
     '''split given line/phrase into list of words
-    Args:
+    Arguments:
         line: string representing phrase to be split
 
-    Return:
+    :returns:
         list of strings, with each string representing a word
     '''
     return re.findall(r"[\w']+|[.,!?;]", line)
@@ -58,10 +58,10 @@ def split_line(line):
 
 def bag_of_words(line, vocab):
     '''returns bag of words representation of given phrase using given vocab
-    Args:
+    Arguments:
         line: string representing phrase to be parsed
         vocab: dictionary with words as keys and indices as values
-    Return:
+    :returns:
         integer list
     '''
     bag = [0] * len(vocab)

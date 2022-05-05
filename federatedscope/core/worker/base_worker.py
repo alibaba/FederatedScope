@@ -1,4 +1,4 @@
-from federatedscope.core.monitor import Monitor
+from federatedscope.core.monitors.monitor import Monitor
 
 
 class Worker(object):

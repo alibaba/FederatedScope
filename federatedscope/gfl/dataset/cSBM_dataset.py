@@ -39,9 +39,12 @@ def ContextualSBM(n, d, Lambda, p, mu, train_percent=0.01, u=None):
         mu (float): the mean of node feature.
         train_percent (float): (optional) the fraction of nodes used for training.
         u (numpy.Array): (optional) the parameter controlling the node feature.
-    Returns:
-        data (PyG.Data): the constructed graph.
-        u (numpy.Array): the parameter controlling the node feature.
+    :returns:
+        data : the constructed graph.
+        u : the parameter controlling the node feature.
+    :rtype:
+        tuple: (PyG.Data, numpy.Array)
+
     """
     # n = 800 #number of nodes
     # d = 5 # average degree
@@ -125,9 +128,11 @@ def parameterized_Lambda_and_mu(theta, p, n, epsilon=0.1):
         p (int): the dimension of node feature.
         n (int): the number of nodes.
         epsilon (float): (optional) controlling the var of node feature.
-    Returns:
-        Lambda (float): controlling the homophilic degree.
-        mu (float): the mean of node feature.
+    :returns:
+        Lambda : controlling the homophilic degree.
+        mu : the mean of node feature.
+    :rtype:
+        tuple: (float, float)
     '''
     from math import pi
     gamma = n / p
@@ -144,8 +149,10 @@ def save_data_to_pickle(data, p2root='../data/', file_name=None):
         data (PyG.Data): the graph to be saved.
         p2root (str): the path of dataset folder.
         file_name (str): (optional) the name of output file.
-    Returns:
-        p2cSBM_data (str): the path of saved file.
+    :returns:
+        p2cSBM_data : the path of saved file.
+    :returns:
+        string
     '''
     now = datetime.now()
     surfix = now.strftime('%b_%d_%Y-%H:%M')
@@ -171,7 +178,7 @@ class dataset_ContextualSBM(InMemoryDataset):
     create_dataset.html#creating-in-memory-datasets>`__ for the accompanying
     tutorial.
 
-    Args:
+    Arguments:
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset if not specified use time stamp.
 
