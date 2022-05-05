@@ -55,14 +55,19 @@ class gRPCCommManager(object):
              global_cfg.distribute.grpc_enable_http_proxy),
         ]
         self.server_funcs = gRPCComServeFunc()
-        self.grpc_server = self.serve(max_workers=client_num, host=host, port=port, options=options)
+        self.grpc_server = self.serve(max_workers=client_num,
+                                      host=host,
+                                      port=port,
+                                      options=options)
         self.neighbors = dict()
 
     def serve(self, max_workers, host, port, options):
         """
         This function is referred to https://grpc.io/docs/languages/python/basics/#starting-the-server
         """
-        server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers), options=options)
+        server = grpc.server(
+            futures.ThreadPoolExecutor(max_workers=max_workers),
+            options=options)
         gRPC_comm_manager_pb2_grpc.add_gRPCComServeFuncServicer_to_server(
             self.server_funcs, server)
         server.add_insecure_port("{}:{}".format(host, port))
@@ -93,14 +98,17 @@ class gRPCCommManager(object):
             This part is referred to https://grpc.io/docs/languages/python/basics/#creating-a-stub
             """
             channel = grpc.insecure_channel(receiver_address,
-                                        options=(('grpc.enable_http_proxy',
-                                                  0), ))
+                                            options=(('grpc.enable_http_proxy',
+                                                      0), ))
             stub = gRPC_comm_manager_pb2_grpc.gRPCComServeFuncStub(channel)
             return stub, channel
+
         stub, channel = _create_stub(receiver_address)
         request = message.transform(to_list=True)
-        #msg_test = gRPC_comm_manager_pb2.MessageRequest(msg=request)
-        stub.sendMessage(request)
+        try:
+            stub.sendMessage(request)
+        except grpc._channel._InactiveRpcError:
+            pass
         channel.close()
 
     def send(self, message):

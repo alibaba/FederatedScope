@@ -8,6 +8,7 @@ from datetime import datetime
 from os import path as osp
 import ssl
 import urllib.request
+import signal
 
 import numpy as np
 # Blind torch
@@ -237,3 +238,30 @@ def move_to(obj, device):
         return res
     else:
         raise TypeError("Invalid type for move_to")
+
+
+class Timeout(object):
+    def __init__(self, seconds, max_failure=5):
+        self.seconds = seconds
+        self.max_failure = max_failure
+
+    def __enter__(self):
+        def signal_handler(signum, frame):
+            raise TimeoutError()
+
+        if self.seconds > 0:
+            signal.signal(signal.SIGALRM, signal_handler)
+            signal.alarm(self.seconds)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        signal.alarm(0)
+
+    def reset(self):
+        signal.alarm(self.seconds)
+
+    def block(self):
+        signal.alarm(0)
+
+    def exceed_max_failure(self, num_failure):
+        return num_failure > self.max_failure
