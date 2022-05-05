@@ -16,16 +16,17 @@ logger = logging.getLogger(__name__)
 class Client(Worker):
     """
     The Client class, which describes the behaviors of client in an FL course.
-    The attributes include:
+    The behaviors are described by the handling functions (named as callback_funcs_for_xxx)
+
+    Arguments:
         ID: The unique ID of the client, which is assigned by the server when joining the FL course
         server_id: (Default) 0
         state: The training round
-        config: the configuration
+        config: The configuration
         data: The data owned by the client
-        model: The local model
+        model: The model maintained locally
         device: The device to run local training and evaluation
         strategy: redundant attribute
-    The behaviors are described by the handled functions (named as callback_funcs_for_xxx)
     """
     def __init__(self,
                  ID=-1,
@@ -100,7 +101,11 @@ class Client(Worker):
 
     def register_handlers(self, msg_type, callback_func):
         """
-        To bind a message type with a handled function
+        To bind a message type with a handling function.
+
+        Arguments:
+            msg_type (str): The defined message type
+            callback_func: The handling functions to handle the received message
         """
         self.msg_handlers[msg_type] = callback_func
 
@@ -119,7 +124,7 @@ class Client(Worker):
 
     def join_in(self):
         """
-        To send 'join_in' message to the server
+        To send 'join_in' message to the server for joining in the FL course.
         """
         self.comm_manager.send(
             Message(msg_type='join_in',
@@ -129,7 +134,7 @@ class Client(Worker):
 
     def run(self):
         """
-        To wait for the messages and handle them (for distributed mode)
+        To listen to the message and handle them accordingly  (used for distributed mode)
         """
         while True:
             msg = self.comm_manager.receive()
@@ -140,6 +145,12 @@ class Client(Worker):
                 break
 
     def callback_funcs_for_model_para(self, message: Message):
+        """
+        The handling function for receiving model parameters, which triggers the local training process. This handling function is widely used in various FL courses.
+
+        Arguments:
+            message: The received message, which includes sender, receiver, state, and content. More detail can be found in federatedscope.core.message
+        """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
             state, content = message.state, message.content
@@ -240,12 +251,24 @@ class Client(Worker):
                             content=(sample_size, model_para_all)))
 
     def callback_funcs_for_assign_id(self, message: Message):
+        """
+        The handling function for receiving the client_ID assigned by the server (during the joining process), which is used in the distributed mode.
+
+        Arguments:
+            message: The received message
+        """
         content = message.content
         self.ID = int(content)
         logger.info('Client (address {}:{}) is assigned with #{:d}.'.format(
             self.comm_manager.host, self.comm_manager.port, self.ID))
 
     def callback_funcs_for_join_in_info(self, message: Message):
+        """
+        The handling function for receiving the request of join in information (such as batch_size, num_of_samples) during the joining process.
+
+        Arguments:
+            message: The received message
+        """
         requirements = message.content
         join_in_info = dict()
         for requirement in requirements:
@@ -267,12 +290,24 @@ class Client(Worker):
                     content=join_in_info))
 
     def callback_funcs_for_address(self, message: Message):
+        """
+        The handling function for receiving other clients' IP addresses, which is used for constructing a complex topology
+
+        Arguments:
+            message: The received message
+        """
         content = message.content
         for neighbor_id, address in content.items():
             if int(neighbor_id) != self.ID:
                 self.comm_manager.add_neighbors(neighbor_id, address)
 
     def callback_funcs_for_evaluate(self, message: Message):
+        """
+        The handling function for receiving the request of evaluating
+
+        Arguments:
+            message: The received message
+        """
         sender = message.sender
         self.state = message.state
         if message.content != None:
@@ -321,6 +356,12 @@ class Client(Worker):
                     content=metrics))
 
     def callback_funcs_for_finish(self, message: Message):
+        """
+        The handling function for receiving the signal of finishing the FL course
+
+        Arguments:
+            message: The received message
+        """
         logger.info(
             "================= receiving Finish Message ============================"
         )
