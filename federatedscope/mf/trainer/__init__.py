@@ -1,8 +1,10 @@
-from os.path import dirname, basename, isfile, join
-import glob
+from federatedscope.mf.trainer.trainer import MFTrainer
+from federatedscope.mf.trainer.trainer_sgdmf import wrap_MFTrainer, init_sgdmf_ctx, embedding_clip, hook_on_batch_backward
 
-modules = glob.glob(join(dirname(__file__), "*.py"))
 __all__ = [
-    basename(f)[:-3] for f in modules
-    if isfile(f) and not f.endswith('__init__.py')
+    'MFTrainer',
+    'wrap_MFTrainer',
+    'init_sgdmf_ctx',
+    'embedding_clip',
+    'hook_on_batch_backward'
 ]

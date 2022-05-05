@@ -1,13 +1,10 @@
 import torch
-import numpy as np
-import torch_geometric.transforms as T
 
-from copy import deepcopy
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
-from federatedscope.gfl.dataset.recsys import RecSys
-from federatedscope.gfl.dataset.kg import KG
-from federatedscope.gfl.dataset.splitter import RelTypeSplitter
+
+from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def raw2loader(raw_data, config=None):
@@ -15,7 +12,7 @@ def raw2loader(raw_data, config=None):
     or still a graph for full-batch training.
     Arguments:
         raw_data (PyG.Data): a raw graph.
-    Returns:
+    :returns:
         sampler (object): a Dict containing loader and subgraph_sampler or still a PyG.Data object.
     """
 
@@ -28,7 +25,6 @@ def raw2loader(raw_data, config=None):
             walk_length=config.data.graphsaint.walk_length,
             num_steps=config.data.graphsaint.num_steps,
             sample_coverage=0)
-        #save_dir=dataset.processed_dir)
         subgraph_sampler = NeighborSampler(raw_data.edge_index,
                                            sizes=[-1],
                                            batch_size=4096,
@@ -47,56 +43,37 @@ def raw2loader(raw_data, config=None):
 
 def load_linklevel_dataset(config=None):
     r"""
-    Returns:
-        data_local_dict (Dict): dict{'client_id': Data()}
+    :returns:
+        data_local_dict
+    :rtype:
+        (Dict): dict{'client_id': Data()}
     """
     path = config.data.root
     name = config.data.type.lower()
 
     # Splitter
-    if config.data.splitter == 'rel_type':
-        alpha = 0.5
-        splitter = RelTypeSplitter(config.federate.client_num, alpha)
-    else:
-        splitter = None
+    splitter = get_splitter(config)
 
     # Transforms
-    if config.data.transforms == 'normalize_feat':
-        transform = T.NormalizeFeatures()
-    else:
-        transform = None
-
-    # Pre-Transforms
-    if config.data.pre_transforms == 'constant_feat':
-        pre_transform = T.Constant(value=1.0, cat=False)
-    elif config.data.pre_transforms == 'degree_feat':
-        pre_transform = T.OneHotDegree(max_degree=1000, cat=False)
-    else:
-        pre_transform = None
+    transforms_funcs = get_transform(config, 'torch_geometric')
 
     if name in ['epinions', 'ciao']:
+        from federatedscope.gfl.dataset.recsys import RecSys
         dataset = RecSys(path,
                          name,
                          FL=True,
                          splits=config.data.splits,
-                         transform=transform,
-                         pre_transform=pre_transform)
+                         **transforms_funcs)
         global_dataset = RecSys(path,
                                 name,
                                 FL=False,
                                 splits=config.data.splits,
-                                transform=transform,
-                                pre_transform=pre_transform)
+                                **transforms_funcs)
     elif name in ['fb15k-237', 'wn18', 'fb15k', 'toy']:
-        dataset = KG(path,
-                     name,
-                     transform=transform,
-                     pre_transform=pre_transform)
+        from federatedscope.gfl.dataset.kg import KG
+        dataset = KG(path, name, **transforms_funcs)
         dataset = splitter(dataset[0])
-        global_dataset = KG(path,
-                            name,
-                            transform=transform,
-                            pre_transform=pre_transform)
+        global_dataset = KG(path, name, **transforms_funcs)
     else:
         raise ValueError(f'No dataset named: {name}!')
 

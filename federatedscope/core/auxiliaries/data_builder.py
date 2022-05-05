@@ -1,5 +1,6 @@
-import numpy as np
 import pickle
+import numpy as np
+from collections import defaultdict
 
 import federatedscope.register as register
 
@@ -118,6 +119,263 @@ def load_toy_data(config=None):
     return data, config
 
 
+def load_external_data(config=None):
+    r""" Based on the configuration file, this function imports external datasets and applies train/valid/test splits
+    and split by some specific `splitter` into the standard FederatedScope input data format.
+
+    Args:
+        config: `CN` from `federatedscope/core/configs/config.py`
+
+    Returns:
+        data_local_dict: dict of split dataloader.
+                        Format:
+                            {
+                                'client_id': {
+                                    'train': DataLoader(),
+                                    'test': DataLoader(),
+                                    'val': DataLoader()
+                                }
+                            }
+        modified_config: `CN` from `federatedscope/core/configs/config.py`, which might be modified in the function.
+
+    """
+
+    import torch
+    import inspect
+    from importlib import import_module
+    from torch.utils.data import DataLoader
+    from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+    from federatedscope.core.auxiliaries.transform_builder import get_transform
+
+    def get_func_args(func):
+        sign = inspect.signature(func).parameters.values()
+        sign = set([val.name for val in sign])
+        return sign
+
+    def filter_dict(func, kwarg):
+        sign = get_func_args(func)
+        common_args = sign.intersection(kwarg.keys())
+        filtered_dict = {key: kwarg[key] for key in common_args}
+        return filtered_dict
+
+    def load_torchvision_data(name, splits=None, config=None):
+        dataset_func = getattr(import_module('torchvision.datasets'), name)
+        transform_funcs = get_transform(config, 'torchvision')
+        if config.data.args:
+            raw_args = config.data.args[0]
+        else:
+            raw_args = {}
+        if 'download' not in raw_args.keys():
+            raw_args.update({'download': True})
+        filtered_args = filter_dict(dataset_func.__init__, raw_args)
+        func_args = get_func_args(dataset_func.__init__)
+
+        # Perform split on different dataset
+        if 'train' in func_args:
+            # Split train to (train, val)
+            dataset_train = dataset_func(root=config.data.root,
+                                         train=True,
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = None
+            dataset_test = dataset_func(root=config.data.root,
+                                        train=False,
+                                        **filtered_args,
+                                        **transform_funcs)
+            if splits:
+                train_size = int(splits[0] * len(dataset_train))
+                val_size = len(dataset_train) - train_size
+                lengths = [train_size, val_size]
+                dataset_train, dataset_val = torch.utils.data.dataset.random_split(
+                    dataset_train, lengths)
+
+        elif 'split' in func_args:
+            # Use raw split
+            dataset_train = dataset_func(root=config.data.root,
+                                         split='train',
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = dataset_func(root=config.data.root,
+                                       split='valid',
+                                       **filtered_args,
+                                       **transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        split='test',
+                                        **filtered_args,
+                                        **transform_funcs)
+        elif 'classes' in func_args:
+            # Use raw split
+            dataset_train = dataset_func(root=config.data.root,
+                                         classes='train',
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = dataset_func(root=config.data.root,
+                                       classes='valid',
+                                       **filtered_args,
+                                       **transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        classes='test',
+                                        **filtered_args,
+                                        **transform_funcs)
+        else:
+            # Use config.data.splits
+            dataset = dataset_func(root=config.data.root,
+                                   **filtered_args,
+                                   **transform_funcs)
+            train_size = int(splits[0] * len(dataset))
+            val_size = int(splits[1] * len(dataset))
+            test_size = len(dataset) - train_size - val_size
+            lengths = [train_size, val_size, test_size]
+            dataset_train, dataset_val, dataset_test = torch.utils.data.dataset.random_split(
+                dataset, lengths)
+
+        data_dict = {
+            'train': dataset_train,
+            'val': dataset_val,
+            'test': dataset_test
+        }
+
+        return data_dict
+
+    def load_torchtext_data(name, splits=None, config=None):
+        from torch.nn.utils.rnn import pad_sequence
+        from torchtext.data import get_tokenizer
+        from federatedscope.nlp.dataset.utils import label_to_index
+
+        dataset_func = getattr(import_module('torchtext.datasets'), name)
+        if config.data.args:
+            raw_args = config.data.args[0]
+        else:
+            raw_args = {}
+        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
+        filtered_args = filter_dict(dataset_func.__init__, raw_args)
+        dataset = dataset_func(root=config.data.root, **filtered_args)
+
+        # torchtext.transforms requires >= 0.12.0 and torch = 1.11.0,
+        # so we do not use `get_transform` in torchtext.
+        tokenizer = get_tokenizer("basic_english")
+        if len(config.data.transform) == 0:
+            raise ValueError(
+                "`transform` must be one pretrained Word Embeddings from \
+                ['GloVe', 'FastText', 'CharNGram']")
+        if len(config.data.transform) == 1:
+            config.data.transform.append({})
+        vocab = getattr(import_module('torchtext.vocab'),
+                        config.data.transform[0])(dim=config.model.in_channels,
+                                                  **config.data.transform[1])
+        data_list = []
+        for data_iter in dataset:
+            # TODO: we may need a more general and principled load function for the `IterableDataset`.
+            data, targets = [], []
+            if config.model.task == 'seq2seq':
+                for item in data_iter:
+                    data.append(
+                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
+                                                 lower_case_backup=True))
+                    targets.append(
+                        vocab.get_vecs_by_tokens(tokenizer(item[0]),
+                                                 lower_case_backup=True))
+                targets = pad_sequence(targets).transpose(
+                    0, 1)[:, :raw_args['max_len'], :]
+            else:
+                for item in data_iter:
+                    data.append(
+                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
+                                                 lower_case_backup=True))
+                    targets.append(item[0])
+                targets = label_to_index(targets)
+            data = pad_sequence(data).transpose(0,
+                                                1)[:, :raw_args['max_len'], :]
+            data_list.append([(x, y) for x, y in zip(data, targets)])
+
+        if len(data_list) == 3:
+            # Use raw splits
+            data_dict = {
+                'train': data_list[0],
+                'val': data_list[1],
+                'test': data_list[2]
+            }
+        elif len(data_list) == 2:
+            # Split train to (train, val)
+            data_dict = {
+                'train': data_list[0],
+                'val': None,
+                'test': data_list[1]
+            }
+            if splits:
+                train_size = int(splits[0] * len(data_dict['train']))
+                val_size = len(data_dict['train']) - train_size
+                lengths = [train_size, val_size]
+                data_dict['train'], data_dict[
+                    'val'] = torch.utils.data.dataset.random_split(
+                        data_dict['train'], lengths)
+        else:
+            # Use config.data.splits
+            data_dict = {}
+            train_size = int(splits[0] * len(data_list[0]))
+            val_size = int(splits[1] * len(data_list[0]))
+            test_size = len(data_list[0]) - train_size - val_size
+            lengths = [train_size, val_size, test_size]
+            data_dict['train'], data_dict['val'], data_dict[
+                'test'] = torch.utils.data.dataset.random_split(
+                    data_list[0], lengths)
+
+        return data_dict
+
+    def load_torchaudio_data(name, splits=None, config=None):
+        import torchaudio
+
+        dataset_func = getattr(import_module('torchaudio.datasets'), name)
+        raise NotImplementedError
+
+    def load_torch_geometric_data(name, splits=None, config=None):
+        import torch_geometric
+
+        dataset_func = getattr(import_module('torch_geometric.datasets'), name)
+        raise NotImplementedError
+
+    DATA_LOAD_FUNCS = {
+        'torchvision': load_torchvision_data,
+        'torchtext': load_torchtext_data,
+        'torchaudio': load_torchaudio_data,
+        'torch_geometric': load_torch_geometric_data
+    }
+
+    modified_config = config.clone()
+
+    # Load dataset
+    splits = modified_config.data.splits
+    name, package = modified_config.data.type.split('@')
+
+    dataset = DATA_LOAD_FUNCS[package.lower()](name, splits, modified_config)
+    splitter = get_splitter(modified_config)
+
+    data_local_dict = {
+        x: {}
+        for x in range(1, modified_config.federate.client_num + 1)
+    }
+
+    # Build dict of Dataloader
+    for split in dataset:
+        if dataset[split] is None:
+            continue
+        for i, ds in enumerate(splitter(dataset[split])):
+            if split == 'train':
+                data_local_dict[i + 1][split] = DataLoader(
+                    ds,
+                    batch_size=modified_config.data.batch_size,
+                    shuffle=True,
+                    num_workers=modified_config.data.num_workers)
+            else:
+                data_local_dict[i + 1][split] = DataLoader(
+                    ds,
+                    batch_size=modified_config.data.batch_size,
+                    shuffle=False,
+                    num_workers=modified_config.data.num_workers)
+
+    return data_local_dict, modified_config
+
+
 def get_data(config):
     for func in register.data_dict.values():
         data_and_config = func(config)
@@ -156,7 +414,31 @@ def get_data(config):
     elif 'movielens' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)
+    elif '@' in config.data.type.lower():
+        data, modified_config = load_external_data(config)
     else:
-        raise ValueError('Data {} is not provided'.format(config.data.type))
+        raise ValueError('Data {} not found.'.format(config.data.type))
 
     return data, modified_config
+
+
+def merge_data(all_data):
+    dataset_names = list(all_data[1].keys())  # e.g., train, test, val
+    assert isinstance(all_data[1]["test"], dict), \
+        "the data should be organized as the format similar to {data_id: {train: {x:ndarray, y:ndarray}} }"
+    data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
+    merged_data = {name: defaultdict(list) for name in dataset_names}
+    for data_id in all_data.keys():
+        if data_id == 0:
+            continue
+        for d_name in dataset_names:
+            for elem_name in data_elem_names:
+                merged_data[d_name][elem_name].append(
+                    all_data[data_id][d_name][elem_name])
+
+    for d_name in dataset_names:
+        for elem_name in data_elem_names:
+            merged_data[d_name][elem_name] = np.concatenate(
+                merged_data[d_name][elem_name])
+
+    return merged_data

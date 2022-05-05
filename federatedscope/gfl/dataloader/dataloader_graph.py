@@ -1,13 +1,11 @@
-import torch
-import random
 import numpy as np
-import torch_geometric.transforms as T
 
+from torch_geometric import transforms
 from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
-from federatedscope.gfl.dataset.utils import get_maxDegree
-from federatedscope.gfl.dataset.splitter import GraphTypeSplitter, ScaffoldSplitter, RandChunkSplitter
+from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def get_numGraphLabels(dataset):
@@ -18,15 +16,16 @@ def get_numGraphLabels(dataset):
 
 
 def load_graphlevel_dataset(config=None):
-    r"""
-    Returns:
-         data_local_dict (Dict): {
-                                  'client_id': {
-                                      'train': DataLoader(),
-                                      'val': DataLoader(),
-                                      'test': DataLoader()
-                                               }
-                                  }
+    r"""Convert dataset to Dataloader.
+    :returns:
+         data_local_dict
+    :rtype: Dict {
+                  'client_id': {
+                      'train': DataLoader(),
+                      'val': DataLoader(),
+                      'test': DataLoader()
+                               }
+                  }
     """
     splits = config.data.splits
     path = config.data.root
@@ -35,29 +34,10 @@ def load_graphlevel_dataset(config=None):
     batch_size = config.data.batch_size
 
     # Splitter
-    if config.data.splitter == 'graph_type':
-        alpha = 0.5
-        splitter = GraphTypeSplitter(config.federate.client_num, alpha)
-    elif config.data.splitter == 'scaffold':
-        splitter = ScaffoldSplitter(config.federate.client_num)
-    elif config.data.splitter == 'rand_chunk':
-        splitter = RandChunkSplitter(config.federate.client_num)
-    else:
-        splitter = None
+    splitter = get_splitter(config)
 
     # Transforms
-    if config.data.transforms == 'normalize_feat':
-        transform = T.NormalizeFeatures()
-    else:
-        transform = None
-
-    # Pre-Transforms
-    if config.data.pre_transforms == 'constant_feat':
-        pre_transform = T.Constant(value=1.0, cat=False)
-    elif config.data.pre_transforms == 'degree_feat':
-        pre_transform = T.OneHotDegree(max_degree=1000, cat=False)
-    else:
-        pre_transform = None
+    transforms_funcs = get_transform(config, 'torch_geometric')
 
     if name in [
             'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
@@ -65,26 +45,22 @@ def load_graphlevel_dataset(config=None):
             'REDDIT-BINARY'
     ]:
         # Add feat for datasets without attrubute
-        if name in ['IMDB-BINARY', 'IMDB-MULTI'] and pre_transform is None:
-            pre_transform = T.Constant(value=1.0, cat=False)
-        dataset = TUDataset(path,
-                            name,
-                            pre_transform=pre_transform,
-                            transform=transform)
+        if name in ['IMDB-BINARY', 'IMDB-MULTI'
+                    ] and 'pre_transform' not in transforms_funcs:
+            transforms_funcs['pre_transform'] = transforms.Constant(value=1.0,
+                                                                    cat=False)
+        dataset = TUDataset(path, name, **transforms_funcs)
         if splitter is None:
-            raise ValueError('Please set the splitter.')
+            raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
 
     elif name in [
             'HIV', 'ESOL', 'FREESOLV', 'LIPO', 'PCBA', 'MUV', 'BACE', 'BBBP',
             'TOX21', 'TOXCAST', 'SIDER', 'CLINTOX'
     ]:
-        dataset = MoleculeNet(path,
-                              name,
-                              pre_transform=pre_transform,
-                              transform=transform)
+        dataset = MoleculeNet(path, name, **transforms_funcs)
         if splitter is None:
-            raise ValueError('Please set the splitter.')
+            raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
     elif name.startswith('graph_multi_domain'.upper()):
         if name.endswith('mol'.upper()):
@@ -95,7 +71,7 @@ def load_graphlevel_dataset(config=None):
                 'PROTEINS'
             ]
         elif name.endswith('mix'.upper()):
-            if not pre_transform:
+            if 'pre_transform' not in transforms_funcs:
                 raise ValueError(f'pre_transform is None!')
             dnames = [
                 'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
@@ -121,16 +97,14 @@ def load_graphlevel_dataset(config=None):
         # Some datasets contain x
         for dname in dnames:
             if dname.startswith('IMDB') or dname == 'COLLAB':
-                tmp_dataset = TUDataset(path,
-                                        dname,
-                                        pre_transform=pre_transform,
-                                        transform=transform)
+                tmp_dataset = TUDataset(path, dname, **transforms_funcs)
             else:
-                tmp_dataset = TUDataset(path,
-                                        dname,
-                                        pre_transform=None,
-                                        transform=transform)
-            #tmp_dataset = [ds for ds in tmp_dataset]
+                tmp_dataset = TUDataset(
+                    path,
+                    dname,
+                    pre_transform=None,
+                    transform=transforms_funcs['transform']
+                    if 'transform' in transforms_funcs else None)
             dataset.append(tmp_dataset)
     else:
         raise ValueError(f'No dataset named: {name}!')

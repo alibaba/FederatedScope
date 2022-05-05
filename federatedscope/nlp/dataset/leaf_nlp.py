@@ -78,20 +78,18 @@ class LEAF_NLP(LEAF):
 
     def download(self):
         # Download to `self.raw_dir`.
-        url = '/xxx/xxx/share'
-        from shutil import copyfile
+        url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com'
 
         os.makedirs(self.raw_dir, exist_ok=True)
         for name in self.raw_file_names:
-            copyfile(osp.join(url, name), osp.join(self.raw_dir, name))
-            # download_url(osp.join(url, name), self.raw_dir)
+            download_url(osp.join(url, name), self.raw_dir)
 
     def __getitem__(self, index):
         """
-        Args:
+        Arguments:
             index (int): Index
 
-        Returns:
+        :returns:
             dict: {'train':[(text, target)], 
                    'test':[(text, target)], 
                    'val':[(text, target)]} 

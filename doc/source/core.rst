@@ -7,10 +7,17 @@ federatedscope.core.configs
 .. automodule:: federatedscope.core.configs
     :members:
 
-federatedscope.core.DAIL_fed_api
+
+federatedscope.core.monitors
 -----------------------
 
-.. automodule:: federatedscope.core.DAIL_fed_api
+.. automodule:: federatedscope.core.monitors
+    :members:
+
+federatedscope.core.fed_runner
+-----------------------
+
+.. automodule:: federatedscope.core.fed_runner
     :members:
 
 federatedscope.core.worker

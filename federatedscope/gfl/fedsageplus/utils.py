@@ -19,8 +19,10 @@ class HideGraph(BaseTransform):
         hidden_portion (int): hidden_portion of validation set.
         num_pred (int): hyperparameters which limit the maximum value of the prediction
         
-    Returns: 
-        filled_data (nx.Graph): impaired graph with attribute "num_missing"
+    :returns:
+        filled_data : impaired graph with attribute "num_missing"
+    :rtype:
+        nx.Graph
     """
     def __init__(self, hidden_portion=0.5, num_pred=5):
         self.hidden_portion = hidden_portion
@@ -119,8 +121,10 @@ def GraphMender(model, impaired_data, original_data):
         model (torch.nn.module): trained generation model
         impaired_data (PyG.Data): impaired graph
         original_data (PyG.Data): raw graph
-    Returns: 
-        filled_data (PyG.Data): Graph after Data Enhancement
+    :returns:
+        filled_data : Graph after Data Enhancement
+    :rtype:
+        PyG.data
     """
     device = impaired_data.x.device
     model = model.to(device)

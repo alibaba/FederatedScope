@@ -1,15 +1,13 @@
 import torch
 import numpy as np
-import torch_geometric.transforms as T
 
 from torch_geometric.datasets import Planetoid
 from torch_geometric.utils import add_self_loops, remove_self_loops, to_undirected
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.gfl.dataset.dblp_new import DBLPNew
-from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
-from federatedscope.gfl.dataset.splitter import LouvainSplitter, RandomSplitter
+from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 INF = np.iinfo(np.int64).max
 
@@ -19,7 +17,7 @@ def raw2loader(raw_data, config=None):
     or still a graph for full-batch training.
     Arguments:
         raw_data (PyG.Data): a raw graph.
-    Returns:
+    :returns:
         sampler (object): a Dict containing loader and subgraph_sampler or still a PyG.Data object.
     """
     # change directed graph to undirected
@@ -75,25 +73,19 @@ def raw2loader(raw_data, config=None):
 
 def load_nodelevel_dataset(config=None):
     r"""
-    Returns:
-        data_local_dict (Dict): dict{'client_id': Data()}
+    :returns:
+        data_local_dict
+    :rtype:
+        Dict: dict{'client_id': Data()}
     """
     path = config.data.root
     name = config.data.type.lower()
 
     # Splitter
-    if config.data.splitter == 'louvain':
-        splitter = LouvainSplitter(config.federate.client_num)
-    elif config.data.splitter == 'random':
-        splitter = RandomSplitter(config.federate.client_num)
-    else:
-        splitter = None
+    splitter = get_splitter(config)
 
     # Transforms
-    if config.data.transforms == 'normalize_feat':
-        transform = T.NormalizeFeatures()
-    else:
-        transform = None
+    transforms_funcs = get_transform(config, 'torch_geometric')
 
     # Dataset
     if name in ["cora", "citeseer", "pubmed"]:
@@ -109,7 +101,7 @@ def load_nodelevel_dataset(config=None):
                             num_train_per_class=num_split[name][0],
                             num_val=num_split[name][1],
                             num_test=num_split[name][2],
-                            transform=transform)
+                            **transforms_funcs)
         dataset = splitter(dataset[0])
         global_dataset = Planetoid(path,
                                    name,
@@ -117,26 +109,29 @@ def load_nodelevel_dataset(config=None):
                                    num_train_per_class=num_split[name][0],
                                    num_val=num_split[name][1],
                                    num_test=num_split[name][2],
-                                   transform=transform)
+                                   **transforms_funcs)
     elif name == "dblp_conf":
+        from federatedscope.gfl.dataset.dblp_new import DBLPNew
         dataset = DBLPNew(path,
                           FL=1,
                           splits=config.data.splits,
-                          transform=transform)
+                          **transforms_funcs)
         global_dataset = DBLPNew(path,
                                  FL=0,
                                  splits=config.data.splits,
-                                 transform=transform)
+                                 **transforms_funcs)
     elif name == "dblp_org":
+        from federatedscope.gfl.dataset.dblp_new import DBLPNew
         dataset = DBLPNew(path,
                           FL=2,
                           splits=config.data.splits,
-                          transform=transform)
+                          **transforms_funcs)
         global_dataset = DBLPNew(path,
                                  FL=0,
                                  splits=config.data.splits,
-                                 transform=transform)
+                                 **transforms_funcs)
     elif name.startswith("csbm"):
+        from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
         dataset = dataset_ContextualSBM(
             root=path,
             name=name if len(name) > len("csbm") else None,

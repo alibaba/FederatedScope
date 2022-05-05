@@ -68,3 +68,17 @@ auxiliary_data_loader_PIA_dict = {}
 
 def register_auxiliary_data_loader_PIA(key, module):
     register(key, module, auxiliary_data_loader_PIA_dict)
+
+
+splitter_dict = {}
+
+
+def register_splitter(key, module):
+    register(key, module, splitter_dict)
+
+
+transform_dict = {}
+
+
+def register_transform(key, module):
+    register(key, module, transform_dict)

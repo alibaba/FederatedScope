@@ -1,15 +1,8 @@
-import torch
-import numpy as np
-
-from collections import Iterable
 from torch.utils.data import DataLoader
 
 from federatedscope.nlp.dataset.leaf_nlp import LEAF_NLP
 from federatedscope.nlp.dataset.leaf_synthetic import LEAF_SYNTHETIC
-
-
-def get_transforms():
-    return None
+from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def load_nlp_dataset(config=None):
@@ -26,10 +19,8 @@ def load_nlp_dataset(config=None):
 
     path = config.data.root
     name = config.data.type.lower()
-    client_num = config.federate.client_num
     batch_size = config.data.batch_size
-
-    transform = get_transforms()
+    transforms_funcs = get_transform(config, 'torchtext')
 
     if name in ['shakespeare', 'subreddit', 'twitter']:
         dataset = LEAF_NLP(root=path,
@@ -38,7 +29,7 @@ def load_nlp_dataset(config=None):
                            tr_frac=splits[0],
                            val_frac=splits[1],
                            seed=1234,
-                           transform=transform)
+                           **transforms_funcs)
     elif name == 'synthetic':
         dataset = LEAF_SYNTHETIC(root=path)
     else:

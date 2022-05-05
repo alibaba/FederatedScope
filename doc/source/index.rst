@@ -24,3 +24,4 @@ Welcome to FederatedScope's documentation!
    gfl.rst
    autotune.rst
    attack.rst
+   mf.rst

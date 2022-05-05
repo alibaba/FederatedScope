@@ -1,6 +1,5 @@
 import torch
 
-from torch_geometric.data import Data
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.utils import to_networkx, to_undirected, from_networkx
 
@@ -13,12 +12,12 @@ class LouvainSplitter(BaseTransform):
     Split Data into small data via louvain algorithm.
     
     Args:
-        num_client (int): Split data into num_client of pieces.
+        client_num (int): Split data into client_num of pieces.
         delta (int): The gap between the number of nodes on the each client.
         
     """
-    def __init__(self, num_client, delta=20):
-        self.num_client = num_client
+    def __init__(self, client_num, delta=20):
+        self.client_num = client_num
         self.delta = delta
 
     def __call__(self, data):
@@ -42,8 +41,8 @@ class LouvainSplitter(BaseTransform):
             else:
                 cluster2node[cluster].append(node)
 
-        max_len = len(G) // self.num_client - self.delta
-        max_len_client = len(G) // self.num_client
+        max_len = len(G) // self.client_num - self.delta
+        max_len_client = len(G) // self.client_num
 
         tmp_cluster2node = {}
         for cluster in cluster2node:
@@ -57,15 +56,15 @@ class LouvainSplitter(BaseTransform):
         orderedc2n = (zip(cluster2node.keys(), cluster2node.values()))
         orderedc2n = sorted(orderedc2n, key=lambda x: len(x[1]), reverse=True)
 
-        client_node_idx = {idx: [] for idx in range(self.num_client)}
-        client_list = [idx for idx in range(self.num_client)]
+        client_node_idx = {idx: [] for idx in range(self.client_num)}
+        client_list = [idx for idx in range(self.client_num)]
         idx = 0
         for (cluster, node_list) in orderedc2n:
             while len(node_list) + len(
                     client_node_idx[idx]) > max_len_client + self.delta:
-                idx = (idx + 1) % self.num_client
+                idx = (idx + 1) % self.client_num
             client_node_idx[idx] += node_list
-            idx = (idx + 1) % self.num_client
+            idx = (idx + 1) % self.client_num
 
         graphs = []
         for owner in client_node_idx:
@@ -75,4 +74,4 @@ class LouvainSplitter(BaseTransform):
         return graphs
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.num_client})'
+        return f'{self.__class__.__name__}({self.client_num})'

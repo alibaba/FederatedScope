@@ -47,10 +47,12 @@ RUN conda install -y wandb tensorboard tensorboardX -c conda-forge \
 # for grpah
 RUN conda install -y pyg==2.0.4 -c pyg  \
     && conda install -y rdkit=2021.09.4=py39hccf6a74_0 -c conda-forge \
+    && conda install -y nltk \
     && conda clean -a -y
 
 # for speech and nlp
 RUN conda install -y sentencepiece textgrid typeguard -c conda-forge \
+    && conda install -y torchtext -c pytorch \
     && conda clean -a -y
 
 

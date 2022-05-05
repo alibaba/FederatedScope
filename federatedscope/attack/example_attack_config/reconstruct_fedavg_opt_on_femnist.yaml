@@ -8,6 +8,7 @@ federate:
   local_update_steps: 1
   total_round_num: 1000
   sample_client_num: 10
+  client_num: 10
 data:
   root: data/
   type: femnist
@@ -15,6 +16,7 @@ data:
   batch_size: 1
   subsample: 0.0001
   num_workers: 0
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
 model:
   type: convnet2
   hidden: 2048
@@ -31,7 +33,7 @@ eval:
   metrics: ['acc', 'correct']
 attack:
   attack_method: DLG
-  max_ite: 500
+  max_ite: 1500
   reconstruct_lr: 0.1
 
 

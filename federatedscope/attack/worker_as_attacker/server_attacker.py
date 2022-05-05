@@ -10,6 +10,8 @@ import logging
 import torch
 from federatedscope.attack.privacy_attacks.passive_PIA import PassivePropertyInference
 
+logger = logging.getLogger(__name__)
+
 
 class PassiveServer(Server):
     '''
@@ -95,7 +97,7 @@ class PassiveServer(Server):
             if sender_list is None:
                 sender_list = self.msg_buffer['train'][state].keys()
             for sender in sender_list:
-                logging.info(
+                logger.info(
                     '------------- reconstruct round:{}, client:{}-----------'.
                     format(state, sender))
 
@@ -132,6 +134,7 @@ class PassivePIAServer(Server):
     The implementation of the batch property classifier, the algorithm 3 in paper: Exploiting Unintended Feature Leakage in Collaborative Learning
 
     References:
+
     Melis, Luca, Congzheng Song, Emiliano De Cristofaro and Vitaly Shmatikov. “Exploiting Unintended Feature Leakage in Collaborative Learning.” 2019 IEEE Symposium on Security and Privacy (SP) (2019): 691-706
     '''
     def __init__(self,

@@ -4,10 +4,10 @@ Federated Graph Learning  Module References
 federatedscope.gfl.dataset
 -----------------------
 
-.. automodule:: federatedscope.gfl.dataloader
+.. automodule:: federatedscope.gfl.dataset
     :members:
 
-federatedscope.gfl.dataset
+federatedscope.gfl.dataloader
 -----------------------
 
 .. automodule:: federatedscope.gfl.dataloader

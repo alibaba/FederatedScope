@@ -158,7 +158,7 @@ class GeneralTFTrainer(Trainer):
         setattr(
             ctx, "{}_y_prob".format(ctx.cur_data_split),
             np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
-        results = self.evaluator.eval(ctx)
+        results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
     def update(self, model_parameters):

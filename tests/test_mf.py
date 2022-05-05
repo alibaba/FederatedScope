@@ -15,7 +15,8 @@ class MFTest(unittest.TestCase):
     def set_config_movielens1m(self, cfg):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = True
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
         cfg.early_stop_patience = 100
         cfg.eval.best_res_update_round_wise_key = "test_avg_loss"
         cfg.eval.freq = 5
