@@ -314,19 +314,16 @@ def load_external_data(config=None):
                 ]
                 targets = label_to_index(y_all)
             else:
-                for item in data_iter:
-                    data = [
-                        vocab.get_vecs_by_tokens(
-                            tokenizer(x, lower_case_backup=True))
-                        for x in x_all
-                    ]
-                    targets = [
-                        vocab.get_vecs_by_tokens(
-                            tokenizer(y, lower_case_backup=True))
-                        for y in y_all
-                    ]
-                targets = pad_sequence(targets).transpose(
-                    0, 1)[:, :raw_args['max_len'], :]
+                data = [
+                    vocab.get_vecs_by_tokens(
+                        tokenizer(x, lower_case_backup=True)) for x in x_all
+                ]
+                targets = [
+                    vocab.get_vecs_by_tokens(
+                        tokenizer(y, lower_case_backup=True)) for y in y_all
+                ]
+            targets = pad_sequence(targets).transpose(
+                0, 1)[:, :raw_args['max_len'], :]
             data = pad_sequence(data).transpose(0,
                                                 1)[:, :raw_args['max_len'], :]
         # Split data to raw
@@ -385,11 +382,54 @@ def load_external_data(config=None):
         dataset_func = getattr(import_module('torch_geometric.datasets'), name)
         raise NotImplementedError
 
+    def load_datasets_data(name, splits=None, config=None):
+        from datasets import load_dataset
+
+        if config.data.args:
+            raw_args = config.data.args[0]
+        else:
+            raw_args = {}
+        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
+        filtered_args = filter_dict(load_dataset, raw_args)
+        dataset = load_dataset(path=config.data.root,
+                               name=name,
+                               **filtered_args)
+        if config.model.type.endswith('transformers'):
+            from transformers import AutoTokenizer
+            tokenizer = AutoTokenizer.from_pretrained(
+                config.model.type.split('@')[0])
+
+        for split in dataset:
+            x_all = [i['sentence'] for i in dataset[split]]
+            targets = [i['label'] for i in dataset[split]]
+
+            x_all = tokenizer(x_all,
+                              return_tensors='pt',
+                              padding=True,
+                              truncation=True,
+                              max_length=raw_args['max_len'])
+            data = [{key: value[i]
+                     for key, value in x_all.items()}
+                    for i in range(len(next(iter(x_all.values()))))]
+            dataset[split] = (data, targets)
+        data_dict = {
+            'train': [(x, y)
+                      for x, y in zip(dataset['train'][0], dataset['train'][1])
+                      ],
+            'val': [(x, y) for x, y in zip(dataset['validation'][0],
+                                           dataset['validation'][1])],
+            'test': [
+                (x, y) for x, y in zip(dataset['test'][0], dataset['test'][1])
+            ] if (set(dataset['test'][1]) - set([-1])) else None,
+        }
+        return data_dict
+
     DATA_LOAD_FUNCS = {
         'torchvision': load_torchvision_data,
         'torchtext': load_torchtext_data,
         'torchaudio': load_torchaudio_data,
-        'torch_geometric': load_torch_geometric_data
+        'torch_geometric': load_torch_geometric_data,
+        'datasets': load_datasets_data
     }
 
     modified_config = config.clone()

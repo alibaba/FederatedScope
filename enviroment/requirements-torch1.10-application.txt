@@ -22,5 +22,5 @@ typeguard
 nltk
 torchtext
 transformers
-
+datasets
 
