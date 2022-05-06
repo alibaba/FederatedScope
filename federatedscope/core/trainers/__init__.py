@@ -8,14 +8,7 @@ from federatedscope.core.trainers.trainer_fedprox import wrap_fedprox_trainer
 from federatedscope.core.trainers.trainer_nbafl import wrap_nbafl_trainer, wrap_nbafl_server
 
 __all__ = [
-    'Trainer',
-    'Context',
-    'GeneralTorchTrainer',
-    'GeneralMultiModelTrainer',
-    'wrap_pFedMeTrainer',
-    'wrap_DittoTrainer',
-    'FedEMTrainer',
-    'wrap_fedprox_trainer',
-    'wrap_nbafl_trainer',
-    'wrap_nbafl_server'
+    'Trainer', 'Context', 'GeneralTorchTrainer', 'GeneralMultiModelTrainer',
+    'wrap_pFedMeTrainer', 'wrap_DittoTrainer', 'FedEMTrainer',
+    'wrap_fedprox_trainer', 'wrap_nbafl_trainer', 'wrap_nbafl_server'
 ]

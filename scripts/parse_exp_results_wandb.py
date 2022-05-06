@@ -110,6 +110,10 @@ def main():
 
                             else:
                                 exp_stop_normal = True
+                                if key == "Results_raw":
+                                    for final_type, final_type_dict in res["Results_raw"].items():
+                                        for inner_key, inner_val in final_type_dict.items():
+                                            log_res_best[f"{final_type}/{inner_key}"] = inner_val
                             #     log_res_best = {}
                             #     for best_res_type, val_dict in val.items():
                             #         for key_inner, val_inner in val_dict.items():
