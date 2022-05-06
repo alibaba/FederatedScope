@@ -427,12 +427,37 @@ def load_external_data(config=None):
         }
         return data_dict
 
+    def load_openml_data(tid, splits=None, config=None):
+        import openml
+        from sklearn.model_selection import train_test_split
+
+        task = openml.tasks.get_task(int(tid))
+        did = task.dataset_id
+        dataset = openml.datasets.get_dataset(did)
+        data, targets, _, _ = dataset.get_data(
+            dataset_format="array", target=dataset.default_target_attribute)
+
+        train_data, test_data, train_targets, test_targets = train_test_split(
+            data, targets, train_size=splits[0], random_state=config.seed)
+        val_data, test_data, val_targets, test_targets = train_test_split(
+            test_data,
+            test_targets,
+            train_size=splits[1] / (1. - splits[0]),
+            random_state=config.seed)
+        data_dict = {
+            'train': [(x, y) for x, y in zip(train_data, train_targets)],
+            'val': [(x, y) for x, y in zip(val_data, val_targets)],
+            'test': [(x, y) for x, y in zip(test_data, test_targets)]
+        }
+        return data_dict
+
     DATA_LOAD_FUNCS = {
         'torchvision': load_torchvision_data,
         'torchtext': load_torchtext_data,
         'torchaudio': load_torchaudio_data,
         'torch_geometric': load_torch_geometric_data,
-        'datasets': load_datasets_data
+        'datasets': load_datasets_data,
+        'openml': load_openml_data
     }
 
     modified_config = config.clone()
