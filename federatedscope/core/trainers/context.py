@@ -12,58 +12,54 @@ class Context(dict):
     Arguments:
         model (Module): training model
         data (dict): a dict contains train/val/test dataset or dataloader
-        # blind
         device: running device
 
     Record attributes:
-        model (Module): the training model
-        data (dict): a dict contains train/val/test dataset or dataloader
-        device (torch.device): specific device to running to
-        criterion: specific loss function
-        optimizer: specific optimizer
-        mode: maintain the current mode of the model
+        - model (Module): the training model
+        - data (dict): a dict contains train/val/test dataset or dataloader
+        - device (torch.device): specific device to running to
+        - criterion: specific loss function
+        - optimizer: specific optimizer
+        - mode: maintain the current mode of the model
 
-        data_batch: current batch data from train/test/val data loader
+        - data_batch: current batch data from train/test/val data loader
 
-        # train
-        trainable_para_names (list): a list of the names of the trainable parameters within ```ctx.model```
-        train_data: training dataset
-        train_loader: training dataloader
-        num_train_data (int): the number of training samples within one epoch
-        num_train_epoch (int): the number of total training epochs
-        num_train_batch (int): the number of batches within one completed training epoch
-        num_train_batch_last_epoch (int): the number of batches within the last epoch
+        - trainable_para_names (list): a list of the names of the trainable parameters within ```ctx.model```
+        - train_data: training dataset
+        - train_loader: training dataloader
+        - num_train_data (int): the number of training samples within one epoch
+        - num_train_epoch (int): the number of total training epochs
+        - num_train_batch (int): the number of batches within one completed training epoch
+        - num_train_batch_last_epoch (int): the number of batches within the last epoch
 
-        # test
-        test_data: test data
-        test_loader: test dataloader
-        num_test_data (int): the number of test samples within one epoch
-        num_test_epoch (int): the number of test epochs, default 1
-        num_test_batch (int): the number of batches within one completed test epoch
+        - test_data: test data
+        - test_loader: test dataloader
+        - num_test_data (int): the number of test samples within one epoch
+        - num_test_epoch (int): the number of test epochs, default 1
+        - num_test_batch (int): the number of batches within one completed test epoch
 
-        # val
-        val_data: val data
-        val_loader: val dataloader
-        num_val_data (int): the number of val samples within one epoch
-        num_val_epoch (int): the number of val epochs, default 1
-        num_val_batch (int): the number of batches within one completed val epoch
+        - val_data: val data
+        - val_loader: val dataloader
+        - num_val_data (int): the number of val samples within one epoch
+        - num_val_epoch (int): the number of val epochs, default 1
+        - num_val_batch (int): the number of batches within one completed val epoch
 
     Statistical variables:
-        loss_batch (float): loss of the current data_batch, shared by train/test/val
-        loss_regular (float): loss of the regularizer
-        loss_task (float): the sum of loss_batch and loss_regular
+        - loss_batch (float): loss of the current data_batch, shared by train/test/val
+        - loss_regular (float): loss of the regularizer
+        - loss_task (float): the sum of loss_batch and loss_regular
 
-        loss_total_batch_train (float): accumulated batch loss during training
-        loss_total_regular_train (float): accumulated regular loss during training
-        num_samples_train (int): accumulated number of training samples involved at present
+        - loss_total_batch_train (float): accumulated batch loss during training
+        - loss_total_regular_train (float): accumulated regular loss during training
+        - num_samples_train (int): accumulated number of training samples involved at present
 
-        loss_total_test (float): accumulated batch loss during test
-        num_samples_test (float): accumulated regular loss during test
+        - loss_total_test (float): accumulated batch loss during test
+        - num_samples_test (float): accumulated regular loss during test
 
-        loss_total_val (float): accumulated batch loss during val
-        num_samples_val (float): accumulated regular loss during val
+        - loss_total_val (float): accumulated batch loss during val
+        - num_samples_val (float): accumulated regular loss during val
 
-        eval_metrics (dict): evaluation results
+        - eval_metrics (dict): evaluation results
     """
 
     __setattr__ = dict.__setitem__
