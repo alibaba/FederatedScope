@@ -46,6 +46,7 @@ def get_transformer(model_config, local_data):
     assert model_config.task.lower(
     ) in model_func_dict, f'model_config.task should be in {model_func_dict.keys()} when using pre_trained transformer model '
     path, _ = model_config.type.split('@')
-    model = model_func_dict[model_config.task.lower()].from_pretrained(path, num_labels=model_config.out_channels)
+    model = model_func_dict[model_config.task.lower()].from_pretrained(
+        path, num_labels=model_config.out_channels)
 
     return model

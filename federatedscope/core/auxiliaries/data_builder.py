@@ -309,21 +309,24 @@ def load_external_data(config=None):
 
             if 'classification' in config.model.task.lower():
                 data = [
-                    vocab.get_vecs_by_tokens(
-                        tokenizer(x, lower_case_backup=True)) for x in x_all
+                    vocab.get_vecs_by_tokens(tokenizer(x),
+                                             lower_case_backup=True)
+                    for x in x_all
                 ]
                 targets = label_to_index(y_all)
             else:
                 data = [
-                    vocab.get_vecs_by_tokens(
-                        tokenizer(x, lower_case_backup=True)) for x in x_all
+                    vocab.get_vecs_by_tokens(tokenizer(x),
+                                             lower_case_backup=True)
+                    for x in x_all
                 ]
                 targets = [
-                    vocab.get_vecs_by_tokens(
-                        tokenizer(y, lower_case_backup=True)) for y in y_all
+                    vocab.get_vecs_by_tokens(tokenizer(y),
+                                             lower_case_backup=True)
+                    for y in y_all
                 ]
-            targets = pad_sequence(targets).transpose(
-                0, 1)[:, :raw_args['max_len'], :]
+                targets = pad_sequence(targets).transpose(
+                    0, 1)[:, :raw_args['max_len'], :]
             data = pad_sequence(data).transpose(0,
                                                 1)[:, :raw_args['max_len'], :]
         # Split data to raw

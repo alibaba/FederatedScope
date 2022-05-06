@@ -523,7 +523,6 @@ class Server(Worker):
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 
-
     def terminate(self, msg_type='finish'):
         """
         To terminate the FL course
