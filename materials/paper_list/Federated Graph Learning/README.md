@@ -1,1 +1,0 @@
-## The paper list of Federated Graph Learning will go here.
