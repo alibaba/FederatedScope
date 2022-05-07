@@ -31,7 +31,7 @@ do
                 for k in {1..5}
                 do
                     python federatedscope/main.py --cfg federatedscope/gfl/baseline/fedavg_gnn_minibatch_on_multi_task.yaml \
-                    data.root /mnt/gaodawei.gdw/data/ \
+                    data.root data/ \
                     device ${cudaid} \
                     data.type ${dataset} \
                     data.splitter ${splitter} \
