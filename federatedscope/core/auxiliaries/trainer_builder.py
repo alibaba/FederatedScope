@@ -10,6 +10,7 @@ TRAINER_CLASS_DICT = {
     "cvtrainer": "CVTrainer",
     "nlptrainer": "NLPTrainer",
     "graphminibatch_trainer": "GraphMiniBatchTrainer",
+    "graphmaml_trainer": "GraphMAMLTrainer",
     "linkfullbatch_trainer": "LinkFullBatchTrainer",
     "linkminibatch_trainer": "LinkMiniBatchTrainer",
     "nodefullbatch_trainer": "NodeFullBatchTrainer",
@@ -48,6 +49,8 @@ def get_trainer(model=None,
             dict_path = "federatedscope.cv.trainer.trainer"
         elif config.trainer.type.lower() in ['nlptrainer']:
             dict_path = "federatedscope.nlp.trainer.trainer"
+        elif config.trainer.type.lower() in ['graphmaml_trainer']:
+            dict_path = "federatedscope.gfl.trainer.mamltrainer"
         elif config.trainer.type.lower() in [
                 'graphminibatch_trainer',
         ]:
