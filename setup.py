@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="federatedscope",
-    version="0.0.1",
+    version="0.1.0",
     author="Alibaba Damo Academy",
     author_email="",
     description="Federated learning package",
