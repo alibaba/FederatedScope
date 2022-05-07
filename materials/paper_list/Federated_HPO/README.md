@@ -7,7 +7,7 @@ Coming soon!
 
 | Title | Venue | Link |
 | --- | --- | --- |
-| Federated Hyperparameter Tuning: Challenges, Baselines, and Connections to Weight-Sharing | NeurIPS | [pdf](https://openreview.net/forum?id=p99rWde9fVJ) [code](https://github.com/mkhodak/FedEx) |
+| Federated Hyperparameter Tuning: Challenges, Baselines, and Connections to Weight-Sharing | NeurIPS | [pdf](https://openreview.net/forum?id=p99rWde9fVJ), [code](https://github.com/mkhodak/FedEx) |
 | FLoRA: Single-shot Hyper-parameter Optimization for Federated Learning | NeurIPS workshop | [pdf](https://neurips2021workshopfl.github.io/NFFL-2021/papers/2021/Zhou2021.pdf) |
 | FedTune: Automatic Tuning of Federated Learning Hyper-Parameters from System Perspective | Arxiv | [pdf](https://arxiv.org/pdf/2110.03061.pdf) |
 
