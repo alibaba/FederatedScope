@@ -3,15 +3,15 @@ device: 2
 federate:
   mode: standalone
   local_update_steps: 1
-  total_round_num: 400
+  total_round_num: 40
   batch_or_epoch: 'epoch'
-  client_num: 1
+  client_num: 5
   share_local_model: True
   online_aggr: True
   sample_client_rate: 1.0
 data:
   root: 'glue'
-  type: 'sst2@datasets'
+  type: 'sst2@huggingface_datasets'
   args: [{'max_len': 512}]
   batch_size: 128
   splitter: 'lda'

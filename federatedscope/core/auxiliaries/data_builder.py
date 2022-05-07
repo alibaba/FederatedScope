@@ -385,7 +385,7 @@ def load_external_data(config=None):
         dataset_func = getattr(import_module('torch_geometric.datasets'), name)
         raise NotImplementedError
 
-    def load_datasets_data(name, splits=None, config=None):
+    def load_huggingface_datasets_data(name, splits=None, config=None):
         from datasets import load_dataset
 
         if config.data.args:
@@ -456,7 +456,7 @@ def load_external_data(config=None):
         'torchtext': load_torchtext_data,
         'torchaudio': load_torchaudio_data,
         'torch_geometric': load_torch_geometric_data,
-        'datasets': load_datasets_data,
+        'huggingface_datasets': load_huggingface_datasets_data,
         'openml': load_openml_data
     }
 
