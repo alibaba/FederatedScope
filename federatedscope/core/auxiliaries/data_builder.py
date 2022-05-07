@@ -239,7 +239,6 @@ def load_external_data(config=None):
 
     def load_torchtext_data(name, splits=None, config=None):
         from torch.nn.utils.rnn import pad_sequence
-        from torchtext.data import get_tokenizer
         from federatedscope.nlp.dataset.utils import label_to_index
 
         dataset_func = getattr(import_module('torchtext.datasets'), name)
@@ -253,40 +252,92 @@ def load_external_data(config=None):
 
         # torchtext.transforms requires >= 0.12.0 and torch = 1.11.0,
         # so we do not use `get_transform` in torchtext.
-        tokenizer = get_tokenizer("basic_english")
-        if len(config.data.transform) == 0:
-            raise ValueError(
-                "`transform` must be one pretrained Word Embeddings from \
-                ['GloVe', 'FastText', 'CharNGram']")
-        if len(config.data.transform) == 1:
-            config.data.transform.append({})
-        vocab = getattr(import_module('torchtext.vocab'),
-                        config.data.transform[0])(dim=config.model.in_channels,
-                                                  **config.data.transform[1])
-        data_list = []
+
+        # Merge all data and tokenize
+        x_list = []
+        y_list = []
         for data_iter in dataset:
-            # TODO: we may need a more general and principled load function for the `IterableDataset`.
             data, targets = [], []
-            if config.model.task == 'seq2seq':
-                for item in data_iter:
-                    data.append(
-                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
-                                                 lower_case_backup=True))
-                    targets.append(
-                        vocab.get_vecs_by_tokens(tokenizer(item[0]),
-                                                 lower_case_backup=True))
+            for i, item in enumerate(data_iter):
+                data.append(item[1])
+                targets.append(item[0])
+            x_list.append(data)
+            y_list.append(targets)
+
+        x_all, y_all = [], []
+        for i in range(len(x_list)):
+            x_all += x_list[i]
+            y_all += y_list[i]
+
+        if config.model.type.endswith('transformers'):
+            from transformers import AutoTokenizer
+            tokenizer = AutoTokenizer.from_pretrained(
+                config.model.type.split('@')[0])
+
+            x_all = tokenizer(x_all,
+                              return_tensors='pt',
+                              padding=True,
+                              truncation=True,
+                              max_length=raw_args['max_len'])
+            data = [{key: value[i]
+                     for key, value in x_all.items()}
+                    for i in range(len(next(iter(x_all.values()))))]
+            if 'classification' in config.model.task.lower():
+                targets = label_to_index(y_all)
+            else:
+                y_all = tokenizer(y_all,
+                                  return_tensors='pt',
+                                  padding=True,
+                                  truncation=True,
+                                  max_length=raw_args['max_len'])
+                targets = [{key: value[i]
+                            for key, value in y_all.items()}
+                           for i in range(len(next(iter(y_all.values()))))]
+        else:
+            from torchtext.data import get_tokenizer
+            tokenizer = get_tokenizer("basic_english")
+            if len(config.data.transform) == 0:
+                raise ValueError(
+                    "`transform` must be one pretrained Word Embeddings from \
+                    ['GloVe', 'FastText', 'CharNGram']")
+            if len(config.data.transform) == 1:
+                config.data.transform.append({})
+            vocab = getattr(import_module('torchtext.vocab'),
+                            config.data.transform[0])(
+                                dim=config.model.in_channels,
+                                **config.data.transform[1])
+
+            if 'classification' in config.model.task.lower():
+                data = [
+                    vocab.get_vecs_by_tokens(tokenizer(x),
+                                             lower_case_backup=True)
+                    for x in x_all
+                ]
+                targets = label_to_index(y_all)
+            else:
+                data = [
+                    vocab.get_vecs_by_tokens(tokenizer(x),
+                                             lower_case_backup=True)
+                    for x in x_all
+                ]
+                targets = [
+                    vocab.get_vecs_by_tokens(tokenizer(y),
+                                             lower_case_backup=True)
+                    for y in y_all
+                ]
                 targets = pad_sequence(targets).transpose(
                     0, 1)[:, :raw_args['max_len'], :]
-            else:
-                for item in data_iter:
-                    data.append(
-                        vocab.get_vecs_by_tokens(tokenizer(item[1]),
-                                                 lower_case_backup=True))
-                    targets.append(item[0])
-                targets = label_to_index(targets)
             data = pad_sequence(data).transpose(0,
                                                 1)[:, :raw_args['max_len'], :]
-            data_list.append([(x, y) for x, y in zip(data, targets)])
+        # Split data to raw
+        num_items = [len(ds) for ds in x_list]
+        data_list, cnt = [], 0
+        for num in num_items:
+            data_list.append([
+                (x, y)
+                for x, y in zip(data[cnt:cnt + num], targets[cnt:cnt + num])
+            ])
+            cnt += num
 
         if len(data_list) == 3:
             # Use raw splits
@@ -334,11 +385,79 @@ def load_external_data(config=None):
         dataset_func = getattr(import_module('torch_geometric.datasets'), name)
         raise NotImplementedError
 
+    def load_huggingface_datasets_data(name, splits=None, config=None):
+        from datasets import load_dataset
+
+        if config.data.args:
+            raw_args = config.data.args[0]
+        else:
+            raw_args = {}
+        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
+        filtered_args = filter_dict(load_dataset, raw_args)
+        dataset = load_dataset(path=config.data.root,
+                               name=name,
+                               **filtered_args)
+        if config.model.type.endswith('transformers'):
+            from transformers import AutoTokenizer
+            tokenizer = AutoTokenizer.from_pretrained(
+                config.model.type.split('@')[0])
+
+        for split in dataset:
+            x_all = [i['sentence'] for i in dataset[split]]
+            targets = [i['label'] for i in dataset[split]]
+
+            x_all = tokenizer(x_all,
+                              return_tensors='pt',
+                              padding=True,
+                              truncation=True,
+                              max_length=raw_args['max_len'])
+            data = [{key: value[i]
+                     for key, value in x_all.items()}
+                    for i in range(len(next(iter(x_all.values()))))]
+            dataset[split] = (data, targets)
+        data_dict = {
+            'train': [(x, y)
+                      for x, y in zip(dataset['train'][0], dataset['train'][1])
+                      ],
+            'val': [(x, y) for x, y in zip(dataset['validation'][0],
+                                           dataset['validation'][1])],
+            'test': [
+                (x, y) for x, y in zip(dataset['test'][0], dataset['test'][1])
+            ] if (set(dataset['test'][1]) - set([-1])) else None,
+        }
+        return data_dict
+
+    def load_openml_data(tid, splits=None, config=None):
+        import openml
+        from sklearn.model_selection import train_test_split
+
+        task = openml.tasks.get_task(int(tid))
+        did = task.dataset_id
+        dataset = openml.datasets.get_dataset(did)
+        data, targets, _, _ = dataset.get_data(
+            dataset_format="array", target=dataset.default_target_attribute)
+
+        train_data, test_data, train_targets, test_targets = train_test_split(
+            data, targets, train_size=splits[0], random_state=config.seed)
+        val_data, test_data, val_targets, test_targets = train_test_split(
+            test_data,
+            test_targets,
+            train_size=splits[1] / (1. - splits[0]),
+            random_state=config.seed)
+        data_dict = {
+            'train': [(x, y) for x, y in zip(train_data, train_targets)],
+            'val': [(x, y) for x, y in zip(val_data, val_targets)],
+            'test': [(x, y) for x, y in zip(test_data, test_targets)]
+        }
+        return data_dict
+
     DATA_LOAD_FUNCS = {
         'torchvision': load_torchvision_data,
         'torchtext': load_torchtext_data,
         'torchaudio': load_torchaudio_data,
-        'torch_geometric': load_torch_geometric_data
+        'torch_geometric': load_torch_geometric_data,
+        'huggingface_datasets': load_huggingface_datasets_data,
+        'openml': load_openml_data
     }
 
     modified_config = config.clone()

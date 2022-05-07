@@ -1,0 +1,25 @@
+use_gpu: True
+device: 1
+early_stop:
+  patience: 100
+federate:
+  mode: 'standalone'
+  total_round_num: 400
+  client_num: 5
+  share_local_model: True
+  online_aggr: True
+trainer:
+  type: 'general'
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']
+data:
+  type: '10101@openml' # task_id@openml
+  splits: [0.8, 0.1, 0.1]
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.5}]
+model:
+  type: lr
+  out_channels: 2
+criterion:
+  type: CrossEntropyLoss

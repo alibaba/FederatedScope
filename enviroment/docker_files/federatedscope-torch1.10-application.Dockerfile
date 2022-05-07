@@ -51,8 +51,9 @@ RUN conda install -y pyg==2.0.4 -c pyg  \
     && conda clean -a -y
 
 # for speech and nlp
-RUN conda install -y sentencepiece textgrid typeguard -c conda-forge \
+RUN conda install -y sentencepiece textgrid typeguard transformers -c conda-forge \
     && conda install -y torchtext -c pytorch \
+    && conda install -y datasets -c huggingface -c conda-forge \
     && conda clean -a -y
 
 

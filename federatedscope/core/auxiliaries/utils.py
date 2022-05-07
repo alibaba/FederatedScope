@@ -222,6 +222,24 @@ def download_url(url: str, folder='folder'):
     return path
 
 
+def move_to(obj, device):
+    import torch
+    if torch.is_tensor(obj):
+        return obj.to(device)
+    elif isinstance(obj, dict):
+        res = {}
+        for k, v in obj.items():
+            res[k] = move_to(v, device)
+        return res
+    elif isinstance(obj, list):
+        res = []
+        for v in obj:
+            res.append(move_to(v, device))
+        return res
+    else:
+        raise TypeError("Invalid type for move_to")
+
+
 class Timeout(object):
     def __init__(self, seconds, max_failure=5):
         self.seconds = seconds
