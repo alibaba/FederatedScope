@@ -32,9 +32,7 @@ def build_feature(words, threshold):
     return features_paper
 
 
-def build_graph(path, FL=0, threshold=15):
-
-    filename = 'gfl%2Fpaper_classification_dataset.tsv'
+def build_graph(path, filename, FL=0, threshold=15):
     with open(os.path.join(path, filename), 'r') as f:
         node_cnt = sum([1 for line in f])
 
@@ -132,9 +130,7 @@ class DBLPNew(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        names = [
-            'gfl%2Fpaper_classification_dataset.tsv',
-        ]
+        names = ['dblp_new.tsv']
         return names
 
     @property
@@ -151,13 +147,13 @@ class DBLPNew(InMemoryDataset):
 
     def download(self):
         # Download to `self.raw_dir`.
-        url = 'xxx.com'
+        url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com'
         for name in self.raw_file_names:
             download_url(osp.join(url, name), self.raw_dir)
 
     def process(self):
         # Read data into huge `Data` list.
-        data_list = build_graph(self.raw_dir, self.FL)
+        data_list = build_graph(self.raw_dir, self.raw_file_names[0], self.FL)
 
         data_list_w_masks = []
         for data in data_list:
