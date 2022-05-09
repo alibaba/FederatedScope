@@ -8,20 +8,20 @@ from torch_geometric.data import InMemoryDataset, download_url
 from torch_geometric.utils import from_networkx
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS as sklearn_stopwords
-from nltk import word_tokenize
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import stopwords as nltk_stopwords
 
 
 class LemmaTokenizer(object):
     def __init__(self):
+        from nltk.stem import WordNetLemmatizer
         self.wnl = WordNetLemmatizer()
 
     def __call__(self, doc):
+        from nltk import word_tokenize
         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
 
 
 def build_feature(words, threshold):
+    from nltk.corpus import stopwords as nltk_stopwords
     # use bag-of-words representation of paper titles as the features of papers
     stopwords = sklearn_stopwords.union(set(nltk_stopwords.words('english')))
     vectorizer = CountVectorizer(min_df=int(threshold),
