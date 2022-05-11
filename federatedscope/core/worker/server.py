@@ -1,9 +1,8 @@
 import logging
 import copy
 import os
-
 import numpy as np
-
+from collections import OrderedDict
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
@@ -286,8 +285,8 @@ class Server(Worker):
                 if self.state < self.total_round_num:
                     # Move to next round of training
                     logger.info(
-                        '----------- Starting a new training round (Round #{:d}) -------------'
-                        .format(self.state))
+                        '----------- Starting a new training round (Round #{:d}/{:d}) -------------'
+                        .format(self.state + 1, self._cfg.federate.total_round_num))
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 
@@ -296,6 +295,9 @@ class Server(Worker):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
+                    if self._cfg.federate.save_to != '':
+                        self.aggregator.save_model(self._cfg.federate.save_to, self.state)
+
                     logger.info(
                         'Server #{:d}: Training is finished! Starting evaluation.'
                         .format(self.ID))
@@ -370,6 +372,8 @@ class Server(Worker):
                   "a") as outfile:
             outfile.write(str(formatted_res) + "\n")
 
+
+
     def merge_eval_results_from_all_clients(self, final_round=False):
         """
         Merge evaluation results from all clients, update best, log the merged results and save then into eval_results.log
@@ -385,10 +389,17 @@ class Server(Worker):
         for each_client in eval_msg_buffer:
             client_eval_results = eval_msg_buffer[each_client]
             for key in client_eval_results.keys():
-                if key not in metrics_all_clients:
-                    metrics_all_clients[key] = list()
-                metrics_all_clients[key].append(float(
-                    client_eval_results[key]))
+                res = client_eval_results[key]
+                if isinstance(res, (dict, OrderedDict)):
+                    for k, v in res.items():
+                        cur_key = key + '_' + k
+                        if key not in metrics_all_clients:
+                            metrics_all_clients[cur_key] = list()
+                        metrics_all_clients[cur_key].append(float(v))
+                else:
+                    if key not in metrics_all_clients:
+                        metrics_all_clients[key] = list()
+                    metrics_all_clients[key].append(float(res))
         formatted_logs = self._monitor.format_eval_res(
             metrics_all_clients,
             rnd=self.state,
@@ -518,8 +529,8 @@ class Server(Worker):
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
             logger.info(
-                '----------- Starting training (Round #{:d}) -------------'.
-                format(self.state))
+                '----------- Starting training (Round #{:d}/{:d}) -------------'.
+                format(self.state + 1, self._cfg.federate.total_round_num))
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 

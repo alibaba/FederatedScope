@@ -13,6 +13,8 @@ class CN(CfgNode):
 
     """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
+        if isinstance(init_dict, tuple):
+            init_dict = {t[0]: t[1] for t in init_dict}
         super().__init__(init_dict, key_list, new_allowed)
         self.cfg_check_funcs = []  # to check the config values validity
 

@@ -19,6 +19,7 @@ TRAINER_CLASS_DICT = {
 
 def get_trainer(model=None,
                 data=None,
+                tokenizer=None,
                 device=None,
                 config=None,
                 only_for_eval=False,
@@ -79,6 +80,7 @@ def get_trainer(model=None,
             if trainer_cls is not None:
                 trainer = trainer_cls(model=model,
                                       data=data,
+                                      tokenizer=tokenizer,
                                       device=device,
                                       config=config,
                                       only_for_eval=only_for_eval)

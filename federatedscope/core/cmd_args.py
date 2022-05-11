@@ -9,6 +9,11 @@ def parse_args():
                         help='Config file path',
                         required=True,
                         type=str)
+    parser.add_argument('--cfg_client',
+                        help='Config file path for clients',
+                        required=False,
+                        default=None,
+                        type=str)
     parser.add_argument('opts',
                         help='See federatedscope/core/configs for all options',
                         default=None,
