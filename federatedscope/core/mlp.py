@@ -7,7 +7,7 @@ from torch.nn import BatchNorm1d, Identity
 class MLP(torch.nn.Module):
     """
     Multilayer Perceptron
-    
+
     """
     def __init__(self,
                  channel_list,
