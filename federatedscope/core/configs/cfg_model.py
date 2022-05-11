@@ -16,7 +16,7 @@ def extend_model_cfg(cfg):
     cfg.model.dropout = 0.5
     cfg.model.in_channels = 0  # If 0, model will be built by data.shape
     cfg.model.out_channels = 1
-    cfg.model.gnn_layer = 2  # In GPR-GNN, K = gnn_layer
+    cfg.model.layer = 2  # In GPR-GNN, K = layer
     cfg.model.graph_pooling = 'mean'
     cfg.model.embed_size = 8
     cfg.model.num_item = 0

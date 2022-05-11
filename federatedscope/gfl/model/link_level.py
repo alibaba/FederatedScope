@@ -1,9 +1,7 @@
 import torch
-import torch.nn.functional as F
-from torch.nn import Linear, Sequential
 from torch_geometric.data import Data
 
-from federatedscope.gfl.model.mlp import MLP
+from federatedscope.core.mlp import MLP
 from federatedscope.gfl.model.gcn import GCN_Net
 from federatedscope.gfl.model.sage import SAGE_Net
 from federatedscope.gfl.model.gat import GAT_Net

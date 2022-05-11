@@ -49,6 +49,24 @@ def get_model(model_config, local_data, backend='torch'):
         else:
             raise ValueError
 
+    elif model_config.type.lower() == 'mlp':
+        from federatedscope.core.mlp import MLP
+        if isinstance(local_data, dict):
+            if 'data' in local_data.keys():
+                data = local_data['data']
+            elif 'train' in local_data.keys():
+                # local_data['train'] is Dataloader
+                data = next(iter(local_data['train']))
+            else:
+                raise TypeError('Unsupported data type.')
+        else:
+            data = local_data
+
+        x, _ = data
+        model = MLP(channel_list=[x.shape[-1]] + [model_config.hidden] *
+                    (model_config.layer - 1) + [model_config.out_channels],
+                    dropout=model_config.dropout)
+
     elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11', 'lr']:
         from federatedscope.cv.model import get_cnn
         model = get_cnn(model_config, local_data)

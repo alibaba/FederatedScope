@@ -35,10 +35,9 @@ def extend_data_cfg(cfg):
 
 def assert_data_cfg(cfg):
     if cfg.data.loader == 'graphsaint-rw':
-        assert cfg.model.gnn_layer == cfg.data.graphsaint.walk_length, 'Sample size mismatch'
+        assert cfg.model.layer == cfg.data.graphsaint.walk_length, 'Sample size mismatch'
     if cfg.data.loader == 'neighbor':
-        assert cfg.model.gnn_layer == len(
-            cfg.data.sizes), 'Sample size mismatch'
+        assert cfg.model.layer == len(cfg.data.sizes), 'Sample size mismatch'
     if '@' in cfg.data.type:
         assert cfg.federate.client_num > 0, '`federate.client_num` should be greater than 0 when using external data'
         assert cfg.data.splitter, '`data.splitter` should not be empty when using external data'
