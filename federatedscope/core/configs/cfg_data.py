@@ -13,11 +13,9 @@ def extend_data_cfg(cfg):
     cfg.data.args = []  # args for external dataset, eg. [{'download': True}]
     cfg.data.splitter = ''
     cfg.data.splitter_args = []  # args for splitter, eg. [{'alpha': 0.5}]
-    cfg.data.transform = [
-    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+    cfg.data.transform = []  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
     cfg.data.target_transform = []  # target_transform for y, use as above
-    cfg.data.pre_transform = [
-    ]  # pre_transform for `torch_geometric` dataset, use as above
+    cfg.data.pre_transform = []  # pre_transform for `torch_geometric` dataset, use as above
     cfg.data.batch_size = 64
     cfg.data.drop_last = False
     cfg.data.sizes = [10, 5]
