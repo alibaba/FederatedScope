@@ -37,7 +37,7 @@ class Monitor(object):
         self.total_flops = -1  # total computation flops to convergence until current fl round
         self.total_upload_bytes = 0   # total upload space cost in bytes until current fl round
         self.total_download_bytes = 0   # total download space cost in bytes until current fl round
-
+        # TODO: count total bytes from comm_manager; track round and wall_time; log in proper position via wandb
         self.fl_begin_wall_time = -1
         self.fl_end_wall_time = -1
         # for the metrics whose names start with "convergence", -1 indicates the worker does not converge yet
@@ -230,10 +230,10 @@ class Monitor(object):
         self.flop_count += 1
 
     def track_upload_bytes(self, bytes):
-        self.upload_bytes += bytes
+        self.total_upload_bytes += bytes
 
     def track_download_bytes(self, bytes):
-        self.download_bytes += bytes
+        self.total_download_bytes += bytes
 
 
 
