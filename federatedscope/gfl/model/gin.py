@@ -4,7 +4,7 @@ from torch.nn import ModuleList
 from torch_geometric.data import Data
 from torch_geometric.nn import GINConv
 
-from federatedscope.gfl.model.mlp import MLP
+from federatedscope.core.mlp import MLP
 """
 Model param names of GIN:
 ['convs.0.eps', 'convs.0.nn.linears.0.weight', 'convs.0.nn.linears.0.bias', 'convs.0.nn.linears.1.weight', 

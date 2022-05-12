@@ -42,10 +42,12 @@ RUN conda install -y pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoo
 # for graph
 RUN conda install -y pyg==2.0.1 -c pyg  \
     && conda install -y rdkit=2021.09.4 -c conda-forge \
+    && conda install -y nltk \
     && conda clean -a -y
 
 # for speech and nlp
 RUN conda install -y sentencepiece textgrid typeguard -c conda-forge \
+    && conda install -y transformers==4.16.2 tokenizers==0.10.3 datasets -c huggingface -c conda-forge \
     && conda install -y torchtext -c pytorch \
     && conda clean -a -y
 
