@@ -242,9 +242,9 @@ def update_best_result(best_results,
                     sorted_keys.append(key)
             if not found_round_wise_update_key:
                 raise ValueError(
-                    "The round_wise_update_key is not in target results, "
+                    "Your specified eval.best_res_update_round_wise_key is not in target results, "
                     "use another key or check the name. \n"
-                    f"Your round_wise_update_key={round_wise_update_key}, "
+                    f"Got eval.best_res_update_round_wise_key={round_wise_update_key}, "
                     f"the keys of results are {list(new_results.keys())}")
 
             for key in sorted_keys:
