@@ -116,7 +116,7 @@ def get_data_info(dataset_name):
     Args:
         dataset_name:dataset name; str
 
-    Returns:
+    :returns:
         data_feature_dim, num_class, is_one_hot_label
 
     '''
@@ -228,7 +228,7 @@ def get_generator(dataset_name):
     Args:
         dataset_name: The dataset name; Type: str
 
-    Returns:
+    :returns:
         The generator; Type: object
 
     '''
@@ -255,6 +255,22 @@ def get_data_property(ctx):
 
 
 def get_passive_PIA_auxiliary_dataset(dataset_name):
+    '''
+
+    Args:
+        dataset_name (str): dataset name
+
+    :returns:
+
+    the auxiliary dataset for property inference attack. Type: dict
+
+    {
+        'x': array,
+        'y': array,
+        'prop': array
+                    }
+
+    '''
     for func in register.auxiliary_data_loader_PIA_dict.values():
         criterion = func(dataset_name)
         if criterion is not None:

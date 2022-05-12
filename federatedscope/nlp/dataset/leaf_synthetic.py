@@ -107,7 +107,7 @@ class LEAF_SYNTHETIC(LEAF):
         Arguments:
             index (int): Index
 
-        Returns:
+        :returns:
             dict: {'train':[(x, target)], 
                    'test':[(x, target)], 
                    'val':[(x, target)]} 

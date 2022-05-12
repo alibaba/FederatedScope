@@ -4,12 +4,13 @@ import os
 
 import numpy as np
 
-from federatedscope.core.early_stopper import EarlyStopper
+from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
+from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
-from federatedscope.core.auxiliaries.utils import merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict, Timeout
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
@@ -19,7 +20,9 @@ logger = logging.getLogger(__name__)
 class Server(Worker):
     """
     The Server class, which describes the behaviors of server in an FL course.
-    The attributes include:
+    The behaviors are described by the handled functions (named as callback_funcs_for_xxx).
+
+    Arguments:
         ID: The unique ID of the server, which is set to 0 by default
         state: The training round
         config: the configuration
@@ -29,7 +32,6 @@ class Server(Worker):
         total_round_num: The total number of the training round
         device: The device to run local training and evaluation
         strategy: redundant attribute
-    The behaviors are described by the handled functions (named as callback_funcs_for_xxx)
     """
     def __init__(self,
                  ID=-1,
@@ -157,7 +159,11 @@ class Server(Worker):
 
     def register_handlers(self, msg_type, callback_func):
         """
-        To bind a message type with a handled function
+        To bind a message type with a handling function.
+
+        Arguments:
+            msg_type (str): The defined message type
+            callback_func: The handling functions to handle the received message
         """
         self.msg_handlers[msg_type] = callback_func
 
@@ -169,7 +175,7 @@ class Server(Worker):
 
     def run(self):
         """
-        To start the FL course, listen and handle messages (for distributed mode)
+        To start the FL course, listen and handle messages (for distributed mode).
         """
 
         # Begin: Broadcast model parameters and start to FL train
@@ -178,35 +184,64 @@ class Server(Worker):
             self.msg_handlers[msg.msg_type](msg)
 
         # Running: listen for message (updates from clients), aggregate and broadcast feedbacks (aggregated model parameters)
-        while self.state <= self.total_round_num:
-            msg = self.comm_manager.receive()
-            self.msg_handlers[msg.msg_type](msg)
+        min_received_num = self._cfg.asyn.min_received_num if hasattr(
+            self._cfg, 'asyn') else self._cfg.federate.sample_client_num
+        num_failure = 0
+        with Timeout(self._cfg.asyn.timeout) as time_counter:
+            while self.state <= self.total_round_num:
+                try:
+                    msg = self.comm_manager.receive()
+                    move_on_flag = self.msg_handlers[msg.msg_type](msg)
+                    if move_on_flag:
+                        time_counter.reset()
+                except TimeoutError:
+                    logger.info('Time out at the training round #{}'.format(
+                        self.state))
+                    move_on_flag_eval = self.check_and_move_on(
+                        min_received_num=min_received_num,
+                        check_eval_result=True)
+                    move_on_flag = self.check_and_move_on(
+                        min_received_num=min_received_num)
+                    if not move_on_flag and not move_on_flag_eval:
+                        num_failure += 1
+                        ## Terminate the training if the number of failure exceeds the maximum number (default value: 10)
+                        if time_counter.exceed_max_failure(num_failure):
+                            logger.info(
+                                '----------- Training fails at round #{:d} -------------'
+                                .format(self.state))
+                            break
 
-        if self.model_num > 1:
-            model_para = [model.state_dict() for model in self.models]
-        else:
-            model_para = self.model.state_dict()
+                        ## Time out, broadcast the model para and re-start the training round
+                        logger.info(
+                            '----------- Re-starting the training round (Round #{:d}) for {:d} time -------------'
+                            .format(self.state, num_failure))
+                        # Clean the msg_buffer
+                        self.msg_buffer['train'][self.state].clear()
 
-        self.comm_manager.send(
-            Message(msg_type='finish',
-                    sender=self.ID,
-                    receiver=list(self.comm_manager.neighbors.keys()),
-                    state=self.state,
-                    content=model_para))
+                        self.broadcast_model_para(
+                            msg_type='model_para',
+                            sample_client_num=self.sample_client_num)
+                    else:
+                        num_failure = 0
+                    time_counter.reset()
 
-    def check_and_move_on(self, check_eval_result=False):
+        self.terminate(msg_type='finish')
+
+    def check_and_move_on(self,
+                          check_eval_result=False,
+                          min_received_num=None):
         """
-        To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
+        To check the message_buffer. When enough messages are receiving, some events (such as perform aggregation, evaluation, and move to the next training round) would be triggered.
+
+        Arguments:
+            check_eval_result (bool): If True, check the message buffer for evaluation; and check the message buffer for training otherwise.
         """
+        if min_received_num is None:
+            min_received_num = self._cfg.federate.sample_client_num
+        assert min_received_num <= self.sample_client_num
 
-        if check_eval_result:
-            # all clients are participating in evaluation
-            minimal_number = self.client_num
-        else:
-            # sampled clients are participating in training
-            minimal_number = self.sample_client_num
-
-        if self.check_buffer(self.state, minimal_number, check_eval_result):
+        move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
+        if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:  # in the training process
                 # Get all the message
@@ -239,14 +274,13 @@ class Server(Worker):
                     }
                     result = aggregator.aggregate(agg_info)
                     model.load_state_dict(result, strict=False)
-                    #aggregator.update(result)
 
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server #{:d}: Starting evaluation at round {:d}.'.
-                        format(self.ID, self.state))
+                        'Server #{:d}: Starting evaluation at the end of round {:d}.'
+                        .format(self.ID, self.state - 1))
                     self.eval()
 
                 if self.state < self.total_round_num:
@@ -274,10 +308,16 @@ class Server(Worker):
                                                   formatted_eval_res)
                 self.check_and_save()
 
+        else:
+            move_on_flag = False
+
+        return move_on_flag
+
     def check_and_save(self):
         """
-        To save the results and save model after each evaluation
+        To save the results and save model after each evaluation.
         """
+
         # early stopping
         should_stop = False
 
@@ -303,23 +343,17 @@ class Server(Worker):
                 .format(self.ID))
             # last round
             self.save_best_results()
-
-            if self.model_num > 1:
-                model_para = [model.state_dict() for model in self.models]
-            else:
-                model_para = self.model.state_dict()
-            self.comm_manager.send(
-                Message(msg_type='finish',
-                        sender=self.ID,
-                        receiver=list(self.comm_manager.neighbors.keys()),
-                        state=self.state,
-                        content=model_para))
+            self.terminate(msg_type='finish')
 
         if self.state == self.total_round_num:
-            #break out the loop for distributed mode
+            # break out the loop for distributed mode
             self.state += 1
 
     def save_best_results(self):
+        """
+        To Save the best evaluation results.
+        """
+
         if self._cfg.federate.save_to != '':
             self.aggregator.save_model(self._cfg.federate.save_to, self.state)
         formatted_best_res = self._monitor.format_eval_res(
@@ -338,14 +372,15 @@ class Server(Worker):
 
     def merge_eval_results_from_all_clients(self, final_round=False):
         """
-        Merge evaluation results from all clients,
-        update best, log the merged results and save then into eval_results.log
+        Merge evaluation results from all clients, update best, log the merged results and save then into eval_results.log
 
-        :param final_round:
-        :return:
+        Arguments:
+            final_round (bool): Whether it is the final round of training
+        :returns: the formatted merged results
         """
-        state = self.state if not final_round else self.state - 1
-        eval_msg_buffer = self.msg_buffer['eval'][state]
+
+        round = max(self.msg_buffer['eval'].keys())
+        eval_msg_buffer = self.msg_buffer['eval'][round]
         metrics_all_clients = dict()
         for each_client in eval_msg_buffer:
             client_eval_results = eval_msg_buffer[each_client]
@@ -360,18 +395,21 @@ class Server(Worker):
             role='Server #',
             forms=self._cfg.eval.report)
         logger.info(formatted_logs)
-        self.update_best_result(metrics_all_clients,
-                                results_type="client_individual",
-                                round_wise_update_key=self._cfg.eval.
-                                best_res_update_round_wise_key)
+        update_best_result(self.best_results,
+                           metrics_all_clients,
+                           results_type="client_individual",
+                           round_wise_update_key=self._cfg.eval.
+                           best_res_update_round_wise_key)
         self.save_formatted_results(formatted_logs)
         for form in self._cfg.eval.report:
             if form != "raw":
-                self.update_best_result(
-                    formatted_logs[f"Results_{form}"],
-                    results_type=f"client_summarized_{form}",
-                    round_wise_update_key=self._cfg.eval.
-                    best_res_update_round_wise_key)
+                update_best_result(self.best_results,
+                                   formatted_logs[f"Results_{form}"],
+                                   results_type=f"client_summarized_{form}",
+                                   round_wise_update_key=self._cfg.eval.
+                                   best_res_update_round_wise_key)
+        #Clean the buffer
+        self.msg_buffer['eval'][round].clear()
         return formatted_logs
 
     def broadcast_model_para(self,
@@ -379,7 +417,12 @@ class Server(Worker):
                              sample_client_num=-1):
         """
         To broadcast the message to all clients or sampled clients
+
+        Arguments:
+            msg_type: 'model_para' or other user defined msg_type
+            sample_client_num: the number of sampled clients in the broadcast behavior. And sample_client_num = -1 denotes to broadcast to all the clients.
         """
+
         if sample_client_num > 0:
             receiver = np.random.choice(np.arange(1, self.client_num + 1),
                                         size=sample_client_num,
@@ -397,16 +440,18 @@ class Server(Worker):
                 self._noise_injector(self._cfg, num_sample_clients,
                                      self.models[model_idx_i])
 
+        skip_broadcast = self._cfg.federate.method in ["local", "global"]
         if self.model_num > 1:
-            model_para = [model.state_dict() for model in self.models]
+            model_para = [{} if skip_broadcast else model.state_dict()
+                          for model in self.models]
         else:
-            model_para = self.model.state_dict()
+            model_para = {} if skip_broadcast else self.model.state_dict()
 
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
                     receiver=receiver,
-                    state=self.state,
+                    state=min(self.state, self.total_round_num),
                     content=model_para))
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
@@ -416,6 +461,7 @@ class Server(Worker):
         """
         To broadcast the communication addresses of clients (used for additive secret sharing)
         """
+
         self.comm_manager.send(
             Message(msg_type='address',
                     sender=self.ID,
@@ -423,30 +469,41 @@ class Server(Worker):
                     state=self.state,
                     content=self.comm_manager.get_neighbors()))
 
-    def check_buffer(self, cur_round, minimal_number, check_eval_result=False):
+    def check_buffer(self,
+                     cur_round,
+                     min_received_num,
+                     check_eval_result=False):
         """
         To check the message buffer
 
         Arguments:
         cur_round (int): The current round number
-        minimal_number (int): The minimal number of the receiving messages
+        min_received_num (int): The minimal number of the receiving messages
         check_eval_result (bool): To check training results for evaluation results
         :returns: Whether enough messages have been received or not
         :rtype: bool
         """
+
         if check_eval_result:
-            if 'eval' not in self.msg_buffer.keys():
+            if 'eval' not in self.msg_buffer.keys() or len(
+                    self.msg_buffer['eval'].keys()) == 0:
                 return False
             buffer = self.msg_buffer['eval']
+            cur_round = max(buffer.keys())
         else:
             buffer = self.msg_buffer['train']
 
-        if cur_round not in buffer or len(buffer[cur_round]) < minimal_number:
+        if cur_round not in buffer or len(
+                buffer[cur_round]) < min_received_num:
             return False
         else:
             return True
 
     def check_client_join_in(self):
+        """
+        To check whether all the clients have joined in the FL course.
+        """
+
         if len(self._cfg.federate.join_in_info) != 0:
             return len(self.join_in_info) == self.client_num
         else:
@@ -456,108 +513,37 @@ class Server(Worker):
         """
         To start the FL course when the expected number of clients have joined
         """
+
         if self.check_client_join_in():
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
+            logger.info(
+                '----------- Starting training (Round #{:d}) -------------'.
+                format(self.state))
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 
-    def update_best_result(self,
-                           results,
-                           results_type,
-                           round_wise_update_key="val_loss"):
+    def terminate(self, msg_type='finish'):
         """
-            update best evaluation results.
-            by default, the update is based on validation loss with `round_wise_update_key="val_loss" `
+        To terminate the FL course
         """
-        update_best_this_round = False
-        if not isinstance(results, dict):
-            raise ValueError(
-                f"update best results require `results` a dict, but got {type(results)}"
-            )
+        if self.model_num > 1:
+            model_para = [model.state_dict() for model in self.models]
         else:
-            if results_type not in self.best_results:
-                self.best_results[results_type] = dict()
-            best_result = self.best_results[results_type]
-            # update different keys separately: the best values can be in different rounds
-            if round_wise_update_key is None:
-                for key in results:
-                    cur_result = results[key]
-                    if 'loss' in key or 'std' in key:  # the smaller, the better
-                        if results_type == "client_individual":
-                            cur_result = min(cur_result)
-                        if key not in best_result or cur_result < best_result[
-                                key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
+            model_para = self.model.state_dict()
 
-                    elif 'acc' in key:  # the larger, the better
-                        if results_type == "client_individual":
-                            cur_result = max(cur_result)
-                        if key not in best_result or cur_result > best_result[
-                                key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    else:
-                        # unconcerned metric
-                        pass
-            # update different keys round-wise: if find better round_wise_update_key, update others at the same time
-            else:
-                if round_wise_update_key not in [
-                        "val_loss", "val_acc", "val_std", "test_loss",
-                        "test_acc", "test_std", "test_avg_loss", "loss"
-                ]:
-                    raise NotImplementedError(
-                        f"We currently support round_wise_update_key as one of "
-                        f"['val_loss', 'val_acc', 'val_std', 'test_loss', 'test_acc', 'test_std'] "
-                        f"for round-wise best results update, but got {round_wise_update_key}."
-                    )
-
-                found_round_wise_update_key = False
-                sorted_keys = []
-                for key in results:
-                    if round_wise_update_key in key:
-                        sorted_keys.insert(0, key)
-                        found_round_wise_update_key = True
-                    else:
-                        sorted_keys.append(key)
-                if not found_round_wise_update_key:
-                    raise ValueError(
-                        "The round_wise_update_key is not in target results, "
-                        "use another key or check the name. \n"
-                        f"Your round_wise_update_key={round_wise_update_key}, "
-                        f"the keys of results are {list(results.keys())}")
-
-                for key in sorted_keys:
-                    cur_result = results[key]
-                    if update_best_this_round or \
-                            ('loss' in round_wise_update_key and 'loss' in key) or \
-                            ('std' in round_wise_update_key and 'std' in key):
-                        if results_type == "client_individual":
-                            cur_result = min(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result < best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    elif update_best_this_round or \
-                            'acc' in round_wise_update_key and 'acc' in key:
-                        if results_type == "client_individual":
-                            cur_result = max(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result > best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    else:
-                        # unconcerned metric
-                        pass
-
-        if update_best_this_round:
-            logging.info(f"Find new best result: {self.best_results}")
+        self.comm_manager.send(
+            Message(msg_type=msg_type,
+                    sender=self.ID,
+                    receiver=list(self.comm_manager.neighbors.keys()),
+                    state=self.state,
+                    content=model_para))
 
     def eval(self):
         """
         To conduct evaluation. When cfg.federate.make_global_eval=True, a global evaluation is conducted by the server.
         """
+
         if self._cfg.federate.make_global_eval:
             # By default, the evaluation is conducted one-by-one for all internal models;
             # for other cases such as ensemble, override the eval function
@@ -575,10 +561,11 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
-                self.update_best_result(formatted_eval_res['Results_raw'],
-                                        results_type="server_global_eval",
-                                        round_wise_update_key=self._cfg.eval.
-                                        best_res_update_round_wise_key)
+                update_best_result(self.best_results,
+                                   formatted_eval_res['Results_raw'],
+                                   results_type="server_global_eval",
+                                   round_wise_update_key=self._cfg.eval.
+                                   best_res_update_round_wise_key)
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.save_formatted_results(formatted_eval_res)
@@ -589,6 +576,14 @@ class Server(Worker):
             self.broadcast_model_para(msg_type='evaluate')
 
     def callback_funcs_model_para(self, message: Message):
+        """
+        The handling function for receiving model parameters, which triggers check_and_move_on (perform aggregation when enough feedback has been received).
+        This handling function is widely used in various FL courses.
+
+        Arguments:
+            message: The received message, which includes sender, receiver, state, and content. More detail can be found in federatedscope.core.message
+        """
+
         round, sender, content = message.state, message.sender, message.content
         # For a new round
         if round not in self.msg_buffer['train'].keys():
@@ -598,9 +593,18 @@ class Server(Worker):
 
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(content)
-        self.check_and_move_on()
+
+        return self.check_and_move_on()
 
     def callback_funcs_for_join_in(self, message: Message):
+        """
+        The handling function for receiving the join in information. The server might request for some information (such as num_of_samples) if necessary, assign IDs for the servers.
+        If all the clients have joined in, the training process will be triggered.
+
+        Arguments:
+            message: The received message
+        """
+
         if 'info' in message.msg_type:
             sender, info = message.sender, message.content
             for key in self._cfg.federate.join_in_info:
@@ -636,6 +640,13 @@ class Server(Worker):
         self.trigger_for_start()
 
     def callback_funcs_for_metrics(self, message: Message):
+        """
+        The handling function for receiving the evaluation results, which triggers check_and_move_on (perform aggregation when enough feedback has been received).
+
+        Arguments:
+            message: The received message
+        """
+
         round, sender, content = message.state, message.sender, message.content
 
         if round not in self.msg_buffer['eval'].keys():
@@ -643,4 +654,4 @@ class Server(Worker):
 
         self.msg_buffer['eval'][round][sender] = content
 
-        self.check_and_move_on(check_eval_result=True)
+        return self.check_and_move_on(check_eval_result=True)

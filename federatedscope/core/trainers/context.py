@@ -76,6 +76,7 @@ class Context(LifecycleDict):
         variables with the same name will be stored according to `ctx.cur_mode` and `ctx.cur_data_split`, and won't \
         influence each other.
     """
+
     def __init__(self,
                  model,
                  cfg,

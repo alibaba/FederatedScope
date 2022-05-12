@@ -1,8 +1,4 @@
-from os.path import dirname, basename, isfile, join
-import glob
+from federatedscope.mf.model.model import BasicMFNet, VMFNet, HMFNet
+from federatedscope.mf.model.model_builder import get_mfnet
 
-modules = glob.glob(join(dirname(__file__), "*.py"))
-__all__ = [
-    basename(f)[:-3] for f in modules
-    if isfile(f) and not f.endswith('__init__.py')
-]
+__all__ = ["get_mfnet", "BasicMFNet", "VMFNet", "HMFNet"]

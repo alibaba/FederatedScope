@@ -11,7 +11,13 @@ logger = logging.getLogger(__name__)
 
 class FedRunner(object):
     """
-    This class is used for building up the Federated Learning course
+    This class is used to construct an FL course, which includes `_set_up` and `run`.
+
+    Arguments:
+        data: The data used in the FL courses, which are formatted as {'ID':data} for standalone mode. More details can be found in federatedscope.core.auxiliaries.data_builder .
+        server_class: The server class is used for instantiating a (customized) server.
+        client_class: The client class is used for instantiating a (customized) client.
+        config: The configurations of the FL course.
     """
     def __init__(self,
                  data,
@@ -39,7 +45,7 @@ class FedRunner(object):
 
     def _setup_for_standalone(self):
         """
-        To set up server and client for standalone mode
+        To set up server and client for standalone mode.
         """
         self.server = self._setup_server()
 
@@ -52,13 +58,20 @@ class FedRunner(object):
         self._shared_client_model = get_model(
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
+
+        if self.cfg.federate.method == "global":
+            assert 0 in self.data and self.data[
+                0] is not None, "In global training mode, we will use a proxy client to hold all the data. Please put the whole dataset in data[0], i.e., the same style with global evaluation mode"
+            from federatedscope.core.auxiliaries.data_builder import merge_data
+            self.data[1] = merge_data(all_data=self.data)
+
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id, client_model=self._shared_client_model)
 
     def _setup_for_distributed(self):
         """
-        To set up server or client for distributed mode
+        To set up server or client for distributed mode.
         """
         self.server_address = {
             'host': self.cfg.distribute.server_host,
@@ -76,7 +89,8 @@ class FedRunner(object):
 
     def run(self):
         """
-        To run an FL course, which is called after server/client has been set up
+        To run an FL course, which is called after server/client has been set up.
+        For the standalone mode, a shared message queue will be set up to simulate ``receiving message``.
         """
         if self.mode == 'standalone':
             # trigger the FL course

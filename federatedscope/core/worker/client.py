@@ -3,9 +3,12 @@ import logging
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
+from federatedscope.core.monitors.early_stopper import EarlyStopper
+from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
+from federatedscope.core.auxiliaries.utils import merge_dict
 
 logger = logging.getLogger(__name__)
 
@@ -13,16 +16,17 @@ logger = logging.getLogger(__name__)
 class Client(Worker):
     """
     The Client class, which describes the behaviors of client in an FL course.
-    The attributes include:
+    The behaviors are described by the handling functions (named as callback_funcs_for_xxx)
+
+    Arguments:
         ID: The unique ID of the client, which is assigned by the server when joining the FL course
         server_id: (Default) 0
         state: The training round
-        config: the configuration
+        config: The configuration
         data: The data owned by the client
-        model: The local model
+        model: The model maintained locally
         device: The device to run local training and evaluation
         strategy: redundant attribute
-    The behaviors are described by the handled functions (named as callback_funcs_for_xxx)
     """
     def __init__(self,
                  ID=-1,
@@ -48,6 +52,18 @@ class Client(Worker):
                                    device=device,
                                    config=self._cfg,
                                    is_attacker=self.is_attacker)
+
+        # For client-side evaluation
+        self.best_results = dict()
+        self.history_results = dict()
+        # in local or global training mode, we do use the early stopper. Otherwise, we set patience=0 to deactivate the local early-stopper
+        patience = self._cfg.early_stop.patience if self._cfg.federate.method in [
+            "local", "global"
+        ] else 0
+        self.early_stopper = EarlyStopper(
+            patience, self._cfg.early_stop.delta,
+            self._cfg.early_stop.improve_indicator_mode,
+            self._cfg.early_stop.the_smaller_the_better)
 
         # Secret Sharing Manager and message buffer
         self.ss_manager = AdditiveSecretSharing(
@@ -85,7 +101,11 @@ class Client(Worker):
 
     def register_handlers(self, msg_type, callback_func):
         """
-        To bind a message type with a handled function
+        To bind a message type with a handling function.
+
+        Arguments:
+            msg_type (str): The defined message type
+            callback_func: The handling functions to handle the received message
         """
         self.msg_handlers[msg_type] = callback_func
 
@@ -104,7 +124,7 @@ class Client(Worker):
 
     def join_in(self):
         """
-        To send 'join_in' message to the server
+        To send 'join_in' message to the server for joining in the FL course.
         """
         self.comm_manager.send(
             Message(msg_type='join_in',
@@ -114,7 +134,7 @@ class Client(Worker):
 
     def run(self):
         """
-        To wait for the messages and handle them (for distributed mode)
+        To listen to the message and handle them accordingly  (used for distributed mode)
         """
         while True:
             msg = self.comm_manager.receive()
@@ -125,6 +145,12 @@ class Client(Worker):
                 break
 
     def callback_funcs_for_model_para(self, message: Message):
+        """
+        The handling function for receiving model parameters, which triggers the local training process. This handling function is widely used in various FL courses.
+
+        Arguments:
+            message: The received message, which includes sender, receiver, state, and content. More detail can be found in federatedscope.core.message
+        """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
             state, content = message.state, message.content
@@ -165,15 +191,21 @@ class Client(Worker):
         else:
             round, sender, content = message.state, message.sender, message.content
             self.trainer.update(content)
-            #self.model.load_state_dict(content)
             self.state = round
-            sample_size, model_para_all, results = self.trainer.train()
-            logger.info(
-                self._monitor.format_eval_res(results,
-                                              rnd=self.state,
-                                              role='Client #{}'.format(
-                                                  self.ID),
-                                              return_raw=True))
+            if self.early_stopper.early_stopped:
+                sample_size, model_para_all, results = 0, self.trainer.get_model_para(
+                ), {}
+                logger.info(
+                    f"Client #{self.ID} has been early stopped, we will skip the local training"
+                )
+            else:
+                sample_size, model_para_all, results = self.trainer.train()
+                logger.info(
+                    self._monitor.format_eval_res(results,
+                                                  rnd=self.state,
+                                                  role='Client #{}'.format(
+                                                      self.ID),
+                                                  return_raw=True))
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
@@ -219,12 +251,24 @@ class Client(Worker):
                             content=(sample_size, model_para_all)))
 
     def callback_funcs_for_assign_id(self, message: Message):
+        """
+        The handling function for receiving the client_ID assigned by the server (during the joining process), which is used in the distributed mode.
+
+        Arguments:
+            message: The received message
+        """
         content = message.content
         self.ID = int(content)
         logger.info('Client (address {}:{}) is assigned with #{:d}.'.format(
             self.comm_manager.host, self.comm_manager.port, self.ID))
 
     def callback_funcs_for_join_in_info(self, message: Message):
+        """
+        The handling function for receiving the request of join in information (such as batch_size, num_of_samples) during the joining process.
+
+        Arguments:
+            message: The received message
+        """
         requirements = message.content
         join_in_info = dict()
         for requirement in requirements:
@@ -246,28 +290,64 @@ class Client(Worker):
                     content=join_in_info))
 
     def callback_funcs_for_address(self, message: Message):
+        """
+        The handling function for receiving other clients' IP addresses, which is used for constructing a complex topology
+
+        Arguments:
+            message: The received message
+        """
         content = message.content
         for neighbor_id, address in content.items():
             if int(neighbor_id) != self.ID:
                 self.comm_manager.add_neighbors(neighbor_id, address)
 
     def callback_funcs_for_evaluate(self, message: Message):
+        """
+        The handling function for receiving the request of evaluating
+
+        Arguments:
+            message: The received message
+        """
         sender = message.sender
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        metrics = {}
-        for split in self._cfg.eval.split:
-            eval_metrics = self.trainer.evaluate(mode=split,
-                                                 target_data_split_name=split)
-            for key in eval_metrics:
-                logger.info(
-                    self._monitor.format_eval_res(eval_metrics,
-                                                  rnd=self.state,
-                                                  role='Client #{}'.format(
-                                                      self.ID)))
+        if self.early_stopper.early_stopped:
+            metrics = self.best_results
+        else:
+            metrics = {}
+            if self._cfg.trainer.finetune.before_eval:
+                self.trainer.finetune()
+            for split in self._cfg.eval.split:
+                eval_metrics = self.trainer.evaluate(mode=split,
+                    target_data_split_name=split)
 
-            metrics.update(**eval_metrics)
+                if self._cfg.federate.mode == 'distributed':
+                    logger.info(
+                        self._monitor.format_eval_res(eval_metrics,
+                                                      rnd=self.state,
+                                                      role='Client #{}'.format(
+                                                          self.ID)))
+
+                metrics.update(**eval_metrics)
+
+            formatted_eval_res = self._monitor.format_eval_res(
+                metrics,
+                rnd=self.state,
+                role='Client #{}'.format(self.ID),
+                forms='raw',
+                return_raw=True)
+            update_best_result(self.best_results,
+                               formatted_eval_res['Results_raw'],
+                               results_type=f"client #{self.ID}",
+                               round_wise_update_key=self._cfg.eval.
+                               best_res_update_round_wise_key)
+            self.history_results = merge_dict(
+                self.history_results, formatted_eval_res['Results_raw'])
+            if self._cfg.federate.method in ["local", "global"]:
+                self.early_stopper.track_and_check_best(self.history_results[
+                    self._cfg.eval.best_res_update_round_wise_key])
+
         self.comm_manager.send(
             Message(msg_type='metrics',
                     sender=self.ID,
@@ -276,6 +356,12 @@ class Client(Worker):
                     content=metrics))
 
     def callback_funcs_for_finish(self, message: Message):
+        """
+        The handling function for receiving the signal of finishing the FL course
+
+        Arguments:
+            message: The received message
+        """
         logger.info(
             "================= receiving Finish Message ============================"
         )

@@ -1,6 +1,6 @@
 use_gpu: True
 federate:
-  client_num: 2
+  client_num: 3
   mode: 'distributed'
   total_round_num: 20
   make_global_eval: False

@@ -65,7 +65,7 @@ class FedGenTrainer(LocalGenTrainer):
         """
         Arguments:
             grads: grads of other clients to optimize the local model
-        Returns:
+        :returns:
             state_dict of generation model
         """
         for key in grads.keys():
@@ -84,7 +84,7 @@ class FedGenTrainer(LocalGenTrainer):
             model_para: model parameters
             embedding: output embeddings after local encoder
             true_missing: number of missing node
-        Returns:
+        :returns:
             grads: grads to optimize the model of other clients
         """
         para_backup = copy.deepcopy(self.ctx.model.cpu().state_dict())

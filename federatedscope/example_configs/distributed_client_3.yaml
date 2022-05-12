@@ -1,0 +1,23 @@
+use_gpu: True
+federate:
+  client_num: 3
+  mode: 'distributed'
+  total_round_num: 20
+  make_global_eval: False
+  online_aggr: False
+distribute:
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051
+  client_host: '127.0.0.1'
+  client_port: 50054
+  role: 'client'
+  data_file: 'toy_data/client_3_data'
+trainer:
+  type: 'general'
+eval:
+  freq: 10
+data:
+  type: 'toy'
+model:
+  type: 'lr'

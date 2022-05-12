@@ -138,7 +138,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         if ctx.cur_model_idx == self.model_nums - 1:
             ctx.var.y_true = np.concatenate(ctx.var.ys_true)
             ctx.var.y_prob = ctx.var.y_prob_ensemble
-            ctx.eval_metrics = self.evaluator.eval(ctx)
+            ctx.eval_metrics = self.metric_calculator.eval(ctx)
             # reset for next run_routine that may have different len([f"{cur_data}_y_prob"])
             ctx.var.y_prob_ensemble = 0
 

@@ -69,6 +69,8 @@ class FedExClient(Client):
         if message.content != None:
             model_params = message.content["model_param"]
             self.trainer.update(model_params)
+        if self._cfg.trainer.finetune.before_eval:
+            self.trainer.finetune()
         metrics = {}
         for split in self._cfg.eval.split:
             eval_metrics = self.trainer.evaluate(mode=split, target_data_split_name=split)

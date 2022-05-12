@@ -15,7 +15,8 @@ class NodeTrainerTest(unittest.TestCase):
     def set_config_node(self, cfg):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = True
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc', 'correct']
 

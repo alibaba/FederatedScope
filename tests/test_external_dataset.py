@@ -15,7 +15,8 @@ class ExternalDatasetTest(unittest.TestCase):
     def set_config_torchvision_dataset(self, cfg):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = True
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc']
 
@@ -25,8 +26,6 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.federate.batch_or_epoch = 'epoch'
         cfg.federate.client_num = 5
         cfg.federate.sample_client_rate = 0.2
-        cfg.federate.share_local_model = True
-        cfg.federate.online_aggr = True
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'MNIST@torchvision'
@@ -60,7 +59,8 @@ class ExternalDatasetTest(unittest.TestCase):
     def set_config_torchtext_dataset(self, cfg):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = True
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc']
 
@@ -81,6 +81,7 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.data.splitter_args = [{'alpha': 0.5}]
 
         cfg.model.type = 'lstm'
+        cfg.model.task = 'SequenceClassification'
         cfg.model.hidden = 256
         cfg.model.in_channels = 300
         cfg.model.embed_size = 0
@@ -95,27 +96,27 @@ class ExternalDatasetTest(unittest.TestCase):
 
         return backup_cfg
 
-        def test_torchvision_dataset_standalone(self):
-            init_cfg = global_cfg.clone()
-            backup_cfg = self.set_config_torchvision_dataset(init_cfg)
-            setup_seed(init_cfg.seed)
-            update_logger(init_cfg)
+    def test_torchvision_dataset_standalone(self):
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_torchvision_dataset(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg)
 
-            data, modified_cfg = get_data(init_cfg.clone())
-            init_cfg.merge_from_other_cfg(modified_cfg)
-            self.assertIsNotNone(data)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
+        self.assertIsNotNone(data)
 
-            Fed_runner = FedRunner(data=data,
-                                   server_class=get_server_cls(init_cfg),
-                                   client_class=get_client_cls(init_cfg),
-                                   config=init_cfg.clone())
-            self.assertIsNotNone(Fed_runner)
-            test_best_results = Fed_runner.run()
-            print(test_best_results)
-            init_cfg.merge_from_other_cfg(backup_cfg)
-            self.assertGreater(
-                test_best_results["client_summarized_weighted_avg"]
-                ['test_acc'], 0.9)
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(init_cfg),
+                               client_class=get_client_cls(init_cfg),
+                               config=init_cfg.clone())
+        self.assertIsNotNone(Fed_runner)
+        test_best_results = Fed_runner.run()
+        print(test_best_results)
+        init_cfg.merge_from_other_cfg(backup_cfg)
+        self.assertGreater(
+            test_best_results["client_summarized_weighted_avg"]['test_acc'],
+            0.9)
 
     def test_torchtext_dataset_standalone(self):
         init_cfg = global_cfg.clone()

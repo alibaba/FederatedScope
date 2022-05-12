@@ -32,31 +32,31 @@ def get_gnn(model_config, local_data):
             model = GCN_Net(data.x.shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
-                            max_depth=model_config.gnn_layer,
+                            max_depth=model_config.layer,
                             dropout=model_config.dropout)
         elif model_config.type == 'sage':
             model = SAGE_Net(data.x.shape[-1],
                              model_config.out_channels,
                              hidden=model_config.hidden,
-                             max_depth=model_config.gnn_layer,
+                             max_depth=model_config.layer,
                              dropout=model_config.dropout)
         elif model_config.type == 'gat':
             model = GAT_Net(data.x.shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
-                            max_depth=model_config.gnn_layer,
+                            max_depth=model_config.layer,
                             dropout=model_config.dropout)
         elif model_config.type == 'gin':
             model = GIN_Net(data.x.shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
-                            max_depth=model_config.gnn_layer,
+                            max_depth=model_config.layer,
                             dropout=model_config.dropout)
         elif model_config.type == 'gpr':
             model = GPR_Net(data.x.shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
-                            K=model_config.gnn_layer,
+                            K=model_config.layer,
                             dropout=model_config.dropout)
         else:
             raise ValueError('not recognized gnn model {}'.format(
@@ -66,14 +66,14 @@ def get_gnn(model_config, local_data):
         model = GNN_Net_Link(data.x.shape[-1],
                              model_config.out_channels,
                              hidden=model_config.hidden,
-                             max_depth=model_config.gnn_layer,
+                             max_depth=model_config.layer,
                              dropout=model_config.dropout,
                              gnn=model_config.type)
     elif model_config.task == 'graph':
         model = GNN_Net_Graph(data.x.shape[-1],
                               max(model_config.out_channels, num_label),
                               hidden=model_config.hidden,
-                              max_depth=model_config.gnn_layer,
+                              max_depth=model_config.layer,
                               dropout=model_config.dropout,
                               gnn=model_config.type,
                               pooling=model_config.graph_pooling)

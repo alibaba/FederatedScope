@@ -8,6 +8,7 @@ from datetime import datetime
 from os import path as osp
 import ssl
 import urllib.request
+import signal
 
 import numpy as np
 # Blind torch
@@ -134,7 +135,7 @@ def save_local_data(dir_path,
         torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
 
 
-def filter_by_specified_keywords(param_name, config):
+def filter_by_specified_keywords(param_name, filter_keywords):
     '''
     Arguments:
         param_name (str): parameter name.
@@ -142,7 +143,7 @@ def filter_by_specified_keywords(param_name, config):
         preserve (bool): whether to preserve this parameter.
     '''
     preserve = True
-    for kw in config.personalization.local_param:
+    for kw in filter_keywords:
         if kw in param_name:
             preserve = False
             break
@@ -219,3 +220,48 @@ def download_url(url: str, folder='folder'):
         f.write(data.read())
 
     return path
+
+
+def move_to(obj, device):
+    import torch
+    if torch.is_tensor(obj):
+        return obj.to(device)
+    elif isinstance(obj, dict):
+        res = {}
+        for k, v in obj.items():
+            res[k] = move_to(v, device)
+        return res
+    elif isinstance(obj, list):
+        res = []
+        for v in obj:
+            res.append(move_to(v, device))
+        return res
+    else:
+        raise TypeError("Invalid type for move_to")
+
+
+class Timeout(object):
+    def __init__(self, seconds, max_failure=5):
+        self.seconds = seconds
+        self.max_failure = max_failure
+
+    def __enter__(self):
+        def signal_handler(signum, frame):
+            raise TimeoutError()
+
+        if self.seconds > 0:
+            signal.signal(signal.SIGALRM, signal_handler)
+            signal.alarm(self.seconds)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        signal.alarm(0)
+
+    def reset(self):
+        signal.alarm(self.seconds)
+
+    def block(self):
+        signal.alarm(0)
+
+    def exceed_max_failure(self, num_failure):
+        return num_failure > self.max_failure

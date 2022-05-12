@@ -1,8 +1,6 @@
-from os.path import dirname, basename, isfile, join
-import glob
+from federatedscope.mf.dataset.movielens import *
 
-modules = glob.glob(join(dirname(__file__), "*.py"))
 __all__ = [
-    basename(f)[:-3] for f in modules
-    if isfile(f) and not f.endswith('__init__.py')
+    'VMFDataset', 'HMFDataset', 'MovieLensData', 'MovieLens1M', 'MovieLens10M',
+    'VFLMovieLens1M', 'HFLMovieLens1M', 'VFLMovieLens10M', 'HFLMovieLens10M'
 ]

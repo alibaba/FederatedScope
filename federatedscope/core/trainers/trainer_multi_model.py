@@ -235,6 +235,20 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 f"Invalid models_interact_mode, should be `sequential` or `parallel`,"
                 f" but got {self.models_interact_mode}")
 
+    def get_model_para(self):
+        """
+            return multiple model parameters
+        :return:
+        """
+        trained_model_para = []
+        for model_idx in range(self.model_nums):
+            trained_model_para.append(
+                self._param_filter(
+                    self.ctx.models[model_idx].cpu().state_dict()))
+
+        return trained_model_para[
+            0] if self.model_nums == 1 else trained_model_para
+
     def update(self, model_parameters):
         # update multiple model paras
         """
@@ -259,13 +273,4 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         sample_size, _, results = super().train(
             target_data_split_name=target_data_split_name)
 
-        trained_model_para = []
-        for model_idx in range(self.model_nums):
-            trained_model_para.append(
-                self._param_filter(
-                    self.ctx.models[model_idx].cpu().state_dict()))
-
-        if self.model_nums == 1:
-            return sample_size, trained_model_para[0], results
-        else:
-            return sample_size, trained_model_para, results
+        return sample_size, self.get_model_para(), results

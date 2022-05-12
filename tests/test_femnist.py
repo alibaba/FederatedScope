@@ -15,7 +15,8 @@ class FEMNISTTest(unittest.TestCase):
     def set_config_femnist(self, cfg):
         backup_cfg = cfg.clone()
 
-        cfg.use_gpu = False
+        import torch
+        cfg.use_gpu = torch.cuda.is_available()
         cfg.eval.freq = 10
         cfg.eval.metrics = ['acc', 'loss_regular']
 
@@ -30,7 +31,13 @@ class FEMNISTTest(unittest.TestCase):
         cfg.data.splits = [0.6, 0.2, 0.2]
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.05
-        cfg.data.transform = [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+        cfg.data.transform = [['ToTensor'],
+                              [
+                                  'Normalize', {
+                                      'mean': [0.1307],
+                                      'std': [0.3081]
+                                  }
+                              ]]
 
         cfg.model.type = 'convnet2'
         cfg.model.hidden = 2048

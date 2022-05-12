@@ -16,7 +16,8 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class Evaluator(object):
+# TODO: make this as a sub-module of monitor class
+class MetricCalculator(object):
     def __init__(self, eval_metric: Union[Set[str], List[str], str]):
 
         # Add personalized metrics
