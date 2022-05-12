@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 class Monitor(object):
     """
-        provide the monitoring functionalities such as formatting the evaluation results into diverse metrics
+        Provide the monitoring functionalities such as formatting the evaluation results into diverse metrics.
+        Besides the prediction related performance, the monitor also can track efficiency related metrics for a worker
     """
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
@@ -27,6 +28,23 @@ class Monitor(object):
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
         # self.use_tensorboard = cfg.use_tensorboard
+
+        # =========  efficiency indicators of the worker to be monitored ================
+        # leveraged the flops counter provided by [fvcore](https://github.com/facebookresearch/fvcore)
+        self.total_model_size = 0    # model size used in the worker, in terms of number of parameters
+        self.flops_per_sample = 0    # average flops for forwarding each data sample
+        self.flop_count = 0     # used to calculated the running mean for flops_per_sample
+        self.total_flops = -1  # total computation flops to convergence until current fl round
+        self.total_upload_bytes = 0   # total upload space cost in bytes until current fl round
+        self.total_download_bytes = 0   # total download space cost in bytes until current fl round
+
+        self.fl_begin_wall_time = -1
+        self.fl_end_wall_time = -1
+        # for the metrics whose names start with "convergence", -1 indicates the worker does not converge yet
+        self.convergence_round = -1   # total fl rounds to convergence
+        # the wall time to convergence
+        # note this time is prone to fluctuations due to possible resource competition during FL courses
+        self.convergence_wall_time = -1
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
@@ -133,7 +151,7 @@ class Monitor(object):
 
         return round_formatted_results_raw if return_raw else round_formatted_results
 
-    def calc_blocal_dissim(last_model, local_updated_models):
+    def calc_blocal_dissim(self, last_model, local_updated_models):
         '''
         Arguments:
             last_model (dict): the state of last round.
@@ -179,6 +197,45 @@ class Monitor(object):
             b_local_dissimilarity[k] = np.sqrt(
                 avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
         return b_local_dissimilarity
+
+    def track_model_size(self, models):
+        """
+            calculate the total model size given the models hold by the worker/trainer
+
+        :param models: torch.nn.Module or list of torch.nn.Module
+        :return:
+        """
+        if self.total_model_size != 0:
+            logger.warning("the total_model_size is not zero. You may have been calculated the total_model_size before")
+
+        if not hasattr(models, '__iter__'):
+            models = [models]
+        for model in models:
+            assert isinstance(model, torch.nn.Module), \
+                f"the `model` should be type torch.nn.Module when calculating its size, but got {type(model)}"
+            for name, para in model.named_parameters():
+                self.total_model_size = para.numel()
+
+    def track_avg_flops(self, flops, sample_num=1):
+        """
+            update the average flops for forwarding each data sample, for most models and tasks,
+            the averaging is not needed as the input shape is fixed
+
+        :param flops: flops/
+        :param sample_num:
+        :return:
+        """
+
+        self.flops_per_sample = (self.flops_per_sample * self.flop_count + flops) / (self.flop_count + sample_num)
+        self.flop_count += 1
+
+    def track_upload_bytes(self, bytes):
+        self.upload_bytes += bytes
+
+    def track_download_bytes(self, bytes):
+        self.download_bytes += bytes
+
+
 
 
 def update_best_result(best_results,

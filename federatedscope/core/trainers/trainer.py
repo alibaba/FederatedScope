@@ -8,6 +8,7 @@ from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 from federatedscope.core.auxiliaries import utils
+from federatedscope.core.monitors.monitor import Monitor
 from federatedscope.core.trainers.context import Context
 from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
@@ -41,6 +42,14 @@ class Trainer(object):
                            data,
                            device,
                            init_dict=self.parse_data(data))
+
+        self.ctx.monitor = Monitor(config)
+        # the "model_nums", and "models" are used for multi-model case and model size calculation
+        self.model_nums = 1
+        self.ctx.models = [model]
+        # "mirrored_models": whether the internal multi-models adopt the same architects and almost the same behaviors,
+        # which is used to simply the flops, model size calculation
+        self.ctx.mirrored_models = False
 
         # Atomic operation during training/evaluation
         self.hooks_in_train = collections.defaultdict(list)
@@ -444,6 +453,8 @@ class GeneralTorchTrainer(Trainer):
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,
                                     "on_fit_start")
+        self.register_hook_in_train(self._hook_on_fit_start_calculate_model_size,
+                                    "on_fit_start")
         self.register_hook_in_train(self._hook_on_epoch_start,
                                     "on_epoch_start")
         self.register_hook_in_train(self._hook_on_batch_start_init,
@@ -451,6 +462,8 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_train(self._hook_on_batch_forward,
                                     "on_batch_forward")
         self.register_hook_in_train(self._hook_on_batch_forward_regularizer,
+                                    "on_batch_forward")
+        self.register_hook_in_train(self._hook_on_batch_forward_flop_count,
                                     "on_batch_forward")
         self.register_hook_in_train(self._hook_on_batch_backward,
                                     "on_batch_backward")
@@ -479,6 +492,10 @@ class GeneralTorchTrainer(Trainer):
         setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
         setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
         setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
+
+    def _hook_on_fit_start_calculate_model_size(self, ctx):
+        if self.ctx.monitor.total_model_size == 0:
+            self.ctx.monitor.track_model_size(ctx.models)
 
     def _hook_on_epoch_start(self, ctx):
         # prepare dataloader
@@ -514,6 +531,31 @@ class GeneralTorchTrainer(Trainer):
         ctx.y_prob = pred
 
         ctx.batch_size = len(label)
+
+    def _hook_on_batch_forward_flop_count(self, ctx):
+        """
+            the monitoring hook to calculate the flops during the fl course
+
+            Note: for customized cases that the forward process is not only based on ctx.model,
+            please override this function (inheritance case) or replace this hook (plug-in case)
+
+        :param ctx:
+        :return:
+        """
+        if self.ctx.monitor.flops_per_sample == 0:
+            # calculate the flops_per_sample
+            x, _ = [_.to(ctx.device) for _ in ctx.data_batch]
+            from fvcore.nn import FlopCountAnalysis
+            flops_one_batch = FlopCountAnalysis(ctx.model, x).total()
+            if self.model_nums > 1 and ctx.mirrored_models:
+                flops_one_batch *= self.model_nums
+                logger.warning("the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                               "if this is not the case you want, please customize the count hook")
+            self.ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
+
+        # by default, we assume the data has the same input shape,
+        # thus simply multiply the flops to avoid redundant forward
+        self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         ctx.loss_regular = float(

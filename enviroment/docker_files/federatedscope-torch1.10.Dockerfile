@@ -39,6 +39,10 @@ RUN conda install -y numpy=1.21.2 scikit-learn=1.0.2 scipy=1.7.3 pandas=1.4.1 -c
 RUN conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge \
     && conda clean -a -y
 
+# torch helper package
+RUN conda install -y fvcore -c fvcore -c iopath -c conda-forge \
+    && conda clean -a -y
+
 # auxiliaries (communications, monitoring, etc.)
 RUN conda install -y wandb tensorboard tensorboardX -c conda-forge \
     && pip install grpcio grpcio-tools protobuf==3.19.4 setuptools==61.2.0 \
