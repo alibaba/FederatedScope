@@ -55,9 +55,12 @@ def main():
     # Define your hyperparameters
     configspace = ConfigurationSpace()
     #configspace.add_hyperparameter(UniformIntegerHyperparameter("depth", 2, 100))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("lr", lower=1e-4, upper=1.0, log=True))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("dropout", lower=.0, upper=.5))
-    configspace.add_hyperparameter(CategoricalHyperparameter("wd", choices=[0.0, 0.5]))
+    configspace.add_hyperparameter(
+        UniformFloatHyperparameter("lr", lower=1e-4, upper=1.0, log=True))
+    configspace.add_hyperparameter(
+        UniformFloatHyperparameter("dropout", lower=.0, upper=.5))
+    configspace.add_hyperparameter(
+        CategoricalHyperparameter("wd", choices=[0.0, 0.5]))
 
     # Provide meta data for the optimization
     scenario = Scenario({
