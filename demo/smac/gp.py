@@ -1,5 +1,5 @@
 """
-This script is provided to demonstrate the usage of SMAC's Gaussian Process, where we have assumed the availability of related packages.
+This script is provided to demonstrate the usage of SMAC's Black-box model with Gaussian Process model, where we have assumed the availability of related packages.
 More details about SMAC can be found at https://github.com/automl/SMAC3
 """
 import numpy as np
@@ -67,6 +67,7 @@ def main():
         'output_dir': "smac_gp",
     })
 
+    # a summary of SMAC's facades: https://automl.github.io/SMAC3/master/pages/details/facades.html?highlight=random%20forest#facades
     smac = SMAC4BB(model_type='gp', scenario=scenario, tae_runner=eval_fl_algo)
     best_found_config = smac.optimize()
     print(best_found_config)
