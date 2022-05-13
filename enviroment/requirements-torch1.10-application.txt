@@ -25,4 +25,5 @@ tokenizers==0.10.3
 torchtext
 datasets
 fvcore
+pympler
 

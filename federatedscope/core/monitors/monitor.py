@@ -1,8 +1,10 @@
 import copy
+import json
 import logging
 import os
 import gzip
 import shutil
+import datetime
 
 import numpy as np
 
@@ -24,10 +26,13 @@ class Monitor(object):
     def __init__(
         self,
         cfg,
+        monitored_object=None
     ):
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
         # self.use_tensorboard = cfg.use_tensorboard
+
+        self.monitored_object = monitored_object
 
         # =========  efficiency indicators of the worker to be monitored ================
         # leveraged the flops counter provided by [fvcore](https://github.com/facebookresearch/fvcore)
@@ -37,14 +42,74 @@ class Monitor(object):
         self.total_flops = -1  # total computation flops to convergence until current fl round
         self.total_upload_bytes = 0   # total upload space cost in bytes until current fl round
         self.total_download_bytes = 0   # total download space cost in bytes until current fl round
-        # TODO: count total bytes from comm_manager; track round and wall_time; log in proper position via wandb
-        self.fl_begin_wall_time = -1
+        # TODO: log in proper position via wandb
+        self.fl_begin_wall_time = datetime.datetime.now()
         self.fl_end_wall_time = -1
-        # for the metrics whose names start with "convergence", -1 indicates the worker does not converge yet
-        self.convergence_round = -1   # total fl rounds to convergence
-        # the wall time to convergence
-        # note this time is prone to fluctuations due to possible resource competition during FL courses
-        self.convergence_wall_time = -1
+        # for the metrics whose names includes "convergence", -1 indicates the worker does not converge yet
+        # Note:
+        # 1) the convergence wall time is prone to fluctuations due to possible resource competition during FL courses
+        # 2) the global/local indicates whether the early stopping triggered with global-aggregation/local-training
+        self.global_convergence_round = -1   # total fl rounds to convergence
+        self.global_convergence_wall_time = -1
+        self.local_convergence_round = -1   # total fl rounds to convergence
+        self.local_convergence_wall_time = -1
+
+    def global_converged(self):
+        self.global_convergence_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
+        self.global_convergence_round = self.monitored_object.state()
+
+    def local_converged(self):
+        self.local_convergence_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
+        self.local_convergence_round = self.monitored_object.state()
+
+    def finish_fl(self):
+        self.fl_end_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
+
+        system_metrics = {
+            "id": self.monitored_object.ID(),
+            "total_model_size": self.total_model_size,
+            "total_flops": self.total_flops,
+            "total_upload_bytes": self.total_upload_bytes,
+            "total_download_bytes": self.total_download_bytes,
+            "global_convergence_round": self.global_convergence_round,
+            "local_convergence_round": self.local_convergence_round,
+            "global_convergence_wall_time": self.global_convergence_wall_time,
+            "local_convergence_wall_time": self.local_convergence_wall_time,
+            "fl_end_wall_time": self.fl_end_wall_time,
+        }
+        logger.info(f"In worker #{self.monitored_object.ID()}, the system-related metrics are: {str(system_metrics)}")
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.txt")
+        with open(sys_metric_f_name, "a") as f:
+            f.write(json.dumps(sys_metric_f_name, indent=0))
+            f.write("\n")
+
+        if self.use_wandb:
+            pass
+
+    def merge_system_metrics_simulation_mode(self):
+        """
+            average the system metrics recorded in "system_metrics.json" by all workers
+        :return:
+        """
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.txt")
+        line_cnt = 0
+        all_sys_metrics = None
+        with open(sys_metric_f_name, "r") as f:
+            for line in f:
+                res = json.loads(line)
+                line_cnt += 1
+                if all_sys_metrics is None:
+                    all_sys_metrics = res
+                    all_sys_metrics["id"] = "avg_all"
+                else:
+                    for k, v in res.items():
+                        all_sys_metrics[k] += v
+
+        for k, v in all_sys_metrics.items():
+            all_sys_metrics[k] = v / line_cnt
+        with open(sys_metric_f_name, "a") as f:
+            f.write(json.dumps(all_sys_metrics, indent=0))
+            f.write("\n")
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")

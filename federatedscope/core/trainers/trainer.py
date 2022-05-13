@@ -33,7 +33,7 @@ class Trainer(object):
         "on_batch_backward", "on_batch_end", "on_epoch_end", "on_fit_end"
     ]
 
-    def __init__(self, model, data, device, config, only_for_eval=False):
+    def __init__(self, model, data, device, config, only_for_eval=False, monitor=None):
         self.cfg = config
         self.metric_calculator = MetricCalculator(config.eval.metrics)
 
@@ -43,7 +43,7 @@ class Trainer(object):
                            device,
                            init_dict=self.parse_data(data))
 
-        self.ctx.monitor = Monitor(config)
+        self.ctx.monitor = monitor
         # the "model_nums", and "models" are used for multi-model case and model size calculation
         self.model_nums = 1
         self.ctx.models = [model]

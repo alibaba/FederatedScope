@@ -245,10 +245,13 @@ class FedRunner(object):
             return
 
         sender, receiver = msg.sender, msg.receiver
+        download_bytes, upload_bytes = msg.count_bytes()
         if not isinstance(receiver, list):
             receiver = [receiver]
         for each_receiver in receiver:
             if each_receiver == 0:
                 self.server.msg_handlers[msg.msg_type](msg)
+                self.server._monitor.track_dowanload_bytes(download_bytes)
             else:
                 self.client[each_receiver].msg_handlers[msg.msg_type](msg)
+                self.client[each_receiver]._monitor.track_dowanload_bytes(download_bytes)

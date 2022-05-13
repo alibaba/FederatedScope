@@ -202,3 +202,15 @@ class Message(object):
         self.msg_type = self._parse_msg(received_msg['msg_type'])
         self.state = self._parse_msg(received_msg['state'])
         self.content = self._parse_msg(received_msg['content'])
+
+    def count_bytes(self):
+        """
+            calculate the message bytes to be sent/received
+        :return: tuple of bytes of the message to be sent and received
+        """
+        from pympler import asizeof
+        download_bytes = asizeof.asizeof(self.content)
+        upload_cnt = len(self.receiver) if isinstance(self.receiver, list) else 1
+        upload_bytes = download_bytes * upload_cnt
+        return download_bytes, upload_bytes
+

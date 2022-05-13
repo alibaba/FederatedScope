@@ -42,8 +42,10 @@ class Client(Worker):
 
         super(Client, self).__init__(ID, state, config, model, strategy)
 
-        # Attack only support the stand alone model; Check if is a attacker; a client is a attacker if the config.attack.attack_method is provided
-        self.is_attacker = config.attack.attacker_id == ID and config.attack.attack_method != '' and config.federate.mode == 'standalone'
+        # Attack only support the stand alone model;
+        # Check if is a attacker; a client is a attacker if the config.attack.attack_method is provided
+        self.is_attacker = config.attack.attacker_id == ID and \
+                           config.attack.attack_method != '' and config.federate.mode == 'standalone'
 
         # Build Trainer
         # trainer might need configurations other than those of trainer node
@@ -51,12 +53,14 @@ class Client(Worker):
                                    data=data,
                                    device=device,
                                    config=self._cfg,
-                                   is_attacker=self.is_attacker)
+                                   is_attacker=self.is_attacker,
+                                   monitor=self._monitor)
 
         # For client-side evaluation
         self.best_results = dict()
         self.history_results = dict()
-        # in local or global training mode, we do use the early stopper. Otherwise, we set patience=0 to deactivate the local early-stopper
+        # in local or global training mode, we do use the early stopper.
+        # Otherwise, we set patience=0 to deactivate the local early-stopper
         patience = self._cfg.early_stop.patience if self._cfg.federate.method in [
             "local", "global"
         ] else 0
@@ -79,7 +83,7 @@ class Client(Worker):
         self.server_id = server_id
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue)
+            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue, monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
             host = kwargs['host']
@@ -121,6 +125,7 @@ class Client(Worker):
                                self.callback_funcs_for_model_para)
         self.register_handlers('evaluate', self.callback_funcs_for_evaluate)
         self.register_handlers('finish', self.callback_funcs_for_finish)
+        self.register_handlers('converged', self.callback_funcs_for_converged)
 
     def join_in(self):
         """
@@ -146,10 +151,12 @@ class Client(Worker):
 
     def callback_funcs_for_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters, which triggers the local training process. This handling function is widely used in various FL courses.
+        The handling function for receiving model parameters, which triggers the local training process.
+        This handling function is widely used in various FL courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver, state, and content. More detail can be found in federatedscope.core.message
+            message: The received message, which includes sender, receiver, state, and content.
+                More detail can be found in federatedscope.core.message
         """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
@@ -192,12 +199,13 @@ class Client(Worker):
             round, sender, content = message.state, message.sender, message.content
             self.trainer.update(content)
             self.state = round
-            if self.early_stopper.early_stopped:
+            if self.early_stopper.early_stopped and self._cfg.federate.method in ["local", "global"]:
                 sample_size, model_para_all, results = 0, self.trainer.get_model_para(
                 ), {}
                 logger.info(
                     f"Client #{self.ID} has been early stopped, we will skip the local training"
                 )
+                self._monitor.local_converged()
             else:
                 sample_size, model_para_all, results = self.trainer.train()
                 logger.info(
@@ -252,7 +260,8 @@ class Client(Worker):
 
     def callback_funcs_for_assign_id(self, message: Message):
         """
-        The handling function for receiving the client_ID assigned by the server (during the joining process), which is used in the distributed mode.
+        The handling function for receiving the client_ID assigned by the server (during the joining process),
+        which is used in the distributed mode.
 
         Arguments:
             message: The received message
@@ -264,7 +273,8 @@ class Client(Worker):
 
     def callback_funcs_for_join_in_info(self, message: Message):
         """
-        The handling function for receiving the request of join in information (such as batch_size, num_of_samples) during the joining process.
+        The handling function for receiving the request of join in information
+        (such as batch_size, num_of_samples) during the joining process.
 
         Arguments:
             message: The received message
@@ -312,7 +322,7 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        if self.early_stopper.early_stopped:
+        if self.early_stopper.early_stopped and self._cfg.federate.method in ["local", "global"]:
             metrics = self.best_results
         else:
             metrics = {}
@@ -344,9 +354,8 @@ class Client(Worker):
                                best_res_update_round_wise_key)
             self.history_results = merge_dict(
                 self.history_results, formatted_eval_res['Results_raw'])
-            if self._cfg.federate.method in ["local", "global"]:
-                self.early_stopper.track_and_check_best(self.history_results[
-                    self._cfg.eval.best_res_update_round_wise_key])
+            self.early_stopper.track_and_check_best(self.history_results[
+                self._cfg.eval.best_res_update_round_wise_key])
 
         self.comm_manager.send(
             Message(msg_type='metrics',
@@ -368,3 +377,17 @@ class Client(Worker):
 
         if message.content != None:
             self.trainer.update(message.content)
+
+        self._monitor.finish_fl()
+
+    def callback_funcs_for_converged(self, message: Message):
+        """
+        The handling function for receiving the signal that the FL course converged
+
+        Arguments:
+            message: The received message
+        """
+
+        self._monitor.global_converged()
+
+

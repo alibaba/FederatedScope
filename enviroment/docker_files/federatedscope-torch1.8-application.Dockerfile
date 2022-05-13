@@ -56,6 +56,6 @@ RUN conda install -y sentencepiece textgrid typeguard -c conda-forge \
     && conda clean -a -y
 
 # auxiliaries (communications, monitoring, etc.)
-RUN conda install -y wandb tensorboard tensorboardX -c conda-forge \
+RUN conda install -y wandb tensorboard tensorboardX pympler -c conda-forge \
     && pip install grpcio grpcio-tools protobuf==3.19.4 setuptools==61.2.0 \
     && conda clean -a -y
