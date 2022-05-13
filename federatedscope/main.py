@@ -1,7 +1,7 @@
 import os
 import sys
 
-DEV_MODE = False  # simplify the federatedscope re-setup everytime we change the source codes of federatedscope
+DEV_MODE = True  # simplify the federatedscope re-setup everytime we change the source codes of federatedscope
 if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(file_dir)
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     data, modified_cfg = get_data(config=init_cfg.clone())
     init_cfg.merge_from_other_cfg(modified_cfg)
 
-    init_cfg.freeze()
+    # init_cfg.freeze()
 
     runner = FedRunner(data=data,
                        server_class=get_server_cls(init_cfg),

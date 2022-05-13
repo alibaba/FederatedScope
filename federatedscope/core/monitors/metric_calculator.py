@@ -45,8 +45,8 @@ class MetricCalculator(object):
             results["{}_{}".format(ctx.cur_data_split,
                                    metric)] = func(ctx=ctx,
                                                    y_true=y_true,
-                                                   y_pred=y_pred,
                                                    y_prob=y_prob,
+                                                   y_pred=y_pred,
                                                    metric=metric)
         return results
 
@@ -162,14 +162,15 @@ def eval_roc_auc(y_true, y_prob, **kwargs):
     return sum(rocauc_list) / len(rocauc_list)
 
 
-def eval_rmse(y_true, y_pred, **kwargs):
+def eval_rmse(y_true, y_prob, **kwargs):
     rmse_list = []
+    y_prob = y_prob.reshape(y_true.shape)
 
     for i in range(y_true.shape[1]):
         # ignore nan values
         is_labeled = y_true[:, i] == y_true[:, i]
         rmse_list.append(
-            np.sqrt(((y_true[is_labeled] - y_pred[is_labeled])**2).mean()))
+            np.sqrt(((y_true[is_labeled] - y_prob[is_labeled])**2).mean()))
 
     return sum(rmse_list) / len(rmse_list)
 

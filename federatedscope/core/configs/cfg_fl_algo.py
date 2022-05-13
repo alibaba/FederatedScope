@@ -73,8 +73,10 @@ def extend_fl_algo_cfg(cfg):
     cfg.flitplus = CN()
 
     cfg.flitplus.alpha = 0.1 # alpha in lda
-    cfg.flitplus.tmpFed = 0.5 # gamma in focal loss
-    cfg.flitplus.lambdavat = 0.01 # lambda in phi
+    cfg.flitplus.tmpFed = 0.5 # gamma in focal loss (Eq.4)
+    cfg.flitplus.lambdavat = 0.5 # lambda in phi (Eq.10)
+    cfg.flitplus.factor_ema = 0.8 # beta in omega (Eq.12)
+    cfg.flitplus.weightReg = 1.0 # balance lossLocalLabel and lossLocalVAT
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_algo_cfg)

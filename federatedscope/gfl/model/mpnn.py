@@ -22,6 +22,8 @@ class MPNNs2s(nn.Module):
         Size for the input node features.
     hidden : int
         Size for the output node representations. Default to 64.
+    num_nn : int
+        num_edge_features
     """
     def __init__(self,
                  in_channels,
@@ -31,11 +33,11 @@ class MPNNs2s(nn.Module):
         super(MPNNs2s, self).__init__()
         self.lin0 = torch.nn.Linear(in_channels, hidden)
 
-        nn = Sequential(Linear(num_nn, 128), ReLU(), Linear(128, hidden * hidden))
-        self.conv = NNConv(hidden, hidden, nn, aggr='mean')
+        nn = Sequential(Linear(num_nn, 16), ReLU(), Linear(16, hidden * hidden))
+        self.conv = NNConv(hidden, hidden, nn, aggr='add')
         self.gru = GRU(hidden, hidden)
 
-        self.set2set = Set2Set(hidden, processing_steps=3)
+        self.set2set = Set2Set(hidden, processing_steps=3, num_layers=3)
         self.lin1 = torch.nn.Linear(2 * hidden, hidden)
         self.lin2 = torch.nn.Linear(hidden, out_channels)
 
@@ -46,7 +48,8 @@ class MPNNs2s(nn.Module):
             x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
         else:
             raise TypeError('Unsupported data type!')
-        
+
+        self.gru.flatten_parameters()
         out = F.relu(self.lin0(x.float()))
         h = out.unsqueeze(0)
 

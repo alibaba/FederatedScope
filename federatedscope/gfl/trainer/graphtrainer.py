@@ -6,7 +6,10 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)
-        label = batch.y.squeeze(-1).long()
+        if ctx.criterion._get_name() == 'CrossEntropyLoss':
+            label = batch.y.squeeze(-1).long()
+        else:
+            label = batch.y.float()
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
         ctx.loss_batch = ctx.criterion(pred, label)

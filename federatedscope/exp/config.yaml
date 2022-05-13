@@ -1,0 +1,189 @@
+attack:
+  alpha_TV: 0.001
+  alpha_prop_loss: 0
+  attack_method: ''
+  attacker_id: -1
+  cfg_check_funcs: []
+  classifier_PIA: randomforest
+  info_diff_type: l2
+  inject_round: 0
+  max_ite: 400
+  reconstruct_lr: 0.01
+  reconstruct_optim: Adam
+  target_label_ind: -1
+backend: torch
+cfg_check_funcs: []
+cfg_file: ''
+criterion:
+  cfg_check_funcs: []
+  type: CrossEntropyLoss
+data:
+  batch_size: 64
+  cSBM_phi:
+  - 0.5
+  - 0.5
+  - 0.5
+  cfg_check_funcs: []
+  drop_last: false
+  graphsaint:
+    cfg_check_funcs: []
+    num_steps: 30
+    walk_length: 2
+  loader: ''
+  num_workers: 0
+  pre_transforms: ''
+  root: data/
+  shuffle: true
+  sizes:
+  - 10
+  - 5
+  splits:
+  - 0.8
+  - 0.1
+  - 0.1
+  splitter: scaffold
+  subsample: 1.0
+  transforms: ''
+  type: hiv
+device: 0
+distribute:
+  use: false
+early_stop:
+  cfg_check_funcs: []
+  delta: 0.0
+  improve_indicator_mode: mean
+  patience: 20
+  the_smaller_the_better: true
+eval:
+  best_res_update_round_wise_key: val_loss
+  cfg_check_funcs: []
+  freq: 5
+  metrics:
+  - acc
+  - correct
+  - roc_auc
+  monitoring: []
+  report:
+  - weighted_avg
+  - avg
+  - fairness
+  - raw
+  save_data: false
+  split:
+  - test
+  - val
+expname: ''
+federate:
+  batch_or_epoch: batch
+  cfg_check_funcs: []
+  client_num: 5
+  data_weighted_aggr: false
+  ignore_weight: false
+  join_in_info: []
+  local_update_steps: 16
+  make_global_eval: true
+  method: FedAvg
+  mode: standalone
+  online_aggr: false
+  restore_from: ''
+  sample_client_num: 5
+  sample_client_rate: -1.0
+  save_to: ''
+  share_local_model: false
+  standalone: local
+  total_round_num: 400
+  use_ss: false
+fedopt:
+  use: false
+fedprox:
+  use: false
+fedsageplus:
+  a: 1.0
+  b: 1.0
+  c: 1.0
+  cfg_check_funcs: []
+  fedgen_epoch: 200
+  gen_hidden: 128
+  hide_portion: 0.5
+  loc_epoch: 1
+  num_pred: 5
+gcflplus:
+  EPS_1: 0.05
+  EPS_2: 0.1
+  cfg_check_funcs: []
+  seq_length: 5
+  standardize: false
+hpo:
+  cfg_check_funcs: []
+  init_cand_num: 16
+  init_strategy: random
+  larger_better: false
+  log_scale: false
+  metric: client_summarized_weighted_avg.test_loss
+  pbt:
+    cfg_check_funcs: []
+    max_stage: 5
+    perf_threshold: 0.1
+  plot_interval: 1
+  scheduler: bruteforce
+  sha:
+    budgets: []
+    cfg_check_funcs: []
+    elim_rate: 3
+    elim_round_num: 3
+  working_folder: hpo
+model:
+  cfg_check_funcs: []
+  dropout: 0.5
+  embed_size: 8
+  gnn_layer: 2
+  graph_pooling: mean
+  hidden: 64
+  in_channels: 0
+  model_num_per_trainer: 1
+  num_item: 0
+  num_user: 0
+  out_channels: 2
+  task: graph
+  type: gcn
+  use_bias: true
+nbafl:
+  use: false
+optimizer:
+  cfg_check_funcs: []
+  grad_clip: -1.0
+  lr: 0.25
+  type: SGD
+  weight_decay: 0.0005
+outdir: exp/
+personalization:
+  K: 5
+  beta: 1.0
+  cfg_check_funcs: []
+  local_param: []
+  local_update_steps: 16
+  lr: 0.25
+  regular_weight: 0.1
+  share_non_trainable_para: false
+regularizer:
+  cfg_check_funcs: []
+  mu: 0.0
+  type: ''
+seed: 0
+sgdmf:
+  use: false
+trainer:
+  cfg_check_funcs: []
+  finetune:
+    cfg_check_funcs: []
+    only_psn: true
+    steps: 0
+    stepsize: 0.01
+  type: flit
+use_gpu: true
+verbose: 1
+vertical:
+  use: false
+wandb:
+  use: false
+

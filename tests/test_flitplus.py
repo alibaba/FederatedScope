@@ -14,16 +14,16 @@ def set_config_flitplus(cfg):
     # cfg.early_stop.improve_indicator_mode = 'mean'
 
     cfg.federate.mode = 'standalone'
-    cfg.federate.make_global_eval = True
-    cfg.federate.client_num = 5
-    # cfg.federate.total_round_num = 400
-    # cfg.federate.local_update_steps = 16
+    # cfg.federate.make_global_eval = True
+    cfg.federate.client_num = 5  # [4, 5, 6]
+    cfg.federate.total_round_num = 30  # [15, 30, 50]
+    cfg.federate.local_update_steps = 10000
 
     cfg.data.root = 'data/'
     # TODO: Cls: Multi-task ['tox21', 'sider', 'clintox'], Reg: Non convergence, QM9: dataloader
     # cfg.data.type = 'freesolv'  # ['esol', 'freesolv', 'lipo']
     cfg.data.type = 'hiv'  # ['hiv', 'bbbp', 'bace']
-    cfg.data.batch_size = 64
+    # cfg.data.batch_size = 64
     cfg.data.splitter = 'scaffold_lda'
 
     cfg.model.type = 'mpnn'
@@ -33,12 +33,14 @@ def set_config_flitplus(cfg):
     cfg.model.out_channels = 2
     cfg.model.task = 'graph'
 
-    cfg.flitplus.alpha = 0.1
-    cfg.flitplus.tmpFed = 0.5
-    cfg.flitplus.lambdavat = 0.01
+    cfg.flitplus.alpha = 0.1  # [0.1, 0.5, 1]
+    cfg.flitplus.tmpFed = 0.5  # [0.1, 0.5, 1, 2, 5]
+    cfg.flitplus.lambdavat = 0.01  # [0.001, 0.01, 0.1, 1]
+    cfg.flitplus.factor_ema = 0.8
 
-    cfg.optimizer.lr = 0.25
-    cfg.optimizer.weight_decay = 0.0005
+    cfg.optimizer.type = 'Adam'
+    cfg.optimizer.lr = 0.0001
+    cfg.optimizer.weight_decay = 0.00001
 
     # cfg.criterion.type = 'MSELoss'
     cfg.criterion.type = 'CrossEntropyLoss'
@@ -46,8 +48,8 @@ def set_config_flitplus(cfg):
     cfg.trainer.type = 'flitplustrainer'
 
     cfg.eval.freq = 5
-    # cfg.eval.metrics = []
-    cfg.eval.metrics = ['acc', 'correct']
+    # cfg.eval.metrics = ['rmse']
+    cfg.eval.metrics = ['acc', 'correct', 'roc_auc']
 
     return backup_cfg
 
