@@ -1,10 +1,12 @@
 import copy
+import logging
 import os
 
 from yacs.config import CfgNode
 
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
 
 class CN(CfgNode):
     """
@@ -83,7 +85,9 @@ class CN(CfgNode):
 
     def freeze(self):
         """
-            make the cfg attributes immutable, and save the freezed cfg_check_funcs into "self.outdir/config.yaml" for better reproducibility
+            1) make the cfg attributes immutable;
+            2) save the frozen cfg_check_funcs into "self.outdir/config.yaml" for better reproducibility;
+            3) if self.wandb.use=True, update the frozen config
 
         :return:
         """
@@ -99,6 +103,19 @@ class CN(CfgNode):
 
         super(CN, self).freeze()
 
+        if self.wandb.use:
+            # update the frozen config
+            try:
+                import wandb
+            except ImportError:
+                logger.error("cfg.wandb.use=True but not install the wandb package")
+            exit()
+
+            tmp_cfg = copy.deepcopy(self)
+            tmp_cfg.cfg_check_funcs = []
+            import yaml
+            cfg_yaml = yaml.safe_load(tmp_cfg.dump())
+            wandb.config.update(cfg_yaml)
 
 # to ensure the sub-configs registered before set up the global config
 from federatedscope.core.configs import all_sub_configs

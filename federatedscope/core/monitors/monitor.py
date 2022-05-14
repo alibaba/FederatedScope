@@ -42,7 +42,6 @@ class Monitor(object):
         self.total_flops = -1  # total computation flops to convergence until current fl round
         self.total_upload_bytes = 0   # total upload space cost in bytes until current fl round
         self.total_download_bytes = 0   # total download space cost in bytes until current fl round
-        # TODO: log in proper position via wandb
         self.fl_begin_wall_time = datetime.datetime.now()
         self.fl_end_wall_time = -1
         # for the metrics whose names includes "convergence", -1 indicates the worker does not converge yet
@@ -83,9 +82,6 @@ class Monitor(object):
             f.write(json.dumps(sys_metric_f_name, indent=0))
             f.write("\n")
 
-        if self.use_wandb:
-            pass
-
     def merge_system_metrics_simulation_mode(self):
         """
             average the system metrics recorded in "system_metrics.json" by all workers
@@ -110,6 +106,24 @@ class Monitor(object):
         with open(sys_metric_f_name, "a") as f:
             f.write(json.dumps(all_sys_metrics, indent=0))
             f.write("\n")
+
+    def finish_fed_runner(self, fl_mode=None):
+        self.compress_raw_res_file()
+        if fl_mode == "standalone":
+            self.merge_system_metrics_simulation_mode()
+
+        if self.use_wandb:
+            try:
+                import wandb
+            except ImportError:
+                logger.error("cfg.wandb.use=True but not install the wandb package")
+            exit()
+
+            from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
+            with open(os.path.join(self.outdir, "eval_results.log", "r")) as exp_log_f:
+                all_log_res, exp_stop_normal, last_line, log_res_best = \
+                    logfile_2_wandb_dict(exp_log_f, raw_out=False)
+                # TODO: wandb log the performance results and system metric results
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")

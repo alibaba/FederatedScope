@@ -135,7 +135,7 @@ class FedRunner(object):
                     msg = self.shared_comm_queue.popleft()
                     self._handle_msg(msg)
 
-            self.server._monitor.compress_raw_res_file()
+            self.server._monitor.finish_fed_runner(fl_mode=self.mode)
 
             return self.server.best_results
 
