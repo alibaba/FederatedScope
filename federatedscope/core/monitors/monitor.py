@@ -5,6 +5,7 @@ import os
 import gzip
 import shutil
 import datetime
+from collections import defaultdict
 
 import numpy as np
 
@@ -87,24 +88,33 @@ class Monitor(object):
             average the system metrics recorded in "system_metrics.json" by all workers
         :return:
         """
-        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.txt")
-        line_cnt = 0
-        all_sys_metrics = None
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+        all_sys_metrics = defaultdict(list)
+        avg_sys_metrics = defaultdict()
+        std_sys_metrics = defaultdict()
         with open(sys_metric_f_name, "r") as f:
             for line in f:
                 res = json.loads(line)
-                line_cnt += 1
                 if all_sys_metrics is None:
                     all_sys_metrics = res
-                    all_sys_metrics["id"] = "avg_all"
+                    all_sys_metrics["id"] = "all"
                 else:
                     for k, v in res.items():
-                        all_sys_metrics[k] += v
+                        all_sys_metrics[k].append(v)
 
         for k, v in all_sys_metrics.items():
-            all_sys_metrics[k] = v / line_cnt
+            if k == "id":
+                avg_sys_metrics[k] = "sys_avg"
+                std_sys_metrics[k] = "sys_std"
+            else:
+                v = np.array(v)
+                avg_sys_metrics[f"sys_avg/{k}"] = np.mean(v)
+                std_sys_metrics[f"sys_std/{k}"] = np.std(v)
+
         with open(sys_metric_f_name, "a") as f:
-            f.write(json.dumps(all_sys_metrics, indent=0))
+            f.write(json.dumps(avg_sys_metrics, indent=0))
+            f.write("\n")
+            f.write(json.dumps(std_sys_metrics, indent=0))
             f.write("\n")
 
     def finish_fed_runner(self, fl_mode=None):
@@ -121,9 +131,22 @@ class Monitor(object):
 
             from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
             with open(os.path.join(self.outdir, "eval_results.log", "r")) as exp_log_f:
+                # track the prediction related performance
                 all_log_res, exp_stop_normal, last_line, log_res_best = \
                     logfile_2_wandb_dict(exp_log_f, raw_out=False)
-                # TODO: wandb log the performance results and system metric results
+                for log_res in all_log_res:
+                    wandb.log(log_res)
+
+                # track the system related performance
+                sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+                with open(sys_metric_f_name, "r") as f:
+                    for line in f:
+                        res = json.loads(line)
+                        if res["id"] in ["sys_avg", "sys_std"]:
+                            wandb.log(res)
+
+                wandb.log(log_res_best)
+                # TODO, make the step consistent; test the new func
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
