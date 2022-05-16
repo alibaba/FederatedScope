@@ -1,6 +1,6 @@
 set -e
 
-cd ../../..
+cd ../../
 
 cudaid=$1
 root=$2
@@ -28,7 +28,7 @@ do
             log=${outdir}/gin_lr-${lrs[$i]}_step-${local_updates[$j]}_mu-${mus[$im]}_on_${dataset}.log
             for k in {1..3}
             do
-                python federatedscope/main.py --cfg federatedscope/scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
+                python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
                 data.root ${root} \
                 device ${cudaid} \
                 data.type ${dataset} \
@@ -39,6 +39,7 @@ do
                 eval.metrics "['acc', 'correct' 'loss_regular']" \
                 seed $k >>${log} 2>&1
             done
+            python federatedscope/parse_exp_results.py --input ${log}
         done
     done
 done

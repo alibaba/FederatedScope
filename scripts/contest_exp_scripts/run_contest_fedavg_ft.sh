@@ -1,6 +1,6 @@
 set -e
 
-cd ../..
+cd ../../
 
 cudaid=$1
 root=$2
@@ -18,6 +18,7 @@ lrs=(0.01 0.1 0.05 0.005 0.5)
 local_updates=(1 2 4)
 steps=(5 10 15)
 
+
 for (( i=0; i<${#lrs[@]}; i++ ))
 do
     for (( j=0; j<${#local_updates[@]}; j++ ))
@@ -27,7 +28,7 @@ do
             log=${outdir}/gin_lr-${lrs[$i]}_step-${local_updates[$j]}_lstep-${steps[$s]}_on_${dataset}.log
             for k in {1..3}
             do
-                python federatedscope/main.py --cfg federatedscope/scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
+                python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
                 data.root ${root} \
                 device ${cudaid} \
                 data.type ${dataset} \

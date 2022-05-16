@@ -303,6 +303,8 @@ class Server(Worker):
                 .format(self.ID))
             # last round
             self.save_best_results()
+            if not self._cfg.federate.make_global_eval:
+                self.save_client_eval_results()
 
             if self.model_num > 1:
                 model_para = [model.state_dict() for model in self.models]
@@ -314,6 +316,11 @@ class Server(Worker):
                         receiver=list(self.comm_manager.neighbors.keys()),
                         state=self.state,
                         content=model_para))
+
+        # Clean the clients evaluation msg buffer
+        if not self._cfg.federate.make_global_eval:
+            round = max(self.msg_buffer['eval'].keys())
+            self.msg_buffer['eval'][round].clear()
 
         if self.state == self.total_round_num:
             # break out the loop for distributed mode
@@ -335,6 +342,25 @@ class Server(Worker):
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
             outfile.write(str(formatted_res) + "\n")
+
+    def save_client_eval_results(self):
+        """
+            save the evaluation results of each client when the fl course early stopped or terminated
+        :return:
+        """
+        round = max(self.msg_buffer['eval'].keys())
+        eval_msg_buffer = self.msg_buffer['eval'][round]
+
+        with open(os.path.join(self._cfg.outdir, "eval_results.log"),
+                  "a") as outfile:
+            for client_id, client_eval_results in eval_msg_buffer.items():
+                formatted_res = self._monitor.format_eval_res(
+                    client_eval_results,
+                    rnd="Final",
+                    role='Client #{}'.format(client_id),
+                    return_raw=True)
+                logger.info(formatted_res)
+                outfile.write(str(formatted_res) + "\n")
 
     def merge_eval_results_from_all_clients(self, final_round=False):
         """
@@ -464,6 +490,7 @@ class Server(Worker):
                 self.broadcast_client_address()
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
+
 
     def eval(self):
         """

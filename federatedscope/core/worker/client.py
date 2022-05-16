@@ -278,7 +278,7 @@ class Client(Worker):
         if message.content != None:
             self.trainer.update(message.content)
         if self.early_stopper.early_stopped:
-            metrics = self.best_results
+            metrics = list(self.best_results.values())[0]
         else:
             metrics = {}
             if self._cfg.trainer.finetune.before_eval:

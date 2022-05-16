@@ -51,15 +51,16 @@ def main():
     if len(result_list_wavg):
         print('\tResults_weighted_avg')
         for key, v in merge_local_results(result_list_wavg).items():
-            print("\t{}, {:.4f}, {:.4f}".format(key, np.mean(v), np.std(v)))
-    if len(result_list_avg):
-        print('\tResults_avg')
-        for key, v in merge_local_results(result_list_avg).items():
-            print("\t{}, {:.4f}, {:.4f}".format(key, np.mean(v), np.std(v)))
-    if len(result_list_global):
-        print('\tserver_global_eval')
-        for key, v in merge_local_results(result_list_global).items():
-            print("\t{}, {:.4f}, {:.4f}".format(key, np.mean(v), np.std(v)))
+            if key == "test_acc":
+                print("\t{}, {:.4f}, {:.4f}".format(key, np.mean(v), np.std(v)))
+    # if len(result_list_avg):
+    #     print('\tResults_avg')
+    #     for key, v in merge_local_results(result_list_avg).items():
+    #         print("\t{}, {:.4f}, {:.4f}".format(key, np.mean(v), np.std(v)))
+    # if len(result_list_global):
+    #     print('\tserver_global_eval')
+    #     for key, v in merge_local_results(result_list_global).items():
+    #         print("\t{}, {:.4f}, {:.4f}".format(key, np.mean(v), np.std(v)))
 
 
 if __name__ == "__main__":

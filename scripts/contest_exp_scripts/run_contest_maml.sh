@@ -1,6 +1,6 @@
 set -e
 
-cd ../..
+cd ../../
 
 cudaid=$1
 root=$2
