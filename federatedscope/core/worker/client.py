@@ -372,7 +372,7 @@ class Client(Worker):
             message: The received message
         """
         logger.info(
-            "================= receiving Finish Message ============================"
+            f"================= client {self.ID} received finish message ============================"
         )
 
         if message.content != None:

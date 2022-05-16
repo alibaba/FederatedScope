@@ -40,19 +40,19 @@ class Monitor(object):
         self.total_model_size = 0    # model size used in the worker, in terms of number of parameters
         self.flops_per_sample = 0    # average flops for forwarding each data sample
         self.flop_count = 0     # used to calculated the running mean for flops_per_sample
-        self.total_flops = -1  # total computation flops to convergence until current fl round
+        self.total_flops = 0  # total computation flops to convergence until current fl round
         self.total_upload_bytes = 0   # total upload space cost in bytes until current fl round
         self.total_download_bytes = 0   # total download space cost in bytes until current fl round
         self.fl_begin_wall_time = datetime.datetime.now()
-        self.fl_end_wall_time = -1
-        # for the metrics whose names includes "convergence", -1 indicates the worker does not converge yet
+        self.fl_end_wall_time = 0
+        # for the metrics whose names includes "convergence", 0 indicates the worker does not converge yet
         # Note:
         # 1) the convergence wall time is prone to fluctuations due to possible resource competition during FL courses
         # 2) the global/local indicates whether the early stopping triggered with global-aggregation/local-training
-        self.global_convergence_round = -1   # total fl rounds to convergence
-        self.global_convergence_wall_time = -1
-        self.local_convergence_round = -1   # total fl rounds to convergence
-        self.local_convergence_wall_time = -1
+        self.global_convergence_round = 0   # total fl rounds to convergence
+        self.global_convergence_wall_time = 0
+        self.local_convergence_round = 0   # total fl rounds to convergence
+        self.local_convergence_wall_time = 0
 
     def global_converged(self):
         self.global_convergence_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
@@ -66,22 +66,24 @@ class Monitor(object):
         self.fl_end_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
 
         system_metrics = {
-            "id": self.monitored_object.ID(),
+            "id": self.monitored_object.ID,
+            "fl_end_time_minutes": self.fl_end_wall_time.total_seconds() / 60
+            if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
             "total_model_size": self.total_model_size,
             "total_flops": self.total_flops,
             "total_upload_bytes": self.total_upload_bytes,
             "total_download_bytes": self.total_download_bytes,
             "global_convergence_round": self.global_convergence_round,
             "local_convergence_round": self.local_convergence_round,
-            "global_convergence_wall_time": self.global_convergence_wall_time,
-            "local_convergence_wall_time": self.local_convergence_wall_time,
-            "fl_end_wall_time": self.fl_end_wall_time,
+            "global_convergence_time_minutes": self.global_convergence_wall_time.total_seconds() / 60
+            if isinstance(self.global_convergence_wall_time, datetime.timedelta) else 0,
+            "local_convergence_time_minutes": self.local_convergence_wall_time.total_seconds() / 60
+            if isinstance(self.local_convergence_wall_time, datetime.timedelta) else 0,
         }
-        logger.info(f"In worker #{self.monitored_object.ID()}, the system-related metrics are: {str(system_metrics)}")
-        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.txt")
+        logger.info(f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}")
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
         with open(sys_metric_f_name, "a") as f:
-            f.write(json.dumps(sys_metric_f_name, indent=0))
-            f.write("\n")
+            f.write(json.dumps(system_metrics) + "\n")
 
     def merge_system_metrics_simulation_mode(self):
         """
@@ -111,11 +113,11 @@ class Monitor(object):
                 avg_sys_metrics[f"sys_avg/{k}"] = np.mean(v)
                 std_sys_metrics[f"sys_std/{k}"] = np.std(v)
 
+        logger.info(f"After merging the system metrics from all works, we got avg: {avg_sys_metrics}")
+        logger.info(f"After merging the system metrics from all works, we got std: {std_sys_metrics}")
         with open(sys_metric_f_name, "a") as f:
-            f.write(json.dumps(avg_sys_metrics, indent=0))
-            f.write("\n")
-            f.write(json.dumps(std_sys_metrics, indent=0))
-            f.write("\n")
+            f.write(json.dumps(avg_sys_metrics) + "\n")
+            f.write(json.dumps(std_sys_metrics) + "\n")
 
     def finish_fed_runner(self, fl_mode=None):
         self.compress_raw_res_file()
@@ -127,10 +129,10 @@ class Monitor(object):
                 import wandb
             except ImportError:
                 logger.error("cfg.wandb.use=True but not install the wandb package")
-            exit()
+                exit()
 
             from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
-            with open(os.path.join(self.outdir, "eval_results.log", "r")) as exp_log_f:
+            with open(os.path.join(self.outdir, "eval_results.log"), "r") as exp_log_f:
                 # track the prediction related performance
                 all_log_res, exp_stop_normal, last_line, log_res_best = \
                     logfile_2_wandb_dict(exp_log_f, raw_out=False)
@@ -313,7 +315,7 @@ class Monitor(object):
             assert isinstance(model, torch.nn.Module), \
                 f"the `model` should be type torch.nn.Module when calculating its size, but got {type(model)}"
             for name, para in model.named_parameters():
-                self.total_model_size = para.numel()
+                self.total_model_size += para.numel()
 
     def track_avg_flops(self, flops, sample_num=1):
         """
@@ -333,7 +335,6 @@ class Monitor(object):
 
     def track_download_bytes(self, bytes):
         self.total_download_bytes += bytes
-
 
 
 

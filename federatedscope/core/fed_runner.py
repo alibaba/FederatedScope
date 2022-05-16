@@ -251,7 +251,7 @@ class FedRunner(object):
         for each_receiver in receiver:
             if each_receiver == 0:
                 self.server.msg_handlers[msg.msg_type](msg)
-                self.server._monitor.track_dowanload_bytes(download_bytes)
+                self.server._monitor.track_download_bytes(download_bytes)
             else:
                 self.client[each_receiver].msg_handlers[msg.msg_type](msg)
-                self.client[each_receiver]._monitor.track_dowanload_bytes(download_bytes)
+                self.client[each_receiver]._monitor.track_download_bytes(download_bytes)

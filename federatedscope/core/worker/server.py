@@ -347,17 +347,20 @@ class Server(Worker):
             )
             self.state = self.total_round_num + 1
 
-        # Clean the msg buffer
-        self.msg_buffer['eval'][round].clear()
-
         if should_stop or self.state == self.total_round_num:
             logger.info(
                 'Server #{:d}: Final evaluation is finished! Starting merging results.'
                 .format(self.ID))
             # last round or early stopped
             self.save_best_results()
-            self.save_clients_eval_results()
+            if not self._cfg.federate.make_global_eval:
+                self.save_client_eval_results()
             self.terminate(msg_type='finish')
+
+        # Clean the clients evaluation msg buffer
+        if not self._cfg.federate.make_global_eval:
+            round = max(self.msg_buffer['eval'].keys())
+            self.msg_buffer['eval'][round].clear()
 
         if self.state == self.total_round_num:
             # break out the loop for distributed mode
@@ -395,11 +398,11 @@ class Server(Worker):
 
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
-            for each_client, client_eval_results in eval_msg_buffer:
+            for client_id, client_eval_results in eval_msg_buffer.items():
                 formatted_res = self._monitor.format_eval_res(client_eval_results,
                                                               rnd=self.state,
                                                               role='Client #{}'.format(
-                                                                  each_client),
+                                                                  client_id),
                                                               return_raw=True)
                 logger.info(formatted_res)
                 outfile.write(str(formatted_res) + "\n")

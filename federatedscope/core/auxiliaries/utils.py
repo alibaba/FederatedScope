@@ -64,6 +64,8 @@ def update_logger(cfg, clear_before_add=False):
     # ================ create outdir to save log, exp_config, models, etc,.
     if cfg.outdir == "":
         cfg.outdir = os.path.join(os.getcwd(), "exp")
+    if cfg.expname == "":
+        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on_{cfg.data.type}"
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
 
     # if exist, make directory with given name and time
@@ -111,7 +113,7 @@ def init_wandb(cfg):
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
     wandb.init(project=cfg.wandb.name_project, entity=cfg.wandb.name_user, config=cfg_yaml,
-               group=dataset_name, job_type=method_name, name=method_name + "-" + exp_name,
+               group=dataset_name, job_type=method_name, name=exp_name,
                notes=f"{method_name}, {exp_name}"
                )
 
