@@ -126,7 +126,8 @@ class Server(Worker):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue, monitor=self._monitor)
+            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+                                                      monitor=self._monitor)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
@@ -339,12 +340,12 @@ class Server(Worker):
         if should_stop:
             self._monitor.global_converged()
             self.comm_manager.send(
-                Message(msg_type="converged",
-                        sender=self.ID,
-                        receiver=list(self.comm_manager.neighbors.keys()),
-                        state=self.state,
-                        )
-            )
+                Message(
+                    msg_type="converged",
+                    sender=self.ID,
+                    receiver=list(self.comm_manager.neighbors.keys()),
+                    state=self.state,
+                ))
             self.state = self.total_round_num + 1
 
         if should_stop or self.state == self.total_round_num:
@@ -399,11 +400,11 @@ class Server(Worker):
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
             for client_id, client_eval_results in eval_msg_buffer.items():
-                formatted_res = self._monitor.format_eval_res(client_eval_results,
-                                                              rnd=self.state,
-                                                              role='Client #{}'.format(
-                                                                  client_id),
-                                                              return_raw=True)
+                formatted_res = self._monitor.format_eval_res(
+                    client_eval_results,
+                    rnd=self.state,
+                    role='Client #{}'.format(client_id),
+                    return_raw=True)
                 logger.info(formatted_res)
                 outfile.write(str(formatted_res) + "\n")
 

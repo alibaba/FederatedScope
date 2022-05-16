@@ -254,4 +254,5 @@ class FedRunner(object):
                 self.server._monitor.track_download_bytes(download_bytes)
             else:
                 self.client[each_receiver].msg_handlers[msg.msg_type](msg)
-                self.client[each_receiver]._monitor.track_download_bytes(download_bytes)
+                self.client[each_receiver]._monitor.track_download_bytes(
+                    download_bytes)

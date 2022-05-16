@@ -210,7 +210,7 @@ class Message(object):
         """
         from pympler import asizeof
         download_bytes = asizeof.asizeof(self.content)
-        upload_cnt = len(self.receiver) if isinstance(self.receiver, list) else 1
+        upload_cnt = len(self.receiver) if isinstance(self.receiver,
+                                                      list) else 1
         upload_bytes = download_bytes * upload_cnt
         return download_bytes, upload_bytes
-

@@ -60,11 +60,9 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             trigger="on_fit_start",
             insert_pos=1  # follow the mixture operation
         )
-        self.register_hook_in_train(
-            new_hook=self._hook_on_fit_end_flop_count,
-            trigger="on_fit_end",
-            insert_pos=-1
-        )
+        self.register_hook_in_train(new_hook=self._hook_on_fit_end_flop_count,
+                                    trigger="on_fit_end",
+                                    insert_pos=-1)
         self.register_hook_in_train(
             new_hook=self.hook_on_batch_forward_weighted_loss,
             trigger="on_batch_forward",
@@ -161,4 +159,3 @@ class FedEMTrainer(GeneralMultiModelTrainer):
 
         ctx[f"{cur_data}_y_prob"] = []
         ctx[f"{cur_data}_y_true"] = []
-

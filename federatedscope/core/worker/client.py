@@ -83,7 +83,8 @@ class Client(Worker):
         self.server_id = server_id
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue, monitor=self._monitor)
+            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+                                                      monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
             host = kwargs['host']
@@ -199,7 +200,9 @@ class Client(Worker):
             round, sender, content = message.state, message.sender, message.content
             self.trainer.update(content)
             self.state = round
-            if self.early_stopper.early_stopped and self._cfg.federate.method in ["local", "global"]:
+            if self.early_stopper.early_stopped and self._cfg.federate.method in [
+                    "local", "global"
+            ]:
                 sample_size, model_para_all, results = 0, self.trainer.get_model_para(
                 ), {}
                 logger.info(
@@ -322,7 +325,9 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        if self.early_stopper.early_stopped and self._cfg.federate.method in ["local", "global"]:
+        if self.early_stopper.early_stopped and self._cfg.federate.method in [
+                "local", "global"
+        ]:
             metrics = self.best_results
         else:
             metrics = {}
@@ -389,5 +394,3 @@ class Client(Worker):
         """
 
         self._monitor.global_converged()
-
-

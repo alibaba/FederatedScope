@@ -34,10 +34,9 @@ def wrap_pFedMeTrainer(
         new_hook=_hook_on_batch_forward_flop_count,
         target_trigger="on_batch_forward",
         target_hook_name="_hook_on_batch_forward_flop_count")
-    base_trainer.register_hook_in_train(
-        new_hook=_hook_on_epoch_end_flop_count,
-        trigger="on_epoch_end",
-        insert_pos=-1)
+    base_trainer.register_hook_in_train(new_hook=_hook_on_epoch_end_flop_count,
+                                        trigger="on_epoch_end",
+                                        insert_pos=-1)
 
     # for "on_batch_start" trigger: replace the original hooks into new ones of pFedMe
     # 1) cache the original hooks for "on_batch_start"
@@ -47,9 +46,12 @@ def wrap_pFedMeTrainer(
         "on_batch_start"]
     # 2) replace the original hooks for "on_batch_start"
     base_trainer.replace_hook_in_train(
-        new_hook=hook_on_batch_start_init_pfedme, target_trigger="on_batch_start", target_hook_name=None)
-    base_trainer.replace_hook_in_eval(
-        new_hook=hook_on_batch_start_init_pfedme, target_trigger="on_batch_start", target_hook_name=None)
+        new_hook=hook_on_batch_start_init_pfedme,
+        target_trigger="on_batch_start",
+        target_hook_name=None)
+    base_trainer.replace_hook_in_eval(new_hook=hook_on_batch_start_init_pfedme,
+                                      target_trigger="on_batch_start",
+                                      target_hook_name=None)
 
     return base_trainer
 
@@ -137,7 +139,6 @@ def hook_on_epoch_end_update_local(ctx):
         "params": list(ctx.pFedMe_local_model_tmp.parameters())
     }]
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
-
 
 
 def hook_on_fit_end_update_local(ctx):

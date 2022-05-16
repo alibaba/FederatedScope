@@ -8,6 +8,7 @@ import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
 
+
 class CN(CfgNode):
     """
         An extended configuration system based on [yacs](https://github.com/rbgirshick/yacs).
@@ -105,7 +106,8 @@ class CN(CfgNode):
                 try:
                     import wandb
                 except ImportError:
-                    logger.error("cfg.wandb.use=True but not install the wandb package")
+                    logger.error(
+                        "cfg.wandb.use=True but not install the wandb package")
                     exit()
 
                 import yaml
@@ -115,7 +117,6 @@ class CN(CfgNode):
             logger.info("the used configs are: \n" + str(tmp_cfg))
 
         super(CN, self).freeze()
-
 
 
 # to ensure the sub-configs registered before set up the global config

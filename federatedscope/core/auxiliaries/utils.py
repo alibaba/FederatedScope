@@ -112,10 +112,13 @@ def init_wandb(cfg):
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
-    wandb.init(project=cfg.wandb.name_project, entity=cfg.wandb.name_user, config=cfg_yaml,
-               group=dataset_name, job_type=method_name, name=exp_name,
-               notes=f"{method_name}, {exp_name}"
-               )
+    wandb.init(project=cfg.wandb.name_project,
+               entity=cfg.wandb.name_user,
+               config=cfg_yaml,
+               group=dataset_name,
+               job_type=method_name,
+               name=exp_name,
+               notes=f"{method_name}, {exp_name}")
 
 
 def get_dataset(type, root, transform, target_transform, download=True):
@@ -316,7 +319,8 @@ def logfile_2_wandb_dict(exp_log_f, raw_out=True):
             parse_res = line.split("INFO: ")[1].split("with value")
             best_key, best_val = parse_res[-2], parse_res[-1]
             # client_individual.test_acc -> client_individual/test_acc
-            best_key = best_key.replace("Find new best result for", "").replace(".", "/")
+            best_key = best_key.replace("Find new best result for",
+                                        "").replace(".", "/")
             log_res_best[best_key.strip()] = float(best_val.strip())
 
         if "'Role': 'Server #'" in line:
@@ -337,15 +341,19 @@ def logfile_2_wandb_dict(exp_log_f, raw_out=True):
                 else:
                     if cur_round != "Final":
                         for key_inner, val_inner in val.items():
-                            assert not isinstance(val_inner, dict), "Un-expected log format"
+                            assert not isinstance(
+                                val_inner, dict), "Un-expected log format"
                             log_res[f"{key}/{key_inner}"] = val_inner
 
                     else:
                         exp_stop_normal = True
                         if key == "Results_raw":
-                            for final_type, final_type_dict in res["Results_raw"].items():
-                                for inner_key, inner_val in final_type_dict.items():
-                                    log_res_best[f"{final_type}/{inner_key}"] = inner_val
+                            for final_type, final_type_dict in res[
+                                    "Results_raw"].items():
+                                for inner_key, inner_val in final_type_dict.items(
+                                ):
+                                    log_res_best[
+                                        f"{final_type}/{inner_key}"] = inner_val
                     #     log_res_best = {}
                     #     for best_res_type, val_dict in val.items():
                     #         for key_inner, val_inner in val_dict.items():

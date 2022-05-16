@@ -24,11 +24,7 @@ class Monitor(object):
     """
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
-    def __init__(
-        self,
-        cfg,
-        monitored_object=None
-    ):
+    def __init__(self, cfg, monitored_object=None):
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
         # self.use_tensorboard = cfg.use_tensorboard
@@ -37,50 +33,57 @@ class Monitor(object):
 
         # =========  efficiency indicators of the worker to be monitored ================
         # leveraged the flops counter provided by [fvcore](https://github.com/facebookresearch/fvcore)
-        self.total_model_size = 0    # model size used in the worker, in terms of number of parameters
-        self.flops_per_sample = 0    # average flops for forwarding each data sample
-        self.flop_count = 0     # used to calculated the running mean for flops_per_sample
+        self.total_model_size = 0  # model size used in the worker, in terms of number of parameters
+        self.flops_per_sample = 0  # average flops for forwarding each data sample
+        self.flop_count = 0  # used to calculated the running mean for flops_per_sample
         self.total_flops = 0  # total computation flops to convergence until current fl round
-        self.total_upload_bytes = 0   # total upload space cost in bytes until current fl round
-        self.total_download_bytes = 0   # total download space cost in bytes until current fl round
+        self.total_upload_bytes = 0  # total upload space cost in bytes until current fl round
+        self.total_download_bytes = 0  # total download space cost in bytes until current fl round
         self.fl_begin_wall_time = datetime.datetime.now()
         self.fl_end_wall_time = 0
         # for the metrics whose names includes "convergence", 0 indicates the worker does not converge yet
         # Note:
         # 1) the convergence wall time is prone to fluctuations due to possible resource competition during FL courses
         # 2) the global/local indicates whether the early stopping triggered with global-aggregation/local-training
-        self.global_convergence_round = 0   # total fl rounds to convergence
+        self.global_convergence_round = 0  # total fl rounds to convergence
         self.global_convergence_wall_time = 0
-        self.local_convergence_round = 0   # total fl rounds to convergence
+        self.local_convergence_round = 0  # total fl rounds to convergence
         self.local_convergence_wall_time = 0
 
     def global_converged(self):
-        self.global_convergence_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
+        self.global_convergence_wall_time = datetime.datetime.now(
+        ) - self.fl_begin_wall_time
         self.global_convergence_round = self.monitored_object.state()
 
     def local_converged(self):
-        self.local_convergence_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
+        self.local_convergence_wall_time = datetime.datetime.now(
+        ) - self.fl_begin_wall_time
         self.local_convergence_round = self.monitored_object.state()
 
     def finish_fl(self):
-        self.fl_end_wall_time = datetime.datetime.now() - self.fl_begin_wall_time
+        self.fl_end_wall_time = datetime.datetime.now(
+        ) - self.fl_begin_wall_time
 
         system_metrics = {
             "id": self.monitored_object.ID,
-            "fl_end_time_minutes": self.fl_end_wall_time.total_seconds() / 60
-            if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
+            "fl_end_time_minutes": self.fl_end_wall_time.total_seconds() /
+            60 if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
             "total_model_size": self.total_model_size,
             "total_flops": self.total_flops,
             "total_upload_bytes": self.total_upload_bytes,
             "total_download_bytes": self.total_download_bytes,
             "global_convergence_round": self.global_convergence_round,
             "local_convergence_round": self.local_convergence_round,
-            "global_convergence_time_minutes": self.global_convergence_wall_time.total_seconds() / 60
-            if isinstance(self.global_convergence_wall_time, datetime.timedelta) else 0,
-            "local_convergence_time_minutes": self.local_convergence_wall_time.total_seconds() / 60
-            if isinstance(self.local_convergence_wall_time, datetime.timedelta) else 0,
+            "global_convergence_time_minutes": self.
+            global_convergence_wall_time.total_seconds() / 60 if isinstance(
+                self.global_convergence_wall_time, datetime.timedelta) else 0,
+            "local_convergence_time_minutes": self.local_convergence_wall_time.
+            total_seconds() / 60 if isinstance(
+                self.local_convergence_wall_time, datetime.timedelta) else 0,
         }
-        logger.info(f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}")
+        logger.info(
+            f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}"
+        )
         sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
         with open(sys_metric_f_name, "a") as f:
             f.write(json.dumps(system_metrics) + "\n")
@@ -113,8 +116,12 @@ class Monitor(object):
                 avg_sys_metrics[f"sys_avg/{k}"] = np.mean(v)
                 std_sys_metrics[f"sys_std/{k}"] = np.std(v)
 
-        logger.info(f"After merging the system metrics from all works, we got avg: {avg_sys_metrics}")
-        logger.info(f"After merging the system metrics from all works, we got std: {std_sys_metrics}")
+        logger.info(
+            f"After merging the system metrics from all works, we got avg: {avg_sys_metrics}"
+        )
+        logger.info(
+            f"After merging the system metrics from all works, we got std: {std_sys_metrics}"
+        )
         with open(sys_metric_f_name, "a") as f:
             f.write(json.dumps(avg_sys_metrics) + "\n")
             f.write(json.dumps(std_sys_metrics) + "\n")
@@ -128,11 +135,13 @@ class Monitor(object):
             try:
                 import wandb
             except ImportError:
-                logger.error("cfg.wandb.use=True but not install the wandb package")
+                logger.error(
+                    "cfg.wandb.use=True but not install the wandb package")
                 exit()
 
             from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
-            with open(os.path.join(self.outdir, "eval_results.log"), "r") as exp_log_f:
+            with open(os.path.join(self.outdir, "eval_results.log"),
+                      "r") as exp_log_f:
                 # track the prediction related performance
                 all_log_res, exp_stop_normal, last_line, log_res_best = \
                     logfile_2_wandb_dict(exp_log_f, raw_out=False)
@@ -141,7 +150,8 @@ class Monitor(object):
                 wandb.log(log_res_best)
 
                 # track the system related performance
-                sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+                sys_metric_f_name = os.path.join(self.outdir,
+                                                 "system_metrics.log")
                 with open(sys_metric_f_name, "r") as f:
                     for line in f:
                         res = json.loads(line)
@@ -307,7 +317,9 @@ class Monitor(object):
         :return:
         """
         if self.total_model_size != 0:
-            logger.warning("the total_model_size is not zero. You may have been calculated the total_model_size before")
+            logger.warning(
+                "the total_model_size is not zero. You may have been calculated the total_model_size before"
+            )
 
         if not hasattr(models, '__iter__'):
             models = [models]
@@ -327,7 +339,8 @@ class Monitor(object):
         :return:
         """
 
-        self.flops_per_sample = (self.flops_per_sample * self.flop_count + flops) / (self.flop_count + sample_num)
+        self.flops_per_sample = (self.flops_per_sample * self.flop_count +
+                                 flops) / (self.flop_count + sample_num)
         self.flop_count += 1
 
     def track_upload_bytes(self, bytes):
@@ -335,7 +348,6 @@ class Monitor(object):
 
     def track_download_bytes(self, bytes):
         self.total_download_bytes += bytes
-
 
 
 def update_best_result(best_results,
@@ -362,16 +374,14 @@ def update_best_result(best_results,
                 if 'loss' in key or 'std' in key:  # the smaller, the better
                     if results_type == "client_individual":
                         cur_result = min(cur_result)
-                    if key not in best_result or cur_result < best_result[
-                            key]:
+                    if key not in best_result or cur_result < best_result[key]:
                         best_result[key] = cur_result
                         update_best_this_round = True
 
                 elif 'acc' in key:  # the larger, the better
                     if results_type == "client_individual":
                         cur_result = max(cur_result)
-                    if key not in best_result or cur_result > best_result[
-                            key]:
+                    if key not in best_result or cur_result > best_result[key]:
                         best_result[key] = cur_result
                         update_best_this_round = True
                 else:
@@ -380,8 +390,8 @@ def update_best_result(best_results,
         # update different keys round-wise: if find better round_wise_update_key, update others at the same time
         else:
             if round_wise_update_key not in [
-                    "val_loss", "val_acc", "val_std", "test_loss",
-                    "test_acc", "test_std", "test_avg_loss", "loss"
+                    "val_loss", "val_acc", "val_std", "test_loss", "test_acc",
+                    "test_std", "test_avg_loss", "loss"
             ]:
                 raise NotImplementedError(
                     f"We currently support round_wise_update_key as one of "
