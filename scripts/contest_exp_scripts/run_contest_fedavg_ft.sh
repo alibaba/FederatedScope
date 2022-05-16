@@ -1,64 +1,43 @@
 set -e
 
+cd ../..
+
 cudaid=$1
-exp=$2
-
+root=$2
 dataset=fs_contest_data
+method=fedavg_ft
+outdir=exp_out/${method}
 
-if [ ! -d "out_${exp}" ];then
-  mkdir out_${exp}
+if [ ! -d ${outdir} ];then
+  mkdir -p ${outdir}
 fi
-
-out_channels=0
-hidden=64
-splitter='ooxx'
 
 echo "HPO starts..."
 
-gnns=('gin')
 lrs=(0.01 0.1 0.05 0.005 0.5)
 local_updates=(1 2 4)
-steps=(1 5 10 15)
+steps=(5 10 15)
 
-for (( g=0; g<${#gnns[@]}; g++ ))
+for (( i=0; i<${#lrs[@]}; i++ ))
 do
-    for (( i=0; i<${#lrs[@]}; i++ ))
+    for (( j=0; j<${#local_updates[@]}; j++ ))
     do
-        for (( j=0; j<${#local_updates[@]}; j++ ))
+        for (( s=0; s<${#steps[@]}; s++ ))
         do
-            for (( s=0; s<${#steps[@]}; s++ ))
+            log=${outdir}/gin_lr-${lrs[$i]}_step-${local_updates[$j]}_lstep-${steps[$s]}_on_${dataset}.log
+            for k in {1..3}
             do
-                for k in {1..5}
-                do
-                    python federatedscope/main.py --cfg federatedscope/gfl/baseline/fedavg_gnn_minibatch_on_multi_task.yaml \
-                    data.root data/ \
-                    device ${cudaid} \
-                    data.type ${dataset} \
-                    data.splitter ${splitter} \
-                    optimizer.lr ${lrs[$i]} \
-                    federate.local_update_steps ${local_updates[$j]} \
-                    model.type ${gnns[$g]} \
-                    model.out_channels ${out_channels} \
-                    model.hidden ${hidden} \
-                    trainer.finetune.before_eval True \
-                    trainer.finetune.steps 5 \
-                    seed $k >>out_${exp}/${gnns[$g]}_${lrs[$i]}_${local_updates[$j]}_${steps[$s]}_on_${dataset}_${splitter}.log 2>&1
-                done
+                python federatedscope/main.py --cfg federatedscope/scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
+                data.root ${root} \
+                device ${cudaid} \
+                data.type ${dataset} \
+                optimizer.lr ${lrs[$i]} \
+                federate.local_update_steps ${local_updates[$j]} \
+                trainer.finetune.before_eval True \
+                trainer.finetune.steps ${steps[$s]} \
+                seed $k >>${log} 2>&1
             done
-        done
-    done
-done
-
-for (( g=0; g<${#gnns[@]}; g++ ))
-do
-    for (( i=0; i<${#lrs[@]}; i++ ))
-    do
-        for (( j=0; j<${#local_updates[@]}; j++ ))
-        do
-            for (( s=0; s<${#steps[@]}; s++ ))
-            do
-                python federatedscope/parse_exp_results.py --input out_${exp}/${gnns[$g]}_${lrs[$i]}_${local_updates[$j]}_${steps[$s]}_on_${dataset}_${splitter}.log
-            done
+            python federatedscope/parse_exp_results.py --input ${log}
         done
     done
 done

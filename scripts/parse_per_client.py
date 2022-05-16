@@ -81,10 +81,10 @@ def plot_local_training(name, path_f):
 if __name__ == '__main__':
     logs = [
         ('fedavg', "/mnt/gaodawei.gdw/FederatedScope/out_fedavg/gin_0.5_2_on_fs_contest_data_ooxx.log"),
-        ('isolated', "")
-        ('fedbn', ""),
-        ('ditto', ""),
-        ('maml', "")
+        # ('isolated', "")
+        # ('fedbn', ""),
+        # ('ditto', ""),
+        # ('maml', "")
     ]
     for name, path_f in logs:
         plot_local_training(name, path_f)
