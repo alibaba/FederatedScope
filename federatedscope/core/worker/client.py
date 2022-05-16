@@ -328,7 +328,7 @@ class Client(Worker):
         if self.early_stopper.early_stopped and self._cfg.federate.method in [
                 "local", "global"
         ]:
-            metrics = self.best_results
+            metrics = list(self.best_results.values())[0]
         else:
             metrics = {}
             if self._cfg.trainer.finetune.before_eval:

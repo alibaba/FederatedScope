@@ -44,13 +44,13 @@ RUN conda install -y fvcore -c fvcore -c iopath -c conda-forge \
     && conda clean -a -y
 
 # auxiliaries (communications, monitoring, etc.)
-RUN conda install -y wandb tensorboard tensorboardX -c conda-forge \
+RUN conda install -y wandb tensorboard tensorboardX pympler -c conda-forge \
     && pip install grpcio grpcio-tools protobuf==3.19.4 setuptools==61.2.0 \
     && conda clean -a -y
 
 # for grpah
 RUN conda install -y pyg==2.0.4 -c pyg  \
-    && conda install -y rdkit=2021.09.4=py39hccf6a74_0 pympler -c conda-forge \
+    && conda install -y rdkit=2021.09.4=py39hccf6a74_0 -c conda-forge \
     && conda install -y nltk \
     && conda clean -a -y
 

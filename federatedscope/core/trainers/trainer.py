@@ -166,16 +166,16 @@ class Trainer(object):
         target_hook_set = hooks_dict[trigger]
         if insert_pos is not None:
             assert (insert_pos == -1) or (insert_pos == len(target_hook_set) == 0) or \
-                   (0 <= insert_pos <= (len(target_hook_set) - 1)), \
+                   (0 <= insert_pos <= (len(target_hook_set))), \
                 f"Got {insert_pos} as insert pos, you should specify a integer (1) =-1 " \
                 f"or (2) =0 for null target_hook_set;" \
-                f"or (3) within [0, {(len(target_hook_set) - 1)}]."
+                f"or (3) within [0, {(len(target_hook_set))}]."
         elif base_hook is not None:
             base_hook_pos = target_hook_set.index(base_hook)
             insert_pos = base_hook_pos - 1 if insert_mode == "before" else base_hook_pos + 1
             # bounding the insert_pos in rational range
             insert_pos = 0 if insert_pos < 0 else insert_pos
-            insert_pos = -1 if insert_pos >= len(
+            insert_pos = -1 if insert_pos > len(
                 target_hook_set) else insert_pos
         else:
             insert_pos = -1  # By default, the new hook is called finally
