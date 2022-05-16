@@ -136,6 +136,7 @@ class Monitor(object):
                     logfile_2_wandb_dict(exp_log_f, raw_out=False)
                 for log_res in all_log_res:
                     wandb.log(log_res)
+                wandb.log(log_res_best)
 
                 # track the system related performance
                 sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
@@ -144,9 +145,6 @@ class Monitor(object):
                         res = json.loads(line)
                         if res["id"] in ["sys_avg", "sys_std"]:
                             wandb.log(res)
-
-                wandb.log(log_res_best)
-                # TODO, make the step consistent; test the new func
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
@@ -195,7 +193,6 @@ class Monitor(object):
                 },
             }
         """
-        # TODO: better visualization via wandb or tensorboard
         if forms is None:
             forms = ['weighted_avg', 'avg', 'fairness', 'raw']
         round_formatted_results = {'Role': role, 'Round': rnd}

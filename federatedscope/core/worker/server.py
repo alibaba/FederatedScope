@@ -347,12 +347,16 @@ class Server(Worker):
             )
             self.state = self.total_round_num + 1
 
+        # Clean the msg buffer
+        self.msg_buffer['eval'][round].clear()
+
         if should_stop or self.state == self.total_round_num:
             logger.info(
                 'Server #{:d}: Final evaluation is finished! Starting merging results.'
                 .format(self.ID))
-            # last round
+            # last round or early stopped
             self.save_best_results()
+            self.save_clients_eval_results()
             self.terminate(msg_type='finish')
 
         if self.state == self.total_round_num:
@@ -379,6 +383,26 @@ class Server(Worker):
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
             outfile.write(str(formatted_res) + "\n")
+
+    def save_client_eval_results(self):
+        """
+            save the evaluation results of each client when the fl course early stopped or terminated
+
+        :return:
+        """
+        round = max(self.msg_buffer['eval'].keys())
+        eval_msg_buffer = self.msg_buffer['eval'][round]
+
+        with open(os.path.join(self._cfg.outdir, "eval_results.log"),
+                  "a") as outfile:
+            for each_client, client_eval_results in eval_msg_buffer:
+                formatted_res = self._monitor.format_eval_res(client_eval_results,
+                                                              rnd=self.state,
+                                                              role='Client #{}'.format(
+                                                                  each_client),
+                                                              return_raw=True)
+                logger.info(formatted_res)
+                outfile.write(str(formatted_res) + "\n")
 
     def merge_eval_results_from_all_clients(self):
         """
@@ -417,8 +441,7 @@ class Server(Worker):
                                    results_type=f"client_summarized_{form}",
                                    round_wise_update_key=self._cfg.eval.
                                    best_res_update_round_wise_key)
-        # Clean the buffer
-        self.msg_buffer['eval'][round].clear()
+
         return formatted_logs
 
     def broadcast_model_para(self,
