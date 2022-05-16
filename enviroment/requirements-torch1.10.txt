@@ -16,3 +16,4 @@ protobuf==3.19.4
 setuptools==61.2.0
 fvcore
 pympler
+iopath

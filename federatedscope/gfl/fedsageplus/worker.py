@@ -261,8 +261,11 @@ class FedSagePlusClient(Client):
                                   dropout=self._cfg.model.dropout,
                                   num_pred=self._cfg.fedsageplus.num_pred)
         self.clf = model
-        self.trainer_loc = LocalGenTrainer(self.gen, self.hide_data,
-                                           self.device, self._cfg)
+        self.trainer_loc = LocalGenTrainer(self.gen,
+                                           self.hide_data,
+                                           self.device,
+                                           self._cfg,
+                                           monitor=self._monitor)
 
         self.register_handlers('clf_para', self.callback_funcs_for_model_para)
         self.register_handlers('local_pretrain',

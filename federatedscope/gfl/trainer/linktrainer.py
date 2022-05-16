@@ -9,6 +9,10 @@ from federatedscope.register import register_trainer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 MODE2MASK = {
     'train': 'train_edge_mask',
     'val': 'valid_edge_mask',
@@ -79,6 +83,34 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         ctx.batch_size = len(label)
         ctx.y_true = label
         ctx.y_prob = pred
+
+    def _hook_on_batch_forward_flop_count(self, ctx):
+        if self.ctx.monitor.flops_per_sample == 0:
+            # calculate the flops_per_sample
+            try:
+                data = ctx.data
+                from fvcore.nn import FlopCountAnalysis
+                if ctx.cur_data_split in ['train', 'val']:
+                    flops_one_batch = FlopCountAnalysis(
+                        ctx.model, (data.x, ctx.input_edge_index)).total()
+                else:
+                    flops_one_batch = FlopCountAnalysis(
+                        ctx.model, (data.x, data.edge_index)).total()
+                if self.model_nums > 1 and ctx.mirrored_models:
+                    flops_one_batch *= self.model_nums
+                    logger.warning(
+                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, please customize the count hook"
+                    )
+                self.ctx.monitor.track_avg_flops(flops_one_batch,
+                                                 ctx.batch_size)
+            except NotImplementedError:
+                logger.error(
+                    "current flop count implementation is for general NodeFullBatchTrainer case: "
+                    "1) the ctx.model takes the "
+                    "tuple (data.x, data.edge_index) or tuple (data.x, ctx.input_edge_index) as input."
+                    "Please check the forward format or implement your own flop_count function"
+                )
 
 
 class LinkMiniBatchTrainer(GeneralTorchTrainer):

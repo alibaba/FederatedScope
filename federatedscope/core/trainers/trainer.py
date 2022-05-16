@@ -49,6 +49,9 @@ class Trainer(object):
                            device,
                            init_dict=self.parse_data(data))
 
+        if monitor is None:
+            logger.warning(
+                f"Will not use monitor in trainer with class {type(self)}")
         self.ctx.monitor = monitor
         # the "model_nums", and "models" are used for multi-model case and model size calculation
         self.model_nums = 1
@@ -550,16 +553,25 @@ class GeneralTorchTrainer(Trainer):
         """
         if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
-            x, _ = [_.to(ctx.device) for _ in ctx.data_batch]
-            from fvcore.nn import FlopCountAnalysis
-            flops_one_batch = FlopCountAnalysis(ctx.model, x).total()
-            if self.model_nums > 1 and ctx.mirrored_models:
-                flops_one_batch *= self.model_nums
-                logger.warning(
-                    "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
-                    "if this is not the case you want, please customize the count hook"
+            try:
+                x, y = [_.to(ctx.device) for _ in ctx.data_batch]
+                from fvcore.nn import FlopCountAnalysis
+                flops_one_batch = FlopCountAnalysis(ctx.model, x).total()
+                if self.model_nums > 1 and ctx.mirrored_models:
+                    flops_one_batch *= self.model_nums
+                    logger.warning(
+                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, please customize the count hook"
+                    )
+                self.ctx.monitor.track_avg_flops(flops_one_batch,
+                                                 ctx.batch_size)
+            except NotImplementedError:
+                logger.error(
+                    "current flop count implementation is for general trainer case: "
+                    "1) ctx.data_batch = [x, y]; and"
+                    "2) the ctx.model takes only x as input."
+                    "Please check the forward format or implement your own flop_count function"
                 )
-            self.ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward

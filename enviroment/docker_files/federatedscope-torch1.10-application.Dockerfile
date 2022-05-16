@@ -40,7 +40,7 @@ RUN conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoo
     && conda clean -a -y
 
 # torch helper package
-RUN conda install -y fvcore -c fvcore -c iopath -c conda-forge \
+RUN conda install -y fvcore iopath -c fvcore -c iopath -c conda-forge \
     && conda clean -a -y
 
 # auxiliaries (communications, monitoring, etc.)

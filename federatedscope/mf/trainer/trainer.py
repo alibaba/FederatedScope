@@ -2,6 +2,10 @@ from federatedscope.mf.dataloader.dataloader import MFDataLoader
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.register import register_trainer
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class MFTrainer(GeneralTorchTrainer):
     """Trainer for MF task
@@ -78,6 +82,33 @@ class MFTrainer(GeneralTorchTrainer):
         ctx.loss_batch = ctx.criterion(pred, label) * ratio
 
         ctx.batch_size = len(ratings)
+
+    def _hook_on_batch_forward_flop_count(self, ctx):
+        if self.ctx.monitor.flops_per_sample == 0:
+            # calculate the flops_per_sample
+            try:
+                indices, ratings = ctx.data_batch
+                from fvcore.nn import FlopCountAnalysis
+                flops_one_batch = FlopCountAnalysis(
+                    ctx.model, (indices, ratings)).total()
+                if self.model_nums > 1 and ctx.mirrored_models:
+                    flops_one_batch *= self.model_nums
+                    logger.warning(
+                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, please customize the count hook"
+                    )
+                self.ctx.monitor.track_avg_flops(flops_one_batch,
+                                                 ctx.batch_size)
+            except NotImplementedError:
+                logger.error(
+                    "current flop count implementation is for general NodeFullBatchTrainer case: "
+                    "1) the ctx.model takes tuple (indices, ratings) as input."
+                    "Please check the forward format or implement your own flop_count function"
+                )
+
+        # by default, we assume the data has the same input shape,
+        # thus simply multiply the flops to avoid redundant forward
+        self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * ctx.batch_size
 
 
 def call_mf_trainer(trainer_type):

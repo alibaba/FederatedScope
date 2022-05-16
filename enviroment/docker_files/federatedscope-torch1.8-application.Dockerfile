@@ -40,7 +40,7 @@ RUN conda install -y pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoo
     && conda clean -a -y
 
 # torch helper package
-RUN conda install -y fvcore -c fvcore -c iopath -c conda-forge \
+RUN conda install -y fvcore iopath -c fvcore -c iopath -c conda-forge \
     && conda clean -a -y
 
 # for graph
