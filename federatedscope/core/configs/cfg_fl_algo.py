@@ -10,6 +10,7 @@ def extend_fl_algo_cfg(cfg):
 
     cfg.fedopt.use = False
     cfg.fedopt.lr_server = 0.01
+    cfg.fedopt.momentum_server = 0.
     cfg.fedopt.type_optimizer = 'SGD'
 
     # ------------------------------------------------------------------------ #
