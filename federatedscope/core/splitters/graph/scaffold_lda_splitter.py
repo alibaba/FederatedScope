@@ -5,7 +5,8 @@ import torch
 from rdkit import Chem
 from rdkit import RDLogger
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from federatedscope.gfl.dataset.utils import dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.graph.scaffold_splitter import generate_scaffold
 
 logger = logging.getLogger(__name__)
 
@@ -102,13 +103,6 @@ class GenFeatures:
             data.edge_attr = feats
 
         return data
-
-def generate_scaffold(smiles, include_chirality=False):
-    """return scaffold string of target molecule"""
-    mol = Chem.MolFromSmiles(smiles)
-    scaffold = MurckoScaffold\
-        .MurckoScaffoldSmiles(mol=mol, includeChirality=include_chirality)
-    return scaffold
 
 
 def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):

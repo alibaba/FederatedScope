@@ -1,10 +1,7 @@
 import torch
 from copy import deepcopy
-import numpy as np
-import torch.nn.functional as F
 
-from federatedscope.gfl.flitplus.vat import VATLoss
-from federatedscope.register import register_trainer
+from federatedscope.gfl.loss.vat import VATLoss
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
 

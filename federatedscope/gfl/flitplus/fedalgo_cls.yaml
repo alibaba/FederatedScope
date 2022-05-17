@@ -11,7 +11,8 @@ data:
   root: data/
   splitter: scaffold_lda
   batch_size: 64
-  transforms: 'self_loop'
+  transform: ['AddSelfLoops']
+  splitter_args: [{'alpha': 0.1}]
 model:
   type: mpnn
   hidden: 64

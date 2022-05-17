@@ -104,8 +104,8 @@ class Context(dict):
                 self.cfg.optimizer.type,
                 self.model,
                 self.cfg.optimizer.lr,
-                weight_decay=self.cfg.optimizer.weight_decay,
-                momentum=self.cfg.optimizer.momentum)
+                weight_decay=self.cfg.optimizer.weight_decay)
+                # ,momentum=self.cfg.optimizer.momentum) # todo: 这里adam不需要动量啊
             self.grad_clip = self.cfg.optimizer.grad_clip
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
