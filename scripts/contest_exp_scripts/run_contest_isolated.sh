@@ -16,7 +16,7 @@ echo "HPO starts..."
 
 lrs=(0.01 0.1 0.05 0.005 0.5)
 local_updates=(1 2 4)
-patiences=(5 10 20)
+patiences=(20)
 
 for (( i=0; i<${#lrs[@]}; i++ ))
 do
