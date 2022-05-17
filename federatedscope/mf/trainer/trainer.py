@@ -1,6 +1,7 @@
 import numpy
 from wandb.wandb_torch import torch
 
+from federatedscope.core.monitors import Monitor
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.register import register_trainer
@@ -87,6 +88,13 @@ class MFTrainer(GeneralTorchTrainer):
         ctx.batch_size = len(ratings)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
+        if not isinstance(self.ctx.monitor, Monitor):
+            logger.warning(
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
+                f"Plz check whether this is you want.")
+            return
+
         if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:

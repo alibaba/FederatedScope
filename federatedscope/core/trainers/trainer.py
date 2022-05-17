@@ -503,6 +503,12 @@ class GeneralTorchTrainer(Trainer):
         setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
+        if not isinstance(self.ctx.monitor, Monitor):
+            logger.warning(
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
+                f"Plz check whether this is you want.")
+            return
         if self.ctx.monitor.total_model_size == 0:
             self.ctx.monitor.track_model_size(ctx.models)
 
@@ -551,6 +557,13 @@ class GeneralTorchTrainer(Trainer):
         :param ctx:
         :return:
         """
+        if not isinstance(self.ctx.monitor, Monitor):
+            logger.warning(
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
+                f"Plz check whether this is you want.")
+            return
+
         if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:

@@ -1,3 +1,4 @@
+from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
@@ -20,6 +21,13 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         ctx.y_prob = pred
 
     def _hook_on_batch_forward_flop_count(self, ctx):
+        if not isinstance(self.ctx.monitor, Monitor):
+            logger.warning(
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
+                f"Plz check whether this is you want.")
+            return
+
         if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:

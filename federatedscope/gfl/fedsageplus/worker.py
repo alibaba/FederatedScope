@@ -357,8 +357,11 @@ class FedSagePlusClient(Client):
             'test': subgraph_sampler
         }
         self._cfg.merge_from_list(['data.batch_size', self.sage_batch_size])
-        self.trainer_clf = NodeMiniBatchTrainer(self.clf, fill_dataloader,
-                                                self.device, self._cfg)
+        self.trainer_clf = NodeMiniBatchTrainer(self.clf,
+                                                fill_dataloader,
+                                                self.device,
+                                                self._cfg,
+                                                monitor=self._monitor)
         sample_size, clf_para, results = self.trainer_clf.train()
         self.state = round
         logger.info(
