@@ -7,23 +7,18 @@ from torch_geometric.data.batch import Batch
 
 from torch.nn import GRU, Linear, ReLU, Sequential
 from torch_geometric.nn import NNConv, Set2Set
-"""MPNN is introduced in `Neural Message Passing for Quantum Chemistry
-<https://arxiv.org/abs/1704.01212>`__.
-Source: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/qm9_nn_conv.py
-https://github.com/brain-research/mpnn
-"""
 
 
 class MPNNs2s(nn.Module):
-    """MPNN for regression and classification on graphs.
-    Parameters
-    ----------
-    in_channels : int
-        Size for the input node features.
-    hidden : int
-        Size for the output node representations. Default to 64.
-    num_nn : int
-        num_edge_features
+    r"""MPNN from "Neural Message Passing for Quantum Chemistry" for regression and classification on graphs.
+    Source: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/qm9_nn_conv.py
+
+        Arguments:
+        in_channels (int): Size for the input node features.
+        out_channels (int): dimension of output.
+        num_nn (int): num_edge_features.
+        hidden (int): Size for the output node representations. Default to 64.
+
     """
     def __init__(self,
                  in_channels,

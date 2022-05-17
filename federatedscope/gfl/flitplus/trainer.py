@@ -213,7 +213,7 @@ class FedVATTrainer(GeneralTorchTrainer):
 
 
 def record_initialization_local(ctx):
-    """Record the shared global model to cpu
+    """Record weight denomaitor to cpu
 
     """
     ctx.weight_denomaitor = None

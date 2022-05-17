@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 RDLogger.DisableLog('rdApp.*')
 
 class GenFeatures:
+    r"""Implementation of 'CanonicalAtomFeaturizer' and 'CanonicalBondFeaturizer' in DGL.
+    Source: https://lifesci.dgl.ai/_modules/dgllife/utils/featurizers.html
+
+    Arguments:
+        data: PyG.data in PyG.dataset.
+
+    Returns:
+        data: PyG.data, data passing featurizer.
+
+    """
     def __init__(self):
         self.symbols = [
             'C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg',
@@ -41,7 +51,6 @@ class GenFeatures:
         ]
 
     def __call__(self, data):
-        # Generate AttentiveFP features according to Table 1.
         mol = Chem.MolFromSmiles(data.smiles)
 
         xs = []
@@ -138,19 +147,21 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
 
 
 class ScaffoldLdaSplitter:
+    r"""First adopt scaffold splitting and then assign the samples to clients according to Latent Dirichlet Allocation.
+
+    Arguments:
+        dataset (List or PyG.dataset): The molecular datasets.
+        alpha (float): Partition hyperparameter in LDA, smaller alpha generates more extreme heterogeneous scenario.
+
+    Returns:
+        data_list (List(List(PyG.data))): Splited dataset via scaffold split.
+
+    """
     def __init__(self, client_num, alpha):
         self.client_num = client_num
         self.alpha = alpha
 
     def __call__(self, dataset):
-        r"""Split dataset with smiles string into scaffold split
-        
-        Arguments:
-            dataset (List or PyG.dataset): The molecular datasets.
-            
-        Returns:
-            data_list (List(List(PyG.data))): Splited dataset via scaffold split.
-        """
         featurizer = GenFeatures()
         data = []
         for ds in dataset:

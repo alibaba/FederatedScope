@@ -23,13 +23,18 @@ def _l2_normalize(d):
 
 
 class VATLoss(nn.Module):
-
     def __init__(self, xi=1e-3, eps=2.5, ip=1):
-        """VAT loss
-        https://github.com/lyakaap/VAT-pytorch
-        :param xi: hyperparameter of VAT
-        :param eps: hyperparameter of VAT
-        :param ip: iteration times of computing adv noise
+        r"""VAT loss
+        Source: https://github.com/lyakaap/VAT-pytorch
+
+        Arguments:
+            xi: hyperparameter of VAT in Eq.9, default: 0.0001
+            eps: hyperparameter of VAT in Eq.9, default: 2.5
+            ip: iteration times of computing adv noise
+
+        Returns:
+            loss : the VAT Loss
+
         """
         super(VATLoss, self).__init__()
         self.xi = xi

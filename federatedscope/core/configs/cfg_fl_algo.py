@@ -69,7 +69,7 @@ def extend_fl_algo_cfg(cfg):
     cfg.gcflplus.standardize = False
 
     # ------------------------------------------------------------------------ #
-    # FLIT+ related options, flit
+    # FLIT+ related options, gfl
     # ------------------------------------------------------------------------ #
     cfg.flitplus = CN()
 
