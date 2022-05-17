@@ -565,7 +565,7 @@ class GeneralTorchTrainer(Trainer):
                     )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
-            except NotImplementedError:
+            except:
                 logger.error(
                     "current flop count implementation is for general trainer case: "
                     "1) ctx.data_batch = [x, y]; and"

@@ -1,3 +1,6 @@
+import numpy
+from wandb.wandb_torch import torch
+
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.register import register_trainer
@@ -88,6 +91,10 @@ class MFTrainer(GeneralTorchTrainer):
             # calculate the flops_per_sample
             try:
                 indices, ratings = ctx.data_batch
+                if isinstance(indices, numpy.ndarray):
+                    indices = torch.from_numpy(indices)
+                if isinstance(ratings, numpy.ndarray):
+                    ratings = torch.from_numpy(ratings)
                 from fvcore.nn import FlopCountAnalysis
                 flops_one_batch = FlopCountAnalysis(
                     ctx.model, (indices, ratings)).total()
@@ -99,7 +106,7 @@ class MFTrainer(GeneralTorchTrainer):
                     )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
-            except NotImplementedError:
+            except:
                 logger.error(
                     "current flop count implementation is for general NodeFullBatchTrainer case: "
                     "1) the ctx.model takes tuple (indices, ratings) as input."

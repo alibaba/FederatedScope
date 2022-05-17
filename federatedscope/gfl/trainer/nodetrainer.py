@@ -45,8 +45,13 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
             # calculate the flops_per_sample
             try:
                 batch = ctx.data_batch.to(ctx.device)
+                from torch_geometric.data import Data
+                if isinstance(batch, Data):
+                    x, edge_index = batch.x, batch.edge_index
                 from fvcore.nn import FlopCountAnalysis
-                flops_one_batch = FlopCountAnalysis(ctx.model, batch).total()
+                flops_one_batch = FlopCountAnalysis(ctx.model,
+                                                    (x, edge_index)).total()
+
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums
                     logger.warning(
@@ -55,7 +60,7 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
                     )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
-            except NotImplementedError:
+            except:
                 logger.error(
                     "current flop count implementation is for general NodeFullBatchTrainer case: "
                     "1) the ctx.model takes only batch = ctx.data_batch as input."

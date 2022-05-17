@@ -53,12 +53,12 @@ class Monitor(object):
     def global_converged(self):
         self.global_convergence_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
-        self.global_convergence_round = self.monitored_object.state()
+        self.global_convergence_round = self.monitored_object.state
 
     def local_converged(self):
         self.local_convergence_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
-        self.local_convergence_round = self.monitored_object.state()
+        self.local_convergence_round = self.monitored_object.state
 
     def finish_fl(self):
         self.fl_end_wall_time = datetime.datetime.now(
@@ -94,6 +94,13 @@ class Monitor(object):
         :return:
         """
         sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+        if not os.path.exists(sys_metric_f_name):
+            logger.warning(
+                "You have not tracked the workers' system metrics in $outdir$/system_metrics.log, "
+                "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
+            )
+            return
+
         all_sys_metrics = defaultdict(list)
         avg_sys_metrics = defaultdict()
         std_sys_metrics = defaultdict()

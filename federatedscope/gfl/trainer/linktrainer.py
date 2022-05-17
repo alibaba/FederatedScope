@@ -104,7 +104,7 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
                     )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
-            except NotImplementedError:
+            except:
                 logger.error(
                     "current flop count implementation is for general NodeFullBatchTrainer case: "
                     "1) the ctx.model takes the "
