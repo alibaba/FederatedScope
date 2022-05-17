@@ -123,7 +123,7 @@ class PassiveServer(Server):
                         data=self.reconstruct_data[message.state][
                             message.sender][0],
                         sav_pth=self._cfg.outdir,
-                        name='image_state:{}_client:{}.png'.format(
+                        name='image_state_{}_client_{}.png'.format(
                             message.state, message.sender))
 
         self.check_and_move_on()
