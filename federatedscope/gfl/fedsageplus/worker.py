@@ -285,7 +285,7 @@ class FedSagePlusClient(Client):
         self.fedgen = FedSage_Plus(self.gen)
         # Build trainer for fedgen
         self.trainer_fedgen = FedGenTrainer(self.fedgen, self.hide_data,
-                                            self.device, self._cfg)
+                                            self.device, self._cfg, monitor=self._monitor)
 
         gen_para = self.fedgen.cpu().state_dict()
         embedding = self.trainer_fedgen.embedding()
