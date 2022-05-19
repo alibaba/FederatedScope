@@ -34,7 +34,7 @@ conda install --file enviroment/requirements-torch1.10-application.txt -c pytorc
 or build docker image and run with docker env:
 ```
 docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
-docker run --gpus device=all --rm --it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash"
+docker run --gpus device=all --rm -it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash
 ```
 Note: if you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when executing the above commands:
 ```
