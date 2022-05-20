@@ -15,6 +15,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.client_num = 0
     cfg.federate.sample_client_num = -1
     cfg.federate.sample_client_rate = -1.0
+    cfg.federate.unseen_clients_rate = 0
     cfg.federate.total_round_num = 50
     cfg.federate.mode = 'standalone'
     cfg.federate.local_update_steps = 1
@@ -76,9 +77,14 @@ def assert_fl_setting_cfg(cfg):
                 and cfg.federate.mode == 'distributed'
                 ), "Please configure the cfg.federate. in distributed mode. "
 
+    assert 0 <= cfg.federate.unseen_clients_rate < 1, "You specified in-valid cfg.federate.unseen_clients_rate"
+    if 0 < cfg.federate.unseen_clients_rate < 1 and cfg.federate.method in ["local", "global"]:
+        raise ValueError("In local/global training mode, the unseen_clients_rate is in-valid, plz check your config")
+    participated_client_num = max(1, int((1 - cfg.federate.unseen_clients_rate) * cfg.federate.client_num))
+
     # sample client num pre-process
     sample_client_num_valid = (0 < cfg.federate.sample_client_num <=
-                               cfg.federate.client_num)
+                               participated_client_num)
     sample_client_rate_valid = (0 < cfg.federate.sample_client_rate <= 1)
 
     sample_cfg_valid = sample_client_rate_valid or sample_client_num_valid
@@ -100,8 +106,8 @@ def assert_fl_setting_cfg(cfg):
             )
 
     if non_sample_case or not sample_cfg_valid:
-        # (a) use all clients
-        cfg.federate.sample_client_num = cfg.federate.client_num
+        # (a) use all participated clients in each round
+        cfg.federate.sample_client_num = participated_client_num
     else:
         # (b) sampling case
         if sample_client_rate_valid:
@@ -109,7 +115,7 @@ def assert_fl_setting_cfg(cfg):
             old_sample_client_num = cfg.federate.sample_client_num
             cfg.federate.sample_client_num = max(
                 1,
-                int(cfg.federate.sample_client_rate * cfg.federate.client_num))
+                int(cfg.federate.sample_client_rate * participated_client_num))
             if sample_client_num_valid:
                 logger.warning(
                     f"Users specify both valid sample_client_rate as {cfg.federate.sample_client_rate} "

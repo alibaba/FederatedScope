@@ -2,6 +2,8 @@ import logging
 
 from collections import deque
 
+import numpy as np
+
 from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
@@ -47,27 +49,39 @@ class FedRunner(object):
         """
         To set up server and client for standalone mode.
         """
-        self.server = self._setup_server()
-
-        self.client = dict()
         assert self.cfg.federate.client_num != 0, \
             "In standalone mode, self.cfg.federate.client_num should be non-zero. " \
-            "This is usually cased by using synthetic data and users not specify a non-zero value for client_num"
+            "The error is usually caused by using synthetic data and users not specify a non-zero value for client_num"
 
-        # assume the client-wise data are consistent in their input&output shape
+        unseen_clients_id = []
+        if self.cfg.federate.unseen_clients_rate > 0:
+            unseen_clients_id = np.random.choice(
+                np.arange(1, self.cfg.federate.client_num + 1),
+                size=max(1, int(self.cfg.federate.unseen_clients_rate *
+                         self.cfg.federate.client_num)),
+                replace=False).tolist()
+
+        self.server = self._setup_server()
+        self.server.unseen_clients_id = unseen_clients_id
+
+        self.client = dict()
+        # we implicitly assume the client-wise data are consistent in their input&output shape
         self._shared_client_model = get_model(
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
 
         if self.cfg.federate.method == "global":
-            assert 0 in self.data and self.data[
-                0] is not None, "In global training mode, we will use a proxy client to hold all the data. Please put the whole dataset in data[0], i.e., the same style with global evaluation mode"
+            assert 0 in self.data and self.data[0] is not None, \
+                "In global training mode, we will use a proxy client to hold all the data. " \
+                "Please put the whole dataset in data[0], i.e., the same style with global evaluation mode"
             from federatedscope.core.auxiliaries.data_builder import merge_data
             self.data[1] = merge_data(all_data=self.data)
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id, client_model=self._shared_client_model)
+            if client_id in unseen_clients_id:
+                self.client[client_id].unseen_client = True
 
     def _setup_for_distributed(self):
         """

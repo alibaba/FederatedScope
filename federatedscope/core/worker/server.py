@@ -117,6 +117,10 @@ class Server(Worker):
         self.sample_client_num = int(self._cfg.federate.sample_client_num)
         self.join_in_client_num = 0
         self.join_in_info = dict()
+        # the unseen clients indicate the ones that do not contribute to FL process by
+        # training on their local data and uploading their local model update. The splitting is useful to check
+        # participation generalization gap in [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
+        self.unseen_clients_id = []
 
         # Register message handlers
         self.msg_handlers = dict()
@@ -244,6 +248,11 @@ class Server(Worker):
         if min_received_num is None:
             min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
+
+        if check_eval_result and self.cfg.federate.mode.lower() == "standalone":
+            # in evaluation stage and standalone simulation mode, we assume
+            # strong synchronization that receives responses from all clients
+            min_received_num = len(self.comm_manager.get_neighbors().keys())
 
         move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
@@ -418,39 +427,56 @@ class Server(Worker):
 
         round = max(self.msg_buffer['eval'].keys())
         eval_msg_buffer = self.msg_buffer['eval'][round]
-        metrics_all_clients = dict()
-        for each_client in eval_msg_buffer:
-            client_eval_results = eval_msg_buffer[each_client]
-            for key in client_eval_results.keys():
-                if key not in metrics_all_clients:
-                    metrics_all_clients[key] = list()
-                metrics_all_clients[key].append(float(
-                    client_eval_results[key]))
-        formatted_logs = self._monitor.format_eval_res(
-            metrics_all_clients,
-            rnd=self.state,
-            role='Server #',
-            forms=self._cfg.eval.report)
-        logger.info(formatted_logs)
-        update_best_result(self.best_results,
-                           metrics_all_clients,
-                           results_type="client_individual",
-                           round_wise_update_key=self._cfg.eval.
-                           best_res_update_round_wise_key)
-        self.save_formatted_results(formatted_logs)
-        for form in self._cfg.eval.report:
-            if form != "raw":
+        eval_res_participated_clients = []
+        eval_res_unseen_clients = []
+        for client_id in eval_msg_buffer:
+            if client_id in self.unseen_clients_id:
+                eval_res_unseen_clients.append(eval_msg_buffer[client_id])
+            else:
+                eval_res_participated_clients.append(
+                    eval_msg_buffer[client_id])
+
+        for merge_type, eval_res_set in [("participated",
+                                          eval_res_participated_clients),
+                                         ("unseen", eval_res_unseen_clients)]:
+            if eval_res_set != []:
+                metrics_all_clients = dict()
+                for client_eval_results in eval_res_set:
+                    for key in client_eval_results.keys():
+                        if key not in metrics_all_clients:
+                            metrics_all_clients[key] = list()
+                        metrics_all_clients[key].append(
+                            float(client_eval_results[key]))
+                formatted_logs = self._monitor.format_eval_res(
+                    metrics_all_clients,
+                    rnd=self.state,
+                    role='Server #',
+                    forms=self._cfg.eval.report)
+                logger.info(formatted_logs)
                 update_best_result(self.best_results,
-                                   formatted_logs[f"Results_{form}"],
-                                   results_type=f"client_summarized_{form}",
+                                   metrics_all_clients,
+                                   results_type="unseen_client_individual" if
+                                   merge_type == "unseen" else "client_individual",
                                    round_wise_update_key=self._cfg.eval.
                                    best_res_update_round_wise_key)
+                self.save_formatted_results(formatted_logs)
+                for form in self._cfg.eval.report:
+                    if form != "raw":
+                        update_best_result(
+                            self.best_results,
+                            formatted_logs[f"Results_{form}"],
+                            results_type=f"unseen_client_summarized_{form}"
+                            if merge_type == "unseen" else
+                            f"client_summarized_{form}",
+                            round_wise_update_key=self._cfg.eval.
+                                best_res_update_round_wise_key)
 
         return formatted_logs
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1):
+                             sample_client_num=-1,
+                             filter_unseen_clients=True):
         """
         To broadcast the message to all clients or sampled clients
 
@@ -458,15 +484,18 @@ class Server(Worker):
             msg_type: 'model_para' or other user defined msg_type
             sample_client_num: the number of sampled clients in the broadcast behavior.
                 And sample_client_num = -1 denotes to broadcast to all the clients.
+            filter_unseen_clients: whether filter out the unseen clients that do not contribute to FL process by
+                training on their local data and uploading their local model update. The splitting is useful to check
+                participation generalization gap in [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
+                You may want to set it to be False when in evaluation stage
         """
-
-        if sample_client_num > 0:
-            receiver = np.random.choice(np.arange(1, self.client_num + 1),
+        receiver = list(self.comm_manager.neighbors.keys())  # all clients
+        if filter_unseen_clients:
+            receiver = list(set(receiver) - set(self.unseen_clients_id))
+        if 0 < sample_client_num < len(receiver):  # we do not need sample when sample_client_num = len(receiver)
+            receiver = np.random.choice(receiver,
                                         size=sample_client_num,
                                         replace=False).tolist()
-        else:
-            # broadcast to all clients
-            receiver = list(self.comm_manager.neighbors.keys())
 
         if self._noise_injector is not None and msg_type == 'model_para':
             # Inject noise only when broadcast parameters
@@ -612,7 +641,8 @@ class Server(Worker):
             self.check_and_save()
         else:
             # Preform evaluation in clients
-            self.broadcast_model_para(msg_type='evaluate')
+            self.broadcast_model_para(msg_type='evaluate',
+                                      filter_unseen_clients=False)
 
     def callback_funcs_model_para(self, message: Message):
         """

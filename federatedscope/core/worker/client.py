@@ -42,6 +42,11 @@ class Client(Worker):
 
         super(Client, self).__init__(ID, state, config, model, strategy)
 
+        # the unseen_client indicates that whether this client contributes to FL process by
+        # training on its local data and uploading the local model update,which is useful for check the
+        # participation generalization gap in [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
+        self.unseen_client = False
+
         # Attack only support the stand alone model;
         # Check if is a attacker; a client is a attacker if the config.attack.attack_method is provided
         self.is_attacker = config.attack.attacker_id == ID and \
@@ -209,6 +214,9 @@ class Client(Worker):
                     f"Client #{self.ID} has been early stopped, we will skip the local training"
                 )
                 self._monitor.local_converged()
+            elif self.unseen_client:
+                # for the unseen client, do not local train and upload local model
+                sample_size, model_para_all, results = 0, None, None
             else:
                 sample_size, model_para_all, results = self.trainer.train()
                 logger.info(
@@ -219,7 +227,7 @@ class Client(Worker):
                                                   return_raw=True))
 
             # Return the feedbacks to the server after local update
-            if self._cfg.federate.use_ss:
+            if self._cfg.federate.use_ss and not self.unseen_client:
                 single_model_case = True
                 if isinstance(model_para_all, list):
                     assert isinstance(model_para_all[0], dict), \
@@ -325,6 +333,7 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
+        role = f'Unseen Client #{self.ID}' if self.unseen_client else f'Client #{self.ID}'
         if self.early_stopper.early_stopped and self._cfg.federate.method in [
                 "local", "global"
         ]:
@@ -341,20 +350,18 @@ class Client(Worker):
                     logger.info(
                         self._monitor.format_eval_res(eval_metrics,
                                                       rnd=self.state,
-                                                      role='Client #{}'.format(
-                                                          self.ID)))
+                                                      role=role))
 
                 metrics.update(**eval_metrics)
 
-            formatted_eval_res = self._monitor.format_eval_res(
-                metrics,
-                rnd=self.state,
-                role='Client #{}'.format(self.ID),
-                forms='raw',
-                return_raw=True)
+            formatted_eval_res = self._monitor.format_eval_res(metrics,
+                                                               rnd=self.state,
+                                                               role=role,
+                                                               forms='raw',
+                                                               return_raw=True)
             update_best_result(self.best_results,
                                formatted_eval_res['Results_raw'],
-                               results_type=f"client #{self.ID}",
+                               results_type=role,
                                round_wise_update_key=self._cfg.eval.
                                best_res_update_round_wise_key)
             self.history_results = merge_dict(
