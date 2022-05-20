@@ -1,0 +1,11 @@
+client_1:
+  optimizer:
+    lr: 0.1
+    weight_decay: 0.01
+client_2:
+  optimizer:
+    type: SGD
+    lr: 0.01
+client_3:
+  federate:
+    local_update_steps: 5
