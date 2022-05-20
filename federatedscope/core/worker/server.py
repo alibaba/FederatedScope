@@ -249,7 +249,8 @@ class Server(Worker):
             min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        if check_eval_result and self.cfg.federate.mode.lower() == "standalone":
+        if check_eval_result and self.cfg.federate.mode.lower(
+        ) == "standalone":
             # in evaluation stage and standalone simulation mode, we assume
             # strong synchronization that receives responses from all clients
             min_received_num = len(self.comm_manager.get_neighbors().keys())
@@ -453,12 +454,13 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report)
                 logger.info(formatted_logs)
-                update_best_result(self.best_results,
-                                   metrics_all_clients,
-                                   results_type="unseen_client_individual" if
-                                   merge_type == "unseen" else "client_individual",
-                                   round_wise_update_key=self._cfg.eval.
-                                   best_res_update_round_wise_key)
+                update_best_result(
+                    self.best_results,
+                    metrics_all_clients,
+                    results_type="unseen_client_individual"
+                    if merge_type == "unseen" else "client_individual",
+                    round_wise_update_key=self._cfg.eval.
+                    best_res_update_round_wise_key)
                 self.save_formatted_results(formatted_logs)
                 for form in self._cfg.eval.report:
                     if form != "raw":
@@ -469,7 +471,7 @@ class Server(Worker):
                             if merge_type == "unseen" else
                             f"client_summarized_{form}",
                             round_wise_update_key=self._cfg.eval.
-                                best_res_update_round_wise_key)
+                            best_res_update_round_wise_key)
 
         return formatted_logs
 
@@ -492,7 +494,9 @@ class Server(Worker):
         receiver = list(self.comm_manager.neighbors.keys())  # all clients
         if filter_unseen_clients:
             receiver = list(set(receiver) - set(self.unseen_clients_id))
-        if 0 < sample_client_num < len(receiver):  # we do not need sample when sample_client_num = len(receiver)
+        if 0 < sample_client_num < len(
+                receiver
+        ):  # we do not need sample when sample_client_num = len(receiver)
             receiver = np.random.choice(receiver,
                                         size=sample_client_num,
                                         replace=False).tolist()

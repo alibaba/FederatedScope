@@ -483,7 +483,8 @@ class GeneralTorchTrainer(Trainer):
         # test/val
         self.register_hook_in_eval(self._hook_on_fit_start_init,
                                    "on_fit_start")
-        self.register_hook_in_eval(self._hook_on_fit_start_calculate_model_size, "on_fit_start")
+        self.register_hook_in_eval(
+            self._hook_on_fit_start_calculate_model_size, "on_fit_start")
         self.register_hook_in_eval(self._hook_on_epoch_start, "on_epoch_start")
         self.register_hook_in_eval(self._hook_on_batch_start_init,
                                    "on_batch_start")

@@ -57,8 +57,10 @@ class FedRunner(object):
         if self.cfg.federate.unseen_clients_rate > 0:
             unseen_clients_id = np.random.choice(
                 np.arange(1, self.cfg.federate.client_num + 1),
-                size=max(1, int(self.cfg.federate.unseen_clients_rate *
-                         self.cfg.federate.client_num)),
+                size=max(
+                    1,
+                    int(self.cfg.federate.unseen_clients_rate *
+                        self.cfg.federate.client_num)),
                 replace=False).tolist()
 
         self.server = self._setup_server()

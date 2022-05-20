@@ -78,9 +78,15 @@ def assert_fl_setting_cfg(cfg):
                 ), "Please configure the cfg.federate. in distributed mode. "
 
     assert 0 <= cfg.federate.unseen_clients_rate < 1, "You specified in-valid cfg.federate.unseen_clients_rate"
-    if 0 < cfg.federate.unseen_clients_rate < 1 and cfg.federate.method in ["local", "global"]:
-        raise ValueError("In local/global training mode, the unseen_clients_rate is in-valid, plz check your config")
-    participated_client_num = max(1, int((1 - cfg.federate.unseen_clients_rate) * cfg.federate.client_num))
+    if 0 < cfg.federate.unseen_clients_rate < 1 and cfg.federate.method in [
+            "local", "global"
+    ]:
+        raise ValueError(
+            "In local/global training mode, the unseen_clients_rate is in-valid, plz check your config"
+        )
+    participated_client_num = max(
+        1, int(
+            (1 - cfg.federate.unseen_clients_rate) * cfg.federate.client_num))
 
     # sample client num pre-process
     sample_client_num_valid = (0 < cfg.federate.sample_client_num <=
