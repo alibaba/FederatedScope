@@ -1,16 +1,16 @@
 import logging
+import math
 import os
 import random
-import sys
+import signal
+import ssl
 import time
-import math
+import urllib.request
 from datetime import datetime
 from os import path as osp
-import ssl
-import urllib.request
-import signal
 
 import numpy as np
+
 # Blind torch
 try:
     import torch
@@ -38,7 +38,6 @@ def setup_seed(seed):
 
 def update_logger(cfg, clear_before_add=False):
     import os
-    import sys
     import logging
 
     root_logger = logging.getLogger("federatedscope")
