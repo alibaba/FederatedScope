@@ -128,7 +128,7 @@ class RecSys(InMemoryDataset):
         url = 'https://github.com/FedML-AI/FedGraphNN/tree/main/data/recommender_system'
         url = osp.join(url, self.name)
         for name in self.raw_file_names:
-            download_url(f'{url}/{name})', self.raw_dir)
+            download_url(f'{url}/{name}', self.raw_dir)
 
     def process(self):
         # Read data into huge `Data` list.
