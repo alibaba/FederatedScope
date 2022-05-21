@@ -324,46 +324,39 @@ def logfile_2_wandb_dict(exp_log_f, raw_out=True):
             log_res_best[best_key.strip()] = float(best_val.strip())
 
         if "'Role': 'Server #'" in line:
-            if raw_out:
-                line = line.split("INFO: ")[1]
-            res = line.replace("\'", "\"")
-            res = json.loads(s=res)
-            if res['Role'] == 'Server #':
-                cur_round = res['Round']
-            res.pop('Role')
-            if cur_round != "Final" and 'Results_raw' in res:
-                res.pop('Results_raw')
-
-            log_res = {}
-            for key, val in res.items():
-                if not isinstance(val, dict):
-                    log_res[key] = val
-                else:
-                    if cur_round != "Final":
-                        for key_inner, val_inner in val.items():
-                            assert not isinstance(
-                                val_inner, dict), "Un-expected log format"
-                            log_res[f"{key}/{key_inner}"] = val_inner
-
-                    else:
-                        exp_stop_normal = True
-                        if key == "Results_raw":
-                            for final_type, final_type_dict in res[
-                                    "Results_raw"].items():
-                                for inner_key, inner_val in final_type_dict.items(
-                                ):
-                                    log_res_best[
-                                        f"{final_type}/{inner_key}"] = inner_val
-                    #     log_res_best = {}
-                    #     for best_res_type, val_dict in val.items():
-                    #         for key_inner, val_inner in val_dict.items():
-                    #             assert not isinstance(val_inner, dict), "Un-expected log format"
-                    #             log_res_best[f"{best_res_type}/{key_inner}"] = val_inner
-            # if log_res_best is not None and "Results_weighted_avg/val_loss" in log_res and \
-            #         log_res_best["client_summarized_weighted_avg/val_loss"] > \
-            #         log_res["Results_weighted_avg/val_loss"]:
-            #     print("Missing the results of last round, update best results")
-            #     for key, val in log_res.items():
-            #         log_res_best[key.replace("Results", "client_summarized")] = val
+            exp_stop_normal, log_res = logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out)
             all_log_res.append(log_res)
     return all_log_res, exp_stop_normal, last_line, log_res_best
+
+
+def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
+    if raw_out:
+        line = line.split("INFO: ")[1]
+    res = line.replace("\'", "\"")
+    res = json.loads(s=res)
+    if res['Role'] == 'Server #':
+        cur_round = res['Round']
+    res.pop('Role')
+    if cur_round != "Final" and 'Results_raw' in res:
+        res.pop('Results_raw')
+    log_res = {}
+    for key, val in res.items():
+        if not isinstance(val, dict):
+            log_res[key] = val
+        else:
+            if cur_round != "Final":
+                for key_inner, val_inner in val.items():
+                    assert not isinstance(
+                        val_inner, dict), "Un-expected log format"
+                    log_res[f"{key}/{key_inner}"] = val_inner
+
+            else:
+                exp_stop_normal = True
+                if key == "Results_raw":
+                    for final_type, final_type_dict in res[
+                        "Results_raw"].items():
+                        for inner_key, inner_val in final_type_dict.items(
+                        ):
+                            log_res_best[
+                                f"{final_type}/{inner_key}"] = inner_val
+    return exp_stop_normal, log_res

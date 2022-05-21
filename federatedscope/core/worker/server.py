@@ -249,7 +249,7 @@ class Server(Worker):
             min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        if check_eval_result and self.cfg.federate.mode.lower(
+        if check_eval_result and self._cfg.federate.mode.lower(
         ) == "standalone":
             # in evaluation stage and standalone simulation mode, we assume
             # strong synchronization that receives responses from all clients
@@ -391,12 +391,8 @@ class Server(Worker):
             forms=["raw"],
             return_raw=True)
         logger.info(formatted_best_res)
-        self.save_formatted_results(formatted_best_res)
+        self._monitor.save_formatted_results(formatted_best_res)
 
-    def save_formatted_results(self, formatted_res):
-        with open(os.path.join(self._cfg.outdir, "eval_results.log"),
-                  "a") as outfile:
-            outfile.write(str(formatted_res) + "\n")
 
     def save_client_eval_results(self):
         """
@@ -454,17 +450,17 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report)
                 logger.info(formatted_logs)
-                update_best_result(
+                self._monitor.update_best_result(
                     self.best_results,
                     metrics_all_clients,
                     results_type="unseen_client_individual"
                     if merge_type == "unseen" else "client_individual",
                     round_wise_update_key=self._cfg.eval.
                     best_res_update_round_wise_key)
-                self.save_formatted_results(formatted_logs)
+                self._monitor.save_formatted_results(formatted_logs)
                 for form in self._cfg.eval.report:
                     if form != "raw":
-                        update_best_result(
+                        self._monitor.update_best_result(
                             self.best_results,
                             formatted_logs[f"Results_{form}"],
                             results_type=f"unseen_client_summarized_{form}"
@@ -633,14 +629,14 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
-                update_best_result(self.best_results,
+                self._monitor.update_best_result(self.best_results,
                                    formatted_eval_res['Results_raw'],
                                    results_type="server_global_eval",
                                    round_wise_update_key=self._cfg.eval.
                                    best_res_update_round_wise_key)
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
-                self.save_formatted_results(formatted_eval_res)
+                self._monitor.save_formatted_results(formatted_eval_res)
                 logger.info(formatted_eval_res)
             self.check_and_save()
         else:

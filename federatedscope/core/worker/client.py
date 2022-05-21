@@ -359,7 +359,7 @@ class Client(Worker):
                                                                role=role,
                                                                forms='raw',
                                                                return_raw=True)
-            update_best_result(self.best_results,
+            self._monitor.update_best_result(self.best_results,
                                formatted_eval_res['Results_raw'],
                                results_type=role,
                                round_wise_update_key=self._cfg.eval.
