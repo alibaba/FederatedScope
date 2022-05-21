@@ -81,7 +81,7 @@ class LEAF_NLP(LEAF):
         url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com'
         os.makedirs(self.raw_dir, exist_ok=True)
         for name in self.raw_file_names:
-            download_url(f'{url}/{name})', self.raw_dir)
+            download_url(f'{url}/{name}', self.raw_dir)
 
     def __getitem__(self, index):
         """

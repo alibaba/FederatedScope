@@ -147,7 +147,7 @@ class DBLPNew(InMemoryDataset):
         # Download to `self.raw_dir`.
         url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com'
         for name in self.raw_file_names:
-            download_url(f'{url}/{name})', self.raw_dir)
+            download_url(f'{url}/{name}', self.raw_dir)
 
     def process(self):
         # Read data into huge `Data` list.
