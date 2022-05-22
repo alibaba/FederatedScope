@@ -7,7 +7,6 @@ import numpy as np
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
-from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout
@@ -449,6 +448,12 @@ class Server(Worker):
                     rnd=self.state,
                     role='Server #',
                     forms=self._cfg.eval.report)
+                if merge_type == "unseen":
+                    for key, val in copy.deepcopy(formatted_logs).items():
+                        if isinstance(val, dict):
+                            # 'Results_weighted_avg' -> 'Results_weighted_avg_unseen'
+                            formatted_logs[key + "_unseen"] = val
+                            del formatted_logs[key]
                 logger.info(formatted_logs)
                 self._monitor.update_best_result(
                     self.best_results,
@@ -460,6 +465,8 @@ class Server(Worker):
                 self._monitor.save_formatted_results(formatted_logs)
                 for form in self._cfg.eval.report:
                     if form != "raw":
+                        if merge_type == "unseen":
+                            form = form + "_unseen"
                         self._monitor.update_best_result(
                             self.best_results,
                             formatted_logs[f"Results_{form}"],

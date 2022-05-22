@@ -17,4 +17,16 @@ def parse_args():
         parser.print_help()
         sys.exit(1)
 
-    return parser.parse_args()
+    # To support the format "para_a=val_a"
+    args = parser.parse_args()
+    res = []
+    for item in args.opts:
+        if "=" in item:
+            para, val = item.split("=")
+            res.append(para)
+            res.append(val)
+        else:
+            res.append(item)
+    args.opts = res
+
+    return args

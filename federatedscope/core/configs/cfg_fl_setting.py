@@ -15,7 +15,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.client_num = 0
     cfg.federate.sample_client_num = -1
     cfg.federate.sample_client_rate = -1.0
-    cfg.federate.unseen_clients_rate = 0
+    cfg.federate.unseen_clients_rate = 0.0
     cfg.federate.total_round_num = 50
     cfg.federate.mode = 'standalone'
     cfg.federate.local_update_steps = 1
@@ -81,12 +81,15 @@ def assert_fl_setting_cfg(cfg):
     if 0 < cfg.federate.unseen_clients_rate < 1 and cfg.federate.method in [
             "local", "global"
     ]:
-        raise ValueError(
+        logger.warning(
             "In local/global training mode, the unseen_clients_rate is in-valid, plz check your config"
         )
+        unseen_clients_rate = 0.0
+    else:
+        unseen_clients_rate = cfg.federate.unseen_clients_rate
     participated_client_num = max(
         1, int(
-            (1 - cfg.federate.unseen_clients_rate) * cfg.federate.client_num))
+            (1 - unseen_clients_rate) * cfg.federate.client_num))
 
     # sample client num pre-process
     sample_client_num_valid = (0 < cfg.federate.sample_client_num <=

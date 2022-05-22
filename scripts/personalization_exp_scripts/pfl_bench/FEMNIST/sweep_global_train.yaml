@@ -1,7 +1,7 @@
 
 program: /mnt1/daoyuanchen.cdy/FederatedScope/federatedscope/main.py
 project: pFL-bench
-name: fedAvg,FEMNIST
+name: global-train,FEMNIST
 method: grid
 #method: bayes
 metric:
@@ -21,6 +21,10 @@ command:
   - "pFL-bench"
   - "wandb.name_user"
   - "daoyuan"
+  - "expname_tag"
+  - "finetune"
+  - "federate.method"
+  - "global"
   - ${args_no_hyphens}
 parameters:
   optimizer.lr:

@@ -167,6 +167,7 @@ def init_global_cfg(cfg):
     # The dir used to save log, exp_config, models, etc,.
     cfg.outdir = 'exp'
     cfg.expname = ''  # detailed exp name to distinguish different sub-exp
+    cfg.expname_tag = ''  # detailed exp tag to distinguish different sub-exp with the same expname
 
     # extend user customized configs
     for func in register.config_dict.values():

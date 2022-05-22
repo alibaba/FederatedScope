@@ -137,8 +137,18 @@ class Monitor(object):
             f.write(json.dumps(avg_sys_metrics) + "\n")
             f.write(json.dumps(std_sys_metrics) + "\n")
 
+        if self.use_wandb and self.wandb_online_track:
+            try:
+                import wandb
+                wandb.log(avg_sys_metrics)
+                wandb.log(std_sys_metrics)
+            except ImportError:
+                logger.error(
+                    "cfg.wandb.use=True but not install the wandb package")
+                exit()
+
     def save_formatted_results(self, formatted_res):
-        with open(os.path.join(self._cfg.outdir, "eval_results.log"),
+        with open(os.path.join(self.outdir, "eval_results.log"),
                   "a") as outfile:
             line = str(formatted_res) + "\n"
             outfile.write(line)
@@ -153,7 +163,6 @@ class Monitor(object):
                 exp_stop_normal = False
                 exp_stop_normal, log_res = logline_2_wandb_dict(exp_stop_normal, line, self.log_res_best, raw_out=False)
                 wandb.log(log_res)
-
 
     def finish_fed_runner(self, fl_mode=None):
         self.compress_raw_res_file()

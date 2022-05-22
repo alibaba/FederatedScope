@@ -1,7 +1,6 @@
 import numpy as np
 import logging
 
-from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Server
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
