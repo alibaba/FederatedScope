@@ -73,11 +73,9 @@ class FedRunner(object):
         ) if self.cfg.federate.share_local_model else None
 
         if self.cfg.federate.method == "global":
-            assert 0 in self.data and self.data[0] is not None, \
-                "In global training mode, we will use a proxy client to hold all the data. " \
-                "Please put the whole dataset in data[0], i.e., the same style with global evaluation mode"
             from federatedscope.core.auxiliaries.data_builder import merge_data
-            self.data[1] = merge_data(all_data=self.data)
+            self.data[1] = merge_data(all_data=self.data, merged_max_data_id=self.cfg.federate.client_num)
+            self.cfg.federate.client_num = 1
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(

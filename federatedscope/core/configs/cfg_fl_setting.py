@@ -104,7 +104,7 @@ def assert_fl_setting_cfg(cfg):
         )
 
     if cfg.federate.method == "global":
-        cfg.federate.client_num = 1
+
         logger.info(
             "In global training mode, we will put all data in a proxy client. "
         )

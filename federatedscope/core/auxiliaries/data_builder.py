@@ -541,15 +541,13 @@ def get_data(config):
     return data, modified_config
 
 
-def merge_data(all_data):
+def merge_data(all_data, merged_max_data_id):
     dataset_names = list(all_data[1].keys())  # e.g., train, test, val
     assert isinstance(all_data[1]["test"], dict), \
         "the data should be organized as the format similar to {data_id: {train: {x:ndarray, y:ndarray}} }"
     data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
     merged_data = {name: defaultdict(list) for name in dataset_names}
-    for data_id in all_data.keys():
-        if data_id == 0:
-            continue
+    for data_id in range(1, merged_max_data_id):
         for d_name in dataset_names:
             for elem_name in data_elem_names:
                 merged_data[d_name][elem_name].append(

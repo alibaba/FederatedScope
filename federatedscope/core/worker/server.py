@@ -348,6 +348,7 @@ class Server(Worker):
 
         if should_stop:
             self._monitor.global_converged()
+
             self.comm_manager.send(
                 Message(
                     msg_type="converged",
@@ -432,6 +433,7 @@ class Server(Worker):
                 eval_res_participated_clients.append(
                     eval_msg_buffer[client_id])
 
+        formatted_logs_all_set = dict()
         for merge_type, eval_res_set in [("participated",
                                           eval_res_participated_clients),
                                          ("unseen", eval_res_unseen_clients)]:
@@ -455,6 +457,7 @@ class Server(Worker):
                             formatted_logs[key + "_unseen"] = val
                             del formatted_logs[key]
                 logger.info(formatted_logs)
+                formatted_logs_all_set.update(formatted_logs)
                 self._monitor.update_best_result(
                     self.best_results,
                     metrics_all_clients,
@@ -476,7 +479,7 @@ class Server(Worker):
                             round_wise_update_key=self._cfg.eval.
                             best_res_update_round_wise_key)
 
-        return formatted_logs
+        return formatted_logs_all_set
 
     def broadcast_model_para(self,
                              msg_type='model_para',

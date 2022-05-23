@@ -213,10 +213,16 @@ class Client(Worker):
                     f"Client #{self.ID} has been early stopped, we will skip the local training"
                 )
                 self._monitor.local_converged()
-            elif self.unseen_client:
+            if self.unseen_client:
                 # for the unseen client, do not local train and upload local model
                 sample_size, model_para_all, results = 0, None, None
             else:
+                if self.early_stopper.early_stopped and self._monitor.local_convergence_round == 0:
+                    logger.info(
+                        f"In noraml FL mode, Client #{self.ID} has been locally early stopped. "
+                        f"The next FL update may lead in negative effect"
+                    )
+                    self._monitor.local_converged()
                 sample_size, model_para_all, results = self.trainer.train()
                 logger.info(
                     self._monitor.format_eval_res(results,
