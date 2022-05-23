@@ -214,7 +214,7 @@ class FedRunner(object):
             if self.cfg_client is not None:
                 client_specific_config.defrost()
                 client_specific_config.merge_from_other_cfg(self.cfg_client.get('client_{}'.format(client_id)))
-                client_specific_config.freeze()
+                client_specific_config.freeze(save=False)
 
             client = self.client_class(
                 ID=client_id,

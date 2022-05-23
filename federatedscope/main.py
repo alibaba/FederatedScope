@@ -37,7 +37,10 @@ if __name__ == '__main__':
 
     # allow different settings for different clients
     # cfg_client.merge_from_file(args.cfg_client)
-    cfg_client = CfgNode.load_cfg(open(args.cfg_client, 'r'))
+    if args.cfg_client is None:
+        cfg_client = None
+    else:
+        cfg_client = CfgNode.load_cfg(open(args.cfg_client, 'r'))
 
     runner = FedRunner(data=data,
                        server_class=get_server_cls(init_cfg),
