@@ -3,6 +3,7 @@ import logging
 from collections import deque
 
 import numpy as np
+import torch
 
 from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
@@ -52,6 +53,8 @@ class FedRunner(object):
         assert self.cfg.federate.client_num != 0, \
             "In standalone mode, self.cfg.federate.client_num should be non-zero. " \
             "The error is usually caused by using synthetic data and users not specify a non-zero value for client_num"
+
+        torch.set_num_threads(1)
 
         unseen_clients_id = []
         if self.cfg.federate.unseen_clients_rate > 0:

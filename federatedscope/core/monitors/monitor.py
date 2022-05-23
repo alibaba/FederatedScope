@@ -124,8 +124,13 @@ class Monitor(object):
                 std_sys_metrics[k] = "sys_std"
             else:
                 v = np.array(v)
-                avg_sys_metrics[f"sys_avg/{k}"] = np.mean(v)
-                std_sys_metrics[f"sys_std/{k}"] = np.std(v)
+                mean_res = np.mean(v)
+                std_res = np.std(v)
+                if "flops" in k or "bytes" in k or "size" in k:
+                    mean_res = self.convert_size(mean_res)
+                    std_res = self.convert_size(std_res)
+                avg_sys_metrics[f"sys_avg/{k}"] = mean_res
+                std_sys_metrics[f"sys_std/{k}"] = std_res
 
         logger.info(
             f"After merging the system metrics from all works, we got avg: {avg_sys_metrics}"
@@ -347,6 +352,16 @@ class Monitor(object):
                 avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
         return b_local_dissimilarity
 
+    def convert_size(self, size_bytes):
+        import math
+        if size_bytes == 0:
+            return "0"
+        size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
+        i = int(math.floor(math.log(size_bytes, 1024)))
+        p = math.pow(1024, i)
+        s = round(size_bytes / p, 2)
+        return f"{s}{size_name[i]}"
+
     def track_model_size(self, models):
         """
             calculate the total model size given the models hold by the worker/trainer
@@ -491,11 +506,11 @@ class Monitor(object):
             if self.use_wandb and self.wandb_online_track:
                 try:
                     import wandb
+                    exp_stop_normal = False
+                    exp_stop_normal, log_res = logline_2_wandb_dict(exp_stop_normal, line, self.log_res_best, raw_out=False)
+                    wandb.log(self.log_res_best)
                 except ImportError:
                     logger.error(
                         "cfg.wandb.use=True but not install the wandb package")
                     exit()
 
-                exp_stop_normal = False
-            exp_stop_normal, log_res = logline_2_wandb_dict(exp_stop_normal, line, self.log_res_best, raw_out=False)
-            wandb.log(self.log_res_best)

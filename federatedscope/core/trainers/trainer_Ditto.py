@@ -81,7 +81,7 @@ def init_Ditto_ctx(base_trainer):
         ctx.optimizer_for_local_model, cfg.personalization.regular_weight)
 
     ctx.model = ctx.global_model
-    del ctx.optimizer
+    ctx.optimizer = ctx.optimizer_for_local_model
 
     # track the batch_num, epoch_num, for local & global model respectively
     ctx.num_train_batch_for_local_model, ctx.num_train_batch_last_epoch_for_local_model, \

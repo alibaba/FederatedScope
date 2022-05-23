@@ -441,8 +441,11 @@ class GeneralTorchTrainer(Trainer):
             g['lr'] = self.cfg.trainer.finetune.lr
         original_epoch_num = self.ctx["num_train_epoch"]
         original_batch_num = self.ctx["num_train_batch"]
-        self.ctx["num_train_epoch"] = 1
-        self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
+        original_batch_num_last = self.ctx["num_train_batch_last_epoch"]
+        ft_num_train_batch = int(min(self.ctx["num_train_batch"], self.cfg.trainer.finetune.steps))
+        self.ctx["num_train_epoch"] = int(max(1, self.cfg.trainer.finetune.steps / ft_num_train_batch))
+        self.ctx["num_train_batch"] = ft_num_train_batch
+        self.ctx["num_train_batch_last_epoch"] = int(self.cfg.trainer.finetune.steps % ft_num_train_batch)
 
         # do the fine-tuning process
         self.train(target_data_split_name, hooks_set)
@@ -458,6 +461,7 @@ class GeneralTorchTrainer(Trainer):
 
         self.ctx["num_train_epoch"] = original_epoch_num
         self.ctx["num_train_batch"] = original_batch_num
+        self.ctx["num_train_batch_last_epoch"] = original_batch_num_last
 
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,
@@ -489,6 +493,8 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_batch_start_init,
                                    "on_batch_start")
         self.register_hook_in_eval(self._hook_on_batch_forward,
+                                   "on_batch_forward")
+        self.register_hook_in_eval(self._hook_on_batch_forward_flop_count,
                                    "on_batch_forward")
         self.register_hook_in_eval(self._hook_on_batch_end, "on_batch_end")
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")

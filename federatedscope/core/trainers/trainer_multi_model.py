@@ -60,7 +60,8 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                    issubclass(type(base_trainer), GeneralTorchTrainer) or \
                    "can only copy instances of `GeneralMultiModelTrainer` and its subclasses, or " \
                    "`GeneralTorchTrainer` and its subclasses"
-            self.__dict__ = copy.deepcopy(base_trainer.__dict__)
+            # Note: we should use shallow copy to support trainer post plug-in
+            self.__dict__ = copy.copy(base_trainer.__dict__)
 
         assert models_interact_mode in ["sequential", "parallel"], \
             f"Invalid models_interact_mode, should be `sequential` or `parallel`, but got {models_interact_mode}"
@@ -263,9 +264,3 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 self.ctx.models[model_idx].load_state_dict(self._param_filter(
                     model_parameters[model_idx]),
                                                            strict=False)
-
-    def train(self, target_data_split_name="train"):
-        # return multiple model paras
-        sample_size, _, results = super().train(target_data_split_name)
-
-        return sample_size, self.get_model_para(), results

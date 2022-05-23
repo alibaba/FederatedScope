@@ -32,7 +32,7 @@ parameters:
   federate.local_update_steps:
     values: [1, 3]
   personalization.regular_weight:
-    values: [0.05, 0.1, 0.2, 1.0, 2.0]
+    values: [0.05, 0.1, 0.2, 0.9]
   personalization.K:
     values: [1, 3]
 

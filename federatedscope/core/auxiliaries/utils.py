@@ -90,7 +90,7 @@ def update_logger(cfg, clear_before_add=False):
         "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s")
     fh.setFormatter(logger_formatter)
     root_logger.addHandler(fh)
-    # sys.stderr = sys.stdout
+    sys.stderr = sys.stdout
 
     root_logger.info(f"the current dir is {os.getcwd()}")
     root_logger.info(f"the output dir is {cfg.outdir}")
