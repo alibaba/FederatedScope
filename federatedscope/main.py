@@ -12,6 +12,7 @@ from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
+from yacs.config import CfgNode
 
 if os.environ.get('https_proxy'):
     del os.environ['https_proxy']
@@ -34,8 +35,16 @@ if __name__ == '__main__':
 
     init_cfg.freeze()
 
+    # allow different settings for different clients
+    # cfg_client.merge_from_file(args.cfg_client)
+    if args.cfg_client is None:
+        cfg_client = None
+    else:
+        cfg_client = CfgNode.load_cfg(open(args.cfg_client, 'r'))
+
     runner = FedRunner(data=data,
                        server_class=get_server_cls(init_cfg),
                        client_class=get_client_cls(init_cfg),
-                       config=init_cfg.clone())
+                       config=init_cfg.clone(),
+                       config_client=cfg_client)
     _ = runner.run()

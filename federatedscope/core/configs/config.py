@@ -48,16 +48,18 @@ class CN(CfgNode):
                         else:
                             del v[k]
 
-    def freeze(self):
+    def freeze(self, save=True):
         self.assert_cfg()
         self.clean_unused_sub_cfgs()
-        # save the final cfg
-        with open(os.path.join(self.outdir, "config.yaml"), 'w') as outfile:
-            from contextlib import redirect_stdout
-            with redirect_stdout(outfile):
-                tmp_cfg = copy.deepcopy(self)
-                tmp_cfg.cfg_check_funcs = []
-                print(tmp_cfg.dump())
+
+        if save:
+            # save the final cfg
+            with open(os.path.join(self.outdir, "config.yaml"), 'w') as outfile:
+                from contextlib import redirect_stdout
+                with redirect_stdout(outfile):
+                    tmp_cfg = copy.deepcopy(self)
+                    tmp_cfg.cfg_check_funcs = []
+                    print(tmp_cfg.dump())
 
         super(CN, self).freeze()
 
