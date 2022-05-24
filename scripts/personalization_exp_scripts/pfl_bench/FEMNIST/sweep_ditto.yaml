@@ -1,5 +1,5 @@
 
-program: /mnt1/daoyuanchen.cdy/FederatedScope/federatedscope/main.py
+program: federatedscope/main.py
 project: pFL-bench
 name: ditto,FEMNIST
 method: grid
@@ -8,11 +8,11 @@ metric:
   goal: maximize
   name: best_client_summarized_weighted_avg/val_acc
 command:
-  - /usr/bin/env # ${env}
-  - /mnt1/daoyuanchen.cdy/anaconda3/envs/gfl/bin/python   # ${interpreter}
+  - ${env}
+  - ${interpreter}
   - ${program}
   - "--cfg"
-  - "/mnt1/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/FEMNIST/fedavg_convnet2_on_femnist.yaml"
+  - "scripts/personalization_exp_scripts/pfl_bench/FEMNIST/fedavg_convnet2_on_femnist.yaml"
   - "outdir"
   - "exp_pfl_bench"
   - "wandb.use"
@@ -30,10 +30,9 @@ parameters:
   federate.local_update_steps:
     values: [1, 3]
   personalization.regular_weight:
-    values: [0.05, 0.1, 0.2, 1.0, 2.0]
+    values: [0.05, 0.1, 0.5, 0.8]
 
 early_terminate:
   type: hyperband
   min_iter: 3  # the first bucket indicates we called wandb at least 3 times
 
-# TODO: list all the yaml, pre-calculate the costs and missing baselines and datasets, currently, we can use the cv data, nlp data + gfl data, speech and rec can be misc type

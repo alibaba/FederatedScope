@@ -2,6 +2,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 def get_rnn(model_config, local_data):
     from federatedscope.nlp.model.rnn import LSTM
@@ -46,7 +50,15 @@ def get_transformer(model_config, local_data):
     assert model_config.task.lower(
     ) in model_func_dict, f'model_config.task should be in {model_func_dict.keys()} when using pre_trained transformer model '
     path, _ = model_config.type.split('@')
-    model = model_func_dict[model_config.task.lower()].from_pretrained(
-        path, num_labels=model_config.out_channels, local_files_only=True)
+    logger.info("To load huggingface tokenizer")
+    use_local_file = True  # TODO: make this configurable
+    if use_local_file:
+        model = model_func_dict[model_config.task.lower()].from_pretrained(
+            path, num_labels=model_config.out_channels,
+            local_files_only=True,
+            cache_dir=os.path.join("huggingface", "transformers"))
+    else:
+        model = model_func_dict[model_config.task.lower()].from_pretrained(
+            path, num_labels=model_config.out_channels)
 
     return model

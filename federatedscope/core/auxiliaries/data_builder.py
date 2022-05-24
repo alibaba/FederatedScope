@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 from random import random, shuffle
@@ -5,10 +6,12 @@ from random import random, shuffle
 import numpy as np
 from collections import defaultdict
 
+
 from federatedscope.core.auxiliaries.utils import setup_seed
 
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
 
 def load_toy_data(config=None):
 
@@ -276,8 +279,14 @@ def load_external_data(config=None):
 
         if config.model.type.endswith('transformers'):
             from transformers import AutoTokenizer
-            tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0])
+
+            try:
+                tokenizer = AutoTokenizer.from_pretrained(
+                    config.model.type.split('@')[0],
+                    local_files_only=True,
+                    cache_dir=os.path.join(os.getcwd(), "huggingface"))
+            except:
+                logging.error("")
 
             x_all = tokenizer(x_all,
                               return_tensors='pt',
@@ -392,6 +401,7 @@ def load_external_data(config=None):
 
     def load_huggingface_datasets_data(name, splits=None, config=None):
         from datasets import load_dataset
+        from datasets import load_from_disk
 
         if config.data.args:
             raw_args = config.data.args[0]
@@ -399,14 +409,24 @@ def load_external_data(config=None):
             raw_args = {}
         assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
         filtered_args = filter_dict(load_dataset, raw_args)
-        dataset = load_dataset(path=config.data.root,
+        logger.info("To load huggingface dataset")
+        if "hg_cache_dir" in raw_args:
+            hugging_face_path = raw_args["hg_cache_dir"]
+        else:
+            hugging_face_path = os.getcwd()
+
+        if "load_disk_dir" in raw_args:
+            dataset = load_from_disk(raw_args["load_disk_dir"])
+        else:
+            dataset = load_dataset(path=config.data.root,
                                name=name,
                                **filtered_args)
         if config.model.type.endswith('transformers'):
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from transformers import AutoTokenizer
+            logger.info("To load huggingface tokenizer")
             tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0], local_files_only=True)
+                config.model.type.split('@')[0], local_files_only=True, cache_dir=os.path.join(hugging_face_path, "transformers"))
 
         for split in dataset:
             x_all = [i['sentence'] for i in dataset[split]]
