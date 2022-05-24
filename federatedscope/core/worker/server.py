@@ -426,7 +426,7 @@ class Server(Worker):
         eval_res_participated_clients = []
         eval_res_unseen_clients = []
         for client_id in eval_msg_buffer:
-            if eval_msg_buffer[client_id].content is None:
+            if eval_msg_buffer[client_id] is None:
                 continue
             if client_id in self.unseen_clients_id:
                 eval_res_unseen_clients.append(eval_msg_buffer[client_id])

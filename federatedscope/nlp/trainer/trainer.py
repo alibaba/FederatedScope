@@ -36,10 +36,7 @@ class NLPTrainer(GeneralTorchTrainer):
             try:
                 x, label = [utils.move_to(_, ctx.device) for _ in ctx.data_batch]
                 from fvcore.nn import FlopCountAnalysis
-                if isinstance(x, dict):
-                    flops_one_batch = FlopCountAnalysis(ctx.model, **x).total()
-                else:
-                    flops_one_batch = FlopCountAnalysis(ctx.model, x).total()
+                flops_one_batch = FlopCountAnalysis(ctx.model, tuple(x.values())).total()
 
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums
@@ -52,7 +49,7 @@ class NLPTrainer(GeneralTorchTrainer):
             except:
                 logger.error(
                     "current flop count implementation is for general NLPTrainer case: "
-                    "1) the ctx.model takes only x (Object) or x (dict) as input."
+                    "1) the ctx.model takes only x (for Object) or tuple(x.values()) (for dict) as input."
                     "Please check the forward format or implement your own flop_count function"
                 )
 

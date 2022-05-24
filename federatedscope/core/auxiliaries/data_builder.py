@@ -1,3 +1,4 @@
+import os
 import pickle
 from random import random, shuffle
 
@@ -402,9 +403,10 @@ def load_external_data(config=None):
                                name=name,
                                **filtered_args)
         if config.model.type.endswith('transformers'):
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from transformers import AutoTokenizer
             tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0])
+                config.model.type.split('@')[0], local_files_only=True)
 
         for split in dataset:
             x_all = [i['sentence'] for i in dataset[split]]
