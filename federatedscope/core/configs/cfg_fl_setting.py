@@ -85,6 +85,7 @@ def assert_fl_setting_cfg(cfg):
             "In local/global training mode, the unseen_clients_rate is in-valid, plz check your config"
         )
         unseen_clients_rate = 0.0
+        cfg.federate.unseen_clients_rate = unseen_clients_rate
     else:
         unseen_clients_rate = cfg.federate.unseen_clients_rate
     participated_client_num = max(

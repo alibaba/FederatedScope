@@ -1,6 +1,10 @@
 import pickle
+from random import random, shuffle
+
 import numpy as np
 from collections import defaultdict
+
+from federatedscope.core.auxiliaries.utils import setup_seed
 
 import federatedscope.register as register
 
@@ -406,6 +410,13 @@ def load_external_data(config=None):
             x_all = [i['sentence'] for i in dataset[split]]
             targets = [i['label'] for i in dataset[split]]
 
+            if split == "train" and  "used_train_ratio" in raw_args and 1> raw_args['used_train_ratio'] >0:
+                selected_idx = [i for i in range(len(dataset[split]))]
+                shuffle(selected_idx)
+                selected_idx = selected_idx[:int(len(selected_idx) * raw_args['used_train_ratio'])]
+                x_all = [element for i, element in enumerate(x_all) if i in selected_idx]
+                targets = [element for i, element in enumerate(targets) if i in selected_idx]
+
             x_all = tokenizer(x_all,
                               return_tensors='pt',
                               padding=True,
@@ -425,6 +436,31 @@ def load_external_data(config=None):
                 (x, y) for x, y in zip(dataset['test'][0], dataset['test'][1])
             ] if (set(dataset['test'][1]) - set([-1])) else None,
         }
+        original_train_size = len(data_dict["train"])
+
+        if "half_val_dummy_test" in raw_args and raw_args["half_val_dummy_test"]:
+            # since the "test" set from GLUE dataset may be masked, we need to submit to get the ground-truth,
+            # for fast FL experiments, we split the validation set into two parts with the same size as new test/val
+            original_val = [(x, y) for x, y in zip(dataset['validation'][0],
+                                                   dataset['validation'][1])]
+            data_dict["val"], data_dict["test"] = original_val[:len(original_val)//2], original_val[len(original_val)//2:]
+        if "val_as_dummy_test" in raw_args and raw_args["val_as_dummy_test"]:
+            # use the validation set as tmp test set, and partial training set as validation set
+            data_dict["test"] = data_dict["val"]
+            data_dict["val"] = []
+        if "part_train_dummy_val" in raw_args and 1 > raw_args["part_train_dummy_val"] > 0:
+            new_val_part = int(original_train_size * raw_args["part_train_dummy_val"])
+            data_dict["val"].extend(data_dict["train"][:new_val_part])
+            data_dict["train"] = data_dict["train"][new_val_part:]
+        if "part_train_dummy_test" in raw_args and 1 > raw_args["part_train_dummy_test"] > 0:
+            new_test_part = int(original_train_size * raw_args["part_train_dummy_test"])
+            data_dict["test"] = data_dict["val"]
+            if data_dict["test"] is not None:
+                data_dict["test"].extend(data_dict["train"][:new_test_part])
+            else:
+                data_dict["test"] = (data_dict["train"][:new_test_part])
+            data_dict["train"] = data_dict["train"][new_test_part:]
+
         return data_dict
 
     def load_openml_data(tid, splits=None, config=None):
@@ -478,7 +514,8 @@ def load_external_data(config=None):
     for split in dataset:
         if dataset[split] is None:
             continue
-        for i, ds in enumerate(splitter(dataset[split])):
+        all_ds = splitter(dataset[split])
+        for i, ds in enumerate(all_ds):
             if split == 'train':
                 data_local_dict[i + 1][split] = DataLoader(
                     ds,
@@ -496,6 +533,8 @@ def load_external_data(config=None):
 
 
 def get_data(config):
+    # fix the seed for data generation, will restore the user-specified on after the generation
+    setup_seed(12345)
     for func in register.data_dict.values():
         data_and_config = func(config)
         if data_and_config is not None:
@@ -538,24 +577,35 @@ def get_data(config):
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
 
+    setup_seed(config.seed)
     return data, modified_config
 
 
 def merge_data(all_data, merged_max_data_id):
     dataset_names = list(all_data[1].keys())  # e.g., train, test, val
-    assert isinstance(all_data[1]["test"], dict), \
-        "the data should be organized as the format similar to {data_id: {train: {x:ndarray, y:ndarray}} }"
-    data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
-    merged_data = {name: defaultdict(list) for name in dataset_names}
-    for data_id in range(1, merged_max_data_id):
+    import torch.utils.data
+    assert isinstance(all_data[1]["test"], (dict, torch.utils.data.DataLoader)), \
+        "the data should be organized as the format similar to the following format" \
+        "1): {data_id: {train: {x:ndarray, y:ndarray}} }" \
+        "2): {data_id: {train: DataLoader }"
+    if isinstance(all_data[1]["test"], dict):
+        data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
+        merged_data = {name: defaultdict(list) for name in dataset_names}
+        for data_id in range(1, merged_max_data_id):
+            for d_name in dataset_names:
+                for elem_name in data_elem_names:
+                    merged_data[d_name][elem_name].append(
+                        all_data[data_id][d_name][elem_name])
+
         for d_name in dataset_names:
             for elem_name in data_elem_names:
-                merged_data[d_name][elem_name].append(
-                    all_data[data_id][d_name][elem_name])
-
-    for d_name in dataset_names:
-        for elem_name in data_elem_names:
-            merged_data[d_name][elem_name] = np.concatenate(
-                merged_data[d_name][elem_name])
-
+                merged_data[d_name][elem_name] = np.concatenate(
+                    merged_data[d_name][elem_name])
+    elif isinstance(all_data[1]["test"], torch.utils.data.DataLoader):
+        merged_data = {name: all_data[1][name] for name in dataset_names}
+        for data_id in range(2, merged_max_data_id):
+            for d_name in dataset_names:
+                merged_data[d_name].dataset.extend(all_data[data_id][d_name].dataset)
+    else:
+        merged_data = None
     return merged_data

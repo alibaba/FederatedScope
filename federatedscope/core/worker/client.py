@@ -347,32 +347,38 @@ class Client(Worker):
             metrics = {}
             if self._cfg.trainer.finetune.before_eval:
                 self.trainer.finetune()
+
+            null_eval_set = True
             for split in self._cfg.eval.split:
-                eval_metrics = self.trainer.evaluate(
-                    target_data_split_name=split)
+                if self.trainer.ctx.__getattr__(f"num_{split}_data") > 0:
+                    null_eval_set = False
+                    eval_metrics = self.trainer.evaluate(
+                        target_data_split_name=split)
 
-                if self._cfg.federate.mode == 'distributed':
-                    logger.info(
-                        self._monitor.format_eval_res(eval_metrics,
-                                                      rnd=self.state,
-                                                      role=role))
+                    if self._cfg.federate.mode == 'distributed':
+                        logger.info(
+                            self._monitor.format_eval_res(eval_metrics,
+                                                          rnd=self.state,
+                                                          role=role))
 
-                metrics.update(**eval_metrics)
-
-            formatted_eval_res = self._monitor.format_eval_res(metrics,
-                                                               rnd=self.state,
-                                                               role=role,
-                                                               forms='raw',
-                                                               return_raw=True)
-            self._monitor.update_best_result(self.best_results,
-                               formatted_eval_res['Results_raw'],
-                               results_type=role,
-                               round_wise_update_key=self._cfg.eval.
-                               best_res_update_round_wise_key)
-            self.history_results = merge_dict(
-                self.history_results, formatted_eval_res['Results_raw'])
-            self.early_stopper.track_and_check_best(self.history_results[
-                self._cfg.eval.best_res_update_round_wise_key])
+                    metrics.update(**eval_metrics)
+            if null_eval_set:
+                metrics = None
+            else:
+                formatted_eval_res = self._monitor.format_eval_res(metrics,
+                                                                   rnd=self.state,
+                                                                   role=role,
+                                                                   forms='raw',
+                                                                   return_raw=True)
+                self._monitor.update_best_result(self.best_results,
+                                   formatted_eval_res['Results_raw'],
+                                   results_type=role,
+                                   round_wise_update_key=self._cfg.eval.
+                                   best_res_update_round_wise_key)
+                self.history_results = merge_dict(
+                    self.history_results, formatted_eval_res['Results_raw'])
+                self.early_stopper.track_and_check_best(self.history_results[
+                    self._cfg.eval.best_res_update_round_wise_key])
 
         self.comm_manager.send(
             Message(msg_type='metrics',

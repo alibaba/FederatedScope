@@ -30,7 +30,7 @@ class Monitor(object):
         self.log_res_best = {}
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
-        self.wandb_online_track = cfg.wandb.online_track
+        self.wandb_online_track = cfg.wandb.online_track if cfg.wandb.use else False
         # self.use_tensorboard = cfg.use_tensorboard
 
         self.monitored_object = monitored_object

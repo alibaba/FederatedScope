@@ -56,6 +56,13 @@ class FedRunner(object):
 
         torch.set_num_threads(1)
 
+        if self.cfg.federate.method == "global":
+            from federatedscope.core.auxiliaries.data_builder import merge_data
+            self.data[1] = merge_data(all_data=self.data, merged_max_data_id=self.cfg.federate.client_num)
+            self.cfg.defrost()
+            self.cfg.federate.client_num = 1
+            self.cfg.freeze()
+
         unseen_clients_id = []
         if self.cfg.federate.unseen_clients_rate > 0:
             unseen_clients_id = np.random.choice(
@@ -74,11 +81,6 @@ class FedRunner(object):
         self._shared_client_model = get_model(
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
-
-        if self.cfg.federate.method == "global":
-            from federatedscope.core.auxiliaries.data_builder import merge_data
-            self.data[1] = merge_data(all_data=self.data, merged_max_data_id=self.cfg.federate.client_num)
-            self.cfg.federate.client_num = 1
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(

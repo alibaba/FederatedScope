@@ -256,7 +256,6 @@ class Server(Worker):
 
         move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
-
             if not check_eval_result:  # in the training process
                 # Get all the message
                 train_msg_buffer = self.msg_buffer['train'][self.state]
@@ -427,6 +426,8 @@ class Server(Worker):
         eval_res_participated_clients = []
         eval_res_unseen_clients = []
         for client_id in eval_msg_buffer:
+            if eval_msg_buffer[client_id].content is None:
+                continue
             if client_id in self.unseen_clients_id:
                 eval_res_unseen_clients.append(eval_msg_buffer[client_id])
             else:

@@ -92,6 +92,8 @@ def update_logger(cfg, clear_before_add=False):
     root_logger.addHandler(fh)
     sys.stderr = sys.stdout
 
+    import socket
+    root_logger.info(f"the current machine is at {socket.gethostbyname(socket.gethostname())}")
     root_logger.info(f"the current dir is {os.getcwd()}")
     root_logger.info(f"the output dir is {cfg.outdir}")
 

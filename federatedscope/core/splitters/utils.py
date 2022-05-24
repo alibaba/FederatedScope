@@ -1,5 +1,8 @@
+import logging
+
 import numpy as np
 
+logger = logging.getLogger(__name__)
 
 def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10):
     r"""Get sample index list for each client from the Dirichlet distribution.
@@ -17,10 +20,17 @@ def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10):
         raise ValueError('Only support single-label tasks!')
     num = len(label)
     classes = len(np.unique(label))
-    assert num > client_num * min_size, f'The number of sample should be greater than {client_num * min_size}.'
+    assert num > client_num * min_size, f'The number of sample should be greater than {client_num *min_size}.'
     size = 0
+    tried_time = 0
     while size < min_size:
         idx_slice = [[] for _ in range(client_num)]
+        tried_time += 1
+        if tried_time > 50:
+            logger.warning(f"In the dirichlet non.i.i.d. split, we tried {tried_time} times but still do not fulfill the min_size requirement with {min_size}, Please try to increase the min_size or consider other splitter. ")
+            if tried_time > 60:
+                logger.warning(f"Too many tried times, we stop the trying")
+                break
         for k in range(classes):
             # for label k
             idx_k = np.where(label == k)[0]
@@ -37,6 +47,8 @@ def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10):
                 for idx_j, idx in zip(idx_slice, np.split(idx_k, prop))
             ]
             size = min([len(idx_j) for idx_j in idx_slice])
+
     for i in range(client_num):
         np.random.shuffle(idx_slice[i])
+
     return idx_slice
