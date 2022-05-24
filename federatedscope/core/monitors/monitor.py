@@ -447,4 +447,4 @@ def update_best_result(best_results,
                     pass
 
     if update_best_this_round:
-        logging.info(f"Find new best result: {best_results}")
+        logger.info(f"Find new best result: {best_results}")
