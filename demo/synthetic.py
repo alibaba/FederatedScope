@@ -25,10 +25,11 @@ if __name__=="__main__":
     # without personalization
     best = float("inf")
     best_lr = None
-    for lr in [0.001, 0.005, 0.025, 0.125, 0.625]:
+    for d in range(64):
+        lr = 0.001 + d * (0.625 - 0.001) / (64 - 1)
         results = []
         for i in range(32):
-            np.random.seed(i)
+            np.random.seed(i+123)
             init_x = np.random.uniform(-10.0, 10.0)
             results.append(FL(init_x, Fis, lr))
         print(np.mean(results), lr)
@@ -41,11 +42,11 @@ if __name__=="__main__":
     best = float("inf")
     best_lrs = None
     for trial in range(64):
-        np.random.seed(trial)
+        np.random.seed(trial+123)
         lrs = np.random.choice([0.001, 0.005, 0.025, 0.125, 0.625], 5)
         results = []
         for _ in range(32):
-            np.random.seed(i)
+            np.random.seed(i+123)
             init_x = np.random.uniform(-10.0, 10.0)
             results.append(FL(init_x, Fis, lrs))
         if best > np.mean(results):

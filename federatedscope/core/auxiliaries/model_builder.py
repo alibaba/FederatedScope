@@ -67,6 +67,16 @@ def get_model(model_config, local_data, backend='torch'):
                     (model_config.layer - 1) + [model_config.out_channels],
                     dropout=model_config.dropout)
 
+    elif model_config.type.lower() == 'quadratic':
+        from federatedscope.tabular.model import QuadraticModel
+        if isinstance(local_data, dict):
+            data = next(iter(local_data['train']))
+        else:
+            # TODO: complete the branch
+            data = local_data
+        x, _ = data
+        model = QuadraticModel(x.shape[-1], 1)
+
     elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11', 'lr']:
         from federatedscope.cv.model import get_cnn
         model = get_cnn(model_config, local_data)

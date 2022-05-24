@@ -510,7 +510,7 @@ def get_data(config):
     if config.data.type.lower() == 'toy':
         data, modified_config = load_toy_data(config)
     elif config.data.type.lower() == 'quadratic':
-        from federatedscope.tabular.dataset import load_quadratic_dataset
+        from federatedscope.tabular.dataloader import load_quadratic_dataset
         data, modified_config = load_quadratic_dataset(config)
     elif config.data.type.lower() in ['femnist', 'celeba']:
         from federatedscope.cv.dataloader import load_cv_dataset
