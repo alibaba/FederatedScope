@@ -245,6 +245,9 @@ class Server(Worker):
             min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
+        if check_eval_result:
+            min_received_num = len(list(self.comm_manager.neighbors.keys()))
+
         move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
 
