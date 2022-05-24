@@ -30,7 +30,8 @@ if __name__ == '__main__':
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file
-    client_cfg = CfgNode.load_cfg(open(args.client_cfg_file, 'r')) if args.client_cfg_file else None
+    client_cfg = CfgNode.load_cfg(open(args.client_cfg_file,
+                                       'r')) if args.client_cfg_file else None
 
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global cfg object

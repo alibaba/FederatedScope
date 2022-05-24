@@ -2,7 +2,6 @@ import torch
 
 
 class QuadraticModel(torch.nn.Module):
-
     def __init__(self, in_channels, class_num):
         super(QuadraticModel, self).__init__()
         x = torch.ones((in_channels, 1))

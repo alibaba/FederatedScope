@@ -533,8 +533,8 @@ def get_data(config):
         from federatedscope.gfl.dataloader import load_linklevel_dataset
         data, modified_config = load_linklevel_dataset(config)
     elif config.data.type.lower() in [
-            'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace', 'sider', 'clintox',
-            'esol', 'freesolv', 'lipo'
+            'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace', 'sider',
+            'clintox', 'esol', 'freesolv', 'lipo'
     ] or config.data.type.startswith('graph_multi_domain'):
         from federatedscope.gfl.dataloader import load_graphlevel_dataset
         data, modified_config = load_graphlevel_dataset(config)
