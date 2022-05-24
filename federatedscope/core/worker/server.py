@@ -392,7 +392,6 @@ class Server(Worker):
         logger.info(formatted_best_res)
         self._monitor.save_formatted_results(formatted_best_res)
 
-
     def save_client_eval_results(self):
         """
             save the evaluation results of each client when the fl course early stopped or terminated
@@ -640,11 +639,12 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
-                self._monitor.update_best_result(self.best_results,
-                                   formatted_eval_res['Results_raw'],
-                                   results_type="server_global_eval",
-                                   round_wise_update_key=self._cfg.eval.
-                                   best_res_update_round_wise_key)
+                self._monitor.update_best_result(
+                    self.best_results,
+                    formatted_eval_res['Results_raw'],
+                    results_type="server_global_eval",
+                    round_wise_update_key=self._cfg.eval.
+                    best_res_update_round_wise_key)
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self._monitor.save_formatted_results(formatted_eval_res)

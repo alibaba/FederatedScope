@@ -4,6 +4,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10):
     r"""Get sample index list for each client from the Dirichlet distribution.
     https://github.com/FedML-AI/FedML/blob/master/fedml_core/non_iid_partition/noniid_partition.py
@@ -27,7 +28,9 @@ def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10):
         idx_slice = [[] for _ in range(client_num)]
         tried_time += 1
         if tried_time > 50:
-            logger.warning(f"In the dirichlet non.i.i.d. split, we tried {tried_time} times but still do not fulfill the min_size requirement with {min_size}, Please try to increase the min_size or consider other splitter. ")
+            logger.warning(
+                f"In the dirichlet non.i.i.d. split, we tried {tried_time} times but still do not fulfill the min_size requirement with {min_size}, Please try to increase the min_size or consider other splitter. "
+            )
             if tried_time > 60:
                 logger.warning(f"Too many tried times, we stop the trying")
                 break

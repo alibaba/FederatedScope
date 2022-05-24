@@ -16,7 +16,10 @@ class GPUManager():
     When gpus is unavailable, return 'cpu';
     The implementation of GPUManager is referred to https://github.com/QuantumLiu/tf_gpu_manager
     """
-    def __init__(self, gpu_available=False, specified_device=-1, the_same_device=True):
+    def __init__(self,
+                 gpu_available=False,
+                 specified_device=-1,
+                 the_same_device=True):
         self.gpu_avaiable = gpu_available and check_gpus()
         self.specified_device = specified_device
         self.the_same_device = the_same_device  # whether only use the same one device for server and clients

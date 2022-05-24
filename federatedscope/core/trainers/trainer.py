@@ -442,10 +442,13 @@ class GeneralTorchTrainer(Trainer):
         original_epoch_num = self.ctx["num_train_epoch"]
         original_batch_num = self.ctx["num_train_batch"]
         original_batch_num_last = self.ctx["num_train_batch_last_epoch"]
-        ft_num_train_batch = int(min(self.ctx["num_train_batch"], self.cfg.trainer.finetune.steps))
-        self.ctx["num_train_epoch"] = int(max(1, self.cfg.trainer.finetune.steps / ft_num_train_batch))
+        ft_num_train_batch = int(
+            min(self.ctx["num_train_batch"], self.cfg.trainer.finetune.steps))
+        self.ctx["num_train_epoch"] = int(
+            max(1, self.cfg.trainer.finetune.steps / ft_num_train_batch))
         self.ctx["num_train_batch"] = ft_num_train_batch
-        self.ctx["num_train_batch_last_epoch"] = int(self.cfg.trainer.finetune.steps % ft_num_train_batch)
+        self.ctx["num_train_batch_last_epoch"] = int(
+            self.cfg.trainer.finetune.steps % ft_num_train_batch)
 
         # do the fine-tuning process
         self.train(target_data_split_name, hooks_set)

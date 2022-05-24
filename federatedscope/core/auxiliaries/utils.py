@@ -93,7 +93,9 @@ def update_logger(cfg, clear_before_add=False):
     sys.stderr = sys.stdout
 
     import socket
-    root_logger.info(f"the current machine is at {socket.gethostbyname(socket.gethostname())}")
+    root_logger.info(
+        f"the current machine is at {socket.gethostbyname(socket.gethostname())}"
+    )
     root_logger.info(f"the current dir is {os.getcwd()}")
     root_logger.info(f"the output dir is {cfg.outdir}")
 
@@ -318,7 +320,8 @@ def logfile_2_wandb_dict(exp_log_f, raw_out=True):
     last_line = None
     for line in exp_log_f:
         last_line = line
-        exp_stop_normal, log_res = logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out)
+        exp_stop_normal, log_res = logline_2_wandb_dict(
+            exp_stop_normal, line, log_res_best, raw_out)
         if "'Role': 'Server #'" in line:
             all_log_res.append(log_res)
     return all_log_res, exp_stop_normal, last_line, log_res_best
@@ -361,14 +364,15 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
             else:
                 if cur_round != "Final":
                     for key_inner, val_inner in val.items():
-                        assert not isinstance(
-                            val_inner, dict), "Un-expected log format"
+                        assert not isinstance(val_inner,
+                                              dict), "Un-expected log format"
                         log_res[f"{key}/{key_inner}"] = val_inner
 
                 else:
                     exp_stop_normal = True
                     if key == "Results_raw":
-                        for final_type, final_type_dict in res["Results_raw"].items():
+                        for final_type, final_type_dict in res[
+                                "Results_raw"].items():
                             for inner_key, inner_val in final_type_dict.items(
                             ):
                                 log_res_best[

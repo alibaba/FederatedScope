@@ -34,9 +34,12 @@ class NLPTrainer(GeneralTorchTrainer):
         if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
-                x, label = [utils.move_to(_, ctx.device) for _ in ctx.data_batch]
+                x, label = [
+                    utils.move_to(_, ctx.device) for _ in ctx.data_batch
+                ]
                 from fvcore.nn import FlopCountAnalysis
-                flops_one_batch = FlopCountAnalysis(ctx.model, tuple(x.values())).total()
+                flops_one_batch = FlopCountAnalysis(ctx.model,
+                                                    tuple(x.values())).total()
 
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums

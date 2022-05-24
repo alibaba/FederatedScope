@@ -220,8 +220,7 @@ class Client(Worker):
                 if self.early_stopper.early_stopped and self._monitor.local_convergence_round == 0:
                     logger.info(
                         f"In noraml FL mode, Client #{self.ID} has been locally early stopped. "
-                        f"The next FL update may lead in negative effect"
-                    )
+                        f"The next FL update may lead in negative effect")
                     self._monitor.local_converged()
                 sample_size, model_para_all, results = self.trainer.train()
                 logger.info(
@@ -365,16 +364,18 @@ class Client(Worker):
             if null_eval_set:
                 metrics = None
             else:
-                formatted_eval_res = self._monitor.format_eval_res(metrics,
-                                                                   rnd=self.state,
-                                                                   role=role,
-                                                                   forms='raw',
-                                                                   return_raw=True)
-                self._monitor.update_best_result(self.best_results,
-                                   formatted_eval_res['Results_raw'],
-                                   results_type=role,
-                                   round_wise_update_key=self._cfg.eval.
-                                   best_res_update_round_wise_key)
+                formatted_eval_res = self._monitor.format_eval_res(
+                    metrics,
+                    rnd=self.state,
+                    role=role,
+                    forms='raw',
+                    return_raw=True)
+                self._monitor.update_best_result(
+                    self.best_results,
+                    formatted_eval_res['Results_raw'],
+                    results_type=role,
+                    round_wise_update_key=self._cfg.eval.
+                    best_res_update_round_wise_key)
                 self.history_results = merge_dict(
                     self.history_results, formatted_eval_res['Results_raw'])
                 self.early_stopper.track_and_check_best(self.history_results[

@@ -58,7 +58,9 @@ class FedRunner(object):
 
         if self.cfg.federate.method == "global":
             from federatedscope.core.auxiliaries.data_builder import merge_data
-            self.data[1] = merge_data(all_data=self.data, merged_max_data_id=self.cfg.federate.client_num)
+            self.data[1] = merge_data(
+                all_data=self.data,
+                merged_max_data_id=self.cfg.federate.client_num)
             self.cfg.defrost()
             self.cfg.federate.client_num = 1
             self.cfg.freeze()

@@ -166,7 +166,8 @@ class Monitor(object):
                     exit()
 
                 exp_stop_normal = False
-                exp_stop_normal, log_res = logline_2_wandb_dict(exp_stop_normal, line, self.log_res_best, raw_out=False)
+                exp_stop_normal, log_res = logline_2_wandb_dict(
+                    exp_stop_normal, line, self.log_res_best, raw_out=False)
                 wandb.log(log_res)
 
     def finish_fed_runner(self, fl_mode=None):
@@ -429,7 +430,8 @@ class Monitor(object):
                                 "client_individual", "unseen_client_individual"
                         ]:
                             cur_result = min(cur_result)
-                        if key not in best_result or cur_result < best_result[key]:
+                        if key not in best_result or cur_result < best_result[
+                                key]:
                             best_result[key] = cur_result
                             update_best_this_round = True
 
@@ -438,7 +440,8 @@ class Monitor(object):
                                 "client_individual", "unseen_client_individual"
                         ]:
                             cur_result = max(cur_result)
-                        if key not in best_result or cur_result > best_result[key]:
+                        if key not in best_result or cur_result > best_result[
+                                key]:
                             best_result[key] = cur_result
                             update_best_this_round = True
                     else:
@@ -447,8 +450,8 @@ class Monitor(object):
             # update different keys round-wise: if find better round_wise_update_key, update     others at the same time
             else:
                 if round_wise_update_key not in [
-                        "val_loss", "val_acc", "val_std", "test_loss", "test_acc",
-                        "test_std", "test_avg_loss", "loss"
+                        "val_loss", "val_acc", "val_std", "test_loss",
+                        "test_acc", "test_std", "test_avg_loss", "loss"
                 ]:
                     raise NotImplementedError(
                         f"We currently support round_wise_update_key as one of "
@@ -507,10 +510,13 @@ class Monitor(object):
                 try:
                     import wandb
                     exp_stop_normal = False
-                    exp_stop_normal, log_res = logline_2_wandb_dict(exp_stop_normal, line, self.log_res_best, raw_out=False)
+                    exp_stop_normal, log_res = logline_2_wandb_dict(
+                        exp_stop_normal,
+                        line,
+                        self.log_res_best,
+                        raw_out=False)
                     wandb.log(self.log_res_best)
                 except ImportError:
                     logger.error(
                         "cfg.wandb.use=True but not install the wandb package")
                     exit()
-
