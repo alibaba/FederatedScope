@@ -22,7 +22,7 @@ command:
   - "wandb.name_user"
   - "daoyuan"
   - "expname_tag"
-  - "finetune"
+  - "local_train"
   - "federate.method"
   - "local"
   - ${args_no_hyphens}

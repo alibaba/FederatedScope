@@ -1,7 +1,7 @@
 
 program: /mnt1/daoyuanchen.cdy/FederatedScope/federatedscope/main.py
 project: pFL-bench
-name: global-train,FEMNIST
+name: fedAvg,COLA,FT
 method: grid
 #method: bayes
 metric:
@@ -12,7 +12,7 @@ command:
   - /mnt1/daoyuanchen.cdy/anaconda3/envs/gfl/bin/python   # ${interpreter}
   - ${program}
   - "--cfg"
-  - "/mnt1/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/FEMNIST/fedavg_convnet2_on_femnist.yaml"
+  - "/mnt1/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/COLA/fedavg_transformer_on_cola.yaml"
   - "outdir"
   - "exp_pfl_bench"
   - "wandb.use"
@@ -22,9 +22,11 @@ command:
   - "wandb.name_user"
   - "daoyuan"
   - "expname_tag"
-  - "global_train"
-  - "federate.method"
-  - "global"
+  - "finetune"
+  - "trainer.finetune.before_eval"
+  - "True"
+  - "trainer.finetune.steps"
+  - "5"
   - ${args_no_hyphens}
 parameters:
   optimizer.lr:

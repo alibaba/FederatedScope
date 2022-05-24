@@ -1,7 +1,7 @@
 
 program: /mnt1/daoyuanchen.cdy/FederatedScope/federatedscope/main.py
 project: pFL-bench
-name: global-train,FEMNIST
+name: pFedMe,CIFAR10
 method: grid
 #method: bayes
 metric:
@@ -12,7 +12,7 @@ command:
   - /mnt1/daoyuanchen.cdy/anaconda3/envs/gfl/bin/python   # ${interpreter}
   - ${program}
   - "--cfg"
-  - "/mnt1/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/FEMNIST/fedavg_convnet2_on_femnist.yaml"
+  - "/mnt1/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/CIFAR10/fedavg_convnet2_on_cifar10.yaml"
   - "outdir"
   - "exp_pfl_bench"
   - "wandb.use"
@@ -21,15 +21,19 @@ command:
   - "pFL-bench"
   - "wandb.name_user"
   - "daoyuan"
-  - "expname_tag"
-  - "global_train"
   - "federate.method"
-  - "global"
+  - "pFedMe"
+  - "personalization.lr"
+  - "-1.0"
   - ${args_no_hyphens}
 parameters:
   optimizer.lr:
     values: [0.05, 0.005, 0.5, 0.01, 0.1]
   federate.local_update_steps:
+    values: [1, 3]
+  personalization.regular_weight:
+    values: [0.05, 0.1, 0.2, 0.5]
+  personalization.K:
     values: [1, 3]
 
 early_terminate:
