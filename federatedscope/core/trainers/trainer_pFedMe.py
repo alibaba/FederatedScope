@@ -30,20 +30,28 @@ def wrap_pFedMeTrainer(
                                         trigger="on_fit_end",
                                         insert_pos=-1)
 
+    base_trainer.replace_hook_in_train(
+        new_hook=_hook_on_batch_forward_flop_count,
+        target_trigger="on_batch_forward",
+        target_hook_name="_hook_on_batch_forward_flop_count")
+    base_trainer.register_hook_in_train(new_hook=_hook_on_epoch_end_flop_count,
+                                        trigger="on_epoch_end",
+                                        insert_pos=-1)
+
     # for "on_batch_start" trigger: replace the original hooks into new ones of pFedMe
     # 1) cache the original hooks for "on_batch_start"
     base_trainer.ctx.original_hook_on_batch_start_train = base_trainer.hooks_in_train[
         "on_batch_start"]
     base_trainer.ctx.original_hook_on_batch_start_eval = base_trainer.hooks_in_eval[
         "on_batch_start"]
-    # 2) reset the original hooks for "on_batch_start"
-    base_trainer.reset_hook_in_train(target_trigger="on_batch_start")
-    base_trainer.reset_hook_in_eval(target_trigger="on_batch_start")
-    # 2) insert the new hooks for "on_batch_start"
-    base_trainer.register_hook_in_train(
-        new_hook=hook_on_batch_start_init_pfedme, trigger="on_batch_start")
-    base_trainer.register_hook_in_eval(
-        new_hook=hook_on_batch_start_init_pfedme, trigger="on_batch_start")
+    # 2) replace the original hooks for "on_batch_start"
+    base_trainer.replace_hook_in_train(
+        new_hook=hook_on_batch_start_init_pfedme,
+        target_trigger="on_batch_start",
+        target_hook_name=None)
+    base_trainer.replace_hook_in_eval(new_hook=hook_on_batch_start_init_pfedme,
+                                      target_trigger="on_batch_start",
+                                      target_hook_name=None)
 
     return base_trainer
 
@@ -99,6 +107,24 @@ def hook_on_batch_start_init_pfedme(ctx):
         ctx.data_batch = copy.deepcopy(ctx.data_batch_cache)
     ctx.pFedMe_approx_fit_counter = (ctx.pFedMe_approx_fit_counter +
                                      1) % ctx.pFedMe_K
+
+
+def _hook_on_batch_forward_flop_count(ctx):
+    if ctx.monitor.flops_per_sample == 0:
+        # calculate the flops_per_sample
+        x, _ = [_.to(ctx.device) for _ in ctx.data_batch]
+        from fvcore.nn import FlopCountAnalysis
+        flops_one_batch = FlopCountAnalysis(ctx.model, x).total()
+        # besides the normal forward flops, pFedMe introduces
+        # 1) the regularization adds the cost of number of model parameters
+        flops_one_batch += ctx.monitor.total_model_size / 2
+        ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
+    ctx.monitor.total_flops += ctx.monitor.flops_per_sample * ctx.batch_size
+
+
+def _hook_on_epoch_end_flop_count(ctx):
+    # due to the local weight updating
+    ctx.monitor.total_flops += ctx.monitor.total_model_size / 2
 
 
 def hook_on_epoch_end_update_local(ctx):

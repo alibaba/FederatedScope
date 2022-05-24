@@ -1,9 +1,9 @@
 import argparse
-import json
 import logging
 import yaml
 import re
 
+from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
 
 parser = argparse.ArgumentParser(description='FederatedScope result parsing')
 parser.add_argument('--exp_dir',
@@ -73,59 +73,8 @@ def main():
 
     for exp_i, cfg_f_name in enumerate(cfg_file_list):
         with open(exp_log_f_list[exp_i], 'r') as exp_log_f:
-            log_res_best = {}
-            exp_stop_normal = False
-            all_log_res = []
             print(f'Process {exp_log_f_list[exp_i]}')
-            last_line = None
-            for line in exp_log_f:
-                last_line = line
-                if " Find new best result" in line:
-                    # e.g.,
-                    # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result for client_individual.test_acc with value 0.5911787974683544
-                    parse_res = line.split("INFO: ")[1].split("with value")
-                    best_key, best_val = parse_res[-2], parse_res[-1]
-                    # client_individual.test_acc -> client_individual/test_acc
-                    best_key = best_key.replace("Find new best result for", "").replace(".", "/")
-                    log_res_best[best_key.strip()] = float(best_val.strip())
-
-                if "'Role': 'Server #'" in line:
-                    res = line.split("INFO: ")[1].replace("\'", "\"")
-                    res = json.loads(s=res)
-                    if res['Role'] == 'Server #':
-                        cur_round = res['Round']
-                    res.pop('Role')
-                    if cur_round != "Final" and 'Results_raw' in res:
-                        res.pop('Results_raw')
-
-                    log_res = {}
-                    for key, val in res.items():
-                        if not isinstance(val, dict):
-                            log_res[key] = val
-                        else:
-                            if cur_round != "Final":
-                                for key_inner, val_inner in val.items():
-                                    assert not isinstance(val_inner, dict), "Un-expected log format"
-                                    log_res[f"{key}/{key_inner}"] = val_inner
-
-                            else:
-                                exp_stop_normal = True
-                                if key == "Results_raw":
-                                    for final_type, final_type_dict in res["Results_raw"].items():
-                                        for inner_key, inner_val in final_type_dict.items():
-                                            log_res_best[f"{final_type}/{inner_key}"] = inner_val
-                            #     log_res_best = {}
-                            #     for best_res_type, val_dict in val.items():
-                            #         for key_inner, val_inner in val_dict.items():
-                            #             assert not isinstance(val_inner, dict), "Un-expected log format"
-                            #             log_res_best[f"{best_res_type}/{key_inner}"] = val_inner
-                    # if log_res_best is not None and "Results_weighted_avg/val_loss" in log_res and \
-                    #         log_res_best["client_summarized_weighted_avg/val_loss"] > \
-                    #         log_res["Results_weighted_avg/val_loss"]:
-                    #     print("Missing the results of last round, update best results")
-                    #     for key, val in log_res.items():
-                    #         log_res_best[key.replace("Results", "client_summarized")] = val
-                    all_log_res.append(log_res)
+            all_log_res, exp_stop_normal, last_line, log_res_best = logfile_2_wandb_dict(exp_log_f)
 
             exp_stop_normal = True if " Find new best result" in last_line else exp_stop_normal
             if exp_stop_normal:

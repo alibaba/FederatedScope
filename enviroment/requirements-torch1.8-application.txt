@@ -24,5 +24,8 @@ transformers==4.16.2
 tokenizers==0.10.3
 torchtext
 datasets
+fvcore
+pympler
+iopath
 
 

@@ -261,8 +261,11 @@ class FedSagePlusClient(Client):
                                   dropout=self._cfg.model.dropout,
                                   num_pred=self._cfg.fedsageplus.num_pred)
         self.clf = model
-        self.trainer_loc = LocalGenTrainer(self.gen, self.hide_data,
-                                           self.device, self._cfg)
+        self.trainer_loc = LocalGenTrainer(self.gen,
+                                           self.hide_data,
+                                           self.device,
+                                           self._cfg,
+                                           monitor=self._monitor)
 
         self.register_handlers('clf_para', self.callback_funcs_for_model_para)
         self.register_handlers('local_pretrain',
@@ -281,8 +284,11 @@ class FedSagePlusClient(Client):
         # Build fedgen base on locgen
         self.fedgen = FedSage_Plus(self.gen)
         # Build trainer for fedgen
-        self.trainer_fedgen = FedGenTrainer(self.fedgen, self.hide_data,
-                                            self.device, self._cfg)
+        self.trainer_fedgen = FedGenTrainer(self.fedgen,
+                                            self.hide_data,
+                                            self.device,
+                                            self._cfg,
+                                            monitor=self._monitor)
 
         gen_para = self.fedgen.cpu().state_dict()
         embedding = self.trainer_fedgen.embedding()
@@ -351,8 +357,11 @@ class FedSagePlusClient(Client):
             'test': subgraph_sampler
         }
         self._cfg.merge_from_list(['data.batch_size', self.sage_batch_size])
-        self.trainer_clf = NodeMiniBatchTrainer(self.clf, fill_dataloader,
-                                                self.device, self._cfg)
+        self.trainer_clf = NodeMiniBatchTrainer(self.clf,
+                                                fill_dataloader,
+                                                self.device,
+                                                self._cfg,
+                                                monitor=self._monitor)
         sample_size, clf_para, results = self.trainer_clf.train()
         self.state = round
         logger.info(

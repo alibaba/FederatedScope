@@ -1,6 +1,14 @@
+import numpy
+from wandb.wandb_torch import torch
+
+from federatedscope.core.monitors import Monitor
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.register import register_trainer
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MFTrainer(GeneralTorchTrainer):
@@ -78,6 +86,44 @@ class MFTrainer(GeneralTorchTrainer):
         ctx.loss_batch = ctx.criterion(pred, label) * ratio
 
         ctx.batch_size = len(ratings)
+
+    def _hook_on_batch_forward_flop_count(self, ctx):
+        if not isinstance(self.ctx.monitor, Monitor):
+            logger.warning(
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
+                f"Plz check whether this is you want.")
+            return
+
+        if self.ctx.monitor.flops_per_sample == 0:
+            # calculate the flops_per_sample
+            try:
+                indices, ratings = ctx.data_batch
+                if isinstance(indices, numpy.ndarray):
+                    indices = torch.from_numpy(indices)
+                if isinstance(ratings, numpy.ndarray):
+                    ratings = torch.from_numpy(ratings)
+                from fvcore.nn import FlopCountAnalysis
+                flops_one_batch = FlopCountAnalysis(
+                    ctx.model, (indices, ratings)).total()
+                if self.model_nums > 1 and ctx.mirrored_models:
+                    flops_one_batch *= self.model_nums
+                    logger.warning(
+                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, please customize the count hook"
+                    )
+                self.ctx.monitor.track_avg_flops(flops_one_batch,
+                                                 ctx.batch_size)
+            except:
+                logger.error(
+                    "current flop count implementation is for general NodeFullBatchTrainer case: "
+                    "1) the ctx.model takes tuple (indices, ratings) as input."
+                    "Please check the forward format or implement your own flop_count function"
+                )
+
+        # by default, we assume the data has the same input shape,
+        # thus simply multiply the flops to avoid redundant forward
+        self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * ctx.batch_size
 
 
 def call_mf_trainer(trainer_type):

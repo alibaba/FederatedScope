@@ -8,9 +8,15 @@ from federatedscope.gfl.trainer.nodetrainer import NodeFullBatchTrainer
 
 
 class LocalGenTrainer(NodeFullBatchTrainer):
-    def __init__(self, model, data, device, config, only_for_eval=False):
+    def __init__(self,
+                 model,
+                 data,
+                 device,
+                 config,
+                 only_for_eval=False,
+                 monitor=None):
         super(LocalGenTrainer, self).__init__(model, data, device, config,
-                                              only_for_eval)
+                                              only_for_eval, monitor)
         self.criterion_num = F.smooth_l1_loss
         self.criterion_feat = GreedyLoss
 

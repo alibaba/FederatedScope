@@ -1,3 +1,5 @@
+import copy
+import json
 import logging
 import math
 import os
@@ -61,6 +63,8 @@ def update_logger(cfg, clear_before_add=False):
     # ================ create outdir to save log, exp_config, models, etc,.
     if cfg.outdir == "":
         cfg.outdir = os.path.join(os.getcwd(), "exp")
+    if cfg.expname == "":
+        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on_{cfg.data.type}"
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
 
     # if exist, make directory with given name and time
@@ -84,9 +88,36 @@ def update_logger(cfg, clear_before_add=False):
         "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s")
     fh.setFormatter(logger_formatter)
     root_logger.addHandler(fh)
-    #sys.stderr = sys.stdout
+    # sys.stderr = sys.stdout
 
     root_logger.info(f"the output dir is {cfg.outdir}")
+
+    if cfg.wandb.use:
+        init_wandb(cfg)
+
+
+def init_wandb(cfg):
+    try:
+        import wandb
+    except ImportError:
+        logger.error("cfg.wandb.use=True but not install the wandb package")
+        exit()
+    dataset_name = cfg.data.type
+    method_name = cfg.federate.method
+    exp_name = cfg.expname
+
+    tmp_cfg = copy.deepcopy(cfg)
+    tmp_cfg.cfg_check_funcs = []
+    import yaml
+    cfg_yaml = yaml.safe_load(tmp_cfg.dump())
+
+    wandb.init(project=cfg.wandb.name_project,
+               entity=cfg.wandb.name_user,
+               config=cfg_yaml,
+               group=dataset_name,
+               job_type=method_name,
+               name=exp_name,
+               notes=f"{method_name}, {exp_name}")
 
 
 def get_dataset(type, root, transform, target_transform, download=True):
@@ -158,7 +189,6 @@ def get_random(type, sample_shape, params, device):
 
 
 def batch_iter(data, batch_size=64, shuffled=True):
-
     assert 'x' in data and 'y' in data
     data_x = data['x']
     data_y = data['y']
@@ -264,3 +294,75 @@ class Timeout(object):
 
     def exceed_max_failure(self, num_failure):
         return num_failure > self.max_failure
+
+
+def logfile_2_wandb_dict(exp_log_f, raw_out=True):
+    """
+        parse the logfiles [exp_print.log, eval_results.log] into wandb_dict that contains non-nested dicts
+
+    :param exp_log_f: opened exp_log file
+    :param raw_out: True indicates "exp_print.log", otherwise indicates "eval_results.log",
+        the difference is whether contains the logger header such as "2022-05-02 16:55:02,843 (client:197) INFO:"
+
+    :return: tuple including (all_log_res, exp_stop_normal, last_line, log_res_best)
+    """
+    log_res_best = {}
+    exp_stop_normal = False
+    all_log_res = []
+    last_line = None
+    for line in exp_log_f:
+        last_line = line
+        if " Find new best result" in line:
+            # e.g.,
+            # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result for client_individual.test_acc with value 0.5911787974683544
+            parse_res = line.split("INFO: ")[1].split("with value")
+            best_key, best_val = parse_res[-2], parse_res[-1]
+            # client_individual.test_acc -> client_individual/test_acc
+            best_key = best_key.replace("Find new best result for",
+                                        "").replace(".", "/")
+            log_res_best[best_key.strip()] = float(best_val.strip())
+
+        if "'Role': 'Server #'" in line:
+            if raw_out:
+                line = line.split("INFO: ")[1]
+            res = line.replace("\'", "\"")
+            res = json.loads(s=res)
+            if res['Role'] == 'Server #':
+                cur_round = res['Round']
+            res.pop('Role')
+            if cur_round != "Final" and 'Results_raw' in res:
+                res.pop('Results_raw')
+
+            log_res = {}
+            for key, val in res.items():
+                if not isinstance(val, dict):
+                    log_res[key] = val
+                else:
+                    if cur_round != "Final":
+                        for key_inner, val_inner in val.items():
+                            assert not isinstance(
+                                val_inner, dict), "Un-expected log format"
+                            log_res[f"{key}/{key_inner}"] = val_inner
+
+                    else:
+                        exp_stop_normal = True
+                        if key == "Results_raw":
+                            for final_type, final_type_dict in res[
+                                    "Results_raw"].items():
+                                for inner_key, inner_val in final_type_dict.items(
+                                ):
+                                    log_res_best[
+                                        f"{final_type}/{inner_key}"] = inner_val
+                    #     log_res_best = {}
+                    #     for best_res_type, val_dict in val.items():
+                    #         for key_inner, val_inner in val_dict.items():
+                    #             assert not isinstance(val_inner, dict), "Un-expected log format"
+                    #             log_res_best[f"{best_res_type}/{key_inner}"] = val_inner
+            # if log_res_best is not None and "Results_weighted_avg/val_loss" in log_res and \
+            #         log_res_best["client_summarized_weighted_avg/val_loss"] > \
+            #         log_res["Results_weighted_avg/val_loss"]:
+            #     print("Missing the results of last round, update best results")
+            #     for key, val in log_res.items():
+            #         log_res_best[key.replace("Results", "client_summarized")] = val
+            all_log_res.append(log_res)
+    return all_log_res, exp_stop_normal, last_line, log_res_best

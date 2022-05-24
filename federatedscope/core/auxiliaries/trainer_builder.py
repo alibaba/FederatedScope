@@ -26,7 +26,8 @@ def get_trainer(model=None,
                 device=None,
                 config=None,
                 only_for_eval=False,
-                is_attacker=False):
+                is_attacker=False,
+                monitor=None):
     if config.trainer.type == 'general':
         if config.backend == 'torch':
             from federatedscope.core.trainers import GeneralTorchTrainer
@@ -34,14 +35,16 @@ def get_trainer(model=None,
                                           data=data,
                                           device=device,
                                           config=config,
-                                          only_for_eval=only_for_eval)
+                                          only_for_eval=only_for_eval,
+                                          monitor=monitor)
         elif config.backend == 'tensorflow':
             from federatedscope.core.trainers.tf_trainer import GeneralTFTrainer
             trainer = GeneralTFTrainer(model=model,
                                        data=data,
                                        device=device,
                                        config=config,
-                                       only_for_eval=only_for_eval)
+                                       only_for_eval=only_for_eval,
+                                       monitor=monitor)
         else:
             raise ValueError
     elif config.trainer.type == 'none':
@@ -78,7 +81,8 @@ def get_trainer(model=None,
                               data=data,
                               device=device,
                               config=config,
-                              only_for_eval=only_for_eval)
+                              only_for_eval=only_for_eval,
+                              monitor=monitor)
     else:
         # try to find user registered trainer
         trainer = None
@@ -89,7 +93,8 @@ def get_trainer(model=None,
                                       data=data,
                                       device=device,
                                       config=config,
-                                      only_for_eval=only_for_eval)
+                                      only_for_eval=only_for_eval,
+                                      monitor=monitor)
         if trainer is None:
             raise ValueError('Trainer {} is not provided'.format(
                 config.trainer.type))
