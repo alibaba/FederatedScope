@@ -2,6 +2,8 @@ import copy
 import os
 
 from yacs.config import CfgNode
+from yacs.config import _assert_with_logging
+from yacs.config import _check_and_coerce_cfg_value_type
 
 import federatedscope.register as register
 
@@ -49,11 +51,37 @@ class CN(CfgNode):
     def merge_from_list(self, cfg_list):
         """
            load configs from a list stores the keys and values.
+           modified `merge_from_list` in `yacs.config.py` to allow adding new keys if `is_new_allowed()` returns True
 
         :param cfg_list (list):
         :return:
         """
-        super(CN, self).merge_from_list(cfg_list)
+        _assert_with_logging(
+            len(cfg_list) % 2 == 0,
+            "Override list has odd length: {}; it must be a list of pairs".format(
+                cfg_list
+            ),
+        )
+        root = self
+        for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
+            if root.key_is_deprecated(full_key):
+                continue
+            if root.key_is_renamed(full_key):
+                root.raise_key_rename_error(full_key)
+            key_list = full_key.split(".")
+            d = self
+            for subkey in key_list[:-1]:
+                _assert_with_logging(
+                    subkey in d, "Non-existent key: {}".format(full_key)
+                )
+                d = d[subkey]
+            subkey = key_list[-1]
+            _assert_with_logging(subkey in d or d.is_new_allowed(), "Non-existent key: {}".format(full_key))
+            value = self._decode_cfg_value(v)
+            if subkey in d:
+                value = _check_and_coerce_cfg_value_type(value, d[subkey], subkey, full_key)
+            d[subkey] = value
+
         self.assert_cfg()
 
     def assert_cfg(self):
@@ -95,7 +123,7 @@ class CN(CfgNode):
             from contextlib import redirect_stdout
             with redirect_stdout(outfile):
                 tmp_cfg = copy.deepcopy(self)
-                tmp_cfg.cfg_check_funcs = []
+                tmp_cfg.cfg_check_funcs.clear()
                 print(tmp_cfg.dump())
 
         super(CN, self).freeze()
