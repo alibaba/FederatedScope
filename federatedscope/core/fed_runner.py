@@ -229,7 +229,7 @@ class FedRunner(object):
                 config=client_specific_config,
                 data=client_data,
                 model=client_model or get_model(
-                    self.cfg.model, client_data, backend=self.cfg.backend),
+                    client_specific_config.model, client_data, backend=self.cfg.backend),
                 device=self.gpu_manager.auto_choice(),
                 **kw)
         else:
