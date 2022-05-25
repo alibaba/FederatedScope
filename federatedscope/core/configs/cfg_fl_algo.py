@@ -13,7 +13,6 @@ def extend_fl_algo_cfg(cfg):
     cfg.fedopt.optimizer = CN(new_allowed=True)
     cfg.fedopt.optimizer.type = 'SGD'
     cfg.fedopt.optimizer.lr = 0.01
-    cfg.fedopt.optimizer.momentum = 0.
 
     # ------------------------------------------------------------------------ #
     # fedprox related options, general fl
