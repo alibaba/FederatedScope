@@ -52,11 +52,13 @@ class GIN_Net(torch.nn.Module):
                     GINConv(MLP([hidden, hidden, hidden], batch_norm=True)))
         self.dropout = dropout
 
-    def forward(self, data):
+    def forward(self, data, edge_index=None):
         if isinstance(data, Data):
             x, edge_index = data.x, data.edge_index
         elif isinstance(data, tuple):
             x, edge_index = data
+        elif edge_index is not None and isinstance(data, torch.Tensor) and isinstance(edge_index, torch.Tensor):
+            x, edge_index = data, edge_index
         else:
             raise TypeError('Unsupported data type!')
 
