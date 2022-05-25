@@ -1,20 +1,20 @@
 use_gpu: True
 device: -1
 early_stop:
-  patience: 3
+  patience: 5
 seed: 1
 federate:
   mode: standalone
   local_update_steps: 1
   batch_or_epoch: epoch
-  total_round_num: 100
-  client_num: 100
+  total_round_num: 500
+  client_num: 50
   sample_client_rate: 0.2
   unseen_clients_rate: 0.2
 data:
   root: 'glue'
   type: 'sst2@huggingface_datasets'
-  args: [ {'used_train_ratio':0.5, 'max_len': 512, 'half_val_dummy_test': False, 'val_as_dummy_test': True, 'part_train_dummy_val': 0.1, 'part_train_dummy_test': 0} ]
+  args: [{'load_disk_dir': 'huggingface/datasets/glue/sst2', 'hg_cache_dir': 'huggingface', 'max_len': 128, 'val_as_dummy_test': True, 'part_train_dummy_val': 0.2} ]
   batch_size: 64
   splitter: 'lda'
   splitter_args: [ { 'alpha': 0.4, 'min_size': 1} ]
@@ -34,4 +34,3 @@ trainer:
 eval:
   freq: 5
   metrics: ['acc', 'correct', 'f1']
-  split: ['val', 'train']
