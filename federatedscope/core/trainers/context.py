@@ -100,10 +100,7 @@ class Context(dict):
             self.criterion = get_criterion(self.cfg.criterion.type,
                                            self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
-            self.optimizer = get_optimizer(
-                self.model,
-                **self.cfg.optimizer
-            )
+            self.optimizer = get_optimizer(self.model, **self.cfg.optimizer)
             self.grad_clip = self.cfg.grad.grad_clip
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()

@@ -14,7 +14,8 @@ class CN(CfgNode):
     """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
         super().__init__(init_dict, key_list, new_allowed)
-        self.__dict__["cfg_check_funcs"] = list() # to check the config values validity
+        self.__dict__["cfg_check_funcs"] = list(
+        )  # to check the config values validity
 
     def __getattr__(self, name):
         if name in self:
