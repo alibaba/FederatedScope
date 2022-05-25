@@ -104,7 +104,7 @@ class Context(dict):
                 self.model,
                 **self.cfg.optimizer
             )
-            self.grad_clip = self.cfg.optimizer.grad_clip
+            self.grad_clip = self.cfg.grad.grad_clip
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None

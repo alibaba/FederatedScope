@@ -9,9 +9,11 @@ def extend_fl_algo_cfg(cfg):
     cfg.fedopt = CN()
 
     cfg.fedopt.use = False
-    cfg.fedopt.lr_server = 0.01
-    cfg.fedopt.momentum_server = 0.
-    cfg.fedopt.type_optimizer = 'SGD'
+
+    cfg.fedopt.optimizer = CN(new_allowed=True)
+    cfg.fedopt.optimizer.type = 'SGD'
+    cfg.fedopt.optimizer.lr = 0.01
+    cfg.fedopt.optimizer.momentum = 0.
 
     # ------------------------------------------------------------------------ #
     # fedprox related options, general fl

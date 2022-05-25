@@ -164,14 +164,14 @@ class PassivePIAServer(Server):
             fl_model_criterion=get_criterion(self._cfg.criterion.type,
                                              device=self.device),
             device=self.device,
-            grad_clip=self._cfg.optimizer.grad_clip,
+            grad_clip=self._cfg.grad.grad_clip,
             dataset_name=self._cfg.data.type,
             fl_local_update_num=self._cfg.federate.local_update_steps,
-            fl_type_optimizer=self._cfg.fedopt.type_optimizer,
+            fl_type_optimizer=self._cfg.fedopt.optimizer.type,
             fl_lr=self._cfg.optimizer.lr,
             batch_size=100)
 
-        # self.optimizer = get_optimizer(type=self._cfg.fedopt.type_optimizer, model=self.model,lr=self._cfg.fedopt.lr_server)
+        # self.optimizer = get_optimizer(type=self._cfg.fedopt.type_optimizer, model=self.model,lr=self._cfg.fedopt.optimizer.lr)
         # print(self.optimizer)
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
