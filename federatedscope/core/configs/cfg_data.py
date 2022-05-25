@@ -31,6 +31,12 @@ def extend_data_cfg(cfg):
     cfg.data.graphsaint.walk_length = 2
     cfg.data.graphsaint.num_steps = 30
 
+    # quadratic
+    cfg.data.quadratic = CN()
+    cfg.data.quadratic.dim = 1
+    cfg.data.quadratic.min_curv = 0.02
+    cfg.data.quadratic.max_curv = 12.5
+
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_data_cfg)
 

@@ -496,12 +496,22 @@ def load_external_data(config=None):
 
 
 def get_data(config):
+    """Instantiate the dataset and update the configuration accordingly if necessary.
+    Arguments:
+        config (obj): a cfg node object.
+    Returns:
+        obj: The dataset object.
+        cfg.node: The updated configuration.
+    """
     for func in register.data_dict.values():
         data_and_config = func(config)
         if data_and_config is not None:
             return data_and_config
     if config.data.type.lower() == 'toy':
         data, modified_config = load_toy_data(config)
+    elif config.data.type.lower() == 'quadratic':
+        from federatedscope.tabular.dataloader import load_quadratic_dataset
+        data, modified_config = load_quadratic_dataset(config)
     elif config.data.type.lower() in ['femnist', 'celeba']:
         from federatedscope.cv.dataloader import load_cv_dataset
         data, modified_config = load_cv_dataset(config)
@@ -523,8 +533,8 @@ def get_data(config):
         from federatedscope.gfl.dataloader import load_linklevel_dataset
         data, modified_config = load_linklevel_dataset(config)
     elif config.data.type.lower() in [
-            'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace', 'sider', 'clintox',
-            'esol', 'freesolv', 'lipo'
+            'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace', 'sider',
+            'clintox', 'esol', 'freesolv', 'lipo'
     ] or config.data.type.startswith('graph_multi_domain'):
         from federatedscope.gfl.dataloader import load_graphlevel_dataset
         data, modified_config = load_graphlevel_dataset(config)
