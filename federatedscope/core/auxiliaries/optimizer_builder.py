@@ -4,7 +4,7 @@ except ImportError:
     torch = None
 
 
-def get_optimizer(type, model, lr, **kwargs):
+def get_optimizer(model, type, lr, grad_clip, **kwargs):
     if torch is None:
         return None
     if isinstance(type, str):

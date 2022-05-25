@@ -14,7 +14,13 @@ class CN(CfgNode):
     """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
         super().__init__(init_dict, key_list, new_allowed)
-        self.cfg_check_funcs = []  # to check the config values validity
+        self.__dict__["cfg_check_funcs"] = list() # to check the config values validity
+
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        else:
+            raise AttributeError(name)
 
     def register_cfg_check_fun(self, cfg_check_fun):
         self.cfg_check_funcs.append(cfg_check_fun)
@@ -26,9 +32,7 @@ class CN(CfgNode):
         :param cfg_filename (string):
         :return:
         """
-        cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         super(CN, self).merge_from_file(cfg_filename)
-        self.cfg_check_funcs = cfg_check_funcs
         self.assert_cfg()
 
     def merge_from_other_cfg(self, cfg_other):
@@ -38,9 +42,7 @@ class CN(CfgNode):
         :param cfg_other (CN):
         :return:
         """
-        cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         super(CN, self).merge_from_other_cfg(cfg_other)
-        self.cfg_check_funcs = cfg_check_funcs
         self.assert_cfg()
 
     def merge_from_list(self, cfg_list):
@@ -50,9 +52,7 @@ class CN(CfgNode):
         :param cfg_list (list):
         :return:
         """
-        cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         super(CN, self).merge_from_list(cfg_list)
-        self.cfg_check_funcs = cfg_check_funcs
         self.assert_cfg()
 
     def assert_cfg(self):
