@@ -4,7 +4,6 @@ from typing import Type
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.attack.privacy_attacks.GAN_based_attack import GANCRA
 
-
 logger = logging.getLogger(__name__)
 
 

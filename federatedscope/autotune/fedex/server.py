@@ -169,9 +169,11 @@ class FedExServer(Server):
         """
 
         index = [elem['arms'] for elem in feedbacks]
-        weight = np.asarray([elem['val_total'] for elem in feedbacks], dtype=np.float64)
+        weight = np.asarray([elem['val_total'] for elem in feedbacks],
+                            dtype=np.float64)
         weight /= np.sum(weight)
-        before = np.asarray([elem['val_avg_loss_before'] for elem in feedbacks])
+        before = np.asarray(
+            [elem['val_avg_loss_before'] for elem in feedbacks])
         after = np.asarray([elem['val_avg_loss_after'] for elem in feedbacks])
 
         if self._trace['refine']:
@@ -226,7 +228,9 @@ class FedExServer(Server):
             .format(self.ID, self._theta, self._trace['entropy'][-1],
                     self._trace['mle'][-1]))
 
-    def check_and_move_on(self, check_eval_result=False, min_received_num=None):
+    def check_and_move_on(self,
+                          check_eval_result=False,
+                          min_received_num=None):
         """
         To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
         """
@@ -237,7 +241,7 @@ class FedExServer(Server):
         if check_eval_result:
             min_received_num = len(list(self.comm_manager.neighbors.keys()))
 
-        move_on_flag = True    # To record whether moving to a new training round or finishing the evaluation
+        move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:  # in the training process
@@ -260,7 +264,8 @@ class FedExServer(Server):
 
                         # collect feedbacks for updating the policy
                         if model_idx == 0:
-                            mab_feedbacks.append(train_msg_buffer[client_id][2])
+                            mab_feedbacks.append(
+                                train_msg_buffer[client_id][2])
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:

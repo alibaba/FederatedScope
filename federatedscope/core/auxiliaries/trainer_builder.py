@@ -67,7 +67,8 @@ def get_trainer(model=None,
         ]:
             dict_path = "federatedscope.gfl.trainer.nodetrainer"
         elif config.trainer.type.lower() in [
-                'flitplustrainer', 'flittrainer', 'fedvattrainer', 'fedfocaltrainer'
+                'flitplustrainer', 'flittrainer', 'fedvattrainer',
+                'fedfocaltrainer'
         ]:
             dict_path = "federatedscope.gfl.flitplus.trainer"
         elif config.trainer.type.lower() in ['mftrainer']:
