@@ -6,7 +6,10 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)
-        label = batch.y.squeeze(-1).long()
+        if self.cfg.model.task.endswith('Regression'):
+            label = batch.y.float()
+        else:
+            label = batch.y.squeeze(-1).long()
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
         ctx.loss_batch = ctx.criterion(pred, label)
