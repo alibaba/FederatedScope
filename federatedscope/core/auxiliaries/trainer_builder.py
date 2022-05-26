@@ -3,12 +3,12 @@ import importlib
 
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
+
 try:
     from federatedscope.contrib.trainer import *
-except ImportError:
-    pass
-
-logger = logging.getLogger(__name__)
+except ImportError as error:
+    logger.warning(f'{error} in `federatedscope.contrib.trainer`, some modules are not available.')
 
 TRAINER_CLASS_DICT = {
     "cvtrainer": "CVTrainer",

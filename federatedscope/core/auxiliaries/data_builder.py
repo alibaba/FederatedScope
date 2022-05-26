@@ -1,13 +1,16 @@
 import pickle
+import logging
 import numpy as np
 from collections import defaultdict
 
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
+
 try:
     from federatedscope.contrib.data import *
-except ImportError:
-    pass
+except ImportError as error:
+    logger.warning(f'{error} in `federatedscope.contrib.data`, some modules are not available.')
 
 def load_toy_data(config=None):
 

@@ -1,9 +1,12 @@
+import logging
 import federatedscope.register as register
+
+logger = logging.getLogger(__name__)
 
 try:
     from federatedscope.contrib.metrics import *
-except ImportError:
-    pass
+except ImportError as error:
+    logger.warning(f'{error} in `federatedscope.contrib.metrics`, some modules are not available.')
 
 
 def get_metric(types):
