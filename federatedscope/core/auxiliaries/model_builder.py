@@ -1,7 +1,14 @@
+import logging
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
 
-#def get_model(fed_data):
+try:
+    from federatedscope.contrib.model import *
+except ImportError as error:
+    logger.warning(f'{error} in `federatedscope.contrib.model`, some modules are not available.')
+
+
 def get_model(model_config, local_data, backend='torch'):
     """
     Arguments:
