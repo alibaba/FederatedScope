@@ -507,12 +507,10 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_batch_forward(self, ctx):
         x, label = [_.to(ctx.device) for _ in ctx.data_batch]
         pred = ctx.model(x)
-        if ctx.criterion._get_name() == 'CrossEntropyLoss':
-            label = label.long()
-        elif ctx.criterion._get_name() == 'MSELoss':
+        if self.cfg.model.task.endswith('Regression'):
             label = label.float()
         else:
-            raise ValueError(f'Not support {ctx.criterion._get_name()}.')
+            label = label.long()
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
         ctx.loss_batch = ctx.criterion(pred, label)

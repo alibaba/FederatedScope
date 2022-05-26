@@ -50,7 +50,6 @@ def load_fs_contest_data(config):
 
     data_dict = {}
     # Build DataLoader dict
-    # num_label = [1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 12, 1, 19]  # todo:only suitable for this dataset
     for client_idx in range(1, config.federate.client_num + 1):
         dataloader_dict = {}
         tmp_dataset = []
@@ -73,7 +72,7 @@ def load_fs_contest_data(config):
             tmp_dataset += dataset[client_idx - 1]['test']
         if tmp_dataset:
             dataloader_dict['num_label'] = 0 # todo: set to 0, used in gfl/model_builder.py line74
-            # dataloader_dict['num_label'] = num_label[client_idx - 1]
+            # dataloader_dict['num_label'] = get_numGraphLabels(tmp_dataset)
         data_dict[client_idx] = dataloader_dict
         print(f'Load data for client {client_idx} done.')
 
