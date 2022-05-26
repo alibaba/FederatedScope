@@ -31,7 +31,10 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
 
         # outer loop for just one task
         batch = ctx.data_batch.to(ctx.device)
-        label = batch.y.squeeze(-1).long()
+        if self.cfg.model.task.endswith('Regression'):
+            label = batch.y.float()
+        else:
+            label = batch.y.squeeze(-1).long()
 
         pred_outer = ctx.model(batch)
         ctx.loss_batch = ctx.criterion(pred_outer, label)
