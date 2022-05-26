@@ -1,5 +1,9 @@
-from federatedscope.contrib.metrics import *
 import federatedscope.register as register
+
+try:
+    from federatedscope.contrib.metrics import *
+except ImportError:
+    pass
 
 
 def get_metric(types):

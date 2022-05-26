@@ -4,6 +4,10 @@ from collections import defaultdict
 
 import federatedscope.register as register
 
+try:
+    from federatedscope.contrib.data import *
+except ImportError:
+    pass
 
 def load_toy_data(config=None):
 

@@ -3,6 +3,11 @@ import importlib
 
 import federatedscope.register as register
 
+try:
+    from federatedscope.contrib.trainer import *
+except ImportError:
+    pass
+
 logger = logging.getLogger(__name__)
 
 TRAINER_CLASS_DICT = {
