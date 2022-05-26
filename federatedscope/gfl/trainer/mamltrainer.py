@@ -6,7 +6,10 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         # sub task
         batch = ctx.data_batch.to(ctx.device)
-        label = batch.y.squeeze(-1).long()
+        if self.cfg.model.task.endswith('Regression'):
+            label = batch.y.float()
+        else:
+            label = batch.y.squeeze(-1).long()
         # inner loop
         if ctx.cur_mode == "train":
             for i in range(5):
