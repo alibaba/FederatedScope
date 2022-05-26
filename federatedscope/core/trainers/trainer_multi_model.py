@@ -3,7 +3,7 @@ from types import FunctionType
 from typing import Type
 
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 
 
 class GeneralMultiModelTrainer(GeneralTorchTrainer):

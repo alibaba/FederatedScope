@@ -1,5 +1,5 @@
 from federatedscope.core.auxiliaries.utils import get_random
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.worker.server import Server
 from typing import Type
 from copy import deepcopy
