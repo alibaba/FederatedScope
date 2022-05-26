@@ -74,7 +74,7 @@ def load_fs_contest_data(config):
             dataloader_dict['num_label'] = 0 # todo: set to 0, used in gfl/model_builder.py line74
             # dataloader_dict['num_label'] = get_numGraphLabels(tmp_dataset)
         data_dict[client_idx] = dataloader_dict
-        print(f'Load data for client {client_idx} done.')
+        # print(f'Load data for client {client_idx} done.')
 
     return data_dict, config
 

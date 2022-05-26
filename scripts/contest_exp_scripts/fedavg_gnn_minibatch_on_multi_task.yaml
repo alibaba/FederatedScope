@@ -7,9 +7,8 @@ federate:
   mode: 'standalone'
   make_global_eval: False
   local_update_steps: 1
-  total_round_num: 10
+  total_round_num: 400
   share_local_model: False
-  sample_client_num: 16
 data:
   root: data/
   type: fs_contest_data
@@ -26,6 +25,8 @@ optimizer:
   lr: 0.5
   weight_decay: 0.0005
   type: SGD
+#criterion:
+#  type: CrossEntropyLoss
 trainer:
   type: graphminibatch_trainer
 eval:
