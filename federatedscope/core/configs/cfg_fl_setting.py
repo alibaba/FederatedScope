@@ -23,6 +23,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is the number of training samples in dataset.
     cfg.federate.online_aggr = False
     cfg.federate.make_global_eval = False
+    cfg.federate.use_diff = False
 
     # the method name is used to internally determine composition of different aggregators, messages, handlers, etc.,
     cfg.federate.method = "FedAvg"

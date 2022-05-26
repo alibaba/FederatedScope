@@ -155,11 +155,12 @@ class FedExServer(Server):
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
 
-        self.msg_buffer['train'][round][sender] = list(content)
+        self.msg_buffer['train'][round][sender] = content
 
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(tuple(content[0:2]))
-        self.check_and_move_on()
+
+        return self.check_and_move_on()
 
     def update_policy(self, feedbacks):
         """Update the policy. This implementation is borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx/blob/150fac03857a3239429734d59d319da71191872e/hyper.py#L151)
@@ -167,12 +168,11 @@ class FedExServer(Server):
             feedbacks (list): each element is a tuple in the form (sample_size, arms, loss)
         """
 
-        index = [tp[1] for tp in feedbacks]
-        weight = np.asarray([tp[0] for tp in feedbacks], dtype=np.float64)
+        index = [elem['arms'] for elem in feedbacks]
+        weight = np.asarray([elem['val_total'] for elem in feedbacks], dtype=np.float64)
         weight /= np.sum(weight)
-        # TODO: acquire client-wise validation loss before local updates
-        before = np.asarray([tp[2] for tp in feedbacks])
-        after = np.asarray([tp[2] for tp in feedbacks])
+        before = np.asarray([elem['val_avg_loss_before'] for elem in feedbacks])
+        after = np.asarray([elem['val_avg_loss_after'] for elem in feedbacks])
 
         if self._trace['refine']:
             trace = self.trace('refine')
@@ -226,19 +226,19 @@ class FedExServer(Server):
             .format(self.ID, self._theta, self._trace['entropy'][-1],
                     self._trace['mle'][-1]))
 
-    def check_and_move_on(self, check_eval_result=False):
+    def check_and_move_on(self, check_eval_result=False, min_received_num=None):
         """
         To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
         """
+        if min_received_num is None:
+            min_received_num = self._cfg.federate.sample_client_num
+        assert min_received_num <= self.sample_client_num
 
         if check_eval_result:
-            # all clients are participating in evaluation
-            minimal_number = self.client_num
-        else:
-            # sampled clients are participating in training
-            minimal_number = self.sample_client_num
+            min_received_num = len(list(self.comm_manager.neighbors.keys()))
 
-        if self.check_buffer(self.state, minimal_number, check_eval_result):
+        move_on_flag = True    # To record whether moving to a new training round or finishing the evaluation
+        if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:  # in the training process
                 mab_feedbacks = list()
@@ -258,13 +258,9 @@ class FedExServer(Server):
                             msg_list.append((train_data_size,
                                              model_para_multiple[model_idx]))
 
+                        # collect feedbacks for updating the policy
                         if model_idx == 0:
-                            # temporarily, we consider training loss
-                            # TODO: use validation loss and sample size
-                            mab_feedbacks.append(
-                                (train_msg_buffer[client_id][0],
-                                 train_msg_buffer[client_id][2],
-                                 train_msg_buffer[client_id][3]))
+                            mab_feedbacks.append(train_msg_buffer[client_id][2])
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
@@ -318,6 +314,10 @@ class FedExServer(Server):
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+        else:
+            move_on_flag = False
+
+        return move_on_flag
 
     def check_and_save(self):
         """

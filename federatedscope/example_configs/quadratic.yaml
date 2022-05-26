@@ -1,0 +1,20 @@
+use_gpu: False
+federate:
+  mode: 'standalone'
+  total_round_num: 5
+  make_global_eval: False
+  client_num: 5
+  share_local_model: False
+  online_aggr: False
+trainer:
+  type: 'general'
+eval:
+  freq: 1
+data:
+  type: 'quadratic'
+model:
+  type: 'quadratic'
+criterion:
+  type: 'L1Loss'
+optimizer:
+  lr: 0.01

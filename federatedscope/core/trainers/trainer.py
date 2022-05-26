@@ -188,7 +188,7 @@ class Trainer(object):
         pass
 
     def evaluate(self, target_data_split_name="test", hooks_set=None):
-        hooks_set = self.hooks_in_eval if hooks_set is None else hooks_set
+        hooks_set = hooks_set or self.hooks_in_eval
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
                     f"{target_data_split_name}_loader") is None:
@@ -206,7 +206,9 @@ class Trainer(object):
         """Run the hooks_set and maintain the mode
 
         Arguments:
-            mode: running mode of client, chosen from train/val/test
+            mode (str): running mode of client, chosen from train/test
+            hooks_set (dict): functions to be executed.
+            dataset_name (str): which split.
 
         Note:
             Considering evaluation could be in ```hooks_set["on_epoch_end"]```, there could be two data loaders in

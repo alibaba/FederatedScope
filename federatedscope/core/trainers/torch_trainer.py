@@ -57,19 +57,29 @@ class GeneralTorchTrainer(Trainer):
         return init_dict
 
     def train(self, target_data_split_name="train", hooks_set=None):
-        hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
+        hooks_set = hooks_set or self.hooks_in_train
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
                     f"{target_data_split_name}_loader") is None:
             raise ValueError(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
             )
-        self._run_routine("train", hooks_set, target_data_split_name)
+        if self.cfg.federate.use_diff:
+            # TODO: any issue for subclasses?
+            before_metric = self.evaluate(target_data_split_name='val')
 
-        # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
+        self._run_routine("train", hooks_set, target_data_split_name)
+        result_metric = self.ctx.eval_metrics
+
+        if self.cfg.federate.use_diff:
+            # TODO: any issue for subclasses?
+            after_metric = self.evaluate(target_data_split_name='val')
+            result_metric['val_total'] = before_metric['val_total']
+            result_metric['val_avg_loss_before'] = before_metric['val_avg_loss']
+            result_metric['val_avg_loss_after'] = after_metric['val_avg_loss']
 
         return self.ctx.num_samples_train, self.get_model_para(
-        ), self.ctx.eval_metrics
+        ), result_metric
 
     def update(self, model_parameters):
         '''
@@ -86,15 +96,15 @@ class GeneralTorchTrainer(Trainer):
 
     def evaluate(self, target_data_split_name="test"):
         with torch.no_grad():
-            super().evaluate(target_data_split_name)
+            super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
 
         return self.ctx.eval_metrics
 
-    def validate(self, target_data_split_name="val"):
-        with torch.no_grad():
-            super().evaluate(target_data_split_name)
+    #def validate(self, target_data_split_name="val"):
+    #    with torch.no_grad():
+    #        super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
 
-        return self.ctx.eval_metrics
+    #    return self.ctx.eval_metrics
 
     def finetune(self, target_data_split_name="train", hooks_set=None):
 
