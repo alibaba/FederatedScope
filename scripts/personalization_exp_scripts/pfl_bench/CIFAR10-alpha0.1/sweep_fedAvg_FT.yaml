@@ -36,5 +36,5 @@ parameters:
 
 early_terminate:
   type: hyperband
-  min_iter: 3  # the first bucket indicates we called wandb at least 3 times
+  min_iter: 5  # the first bucket indicates we called wandb at least 3 times
 
