@@ -49,7 +49,6 @@ class FedExServer(Server):
             # in which case, self._cfsp will be a list with length equal to #aspects
             pass
         sizes = [len(cand_set) for cand_set in self._cfsp]
-        # TODO: support other step size
         eta0 = 'auto'
         self._eta0 = [
             np.sqrt(2.0 * np.log(size)) if eta0 == 'auto' else eta0
