@@ -40,8 +40,10 @@ def init_fedprox_ctx(base_trainer):
     ctx = base_trainer.ctx
     cfg = base_trainer.cfg
 
+    cfg.regularizer.defrost()
     cfg.regularizer.type = 'proximal_regularizer'
     cfg.regularizer.mu = cfg.fedprox.mu
+    cfg.regularizer.freeze(save=False)
 
     from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
