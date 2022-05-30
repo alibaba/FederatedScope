@@ -114,18 +114,19 @@ class Monitor(object):
             average the system metrics recorded in "system_metrics.json" by all workers
         :return:
         """
-        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
-        if not os.path.exists(sys_metric_f_name):
-            logger.warning(
-                "You have not tracked the workers' system metrics in $outdir$/system_metrics.log, "
-                "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
-            )
-            return
+
         all_sys_metrics = defaultdict(list)
         avg_sys_metrics = defaultdict()
         std_sys_metrics = defaultdict()
 
         if file_io:
+            sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+            if not os.path.exists(sys_metric_f_name):
+                logger.warning(
+                    "You have not tracked the workers' system metrics in $outdir$/system_metrics.log, "
+                    "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
+                )
+                return
             with open(sys_metric_f_name, "r") as f:
                 for line in f:
                     res = json.loads(line)
@@ -553,7 +554,7 @@ class Monitor(object):
                         self.log_res_best,
                         raw_out=False)
                     #wandb.log(self.log_res_best)
-                    for k, v in self.log_res_best:
+                    for k, v in self.log_res_best.items():
                         wandb.summary[k] = v
                 except ImportError:
                     logger.error(

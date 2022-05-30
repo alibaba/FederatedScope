@@ -281,6 +281,9 @@ def print_table_datasets_list(filters_each_line_table):
             res_all_generalization = []
             res_all_fair = []
             res_all_efficiency = []
+            if best_run.state != "finished":
+                print(f"Waring: the best_run with id={best_run} has state {best_run.state}. "
+                      f"In weep_id={sweep_id}, sweep_name={run_header}")
 
             # for generalization results
             wrong_sweep = False
