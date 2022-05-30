@@ -1,7 +1,7 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: fedOpt,CIFAR10-alpha0.1
+name: fedOpt,FT,CIFAR10-alpha0.1
 method: grid
 #method: bayes
 metric:

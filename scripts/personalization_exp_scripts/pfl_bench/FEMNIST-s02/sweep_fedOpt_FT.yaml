@@ -1,7 +1,7 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: fedOpt,FEMNIST-s02
+name: fedOpt,FT,FEMNIST-s02
 method: grid
 #method: bayes
 metric:

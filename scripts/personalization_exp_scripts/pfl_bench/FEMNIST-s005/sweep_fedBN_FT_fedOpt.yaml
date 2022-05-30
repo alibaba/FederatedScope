@@ -1,7 +1,7 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: fedOpt,FT,CIFAR10-alpha0.5
+name: fedBN,FEMNIST-s005,FT
 method: grid
 #method: bayes
 metric:
@@ -12,7 +12,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "scripts/personalization_exp_scripts/pfl_bench/CIFAR10-alpha0.5/fedavg_convnet2_on_cifar10.yaml"
+  - "scripts/personalization_exp_scripts/pfl_bench/FEMNIST-s005/fedavg_convnet2_on_femnist005.yaml"
   - "outdir"
   - "exp_pfl_bench"
   - "wandb.use"
@@ -21,16 +21,16 @@ command:
   - "pFL-bench"
   - "wandb.name_user"
   - "daoyuan"
-  - "federate.method"
-  - "FedOpt"
-  - "fedopt.use"
-  - "True"
   - "expname_tag"
-  - "+finetune"
+  - "fedBN_finetune"
   - "trainer.finetune.before_eval"
   - "True"
   - "trainer.finetune.steps"
   - "5"
+  - "personalization.local_param"
+  - "['bn', 'norms', 'LayerNorm']"  # FedBN
+  - "fedopt.use"
+  - "True"
   - ${args_no_hyphens}
 parameters:
   optimizer.lr:
@@ -42,5 +42,5 @@ parameters:
 
 early_terminate:
   type: hyperband
-  min_iter: 5  # the first bucket indicates we called wandb at least 3 times
+  min_iter: 5  # the first bucket indicates we called wandb at least 5 times
 

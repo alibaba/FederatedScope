@@ -1,7 +1,7 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: fedOpt,FT,CIFAR10-alpha0.5
+name: fedOpt,FT,CITESEER
 method: grid
 #method: bayes
 metric:
@@ -12,7 +12,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "scripts/personalization_exp_scripts/pfl_bench/CIFAR10-alpha0.5/fedavg_convnet2_on_cifar10.yaml"
+  - "scripts/personalization_exp_scripts/pfl_bench/CITESEER/fedavg_gin_on_citeseer.yaml"
   - "outdir"
   - "exp_pfl_bench"
   - "wandb.use"
