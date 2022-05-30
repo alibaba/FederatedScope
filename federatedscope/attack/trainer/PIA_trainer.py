@@ -1,6 +1,6 @@
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from typing import Type
 
+from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.attack.auxiliary.utils import get_data_property
 
 
