@@ -1,6 +1,6 @@
 from federatedscope.core.auxiliaries.utils import get_random
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
-from federatedscope.core.worker.server import Server
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
+#from federatedscope.core.worker.server import Server
 from typing import Type
 from copy import deepcopy
 
@@ -123,7 +123,8 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
                 }, p.device)
 
 
-def wrap_nbafl_server(server: Type[Server]) -> Type[Server]:
+#def wrap_nbafl_server(server: Type[Server]) -> Type[Server]:
+def wrap_nbafl_server(server):
     """Register noise injector for the server
 
     """

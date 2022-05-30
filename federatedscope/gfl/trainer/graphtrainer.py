@@ -1,8 +1,8 @@
+import logging
+
 from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
-
-import logging
+from federatedscope.core.trainers import GeneralTorchTrainer
 
 logger = logging.getLogger(__name__)
 
