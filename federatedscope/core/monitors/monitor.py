@@ -18,6 +18,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+global_all_monitors = []  # used in standalone mode, to merge sys metric results for all workers
+
 
 class Monitor(object):
     """
@@ -54,6 +56,16 @@ class Monitor(object):
         self.local_convergence_round = 0  # total fl rounds to convergence
         self.local_convergence_wall_time = 0
 
+        if self.wandb_online_track:
+            global_all_monitors.append(self)
+        if self.use_wandb:
+            try:
+                import wandb
+            except ImportError:
+                logger.error(
+                    "cfg.wandb.use=True but not install the wandb package")
+                exit()
+
     def global_converged(self):
         self.global_convergence_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
@@ -68,10 +80,16 @@ class Monitor(object):
         self.fl_end_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
 
+        system_metrics = self.get_sys_metrics()
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+        with open(sys_metric_f_name, "a") as f:
+            f.write(json.dumps(system_metrics) + "\n")
+
+    def get_sys_metrics(self, verbose=True):
         system_metrics = {
             "id": self.monitored_object.ID,
             "fl_end_time_minutes": self.fl_end_wall_time.total_seconds() /
-            60 if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
+                                   60 if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
             "total_model_size": self.total_model_size,
             "total_flops": self.total_flops,
             "total_upload_bytes": self.total_upload_bytes,
@@ -79,20 +97,19 @@ class Monitor(object):
             "global_convergence_round": self.global_convergence_round,
             "local_convergence_round": self.local_convergence_round,
             "global_convergence_time_minutes": self.
-            global_convergence_wall_time.total_seconds() / 60 if isinstance(
+                                                   global_convergence_wall_time.total_seconds() / 60 if isinstance(
                 self.global_convergence_wall_time, datetime.timedelta) else 0,
             "local_convergence_time_minutes": self.local_convergence_wall_time.
-            total_seconds() / 60 if isinstance(
+                                                  total_seconds() / 60 if isinstance(
                 self.local_convergence_wall_time, datetime.timedelta) else 0,
         }
-        logger.info(
-            f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}"
-        )
-        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
-        with open(sys_metric_f_name, "a") as f:
-            f.write(json.dumps(system_metrics) + "\n")
+        if verbose:
+            logger.info(
+                f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}"
+            )
+        return system_metrics
 
-    def merge_system_metrics_simulation_mode(self):
+    def merge_system_metrics_simulation_mode(self, file_io=True, from_global_monitors=False):
         """
             average the system metrics recorded in "system_metrics.json" by all workers
         :return:
@@ -104,19 +121,32 @@ class Monitor(object):
                 "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
             )
             return
-
         all_sys_metrics = defaultdict(list)
         avg_sys_metrics = defaultdict()
         std_sys_metrics = defaultdict()
-        with open(sys_metric_f_name, "r") as f:
-            for line in f:
-                res = json.loads(line)
+
+        if file_io:
+            with open(sys_metric_f_name, "r") as f:
+                for line in f:
+                    res = json.loads(line)
+                    if all_sys_metrics is None:
+                        all_sys_metrics = res
+                        all_sys_metrics["id"] = "all"
+                    else:
+                        for k, v in res.items():
+                            all_sys_metrics[k].append(v)
+        elif from_global_monitors:
+            for monitor in global_all_monitors:
+                res = monitor.get_sys_metrics(verbose=False)
                 if all_sys_metrics is None:
                     all_sys_metrics = res
                     all_sys_metrics["id"] = "all"
                 else:
                     for k, v in res.items():
                         all_sys_metrics[k].append(v)
+        else:
+            raise ValueError("file_io or from_monitors should be True: "
+                             f"but got file_io={file_io}, from_monitors={from_global_monitors}")
 
         for k, v in all_sys_metrics.items():
             if k == "id":
@@ -138,15 +168,20 @@ class Monitor(object):
         logger.info(
             f"After merging the system metrics from all works, we got std: {std_sys_metrics}"
         )
-        with open(sys_metric_f_name, "a") as f:
-            f.write(json.dumps(avg_sys_metrics) + "\n")
-            f.write(json.dumps(std_sys_metrics) + "\n")
+        if file_io:
+            with open(sys_metric_f_name, "a") as f:
+                f.write(json.dumps(avg_sys_metrics) + "\n")
+                f.write(json.dumps(std_sys_metrics) + "\n")
 
         if self.use_wandb and self.wandb_online_track:
             try:
                 import wandb
-                wandb.log(avg_sys_metrics)
-                wandb.log(std_sys_metrics)
+                # wandb.log(avg_sys_metrics)
+                # wandb.log(std_sys_metrics)
+                for k, v in avg_sys_metrics.items():
+                    wandb.summary[k] = v
+                for k, v in std_sys_metrics.items():
+                    wandb.summary[k] = v
             except ImportError:
                 logger.error(
                     "cfg.wandb.use=True but not install the wandb package")
@@ -200,7 +235,9 @@ class Monitor(object):
                     for line in f:
                         res = json.loads(line)
                         if res["id"] in ["sys_avg", "sys_std"]:
-                            wandb.log(res)
+                            # wandb.log(res)
+                            for k, v in res.items():
+                                wandb.summary[k] = v
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
@@ -515,7 +552,9 @@ class Monitor(object):
                         line,
                         self.log_res_best,
                         raw_out=False)
-                    wandb.log(self.log_res_best)
+                    #wandb.log(self.log_res_best)
+                    for k, v in self.log_res_best:
+                        wandb.summary[k] = v
                 except ImportError:
                     logger.error(
                         "cfg.wandb.use=True but not install the wandb package")

@@ -166,12 +166,7 @@ filters_each_line_all_nlp = OrderedDict(
     ]
 )
 
-res_of_each_line_generalization = OrderedDict()
-res_of_each_line_fair = OrderedDict()
-res_of_each_line_efficiency = OrderedDict()
-res_of_each_line_commu_acc_trade = OrderedDict()
-res_of_each_line_conver_acc_trade = OrderedDict()
-res_of_all_sweeps = OrderedDict()
+
 sweep_name_2_id = dict()
 column_names_generalization = [
     "best_client_summarized_weighted_avg/test_acc",
@@ -219,6 +214,27 @@ sorted_keys = OrderedDict(
 )
 expected_keys = set(list(sorted_keys.keys()))
 
+def bytes_to_unit_size(size_bytes):
+    import math
+    if size_bytes == 0:
+        return "0"
+    size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return f"{s}{size_name[i]}"
+
+def unit_size_to_bytes(size_str):
+    last_unit = size_str[-1]
+    # TODO
+    import math
+    if size_str == 0:
+        return "0"
+    size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
+    i = int(math.floor(math.log(size_str, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_str / p, 2)
+    return f"{s}{size_name[i]}"
 
 def get_best_runs_within_sweep(sweep_id_lists):
     best_run_list = []
@@ -246,7 +262,12 @@ order = '-' + 'summary_metrics.best_client_summarized_weighted_avg/val_acc'
 
 
 def print_table_datasets_list(filters_each_line_table):
-    global sweep, best_run
+    res_of_each_line_generalization = OrderedDict()
+    res_of_each_line_fair = OrderedDict()
+    res_of_each_line_efficiency = OrderedDict()
+    res_of_each_line_commu_acc_trade = OrderedDict()
+    res_of_each_line_conver_acc_trade = OrderedDict()
+    res_of_all_sweeps = OrderedDict()
     for data_name in filters_each_line_table:
         unseen_keys = copy.copy(expected_keys)
         print(f"======= processing dataset {data_name}")
@@ -269,7 +290,7 @@ def print_table_datasets_list(filters_each_line_table):
                     res_all_generalization.append(res)
                 except KeyError:
                     print(
-                        f"KeyError with key={column_names_generalization[0]}, sweep_id={sweep_id}, sweep_name={run_header}")
+                        f"KeyError with key={column_names_generalization[0]}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
                     wrong_sweep = True
                 if wrong_sweep:
                     continue
@@ -281,7 +302,7 @@ def print_table_datasets_list(filters_each_line_table):
                         res = best_run.summary[column_name]
                         res_all_generalization.append(res)
                     except KeyError:
-                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}")
+                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
                         wrong_sweep = True
                 if wrong_sweep:
                     continue
@@ -297,7 +318,7 @@ def print_table_datasets_list(filters_each_line_table):
                         res = best_run.summary[column_name]
                         res_all_fair.append(res)
                     except KeyError:
-                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}    ")
+                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
                         res_all_fair.append("-")
                         wrong_sweep = True
 
@@ -305,9 +326,16 @@ def print_table_datasets_list(filters_each_line_table):
             for column_name in column_names_efficiency:
                 try:
                     res = best_run.summary[column_name]
+                    contain_unit = False
+                    for size_unit in ["K", "M", "G", "T", "P", "E", "Z", "Y"]:
+                        if size_unit in str(res):
+                            contain_unit = True
+                    if not contain_unit:
+                        res = bytes_to_unit_size(float(res))
+
                     res_all_efficiency.append(res)
                 except KeyError:
-                    print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}")
+                    print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
                     wrong_sweep = True
                     res_all_efficiency.append("-")
 
@@ -360,15 +388,16 @@ def print_table_datasets_list(filters_each_line_table):
                 res_of_each_line_fair[method_header].extend(res_all_fair)
                 res_of_each_line_efficiency[method_header].extend(res_all_efficiency)
 
-            for missing_header in unseen_keys:
-                if missing_header not in res_of_each_line_generalization:
-                    res_of_each_line_generalization[missing_header] = ["-"] * 3
-                    res_of_each_line_fair[missing_header] = ["-"] * 3
-                    res_of_each_line_efficiency[missing_header] = ["-"] * 3
-                else:
-                    res_of_each_line_generalization[missing_header].extend(["-"] * 3)
-                    res_of_each_line_fair[missing_header].extend(["-"] * 3)
-                    res_of_each_line_efficiency[missing_header].extend(["-"] * 4)
+        for missing_header in unseen_keys:
+            print(f"the header is missing {missing_header} in dataset {data_name}")
+            if missing_header not in res_of_each_line_generalization:
+                res_of_each_line_generalization[missing_header] = ["-"] * 3
+                res_of_each_line_fair[missing_header] = ["-"] * 3
+                res_of_each_line_efficiency[missing_header] = ["-"] * 4
+            else:
+                res_of_each_line_generalization[missing_header].extend(["-"] * 3)
+                res_of_each_line_fair[missing_header].extend(["-"] * 3)
+                res_of_each_line_efficiency[missing_header].extend(["-"] * 4)
 
     print("\n=============res_of_each_line [Generalization]===============" + ",".join(
         list(filters_each_line_table.keys())))
@@ -425,8 +454,8 @@ def print_table_datasets_list(filters_each_line_table):
     #
 
 
-print_table_datasets_list(filters_each_line_main_table)
-# print_table_datasets_list(filters_each_line_femnist_all_s)
-# print_table_datasets_list(filters_each_line_all_cifar10)
-# print_table_datasets_list(filters_each_line_all_nlp)
-# print_table_datasets_list(filters_each_line_all_graph)
+#print_table_datasets_list(filters_each_line_main_table)
+#print_table_datasets_list(filters_each_line_femnist_all_s)
+#print_table_datasets_list(filters_each_line_all_cifar10)
+print_table_datasets_list(filters_each_line_all_nlp)
+#print_table_datasets_list(filters_each_line_all_graph)
