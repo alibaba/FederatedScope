@@ -3,7 +3,7 @@ from wandb.wandb_torch import torch
 
 from federatedscope.core.monitors import Monitor
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.register import register_trainer
 
 import logging

@@ -24,7 +24,7 @@ class FedExClient(Client):
 
         self._cfg.defrost()
         self._cfg.merge_from_list(cmd_args)
-        self._cfg.freeze()
+        self._cfg.freeze(inform=False)
 
         self.trainer.ctx.setup_vars()
 
@@ -53,9 +53,8 @@ class FedExClient(Client):
                                           role='Client #{}'.format(self.ID),
                                           return_raw=True))
 
-        # TODO: using validation loss as feedback and validation set size as weight
-        content = (sample_size, model_para_all, arms,
-                   results["train_avg_loss"])
+        results['arms'] = arms
+        content = (sample_size, model_para_all, results)
         self.comm_manager.send(
             Message(msg_type='model_para',
                     sender=self.ID,

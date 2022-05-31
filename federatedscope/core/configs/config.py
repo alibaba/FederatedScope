@@ -84,7 +84,7 @@ class CN(CfgNode):
                         else:
                             del v[k]
 
-    def freeze(self, save=True):
+    def freeze(self, save=True, inform=True):
         """
             1) make the cfg attributes immutable;
             2) save the frozen cfg_check_funcs into "self.outdir/config.yaml" for better reproducibility;
@@ -115,6 +115,7 @@ class CN(CfgNode):
                     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
                     wandb.config.update(cfg_yaml, allow_val_change=True)
 
+            if inform:
                 logger.info("the used configs are: \n" + str(tmp_cfg))
 
         super(CN, self).freeze()

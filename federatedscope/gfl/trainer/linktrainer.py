@@ -7,7 +7,7 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 
 import logging

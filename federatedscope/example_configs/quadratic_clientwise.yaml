@@ -1,0 +1,15 @@
+client_1:
+  optimizer:
+    lr: 0.625
+client_2:
+  optimizer:
+    lr: 0.125
+client_3:
+  optimizer:
+    lr: 0.125
+client_4:
+  optimizer:
+    lr: 0.125
+client_5:
+  optimizer:
+    lr: 0.025

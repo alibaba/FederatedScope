@@ -1,4 +1,5 @@
-from federatedscope.core.trainers.trainer import Trainer, GeneralTorchTrainer
+from federatedscope.core.trainers.trainer import Trainer
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.trainers.trainer_multi_model import GeneralMultiModelTrainer
 from federatedscope.core.trainers.trainer_pFedMe import wrap_pFedMeTrainer
 from federatedscope.core.trainers.trainer_Ditto import wrap_DittoTrainer

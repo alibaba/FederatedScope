@@ -1,5 +1,5 @@
 from federatedscope.register import register_trainer
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers import GeneralTorchTrainer
 
 
 class CVTrainer(GeneralTorchTrainer):

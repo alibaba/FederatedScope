@@ -43,7 +43,7 @@ def get_trainer(model=None,
                                           only_for_eval=only_for_eval,
                                           monitor=monitor)
         elif config.backend == 'tensorflow':
-            from federatedscope.core.trainers.tf_trainer import GeneralTFTrainer
+            from federatedscope.core.trainers import GeneralTFTrainer
             trainer = GeneralTFTrainer(model=model,
                                        data=data,
                                        device=device,
@@ -72,7 +72,8 @@ def get_trainer(model=None,
         ]:
             dict_path = "federatedscope.gfl.trainer.nodetrainer"
         elif config.trainer.type.lower() in [
-                'flitplustrainer', 'flittrainer', 'fedvattrainer', 'fedfocaltrainer'
+                'flitplustrainer', 'flittrainer', 'fedvattrainer',
+                'fedfocaltrainer'
         ]:
             dict_path = "federatedscope.gfl.flitplus.trainer"
         elif config.trainer.type.lower() in ['mftrainer']:
@@ -106,23 +107,23 @@ def get_trainer(model=None,
 
     # differential privacy plug-in
     if config.nbafl.use:
-        from federatedscope.core.trainers.trainer_nbafl import wrap_nbafl_trainer
+        from federatedscope.core.trainers import wrap_nbafl_trainer
         trainer = wrap_nbafl_trainer(trainer)
     if config.sgdmf.use:
-        from federatedscope.mf.trainer.trainer_sgdmf import wrap_MFTrainer
+        from federatedscope.mf.trainer import wrap_MFTrainer
         trainer = wrap_MFTrainer(trainer)
 
     # personalization plug-in
     if config.federate.method.lower() == "pfedme":
-        from federatedscope.core.trainers.trainer_pFedMe import wrap_pFedMeTrainer
+        from federatedscope.core.trainers import wrap_pFedMeTrainer
         # wrap style: instance a (class A) -> instance a (class A)
         trainer = wrap_pFedMeTrainer(trainer)
     elif config.federate.method.lower() == "ditto":
-        from federatedscope.core.trainers.trainer_Ditto import wrap_DittoTrainer
+        from federatedscope.core.trainers import wrap_DittoTrainer
         # wrap style: instance a (class A) -> instance a (class A)
         trainer = wrap_DittoTrainer(trainer)
     elif config.federate.method.lower() == "fedem":
-        from federatedscope.core.trainers.trainer_FedEM import FedEMTrainer
+        from federatedscope.core.trainers import FedEMTrainer
         # copy construct style: instance a (class A) -> instance b (class B)
         trainer = FedEMTrainer(model_nums=config.model.model_num_per_trainer,
                                base_trainer=trainer)
@@ -136,7 +137,7 @@ def get_trainer(model=None,
 
     # fed algorithm plug-in
     if config.fedprox.use:
-        from federatedscope.core.trainers.trainer_fedprox import wrap_fedprox_trainer
+        from federatedscope.core.trainers import wrap_fedprox_trainer
         trainer = wrap_fedprox_trainer(trainer)
 
     return trainer

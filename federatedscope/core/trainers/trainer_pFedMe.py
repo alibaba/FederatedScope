@@ -1,6 +1,6 @@
 import copy
 
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
 from typing import Type
 
