@@ -174,10 +174,8 @@ class FedOptAggregator(ClientsAvgAggregator):
         self.cfg = config
         self.model = model
         self.device = device
-        self.optimizer = get_optimizer(type=config.fedopt.type_optimizer,
-                                       model=self.model,
-                                       lr=config.fedopt.lr_server,
-                                       momentum=config.fedopt.momentum_server)
+        self.optimizer = get_optimizer(model=self.model,
+                                       **config.fedopt.optimizer)
 
     def aggregate(self, agg_info):
         new_model = super().aggregate(agg_info)

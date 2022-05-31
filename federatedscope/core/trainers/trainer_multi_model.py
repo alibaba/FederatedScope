@@ -96,10 +96,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         self.ctx.models = [self.ctx.model] + additional_models
 
         additional_optimizers = [
-            get_optimizer(self.cfg.optimizer.type,
-                          self.ctx.models[i],
-                          self.cfg.optimizer.lr,
-                          weight_decay=self.cfg.optimizer.weight_decay)
+            get_optimizer(self.ctx.models[i], **self.cfg.optimizer)
             for i in range(1, self.model_nums)
         ]
         self.ctx.optimizers = [self.ctx.optimizer] + additional_optimizers

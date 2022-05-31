@@ -67,16 +67,10 @@ def init_Ditto_ctx(base_trainer):
     ctx.local_model = copy.deepcopy(ctx.model)  # the personalized model
     ctx.models = [ctx.local_model, ctx.global_model]
 
-    ctx.optimizer_for_global_model = get_optimizer(
-        cfg.optimizer.type,
-        ctx.global_model,
-        cfg.optimizer.lr,
-        weight_decay=cfg.optimizer.weight_decay)
-    ctx.optimizer_for_local_model = get_optimizer(
-        cfg.optimizer.type,
-        ctx.local_model,
-        cfg.personalization.lr,
-        weight_decay=cfg.optimizer.weight_decay)
+    ctx.optimizer_for_global_model = get_optimizer(ctx.global_model,
+                                                   **cfg.optimizer)
+    ctx.optimizer_for_local_model = get_optimizer(ctx.local_model,
+                                                  **cfg.optimizer)
     ctx.optimizer_for_local_model = wrap_regularized_optimizer(
         ctx.optimizer_for_local_model, cfg.personalization.regular_weight)
 

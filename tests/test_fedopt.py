@@ -51,7 +51,7 @@ class FedOptTest(unittest.TestCase):
         cfg.trainer.type = 'cvtrainer'
         cfg.seed = 123
 
-        cfg.fedopt.lr_server = 1.
+        cfg.fedopt.optimizer.lr = 1.
 
         return backup_cfg
 

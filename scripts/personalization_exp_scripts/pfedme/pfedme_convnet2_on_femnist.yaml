@@ -28,6 +28,7 @@ personalization:
 optimizer:
   lr: 0.5
   weight_decay: 0.0
+grad:
   grad_clip: 5.0
 criterion:
   type: CrossEntropyLoss

@@ -26,9 +26,6 @@ class FEMNISTTest(unittest.TestCase):
         cfg.federate.sample_client_num = 5
         cfg.federate.client_num = 10
 
-        cfg.federate.method = "Ditto"
-        cfg.personalization.regular_weight = 0.1
-
         cfg.data.root = 'test_data/'
         cfg.data.type = 'femnist'
         cfg.data.splits = [0.6, 0.2, 0.2]
@@ -46,8 +43,10 @@ class FEMNISTTest(unittest.TestCase):
         cfg.model.hidden = 2048
         cfg.model.out_channels = 62
 
+        cfg.optimizer.type = "Adam"
         cfg.optimizer.lr = 0.001
-        cfg.optimizer.weight_decay = 0.0
+        cfg.optimizer.betas = [0.9, 0.999]
+        cfg.optimizer.weight_decay = 0.001
         cfg.grad.grad_clip = 5.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
@@ -58,7 +57,6 @@ class FEMNISTTest(unittest.TestCase):
 
     def test_femnist_standalone(self):
         init_cfg = global_cfg.clone()
-
         backup_cfg = self.set_config_femnist(init_cfg)
         setup_seed(init_cfg.seed)
         update_logger(init_cfg)
@@ -76,8 +74,8 @@ class FEMNISTTest(unittest.TestCase):
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertLess(
-            test_best_results["client_summarized_weighted_avg"]
-            ['test_avg_loss'], 10)
+            test_best_results["client_summarized_weighted_avg"]['test_loss'],
+            600)
 
 
 if __name__ == '__main__':
