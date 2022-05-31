@@ -12,6 +12,10 @@ FederatedScope is a comprehensive federated learning platform that provides conv
 
 A detailed tutorial is provided on our [website](https://federatedscope.io/).
 
+## News
+- [05/2022] Congratulation! Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!
+- [05/2022] We release FederatedScope v0.1.0! 
+
 ## Quick Start
 
 We provide an end-to-end example for users to start running a standard FL course with FederatedScope.
