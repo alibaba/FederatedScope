@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 class TrialExecutor(threading.Thread):
     """This class is responsible for executing the FL procedure with a given trial configuration in another thread.
     """
-
     def __init__(self, cfg_idx, signal, returns, trial_config):
         threading.Thread.__init__(self)
 
@@ -66,7 +65,6 @@ def get_scheduler(init_cfg):
 class Scheduler(object):
     """The base class for describing HPO algorithms
     """
-
     def __init__(self, cfg):
         """
             Arguments:
@@ -78,7 +76,7 @@ class Scheduler(object):
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
         self._init_configs = self._setup()
-        
+
         logger.info(self._init_configs)
 
     def _setup(self):
@@ -100,9 +98,12 @@ class Scheduler(object):
 class ModelFreeBase(Scheduler):
     """To attempt a collection of configurations exhaustively.
     """
-
     def _setup(self):
-        return [cfg.get_dictionary() for cfg in self._search_space.sample_configuration(size=self._cfg.hpo.init_cand_num)]
+        return [
+            cfg.get_dictionary()
+            for cfg in self._search_space.sample_configuration(
+                size=self._cfg.hpo.init_cand_num)
+        ]
 
     def _evaluate(self, configs):
         flags = [threading.Event() for _ in range(self._cfg.hpo.num_workers)]
@@ -120,7 +121,9 @@ class ModelFreeBase(Scheduler):
                 completed_trial_results = thread_results[available_worker]
                 cfg_idx = completed_trial_results['cfg_idx']
                 perfs[cfg_idx] = completed_trial_results['perf']
-                logger.info("Evaluate the {}-th config {} and get performance {}".format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
+                logger.info(
+                    "Evaluate the {}-th config {} and get performance {}".
+                    format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
                 thread_results[available_worker].clear()
 
             trial_cfg = self._cfg.clone()
@@ -139,7 +142,9 @@ class ModelFreeBase(Scheduler):
                 completed_trial_results = thread_results[i]
                 cfg_idx = completed_trial_results['cfg_idx']
                 perfs[cfg_idx] = completed_trial_results['perf']
-                logger.info("Evaluate the {}-th config {} and get performance {}".format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
+                logger.info(
+                    "Evaluate the {}-th config {} and get performance {}".
+                    format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
                 thread_results[i].clear()
 
         return perfs
@@ -147,11 +152,11 @@ class ModelFreeBase(Scheduler):
     def optimize(self):
         perfs = self._evaluate(self._init_configs)
 
-        results = summarize_hpo_results(
-            self._init_configs,
-            perfs,
-            white_list=set(self._search_space.keys()),
-            desc=self._cfg.hpo.larger_better)
+        results = summarize_hpo_results(self._init_configs,
+                                        perfs,
+                                        white_list=set(
+                                            self._search_space.keys()),
+                                        desc=self._cfg.hpo.larger_better)
         logger.info(
             "====================================== HPO Final ========================================"
         )
@@ -166,7 +171,6 @@ class ModelFreeBase(Scheduler):
 class IterativeScheduler(ModelFreeBase):
     """The base class for HPO algorithms that divide the whole optimization procedure into iterations.
     """
-
     def _setup(self):
         self._stage = 0
         return super(IterativeScheduler, self)._setup()
@@ -226,14 +230,13 @@ class IterativeScheduler(ModelFreeBase):
             )
             current_configs = self._generate_next_population(
                 current_configs, current_perfs)
-        
+
         return current_configs
 
 
 class SuccessiveHalvingAlgo(IterativeScheduler):
     """Successive Halving Algorithm (SHA) tailored to FL setting, where, in each iteration, just a limited number of communication rounds are allowed for each trial.
     """
-
     def _setup(self):
         init_configs = super(SuccessiveHalvingAlgo, self)._setup()
 
@@ -247,8 +250,7 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
                 trial_cfg[
                     'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
                         self._stage]
-                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[
-                    self._stage]
+                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
 
         return init_configs
 
@@ -259,8 +261,9 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
         indices = [(i, val) for i, val in enumerate(perfs)]
         indices.sort(key=lambda x: x[1], reverse=self._cfg.hpo.larger_better)
         next_population = [
-            configs[tp[0]]
-            for tp in indices[:math.ceil(float(len(indices)) / self._cfg.hpo.sha.elim_rate)]
+            configs[tp[0]] for tp in
+            indices[:math.
+                    ceil(float(len(indices)) / self._cfg.hpo.sha.elim_rate)]
         ]
 
         for trial_cfg in next_population:
@@ -272,8 +275,7 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
                 trial_cfg[
                     'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
                         self._stage]
-                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[
-                    self._stage]
+                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
 
         return next_population
 
