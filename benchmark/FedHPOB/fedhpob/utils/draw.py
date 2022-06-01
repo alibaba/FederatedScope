@@ -18,7 +18,7 @@ def logloader(file):
     return log
 
 
-def ecdf(model, data_list, sample_client=None, key='test_acc'):
+def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
     import datetime
     from fedhpob.benchmarks import TabularBenchmark
 
@@ -32,7 +32,7 @@ def ecdf(model, data_list, sample_client=None, key='test_acc'):
 
     # Get target data (tabular only)
     for data in data_list:
-        benchmark = TabularBenchmark(model, data, device=-1)
+        benchmark = TabularBenchmark(model, data, algo, device=-1)
         target = [0]  # Init with zero
         for idx in tqdm(range(len(benchmark.table))):
             row = benchmark.table.iloc[idx]

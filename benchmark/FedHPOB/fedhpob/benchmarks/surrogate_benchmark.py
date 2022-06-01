@@ -7,17 +7,16 @@ class SurrogateBenchmark(BaseBenchmark):
                  model,
                  dname,
                  algo,
-                 modeldir=None,
+                 modeldir='data/surrogate_model/',
                  datadir='data/tabular_data/',
                  rng=None,
                  cost_mode='estimated',
                  **kwargs):
         self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
-        assert datadir or modeldir, 'Please provide at least one of `datadir` and `modeldir`.'
-        if not modeldir:
-            self.surrogate_models, self.meta_info, self.X, self.Y = build_surrogate_model(
+        try:
+            self.surrogate_models, self.meta_info, self.X, self.Y = load_surrogate_model(
                 datadir, model, dname, algo)
-        else:
+        except:
             self.surrogate_models, self.meta_info, self.X, self.Y = load_surrogate_model(
                 modeldir, model, dname, algo)
         super(SurrogateBenchmark, self).__init__(model, dname, algo, rng, **kwargs)
