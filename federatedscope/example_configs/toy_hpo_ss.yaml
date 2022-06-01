@@ -1,0 +1,8 @@
+optimizer.lr:
+  type: float
+  lower: 0.001
+  upper: 0.5
+  log: True
+optimizer.weight_decay:
+  type: cate
+  choices: [0.0, 0.0005, 0.005]

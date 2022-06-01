@@ -45,9 +45,12 @@ class FedExServer(Server):
         if config.hpo.fedex.flatten_ss:
             self._cfsp = [random_search(tbd_config, config.hpo.fedex.num_arms)]
         else:
-            # TODO: cross-producting the grids of all aspects
-            # in which case, self._cfsp will be a list with length equal to #aspects
-            pass
+            self._cfsp = []
+            for k, v in tbd_config.items():
+                if isinstance(v, Discrete):
+                    self._cfsp.append(None)
+                else:
+                    self._cfsp.append(None)
         sizes = [len(cand_set) for cand_set in self._cfsp]
         eta0 = 'auto'
         self._eta0 = [
