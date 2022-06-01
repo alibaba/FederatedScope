@@ -425,7 +425,8 @@ def print_table_datasets_list(filters_each_line_table):
         list(filters_each_line_table.keys())))
     for key in sorted_keys:
         res_of_each_line_commu_acc_trade[key] = []
-        for i in range(3):
+        dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
+        for i in range(dataset_num):
             res_of_each_line_commu_acc_trade[key].extend(
                 [str(res_of_each_line_efficiency[key][i * 4])] + \
                 [str(res_of_each_line_efficiency[key][i * 4 + 1])] + \
@@ -457,8 +458,8 @@ def print_table_datasets_list(filters_each_line_table):
     #
 
 
-#print_table_datasets_list(filters_each_line_main_table)
-#print_table_datasets_list(filters_each_line_femnist_all_s)
-#print_table_datasets_list(filters_each_line_all_cifar10)
+# print_table_datasets_list(filters_each_line_main_table)
+# print_table_datasets_list(filters_each_line_femnist_all_s)
+# print_table_datasets_list(filters_each_line_all_cifar10)
 print_table_datasets_list(filters_each_line_all_nlp)
 #print_table_datasets_list(filters_each_line_all_graph)

@@ -29,10 +29,13 @@ def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10):
         tried_time += 1
         if tried_time > 50:
             logger.warning(
-                f"In the dirichlet non.i.i.d. split, we tried {tried_time} times but still do not fulfill the min_size requirement with {min_size}, Please try to increase the min_size or consider other splitter. "
+                f"In the dirichlet non.i.i.d. split, we tried {tried_time} times but still do not fulfill the min_size requirement with {min_size}, Please try to increase the min_size or consider other splitter."
             )
             if tried_time > 60:
-                logger.warning(f"Too many tried times, we stop the trying")
+                logger.warning(f"Too many tried times, we set the min_size to be 1")
+                min_size = 1
+            if tried_time > 70:
+                logger.warning(f"Too many tried times for min_size=1, we stop the trying")
                 break
         for k in range(classes):
             # for label k

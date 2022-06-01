@@ -549,12 +549,16 @@ def load_external_data(config=None):
     }
 
     # Build dict of Dataloader
+    sample_num_all_client = defaultdict(list)
     for split in dataset:
         if dataset[split] is None:
             continue
         all_ds = splitter(dataset[split])
         for i, ds in enumerate(all_ds):
+            if isinstance(ds, (torch.utils.data.Dataset, list)):
+                sample_num_all_client[split].append(len(ds))
             if split == 'train':
+
                 data_local_dict[i + 1][split] = DataLoader(
                     ds,
                     batch_size=modified_config.data.batch_size,
@@ -566,6 +570,13 @@ def load_external_data(config=None):
                     batch_size=modified_config.data.batch_size,
                     shuffle=False,
                     num_workers=modified_config.data.num_workers)
+    from scipy import stats
+    for k, v in sample_num_all_client.items():
+        stats_res = stats.describe(v)
+        if stats_res.minmax[1] == 0:
+            logger.warning(f"For data split {k}, the max sample num in the client is 0. Please check whether this you want")
+
+        logger.info(f"For data split {k}, the stats_res over all client is {stats_res}")
 
     return data_local_dict, modified_config
 

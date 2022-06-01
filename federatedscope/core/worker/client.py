@@ -44,7 +44,7 @@ class Client(Worker):
         # the unseen_client indicates that whether this client contributes to FL process by
         # training on its local data and uploading the local model update,which is useful for check the
         # participation generalization gap in [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
-        self.unseen_client = False
+        self.is_unseen_client = False
 
         # Attack only support the stand alone model;
         # Check if is a attacker; a client is a attacker if the config.attack.attack_method is provided
@@ -204,17 +204,17 @@ class Client(Worker):
             round, sender, content = message.state, message.sender, message.content
             self.trainer.update(content)
             self.state = round
-            if self.early_stopper.early_stopped and self._cfg.federate.method in [
-                    "local", "global"
-            ]:
-                sample_size, model_para_all, results = 0, self.trainer.get_model_para(
-                ), {}
+            skip_train_isolated_or_gloabl_mode = self.early_stopper.early_stopped and self._cfg.federate.method in [
+                "local", "global"
+            ]
+            if skip_train_isolated_or_gloabl_mode:
                 logger.info(
                     f"Client #{self.ID} has been early stopped, we will skip the local training"
                 )
                 self._monitor.local_converged()
-            if self.unseen_client:
-                # for the unseen client, do not local train and upload local model
+            if self.is_unseen_client or skip_train_isolated_or_gloabl_mode:
+                # for these cases (1) unseen client (2) isolated_global_mode,
+                # we do not local train and upload local model
                 sample_size, model_para_all, results = 0, None, None
             else:
                 if self.early_stopper.early_stopped and self._monitor.local_convergence_round == 0:
@@ -231,7 +231,7 @@ class Client(Worker):
                                                   return_raw=True))
 
             # Return the feedbacks to the server after local update
-            if self._cfg.federate.use_ss and not self.unseen_client:
+            if self._cfg.federate.use_ss and not self.is_unseen_client:
                 single_model_case = True
                 if isinstance(model_para_all, list):
                     assert isinstance(model_para_all[0], dict), \
@@ -337,7 +337,7 @@ class Client(Worker):
         self.state = message.state
         if message.content != None:
             self.trainer.update(message.content)
-        role = f'Unseen Client #{self.ID}' if self.unseen_client else f'Client #{self.ID}'
+        role = f'Unseen Client #{self.ID}' if self.is_unseen_client else f'Client #{self.ID}'
         if self.early_stopper.early_stopped and self._cfg.federate.method in [
                 "local", "global"
         ]:

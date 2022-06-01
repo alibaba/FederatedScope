@@ -94,7 +94,7 @@ class FedRunner(object):
             self.client[client_id] = self._setup_client(
                 client_id=client_id, client_model=self._shared_client_model)
             if client_id in unseen_clients_id:
-                self.client[client_id].unseen_client = True
+                self.client[client_id].is_unseen_client = True
 
     def _setup_for_distributed(self):
         """
