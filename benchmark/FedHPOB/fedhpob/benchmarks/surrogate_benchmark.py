@@ -15,10 +15,10 @@ class SurrogateBenchmark(BaseBenchmark):
         self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
         try:
             self.surrogate_models, self.meta_info, self.X, self.Y = load_surrogate_model(
-                datadir, model, dname, algo)
-        except:
-            self.surrogate_models, self.meta_info, self.X, self.Y = load_surrogate_model(
                 modeldir, model, dname, algo)
+        except:
+            self.surrogate_models, self.meta_info, self.X, self.Y = build_surrogate_model(
+                datadir, model, dname, algo)
         super(SurrogateBenchmark, self).__init__(model, dname, algo, rng, **kwargs)
 
     def _check(self, configuration, fidelity):
