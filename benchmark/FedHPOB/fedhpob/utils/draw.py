@@ -6,6 +6,10 @@ from tqdm import tqdm
 
 FONTSIZE = 30
 MARKSIZE = 25
+COLORS = [
+    u'#1f77b4', u'#ff7f0e', u'#2ca02c', u'#d62728', u'#9467bd', u'#8c564b',
+    u'#e377c2', u'#7f7f7f', u'#bcbd22', u'#17becf'
+]
 
 
 def logloader(file):
@@ -100,6 +104,83 @@ def get_mean_loss(traj_dict):
     return xs, rank / len(traj_dict)
 
 
+def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
+    # BBO + MF
+    plt.figure(figsize=(10, 7.5))
+    plt.xticks(np.linspace(0, 1, 5),
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
+    plt.ylabel(Y_label, size=FONTSIZE)
+
+    for idx, rank in enumerate(mean_ranks):
+        plt.plot(xs,
+                 rank,
+                 linewidth=1,
+                 color=COLORS[idx],
+                 markersize=MARKSIZE)
+    plt.legend(opt_all,
+               fontsize=23,
+               loc='lower right',
+               bbox_to_anchor=(1.35, 0))
+    plt.savefig(
+        f'{dataset}_{family}_{suffix}_rank_over_time_all{Y_label}.pdf',
+        bbox_inches='tight')
+    plt.close()
+
+    # BBO
+    plt.figure(figsize=(10, 7.5))
+    plt.xticks(np.linspace(0, 1, 5),
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
+    plt.ylabel(Y_label, size=FONTSIZE)
+
+    for idx, rank in enumerate(mean_ranks[:5]):
+        plt.plot(xs,
+                 rank,
+                 linewidth=1,
+                 color=COLORS[idx],
+                 markersize=MARKSIZE)
+    plt.legend(opt_all[:5],
+               fontsize=23,
+               loc='lower right',
+               bbox_to_anchor=(1.35, 0))
+    plt.savefig(
+        f'{dataset}_{family}_{suffix}_rank_over_time_bbo{Y_label}.pdf',
+        bbox_inches='tight')
+    plt.close()
+
+    # MF
+    plt.figure(figsize=(10, 7.5))
+    plt.xticks(np.linspace(0, 1, 5),
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
+    plt.ylabel(Y_label, size=FONTSIZE)
+
+    for idx, rank in enumerate(mean_ranks[-5:]):
+        plt.plot(xs,
+                 rank,
+                 linewidth=1,
+                 color=COLORS[idx + 5],
+                 markersize=MARKSIZE)
+    plt.legend(opt_all[-5:],
+               fontsize=23,
+               loc='lower right',
+               bbox_to_anchor=(1.35, 0))
+    plt.savefig(
+        f'{dataset}_{family}_{suffix}_rank_over_time_mf_{Y_label}.pdf',
+        bbox_inches='tight')
+    plt.close()
+
+
 def rank_over_time(root,
                    family='all',
                    mode='tabular',
@@ -144,32 +225,27 @@ def rank_over_time(root,
             traj[dataset][i] = []
             for opt in opt_all:
                 for file in files_i:
-                    if file.startswith(opt):
+                    if file.startswith(f'{opt}_'):
                         traj[dataset][i].append(
                             logloader(os.path.join(path, file)))
 
     # Draw over dataset
+    family_rank = []
     for dataset in traj:
         if loss:
             xs, mean_ranks = get_mean_loss(traj[dataset])
+            Y_label = 'Loss'
         else:
             xs, mean_ranks = get_mean_rank(traj[dataset])
-        plt.figure(figsize=(10, 7.5))
-        plt.xticks(np.linspace(0, 1, 5),
-                   labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
-                   fontsize=FONTSIZE)
-        plt.yticks(fontsize=FONTSIZE)
+            Y_label = 'Mean rank'
+        if len(family_rank):
+            family_rank += mean_ranks
+        else:
+            family_rank = mean_ranks
+        draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label)
 
-        plt.xlabel('Fraction of budget', size=FONTSIZE)
-        plt.ylabel('Mean rank', size=FONTSIZE)
-
-        for rank in mean_ranks:
-            plt.plot(xs, rank, linewidth=1, markersize=MARKSIZE)
-        plt.legend(opt_all, fontsize=23, loc='lower right', bbox_to_anchor=(1.35, 0))
-        plt.savefig(f'{dataset}_{family}_{suffix}_rank_over_time.pdf',
-                    bbox_inches='tight')
-        # plt.show()
-        plt.close()
+    # Draw entire family
+    draw_rank(family_rank, xs, opt_all, 'entire', family, suffix, Y_label)
 
 
 if __name__ == '__main__':
