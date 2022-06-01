@@ -1,8 +1,11 @@
 import copy
 import json
+import os
 
 import wandb
 from collections import OrderedDict
+
+import yaml
 
 api = wandb.Api()
 
@@ -282,8 +285,11 @@ def print_table_datasets_list(filters_each_line_table):
             res_all_fair = []
             res_all_efficiency = []
             if best_run.state != "finished":
-                print(f"Waring: the best_run with id={best_run} has state {best_run.state}. "
+                print(f"==================Waring: the best_run with id={best_run} has state {best_run.state}. "
                       f"In weep_id={sweep_id}, sweep_name={run_header}")
+            else:
+                print(f"Finding the best_run with id={best_run}. "
+                      f"In sweep_id={sweep_id}, sweep_name={run_header}")
 
             # for generalization results
             wrong_sweep = False
@@ -345,11 +351,21 @@ def print_table_datasets_list(filters_each_line_table):
             run_header = str.lower(run_header)
 
             # fix some run_header error
-            best_run_cfg = json.loads(best_run.json_config)
+            #best_run_cfg = json.loads(best_run.json_config)
+            best_run_cfg = best_run.config
+
+            def remove_a_key(d, remove_key):
+                if isinstance(d, dict):
+                    for key in list(d.keys()):
+                        if key == remove_key:
+                            del d[key]
+                        else:
+                            remove_a_key(d[key], remove_key)
+            remove_a_key(best_run_cfg, "cfg_check_funcs")
             old_run_header = run_header
-            if best_run_cfg["trainer"]["value"]["finetune"]["before_eval"] is True and "ft" not in run_header:
+            if best_run_cfg["trainer"]["finetune"]["before_eval"] is True and "ft" not in run_header:
                 run_header = run_header + ",ft"
-            elif best_run_cfg["fedopt"]["value"]["use"] is True and "fedopt" not in run_header:
+            elif best_run_cfg["fedopt"]["use"] is True and "fedopt" not in run_header:
                 run_header = run_header + ",fedopt"
             if old_run_header != run_header:
                 print(f"processed {old_run_header} to new run header {run_header}")
@@ -381,6 +397,14 @@ def print_table_datasets_list(filters_each_line_table):
             method_header = "-".join(sorted(filter_split_res))
             if method_header in unseen_keys:
                 unseen_keys.remove(method_header)
+
+            # save config
+            parent_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+            best_cfg_dir = os.path.join(parent_dir, "yaml_best_runs")
+            os.makedirs(best_cfg_dir, exist_ok=True)
+            yaml_f_name = f"{sorted_keys[method_header]}_{data_name}.yaml"
+            with open(os.path.join(best_cfg_dir, yaml_f_name), 'w') as yml_f:
+                yaml.dump(best_run_cfg, yml_f, allow_unicode=True)
 
             if method_header not in res_of_each_line_generalization:
                 res_of_each_line_generalization[method_header] = res_all_generalization
@@ -440,7 +464,8 @@ def print_table_datasets_list(filters_each_line_table):
         list(filters_each_line_table.keys())))
     for key in sorted_keys:
         res_of_each_line_conver_acc_trade[key] = []
-        for i in range(3):
+        dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
+        for i in range(dataset_num):
             res_of_each_line_conver_acc_trade[key].extend(
                 [str(res_of_each_line_efficiency[key][i * 4 + 3])] + \
                 # [str(res_of_each_line_efficiency[key][i * 4 + 4])] + \
@@ -458,8 +483,8 @@ def print_table_datasets_list(filters_each_line_table):
     #
 
 
-# print_table_datasets_list(filters_each_line_main_table)
-# print_table_datasets_list(filters_each_line_femnist_all_s)
-# print_table_datasets_list(filters_each_line_all_cifar10)
+print_table_datasets_list(filters_each_line_main_table)
+print_table_datasets_list(filters_each_line_femnist_all_s)
+print_table_datasets_list(filters_each_line_all_cifar10)
 print_table_datasets_list(filters_each_line_all_nlp)
-#print_table_datasets_list(filters_each_line_all_graph)
+print_table_datasets_list(filters_each_line_all_graph)
