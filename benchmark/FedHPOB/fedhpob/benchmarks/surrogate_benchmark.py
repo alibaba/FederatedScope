@@ -35,9 +35,8 @@ class SurrogateBenchmark(BaseBenchmark):
             x_in.append(configuration[key])
         for key in self.fidelity_space:
             x_in.append(fidelity[key])
-        return model.predict([x_in])
+        return model.predict([x_in])[0]
 
-    # noinspection DuplicatedCode
     def objective_function(self,
                            configuration,
                            fidelity=None,
