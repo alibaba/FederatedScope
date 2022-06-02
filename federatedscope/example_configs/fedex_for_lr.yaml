@@ -21,5 +21,6 @@ model:
 hpo:
   fedex:
     use: True
-    ss: 'federatedscope/example_configs/fedex_flat_search_space.yaml'
+#    ss: 'federatedscope/example_configs/fedex_flat_search_space.yaml'
+    ss: 'federatedscope/example_configs/fedex_grid_search_space.yaml'
     diff: True

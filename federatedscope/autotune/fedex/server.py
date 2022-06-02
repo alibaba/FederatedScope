@@ -100,26 +100,20 @@ class FedExServer(Server):
 
         return np.array(self._trace[key])
 
-    def sample(self, mle=False):
+    def sample(self):
         """samples from configs using current probability vector"""
 
         # determine index
-        if mle or self._stop_exploration:
-            if self._grid:
-                cfg_idx = {pn: theta.argmax() for theta, pn in zip(self._theta, self._grid)}
-            else:
-                cfg_idx = [theta.argmax() for theta in self._theta]
+        if self._stop_exploration:
+            cfg_idx = [theta.argmax() for theta in self._theta]
         else:
-            if self._grid:
-                cfg_idx = {pn: np.random.choice(len(theta), p=theta) for theta, pn in zip(self._theta, self._grid)}
-            else:
-                cfg_idx = [
-                    np.random.choice(len(theta), p=theta) for theta in self._theta
-                ]
+            cfg_idx = [
+                np.random.choice(len(theta), p=theta) for theta in self._theta
+            ]
 
         # get the sampled value(s)
         if self._grid:
-            sampled_cfg = {k: self._cfsp[k][v] for k, v in cfg_idx}
+            sampled_cfg = {pn: cands[i] for pn, cands, i in zip(self._grid, self._cfsp, cfg_idx)}
         else:
             sampled_cfg = self._cfsp[0][cfg_idx[0]]
 
@@ -157,7 +151,7 @@ class FedExServer(Server):
         # sample the hyper-parameter config specific to the clients
 
         for rcv_idx in receiver:
-            cfg_idx, sampled_cfg = self.sample(_index=self._index)
+            cfg_idx, sampled_cfg = self.sample()
             content = {
                 'model_param': model_para,
                 "arms": cfg_idx,
@@ -189,22 +183,22 @@ class FedExServer(Server):
     def update_policy(self, feedbacks):
         """Update the policy. This implementation is borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx/blob/150fac03857a3239429734d59d319da71191872e/hyper.py#L151)
         Arguments:
-            feedbacks (list): each element is a tuple in the form (sample_size, arms, loss)
+            feedbacks (list): each element is a dict containing "arms" and necessary feedback.
         """
 
         index = [elem['arms'] for elem in feedbacks]
-        weight = np.asarray([elem['val_total'] for elem in feedbacks],
-                            dtype=np.float64)
-        weight /= np.sum(weight)
         before = np.asarray(
             [elem['val_avg_loss_before'] for elem in feedbacks])
         after = np.asarray([elem['val_avg_loss_after'] for elem in feedbacks])
+        weight = np.asarray([elem['val_total'] for elem in feedbacks],
+                            dtype=np.float64)
+        weight /= np.sum(weight)
 
         if self._trace['refine']:
             trace = self.trace('refine')
-            if self._cfg.hpo.fedex.diff:
+            if self._diff:
                 trace -= self.trace('global')
-            baseline = discounted_mean(trace, self._cfg.hpo.fedex.gamma)
+            baseline = discounted_mean(trace, self._baseline)
         else:
             baseline = 0.0
         self._trace['global'].append(np.inner(before, weight))
@@ -218,21 +212,21 @@ class FedExServer(Server):
             grad = np.zeros(len(z))
             for idx, s, w in zip(
                     index,
-                    after - before if self._cfg.hpo.fedex.diff else after,
+                    after - before if self._diff else after,
                     weight):
                 grad[idx[i]] += w * (s - baseline) / theta[idx[i]]
-            if self._cfg.hpo.fedex.sched == 'adaptive':
+            if self._sched == 'adaptive':
                 self._store[i] += norm(grad, float('inf'))**2
                 denom = np.sqrt(self._store[i])
-            elif self._cfg.hpo.fedex.sched == 'aggressive':
+            elif self._sched == 'aggressive':
                 denom = 1.0 if np.all(
                     grad == 0.0) else norm(grad, float('inf'))
-            elif self._cfg.hpo.fedex.sched == 'auto':
+            elif self._sched == 'auto':
                 self._store[i] += 1.0
                 denom = np.sqrt(self._store[i])
-            elif self._cfg.hpo.fedex.sched == 'constant':
+            elif self._sched == 'constant':
                 denom = 1.0
-            elif self._cfg.hpo.fedex.sched == 'scale':
+            elif self._sched == 'scale':
                 denom = 1.0 / np.sqrt(
                     2.0 * np.log(len(grad))) if len(grad) > 1 else float('inf')
             else:
@@ -244,7 +238,7 @@ class FedExServer(Server):
 
         self._trace['entropy'].append(self.entropy())
         self._trace['mle'].append(self.mle())
-        if self._trace['entropy'][-1] < self._cfg.hpo.fedex.cutoff:
+        if self._trace['entropy'][-1] < self._cutoff:
             self._stop_exploration = True
 
         logger.info(

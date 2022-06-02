@@ -178,6 +178,7 @@ class FedRunner(object):
                 self.cfg.mode.type))
 
         if self.server_class:
+            self._server_device = self.gpu_manager.auto_choice()
             server = self.server_class(
                 ID=self.server_id,
                 config=self.cfg,
@@ -185,7 +186,7 @@ class FedRunner(object):
                 model=model,
                 client_num=self.cfg.federate.client_num,
                 total_round_num=self.cfg.federate.total_round_num,
-                device=self.gpu_manager.auto_choice(),
+                device=self._server_device,
                 **kw)
 
             if self.cfg.nbafl.use:
@@ -223,6 +224,7 @@ class FedRunner(object):
                 client_specific_config.merge_from_other_cfg(
                     self.client_cfg.get('client_{}'.format(client_id)))
                 client_specific_config.freeze()
+            client_device = self._server_device if self.cfg.federate.share_local_model else self.gpu_manager.auto_choice()
             client = self.client_class(
                 ID=client_id,
                 server_id=self.server_id,
@@ -230,7 +232,7 @@ class FedRunner(object):
                 data=client_data,
                 model=client_model or get_model(
                     client_specific_config.model, client_data, backend=self.cfg.backend),
-                device=self.gpu_manager.auto_choice(),
+                device=client_device,
                 **kw)
         else:
             raise ValueError

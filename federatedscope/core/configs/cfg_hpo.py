@@ -71,8 +71,7 @@ def assert_hpo_cfg(cfg):
         ['adaptive', 'aggressive', 'auto', 'constant', 'scale'])
     assert cfg.hpo.fedex.gamma >= .0 and cfg.hpo.fedex.gamma <= 1.0, "{} must be in [0, 1]".format(
         cfg.hpo.fedex.gamma)
-    assert cfg.hpo.fedex.diff == cfg.federate.use_diff, "Inconsistent values for cfg.hpo.fedex.diff={} and cfg.federate.use_diff={}".format(
-        cfg.hpo.fedex.diff, cfg.federate.use_diff)
+    assert cfg.hpo.fedex.use == cfg.federate.use_diff, "Once FedEx is adopted, cfg.federate.use_diff must be True."
 
 
 register_config("hpo", extend_hpo_cfg)

@@ -18,7 +18,7 @@ class FedExClient(Client):
         """
 
         cmd_args = []
-        for k, v in hyper.items():
+        for k, v in hyperparams.items():
             cmd_args.append(k)
             cmd_args.append(v)
 
