@@ -143,8 +143,8 @@ class CN(CfgNode):
                 cfg_yaml = yaml.safe_load(tmp_cfg.dump())
                 wandb.config.update(cfg_yaml, allow_val_change=True)
 
-            if inform:
-                logger.info("the used configs are: \n" + str(tmp_cfg))
+        if inform:
+            logger.info("the used configs are: \n" + str(tmp_cfg))
 
         super(CN, self).freeze()
 
