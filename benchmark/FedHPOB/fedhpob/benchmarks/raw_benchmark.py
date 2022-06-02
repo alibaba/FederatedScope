@@ -27,6 +27,11 @@ class RawBenchmark(BaseBenchmark):
         modified_cfg = merge_cfg(init_cfg, configuration, fidelity)
         init_cfg.merge_from_other_cfg(modified_cfg)
         init_cfg.device = self.device
+        if self.algo == 'opt':
+            init_cfg.federate.share_local_model = False
+            init_cfg.federate.online_aggr = False
+            init_cfg.fedopt.use = True
+            init_cfg.federate.method = 'FedOpt'
         init_cfg.freeze()
         runner = FedRunner(data=self.data,
                            server_class=get_server_cls(init_cfg),

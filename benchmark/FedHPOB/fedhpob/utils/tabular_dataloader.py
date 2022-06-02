@@ -145,9 +145,12 @@ def logs2df(dname,
                     except:
                         continue
                     for key in metrics_dict:
-                        if results['Role'] == 'Global-Eval-Server #':
-                            metrics_dict[key].append(
-                                results['Results_raw'][key])
+                        if results['Role'] in ['Server #', 'Global-Eval-Server #']:
+                            try:
+                                metrics_dict[key].append(
+                                    results['Results_raw'][key])
+                            except KeyError:
+                                continue
                         elif 'Results_weighted_avg' not in results:
                             continue
                         else:
