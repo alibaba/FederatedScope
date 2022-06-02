@@ -294,6 +294,9 @@ class Server(Worker):
         else:
             should_stop = False
 
+        if self._cfg.federate.method in ['local']:
+            should_stop = False
+
         if should_stop:
             self.state = self.total_round_num + 1
 
