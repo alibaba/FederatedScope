@@ -24,7 +24,6 @@ def discounted_mean(trace, factor=1.0):
 class FedExServer(Server):
     """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
     """
-
     def __init__(self,
                  ID=-1,
                  state=0,
@@ -44,7 +43,8 @@ class FedExServer(Server):
         if next(iter(ss.keys())).startswith('arm'):
             # This is a flattened action space
             # ensure the order is unchanged
-            ss = sorted([(int(k[3:]), v) for k, v in ss.items()], key=lambda x:x[0])
+            ss = sorted([(int(k[3:]), v) for k, v in ss.items()],
+                        key=lambda x: x[0])
             self._grid = []
             self._cfsp = [[tp[1] for tp in ss]]
         else:
@@ -54,7 +54,8 @@ class FedExServer(Server):
             self._cfsp = [ss[pn] for pn in self._grid]
 
         sizes = [len(cand_set) for cand_set in self._cfsp]
-        eta0 = 'auto' if config.hpo.fedex.eta0 <= .0 else float(config.hpo.fedex.eta0)
+        eta0 = 'auto' if config.hpo.fedex.eta0 <= .0 else float(
+            config.hpo.fedex.eta0)
         self._eta0 = [
             np.sqrt(2.0 * np.log(size)) if eta0 == 'auto' else eta0
             for size in sizes
@@ -113,7 +114,10 @@ class FedExServer(Server):
 
         # get the sampled value(s)
         if self._grid:
-            sampled_cfg = {pn: cands[i] for pn, cands, i in zip(self._grid, self._cfsp, cfg_idx)}
+            sampled_cfg = {
+                pn: cands[i]
+                for pn, cands, i in zip(self._grid, self._cfsp, cfg_idx)
+            }
         else:
             sampled_cfg = self._cfsp[0][cfg_idx[0]]
 
@@ -210,10 +214,9 @@ class FedExServer(Server):
 
         for i, (z, theta) in enumerate(zip(self._z, self._theta)):
             grad = np.zeros(len(z))
-            for idx, s, w in zip(
-                    index,
-                    after - before if self._diff else after,
-                    weight):
+            for idx, s, w in zip(index,
+                                 after - before if self._diff else after,
+                                 weight):
                 grad[idx[i]] += w * (s - baseline) / theta[idx[i]]
             if self._sched == 'adaptive':
                 self._store[i] += norm(grad, float('inf'))**2

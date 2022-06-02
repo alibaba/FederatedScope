@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 class FedExClient(Client):
     """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
     """
-
     def _apply_hyperparams(self, hyperparams):
         """Apply the given hyperparameters
         Arguments:

@@ -224,14 +224,16 @@ class FedRunner(object):
                 client_specific_config.merge_from_other_cfg(
                     self.client_cfg.get('client_{}'.format(client_id)))
                 client_specific_config.freeze()
-            client_device = self._server_device if self.cfg.federate.share_local_model else self.gpu_manager.auto_choice()
+            client_device = self._server_device if self.cfg.federate.share_local_model else self.gpu_manager.auto_choice(
+            )
             client = self.client_class(
                 ID=client_id,
                 server_id=self.server_id,
                 config=client_specific_config,
                 data=client_data,
-                model=client_model or get_model(
-                    client_specific_config.model, client_data, backend=self.cfg.backend),
+                model=client_model or get_model(client_specific_config.model,
+                                                client_data,
+                                                backend=self.cfg.backend),
                 device=client_device,
                 **kw)
         else:
