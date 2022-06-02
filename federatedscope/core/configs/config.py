@@ -84,7 +84,7 @@ class CN(CfgNode):
                         else:
                             del v[k]
 
-    def freeze(self, save=True, inform=True):
+    def freeze(self, inform=True):
         """
             1) make the cfg attributes immutable;
             2) save the frozen cfg_check_funcs into "self.outdir/config.yaml" for better reproducibility;
@@ -94,29 +94,28 @@ class CN(CfgNode):
         """
         self.assert_cfg()
         self.clean_unused_sub_cfgs()
-        if save:
-            # save the final cfg
-            with open(os.path.join(self.outdir, "config.yaml"), 'w') as outfile:
-                from contextlib import redirect_stdout
-                with redirect_stdout(outfile):
-                    tmp_cfg = copy.deepcopy(self)
-                    tmp_cfg.cfg_check_funcs = []
-                    print(tmp_cfg.dump())
-                if self.wandb.use:
-                    # update the frozen config
-                    try:
-                        import wandb
-                    except ImportError:
-                        logger.error(
-                            "cfg.wandb.use=True but not install the wandb package")
-                        exit()
+        # save the final cfg
+        with open(os.path.join(self.outdir, "config.yaml"), 'w') as outfile:
+            from contextlib import redirect_stdout
+            with redirect_stdout(outfile):
+                tmp_cfg = copy.deepcopy(self)
+                tmp_cfg.cfg_check_funcs = []
+                print(tmp_cfg.dump())
+            if self.wandb.use:
+                # update the frozen config
+                try:
+                    import wandb
+                except ImportError:
+                    logger.error(
+                        "cfg.wandb.use=True but not install the wandb package")
+                    exit()
 
-                    import yaml
-                    cfg_yaml = yaml.safe_load(tmp_cfg.dump())
-                    wandb.config.update(cfg_yaml, allow_val_change=True)
+                import yaml
+                cfg_yaml = yaml.safe_load(tmp_cfg.dump())
+                wandb.config.update(cfg_yaml, allow_val_change=True)
 
-            if inform:
-                logger.info("the used configs are: \n" + str(tmp_cfg))
+        if inform:
+            logger.info("the used configs are: \n" + str(tmp_cfg))
 
         super(CN, self).freeze()
 
