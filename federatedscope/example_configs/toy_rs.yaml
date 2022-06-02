@@ -12,8 +12,7 @@ model:
   type: 'lr'
 data:
   type: 'toy'
-optimizer:
-  lr: !contd '0.001,0.5'
-  weight_decay: !disc [0.0, 0.0005, 0.005]
 hpo:
-  init_strategy: 'random'
+  num_workers: 3
+  init_cand_num: 3
+  ss: federatedscope/example_configs/toy_hpo_ss.yaml
