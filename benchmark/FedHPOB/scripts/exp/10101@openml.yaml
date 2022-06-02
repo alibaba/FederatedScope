@@ -1,0 +1,5 @@
+benchmark:
+  device: 0
+optimizer:
+  min_budget: 3
+  max_budget: 81
