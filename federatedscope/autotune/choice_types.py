@@ -7,7 +7,6 @@ import math
 import yaml
 
 import numpy as np
-import ConfigSpace as CS
 
 from federatedscope.core.configs.config import global_cfg
 
