@@ -9,8 +9,6 @@ from scipy.special import logsumexp
 
 from federatedscope.core.message import Message
 from federatedscope.core.worker import Server
-from federatedscope.autotune import Continuous, Discrete, split_raw_config
-from federatedscope.autotune.algos import random_search
 from federatedscope.core.auxiliaries.utils import merge_dict
 
 logger = logging.getLogger(__name__)
@@ -26,6 +24,7 @@ def discounted_mean(trace, factor=1.0):
 class FedExServer(Server):
     """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
     """
+
     def __init__(self,
                  ID=-1,
                  state=0,
@@ -41,32 +40,39 @@ class FedExServer(Server):
         # initialize action space and the policy
         with open(config.hpo.fedex.ss, 'r') as ips:
             ss = yaml.load(ips, Loader=yaml.FullLoader)
-        _, tbd_config = split_raw_config(ss)
-        if config.hpo.fedex.flatten_ss:
-            self._cfsp = [random_search(tbd_config, config.hpo.fedex.num_arms)]
+
+        if next(iter(ss.keys())).startswith('arm'):
+            # This is a flattened action space
+            # ensure the order is unchanged
+            ss = sorted([(int(k[3:]), v) for k, v in ss.items()], key=lambda x:x[0])
+            self._grid = []
+            self._cfsp = [[tp[1] for tp in ss]]
         else:
-            self._cfsp = []
-            for k, v in tbd_config.items():
-                if isinstance(v, Discrete):
-                    self._cfsp.append(None)
-                else:
-                    self._cfsp.append(None)
+            # This is not a flat search space
+            # be careful for the order
+            self._grid = sorted(ss.keys())
+            self._cfsp = [ss[pn] for pn in self._grid]
+
         sizes = [len(cand_set) for cand_set in self._cfsp]
-        eta0 = 'auto'
+        eta0 = 'auto' if config.hpo.fedex.eta0 <= .0 else float(config.hpo.fedex.eta0)
         self._eta0 = [
             np.sqrt(2.0 * np.log(size)) if eta0 == 'auto' else eta0
             for size in sizes
         ]
+        self._sched = config.hpo.fedex.sched
+        self._cutoff = config.hpo.fedex.cutoff
+        self._baseline = config.hpo.fedex.gamma
+        self._diff = config.hpo.fedex.diff
         self._z = [np.full(size, -np.log(size)) for size in sizes]
         self._theta = [np.exp(z) for z in self._z]
         self._store = [0.0 for _ in sizes]
+        self._stop_exploration = False
         self._trace = {
             'global': [],
             'refine': [],
             'entropy': [self.entropy()],
             'mle': [self.mle()]
         }
-        self._stop_exploration = False
 
         super(FedExServer,
               self).__init__(ID, state, config, data, model, client_num,
@@ -94,14 +100,29 @@ class FedExServer(Server):
 
         return np.array(self._trace[key])
 
-    def sample(self):
-        if self._stop_exploration:
-            cfg_idx = [theta.argmax() for theta in self._theta]
+    def sample(self, mle=False):
+        """samples from configs using current probability vector"""
+
+        # determine index
+        if mle or self._stop_exploration:
+            if self._grid:
+                cfg_idx = {pn: theta.argmax() for theta, pn in zip(self._theta, self._grid)}
+            else:
+                cfg_idx = [theta.argmax() for theta in self._theta]
         else:
-            cfg_idx = [
-                np.random.choice(len(theta), p=theta) for theta in self._theta
-            ]
-        sampled_cfg = [sps[i] for i, sps in zip(cfg_idx, self._cfsp)]
+            if self._grid:
+                cfg_idx = {pn: np.random.choice(len(theta), p=theta) for theta, pn in zip(self._theta, self._grid)}
+            else:
+                cfg_idx = [
+                    np.random.choice(len(theta), p=theta) for theta in self._theta
+                ]
+
+        # get the sampled value(s)
+        if self._grid:
+            sampled_cfg = {k: self._cfsp[k][v] for k, v in cfg_idx}
+        else:
+            sampled_cfg = self._cfsp[0][cfg_idx[0]]
+
         return cfg_idx, sampled_cfg
 
     def broadcast_model_para(self,
@@ -110,6 +131,7 @@ class FedExServer(Server):
         """
         To broadcast the message to all clients or sampled clients
         """
+
         if sample_client_num > 0:
             receiver = np.random.choice(np.arange(1, self.client_num + 1),
                                         size=sample_client_num,
@@ -135,7 +157,7 @@ class FedExServer(Server):
         # sample the hyper-parameter config specific to the clients
 
         for rcv_idx in receiver:
-            cfg_idx, sampled_cfg = self.sample()
+            cfg_idx, sampled_cfg = self.sample(_index=self._index)
             content = {
                 'model_param': model_para,
                 "arms": cfg_idx,

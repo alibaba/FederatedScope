@@ -10,17 +10,17 @@ logger = logging.getLogger(__name__)
 class FedExClient(Client):
     """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
     """
+
     def _apply_hyperparams(self, hyperparams):
         """Apply the given hyperparameters
         Arguments:
-            hyperparams (list): each element is a dict, where keys are hyperparameter names and values are specific choices.
+            hyperparams (dict): keys are hyperparameter names and values are specific choices.
         """
 
         cmd_args = []
-        for hyper in hyperparams:
-            for k, v in hyper.items():
-                cmd_args.append(k)
-                cmd_args.append(v)
+        for k, v in hyper.items():
+            cmd_args.append(k)
+            cmd_args.append(v)
 
         self._cfg.defrost()
         self._cfg.merge_from_list(cmd_args)

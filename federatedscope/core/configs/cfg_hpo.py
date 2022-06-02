@@ -36,13 +36,15 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex.use = False
     cfg.hpo.fedex.ss = ''
     cfg.hpo.fedex.flatten_ss = True
-    cfg.hpo.fedex.num_arms = 16
-    cfg.hpo.fedex.diff = False
+    # If <= .0, use 'auto'
+    cfg.hpo.fedex.eta0 = -1.0
     cfg.hpo.fedex.sched = 'auto'
-    # discount factor; 0.0 is most recent, 1.0 is mean
-    cfg.hpo.fedex.gamma = .0
     # cutoff: entropy level below which to stop updating the config probability and use MLE
     cfg.hpo.fedex.cutoff = .0
+    # discount factor; 0.0 is most recent, 1.0 is mean
+    cfg.hpo.fedex.gamma = .0
+    cfg.hpo.fedex.num_arms = 16
+    cfg.hpo.fedex.diff = False
 
 
 def assert_hpo_cfg(cfg):
