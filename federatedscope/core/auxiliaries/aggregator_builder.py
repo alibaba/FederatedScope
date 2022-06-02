@@ -30,7 +30,7 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
                 src_device=device
                 if config.federate.share_local_model else 'cpu')
         else:
-            return ClientsAvgAggregator(model=model, device=device)
+            return ClientsAvgAggregator(model=model, device=device, config=config)
     elif aggregator_type == 'server_clients_interpolation':
         return ServerClientsInterpolateAggregator(
             model=model, device=device, beta=config.personalization.beta)
