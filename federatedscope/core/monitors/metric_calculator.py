@@ -69,7 +69,10 @@ class MetricCalculator(object):
         if y_prob.ndim == 2:
             y_prob = np.expand_dims(y_prob, axis=-1)
 
-        y_pred = np.argmax(y_prob, axis=1)
+        if ctx.cfg.model.task.endswith('Regression'):
+            y_pred = y_prob.squeeze(-1)
+        else:
+            y_pred = np.argmax(y_prob, axis=1)
 
         # check shape and type
         if not isinstance(y_true, np.ndarray):

@@ -69,7 +69,7 @@ def get_gnn(model_config, local_data):
                              max_depth=model_config.gnn_layer,
                              dropout=model_config.dropout,
                              gnn=model_config.type)
-    elif model_config.task == 'graph':
+    elif model_config.task.startswith('graph'):
         model = GNN_Net_Graph(data.x.shape[-1],
                               max(model_config.out_channels, num_label),
                               hidden=model_config.hidden,

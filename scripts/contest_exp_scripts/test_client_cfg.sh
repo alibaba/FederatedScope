@@ -12,4 +12,3 @@ python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minib
             device ${cudaid} \
             data.type ${dataset} \
             seed 1
-

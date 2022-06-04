@@ -11,7 +11,10 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
-        label = batch.y.squeeze(-1).long()
+        if self.cfg.model.task.endswith('Regression'):
+            label = batch.y.float()
+        else:
+            label = batch.y.squeeze(-1).long()
 
         if ctx.get("finetune", False):
             # update on the model
@@ -45,7 +48,10 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
         if ctx.cur_mode == "train" and not ctx.get("finetune", False):
             # outer loop, reuse the last batch
             batch = ctx.data_batch.to(ctx.device)
-            label = batch.y.squeeze(-1).long()
+            if self.cfg.model.task.endswith('Regression'):
+                label = batch.y.float()
+            else:
+                label = batch.y.squeeze(-1).long()
             # forward
             pred_outer = ctx.clone(batch)
             ctx.loss_batch = ctx.criterion(pred_outer, label)

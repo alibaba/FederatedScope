@@ -1,11 +1,208 @@
 client_1:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  optimizer:
+    lr: 0.05
+  federate:
+    local_update_steps: 4
+  trainer:
+    finetune:
+      steps: 4
+client_2:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
   optimizer:
     lr: 0.1
-    weight_decay: 0.01
-client_2:
-  optimizer:
-    type: SGD
-    lr: 0.01
+  federate:
+    local_update_steps: 2
+  trainer:
+    finetune:
+      steps: 2
 client_3:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  optimizer:
+    lr: 0.1
+  federate:
+    local_update_steps: 14
+  trainer:
+    finetune:
+      steps: 14
+client_4:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.5
   federate:
     local_update_steps: 5
+  trainer:
+    finetune:
+      steps: 5
+client_5:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.05
+  federate:
+    local_update_steps: 7
+  trainer:
+    finetune:
+      steps: 7
+client_6:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.00005
+  federate:
+    local_update_steps: 5
+  trainer:
+    finetune:
+      steps: 5
+client_7:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.5
+  federate:
+    local_update_steps: 1
+  trainer:
+    finetune:
+      steps: 1
+client_8:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.5
+  federate:
+    local_update_steps: 1
+  trainer:
+    finetune:
+      steps: 1
+client_9:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.1
+  federate:
+    local_update_steps: 1
+  trainer:
+    finetune:
+      steps: 1
+client_10:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.5
+  federate:
+    local_update_steps: 1
+  trainer:
+    finetune:
+      steps: 1
+client_11:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.05
+  federate:
+    local_update_steps: 1
+  trainer:
+    finetune:
+      steps: 1
+client_12:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.05
+  federate:
+    local_update_steps: 14
+  trainer:
+    finetune:
+      steps: 14
+client_13:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  optimizer:
+    lr: 0.05
+  federate:
+    local_update_steps: 14
+  trainer:
+    finetune:
+      steps: 14
+client_14:
+  model:
+    out_channels: 12
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  optimizer:
+    lr: 0.1
+  federate:
+    local_update_steps: 675
+  trainer:
+    finetune:
+      steps: 675
+client_15:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  optimizer:
+    lr: 0.05
+  federate:
+    local_update_steps: 832
+  trainer:
+    finetune:
+      steps: 832
+client_16:
+  model:
+    out_channels: 19
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  optimizer:
+    lr: 0.1
+  federate:
+    local_update_steps: 431
+  trainer:
+    finetune:
+      steps: 431
