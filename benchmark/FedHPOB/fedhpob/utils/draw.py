@@ -126,7 +126,7 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
                loc='lower right',
                bbox_to_anchor=(1.35, 0))
     plt.savefig(
-        f'{dataset}_{family}_{suffix}_rank_over_time_all{Y_label}.pdf',
+        f'{dataset}_{family}_{suffix}_over_time_all_{Y_label}.pdf',
         bbox_inches='tight')
     plt.close()
 
@@ -151,7 +151,7 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
                loc='lower right',
                bbox_to_anchor=(1.35, 0))
     plt.savefig(
-        f'{dataset}_{family}_{suffix}_rank_over_time_bbo{Y_label}.pdf',
+        f'{dataset}_{family}_{suffix}_over_time_bbo{Y_label}.pdf',
         bbox_inches='tight')
     plt.close()
 
@@ -176,7 +176,7 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
                loc='lower right',
                bbox_to_anchor=(1.35, 0))
     plt.savefig(
-        f'{dataset}_{family}_{suffix}_rank_over_time_mf_{Y_label}.pdf',
+        f'{dataset}_{family}_{suffix}_over_time_mf_{Y_label}.pdf',
         bbox_inches='tight')
     plt.close()
 
