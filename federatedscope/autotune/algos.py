@@ -4,13 +4,7 @@ from copy import deepcopy
 from contextlib import redirect_stdout
 from yacs.config import CfgNode as CN
 import threading
-from itertools import product
 import math
-
-import yaml
-
-import numpy as np
-import torch
 
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
@@ -76,7 +70,6 @@ class Scheduler(object):
         """
 
         self._cfg = cfg
-        # TODO: load from generated file.
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
         self._init_configs = self._setup()
@@ -315,31 +308,6 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
                 f"{trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
 
         return init_configs
-
-    # def _stop_criterion(self, configs, last_results):
-    #     return len(configs) <= 1
-    #
-    # def _generate_next_population(self, configs, perfs):
-    #     indices = [(i, val) for i, val in enumerate(perfs)]
-    #     indices.sort(key=lambda x: x[1], reverse=self._cfg.hpo.larger_better)
-    #     next_population = [
-    #         configs[tp[0]] for tp in
-    #         indices[:math.
-    #                 ceil(float(len(indices)) / self._cfg.hpo.sha.elim_rate)]
-    #     ]
-    #
-    #     for trial_cfg in next_population:
-    #         if 'federate.restore_from' not in trial_cfg:
-    #             trial_cfg['federate.restore_from'] = trial_cfg[
-    #                 'federate.save_to']
-    #         if self._cfg.hpo.sha.budgets and self._stage < len(
-    #                 self._cfg.hpo.sha.budgets):
-    #             trial_cfg[
-    #                 'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
-    #                     self._stage]
-    #             trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
-    #
-    #     return next_population
 
 
 # TODO: refactor PBT to enable async parallel
