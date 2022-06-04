@@ -1,6 +1,8 @@
 import os
 import logging
 from copy import deepcopy
+from contextlib import redirect_stdout
+from yacs.config import CfgNode as CN
 import threading
 from itertools import product
 import math
@@ -59,6 +61,8 @@ def get_scheduler(init_cfg):
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     elif init_cfg.hpo.scheduler == 'pbt':
         scheduler = PBT(init_cfg)
+    elif init_cfg.hpo.scheduler == 'wrap_sha':
+        scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 
 
@@ -72,7 +76,7 @@ class Scheduler(object):
         """
 
         self._cfg = cfg
-
+        # TODO: load from generated file.
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
         self._init_configs = self._setup()
@@ -278,6 +282,64 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
                 trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
 
         return next_population
+
+
+class SHAWrapFedex(SuccessiveHalvingAlgo):
+    def _cache_yaml(self):
+        # Save as file
+        for idx in range(self._cfg.hpo.table.cand):
+            sample_ss = parse_search_space(
+                self._cfg.hpo.table.ss).sample_configuration(
+                    self._cfg.hpo.table.num)
+            # Convert Configuration to CfgNode
+            tmp_cfg = CN()
+            for arm, configuration in enumerate(sample_ss):
+                tmp_cfg[f'arm{arm}'] = CN()
+                for key, value in configuration.get_dictionary().items():
+                    tmp_cfg[f'arm{arm}'][key] = value
+
+            with open(
+                    os.path.join(self._cfg.hpo.working_folder,
+                                 f'{idx}_tmp_grid_search_space.yaml'),
+                    'w') as f:
+                with redirect_stdout(f):
+                    print(tmp_cfg.dump())
+
+    def _setup(self):
+        init_configs = super(SHAWrapFedex, self)._setup()
+        self._cache_yaml()
+
+        for trial_cfg in init_configs:
+            trial_cfg['hpo.fedex.ss'] = os.path.join(
+                self._cfg.hpo.working_folder,
+                f"{trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
+
+        return init_configs
+
+    # def _stop_criterion(self, configs, last_results):
+    #     return len(configs) <= 1
+    #
+    # def _generate_next_population(self, configs, perfs):
+    #     indices = [(i, val) for i, val in enumerate(perfs)]
+    #     indices.sort(key=lambda x: x[1], reverse=self._cfg.hpo.larger_better)
+    #     next_population = [
+    #         configs[tp[0]] for tp in
+    #         indices[:math.
+    #                 ceil(float(len(indices)) / self._cfg.hpo.sha.elim_rate)]
+    #     ]
+    #
+    #     for trial_cfg in next_population:
+    #         if 'federate.restore_from' not in trial_cfg:
+    #             trial_cfg['federate.restore_from'] = trial_cfg[
+    #                 'federate.save_to']
+    #         if self._cfg.hpo.sha.budgets and self._stage < len(
+    #                 self._cfg.hpo.sha.budgets):
+    #             trial_cfg[
+    #                 'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
+    #                     self._stage]
+    #             trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
+    #
+    #     return next_population
 
 
 # TODO: refactor PBT to enable async parallel
