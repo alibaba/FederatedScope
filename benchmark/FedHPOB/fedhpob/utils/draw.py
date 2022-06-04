@@ -51,7 +51,8 @@ def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
         y = np.arange(len(norm_regret)) / float(len(norm_regret) - 1)
         plt.plot(norm_regret, y)
     plt.legend(data_list, fontsize=23, loc='lower right')
-    plt.savefig(f'{model}_{sample_client}_cdf.pdf', bbox_inches='tight')
+    os.makedirs('figures', exist_ok=True)
+    plt.savefig(f'figures/{model}_{sample_client}_{algo}_cdf.pdf', bbox_inches='tight')
     plt.close()
 
     return target
@@ -105,6 +106,7 @@ def get_mean_loss(traj_dict):
 
 
 def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
+    os.makedirs('figures', exist_ok=True)
     # BBO + MF
     plt.figure(figsize=(10, 7.5))
     plt.xticks(np.linspace(0, 1, 5),
@@ -126,7 +128,7 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
                loc='lower right',
                bbox_to_anchor=(1.35, 0))
     plt.savefig(
-        f'{dataset}_{family}_{suffix}_over_time_all_{Y_label}.pdf',
+        f'figures/{dataset}_{family}_{suffix}_over_time_all_{Y_label}.pdf',
         bbox_inches='tight')
     plt.close()
 
@@ -151,7 +153,7 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
                loc='lower right',
                bbox_to_anchor=(1.35, 0))
     plt.savefig(
-        f'{dataset}_{family}_{suffix}_over_time_bbo{Y_label}.pdf',
+        f'figures/{dataset}_{family}_{suffix}_over_time_bbo{Y_label}.pdf',
         bbox_inches='tight')
     plt.close()
 
@@ -176,7 +178,7 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
                loc='lower right',
                bbox_to_anchor=(1.35, 0))
     plt.savefig(
-        f'{dataset}_{family}_{suffix}_over_time_mf_{Y_label}.pdf',
+        f'figures/{dataset}_{family}_{suffix}_over_time_mf_{Y_label}.pdf',
         bbox_inches='tight')
     plt.close()
 
@@ -245,7 +247,7 @@ def rank_over_time(root,
         draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label)
 
     # Draw entire family
-    draw_rank(family_rank, xs, opt_all, 'entire', family, suffix, Y_label)
+    draw_rank(family_rank / len(family_rank), xs, opt_all, 'entire', family, suffix, Y_label)
 
 
 if __name__ == '__main__':
