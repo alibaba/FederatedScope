@@ -427,7 +427,9 @@ class GeneralTorchTrainer(Trainer):
         self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
 
         # do the fine-tuning process
+        self.ctx.finetune = True
         self.train(target_data_split_name, hooks_set)
+        self.ctx.finetune = False
 
         # restore the state before fine-tuning
         if len(require_grad_changed_paras) > 0:
