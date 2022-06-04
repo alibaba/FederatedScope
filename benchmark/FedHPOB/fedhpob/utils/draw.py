@@ -77,10 +77,14 @@ def get_mean_rank(traj_dict):
             ])
         if repeat == 0:
             rank = rankdata(ys, axis=0)
+            rank_bbo = rankdata(ys[:5], axis=0)
+            rank_mf = rankdata(ys[-5:], axis=0)
         else:
             rank += rankdata(ys, axis=0)
+            rank_bbo += rankdata(ys[:5], axis=0)
+            rank_mf += rankdata(ys[-5:], axis=0)
     xs = np.linspace(0, 1, 500)
-    return xs, rank / len(traj_dict)
+    return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(traj_dict)
 
 
 def get_mean_loss(traj_dict):
@@ -99,20 +103,27 @@ def get_mean_loss(traj_dict):
             ])
         if repeat == 0:
             rank = np.array(ys)
+            rank_bbo = np.array(ys[:5])
+            rank_mf = np.array(ys[-5:])
         else:
             rank += np.array(ys)
+            rank_bbo += np.array(ys[:5])
+            rank_mf += np.array(ys[-5:])
     xs = np.linspace(0, 1, 500)
-    return xs, rank / len(traj_dict)
+    return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(traj_dict)
 
 
-def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
+def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, family, suffix, Y_label):
     os.makedirs('figures', exist_ok=True)
     # BBO + MF
     plt.figure(figsize=(10, 7.5))
     plt.xticks(np.linspace(0, 1, 5),
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
                fontsize=FONTSIZE)
-    plt.yticks(fontsize=FONTSIZE)
+    if Y_label == 'Mean_rank':
+        plt.yticks(np.linspace(1, 10, 10), fontsize=FONTSIZE)
+    else:
+        plt.yticks(fontsize=FONTSIZE)
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.ylabel(Y_label, size=FONTSIZE)
@@ -137,12 +148,15 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
     plt.xticks(np.linspace(0, 1, 5),
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
                fontsize=FONTSIZE)
-    plt.yticks(fontsize=FONTSIZE)
+    if Y_label == 'Mean_rank':
+        plt.yticks(np.linspace(1, 5, 5), fontsize=FONTSIZE)
+    else:
+        plt.yticks(fontsize=FONTSIZE)
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.ylabel(Y_label, size=FONTSIZE)
 
-    for idx, rank in enumerate(mean_ranks[:5]):
+    for idx, rank in enumerate(mean_ranks_bbo):
         plt.plot(xs,
                  rank,
                  linewidth=1,
@@ -153,7 +167,7 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
                loc='lower right',
                bbox_to_anchor=(1.35, 0))
     plt.savefig(
-        f'figures/{dataset}_{family}_{suffix}_over_time_bbo{Y_label}.pdf',
+        f'figures/{dataset}_{family}_{suffix}_over_time_bbo_{Y_label}.pdf',
         bbox_inches='tight')
     plt.close()
 
@@ -162,12 +176,15 @@ def draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label):
     plt.xticks(np.linspace(0, 1, 5),
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
                fontsize=FONTSIZE)
-    plt.yticks(fontsize=FONTSIZE)
+    if Y_label == 'Mean_rank':
+        plt.yticks(np.linspace(1, 5, 5), fontsize=FONTSIZE)
+    else:
+        plt.yticks(fontsize=FONTSIZE)
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.ylabel(Y_label, size=FONTSIZE)
 
-    for idx, rank in enumerate(mean_ranks[-5:]):
+    for idx, rank in enumerate(mean_ranks_mf):
         plt.plot(xs,
                  rank,
                  linewidth=1,
@@ -235,19 +252,21 @@ def rank_over_time(root,
     family_rank = []
     for dataset in traj:
         if loss:
-            xs, mean_ranks = get_mean_loss(traj[dataset])
+            xs, mean_ranks, mean_ranks_bbo, mean_ranks_mf = get_mean_loss(traj[dataset])
             Y_label = 'Loss'
         else:
-            xs, mean_ranks = get_mean_rank(traj[dataset])
-            Y_label = 'Mean rank'
+            xs, mean_ranks, mean_ranks_bbo, mean_ranks_mf = get_mean_rank(traj[dataset])
+            Y_label = 'Mean_rank'
         if len(family_rank):
             family_rank += mean_ranks
+            family_rank_bbo += mean_ranks_bbo
+            family_rank_mf += mean_ranks_mf
         else:
-            family_rank = mean_ranks
-        draw_rank(mean_ranks, xs, opt_all, dataset, family, suffix, Y_label)
+            family_rank, family_rank_bbo, family_rank_mf = mean_ranks, mean_ranks_bbo, mean_ranks_mf
+        draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, family, suffix, Y_label)
 
     # Draw entire family
-    draw_rank(family_rank / len(family_rank), xs, opt_all, 'entire', family, suffix, Y_label)
+    draw_rank(family_rank/len(traj), family_rank_bbo/len(traj), family_rank_mf/len(traj), xs, opt_all, 'entire', family, suffix, Y_label)
 
 
 if __name__ == '__main__':
