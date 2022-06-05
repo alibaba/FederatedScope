@@ -40,4 +40,4 @@ hpo:
   ss: 'federatedscope/example_configs/cora/hpo_ss_sha.yaml'
   sha:
     budgets: [2, 4, 12, 36]
-  metric: 'server_global_eval.val_loss'
+  metric: 'server_global_eval.val_avg_loss'

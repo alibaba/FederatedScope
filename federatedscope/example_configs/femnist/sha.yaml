@@ -1,5 +1,5 @@
 use_gpu: True
-device: 0
+device: 3
 early_stop:
   patience: 100
 seed: 12345
@@ -28,6 +28,7 @@ model:
 optimizer:
   lr: 0.01
   weight_decay: 0.0
+grad:
   grad_clip: 5.0
 criterion:
   type: CrossEntropyLoss
@@ -41,6 +42,7 @@ hpo:
   scheduler: sha
   num_workers: 0
   init_cand_num: 81
-  ss: federatedscope/example_configs/femnist/hpo_ss_sha.yaml
+  ss: 'federatedscope/example_configs/femnist/hpo_ss_sha.yaml'
   sha:
     budgets: [2, 4, 12, 36]
+  metric: 'client_summarized_weighted_avg.val_avg_loss'

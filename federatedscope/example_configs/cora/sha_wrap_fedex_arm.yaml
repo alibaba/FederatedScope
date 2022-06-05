@@ -46,4 +46,4 @@ hpo:
     budgets: [2, 4, 12, 36]
   fedex:
     use: True
-  metric: 'server_global_eval.val_loss'
+  metric: 'server_global_eval.val_avg_loss'

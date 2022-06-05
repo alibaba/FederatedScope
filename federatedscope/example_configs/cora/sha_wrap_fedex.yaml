@@ -43,4 +43,4 @@ hpo:
   fedex:
     use: True
     ss: 'federatedscope/example_configs/cora/hpo_ss_fedex_grid.yaml'
-    metric: 'server_global_eval.val_loss'
+  metric: 'server_global_eval.val_avg_loss'
