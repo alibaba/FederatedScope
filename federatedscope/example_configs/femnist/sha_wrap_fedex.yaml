@@ -39,7 +39,7 @@ eval:
   split: ['test', 'val', 'train']
 hpo:
   scheduler: sha
-  num_workers: 1
+  num_workers: 0
   init_cand_num: 81
   ss: federatedscope/example_configs/femnist/hpo_ss_fedex.yaml
   sha:

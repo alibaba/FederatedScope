@@ -20,9 +20,9 @@ hpo:
   scheduler: wrap_sha
   num_workers: 1
   init_cand_num: 5
-  ss: federatedscope/example_configs/sha_wrap_fedex_ss_table.yaml
+  ss: 'federatedscope/example_configs/sha_wrap_fedex_ss_table.yaml'
   table:
-    ss: federatedscope/example_configs/toy_hpo_ss.yaml
+    ss: 'federatedscope/example_configs/toy_hpo_ss.yaml'
     num: 4
     cand: 5
   sha:
