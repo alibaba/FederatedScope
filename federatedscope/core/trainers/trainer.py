@@ -425,6 +425,8 @@ class GeneralTorchTrainer(Trainer):
         original_batch_num = self.ctx["num_train_batch"]
         self.ctx["num_train_epoch"] = 1
         self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
+        # self.ctx["num_train_epoch"] = self.cfg.trainer.finetune.steps
+        # self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
 
         # do the fine-tuning process
         self.ctx.finetune = True
