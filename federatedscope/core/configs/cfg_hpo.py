@@ -10,7 +10,7 @@ def extend_hpo_cfg(cfg):
     cfg.hpo = CN()
     cfg.hpo.working_folder = 'hpo'
     cfg.hpo.ss = ''
-    cfg.hpo.num_workers = 1
+    cfg.hpo.num_workers = 0
     #cfg.hpo.init_strategy = 'random'
     cfg.hpo.init_cand_num = 16
     cfg.hpo.log_scale = False
@@ -56,6 +56,8 @@ def assert_hpo_cfg(cfg):
     assert cfg.hpo.scheduler in ['rs', 'sha',
                                  'pbt'], "No HPO scheduler named {}".format(
                                      cfg.hpo.scheduler)
+    assert cfg.hpo.num_workers >= 0, "#worker should be non-negative but given {}".format(
+        cfg.hpo.num_workers)
     assert len(cfg.hpo.sha.budgets) == 0 or len(
         cfg.hpo.sha.budgets
     ) == cfg.hpo.sha.elim_round_num, \
