@@ -56,7 +56,8 @@ def assert_hpo_cfg(cfg):
     assert cfg.hpo.scheduler in ['rs', 'sha',
                                  'pbt'], "No HPO scheduler named {}".format(
                                      cfg.hpo.scheduler)
-    assert cfg.hpo.num_workers >= 0, "#worker should be non-negative but given {}".format(cfg.hpo.num_workers)
+    assert cfg.hpo.num_workers >= 0, "#worker should be non-negative but given {}".format(
+        cfg.hpo.num_workers)
     assert len(cfg.hpo.sha.budgets) == 0 or len(
         cfg.hpo.sha.budgets
     ) == cfg.hpo.sha.elim_round_num, \

@@ -123,7 +123,9 @@ class ModelFreeBase(Scheduler):
     def _evaluate(self, configs):
         if self._cfg.hpo.num_workers:
             # execute FL in parallel by multi-threading
-            flags = [threading.Event() for _ in range(self._cfg.hpo.num_workers)]
+            flags = [
+                threading.Event() for _ in range(self._cfg.hpo.num_workers)
+            ]
             for i in range(len(flags)):
                 flags[i].set()
             threads = [None for _ in range(len(flags))]
@@ -147,7 +149,8 @@ class ModelFreeBase(Scheduler):
                 trial_cfg.merge_from_list(config2cmdargs(config))
                 flags[available_worker].clear()
                 trial = TrialExecutor(i, flags[available_worker],
-                                      thread_results[available_worker], trial_cfg)
+                                      thread_results[available_worker],
+                                      trial_cfg)
                 trial.start()
                 threads[available_worker] = trial
 
