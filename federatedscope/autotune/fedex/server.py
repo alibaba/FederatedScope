@@ -377,8 +377,10 @@ class FedExServer(Server):
 
             if self._cfg.federate.save_to != '':
                 # save the policy
-                
-                pi_ckpt_path = self._cfg.federate.save_to[:self._cfg.federate.save_to.rfind('.')] + "_pi.npy"
+
+                pi_ckpt_path = self._cfg.federate.save_to[:self._cfg.federate.
+                                                          save_to.rfind(
+                                                              '.')] + "_pi.npy"
                 with open(pi_ckpt_path, 'wb') as ops:
                     np.save(ops, self._z)
 
