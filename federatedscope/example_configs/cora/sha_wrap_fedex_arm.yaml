@@ -46,4 +46,7 @@ hpo:
     budgets: [2, 4, 12, 36]
   fedex:
     use: True
+    diff: False
+    eta0: 0.050
+    gamma: 0.495861
   metric: 'server_global_eval.val_avg_loss'

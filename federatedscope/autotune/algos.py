@@ -332,10 +332,14 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
         init_configs = super(SHAWrapFedex, self)._setup()
         self._cache_yaml()
 
-        for trial_cfg in init_configs:
+        for idx, trial_cfg in enumerate(init_configs):
+            trial_cfg['hpo.table.idx'] = idx
             trial_cfg['hpo.fedex.ss'] = os.path.join(
                 self._cfg.hpo.working_folder,
                 f"{trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
+            trial_cfg['federate.save_to'] = os.path.join(
+                self._cfg.hpo.working_folder,
+                "{}.pth".format(config2str(trial_cfg)))
 
         return init_configs
 
