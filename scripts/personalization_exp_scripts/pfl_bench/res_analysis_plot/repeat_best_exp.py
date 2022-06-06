@@ -188,49 +188,34 @@ column_names_efficiency = [
     "sys_avg/global_convergence_round",
     # "sys_avg/local_convergence_round"
 ]
-sorted_method_name_pair = [
-    ("global-train", "Global-Train"),
-    ("isolated-train", "Isolated"),
-    ("fedavg", "FedAvg"),
-    ("fedavg-ft", "FedAvg-FT"),
-    ("fedopt", "FedOpt"),
-    ("fedopt-ft", "FedOpt-FT"),
-    ("pfedme", "pFedMe"),
-    ("ft-pfedme", "pFedMe-FT"),
-    ("fedbn", "FedBN"),
-    ("fedbn-ft", "FedBN-FT"),
-    ("fedbn-fedopt", "FedBN-FedOPT"),
-    ("fedbn-fedopt-ft", "FedBN-FedOPT-FT"),
-    ("ditto", "Ditto"),
-    ("ditto-ft", "Ditto-FT"),
-    ("ditto-fedbn", "Ditto-FedBN"),
-    ("ditto-fedbn-ft", "Ditto-FedBN-FT"),
-    ("ditto-fedbn-fedopt", "Ditto-FedBN-FedOpt"),
-    ("ditto-fedbn-fedopt-ft", "Ditto-FedBN-FedOpt-FT"),
-    ("fedem", "FedEM"),
-    ("fedem-ft", "FedEM-FT"),
-    ("fedbn-fedem", "FedEM-FedBN"),
-    ("fedbn-fedem-ft", "FedEM-FedBN-FT"),
-    ("fedbn-fedem-fedopt", "FedEM-FedBN-FedOPT"),
-    ("fedbn-fedem-fedopt-ft", "FedEM-FedBN-FedOPT-FT"),
-]
-sorted_method_name_to_print = OrderedDict(sorted_method_name_pair)
-expected_keys = set(list(sorted_method_name_to_print.keys()))
-expected_method_names = list(sorted_method_name_to_print.values())
-expected_datasets_name = ["cola", "sst2", "pubmed", "cora", "citeseer", "cifar10-alpha5", "cifar10-alpha05",
-                          "cifar10-alpha01", "FEMNIST-s02", "FEMNIST-s01", "FEMNIST-s005"]
-expected_seed_set = ["1"]
-expected_expname_tag = set()
-
-for method_name in expected_method_names:
-    for dataset_name in expected_datasets_name:
-        for seed in expected_seed_set:
-            expected_expname_tag.add(f"{method_name}_{dataset_name}_seed{seed}")
-from collections import defaultdict
-all_res_structed = defaultdict(dict)
-for expname_tag in expected_expname_tag:
-    for metric in column_names_generalization + column_names_efficiency + column_names_fair:
-        all_res_structed[expname_tag][metric] = "-"
+sorted_keys = OrderedDict(
+    [("global-train", "Global Train"),
+     ("isolated-train", "Isolated"),
+     ("fedavg", "FedAvg"),
+     ("fedavg-ft", "FedAvg-FT"),
+     ("fedopt", "FedOpt"),
+     ("fedopt-ft", "FedOpt-FT"),
+     ("pfedme", "pFedMe"),
+     ("ft-pfedme", "pFedMe-FT"),
+     ("fedbn", "FedBN"),
+     ("fedbn-ft", "FedBN-FT"),
+     ("fedbn-fedopt", "FedBN-FedOPT"),
+     ("fedbn-fedopt-ft", "FedBN-FedOPT-FT"),
+     ("ditto", "Ditto"),
+     ("ditto-ft", "Ditto-FT"),
+     ("ditto-fedbn", "Ditto-FedBN"),
+     ("ditto-fedbn-ft", "Ditto-FedBN-FT"),
+     ("ditto-fedbn-fedopt", "Ditto-FedBN-FedOpt"),
+     ("ditto-fedbn-fedopt-ft", "Ditto-FedBN-FedOpt-FT"),
+     ("fedem", "FedEM"),
+     ("fedem-ft", "FedEM-FT"),
+     ("fedbn-fedem", "FedEM-FedBN"),
+     ("fedbn-fedem-ft", "FedEM-FedBN-FT"),
+     ("fedbn-fedem-fedopt", "FedEM-FedBN-FedOPT"),
+     ("fedbn-fedem-fedopt-ft", "FedEM-FedBN-FedOPT-FT"),
+     ]
+)
+expected_keys = set(list(sorted_keys.keys()))
 
 def bytes_to_unit_size(size_bytes):
     import math
@@ -243,19 +228,16 @@ def bytes_to_unit_size(size_bytes):
     return f"{s}{size_name[i]}"
 
 def unit_size_to_bytes(size_str):
-    if not isinstance(size_str, str):
-        return size_str
-    else:
-        last_unit = size_str[-1]
-        size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
-        if last_unit not in size_name:
-            return float(size_str)
-        else:
-            # need transform
-            import math
-            idx = size_name.index(last_unit)
-            p = math.pow(1024, idx)
-            return float(size_str[:-1]) * p
+    last_unit = size_str[-1]
+    # TODO
+    import math
+    if size_str == 0:
+        return "0"
+    size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
+    i = int(math.floor(math.log(size_str, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_str / p, 2)
+    return f"{s}{size_name[i]}"
 
 def get_best_runs_within_sweep(sweep_id_lists):
     best_run_list = []
@@ -279,6 +261,13 @@ def get_sweep_filter_by(filter_name, filters_each_line_table):
     return list(filtered_sweep_ids)
 
 
+def get_runs_filter_by(filter_name, filters_each_line_table):
+    filter = filters_each_line_table[filter_name]
+    filtered_runs = api.runs(name_project, filters=filter)
+    return filtered_runs
+
+
+
 order = '-' + 'summary_metrics.best_client_summarized_weighted_avg/val_acc'
 
 
@@ -292,26 +281,34 @@ def print_table_datasets_list(filters_each_line_table):
     for data_name in filters_each_line_table:
         unseen_keys = copy.copy(expected_keys)
         print(f"======= processing dataset {data_name}")
-        sweep_ids = get_sweep_filter_by(data_name, filters_each_line_table)
-        for sweep_id in sweep_ids:
-            sweep = api.sweep(f"{name_project}/{sweep_id}")
-            run_header = sweep.name
-            if sweep.order != order:
-                print(f"un-expected order for {run_header}")
-            best_run = sweep.best_run()
+        runs_ids = get_sweep_filter_by(data_name, filters_each_line_table)
+        for best_run in runs_ids:
             res_all_generalization = []
             res_all_fair = []
             res_all_efficiency = []
             if best_run.state != "finished":
                 print(f"==================Waring: the best_run with id={best_run} has state {best_run.state}. "
-                      f"In weep_id={sweep_id}, sweep_name={run_header}")
-            else:
-                print(f"Finding the best_run with id={best_run}. "
-                      f"In sweep_id={sweep_id}, sweep_name={run_header}")
+                     )
+
+            # TODO download best cfg, then send to all, then generate the python string,
+            # TODO: filters_add dataset name + seed
+            def remove_a_key(d, remove_key):
+                if isinstance(d, dict):
+                    for key in list(d.keys()):
+                        if key == remove_key:
+                            del d[key]
+                        else:
+                            remove_a_key(d[key], remove_key)
+
+            remove_a_key(best_run_cfg, "cfg_check_funcs")
+            best_run_cfg = best_run.config
+            run_header = best_run_cfg.expname_tag
+            run_header = run_header.split("_")[0]
+
+
 
             # for generalization results
-            wrong_sweep = False
-            if "isolated" in run_header or "global" in run_header:
+            if "isolated" in run_header.lower() or "global" in run_header.lower():
                 try:
                     res = best_run.summary[column_names_generalization[0]]
                     res_all_generalization.append(res)
@@ -366,20 +363,7 @@ def print_table_datasets_list(filters_each_line_table):
                     wrong_sweep = True
                     res_all_efficiency.append("-")
 
-            run_header = str.lower(run_header)
 
-            # fix some run_header error
-            #best_run_cfg = json.loads(best_run.json_config)
-            best_run_cfg = best_run.config
-
-            def remove_a_key(d, remove_key):
-                if isinstance(d, dict):
-                    for key in list(d.keys()):
-                        if key == remove_key:
-                            del d[key]
-                        else:
-                            remove_a_key(d[key], remove_key)
-            remove_a_key(best_run_cfg, "cfg_check_funcs")
             old_run_header = run_header
             if best_run_cfg["trainer"]["finetune"]["before_eval"] is True and "ft" not in run_header:
                 run_header = run_header + ",ft"
@@ -416,21 +400,11 @@ def print_table_datasets_list(filters_each_line_table):
             if method_header in unseen_keys:
                 unseen_keys.remove(method_header)
 
-            # save all res into the structured dict
-            cur_seed = best_run_cfg["seed"]
-            exp_name_current = f"{sorted_method_name_to_print[method_header]}_{data_name}_seed{cur_seed}"
-            for i, metric in enumerate(column_names_generalization):
-                all_res_structed[exp_name_current][metric] = res_all_generalization[i]
-            for i, metric in enumerate(column_names_efficiency):
-                all_res_structed[exp_name_current][metric] = res_all_efficiency[i]
-            for i, metric in enumerate(column_names_fair):
-                all_res_structed[exp_name_current][metric] = res_all_fair[i]
-
             # save config
             parent_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-            best_cfg_dir = os.path.join(parent_dir, "yaml_best_runs")
+            best_cfg_dir = os.path.join(parent_dir, "yaml_best_rums")
             os.makedirs(best_cfg_dir, exist_ok=True)
-            yaml_f_name = f"{sorted_method_name_to_print[method_header]}_{data_name}.yaml"
+            yaml_f_name = f"best_{sorted_keys[method_header]}_on_{data_name}.yaml"
             with open(os.path.join(best_cfg_dir, yaml_f_name), 'w') as yml_f:
                 yaml.dump(best_run_cfg, yml_f, allow_unicode=True)
 
@@ -457,41 +431,40 @@ def print_table_datasets_list(filters_each_line_table):
     print("\n=============res_of_each_line [Generalization]===============" + ",".join(
         list(filters_each_line_table.keys())))
     # Acc, Unseen-ACC, Delta
-    for key in sorted_method_name_to_print:
+    for key in sorted_keys:
         res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_generalization[key]]
-        res_to_print = [sorted_method_name_to_print[key]] + res_to_print
+        res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
-
     print("\n=============res_of_each_line [Fairness]===============" + ",".join(list(filters_each_line_table.keys())))
-    for key in sorted_method_name_to_print:
+    for key in sorted_keys:
         res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_fair[key]]
-        res_to_print = [sorted_method_name_to_print[key]] + res_to_print
+        res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
     print("\n=============res_of_each_line [All Efficiency]===============" + ",".join(
         list(filters_each_line_table.keys())))
     # FLOPS, UPLOAD, DOWNLOAD
-    for key in sorted_method_name_to_print:
+    for key in sorted_keys:
         res_to_print = [str(v) for v in res_of_each_line_efficiency[key]]
-        res_to_print = [sorted_method_name_to_print[key]] + res_to_print
+        res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
     print("\n=============res_of_each_line [flops, communication, acc]===============" + ",".join(
         list(filters_each_line_table.keys())))
-    for key in sorted_method_name_to_print:
+    for key in sorted_keys:
         res_of_each_line_commu_acc_trade[key] = []
         dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
         for i in range(dataset_num):
             res_of_each_line_commu_acc_trade[key].extend(
                 [str(res_of_each_line_efficiency[key][i * 4])] + \
                 [str(res_of_each_line_efficiency[key][i * 4 + 1])] + \
-                ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_generalization[key][i * 3:i * 3 + 1]]
+                ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_fair[key][i * 3:i * 3 + 1]]
             )
 
         res_to_print = [str(v) for v in res_of_each_line_commu_acc_trade[key]]
-        res_to_print = [sorted_method_name_to_print[key]] + res_to_print
+        res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
     print("\n=============res_of_each_line [converge_round, acc]===============" + ",".join(
         list(filters_each_line_table.keys())))
-    for key in sorted_method_name_to_print:
+    for key in sorted_keys:
         res_of_each_line_conver_acc_trade[key] = []
         dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
         for i in range(dataset_num):
@@ -502,7 +475,7 @@ def print_table_datasets_list(filters_each_line_table):
             )
 
         res_to_print = [str(v) for v in res_of_each_line_conver_acc_trade[key]]
-        res_to_print = [sorted_method_name_to_print[key]] + res_to_print
+        res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
     # print("\n=============res_of_all_sweeps [Generalization]===============")
     # for key in sorted(res_of_all_sweeps.keys()):
@@ -511,19 +484,36 @@ def print_table_datasets_list(filters_each_line_table):
     #     print(",".join(res_to_print))
     #
 
+def generate_repeat_scripts(best_cfg_path, seed_sets=None):
+    file_cnt = 0
+    if seed_sets is None:
+        seed_sets = [2, 3]
+    from os import listdir
+    from os.path import isfile, join
+    onlyfiles = [f for f in listdir(best_cfg_path) if isfile(join(best_cfg_path, f))]
+    # TODO: repeat runs with new project: pfl-bench-best-repeat;  cfg.expname_tag = yaml_name + seed
+    for file_name in onlyfiles:
+        exp_name = file_name
+        exp_name = exp_name.replace(".yaml", "")
+        method, data = exp_name.split("_")
+        for seed in seed_sets:
+            print(f"python federatedscope/main.py --cfg scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs/{file_name} seed {seed} expname_tag {exp_name}_seed{seed} wandb.name_project pfl-bench-best-repeat")
+            file_cnt += 1
+            if file_cnt % 10 == 0:
+                print(f"Seed={seed}, totally generated {file_cnt} run scripts\n\n")
 
-print_table_datasets_list(filters_each_line_main_table)
-print_table_datasets_list(filters_each_line_femnist_all_s)
-print_table_datasets_list(filters_each_line_all_cifar10)
-print_table_datasets_list(filters_each_line_all_nlp)
-print_table_datasets_list(filters_each_line_all_graph)
+    print(f"Seed={seed_sets}, totally generated {file_cnt} run scripts")
+    print(f"=============================== END ===============================")
 
-import json
-with open('best_res_all_metric.json', 'w') as fp:
-    json.dump(all_res_structed, fp)
 
-for expname_tag in expected_expname_tag:
-    for metric in column_names_generalization + column_names_efficiency + column_names_fair:
-        if all_res_structed[expname_tag][metric] == "-":
-            print(f"Missing {expname_tag} for metric {metric}")
+def generate_res_table():
+    print_table_datasets_list(filters_each_line_main_table)
+    print_table_datasets_list(filters_each_line_femnist_all_s)
+    print_table_datasets_list(filters_each_line_all_cifar10)
+    print_table_datasets_list(filters_each_line_all_nlp)
+    print_table_datasets_list(filters_each_line_all_graph)
 
+
+seed_sets = [2, 3]
+for seed in seed_sets:
+    generate_repeat_scripts("/mnt/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs", seed_sets=[seed])

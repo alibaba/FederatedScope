@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import pickle
 from random import random, shuffle
@@ -549,16 +550,12 @@ def load_external_data(config=None):
     }
 
     # Build dict of Dataloader
-    sample_num_all_client = defaultdict(list)
     for split in dataset:
         if dataset[split] is None:
             continue
         all_ds = splitter(dataset[split])
         for i, ds in enumerate(all_ds):
-            if isinstance(ds, (torch.utils.data.Dataset, list)):
-                sample_num_all_client[split].append(len(ds))
             if split == 'train':
-
                 data_local_dict[i + 1][split] = DataLoader(
                     ds,
                     batch_size=modified_config.data.batch_size,
@@ -570,13 +567,6 @@ def load_external_data(config=None):
                     batch_size=modified_config.data.batch_size,
                     shuffle=False,
                     num_workers=modified_config.data.num_workers)
-    from scipy import stats
-    for k, v in sample_num_all_client.items():
-        stats_res = stats.describe(v)
-        if stats_res.minmax[1] == 0:
-            logger.warning(f"For data split {k}, the max sample num in the client is 0. Please check whether this you want")
-
-        logger.info(f"For data split {k}, the stats_res over all client is {stats_res}")
 
     return data_local_dict, modified_config
 
@@ -627,6 +617,80 @@ def get_data(config):
         raise ValueError('Data {} not found.'.format(config.data.type))
 
     setup_seed(config.seed)
+
+    # get the statistics about the used data
+    data_num_all_client = defaultdict(list)
+    logger.info(f"For data={config.data.type} with subsample={config.data.subsample}, the client_num is {len(data)}")
+    for client_id, ds_ci in data.items():
+        if client_id == 0:
+            # skip the data holds on server
+            continue
+        if isinstance(ds_ci, dict):
+            for split_name, ds in ds_ci.items():
+                try:
+                    import torch
+                    if isinstance(ds, (torch.utils.data.Dataset, list)):
+                        data_num_all_client[split_name].append(len(ds))
+                    elif isinstance(ds, (torch.utils.data.DataLoader, list)):
+                        data_num_all_client[split_name].append(len(ds.dataset))
+                except:
+                    if isinstance(ds, list):
+                        data_num_all_client[split_name].append(len(ds))
+        if config.data.type in ["cora", "citeseer", "pubmed"]:
+            # node-wise classification
+            from torch_geometric.data.data import Data
+            import torch
+            if isinstance(ds_ci, Data):
+                for split_name in ["train_mask", "val_mask", "test_mask"]:
+                    num_nodes = sum(ds_ci[split_name]).item()
+                    data_num_all_client[split_name.split("_")[0]].append(num_nodes)
+
+    if config.data.plot_boxplot:
+        index = []
+        data_num_list = []
+        for key, val in data_num_all_client.items():
+            index.append(key)
+            data_num_list.append(val)
+        if index[1] == "test" and index[2] == "val":
+            index[1], index[2] = index[2], index[1]
+            data_num_list[1], data_num_list[2] = data_num_list[2], data_num_list[1]
+        import matplotlib.pyplot as plt
+        import matplotlib.pylab as pylab
+        plt.clf()
+        label_size = 18.5
+        ticks_size = 17
+        title_size = 22.5
+        legend_size = 17
+        params = {'legend.fontsize': legend_size,
+                  'axes.labelsize': label_size,
+                  'axes.titlesize': title_size,
+                  'xtick.labelsize': ticks_size,
+                  'ytick.labelsize': ticks_size}
+        pylab.rcParams.update(params)
+        ax = plt.subplot()
+        ax.violinplot(data_num_list)
+        ax.set_xticks(range(1, len(index)+1))
+        ax.set_xticklabels(index)
+        ax.set_ylabel("#Samples Per Client")
+        plt.savefig(f"{config.outdir}/visual_{config.data.type}.pdf", bbox_inches='tight', pad_inches=0)
+        plt.show()
+        # TODO: prepare plot curves for and average the res codes
+
+    from scipy import stats
+    all_split_merged_num = []
+    for k, v in data_num_all_client.items():
+        if all_split_merged_num == []:
+            all_split_merged_num.extend(v)
+        else:
+            all_split_merged_num = [all_split_merged_num[i] + v[i] for i in range(len(v))]
+    data_num_all_client["all"] = all_split_merged_num
+    for k, v in data_num_all_client.items():
+        stats_res = stats.describe(v)
+        if stats_res.minmax[1] == 0:
+            logger.warning(f"For data split {k}, the max sample num in the client is 0. Please check whether this is as you would like it to be")
+        logger.info(f"For data split {k}, the stats_res over all client is {stats_res}, the meadian is {sorted(v)[len(v) // 2]}, std is {math.sqrt(stats_res.variance)}")
+
+
     return data, modified_config
 
 
