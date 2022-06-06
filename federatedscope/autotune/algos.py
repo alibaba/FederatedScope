@@ -1,14 +1,10 @@
 import os
 import logging
 from copy import deepcopy
+from contextlib import redirect_stdout
+from yacs.config import CfgNode as CN
 import threading
-from itertools import product
 import math
-
-import yaml
-
-import numpy as np
-import torch
 
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
@@ -74,6 +70,8 @@ def get_scheduler(init_cfg):
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     elif init_cfg.hpo.scheduler == 'pbt':
         scheduler = PBT(init_cfg)
+    elif init_cfg.hpo.scheduler == 'wrap_sha':
+        scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 
 
@@ -87,7 +85,6 @@ class Scheduler(object):
         """
 
         self._cfg = cfg
-
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
         self._init_configs = self._setup()
@@ -308,6 +305,43 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
                 trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
 
         return next_population
+
+
+class SHAWrapFedex(SuccessiveHalvingAlgo):
+    def _cache_yaml(self):
+        # Save as file
+        for idx in range(self._cfg.hpo.table.cand):
+            sample_ss = parse_search_space(
+                self._cfg.hpo.table.ss).sample_configuration(
+                    self._cfg.hpo.table.num)
+            # Convert Configuration to CfgNode
+            tmp_cfg = CN()
+            for arm, configuration in enumerate(sample_ss):
+                tmp_cfg[f'arm{arm}'] = CN()
+                for key, value in configuration.get_dictionary().items():
+                    tmp_cfg[f'arm{arm}'][key] = value
+
+            with open(
+                    os.path.join(self._cfg.hpo.working_folder,
+                                 f'{idx}_tmp_grid_search_space.yaml'),
+                    'w') as f:
+                with redirect_stdout(f):
+                    print(tmp_cfg.dump())
+
+    def _setup(self):
+        self._cache_yaml()
+        init_configs = super(SHAWrapFedex, self)._setup()
+
+        for idx, trial_cfg in enumerate(init_configs):
+            trial_cfg['hpo.table.idx'] = idx
+            trial_cfg['hpo.fedex.ss'] = os.path.join(
+                self._cfg.hpo.working_folder,
+                f"{trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
+            trial_cfg['federate.save_to'] = os.path.join(
+                self._cfg.hpo.working_folder,
+                "idx_{}.pth".format(idx))
+        print(init_configs)
+        return init_configs
 
 
 # TODO: refactor PBT to enable async parallel

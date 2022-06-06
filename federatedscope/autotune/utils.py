@@ -83,3 +83,55 @@ def summarize_hpo_results(configs, perfs, white_list=None, desc=False):
     d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
     df = pd.DataFrame(d, columns=cols)
     return df
+
+
+def parse_logs(file_list):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    FONTSIZE = 40
+    MARKSIZE = 25
+
+    def process(file):
+        history = []
+        with open(file, 'r') as F:
+            for line in F:
+                try:
+                    state, line = line.split('INFO: ')
+                    config = eval(line[line.find('{'): line.find('}') + 1])
+                    performance = float(line[line.find('performance'):].split(' ')[1])
+                    print(config, performance)
+                    history.append((config, performance))
+                except:
+                    continue
+        best_seen = np.inf
+        tol_budget = 0
+        x, y = [], []
+
+        for config, performance in history:
+            tol_budget += config['federate.total_round_num']
+            if best_seen > performance or config['federate.total_round_num'] > tmp_b:
+                best_seen = performance
+            x.append(tol_budget)
+            y.append(best_seen)
+            tmp_b = config['federate.total_round_num']
+        return np.array(x) / tol_budget, np.array(y)
+
+    # Draw
+    plt.figure(figsize=(10, 7.5))
+    plt.xticks(fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
+    plt.ylabel('Loss', size=FONTSIZE)
+
+    for file in file_list:
+        x, y = process(file)
+        plt.plot(x, y, linewidth=1, markersize=MARKSIZE)
+    plt.legend(file_list, fontsize=23, loc='lower right')
+    plt.savefig(f'exp2.pdf', bbox_inches='tight')
+    plt.close()
+
+
+
+

@@ -46,6 +46,13 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex.num_arms = 16
     cfg.hpo.fedex.diff = False
 
+    # Table
+    cfg.hpo.table = CN()
+    cfg.hpo.table.ss = ''
+    cfg.hpo.table.num = 4
+    cfg.hpo.table.cand = 81
+    cfg.hpo.table.idx = 0
+
 
 def assert_hpo_cfg(cfg):
     # HPO related
