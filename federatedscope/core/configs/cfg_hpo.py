@@ -49,8 +49,9 @@ def extend_hpo_cfg(cfg):
     # Table
     cfg.hpo.table = CN()
     cfg.hpo.table.ss = ''
-    cfg.hpo.table.num = 4
-    cfg.hpo.table.cand = 81
+    cfg.hpo.table.eps = 0.1
+    cfg.hpo.table.num = 27
+    #cfg.hpo.table.cand = 81
     cfg.hpo.table.idx = 0
 
 

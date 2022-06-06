@@ -2,9 +2,13 @@ import os
 import logging
 from copy import deepcopy
 from contextlib import redirect_stdout
-from yacs.config import CfgNode as CN
 import threading
 import math
+
+import ConfigSpace as CS
+from yacs.config import CfgNode as CN
+import yaml
+import numpy as np
 
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
@@ -308,40 +312,103 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
 
 
 class SHAWrapFedex(SuccessiveHalvingAlgo):
-    def _cache_yaml(self):
-        # Save as file
-        for idx in range(self._cfg.hpo.table.cand):
-            sample_ss = parse_search_space(
-                self._cfg.hpo.table.ss).sample_configuration(
-                    self._cfg.hpo.table.num)
-            # Convert Configuration to CfgNode
-            tmp_cfg = CN()
-            for arm, configuration in enumerate(sample_ss):
-                tmp_cfg[f'arm{arm}'] = CN()
-                for key, value in configuration.get_dictionary().items():
-                    tmp_cfg[f'arm{arm}'][key] = value
+    """This SHA is customized as a wrapper for FedEx algorithm."""
 
+    #def _cache_yaml(self):
+    #    # Save as file
+    #    for idx in range(self._cfg.hpo.table.cand):
+    #        sample_ss = parse_search_space(
+    #            self._cfg.hpo.table.ss).sample_configuration(
+    #                self._cfg.hpo.table.num)
+    #        # Convert Configuration to CfgNode
+    #        tmp_cfg = CN()
+    #        for arm, configuration in enumerate(sample_ss):
+    #            tmp_cfg[f'arm{arm}'] = CN()
+    #            for key, value in configuration.get_dictionary().items():
+    #                tmp_cfg[f'arm{arm}'][key] = value
+
+    #        with open(
+    #                os.path.join(self._cfg.hpo.working_folder,
+    #                             f'{idx}_tmp_grid_search_space.yaml'),
+    #                'w') as f:
+    #            with redirect_stdout(f):
+    #                print(tmp_cfg.dump())
+
+    def _make_local_perturbation(self, config):
+        neighbor = dict()
+        for k in config:
+            if 'fedex' in k or 'fedopt' in k or k in [
+                    'federate.save_to', 'federate.total_round_num', 'eval.freq'
+            ]:
+                # a workaround
+                continue
+            hyper = self._search_space.get(k)
+            if isinstance(hyper, CS.UniformFloatHyperparameter):
+                lb, ub = hyper.lower, hyper.upper
+                diameter = self._cfg.hpo.table.eps * (ub - lb)
+                new_val = (config[k] -
+                           0.5 * diameter) + np.random.uniform() * diameter
+                neighbor[k] = float(np.clip(new_val, lb, ub))
+            elif isinstance(hyper, CS.UniformIntegerHyperparameter):
+                lb, ub = hyper.lower, hyper.upper
+                diameter = self._cfg.hpo.table.eps * (ub - lb)
+                new_val = int((config[k] - 0.5 * diameter) +
+                              np.random.uniform() * diameter)
+                neighbor[k] = int(np.clip(new_val, lb, ub))
+            elif isinstance(hyper, CS.CategoricalHyperparameter):
+                if len(hyper.choices) == 1:
+                    neighbor[k] = config[k]
+                else:
+                    threshold = self._cfg.hpo.table.eps * len(
+                        hyper.choices) / (len(hyper.choices) - 1)
+                    rn = np.random.uniform()
+                    new_val = np.random.choice(
+                        hyper.choices) if rn <= threshold else config[k]
+                    if type(new_val) in [np.int32, np.int64]:
+                        neighbor[k] = int(new_val)
+                    elif type(new_val) in [np.float32, np.float64]:
+                        neighbor[k] = float(new_val)
+                    else:
+                        neighbor[k] = str(new_val)
+            else:
+                raise TypeError("Value of {} has an invalid type {}".format(
+                    k, type(config[k])))
+
+        return neighbor
+
+    def _setup(self):
+        #self._cache_yaml()
+        init_configs = super(SHAWrapFedex, self)._setup()
+        new_init_configs = []
+        for idx, trial_cfg in enumerate(init_configs):
+            arms = dict(("arm{}".format(1 + j),
+                         self._make_local_perturbation(trial_cfg))
+                        for j in range(self._cfg.hpo.table.num - 1))
+            arms['arm0'] = dict(
+                (k, v) for k, v in trial_cfg.items() if k in arms['arm1'])
             with open(
                     os.path.join(self._cfg.hpo.working_folder,
                                  f'{idx}_tmp_grid_search_space.yaml'),
                     'w') as f:
-                with redirect_stdout(f):
-                    print(tmp_cfg.dump())
-
-    def _setup(self):
-        self._cache_yaml()
-        init_configs = super(SHAWrapFedex, self)._setup()
-
-        for idx, trial_cfg in enumerate(init_configs):
-            trial_cfg['hpo.table.idx'] = idx
-            trial_cfg['hpo.fedex.ss'] = os.path.join(
+                yaml.dump(arms, f)
+            new_trial_cfg = dict()
+            for k in trial_cfg:
+                if k not in arms['arm0']:
+                    new_trial_cfg[k] = trial_cfg[k]
+            new_trial_cfg['hpo.table.idx'] = idx
+            new_trial_cfg['hpo.fedex.ss'] = os.path.join(
                 self._cfg.hpo.working_folder,
-                f"{trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
-            trial_cfg['federate.save_to'] = os.path.join(
-                self._cfg.hpo.working_folder,
-                "idx_{}.pth".format(idx))
-        print(init_configs)
-        return init_configs
+                f"{new_trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
+            new_trial_cfg['federate.save_to'] = os.path.join(
+                self._cfg.hpo.working_folder, "idx_{}.pth".format(idx))
+            new_init_configs.append(new_trial_cfg)
+
+        self._search_space.add_hyperparameter(
+            CS.CategoricalHyperparameter("hpo.table.idx",
+                                         choices=list(
+                                             range(len(new_init_configs)))))
+
+        return new_init_configs
 
 
 # TODO: refactor PBT to enable async parallel
