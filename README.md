@@ -228,3 +228,6 @@ More publications can be found in the [Publications](https://federatedscope.io/y
 
 We **greatly appreciate** any contribution to FederatedScope! You can refer to [Contributing to FederatedScope](https://federatedscope.io/docs/contributor/) for more details.
 
+Welcome to join in our [Slack channel](https://federatedscopeteam.slack.com/archives/C03E5LGQH7S), or DingDing group (please scan the following QR code) for discussion.
+
+<img width="150" src="https://img.alicdn.com/imgextra/i4/O1CN01heXHpf1zuXhcOCgGF_!!6000000006774-2-tps-860-861.png" width="400" alt="federatedscope-logo">
