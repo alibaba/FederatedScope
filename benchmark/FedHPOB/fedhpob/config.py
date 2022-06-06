@@ -75,7 +75,8 @@ def get_cs(dname, model, mode, alg='avg'):
                                                   upper=1.0))
 
     elif dname in [
-            '10101', '53', '146818', '146821', '9952', '146822', '31', '3917'
+            '10101@openml', '53@openml', '146818@openml', '146821@openml',
+            '9952@openml', '146822@openml', '31@openml', '3917@openml'
     ]:
         # Openml tabular, raw and surrogate
         fidelity_space.add_hyperparameter(
