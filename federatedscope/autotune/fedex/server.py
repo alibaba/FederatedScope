@@ -5,6 +5,7 @@ from itertools import product
 import yaml
 
 import numpy as np
+from numpy.linalg import norm
 from scipy.special import logsumexp
 
 from federatedscope.core.message import Message

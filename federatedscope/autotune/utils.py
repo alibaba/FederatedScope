@@ -5,8 +5,6 @@ import yaml
 import pandas as pd
 import ConfigSpace as CS
 
-from federatedscope.autotune.choice_types import Continuous, Discrete
-
 
 def parse_search_space(config_path):
     """Parse yaml format configuration to generate search space

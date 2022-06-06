@@ -5,8 +5,8 @@ federate:
   total_round_num: 20
   make_global_eval: False
   client_num: 5
-  share_local_model: True
-  online_aggr: True
+  share_local_model: False
+  online_aggr: False
   use_diff: True
 trainer:
   type: 'general'
@@ -16,17 +16,17 @@ data:
   type: 'toy'
 model:
   type: 'lr'
+fedopt:
+  use: True
 hpo:
   scheduler: wrap_sha
-  num_workers: 1
+  #num_workers: 1
+  num_workers: 0
   init_cand_num: 5
   ss: 'federatedscope/example_configs/sha_wrap_fedex_ss_table.yaml'
   table:
-    ss: 'federatedscope/example_configs/toy_hpo_ss.yaml'
     num: 4
-    cand: 5
   sha:
-    budgets: [2, 4]
+    budgets: [2, 2]
   fedex:
     use: True
-
