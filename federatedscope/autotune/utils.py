@@ -96,8 +96,9 @@ def parse_logs(file_list):
             for line in F:
                 try:
                     state, line = line.split('INFO: ')
-                    config = eval(line[line.find('{'): line.find('}') + 1])
-                    performance = float(line[line.find('performance'):].split(' ')[1])
+                    config = eval(line[line.find('{'):line.find('}') + 1])
+                    performance = float(
+                        line[line.find('performance'):].split(' ')[1])
                     print(config, performance)
                     history.append((config, performance))
                 except:
@@ -108,7 +109,8 @@ def parse_logs(file_list):
 
         for config, performance in history:
             tol_budget += config['federate.total_round_num']
-            if best_seen > performance or config['federate.total_round_num'] > tmp_b:
+            if best_seen > performance or config[
+                    'federate.total_round_num'] > tmp_b:
                 best_seen = performance
             x.append(tol_budget)
             y.append(best_seen)
@@ -129,7 +131,3 @@ def parse_logs(file_list):
     plt.legend(file_list, fontsize=23, loc='lower right')
     plt.savefig(f'exp2.pdf', bbox_inches='tight')
     plt.close()
-
-
-
-
