@@ -71,8 +71,9 @@ def load_fs_contest_data(config):
                                                  shuffle=False)
             tmp_dataset += dataset[client_idx - 1]['test']
         if tmp_dataset:
-            dataloader_dict['num_label'] = 0 # todo: set to 0, used in gfl/model_builder.py line74
-            # dataloader_dict['num_label'] = get_numGraphLabels(tmp_dataset)
+            # TODO: specific by the task
+            # dataloader_dict['num_label'] = 0 # todo: set to 0, used in gfl/model_builder.py line74
+            dataloader_dict['num_label'] = get_numGraphLabels(tmp_dataset)
         data_dict[client_idx] = dataloader_dict
 
     return data_dict, config
