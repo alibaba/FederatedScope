@@ -82,8 +82,9 @@ class FedExServer(Server):
 
         if self._cfg.federate.restore_from != '':
             pi_ckpt_path = self._cfg.federate.restore_from[:self._cfg.federate.
-                                                          restore_from.rfind(
-                                                              '.')] + "_fedex.yaml"
+                                                           restore_from.rfind(
+                                                               '.'
+                                                           )] + "_fedex.yaml"
             with open(pi_ckpt_path, 'r') as ips:
                 ckpt = yaml.load(ips, Loader=yaml.FullLoader)
             self._z = [np.asarray(z) for z in ckpt['z']]
@@ -95,7 +96,6 @@ class FedExServer(Server):
             self._trace['refine'] = ckpt['refine']
             self._trace['entropy'] = ckpt['entropy']
             self._trace['mle'] = ckpt['mle']
-
 
     def entropy(self):
 
@@ -406,7 +406,8 @@ class FedExServer(Server):
                 ckpt['mle'] = self.trace('mle').tolist()
                 pi_ckpt_path = self._cfg.federate.save_to[:self._cfg.federate.
                                                           save_to.rfind(
-                                                              '.')] + "_fedex.yaml"
+                                                              '.'
+                                                          )] + "_fedex.yaml"
                 with open(pi_ckpt_path, 'w') as ops:
                     yaml.dump(ckpt, ops)
 

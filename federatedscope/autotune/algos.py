@@ -314,7 +314,6 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
 
 class SHAWrapFedex(SuccessiveHalvingAlgo):
     """This SHA is customized as a wrapper for FedEx algorithm."""
-
     def _make_local_perturbation(self, config):
         neighbor = dict()
         for k in config:
@@ -333,7 +332,9 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
             elif isinstance(hyper, CS.UniformIntegerHyperparameter):
                 lb, ub = hyper.lower, hyper.upper
                 diameter = self._cfg.hpo.table.eps * (ub - lb)
-                new_val = round(float((config[k] - 0.5 * diameter) + np.random.uniform() * diameter))
+                new_val = round(
+                    float((config[k] - 0.5 * diameter) +
+                          np.random.uniform() * diameter))
                 neighbor[k] = int(np.clip(new_val, lb, ub))
             elif isinstance(hyper, CS.CategoricalHyperparameter):
                 if len(hyper.choices) == 1:
