@@ -80,6 +80,23 @@ class FedExServer(Server):
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
 
+        if self._cfg.federate.restore_from != '':
+            pi_ckpt_path = self._cfg.federate.restore_from[:self._cfg.federate.
+                                                           restore_from.rfind(
+                                                               '.'
+                                                           )] + "_fedex.yaml"
+            with open(pi_ckpt_path, 'r') as ips:
+                ckpt = yaml.load(ips, Loader=yaml.FullLoader)
+            self._z = [np.asarray(z) for z in ckpt['z']]
+            self._theta = [np.exp(z) for z in self._z]
+            self._store = ckpt['store']
+            self._stop_exploration = ckpt['stop']
+            self._trace = dict()
+            self._trace['global'] = ckpt['global']
+            self._trace['refine'] = ckpt['refine']
+            self._trace['entropy'] = ckpt['entropy']
+            self._trace['mle'] = ckpt['mle']
+
     def entropy(self):
 
         entropy = 0.0
@@ -378,12 +395,21 @@ class FedExServer(Server):
 
             if self._cfg.federate.save_to != '':
                 # save the policy
-
+                ckpt = dict()
+                z_list = [z.tolist() for z in self._z]
+                ckpt['z'] = z_list
+                ckpt['store'] = self._store
+                ckpt['stop'] = self._stop_exploration
+                ckpt['global'] = self.trace('global').tolist()
+                ckpt['refine'] = self.trace('refine').tolist()
+                ckpt['entropy'] = self.trace('entropy').tolist()
+                ckpt['mle'] = self.trace('mle').tolist()
                 pi_ckpt_path = self._cfg.federate.save_to[:self._cfg.federate.
                                                           save_to.rfind(
-                                                              '.')] + "_pi.npy"
-                with open(pi_ckpt_path, 'wb') as ops:
-                    np.save(ops, self._z)
+                                                              '.'
+                                                          )] + "_fedex.yaml"
+                with open(pi_ckpt_path, 'w') as ops:
+                    yaml.dump(ckpt, ops)
 
             if self.model_num > 1:
                 model_para = [model.state_dict() for model in self.models]

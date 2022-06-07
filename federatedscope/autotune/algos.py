@@ -115,6 +115,7 @@ class ModelFreeBase(Scheduler):
     """To attempt a collection of configurations exhaustively.
     """
     def _setup(self):
+        self._search_space.seed(self._cfg.seed + 19)
         return [
             cfg.get_dictionary()
             for cfg in self._search_space.sample_configuration(
@@ -313,27 +314,6 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
 
 class SHAWrapFedex(SuccessiveHalvingAlgo):
     """This SHA is customized as a wrapper for FedEx algorithm."""
-
-    #def _cache_yaml(self):
-    #    # Save as file
-    #    for idx in range(self._cfg.hpo.table.cand):
-    #        sample_ss = parse_search_space(
-    #            self._cfg.hpo.table.ss).sample_configuration(
-    #                self._cfg.hpo.table.num)
-    #        # Convert Configuration to CfgNode
-    #        tmp_cfg = CN()
-    #        for arm, configuration in enumerate(sample_ss):
-    #            tmp_cfg[f'arm{arm}'] = CN()
-    #            for key, value in configuration.get_dictionary().items():
-    #                tmp_cfg[f'arm{arm}'][key] = value
-
-    #        with open(
-    #                os.path.join(self._cfg.hpo.working_folder,
-    #                             f'{idx}_tmp_grid_search_space.yaml'),
-    #                'w') as f:
-    #            with redirect_stdout(f):
-    #                print(tmp_cfg.dump())
-
     def _make_local_perturbation(self, config):
         neighbor = dict()
         for k in config:
@@ -352,8 +332,9 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
             elif isinstance(hyper, CS.UniformIntegerHyperparameter):
                 lb, ub = hyper.lower, hyper.upper
                 diameter = self._cfg.hpo.table.eps * (ub - lb)
-                new_val = int((config[k] - 0.5 * diameter) +
-                              np.random.uniform() * diameter)
+                new_val = round(
+                    float((config[k] - 0.5 * diameter) +
+                          np.random.uniform() * diameter))
                 neighbor[k] = int(np.clip(new_val, lb, ub))
             elif isinstance(hyper, CS.CategoricalHyperparameter):
                 if len(hyper.choices) == 1:
