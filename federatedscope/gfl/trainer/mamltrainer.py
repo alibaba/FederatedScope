@@ -7,7 +7,7 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
     def _hook_on_fit_start_init(self, ctx):
         super()._hook_on_fit_start_init(ctx)
         maml = l2l.algorithms.MAML(self.ctx.model, lr=self.cfg.maml.inner_lr)
-        ctx.clone = maml.clone()
+        ctx.maml = maml.clone()
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
@@ -21,7 +21,7 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
             pred = ctx.model(batch)
         else:
             # update on the clone
-            pred = ctx.clone(batch)
+            pred = ctx.maml(batch)
         ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
@@ -36,7 +36,7 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
             ctx.optimizer.step()
         else:
             # during train, fake forward
-            ctx.clone.adapt(ctx.loss_batch, allow_unused=True)
+            ctx.maml.adapt(ctx.loss_batch, allow_unused=True)
 
     def _hook_on_batch_end(self, ctx):
         # keep the last batch here
@@ -53,7 +53,7 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
             else:
                 label = batch.y.squeeze(-1).long()
             # forward
-            pred_outer = ctx.clone(batch)
+            pred_outer = ctx.maml(batch)
             ctx.loss_batch = ctx.criterion(pred_outer, label)
 
             ctx.optimizer.zero_grad()
@@ -61,7 +61,7 @@ class GraphMAMLTrainer(GeneralTorchTrainer):
             ctx.optimizer.step()
 
         ctx.data_batch = None
-        ctx.clone = None
+        ctx.maml = None
         super()._hook_on_fit_end(ctx)
 
 
