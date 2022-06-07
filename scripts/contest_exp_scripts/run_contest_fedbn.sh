@@ -5,7 +5,7 @@ cd ../../
 cudaid=$1
 root=$2
 dataset=fs_contest_data
-method=fedbn
+method=fedbn_epoch
 outdir=exp_out/${method}
 
 if [ ! -d ${outdir} ];then
@@ -15,7 +15,7 @@ fi
 echo "HPO starts..."
 
 lrs=(0.01 0.1 0.05 0.005 0.5)
-local_updates=(1 2 4)
+local_updates=(1 5 10)
 
 
 for (( i=0; i<${#lrs[@]}; i++ ))
@@ -30,6 +30,7 @@ do
             device ${cudaid} \
             data.type ${dataset} \
             optimizer.lr ${lrs[$i]} \
+            federate.batch_or_epoch epoch \
             federate.local_update_steps ${local_updates[$j]} \
             seed $k >>${log} 2>&1
         done
