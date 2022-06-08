@@ -55,6 +55,9 @@ The docker images are based on the nvidia-docker. Please pre-install the NVIDIA 
 Finally, after all the dependencies are installed, run:
 ```bash
 python setup.py install
+
+# Or (for dev mode)
+pip install -e .
 ```
 
 ### Step 2. Prepare datasets
