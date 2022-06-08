@@ -17,16 +17,18 @@ class VMFDataset:
 
     """
     def _split_n_clients_rating(self, ratings: csc_matrix, num_client: int,
-                                test_portion: float):
+                                split: list):
         id_item = np.arange(self.n_item)
         shuffle(id_item)
         items_per_client = np.array_split(id_item, num_client)
         data = dict()
         for clientId, items in enumerate(items_per_client):
             client_ratings = ratings[:, items]
-            train_ratings, test_ratings = self._split_train_test_ratings(
-                client_ratings, test_portion)
-            data[clientId + 1] = {"train": train_ratings, "test": test_ratings}
+            train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
+                client_ratings, split)
+            data[clientId + 1] = {
+                "train": train_ratings, "val": val_ratings, "test": test_ratings
+            }
         self.data = data
 
 
@@ -35,16 +37,18 @@ class HMFDataset:
 
     """
     def _split_n_clients_rating(self, ratings: csc_matrix, num_client: int,
-                                test_portion: float):
+                                split: list):
         id_user = np.arange(self.n_user)
         shuffle(id_user)
         users_per_client = np.array_split(id_user, num_client)
         data = dict()
-        for cliendId, users in enumerate(users_per_client):
+        for clientId, users in enumerate(users_per_client):
             client_ratings = ratings[users, :]
-            train_ratings, test_ratings = self._split_train_test_ratings(
-                client_ratings, test_portion)
-            data[cliendId + 1] = {"train": train_ratings, "test": test_ratings}
+            train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
+                client_ratings, split)
+            data[clientId + 1] = {
+                "train": train_ratings, "val": val_ratings, "test": test_ratings
+            }
         self.data = data
 
 
@@ -54,12 +58,14 @@ class MovieLensData(object):
     Arguments:
         root (string): the path of data
         num_client (int): the number of clients
-        train_portion (float): the portion of training data
+        split (float): the portion of training/val/test data as list [train, val, test]
         download (bool): indicator to download dataset
     """
-    def __init__(self, root, num_client, train_portion=0.9, download=True):
+    def __init__(self, root, num_client, split=None, download=True):
         super(MovieLensData, self).__init__()
 
+        if split is None:
+            split = [0.8, 0.1, 0.1]
         self.root = root
         self.data = None
 
@@ -74,30 +80,59 @@ class MovieLensData(object):
                                "You can use download=True to download it")
 
         ratings = self._load_meta()
-        self._split_n_clients_rating(ratings, num_client, 1 - train_portion)
+        if issubclass(type(self), HMFDataset):
+            self._split_n_clients_rating_hmf(ratings, num_client, split)
+        else:
+            self._split_n_clients_rating_vmf(ratings, num_client, split)
 
-    def _split_n_clients_rating(self, ratings: csc_matrix, num_client: int,
-                                test_portion: float):
+    def _split_n_clients_rating_hmf(self, ratings: csc_matrix, num_client: int,
+                                split: list):
+        id_user = np.arange(self.n_user)
+        shuffle(id_user)
+        users_per_client = np.array_split(id_user, num_client)
+        data = dict()
+        for clientId, users in enumerate(users_per_client):
+            client_ratings = ratings[users, :]
+            train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
+                client_ratings, split)
+            data[clientId + 1] = {
+                "train": train_ratings, "val": val_ratings, "test": test_ratings
+            }
+        self.data = data
+
+    def _split_n_clients_rating_vmf(self, ratings: csc_matrix, num_client: int,
+                                    split: list):
         id_item = np.arange(self.n_item)
         shuffle(id_item)
         items_per_client = np.array_split(id_item, num_client)
         data = dict()
         for clientId, items in enumerate(items_per_client):
             client_ratings = ratings[:, items]
-            train_ratings, test_ratings = self._split_train_test_ratings(
-                client_ratings, test_portion)
-            data[clientId + 1] = {"train": train_ratings, "test": test_ratings}
+            train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
+                client_ratings, split)
+            data[clientId + 1] = {
+                "train": train_ratings, "val": val_ratings, "test": test_ratings
+            }
         self.data = data
 
-    def _split_train_test_ratings(self, ratings: csc_matrix,
-                                  test_portion: float):
+    def _split_train_val_test_ratings(self,
+                                      ratings: csc_matrix,
+                                      split: list):
+        train_ratio, val_ratio, test_ratio = split
+
         n_ratings = ratings.count_nonzero()
-        id_test = np.random.choice(n_ratings,
-                                   int(n_ratings * test_portion),
+        id_val_test = np.random.choice(n_ratings,
+                                   int(n_ratings * (val_ratio + test_ratio)),
                                    replace=False)
-        id_train = list(set(np.arange(n_ratings)) - set(id_test))
+
+        id_val = id_val_test[:int(n_ratings * val_ratio)]
+        id_test = id_val_test[int(n_ratings * val_ratio):]
+        id_train = list(set(np.arange(n_ratings)) - set(id_test) - set(id_val))
 
         ratings = ratings.tocoo()
+        val = coo_matrix((ratings.data[id_val],
+                           (ratings.row[id_val], ratings.col[id_val])),
+                          shape=ratings.shape)
         test = coo_matrix((ratings.data[id_test],
                            (ratings.row[id_test], ratings.col[id_test])),
                           shape=ratings.shape)
@@ -105,8 +140,8 @@ class MovieLensData(object):
                             (ratings.row[id_train], ratings.col[id_train])),
                            shape=ratings.shape)
 
-        train_ratings, test_ratings = train.tocsc(), test.tocsc()
-        return train_ratings, test_ratings
+        train_ratings, val_ratings, test_ratings = train.tocsc(), val.tocsc(), test.tocsc()
+        return train_ratings, val_ratings, test_ratings
 
     def _load_meta(self):
         meta_path = os.path.join(self.root, self.base_folder, "ratings.pkl")

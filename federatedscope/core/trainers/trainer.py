@@ -49,6 +49,8 @@ class Trainer(object):
                            device,
                            init_dict=self.parse_data(data))
 
+        self.need_flops_count = True
+
         if monitor is None:
             logger.warning(
                 f"Will not use monitor in trainer with class {type(self)}")

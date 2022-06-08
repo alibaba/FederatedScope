@@ -629,10 +629,13 @@ def get_data(config):
             for split_name, ds in ds_ci.items():
                 try:
                     import torch
-                    if isinstance(ds, (torch.utils.data.Dataset, list)):
+                    from federatedscope.mf.dataloader import MFDataLoader
+                    if isinstance(ds, (torch.utils.data.Dataset, list)) or issubclass(type(ds), torch.utils.data.Dataset):
                         data_num_all_client[split_name].append(len(ds))
-                    elif isinstance(ds, (torch.utils.data.DataLoader, list)):
+                    elif isinstance(ds, (torch.utils.data.DataLoader, list)) or issubclass(type(ds), torch.utils.data.DataLoader):
                         data_num_all_client[split_name].append(len(ds.dataset))
+                    elif issubclass(type(ds), MFDataLoader):
+                        data_num_all_client[split_name].append(ds.n_rating)
                 except:
                     if isinstance(ds, list):
                         data_num_all_client[split_name].append(len(ds))
@@ -685,11 +688,13 @@ def get_data(config):
             all_split_merged_num = [all_split_merged_num[i] + v[i] for i in range(len(v))]
     data_num_all_client["all"] = all_split_merged_num
     for k, v in data_num_all_client.items():
-        stats_res = stats.describe(v)
-        if stats_res.minmax[1] == 0:
-            logger.warning(f"For data split {k}, the max sample num in the client is 0. Please check whether this is as you would like it to be")
-        logger.info(f"For data split {k}, the stats_res over all client is {stats_res}, the meadian is {sorted(v)[len(v) // 2]}, std is {math.sqrt(stats_res.variance)}")
-
+        if len(v) == 0:
+            logger.warning("The data distribution statistics info are nor correctly logged, maybe you used a data type we haven't support")
+        else:
+            stats_res = stats.describe(v)
+            if stats_res.minmax[1] == 0:
+                logger.warning(f"For data split {k}, the max sample num in the client is 0. Please check w    hether this is as you would like it to be")
+            logger.info(f"For data split {k}, the stats_res over all client is {stats_res}, the meadian is {sorted(v)[len(v) // 2]}, std is {math.sqrt(stats_res.variance)}")
 
     return data, modified_config
 

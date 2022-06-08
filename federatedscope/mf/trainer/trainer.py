@@ -43,20 +43,27 @@ class MFTrainer(GeneralTorchTrainer):
         return init_dict
 
     def _hook_on_fit_end(self, ctx):
-        results = {
-            f"{ctx.cur_mode}_avg_loss": ctx.get("loss_batch_total_{}".format(
-                ctx.cur_mode)) /
-            ctx.get("num_samples_{}".format(ctx.cur_mode)),
-            f"{ctx.cur_mode}_total": ctx.get("num_samples_{}".format(
-                ctx.cur_mode))
-        }
+        if ctx.get("num_samples_{}".format(ctx.cur_data_split)) == 0:
+            results = {
+                f"{ctx.cur_data_split}_avg_loss": ctx.get("loss_batch_total_{}".format(
+                ctx.cur_data_split)),
+                f"{ctx.cur_data_split}_total": 0
+            }
+        else:
+            results = {
+                f"{ctx.cur_data_split}_avg_loss": ctx.get("loss_batch_total_{}".format(
+                    ctx.cur_data_split)) /
+                ctx.get("num_samples_{}".format(ctx.cur_data_split)),
+                f"{ctx.cur_data_split}_total": ctx.get("num_samples_{}".format(
+                    ctx.cur_data_split))
+            }
         setattr(ctx, 'eval_metrics', results)
 
     def _hook_on_batch_end(self, ctx):
         # update statistics
         setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_mode),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_mode)) +
+            ctx, "loss_batch_total_{}".format(ctx.cur_data_split),
+            ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) +
             ctx.loss_batch.item() * ctx.batch_size)
 
         if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
@@ -64,12 +71,12 @@ class MFTrainer(GeneralTorchTrainer):
         else:
             loss_regular = ctx.loss_regular.item()
         setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_mode),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_mode)) +
+            ctx, "loss_regular_total_{}".format(ctx.cur_data_split),
+            ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
             loss_regular)
         setattr(
-            ctx, "num_samples_{}".format(ctx.cur_mode),
-            ctx.get("num_samples_{}".format(ctx.cur_mode)) + ctx.batch_size)
+            ctx, "num_samples_{}".format(ctx.cur_data_split),
+            ctx.get("num_samples_{}".format(ctx.cur_data_split)) + ctx.batch_size)
 
         # clean temp ctx
         ctx.data_batch = None
@@ -83,7 +90,9 @@ class MFTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         indices, ratings = ctx.data_batch
         pred, label, ratio = ctx.model(indices, ratings)
-        ctx.loss_batch = ctx.criterion(pred, label) * ratio
+        ctx.loss_batch = ctx.criterion(pred, label) * ratio.item()
+        ctx.y_prob = pred
+        ctx.y_true = label
 
         ctx.batch_size = len(ratings)
 
@@ -95,12 +104,13 @@ class MFTrainer(GeneralTorchTrainer):
                 f"Plz check whether this is you want.")
             return
 
-        if self.ctx.monitor.flops_per_sample == 0:
+        if self.ctx.monitor.flops_per_sample == 0 and self.need_flops_count:
             # calculate the flops_per_sample
             try:
+                import torch
                 indices, ratings = ctx.data_batch
-                if isinstance(indices, numpy.ndarray):
-                    indices = torch.from_numpy(indices)
+                if isinstance(indices, tuple) and isinstance(indices[0], numpy.ndarray):
+                    indices = torch.from_numpy(numpy.stack(indices))
                 if isinstance(ratings, numpy.ndarray):
                     ratings = torch.from_numpy(ratings)
                 from fvcore.nn import FlopCountAnalysis
@@ -109,14 +119,15 @@ class MFTrainer(GeneralTorchTrainer):
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums
                     logger.warning(
-                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "the flops_per_batch is multiplied by internal model nums as self.mirror    ed_models=True."
                         "if this is not the case you want, please customize the count hook"
                     )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
-                                                 ctx.batch_size)
+                                             ctx.batch_size)
             except:
+                self.need_flops_count = False
                 logger.error(
-                    "current flop count implementation is for general NodeFullBatchTrainer case: "
+                    "current flop count implementation is for general Torch case: "
                     "1) the ctx.model takes tuple (indices, ratings) as input."
                     "Please check the forward format or implement your own flop_count function"
                 )

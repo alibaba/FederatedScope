@@ -488,12 +488,13 @@ class Monitor(object):
             # update different keys round-wise: if find better round_wise_update_key, update     others at the same time
             else:
                 if round_wise_update_key not in [
-                        "val_loss", "val_acc", "val_std", "test_loss",
-                        "test_acc", "test_std", "test_avg_loss", "loss"
+                    "val_loss", "test_loss", "loss",
+                    "val_avg_loss", "test_avg_loss", "avg_loss",
+                    "test_acc", "test_std", "val_acc", "val_std",
                 ]:
                     raise NotImplementedError(
                         f"We currently support round_wise_update_key as one of "
-                        f"['val_loss', 'val_acc', 'val_std', 'test_loss', 'test_acc', 'test_std'] "
+                        f"['val_loss', 'test_loss', 'loss', 'val_avg_loss', 'test_avg_loss', 'avg_loss,''val_acc', 'val_std', 'test_acc', 'test_std'] "
                         f"for round-wise best results update, but got {round_wise_update_key}."
                     )
 

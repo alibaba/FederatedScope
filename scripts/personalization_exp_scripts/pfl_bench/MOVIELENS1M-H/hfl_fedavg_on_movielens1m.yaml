@@ -1,0 +1,30 @@
+use_gpu: True
+device: -1
+early_stop:
+  patience: 5
+federate:
+  mode: standalone
+  client_num: 6040
+  total_round_num: 1000
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  sample_client_rate: 0.2
+  unseen_clients_rate: 0.2
+data:
+  root: data/
+  type: HFLMovieLens1M
+  batch_size: 64
+  num_workers: 0
+  splits: [0.7,0.15,0.15]
+model:
+  type: HMFNet
+  hidden: 20
+optimizer:
+  lr: 1.
+criterion:
+  type: MSELoss
+trainer:
+  type: mftrainer
+eval:
+  freq: 10
+  best_res_update_round_wise_key: val_avg_loss
