@@ -1,0 +1,38 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 100
+seed: 12345
+federate:
+  mode: standalone
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  total_round_num: 500
+  sample_client_rate: 0.2
+  share_local_model: True
+  online_aggr: True
+data:
+  root: data/
+  type: femnist
+  splits: [0.6,0.2,0.2]
+  batch_size: 16
+  subsample: 0.05
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  num_workers: 0
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 62
+  dropout: 0.5
+optimizer:
+  lr: 0.01
+  weight_decay: 0.0
+  grad_clip: 5.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  freq: 2
+  metrics: ['acc', 'correct', 'f1']
+  split: ['test', 'val', 'train']

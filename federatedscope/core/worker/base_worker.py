@@ -12,7 +12,7 @@ class Worker(object):
         self._cfg = config
         self._strategy = strategy
         self._mode = self._cfg.federate.mode.lower()
-        self._monitor = Monitor(config)
+        self._monitor = Monitor(config, monitored_object=self)
 
     @property
     def ID(self):

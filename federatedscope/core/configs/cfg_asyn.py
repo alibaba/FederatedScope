@@ -11,7 +11,7 @@ def extend_asyn_cfg(cfg):
     cfg.asyn = CN()
 
     cfg.asyn.use = True
-    cfg.asyn.timeout = 3
+    cfg.asyn.timeout = 0
     cfg.asyn.min_received_num = 2
     cfg.asyn.min_received_rate = -1.0
 

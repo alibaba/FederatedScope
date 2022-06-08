@@ -9,6 +9,7 @@ from federatedscope.gfl.model.gin import GIN_Net
 from federatedscope.gfl.model.gpr import GPR_Net
 from federatedscope.gfl.model.link_level import GNN_Net_Link
 from federatedscope.gfl.model.graph_level import GNN_Net_Graph
+from federatedscope.gfl.model.mpnn import MPNNs2s
 
 
 def get_gnn(model_config, local_data):
@@ -70,13 +71,19 @@ def get_gnn(model_config, local_data):
                              dropout=model_config.dropout,
                              gnn=model_config.type)
     elif model_config.task == 'graph':
-        model = GNN_Net_Graph(data.x.shape[-1],
-                              max(model_config.out_channels, num_label),
-                              hidden=model_config.hidden,
-                              max_depth=model_config.layer,
-                              dropout=model_config.dropout,
-                              gnn=model_config.type,
-                              pooling=model_config.graph_pooling)
+        if model_config.type == 'mpnn':
+            model = MPNNs2s(in_channels=data.x.shape[-1],
+                            out_channels=model_config.out_channels,
+                            num_nn=data.num_edge_features,
+                            hidden=model_config.hidden)
+        else:
+            model = GNN_Net_Graph(data.x.shape[-1],
+                                  max(model_config.out_channels, num_label),
+                                  hidden=model_config.hidden,
+                                  max_depth=model_config.layer,
+                                  dropout=model_config.dropout,
+                                  gnn=model_config.type,
+                                  pooling=model_config.graph_pooling)
     else:
         raise ValueError('not recognized data task {}'.format(
             model_config.task))

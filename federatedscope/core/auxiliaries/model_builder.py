@@ -1,7 +1,14 @@
+import logging
 import federatedscope.register as register
 
+logger = logging.getLogger(__name__)
 
-#def get_model(fed_data):
+try:
+    from federatedscope.contrib.model import *
+except ImportError as error:
+    logger.warning(f'{error} in `federatedscope.contrib.model`, some modules are not available.')
+
+
 def get_model(model_config, local_data, backend='torch'):
     """
     Arguments:
@@ -67,6 +74,16 @@ def get_model(model_config, local_data, backend='torch'):
                     (model_config.layer - 1) + [model_config.out_channels],
                     dropout=model_config.dropout)
 
+    elif model_config.type.lower() == 'quadratic':
+        from federatedscope.tabular.model import QuadraticModel
+        if isinstance(local_data, dict):
+            data = next(iter(local_data['train']))
+        else:
+            # TODO: complete the branch
+            data = local_data
+        x, _ = data
+        model = QuadraticModel(x.shape[-1], 1)
+
     elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11', 'lr']:
         from federatedscope.cv.model import get_cnn
         model = get_cnn(model_config, local_data)
@@ -76,7 +93,9 @@ def get_model(model_config, local_data, backend='torch'):
     elif model_config.type.lower().endswith('transformers'):
         from federatedscope.nlp.model import get_transformer
         model = get_transformer(model_config, local_data)
-    elif model_config.type.lower() in ['gcn', 'sage', 'gpr', 'gat', 'gin']:
+    elif model_config.type.lower() in [
+            'gcn', 'sage', 'gpr', 'gat', 'gin', 'mpnn'
+    ]:
         from federatedscope.gfl.model import get_gnn
         model = get_gnn(model_config, local_data)
     elif model_config.type.lower() in ['vmfnet', 'hmfnet']:

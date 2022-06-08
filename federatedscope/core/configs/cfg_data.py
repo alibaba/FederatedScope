@@ -13,9 +13,11 @@ def extend_data_cfg(cfg):
     cfg.data.args = []  # args for external dataset, eg. [{'download': True}]
     cfg.data.splitter = ''
     cfg.data.splitter_args = []  # args for splitter, eg. [{'alpha': 0.5}]
-    cfg.data.transform = []  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+    cfg.data.transform = [
+    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
     cfg.data.target_transform = []  # target_transform for y, use as above
-    cfg.data.pre_transform = []  # pre_transform for `torch_geometric` dataset, use as above
+    cfg.data.pre_transform = [
+    ]  # pre_transform for `torch_geometric` dataset, use as above
     cfg.data.batch_size = 64
     cfg.data.drop_last = False
     cfg.data.sizes = [10, 5]
@@ -28,6 +30,12 @@ def extend_data_cfg(cfg):
     cfg.data.graphsaint = CN()
     cfg.data.graphsaint.walk_length = 2
     cfg.data.graphsaint.num_steps = 30
+
+    # quadratic
+    cfg.data.quadratic = CN()
+    cfg.data.quadratic.dim = 1
+    cfg.data.quadratic.min_curv = 0.02
+    cfg.data.quadratic.max_curv = 12.5
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_data_cfg)

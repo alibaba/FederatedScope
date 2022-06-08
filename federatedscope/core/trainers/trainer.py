@@ -4,9 +4,6 @@ import logging
 import os
 import numpy as np
 
-from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
-from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
-from federatedscope.core.auxiliaries.ReIterator import ReIterator
 from federatedscope.core.auxiliaries import utils
 from federatedscope.core.trainers.context import Context
 from federatedscope.core.trainers.context import CtxReferVar
@@ -35,7 +32,13 @@ class Trainer(object):
         "on_batch_backward", "on_batch_end", "on_epoch_end", "on_fit_end"
     ]
 
-    def __init__(self, model, data, device, config, only_for_eval=False):
+    def __init__(self,
+                 model,
+                 data,
+                 device,
+                 config,
+                 only_for_eval=False,
+                 monitor=None):
         self.cfg = config
         self.metric_calculator = MetricCalculator(config.eval.metrics)
 
@@ -44,6 +47,17 @@ class Trainer(object):
                            data,
                            device,
                            init_dict=self.parse_data(data))
+
+        if monitor is None:
+            logger.warning(
+                f"Will not use monitor in trainer with class {type(self)}")
+        self.ctx.monitor = monitor
+        # the "model_nums", and "models" are used for multi-model case and model size calculation
+        self.model_nums = 1
+        self.ctx.models = [model]
+        # "mirrored_models": whether the internal multi-models adopt the same architects and almost the same behaviors,
+        # which is used to simply the flops, model size calculation
+        self.ctx.mirrored_models = False
 
         # Atomic operation during training/evaluation
         self.hooks_in_train = collections.defaultdict(list)
@@ -154,16 +168,16 @@ class Trainer(object):
         target_hook_set = hooks_dict[trigger]
         if insert_pos is not None:
             assert (insert_pos == -1) or (insert_pos == len(target_hook_set) == 0) or \
-                   (0 <= insert_pos <= (len(target_hook_set) - 1)), \
+                   (0 <= insert_pos <= (len(target_hook_set))), \
                 f"Got {insert_pos} as insert pos, you should specify a integer (1) =-1 " \
                 f"or (2) =0 for null target_hook_set;" \
-                f"or (3) within [0, {(len(target_hook_set) - 1)}]."
+                f"or (3) within [0, {(len(target_hook_set))}]."
         elif base_hook is not None:
             base_hook_pos = target_hook_set.index(base_hook)
             insert_pos = base_hook_pos - 1 if insert_mode == "before" else base_hook_pos + 1
             # bounding the insert_pos in rational range
             insert_pos = 0 if insert_pos < 0 else insert_pos
-            insert_pos = -1 if insert_pos >= len(
+            insert_pos = -1 if insert_pos > len(
                 target_hook_set) else insert_pos
         else:
             insert_pos = -1  # By default, the new hook is called finally
@@ -339,237 +353,3 @@ class Trainer(object):
         raise NotImplementedError(
             "The function `load_model` should be implemented according to the ML backend (Pytorch, Tensorflow ...)."
         )
-
-
-class GeneralTorchTrainer(Trainer):
-    def get_model_para(self):
-        return self._param_filter(
-            self.ctx.model.state_dict() if self.cfg.federate.
-            share_local_model else self.ctx.model.cpu().state_dict())
-
-    def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
-
-        """
-        # TODO: more robust for different data
-        init_dict = dict()
-        if isinstance(data, dict):
-            for mode in ["train", "val", "test"]:
-                init_dict["{}_data".format(mode)] = None
-                init_dict["{}_loader".format(mode)] = None
-                init_dict["num_{}_data".format(mode)] = 0
-                if data.get(mode, None) is not None:
-                    if isinstance(data.get(mode), Dataset):
-                        init_dict["{}_data".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode))
-                    elif isinstance(data.get(mode), DataLoader):
-                        init_dict["{}_loader".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode).dataset)
-                    elif isinstance(data.get(mode), dict):
-                        init_dict["{}_data".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode)['y'])
-                    else:
-                        raise TypeError("Type {} is not supported.".format(
-                            type(data.get(mode))))
-        else:
-            raise TypeError("Type of data should be dict.")
-        return init_dict
-
-    def train(self, target_data_split_name="train"):
-        if self.ctx.get(
-                f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
-            raise ValueError(
-                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
-            )
-        self._run_routine("train", target_data_split_name)
-
-        # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
-        # TODO: self.ctx should not fetch variables here (since the lifecycle of the variables should end in the routine)
-        return self.ctx["var"]["train_{}".format(target_data_split_name)].num_samples, self.get_model_para(
-        ), self.ctx.eval_metrics
-
-    def update(self, model_parameters):
-        '''
-            Called by the FL client to update the model parameters
-        Arguments:
-            model_parameters (dict): PyTorch Module object's state_dict.
-        '''
-        for key in model_parameters:
-            if isinstance(model_parameters[key], list):
-                model_parameters[key] = torch.FloatTensor(
-                    model_parameters[key])
-        self.ctx.model.load_state_dict(self._param_filter(model_parameters),
-                                       strict=False)
-
-    def evaluate(self, mode, target_data_split_name="test"):
-        with torch.no_grad():
-            super().evaluate(mode, target_data_split_name)
-
-        return self.ctx.eval_metrics
-
-    def finetune(self, target_data_split_name="train", hooks_set=None):
-
-        # freeze the parameters during the fine-tune stage
-        require_grad_changed_paras = set()
-        if self.cfg.trainer.finetune.freeze_param != "":
-            preserved_paras = self._param_filter(
-                self.ctx.model.state_dict(),
-                self.cfg.trainer.finetune.freeze_param)
-            for name, param in self.ctx.model.named_parameters():
-                if name not in preserved_paras and param.requires_grad is True:
-                    param.requires_grad = False
-                    require_grad_changed_paras.add(name)
-
-        # change the optimization configs
-        original_lrs = []
-        for g in self.ctx.optimizer.param_groups:
-            original_lrs.append(g['lr'])
-            g['lr'] = self.cfg.trainer.finetune.lr
-        original_epoch_num = self.ctx["num_train_epoch"]
-        original_batch_num = self.ctx["num_train_batch"]
-        self.ctx["num_train_epoch"] = 1
-        self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
-
-        # do the fine-tuning process
-        self.train(target_data_split_name, hooks_set)
-
-        # restore the state before fine-tuning
-        if len(require_grad_changed_paras) > 0:
-            for name, param in self.ctx.model.named_parameters():
-                if name in require_grad_changed_paras:
-                    param.requires_grad = True
-
-        for i, g in enumerate(self.ctx.optimizer.param_groups):
-            g['lr'] = original_lrs[i]
-
-        self.ctx["num_train_epoch"] = original_epoch_num
-        self.ctx["num_train_batch"] = original_batch_num
-
-    def register_default_hooks_train(self):
-        self.register_hook_in_train(self._hook_on_fit_start_init,
-                                    "on_fit_start")
-        self.register_hook_in_train(self._hook_on_epoch_start,
-                                    "on_epoch_start")
-        self.register_hook_in_train(self._hook_on_batch_start_init,
-                                    "on_batch_start")
-        self.register_hook_in_train(self._hook_on_batch_forward,
-                                    "on_batch_forward")
-        self.register_hook_in_train(self._hook_on_batch_forward_regularizer,
-                                    "on_batch_forward")
-        self.register_hook_in_train(self._hook_on_batch_backward,
-                                    "on_batch_backward")
-        self.register_hook_in_train(self._hook_on_batch_end, "on_batch_end")
-        self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
-
-    def register_default_hooks_eval(self):
-        # test/val
-        self.register_hook_in_eval(self._hook_on_fit_start_init,
-                                   "on_fit_start")
-        self.register_hook_in_eval(self._hook_on_epoch_start, "on_epoch_start")
-        self.register_hook_in_eval(self._hook_on_batch_start_init,
-                                   "on_batch_start")
-        self.register_hook_in_eval(self._hook_on_batch_forward,
-                                   "on_batch_forward")
-        self.register_hook_in_eval(self._hook_on_batch_end, "on_batch_end")
-        self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
-
-    def _hook_on_fit_start_init(self, ctx):
-        # prepare model
-        ctx.model.to(ctx.device)
-
-        # Prepare variables
-        ctx.var.loss_batch_total = CtxStatsVar()
-        ctx.var.loss_regular_total = CtxStatsVar()
-        ctx.var.num_samples = CtxStatsVar(0, lifecycle=None)
-        ctx.var.ys_true = CtxReferVar(list(), "routine")
-        ctx.var.ys_prob = CtxReferVar(list(), "routine")
-
-    def _hook_on_epoch_start(self, ctx):
-        # Prepare dataloader
-        if ctx.get("{}_loader".format(ctx.cur_data_split)) is None:
-            loader = get_dataloader(
-                WrapDataset(ctx.get("{}_data".format(ctx.cur_data_split))),
-                self.cfg)
-            setattr(ctx, "{}_loader".format(ctx.cur_data_split),
-                    ReIterator(loader))
-        elif not isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
-                            ReIterator):
-            setattr(
-                ctx, "{}_loader".format(ctx.cur_data_split),
-                ReIterator(ctx.get("{}_loader".format(ctx.cur_data_split))))
-        else:
-            ctx.get("{}_loader".format(ctx.cur_data_split)).reset()
-
-    def _hook_on_batch_start_init(self, ctx):
-        # Prepare data batch
-        try:
-            # TODO: modify prepare function
-            ctx.data_batch = CtxReferVar(
-                next(ctx.get("{}_loader".format(ctx.cur_data_split))), "batch")
-        except StopIteration:
-            raise StopIteration
-
-    def _hook_on_batch_forward(self, ctx):
-        x, label = [_.to(ctx.device) for _ in ctx.data_batch]
-        pred = ctx.model(x)
-        if len(label.size()) == 0:
-            label = label.unsqueeze(0)
-
-        ctx.loss_batch = CtxReferVar(ctx.criterion(pred, label), "batch")
-        ctx.batch_size = CtxStatsVar(len(label), "batch")
-        ctx.var.y_true = CtxReferVar(label, "batch")
-        ctx.var.y_prob = CtxReferVar(pred, "batch")
-
-    def _hook_on_batch_forward_regularizer(self, ctx):
-        ctx.loss_regular = CtxReferVar(
-            self.cfg.regularizer.mu * ctx.regularizer(ctx), "batch")
-        ctx.loss_task = CtxReferVar(ctx.loss_batch + ctx.loss_regular, "batch")
-
-    def _hook_on_batch_backward(self, ctx):
-        ctx.optimizer.zero_grad()
-        ctx.loss_task.backward()
-        if ctx.grad_clip > 0:
-            torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
-                                           ctx.grad_clip)
-        ctx.optimizer.step()
-
-    def _hook_on_batch_end(self, ctx):
-        # Update statistics
-        ctx.var.num_samples += ctx.batch_size
-        ctx.var.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
-        ctx.var.loss_regular_total += float(ctx.get("loss_regular", 0.))
-        # Cache label for evaluate
-        ctx.var.ys_true.append(ctx.var.y_true.detach().cpu().numpy())
-        ctx.var.ys_prob.append(ctx.var.y_prob.detach().cpu().numpy())
-
-    def _hook_on_fit_end(self, ctx):
-        """Evaluate metrics.
-
-        """
-        ctx.var.y_true = CtxReferVar(np.concatenate(ctx.var.ys_true),
-                                      "routine")
-        ctx.var.y_prob = CtxReferVar(np.concatenate(ctx.var.ys_prob),
-                                      "routine")
-
-        results = self.metric_calculator.eval(ctx)
-        setattr(ctx, 'eval_metrics', results)
-
-    def save_model(self, path, cur_round=-1):
-        assert self.ctx.model is not None
-
-        ckpt = {'cur_round': cur_round, 'model': self.ctx.model.state_dict()}
-        torch.save(ckpt, path)
-
-    def load_model(self, path):
-        assert self.ctx.model is not None
-
-        if os.path.exists(path):
-            ckpt = torch.load(path, map_location=self.ctx.device)
-            self.ctx.model.load_state_dict(ckpt['model'])
-            return ckpt['cur_round']
-        else:
-            raise ValueError("The file {} does NOT exist".format(path))

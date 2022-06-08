@@ -12,9 +12,10 @@ from federatedscope.core.splitters.graph.graphtype_splitter import GraphTypeSpli
 from federatedscope.core.splitters.graph.randchunk_splitter import RandChunkSplitter
 
 from federatedscope.core.splitters.graph.analyzer import Analyzer
+from federatedscope.core.splitters.graph.scaffold_lda_splitter import ScaffoldLdaSplitter
 
 
 __all__ = [
     'LouvainSplitter', 'RandomSplitter', 'RelTypeSplitter', 'ScaffoldSplitter',
-    'GraphTypeSplitter', 'RandChunkSplitter', 'Analyzer'
+    'GraphTypeSplitter', 'RandChunkSplitter', 'Analyzer', 'ScaffoldLdaSplitter'
 ]

@@ -5,12 +5,11 @@ from itertools import product
 import yaml
 
 import numpy as np
+from numpy.linalg import norm
 from scipy.special import logsumexp
 
 from federatedscope.core.message import Message
 from federatedscope.core.worker import Server
-from federatedscope.autotune import Continuous, Discrete, split_raw_config
-from federatedscope.autotune.algos import random_search
 from federatedscope.core.auxiliaries.utils import merge_dict
 
 logger = logging.getLogger(__name__)
@@ -41,34 +40,62 @@ class FedExServer(Server):
         # initialize action space and the policy
         with open(config.hpo.fedex.ss, 'r') as ips:
             ss = yaml.load(ips, Loader=yaml.FullLoader)
-        _, tbd_config = split_raw_config(ss)
-        if config.hpo.fedex.flatten_ss:
-            self._cfsp = [random_search(tbd_config, config.hpo.fedex.num_arms)]
+
+        if next(iter(ss.keys())).startswith('arm'):
+            # This is a flattened action space
+            # ensure the order is unchanged
+            ss = sorted([(int(k[3:]), v) for k, v in ss.items()],
+                        key=lambda x: x[0])
+            self._grid = []
+            self._cfsp = [[tp[1] for tp in ss]]
         else:
-            # TODO: cross-producting the grids of all aspects
-            # in which case, self._cfsp will be a list with length equal to #aspects
-            pass
+            # This is not a flat search space
+            # be careful for the order
+            self._grid = sorted(ss.keys())
+            self._cfsp = [ss[pn] for pn in self._grid]
+
         sizes = [len(cand_set) for cand_set in self._cfsp]
-        # TODO: support other step size
-        eta0 = 'auto'
+        eta0 = 'auto' if config.hpo.fedex.eta0 <= .0 else float(
+            config.hpo.fedex.eta0)
         self._eta0 = [
             np.sqrt(2.0 * np.log(size)) if eta0 == 'auto' else eta0
             for size in sizes
         ]
+        self._sched = config.hpo.fedex.sched
+        self._cutoff = config.hpo.fedex.cutoff
+        self._baseline = config.hpo.fedex.gamma
+        self._diff = config.hpo.fedex.diff
         self._z = [np.full(size, -np.log(size)) for size in sizes]
         self._theta = [np.exp(z) for z in self._z]
         self._store = [0.0 for _ in sizes]
+        self._stop_exploration = False
         self._trace = {
             'global': [],
             'refine': [],
             'entropy': [self.entropy()],
             'mle': [self.mle()]
         }
-        self._stop_exploration = False
 
         super(FedExServer,
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
+
+        if self._cfg.federate.restore_from != '':
+            pi_ckpt_path = self._cfg.federate.restore_from[:self._cfg.federate.
+                                                           restore_from.rfind(
+                                                               '.'
+                                                           )] + "_fedex.yaml"
+            with open(pi_ckpt_path, 'r') as ips:
+                ckpt = yaml.load(ips, Loader=yaml.FullLoader)
+            self._z = [np.asarray(z) for z in ckpt['z']]
+            self._theta = [np.exp(z) for z in self._z]
+            self._store = ckpt['store']
+            self._stop_exploration = ckpt['stop']
+            self._trace = dict()
+            self._trace['global'] = ckpt['global']
+            self._trace['refine'] = ckpt['refine']
+            self._trace['entropy'] = ckpt['entropy']
+            self._trace['mle'] = ckpt['mle']
 
     def entropy(self):
 
@@ -93,13 +120,25 @@ class FedExServer(Server):
         return np.array(self._trace[key])
 
     def sample(self):
+        """samples from configs using current probability vector"""
+
+        # determine index
         if self._stop_exploration:
             cfg_idx = [theta.argmax() for theta in self._theta]
         else:
             cfg_idx = [
                 np.random.choice(len(theta), p=theta) for theta in self._theta
             ]
-        sampled_cfg = [sps[i] for i, sps in zip(cfg_idx, self._cfsp)]
+
+        # get the sampled value(s)
+        if self._grid:
+            sampled_cfg = {
+                pn: cands[i]
+                for pn, cands, i in zip(self._grid, self._cfsp, cfg_idx)
+            }
+        else:
+            sampled_cfg = self._cfsp[0][cfg_idx[0]]
+
         return cfg_idx, sampled_cfg
 
     def broadcast_model_para(self,
@@ -108,6 +147,7 @@ class FedExServer(Server):
         """
         To broadcast the message to all clients or sampled clients
         """
+
         if sample_client_num > 0:
             receiver = np.random.choice(np.arange(1, self.client_num + 1),
                                         size=sample_client_num,
@@ -155,30 +195,32 @@ class FedExServer(Server):
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
 
-        self.msg_buffer['train'][round][sender] = list(content)
+        self.msg_buffer['train'][round][sender] = content
 
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(tuple(content[0:2]))
-        self.check_and_move_on()
+
+        return self.check_and_move_on()
 
     def update_policy(self, feedbacks):
         """Update the policy. This implementation is borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx/blob/150fac03857a3239429734d59d319da71191872e/hyper.py#L151)
         Arguments:
-            feedbacks (list): each element is a tuple in the form (sample_size, arms, loss)
+            feedbacks (list): each element is a dict containing "arms" and necessary feedback.
         """
 
-        index = [tp[1] for tp in feedbacks]
-        weight = np.asarray([tp[0] for tp in feedbacks], dtype=np.float64)
+        index = [elem['arms'] for elem in feedbacks]
+        before = np.asarray(
+            [elem['val_avg_loss_before'] for elem in feedbacks])
+        after = np.asarray([elem['val_avg_loss_after'] for elem in feedbacks])
+        weight = np.asarray([elem['val_total'] for elem in feedbacks],
+                            dtype=np.float64)
         weight /= np.sum(weight)
-        # TODO: acquire client-wise validation loss before local updates
-        before = np.asarray([tp[2] for tp in feedbacks])
-        after = np.asarray([tp[2] for tp in feedbacks])
 
         if self._trace['refine']:
             trace = self.trace('refine')
-            if self._cfg.hpo.fedex.diff:
+            if self._diff:
                 trace -= self.trace('global')
-            baseline = discounted_mean(trace, self._cfg.hpo.fedex.gamma)
+            baseline = discounted_mean(trace, self._baseline)
         else:
             baseline = 0.0
         self._trace['global'].append(np.inner(before, weight))
@@ -190,23 +232,22 @@ class FedExServer(Server):
 
         for i, (z, theta) in enumerate(zip(self._z, self._theta)):
             grad = np.zeros(len(z))
-            for idx, s, w in zip(
-                    index,
-                    after - before if self._cfg.hpo.fedex.diff else after,
-                    weight):
+            for idx, s, w in zip(index,
+                                 after - before if self._diff else after,
+                                 weight):
                 grad[idx[i]] += w * (s - baseline) / theta[idx[i]]
-            if self._cfg.hpo.fedex.sched == 'adaptive':
+            if self._sched == 'adaptive':
                 self._store[i] += norm(grad, float('inf'))**2
                 denom = np.sqrt(self._store[i])
-            elif self._cfg.hpo.fedex.sched == 'aggressive':
+            elif self._sched == 'aggressive':
                 denom = 1.0 if np.all(
                     grad == 0.0) else norm(grad, float('inf'))
-            elif self._cfg.hpo.fedex.sched == 'auto':
+            elif self._sched == 'auto':
                 self._store[i] += 1.0
                 denom = np.sqrt(self._store[i])
-            elif self._cfg.hpo.fedex.sched == 'constant':
+            elif self._sched == 'constant':
                 denom = 1.0
-            elif self._cfg.hpo.fedex.sched == 'scale':
+            elif self._sched == 'scale':
                 denom = 1.0 / np.sqrt(
                     2.0 * np.log(len(grad))) if len(grad) > 1 else float('inf')
             else:
@@ -218,7 +259,7 @@ class FedExServer(Server):
 
         self._trace['entropy'].append(self.entropy())
         self._trace['mle'].append(self.mle())
-        if self._trace['entropy'][-1] < self._cfg.hpo.fedex.cutoff:
+        if self._trace['entropy'][-1] < self._cutoff:
             self._stop_exploration = True
 
         logger.info(
@@ -226,19 +267,21 @@ class FedExServer(Server):
             .format(self.ID, self._theta, self._trace['entropy'][-1],
                     self._trace['mle'][-1]))
 
-    def check_and_move_on(self, check_eval_result=False):
+    def check_and_move_on(self,
+                          check_eval_result=False,
+                          min_received_num=None):
         """
         To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
         """
+        if min_received_num is None:
+            min_received_num = self._cfg.federate.sample_client_num
+        assert min_received_num <= self.sample_client_num
 
         if check_eval_result:
-            # all clients are participating in evaluation
-            minimal_number = self.client_num
-        else:
-            # sampled clients are participating in training
-            minimal_number = self.sample_client_num
+            min_received_num = len(list(self.comm_manager.neighbors.keys()))
 
-        if self.check_buffer(self.state, minimal_number, check_eval_result):
+        move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
+        if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:  # in the training process
                 mab_feedbacks = list()
@@ -258,13 +301,10 @@ class FedExServer(Server):
                             msg_list.append((train_data_size,
                                              model_para_multiple[model_idx]))
 
+                        # collect feedbacks for updating the policy
                         if model_idx == 0:
-                            # temporarily, we consider training loss
-                            # TODO: use validation loss and sample size
                             mab_feedbacks.append(
-                                (train_msg_buffer[client_id][0],
-                                 train_msg_buffer[client_id][2],
-                                 train_msg_buffer[client_id][3]))
+                                train_msg_buffer[client_id][2])
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
@@ -318,6 +358,10 @@ class FedExServer(Server):
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+        else:
+            move_on_flag = False
+
+        return move_on_flag
 
     def check_and_save(self):
         """
@@ -351,9 +395,21 @@ class FedExServer(Server):
 
             if self._cfg.federate.save_to != '':
                 # save the policy
-                with open(os.path.join(self._cfg.outdir, "policy.npy"),
-                          'wb') as ops:
-                    np.save(ops, self._z)
+                ckpt = dict()
+                z_list = [z.tolist() for z in self._z]
+                ckpt['z'] = z_list
+                ckpt['store'] = self._store
+                ckpt['stop'] = self._stop_exploration
+                ckpt['global'] = self.trace('global').tolist()
+                ckpt['refine'] = self.trace('refine').tolist()
+                ckpt['entropy'] = self.trace('entropy').tolist()
+                ckpt['mle'] = self.trace('mle').tolist()
+                pi_ckpt_path = self._cfg.federate.save_to[:self._cfg.federate.
+                                                          save_to.rfind(
+                                                              '.'
+                                                          )] + "_fedex.yaml"
+                with open(pi_ckpt_path, 'w') as ops:
+                    yaml.dump(ckpt, ops)
 
             if self.model_num > 1:
                 model_para = [model.state_dict() for model in self.models]

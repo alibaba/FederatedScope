@@ -1,15 +1,20 @@
 <h1 align="center">
-    <img src="https://img.alicdn.com/imgextra/i1/O1CN01P4ImT91Yj6B2WPQVK_!!6000000003094-2-tps-1207-625.png" width="400" alt="federatedscope-logo">
+    <img src="https://img.alicdn.com/imgextra/i4/O1CN01yp6zdb23HOJJkCmZg_!!6000000007230-2-tps-2048-1009.png" width="400" alt="federatedscope-logo">
 </h1>
 
 ![](https://img.shields.io/badge/language-python-blue.svg)
 ![](https://img.shields.io/badge/license-Apache-000000.svg)
+[![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
 [![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
 [![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
 
 FederatedScope is a comprehensive federated learning platform that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on an event-driven architecture, FederatedScope integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
-A detailed tutorial is provided on [Tutorial](https://federatedscope.io/).
+A detailed tutorial is provided on our [website](https://federatedscope.io/).
+
+## News
+- [05-25-2022] Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!
+- [05-06-2022] We release FederatedScope v0.1.0! 
 
 ## Quick Start
 
@@ -31,19 +36,22 @@ conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-f
 # For application version
 conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
 ```
-or build docker image and run with docker env:
+or build docker image and run with docker env (cuda 11 and torch 1.10):
 ```
 docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
-docker run --gpus device=all --rm --it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash"
+docker run --gpus device=all --rm -it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash
 ```
-Note: if you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when executing the above commands:
+If you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when executing the above commands:
 ```
 # enviroment/requirements-torch1.10.txt -> 
-requirements-torch1.10-application.txt
+enviroment/requirements-torch1.10-application.txt
 
 # enviroment/docker_files/federatedscope-torch1.10.Dockerfile ->
 enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ```
+Note: You can choose to use cuda 10 and torch 1.8 via changing `torch1.10` to `torch1.8`.
+The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/enviroment/docker_files).
+
 Finally, after all the dependencies are installed, run:
 ```bash
 python setup.py install
@@ -125,11 +133,28 @@ We prepare a synthetic example for running with distributed mode:
 
 ```bash
 # For server
-python main.py --cfg federatedscope/example_configs/distributed_server.yaml data_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_server.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
 
 # For clients
-python main.py --cfg federatedscope/example_configs/distributed_client_1.yaml data_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
-python main.py --cfg federatedscope/example_configs/distributed_client_2.yaml data_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_client_1.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_client_2.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_client_3.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+```
+
+An executable example with generated toy data can be run with:
+```bash
+# Generate the toy data
+python scripts/gen_data.py
+
+# Firstly start the server that is waiting for clients to join in
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_server.yaml distribute.data_file toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
+
+# Start the client #1 (with another process)
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_1.yaml distribute.data_file toy_data/client_1_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50052
+# Start the client #2 (with another process)
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_2.yaml distribute.data_file toy_data/client_2_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50053
+# Start the client #3 (with another process)
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_3.yaml distribute.data_file toy_data/client_3_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50054
 ```
 
 And you can observe the results as (the IP addresses are anonymized with 'x.x.x.x'):
@@ -170,6 +195,8 @@ As a comprehensive FL platform, FederatedScope provides the fundamental implemen
 
 More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning!
 
+Materials of related topics are constantly being updated, please refer to [FL-Recommendation](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Recommendation), [Federated-HPO](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_HPO), [Personalized FL](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Personalized_FL), [Federated Graph Learning](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_Graph_Learning), [FL-NLP](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-NLP), and so on. 
+
 ## Documentation
 
 The classes and methods of FederatedScope have been well documented so that users can generate the API references by:
@@ -201,3 +228,6 @@ More publications can be found in the [Publications](https://federatedscope.io/y
 
 We **greatly appreciate** any contribution to FederatedScope! You can refer to [Contributing to FederatedScope](https://federatedscope.io/docs/contributor/) for more details.
 
+Welcome to join in our [Slack channel](https://federatedscopeteam.slack.com/archives/C03E5LGQH7S), or DingDing group (please scan the following QR code) for discussion.
+
+<img width="150" src="https://img.alicdn.com/imgextra/i4/O1CN01heXHpf1zuXhcOCgGF_!!6000000006774-2-tps-860-861.png" width="400" alt="federatedscope-logo">

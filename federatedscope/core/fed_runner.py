@@ -18,16 +18,19 @@ class FedRunner(object):
         server_class: The server class is used for instantiating a (customized) server.
         client_class: The client class is used for instantiating a (customized) client.
         config: The configurations of the FL course.
+        client_config: The clients' configurations.
     """
     def __init__(self,
                  data,
                  server_class=Server,
                  client_class=Client,
-                 config=None):
+                 config=None,
+                 client_config=None):
         self.data = data
         self.server_class = server_class
         self.client_class = client_class
         self.cfg = config
+        self.client_cfg = client_config
 
         self.mode = self.cfg.federate.mode.lower()
         self.gpu_manager = GPUManager(gpu_available=self.cfg.use_gpu,
@@ -135,7 +138,7 @@ class FedRunner(object):
                     msg = self.shared_comm_queue.popleft()
                     self._handle_msg(msg)
 
-            self.server._monitor.compress_raw_res_file()
+            self.server._monitor.finish_fed_runner(fl_mode=self.mode)
 
             return self.server.best_results
 
@@ -175,6 +178,7 @@ class FedRunner(object):
                 self.cfg.mode.type))
 
         if self.server_class:
+            self._server_device = self.gpu_manager.auto_choice()
             server = self.server_class(
                 ID=self.server_id,
                 config=self.cfg,
@@ -182,7 +186,7 @@ class FedRunner(object):
                 model=model,
                 client_num=self.cfg.federate.client_num,
                 total_round_num=self.cfg.federate.total_round_num,
-                device=self.gpu_manager.auto_choice(),
+                device=self._server_device,
                 **kw)
 
             if self.cfg.nbafl.use:
@@ -215,14 +219,22 @@ class FedRunner(object):
 
         if self.client_class:
             client_specific_config = self.cfg.clone()
+            if self.client_cfg:
+                client_specific_config.defrost()
+                client_specific_config.merge_from_other_cfg(
+                    self.client_cfg.get('client_{}'.format(client_id)))
+                client_specific_config.freeze()
+            client_device = self._server_device if self.cfg.federate.share_local_model else self.gpu_manager.auto_choice(
+            )
             client = self.client_class(
                 ID=client_id,
                 server_id=self.server_id,
                 config=client_specific_config,
                 data=client_data,
-                model=client_model or get_model(
-                    self.cfg.model, client_data, backend=self.cfg.backend),
-                device=self.gpu_manager.auto_choice(),
+                model=client_model or get_model(client_specific_config.model,
+                                                client_data,
+                                                backend=self.cfg.backend),
+                device=client_device,
                 **kw)
         else:
             raise ValueError
@@ -245,10 +257,14 @@ class FedRunner(object):
             return
 
         sender, receiver = msg.sender, msg.receiver
+        download_bytes, upload_bytes = msg.count_bytes()
         if not isinstance(receiver, list):
             receiver = [receiver]
         for each_receiver in receiver:
             if each_receiver == 0:
                 self.server.msg_handlers[msg.msg_type](msg)
+                self.server._monitor.track_download_bytes(download_bytes)
             else:
                 self.client[each_receiver].msg_handlers[msg.msg_type](msg)
+                self.client[each_receiver]._monitor.track_download_bytes(
+                    download_bytes)

@@ -1,7 +1,9 @@
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
-from typing import Type
-import torch
 import logging
+from typing import Type
+
+import torch
+
+from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.attack.auxiliary.MIA_get_target_data import get_target_data
 

@@ -1,8 +1,8 @@
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+import logging
 from typing import Type
 
+from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.attack.privacy_attacks.GAN_based_attack import GANCRA
-import logging
 
 logger = logging.getLogger(__name__)
 

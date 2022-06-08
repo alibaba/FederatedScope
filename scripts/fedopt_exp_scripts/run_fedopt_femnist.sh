@@ -16,7 +16,7 @@ do
   data.root data \
   fedopt.use True \
   federate.method FedOpt \
-  fedopt.lr_server ${lrs[$il]} \
+  fedopt.optimizer.lr ${lrs[$il]} \
   >>out_fedopt_femnist/nothing.out \
   2>>out_fedopt_femnist/lr_${lrs[$il]}.log
 done

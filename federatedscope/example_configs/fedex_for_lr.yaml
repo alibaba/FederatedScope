@@ -9,6 +9,7 @@ federate:
   share_local_model: True
   online_aggr: True
   save_to: 'fedex_test/lr.pth'
+  use_diff: True
 trainer:
   type: 'general'
 eval:
@@ -20,4 +21,6 @@ model:
 hpo:
   fedex:
     use: True
-    ss: 'federatedscope/example_configs/fedex_search_space.yaml'
+#    ss: 'federatedscope/example_configs/fedex_flat_search_space.yaml'
+    ss: 'federatedscope/example_configs/fedex_grid_search_space.yaml'
+    diff: True

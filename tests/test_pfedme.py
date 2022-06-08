@@ -50,7 +50,7 @@ class FEMNISTTest(unittest.TestCase):
 
         cfg.optimizer.lr = 0.001
         cfg.optimizer.weight_decay = 0.0
-        cfg.optimizer.grad_clip = 5.0
+        cfg.grad.grad_clip = 5.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'cvtrainer'

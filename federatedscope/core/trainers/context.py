@@ -117,13 +117,8 @@ class Context(LifecycleDict):
             self.criterion = get_criterion(self.cfg.criterion.type,
                                            self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
-            self.optimizer = get_optimizer(
-                self.cfg.optimizer.type,
-                self.model,
-                self.cfg.optimizer.lr,
-                weight_decay=self.cfg.optimizer.weight_decay,
-                momentum=self.cfg.optimizer.momentum)
-            self.grad_clip = self.cfg.optimizer.grad_clip
+            self.optimizer = get_optimizer(self.model, **self.cfg.optimizer)
+            self.grad_clip = self.cfg.grad.grad_clip
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None
@@ -177,9 +172,11 @@ class Context(LifecycleDict):
             num_train_epoch = local_update_steps
             num_train_batch_last_epoch = num_train_batch
             num_total_train_batch = local_update_steps * num_train_batch
+        elif num_train_batch == 0:
+            raise RuntimeError("The number of training batch is 0, please check 'batch_size' or set 'drop_last' as False")
         else:
             num_train_epoch = math.ceil(local_update_steps / num_train_batch)
-            num_train_batch_last_epoch = local_update_steps % num_train_batch
+            num_train_batch_last_epoch = local_update_steps % num_train_batch or num_train_batch
             num_total_train_batch = local_update_steps
         return num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch
 

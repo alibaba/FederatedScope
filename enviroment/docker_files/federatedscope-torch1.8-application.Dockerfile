@@ -39,6 +39,10 @@ RUN conda install -y numpy=1.21.2 scikit-learn=1.0.2 scipy=1.7.3 pandas=1.4.1 -c
 RUN conda install -y pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoolkit=10.2 -c pytorch \
     && conda clean -a -y
 
+# torch helper package
+RUN conda install -y fvcore iopath -c fvcore -c iopath -c conda-forge \
+    && conda clean -a -y
+
 # for graph
 RUN conda install -y pyg==2.0.1 -c pyg  \
     && conda install -y rdkit=2021.09.4 -c conda-forge \
@@ -52,6 +56,6 @@ RUN conda install -y sentencepiece textgrid typeguard -c conda-forge \
     && conda clean -a -y
 
 # auxiliaries (communications, monitoring, etc.)
-RUN conda install -y wandb tensorboard tensorboardX -c conda-forge \
+RUN conda install -y wandb tensorboard tensorboardX pympler -c conda-forge \
     && pip install grpcio grpcio-tools protobuf==3.19.4 setuptools==61.2.0 \
     && conda clean -a -y

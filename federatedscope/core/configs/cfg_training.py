@@ -19,13 +19,16 @@ def extend_training_cfg(cfg):
     # ------------------------------------------------------------------------ #
     # Optimizer related options
     # ------------------------------------------------------------------------ #
-    cfg.optimizer = CN()
+    cfg.optimizer = CN(new_allowed=True)
 
     cfg.optimizer.type = 'SGD'
     cfg.optimizer.lr = 0.1
-    cfg.optimizer.weight_decay = .0
-    cfg.optimizer.momentum = .0
-    cfg.optimizer.grad_clip = -1.0  # negative numbers indicate we do not clip grad
+
+    # ------------------------------------------------------------------------ #
+    # Gradient related options
+    # ------------------------------------------------------------------------ #
+    cfg.grad = CN()
+    cfg.grad.grad_clip = -1.0  # negative numbers indicate we do not clip grad
 
     # ------------------------------------------------------------------------ #
     # lr_scheduler related options

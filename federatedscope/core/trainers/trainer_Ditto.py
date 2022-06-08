@@ -3,7 +3,7 @@ import copy
 import torch
 
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
 from typing import Type
 
@@ -29,6 +29,10 @@ def wrap_DittoTrainer(
         new_hook=hook_on_batch_start_switch_model,
         trigger="on_batch_start",
         insert_pos=0)
+    base_trainer.replace_hook_in_train(
+        new_hook=_hook_on_batch_forward_flop_count,
+        target_trigger="on_batch_forward",
+        target_hook_name="_hook_on_batch_forward_flop_count")
     # evaluation is based on the local personalized model
     base_trainer.register_hook_in_eval(
         new_hook=hook_on_fit_start_switch_local_model,
@@ -61,17 +65,12 @@ def init_Ditto_ctx(base_trainer):
 
     ctx.global_model = copy.deepcopy(ctx.model)
     ctx.local_model = copy.deepcopy(ctx.model)  # the personalized model
+    ctx.models = [ctx.local_model, ctx.global_model]
 
-    ctx.optimizer_for_global_model = get_optimizer(
-        cfg.optimizer.type,
-        ctx.global_model,
-        cfg.optimizer.lr,
-        weight_decay=cfg.optimizer.weight_decay)
-    ctx.optimizer_for_local_model = get_optimizer(
-        cfg.optimizer.type,
-        ctx.local_model,
-        cfg.personalization.lr,
-        weight_decay=cfg.optimizer.weight_decay)
+    ctx.optimizer_for_global_model = get_optimizer(ctx.global_model,
+                                                   **cfg.optimizer)
+    ctx.optimizer_for_local_model = get_optimizer(ctx.local_model,
+                                                  **cfg.optimizer)
     ctx.optimizer_for_local_model = wrap_regularized_optimizer(
         ctx.optimizer_for_local_model, cfg.personalization.regular_weight)
 
@@ -101,6 +100,18 @@ def hook_on_fit_start_set_regularized_para(ctx):
     }]
     ctx.optimizer_for_local_model.set_compared_para_group(
         compared_global_model_para)
+
+
+def _hook_on_batch_forward_flop_count(ctx):
+    if ctx.monitor.flops_per_sample == 0:
+        # calculate the flops_per_sample
+        x, _ = [_.to(ctx.device) for _ in ctx.data_batch]
+        from fvcore.nn import FlopCountAnalysis
+        flops_one_batch = FlopCountAnalysis(ctx.model, x).total()
+        # besides the normal forward flops, the regularization adds the cost of number of model parameters
+        flops_one_batch += ctx.monitor.total_model_size / 2
+        ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
+    ctx.monitor.total_flops += ctx.monitor.flops_per_sample * ctx.batch_size
 
 
 def hook_on_batch_start_switch_model(ctx):

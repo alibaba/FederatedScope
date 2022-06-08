@@ -1,8 +1,11 @@
 import copy
+import json
 import logging
 import os
 import gzip
 import shutil
+import datetime
+from collections import defaultdict
 
 import numpy as np
 
@@ -16,17 +19,151 @@ logger = logging.getLogger(__name__)
 
 class Monitor(object):
     """
-        provide the monitoring functionalities such as formatting the evaluation results into diverse metrics
+        Provide the monitoring functionalities such as formatting the evaluation results into diverse metrics.
+        Besides the prediction related performance, the monitor also can track efficiency related metrics for a worker
     """
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
-    def __init__(
-        self,
-        cfg,
-    ):
+    def __init__(self, cfg, monitored_object=None):
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
         # self.use_tensorboard = cfg.use_tensorboard
+
+        self.monitored_object = monitored_object
+
+        # =========  efficiency indicators of the worker to be monitored ================
+        # leveraged the flops counter provided by [fvcore](https://github.com/facebookresearch/fvcore)
+        self.total_model_size = 0  # model size used in the worker, in terms of number of parameters
+        self.flops_per_sample = 0  # average flops for forwarding each data sample
+        self.flop_count = 0  # used to calculated the running mean for flops_per_sample
+        self.total_flops = 0  # total computation flops to convergence until current fl round
+        self.total_upload_bytes = 0  # total upload space cost in bytes until current fl round
+        self.total_download_bytes = 0  # total download space cost in bytes until current fl round
+        self.fl_begin_wall_time = datetime.datetime.now()
+        self.fl_end_wall_time = 0
+        # for the metrics whose names includes "convergence", 0 indicates the worker does not converge yet
+        # Note:
+        # 1) the convergence wall time is prone to fluctuations due to possible resource competition during FL courses
+        # 2) the global/local indicates whether the early stopping triggered with global-aggregation/local-training
+        self.global_convergence_round = 0  # total fl rounds to convergence
+        self.global_convergence_wall_time = 0
+        self.local_convergence_round = 0  # total fl rounds to convergence
+        self.local_convergence_wall_time = 0
+
+    def global_converged(self):
+        self.global_convergence_wall_time = datetime.datetime.now(
+        ) - self.fl_begin_wall_time
+        self.global_convergence_round = self.monitored_object.state
+
+    def local_converged(self):
+        self.local_convergence_wall_time = datetime.datetime.now(
+        ) - self.fl_begin_wall_time
+        self.local_convergence_round = self.monitored_object.state
+
+    def finish_fl(self):
+        self.fl_end_wall_time = datetime.datetime.now(
+        ) - self.fl_begin_wall_time
+
+        system_metrics = {
+            "id": self.monitored_object.ID,
+            "fl_end_time_minutes": self.fl_end_wall_time.total_seconds() /
+            60 if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
+            "total_model_size": self.total_model_size,
+            "total_flops": self.total_flops,
+            "total_upload_bytes": self.total_upload_bytes,
+            "total_download_bytes": self.total_download_bytes,
+            "global_convergence_round": self.global_convergence_round,
+            "local_convergence_round": self.local_convergence_round,
+            "global_convergence_time_minutes": self.
+            global_convergence_wall_time.total_seconds() / 60 if isinstance(
+                self.global_convergence_wall_time, datetime.timedelta) else 0,
+            "local_convergence_time_minutes": self.local_convergence_wall_time.
+            total_seconds() / 60 if isinstance(
+                self.local_convergence_wall_time, datetime.timedelta) else 0,
+        }
+        logger.info(
+            f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}"
+        )
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+        with open(sys_metric_f_name, "a") as f:
+            f.write(json.dumps(system_metrics) + "\n")
+
+    def merge_system_metrics_simulation_mode(self):
+        """
+            average the system metrics recorded in "system_metrics.json" by all workers
+        :return:
+        """
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+        if not os.path.exists(sys_metric_f_name):
+            logger.warning(
+                "You have not tracked the workers' system metrics in $outdir$/system_metrics.log, "
+                "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
+            )
+            return
+
+        all_sys_metrics = defaultdict(list)
+        avg_sys_metrics = defaultdict()
+        std_sys_metrics = defaultdict()
+        with open(sys_metric_f_name, "r") as f:
+            for line in f:
+                res = json.loads(line)
+                if all_sys_metrics is None:
+                    all_sys_metrics = res
+                    all_sys_metrics["id"] = "all"
+                else:
+                    for k, v in res.items():
+                        all_sys_metrics[k].append(v)
+
+        for k, v in all_sys_metrics.items():
+            if k == "id":
+                avg_sys_metrics[k] = "sys_avg"
+                std_sys_metrics[k] = "sys_std"
+            else:
+                v = np.array(v)
+                avg_sys_metrics[f"sys_avg/{k}"] = np.mean(v)
+                std_sys_metrics[f"sys_std/{k}"] = np.std(v)
+
+        logger.info(
+            f"After merging the system metrics from all works, we got avg: {avg_sys_metrics}"
+        )
+        logger.info(
+            f"After merging the system metrics from all works, we got std: {std_sys_metrics}"
+        )
+        with open(sys_metric_f_name, "a") as f:
+            f.write(json.dumps(avg_sys_metrics) + "\n")
+            f.write(json.dumps(std_sys_metrics) + "\n")
+
+    def finish_fed_runner(self, fl_mode=None):
+        self.compress_raw_res_file()
+        if fl_mode == "standalone":
+            self.merge_system_metrics_simulation_mode()
+
+        if self.use_wandb:
+            try:
+                import wandb
+            except ImportError:
+                logger.error(
+                    "cfg.wandb.use=True but not install the wandb package")
+                exit()
+
+            from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
+            with open(os.path.join(self.outdir, "eval_results.log"),
+                      "r") as exp_log_f:
+                # track the prediction related performance
+                all_log_res, exp_stop_normal, last_line, log_res_best = \
+                    logfile_2_wandb_dict(exp_log_f, raw_out=False)
+                for log_res in all_log_res:
+                    wandb.log(log_res)
+                wandb.log(log_res_best)
+
+                # track the system related performance
+                sys_metric_f_name = os.path.join(self.outdir,
+                                                 "system_metrics.log")
+                with open(sys_metric_f_name, "r") as f:
+                    for line in f:
+                        res = json.loads(line)
+                        if res["id"] in ["sys_avg", "sys_std"]:
+                            wandb.log(res)
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
@@ -75,7 +212,6 @@ class Monitor(object):
                 },
             }
         """
-        # TODO: better visualization via wandb or tensorboard
         if forms is None:
             forms = ['weighted_avg', 'avg', 'fairness', 'raw']
         round_formatted_results = {'Role': role, 'Round': rnd}
@@ -133,7 +269,7 @@ class Monitor(object):
 
         return round_formatted_results_raw if return_raw else round_formatted_results
 
-    def calc_blocal_dissim(last_model, local_updated_models):
+    def calc_blocal_dissim(self, last_model, local_updated_models):
         '''
         Arguments:
             last_model (dict): the state of last round.
@@ -180,6 +316,46 @@ class Monitor(object):
                 avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
         return b_local_dissimilarity
 
+    def track_model_size(self, models):
+        """
+            calculate the total model size given the models hold by the worker/trainer
+
+        :param models: torch.nn.Module or list of torch.nn.Module
+        :return:
+        """
+        if self.total_model_size != 0:
+            logger.warning(
+                "the total_model_size is not zero. You may have been calculated the total_model_size before"
+            )
+
+        if not hasattr(models, '__iter__'):
+            models = [models]
+        for model in models:
+            assert isinstance(model, torch.nn.Module), \
+                f"the `model` should be type torch.nn.Module when calculating its size, but got {type(model)}"
+            for name, para in model.named_parameters():
+                self.total_model_size += para.numel()
+
+    def track_avg_flops(self, flops, sample_num=1):
+        """
+            update the average flops for forwarding each data sample, for most models and tasks,
+            the averaging is not needed as the input shape is fixed
+
+        :param flops: flops/
+        :param sample_num:
+        :return:
+        """
+
+        self.flops_per_sample = (self.flops_per_sample * self.flop_count +
+                                 flops) / (self.flop_count + sample_num)
+        self.flop_count += 1
+
+    def track_upload_bytes(self, bytes):
+        self.total_upload_bytes += bytes
+
+    def track_download_bytes(self, bytes):
+        self.total_download_bytes += bytes
+
 
 def update_best_result(best_results,
                        new_results,
@@ -205,16 +381,14 @@ def update_best_result(best_results,
                 if 'loss' in key or 'std' in key:  # the smaller, the better
                     if results_type == "client_individual":
                         cur_result = min(cur_result)
-                    if key not in best_result or cur_result < best_result[
-                            key]:
+                    if key not in best_result or cur_result < best_result[key]:
                         best_result[key] = cur_result
                         update_best_this_round = True
 
                 elif 'acc' in key:  # the larger, the better
                     if results_type == "client_individual":
                         cur_result = max(cur_result)
-                    if key not in best_result or cur_result > best_result[
-                            key]:
+                    if key not in best_result or cur_result > best_result[key]:
                         best_result[key] = cur_result
                         update_best_this_round = True
                 else:
@@ -223,8 +397,8 @@ def update_best_result(best_results,
         # update different keys round-wise: if find better round_wise_update_key, update others at the same time
         else:
             if round_wise_update_key not in [
-                    "val_loss", "val_acc", "val_std", "test_loss",
-                    "test_acc", "test_std", "test_avg_loss", "loss"
+                    "val_loss", "val_acc", "val_std", "test_loss", "test_acc",
+                    "test_std", "test_avg_loss", "loss"
             ]:
                 raise NotImplementedError(
                     f"We currently support round_wise_update_key as one of "
@@ -242,9 +416,9 @@ def update_best_result(best_results,
                     sorted_keys.append(key)
             if not found_round_wise_update_key:
                 raise ValueError(
-                    "The round_wise_update_key is not in target results, "
+                    "Your specified eval.best_res_update_round_wise_key is not in target results, "
                     "use another key or check the name. \n"
-                    f"Your round_wise_update_key={round_wise_update_key}, "
+                    f"Got eval.best_res_update_round_wise_key={round_wise_update_key}, "
                     f"the keys of results are {list(new_results.keys())}")
 
             for key in sorted_keys:
@@ -273,4 +447,4 @@ def update_best_result(best_results,
                     pass
 
     if update_best_this_round:
-        logging.info(f"Find new best result: {best_results}")
+        logger.info(f"Find new best result: {best_results}")

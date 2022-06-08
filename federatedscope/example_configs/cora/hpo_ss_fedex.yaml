@@ -1,0 +1,11 @@
+hpo.fedex.eta0:
+  type: cate
+  choices: [-1.0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+hpo.fedex.gamma:
+  type: float
+  lower: 0.0
+  upper: 1.0
+  log: False
+hpo.fedex.diff:
+  type: cate
+  choices: [True, False]

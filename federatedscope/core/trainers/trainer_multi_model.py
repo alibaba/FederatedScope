@@ -3,7 +3,7 @@ from types import FunctionType
 from typing import Type
 
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 
 
 class GeneralMultiModelTrainer(GeneralTorchTrainer):
@@ -96,10 +96,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         self.ctx.models = [self.ctx.model] + additional_models
 
         additional_optimizers = [
-            get_optimizer(self.cfg.optimizer.type,
-                          self.ctx.models[i],
-                          self.cfg.optimizer.lr,
-                          weight_decay=self.cfg.optimizer.weight_decay)
+            get_optimizer(self.ctx.models[i], **self.cfg.optimizer)
             for i in range(1, self.model_nums)
         ]
         self.ctx.optimizers = [self.ctx.optimizer] + additional_optimizers

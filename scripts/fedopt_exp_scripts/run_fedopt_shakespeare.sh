@@ -16,7 +16,7 @@ do
   data.root data \
   fedopt.use True \
   federate.method FedOpt \
-  fedopt.lr_server ${lrs[$il]} \
+  fedopt.optimizer.lr ${lrs[$il]} \
   >>out_fedopt_shakespeare/nothing.out \
   2>>out_fedopt_shakespeare/lr_${lrs[$il]}.log
 done

@@ -1,6 +1,6 @@
 from federatedscope.core.auxiliaries.utils import get_random
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
-from federatedscope.core.worker.server import Server
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
+#from federatedscope.core.worker.server import Server
 from typing import Type
 from copy import deepcopy
 
@@ -54,8 +54,10 @@ def init_nbafl_ctx(base_trainer):
     cfg = base_trainer.cfg
 
     # set proximal regularizer
+    cfg.defrost()
     cfg.regularizer.type = 'proximal_regularizer'
     cfg.regularizer.mu = cfg.nbafl.mu
+    cfg.freeze()
     from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
 
@@ -123,7 +125,8 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
                 }, p.device)
 
 
-def wrap_nbafl_server(server: Type[Server]) -> Type[Server]:
+#def wrap_nbafl_server(server: Type[Server]) -> Type[Server]:
+def wrap_nbafl_server(server):
     """Register noise injector for the server
 
     """

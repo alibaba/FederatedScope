@@ -11,9 +11,10 @@ class StandaloneCommManager(object):
     """
     The communicator used for standalone mode
     """
-    def __init__(self, comm_queue):
+    def __init__(self, comm_queue, monitor=None):
         self.comm_queue = comm_queue
         self.neighbors = dict()
+        self.monitor = monitor  # used to track the communication related metrics
 
     def receive(self):
         # we don't need receive() in standalone
@@ -37,6 +38,8 @@ class StandaloneCommManager(object):
 
     def send(self, message):
         self.comm_queue.append(message)
+        download_bytes, upload_bytes = message.count_bytes()
+        self.monitor.track_upload_bytes(upload_bytes)
 
 
 class gRPCCommManager(object):
@@ -60,6 +63,7 @@ class gRPCCommManager(object):
                                       port=port,
                                       options=options)
         self.neighbors = dict()
+        self.monitor = None  # used to track the communication related metrics
 
     def serve(self, max_workers, host, port, options):
         """
