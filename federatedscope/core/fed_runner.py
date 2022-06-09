@@ -2,6 +2,8 @@ import logging
 
 from collections import deque
 
+import torch
+
 from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
@@ -43,6 +45,7 @@ class FedRunner(object):
         """
         To set up server and client for standalone mode
         """
+        torch.set_num_threads(4)
         self.server = self._setup_server()
 
         self.client = dict()

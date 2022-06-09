@@ -6,12 +6,11 @@ client_1:
     type: MSELoss
   optimizer:
     lr: 0.01
+    grad_clip: 5.0
   federate:
     local_update_steps: 4
-#  trainer:
-#    finetune:
-#      steps: 35
-#      steps: 18
+  maml:
+    inner_lr: 0.005
 client_2:
   model:
     out_channels: 1
@@ -22,10 +21,8 @@ client_2:
     lr: 0.1
   federate:
     local_update_steps: 2
-#  trainer:
-#    finetune:
-#      steps: 20
-#      steps: 10
+  maml:
+    inner_lr: 0.1
 client_3:
   model:
     out_channels: 1
@@ -34,12 +31,11 @@ client_3:
     type: MSELoss
   optimizer:
     lr: 0.1
+    grad_clip: 5.0
   federate:
     local_update_steps: 14
-#  trainer:
-#    finetune:
-#      steps: 131
-#      steps: 66
+  maml:
+    inner_lr: 0.01
 client_4:
   model:
     out_channels: 2
@@ -48,12 +44,11 @@ client_4:
     type: CrossEntropyLoss
   optimizer:
     lr: 0.01
+    grad_clip: 5.0
   federate:
     local_update_steps: 5
-#  trainer:
-#    finetune:
-#      steps: 47
-#      steps: 24
+  maml:
+    inner_lr: 0.1
 client_5:
   model:
     out_channels: 2
@@ -64,10 +59,8 @@ client_5:
     lr: 0.05
   federate:
     local_update_steps: 7
-#  trainer:
-#    finetune:
-#      steps: 64
-#      steps: 32
+  maml:
+    inner_lr: 0.05
 client_6:
   model:
     out_channels: 2
@@ -78,10 +71,8 @@ client_6:
     lr: 0.05
   federate:
     local_update_steps: 8
-#  trainer:
-#    finetune:
-#      steps: 46
-#      steps: 36
+  maml:
+    inner_lr: 0.1
 client_7:
   model:
     out_channels: 2
@@ -92,10 +83,8 @@ client_7:
     lr: 0.1
   federate:
     local_update_steps: 1
-#  trainer:
-#    finetune:
-#      steps: 6
-#      steps: 3
+  maml:
+    inner_lr: 0.0001
 client_8:
   model:
     out_channels: 2
@@ -106,10 +95,8 @@ client_8:
     lr: 0.0001
   federate:
     local_update_steps: 1
-#  trainer:
-#    finetune:
-#      steps: 11
-#      steps: 5
+  maml:
+    inner_lr: 0.1
 client_9:
   model:
     out_channels: 2
@@ -120,10 +107,8 @@ client_9:
     lr: 0.05
   federate:
     local_update_steps: 1
-#  trainer:
-#    finetune:
-#      steps: 10
-#      steps: 5
+  maml:
+    inner_lr: 0.001
 client_10:
   model:
     out_channels: 2
@@ -134,10 +119,8 @@ client_10:
     lr: 0.05
   federate:
     local_update_steps: 1
-#  trainer:
-#    finetune:
-#      steps: 11
-#      steps: 5
+  maml:
+    inner_lr: 0.005
 client_11:
   model:
     out_channels: 2
@@ -148,10 +131,8 @@ client_11:
     lr: 0.1
   federate:
     local_update_steps: 5
-#  trainer:
-#    finetune:
-#      steps: 11
-#      steps: 22
+  maml:
+    inner_lr: 0.1
 client_12:
   model:
     out_channels: 2
@@ -162,10 +143,8 @@ client_12:
     lr: 0.05
   federate:
     local_update_steps: 14
-#  trainer:
-#    finetune:
-#      steps: 129
-#      steps: 64
+  maml:
+    inner_lr: 0.1
 client_13:
   model:
     out_channels: 2
@@ -176,10 +155,8 @@ client_13:
     lr: 0.05
   federate:
     local_update_steps: 14
-#  trainer:
-#    finetune:
-#      steps: 128
-#      steps: 64
+  maml:
+    inner_lr: 0.1
 client_14:
   model:
     out_channels: 12
@@ -190,10 +167,8 @@ client_14:
     lr: 0.05
   federate:
     local_update_steps: 675
-#  trainer:
-#    finetune:
-#      steps: 6331
-#      steps: 3165
+  maml:
+    inner_lr: 0.005
 client_15:
   model:
     out_channels: 1
@@ -202,12 +177,11 @@ client_15:
     type: MSELoss
   optimizer:
     lr: 0.1
+    grad_clip: 5.0
   federate:
     local_update_steps: 832
-#  trainer:
-#    finetune:
-#      steps: 7796
-#      steps: 3898
+  maml:
+    inner_lr: 0.05
 client_16:
   model:
     out_channels: 19
@@ -218,7 +192,5 @@ client_16:
     lr: 0.05
   federate:
     local_update_steps: 431
-#  trainer:
-#    finetune:
-#      steps: 4045
-#      steps: 2022
+  maml:
+    inner_lr: 0.0001

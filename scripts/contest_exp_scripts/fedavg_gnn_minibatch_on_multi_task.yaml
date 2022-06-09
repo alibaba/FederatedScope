@@ -6,9 +6,10 @@ early_stop:
 federate:
   mode: 'standalone'
   make_global_eval: False
-  local_update_steps: 1
-  total_round_num: 400
+#  local_update_steps: 1
+  total_round_num: 100
   share_local_model: False
+  sample_client_num: 16
 data:
   root: data/
   type: fs_contest_data
@@ -22,7 +23,7 @@ personalization:
   local_param: ['encoder_atom', 'encoder', 'clf']   # to handle size-different pre & post layers
   # local_param: [ 'encoder_atom', 'encoder', 'clf', 'norms' ]  # pre, post + FedBN
 optimizer:
-  lr: 0.5
+#  lr: 0.25
   weight_decay: 0.0005
   type: SGD
 #criterion:

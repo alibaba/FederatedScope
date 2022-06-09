@@ -1,48 +1,68 @@
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
+import learn2learn as l2l
 
 class GraphMAMLTrainer(GeneralTorchTrainer):
+    def _hook_on_fit_start_init(self, ctx):
+        super()._hook_on_fit_start_init(ctx)
+        maml = l2l.algorithms.MAML(self.ctx.model, lr=self.cfg.maml.inner_lr)
+        ctx.maml = maml.clone()
+
     def _hook_on_batch_forward(self, ctx):
-        # sub task
         batch = ctx.data_batch.to(ctx.device)
         if self.cfg.model.task.endswith('Regression'):
             label = batch.y.float()
         else:
             label = batch.y.squeeze(-1).long()
-        # inner loop
-        if ctx.cur_mode == "train":
-            for i in range(5):
-                pred = ctx.model(batch)
-                ctx.loss_batch = ctx.criterion(pred, label)
-        else:
+
+        if ctx.get("finetune", False):
+            # update on the model
             pred = ctx.model(batch)
-            ctx.loss_batch = ctx.criterion(pred, label)
+        else:
+            # update on the clone
+            pred = ctx.maml(batch)
+        ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
         ctx.y_true = label
         ctx.y_prob = pred
 
-
     def _hook_on_batch_backward(self, ctx):
-        ctx.optimizer.zero_grad()
-        ctx.loss_batch.backward(retain_graph=True, create_graph=True)
-        ctx.optimizer.step()
-
-        # outer loop for just one task
-        batch = ctx.data_batch.to(ctx.device)
-        if self.cfg.model.task.endswith('Regression'):
-            label = batch.y.float()
+        if ctx.get("finetune", False):
+            # normal update when finetune
+            ctx.optimizer.zero_grad()
+            ctx.loss_batch.backward()
+            ctx.optimizer.step()
         else:
-            label = batch.y.squeeze(-1).long()
+            # during train, fake forward
+            ctx.maml.adapt(ctx.loss_batch, allow_unused=True)
 
-        pred_outer = ctx.model(batch)
-        ctx.loss_batch = ctx.criterion(pred_outer, label)
-        ctx.optimizer.zero_grad()
-        ctx.loss_batch.backward()
-        ctx.optimizer.step()
+    def _hook_on_batch_end(self, ctx):
+        # keep the last batch here
+        data_batch = ctx.data_batch
+        super()._hook_on_batch_end(ctx)
+        ctx.data_batch = data_batch
 
+    def _hook_on_fit_end(self, ctx):
+        if ctx.cur_mode == "train" and not ctx.get("finetune", False):
+            # outer loop, reuse the last batch
+            batch = ctx.data_batch.to(ctx.device)
+            if self.cfg.model.task.endswith('Regression'):
+                label = batch.y.float()
+            else:
+                label = batch.y.squeeze(-1).long()
+            # forward
+            pred_outer = ctx.maml(batch)
+            ctx.loss_batch = ctx.criterion(pred_outer, label)
 
+            ctx.optimizer.zero_grad()
+            ctx.loss_batch.backward()
+            ctx.optimizer.step()
+
+        ctx.data_batch = None
+        ctx.maml = None
+        super()._hook_on_fit_end(ctx)
 
 
 def call_graph_level_trainer(trainer_type):

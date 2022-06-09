@@ -33,7 +33,7 @@ client_3:
   criterion:
     type: MSELoss
   optimizer:
-    lr: 0.1
+    lr: 0.05
   federate:
     local_update_steps: 14
 #  trainer:
@@ -61,7 +61,7 @@ client_5:
   criterion:
     type: CrossEntropyLoss
   optimizer:
-    lr: 0.05
+    lr: 0.025
   federate:
     local_update_steps: 7
 #  trainer:
@@ -75,7 +75,7 @@ client_6:
   criterion:
     type: CrossEntropyLoss
   optimizer:
-    lr: 0.05
+    lr: 0.025
   federate:
     local_update_steps: 8
 #  trainer:

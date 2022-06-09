@@ -6,8 +6,11 @@ client_1:
     type: MSELoss
   optimizer:
     lr: 0.01
+    grad_clip: 5.0
   federate:
     local_update_steps: 4
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 35
@@ -22,6 +25,8 @@ client_2:
     lr: 0.1
   federate:
     local_update_steps: 2
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 20
@@ -36,6 +41,8 @@ client_3:
     lr: 0.1
   federate:
     local_update_steps: 14
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 131
@@ -50,6 +57,8 @@ client_4:
     lr: 0.01
   federate:
     local_update_steps: 5
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 47
@@ -64,6 +73,8 @@ client_5:
     lr: 0.05
   federate:
     local_update_steps: 7
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 64
@@ -77,11 +88,13 @@ client_6:
   optimizer:
     lr: 0.05
   federate:
-    local_update_steps: 8
+    local_update_steps: 5
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 46
-#      steps: 36
+#      steps: 23
 client_7:
   model:
     out_channels: 2
@@ -92,6 +105,8 @@ client_7:
     lr: 0.1
   federate:
     local_update_steps: 1
+  personalization:
+    regular_weight: 0.05
 #  trainer:
 #    finetune:
 #      steps: 6
@@ -106,6 +121,8 @@ client_8:
     lr: 0.0001
   federate:
     local_update_steps: 1
+  personalization:
+    regular_weight: 0.05
 #  trainer:
 #    finetune:
 #      steps: 11
@@ -120,6 +137,8 @@ client_9:
     lr: 0.05
   federate:
     local_update_steps: 1
+  personalization:
+    regular_weight: 1.0
 #  trainer:
 #    finetune:
 #      steps: 10
@@ -134,6 +153,8 @@ client_10:
     lr: 0.05
   federate:
     local_update_steps: 1
+  personalization:
+    regular_weight: 0.05
 #  trainer:
 #    finetune:
 #      steps: 11
@@ -147,11 +168,13 @@ client_11:
   optimizer:
     lr: 0.1
   federate:
-    local_update_steps: 5
+    local_update_steps: 1
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 11
-#      steps: 22
+#      steps: 5
 client_12:
   model:
     out_channels: 2
@@ -162,6 +185,8 @@ client_12:
     lr: 0.05
   federate:
     local_update_steps: 14
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 129
@@ -176,6 +201,8 @@ client_13:
     lr: 0.05
   federate:
     local_update_steps: 14
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 128
@@ -190,6 +217,8 @@ client_14:
     lr: 0.05
   federate:
     local_update_steps: 675
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 6331
@@ -204,6 +233,8 @@ client_15:
     lr: 0.1
   federate:
     local_update_steps: 832
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 7796
@@ -218,6 +249,8 @@ client_16:
     lr: 0.05
   federate:
     local_update_steps: 431
+  personalization:
+    regular_weight: 0.01
 #  trainer:
 #    finetune:
 #      steps: 4045
