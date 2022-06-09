@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from federatedscope.core.trainers import Trainer
 from federatedscope.core.auxiliaries.utils import batch_iter
-from federatedscope.core.trainers.context import CtxReferVar
+from federatedscope.core.trainers.context import CtxVar
 
 
 class GeneralTFTrainer(Trainer):
@@ -108,8 +108,8 @@ class GeneralTFTrainer(Trainer):
                     ],
                     feed_dict=feed_dict)
                 ctx.loss_batch = batch_loss
-                ctx.var.y_true = CtxReferVar(y_true, "batch")
-                ctx.var.y_prob = CtxReferVar(y_prob, "batch")
+                ctx.var.y_true = CtxVar(y_true, "batch")
+                ctx.var.y_prob = CtxVar(y_prob, "batch")
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         pass

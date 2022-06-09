@@ -331,8 +331,8 @@ class Client(Worker):
             metrics = list(self.best_results.values())[0]
         else:
             metrics = {}
-            if self._cfg.trainer.finetune.before_eval:
-                self.trainer.finetune()
+            if self._cfg.federate.finetune.before_eval:
+                self.federate.finetune()
             for split in self._cfg.eval.split:
                 eval_metrics = self.trainer.evaluate(mode=split,
                     target_data_split_name=split)

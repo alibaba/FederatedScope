@@ -6,8 +6,7 @@ import numpy as np
 
 from federatedscope.core.auxiliaries import utils
 from federatedscope.core.trainers.context import Context
-from federatedscope.core.trainers.context import CtxReferVar
-from federatedscope.core.trainers.context import CtxStatsVar
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.context import lifecycle
 from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
@@ -213,7 +212,7 @@ class Trainer(object):
     def _run_batch(self):
         for batch_i in range(
                 self.ctx.get("num_{}_batch".format(self.ctx.cur_data_split))):
-            self.ctx.cur_batch_i = CtxStatsVar(batch_i)
+            self.ctx.cur_batch_i = CtxVar(batch_i)
 
             for hook in self._get_hooks("on_batch_start"):
                 hook(self.ctx)
@@ -237,7 +236,7 @@ class Trainer(object):
         # TODO: epoch mode or split
         for epoch_i in range(
                 self.ctx.get("num_{}_epoch".format(self.ctx.cur_data_split))):
-            self.ctx.cur_epoch_i = CtxStatsVar(epoch_i, "epoch")
+            self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
 
             for hook in self._get_hooks("on_epoch_start"):
                 hook(self.ctx)

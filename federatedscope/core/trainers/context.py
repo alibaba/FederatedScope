@@ -1,10 +1,12 @@
 import collections
 import math
+import numpy
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.model_builder import get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
+from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
 
 
 class LifecycleDict(dict):
@@ -14,39 +16,18 @@ class LifecycleDict(dict):
         init_dict: initialized dict
     """
     __delattr__ = dict.__delitem__
+    __setattr__ = dict.__setitem__
+    __getattr__ = dict.__getitem__
 
     def __init__(self, init_dict=None):
         if init_dict is not None:
             super(LifecycleDict, self).__init__(init_dict)
         self.lifecycles = collections.defaultdict(set)
 
-    def __getitem__(self, item):
-        value = super(LifecycleDict, self).__getitem__(item)
-        if isinstance(value, CtxReferVar):
-            return value.obj
-        else:
-            return value
-
     def __setitem__(self, key, value):
-        if isinstance(value, BasicCtxVar):
+        if isinstance(value, CtxVar):
             self.lifecycles[value.lifecycle].add(key)
         super(LifecycleDict, self).__setitem__(key, value)
-
-    def get(self, *args, **kwargs):
-        value = super(LifecycleDict, self).get(*args, **kwargs)
-        if isinstance(value, CtxReferVar):
-            return value.obj
-        else:
-            return value
-
-    def __delattr__(self, item):
-        self.__delitem__(item)
-
-    def __setattr__(self, key, value):
-        self.__setitem__(key, value)
-
-    def __getattr__(self, item):
-        return self.__getitem__(item)
 
     def clear(self, lifecycle):
         for var in self.lifecycles[lifecycle]:
@@ -92,6 +73,7 @@ class Context(LifecycleDict):
         self.device = device
         self.cur_mode = None
         self.mode_stack = list()
+        # store all variables under the name of ${cur_mode}_${cur_data}
         self.var = collections.defaultdict(LifecycleDict)
 
         self.lifecycles = collections.defaultdict(set)
@@ -129,6 +111,7 @@ class Context(LifecycleDict):
         self.cur_data_splits_used_by_routine = list()
 
         # Process training data
+        self.pre_calculate_batch_epoch_num()
         if self.train_data is not None or self.train_loader is not None:
             # Calculate the number of update steps during training given the local_update_steps
             num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch = self.pre_calculate_batch_epoch_num(
@@ -164,21 +147,13 @@ class Context(LifecycleDict):
         """
         return self[mode][key]
 
-    def pre_calculate_batch_epoch_num(self, local_update_steps):
-        num_train_batch = self.num_train_data // self.cfg.data.batch_size + int(
-            not self.cfg.data.drop_last
-            and bool(self.num_train_data % self.cfg.data.batch_size))
-        if self.cfg.federate.batch_or_epoch == "epoch":
-            num_train_epoch = local_update_steps
-            num_train_batch_last_epoch = num_train_batch
-            num_total_train_batch = local_update_steps * num_train_batch
-        elif num_train_batch == 0:
-            raise RuntimeError("The number of training batch is 0, please check 'batch_size' or set 'drop_last' as False")
-        else:
-            num_train_epoch = math.ceil(local_update_steps / num_train_batch)
-            num_train_batch_last_epoch = local_update_steps % num_train_batch or num_train_batch
-            num_total_train_batch = local_update_steps
-        return num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch
+
+    def pre_calculate_batch_epoch_num(self):
+        # train
+        calculate_batch_epoch_num(self.cfg.federate.local_update_steps, self.num_train_data, self.cfg.data.batch_size, self.cfg.data.drop_last)
+        # finetune
+        calculate_batch_epoch_num(self.cfg.finetune.steps, self.num_{}_data, self.cfg.data.batch_size, self.cfg.data.drop_last)
+        return
 
     def append_mode(self, mode):
         if mode in self.mode_stack:
@@ -236,7 +211,7 @@ class Context(LifecycleDict):
         self.var.clear(lifecycle)
 
 
-class BasicCtxVar(object):
+class CtxVar(object):
     """Basic variable class
 
     Arguments:
@@ -245,50 +220,14 @@ class BasicCtxVar(object):
 
     LIEFTCYCLES = ["batch", "epoch", "routine", None]
 
-    def __init__(self, lifecycle=None):
-        assert lifecycle in BasicCtxVar.LIEFTCYCLES
-
+    def __init__(self, lifecycle=None, end_func=None):
+        assert lifecycle in CtxVar.LIEFTCYCLES
         self.lifecycle = lifecycle
-
-
-class CtxReferVar(BasicCtxVar):
-    """To store the reference variables with specific lifecycle and clear function, e.g. model, data, dataloader
-
-    Arguments:
-        obj: the stored obj
-        lifecycle: the specific lifecycle of the variable
-        efunc: a function that will be called when the lifecycle ends
-
-    """
-    def __init__(self, obj, lifecycle=None, efunc=None):
-        super(CtxReferVar, self).__init__(lifecycle=lifecycle)
-        self.obj = obj
-        self.efunc = efunc
+        self.efunc = end_func
 
     def clear(self):
         if self.efunc is not None:
             self.efunc(self.obj)
-
-
-def CtxStatsVar(init=0., lifecycle="routine"):
-    """To store the statistic digits with specific lifecycle, e.g. loss_batch, loss_total. The type is the same with `init`
-
-    Arguments:
-        init: the initialized value
-        lifecycle: the specific lifecycle of the variable
-
-    """
-    fcls = type(init)
-
-    class TemplateVar(BasicCtxVar, fcls):
-        def __new__(cls, init=0., *args, **kwargs):
-            return super(TemplateVar, cls).__new__(cls, init)
-
-        def __init__(self, init=0., lifecycle='routine'):
-            BasicCtxVar.__init__(self, lifecycle=lifecycle)
-            fcls.__init__(self)
-
-    return TemplateVar(init, lifecycle)
 
 
 def lifecycle(lifecycle):

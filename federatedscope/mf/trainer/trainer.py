@@ -3,8 +3,7 @@ from wandb.wandb_torch import torch
 
 from federatedscope.core.monitors import Monitor
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
-from federatedscope.core.trainers.context import CtxReferVar
-from federatedscope.core.trainers.context import CtxStatsVar
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.register import register_trainer
 
@@ -61,10 +60,10 @@ class MFTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         indices, ratings = ctx.data_batch
         pred, label, ratio = ctx.model(indices, ratings)
-        ctx.loss_batch = CtxReferVar(
+        ctx.loss_batch = CtxVar(
             ctx.criterion(pred, label) * ratio, "batch")
 
-        ctx.batch_size = CtxStatsVar(len(ratings), "batch")
+        ctx.batch_size = CtxVar(len(ratings), "batch")
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):

@@ -9,12 +9,6 @@ def extend_training_cfg(cfg):
     cfg.trainer = CN()
 
     cfg.trainer.type = 'general'
-    cfg.trainer.finetune = CN()
-    cfg.trainer.finetune.before_eval = False
-    cfg.trainer.finetune.steps = 5
-    cfg.trainer.finetune.lr = 0.01
-    cfg.trainer.finetune.freeze_param = ""  # parameters frozen in fine-tuning stage
-    # cfg.trainer.finetune.only_psn = True
 
     # ------------------------------------------------------------------------ #
     # Optimizer related options
@@ -29,6 +23,21 @@ def extend_training_cfg(cfg):
     # ------------------------------------------------------------------------ #
     cfg.grad = CN()
     cfg.grad.grad_clip = -1.0  # negative numbers indicate we do not clip grad
+
+    # ------------------------------------------------------------------------ #
+    # Finetune related options
+    # ------------------------------------------------------------------------ #
+    cfg.finetune = CN()
+
+    cfg.finetune.before_eval = False
+    cfg.finetune.steps = 0
+    cfg.finetune.batch_or_epoch = "batch"
+
+    cfg.finetune.optimizer = CN(new_allowed=True)
+
+    cfg.finetune.optimizer.type = "SGD"
+    cfg.finetune.optimizer.lr = 0.01
+    cfg.finetune.freeze_param = ""  # parameters frozen in fine-tuning stage
 
     # ------------------------------------------------------------------------ #
     # lr_scheduler related options
@@ -69,10 +78,9 @@ def assert_training_cfg(cfg):
         raise ValueError(
             "We only support run with cpu when backend is tensorflow")
 
-    if cfg.trainer.finetune.before_eval is False and cfg.trainer.finetune.steps <= 0:
+    if cfg.finetune.before_eval is False and cfg.finetune.steps <= 0:
         raise ValueError(
-            f"When adopting fine-tuning, please set a valid local fine-tune steps, got {cfg.trainer.finetune.steps}"
+            f"When adopting fine-tuning, please set a valid local fine-tune steps, got {cfg.federate.finetune.steps}"
         )
-
 
 register_config("fl_training", extend_training_cfg)

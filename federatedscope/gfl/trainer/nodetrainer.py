@@ -8,7 +8,7 @@ from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
-from federatedscope.core.trainers.context import CtxReferVar
+from federatedscope.core.trainers.context import CtxVar
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,8 +39,8 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
             ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.var.y_true = CtxReferVar(label, "batch")
-        ctx.var.y_prob = CtxReferVar(pred, "batch")
+        ctx.var.y_true = CtxVar(label, "batch")
+        ctx.var.y_prob = CtxVar(pred, "batch")
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -159,8 +159,8 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                 ctx.cur_data_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.var.y_true = CtxReferVar(label, "batch")
-        ctx.var.y_prob = CtxReferVar(pred, "batch")
+        ctx.var.y_true = CtxVar(label, "batch")
+        ctx.var.y_prob = CtxVar(pred, "batch")
 
 
 def call_node_level_trainer(trainer_type):

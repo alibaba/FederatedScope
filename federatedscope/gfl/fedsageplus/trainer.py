@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from federatedscope.gfl.loss import GreedyLoss
 from federatedscope.gfl.trainer.nodetrainer import NodeFullBatchTrainer
-from federatedscope.core.trainers.context import CtxReferVar
+from federatedscope.core.trainers.context import CtxVar
 
 
 class LocalGenTrainer(NodeFullBatchTrainer):
@@ -40,8 +40,8 @@ class LocalGenTrainer(NodeFullBatchTrainer):
                           self.cfg.fedsageplus.b * loss_feat +
                           self.cfg.fedsageplus.c * loss_clf).float()
 
-        ctx.var.y_true = CtxReferVar(batch.num_missing[mask], "batch")
-        ctx.var.y_prob = CtxReferVar(pred_missing, "batch")
+        ctx.var.y_true = CtxVar(batch.num_missing[mask], "batch")
+        ctx.var.y_prob = CtxVar(pred_missing, "batch")
 
 
 class FedGenTrainer(LocalGenTrainer):
@@ -64,8 +64,8 @@ class FedGenTrainer(LocalGenTrainer):
                           self.cfg.fedsageplus.c *
                           loss_clf).float() / self.cfg.federate.client_num
 
-        ctx.var.y_true = CtxReferVar(batch.num_missing[mask])
-        ctx.var.y_prob = CtxReferVar(pred_missing)
+        ctx.var.y_true = CtxVar(batch.num_missing[mask])
+        ctx.var.y_prob = CtxVar(pred_missing)
 
     def update_by_grad(self, grads):
         """

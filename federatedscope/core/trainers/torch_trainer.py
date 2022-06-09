@@ -11,6 +11,7 @@ except ImportError:
     Dataset = None
 
 from federatedscope.core.trainers.trainer import Trainer
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
@@ -56,11 +57,10 @@ class GeneralTorchTrainer(Trainer):
             raise TypeError("Type of data should be dict.")
         return init_dict
 
-    def train(self, target_data_split_name="train", hooks_set=None):
-        hooks_set = hooks_set or self.hooks_in_train
+    def train(self, target_data_split_name="train"):
         if self.ctx.get(
                 f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
+            f"{target_data_split_name}_loader") is None:
             raise ValueError(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
             )
@@ -68,7 +68,7 @@ class GeneralTorchTrainer(Trainer):
             # TODO: any issue for subclasses?
             before_metric = self.evaluate(target_data_split_name='val')
 
-        self._run_routine("train", hooks_set, target_data_split_name)
+        self._run_routine("train", target_data_split_name)
         result_metric = self.ctx.eval_metrics
 
         if self.cfg.federate.use_diff:
@@ -79,7 +79,10 @@ class GeneralTorchTrainer(Trainer):
                 'val_avg_loss']
             result_metric['val_avg_loss_after'] = after_metric['val_avg_loss']
 
-        return self.ctx.num_samples_train, self.get_model_para(), result_metric
+        # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
+        # TODO: self.ctx should not fetch variables here (since the lifecycle of the variables should end in the routine)
+        return self.ctx["var"]["train_{}".format(target_data_split_name)].num_samples, self.get_model_para(
+        ), result_metric
 
     def update(self, model_parameters):
         '''
@@ -94,26 +97,20 @@ class GeneralTorchTrainer(Trainer):
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=False)
 
-    def evaluate(self, target_data_split_name="test"):
+    def evaluate(self, mode, target_data_split_name="test"):
         with torch.no_grad():
-            super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
+            super(GeneralTorchTrainer, self).evaluate(mode, target_data_split_name)
 
         return self.ctx.eval_metrics
-
-    #def validate(self, target_data_split_name="val"):
-    #    with torch.no_grad():
-    #        super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
-
-    #    return self.ctx.eval_metrics
 
     def finetune(self, target_data_split_name="train", hooks_set=None):
 
         # freeze the parameters during the fine-tune stage
         require_grad_changed_paras = set()
-        if self.cfg.trainer.finetune.freeze_param != "":
+        if self.cfg.federate.finetune.freeze_param != "":
             preserved_paras = self._param_filter(
                 self.ctx.model.state_dict(),
-                self.cfg.trainer.finetune.freeze_param)
+                self.cfg.federate.finetune.freeze_param)
             for name, param in self.ctx.model.named_parameters():
                 if name not in preserved_paras and param.requires_grad is True:
                     param.requires_grad = False
@@ -123,11 +120,11 @@ class GeneralTorchTrainer(Trainer):
         original_lrs = []
         for g in self.ctx.optimizer.param_groups:
             original_lrs.append(g['lr'])
-            g['lr'] = self.cfg.trainer.finetune.lr
+            g['lr'] = self.cfg.federate.finetune.lr
         original_epoch_num = self.ctx["num_train_epoch"]
         original_batch_num = self.ctx["num_train_batch"]
         self.ctx["num_train_epoch"] = 1
-        self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
+        self.ctx["num_train_batch"] = self.cfg.federate.finetune.steps
 
         # do the fine-tuning process
         self.train(target_data_split_name, hooks_set)
@@ -214,10 +211,11 @@ class GeneralTorchTrainer(Trainer):
             ctx.get("{}_loader".format(ctx.cur_data_split)).reset()
 
     def _hook_on_batch_start_init(self, ctx):
-        # prepare data batch
+        # Prepare data batch
         try:
-            ctx.data_batch = next(
-                ctx.get("{}_loader".format(ctx.cur_data_split)))
+            # TODO: modify prepare function
+            ctx.data_batch = CtxVar(
+                next(ctx.get("{}_loader".format(ctx.cur_data_split))), "batch")
         except StopIteration:
             raise StopIteration
 
@@ -227,10 +225,11 @@ class GeneralTorchTrainer(Trainer):
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
         ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
 
-        ctx.batch_size = len(label)
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), "batch")
+        ctx.batch_size = CtxVar(len(label), "batch")
+        ctx.var.y_true = CtxVar(label, "batch")
+        ctx.var.y_prob = CtxVar(pred, "batch")
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         """
@@ -276,9 +275,8 @@ class GeneralTorchTrainer(Trainer):
         self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
-        ctx.loss_regular = float(
-            self.cfg.regularizer.mu) * ctx.regularizer(ctx)
-        ctx.loss_task = ctx.loss_batch + ctx.loss_regular
+        ctx.loss_regular = CtxVar(self.cfg.regularizer.mu * ctx.regularizer(ctx), "batch")
+        ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular, "batch")
 
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
@@ -289,51 +287,21 @@ class GeneralTorchTrainer(Trainer):
         ctx.optimizer.step()
 
     def _hook_on_batch_end(self, ctx):
-        # update statistics
-        setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) +
-            ctx.loss_batch.item() * ctx.batch_size)
-
-        if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
-            loss_regular = 0.
-        else:
-            loss_regular = ctx.loss_regular.item()
-        setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
-            loss_regular)
-        setattr(
-            ctx, "num_samples_{}".format(ctx.cur_data_split),
-            ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
-            ctx.batch_size)
-
-        # cache label for evaluate
-        ctx.get("{}_y_true".format(ctx.cur_data_split)).append(
-            ctx.y_true.detach().cpu().numpy())
-
-        ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
-            ctx.y_prob.detach().cpu().numpy())
-
-        # clean temp ctx
-        ctx.data_batch = None
-        ctx.batch_size = None
-        ctx.loss_task = None
-        ctx.loss_batch = None
-        ctx.loss_regular = None
-        ctx.y_true = None
-        ctx.y_prob = None
+        # Update statistics
+        ctx.var.num_samples += ctx.batch_size
+        ctx.var.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
+        ctx.var.loss_regular_total += float(ctx.get("loss_regular", 0.))
+        # Cache label for evaluate
+        ctx.var.ys_true.append(ctx.var.y_true.detach().cpu().numpy())
+        ctx.var.ys_prob.append(ctx.var.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
 
         """
-        setattr(
-            ctx, "{}_y_true".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_data_split))))
-        setattr(
-            ctx, "{}_y_prob".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
+        ctx.var.y_true = CtxVar(np.concatenate(ctx.var.ys_true), "routine")
+        ctx.var.y_prob = CtxVar(np.concatenate(ctx.var.ys_prob), "routine")
+
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
