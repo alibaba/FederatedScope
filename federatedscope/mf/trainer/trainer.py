@@ -45,14 +45,14 @@ class MFTrainer(GeneralTorchTrainer):
     def _hook_on_fit_end(self, ctx):
         if ctx.get("num_samples_{}".format(ctx.cur_data_split)) == 0:
             results = {
-                f"{ctx.cur_data_split}_avg_loss": ctx.get("loss_batch_total_{}".format(
-                ctx.cur_data_split)),
+                f"{ctx.cur_data_split}_avg_loss": ctx.get(
+                    "loss_batch_total_{}".format(ctx.cur_data_split)),
                 f"{ctx.cur_data_split}_total": 0
             }
         else:
             results = {
-                f"{ctx.cur_data_split}_avg_loss": ctx.get("loss_batch_total_{}".format(
-                    ctx.cur_data_split)) /
+                f"{ctx.cur_data_split}_avg_loss": ctx.get(
+                    "loss_batch_total_{}".format(ctx.cur_data_split)) /
                 ctx.get("num_samples_{}".format(ctx.cur_data_split)),
                 f"{ctx.cur_data_split}_total": ctx.get("num_samples_{}".format(
                     ctx.cur_data_split))
@@ -76,7 +76,8 @@ class MFTrainer(GeneralTorchTrainer):
             loss_regular)
         setattr(
             ctx, "num_samples_{}".format(ctx.cur_data_split),
-            ctx.get("num_samples_{}".format(ctx.cur_data_split)) + ctx.batch_size)
+            ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
+            ctx.batch_size)
 
         # clean temp ctx
         ctx.data_batch = None
@@ -109,7 +110,8 @@ class MFTrainer(GeneralTorchTrainer):
             try:
                 import torch
                 indices, ratings = ctx.data_batch
-                if isinstance(indices, tuple) and isinstance(indices[0], numpy.ndarray):
+                if isinstance(indices, tuple) and isinstance(
+                        indices[0], numpy.ndarray):
                     indices = torch.from_numpy(numpy.stack(indices))
                 if isinstance(ratings, numpy.ndarray):
                     ratings = torch.from_numpy(ratings)
@@ -123,7 +125,7 @@ class MFTrainer(GeneralTorchTrainer):
                         "if this is not the case you want, please customize the count hook"
                     )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
-                                             ctx.batch_size)
+                                                 ctx.batch_size)
             except:
                 self.need_flops_count = False
                 logger.error(

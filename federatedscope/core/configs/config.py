@@ -8,7 +8,6 @@ import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
 
-
 # allow int <-> float converse
 casts = [(tuple, list), (list, tuple), (int, float), (float, int)]
 
@@ -27,8 +26,7 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
 
     # If either of them is None, allow type conversion to one of the valid types
     if (replacement_type == type(None) and original_type in _VALID_TYPES) or (
-            original_type == type(None) and replacement_type in _VALID_TYPES
-    ):
+            original_type == type(None) and replacement_type in _VALID_TYPES):
         return replacement
 
     # Cast replacement from from_type to to_type if the replacement and original
@@ -54,10 +52,8 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
 
     raise ValueError(
         "Type mismatch ({} vs. {}) with values ({} vs. {}) for config "
-        "key: {}".format(
-            original_type, replacement_type, original, replacement, full_key
-        )
-    )
+        "key: {}".format(original_type, replacement_type, original,
+                         replacement, full_key))
 
 
 def _merge_a_into_b(a, b, root, key_list):
@@ -119,7 +115,9 @@ class CN(CfgNode):
                 logger.info(f"Find nested key {k}")
                 sub_keys = k.split(".")
                 if len(sub_keys) != 2:
-                    raise ValueError("Your config should contain keys not more than two-level dots, e.g., a.b.c is not supported now")
+                    raise ValueError(
+                        "Your config should contain keys not more than two-level dots, e.g., a.b.c is not supported now"
+                    )
                 key1, key2 = k.split(".")
                 try:
                     cfg_dict[key1][key2] = cfg_dict[k]
@@ -127,7 +125,8 @@ class CN(CfgNode):
                     logger.info(f"split config key {k} into two parts")
                 except:
                     logger.error(f"Error config format for the key {k}")
-            elif isinstance(cfg_dict[k], CfgNode) or isinstance(cfg_dict[k], CN):
+            elif isinstance(cfg_dict[k], CfgNode) or isinstance(
+                    cfg_dict[k], CN):
                 # sub-config
                 self.check_dot_cfg(cfg_dict[k])
         return cfg_dict
@@ -187,10 +186,9 @@ class CN(CfgNode):
         """
         _assert_with_logging(
             len(cfg_list) % 2 == 0,
-            "Override list has odd length: {}; it must be a list of pairs".format(
-                cfg_list
-            ),
-            )
+            "Override list has odd length: {}; it must be a list of pairs".
+            format(cfg_list),
+        )
         root = self
         for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
             if root.key_is_deprecated(full_key):
@@ -200,16 +198,16 @@ class CN(CfgNode):
             key_list = full_key.split(".")
             d = self
             for subkey in key_list[:-1]:
-                _assert_with_logging(
-                    subkey in d, "Non-existent key: {}".format(full_key)
-                )
+                _assert_with_logging(subkey in d,
+                                     "Non-existent key: {}".format(full_key))
                 d = d[subkey]
             subkey = key_list[-1]
-            _assert_with_logging(subkey in d, "Non-existent key: {}".format(full_key))
+            _assert_with_logging(subkey in d,
+                                 "Non-existent key: {}".format(full_key))
             value = self._decode_cfg_value(v)
-            value = _check_and_coerce_cfg_value_type(value, d[subkey], subkey, full_key)
+            value = _check_and_coerce_cfg_value_type(value, d[subkey], subkey,
+                                                     full_key)
             d[subkey] = value
-
 
     def clean_unused_sub_cfgs(self):
         """

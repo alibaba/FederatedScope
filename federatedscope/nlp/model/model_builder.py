@@ -7,6 +7,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
+
 def get_rnn(model_config, local_data):
     from federatedscope.nlp.model.rnn import LSTM
     if isinstance(local_data, dict):
@@ -54,7 +55,8 @@ def get_transformer(model_config, local_data):
     use_local_file = True  # TODO: make this configurable
     if use_local_file:
         model = model_func_dict[model_config.task.lower()].from_pretrained(
-            path, num_labels=model_config.out_channels,
+            path,
+            num_labels=model_config.out_channels,
             local_files_only=True,
             cache_dir=os.path.join("huggingface", "transformers"))
     else:

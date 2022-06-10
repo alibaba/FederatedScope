@@ -320,7 +320,8 @@ class Server(Worker):
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 if self.mode == 'standalone' and self._cfg.wandb.online_track and self._cfg.wandb.use:
-                    self._monitor.merge_system_metrics_simulation_mode(file_io=False, from_global_monitors=True)
+                    self._monitor.merge_system_metrics_simulation_mode(
+                        file_io=False, from_global_monitors=True)
                 self.check_and_save()
 
         else:

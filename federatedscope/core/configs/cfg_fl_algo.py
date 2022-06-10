@@ -43,6 +43,9 @@ def extend_fl_algo_cfg(cfg):
     cfg.personalization.K = 5  # the local approximation steps for pFedMe
     cfg.personalization.beta = 1.0  # the average moving parameter for pFedMe
 
+    # the mixture factor alpha used in APFL method, "APFL: Fair and Robust Federated Learning Through Personalization."
+    cfg.personalization.apfl_alpha = 0.0
+
     # ------------------------------------------------------------------------ #
     # FedSage+ related options, gfl
     # ------------------------------------------------------------------------ #
@@ -79,6 +82,9 @@ def assert_fl_algo_cfg(cfg):
     if cfg.personalization.lr <= 0.0:
         # By default, use the same lr to normal mode
         cfg.personalization.lr = cfg.optimizer.lr
+
+    assert 1 >= cfg.personalization.apfl_alpha >= 0.0, \
+        f"For the APFL method, you should specify alpha in [0,1], but got {cfg.personalization.apfl_alpha}"
 
 
 register_config("fl_algo", extend_fl_algo_cfg)

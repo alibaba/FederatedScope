@@ -7,12 +7,12 @@ from random import random, shuffle
 import numpy as np
 from collections import defaultdict
 
-
 from federatedscope.core.auxiliaries.utils import setup_seed
 
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
+
 
 def load_toy_data(config=None):
 
@@ -420,14 +420,16 @@ def load_external_data(config=None):
             dataset = load_from_disk(raw_args["load_disk_dir"])
         else:
             dataset = load_dataset(path=config.data.root,
-                               name=name,
-                               **filtered_args)
+                                   name=name,
+                                   **filtered_args)
         if config.model.type.endswith('transformers'):
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from transformers import AutoTokenizer
             logger.info("To load huggingface tokenizer")
             tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0], local_files_only=True, cache_dir=os.path.join(hugging_face_path, "transformers"))
+                config.model.type.split('@')[0],
+                local_files_only=True,
+                cache_dir=os.path.join(hugging_face_path, "transformers"))
 
         for split in dataset:
             x_all = [i['sentence'] for i in dataset[split]]
@@ -620,7 +622,9 @@ def get_data(config):
 
     # get the statistics about the used data
     data_num_all_client = defaultdict(list)
-    logger.info(f"For data={config.data.type} with subsample={config.data.subsample}, the client_num is {len(data)}")
+    logger.info(
+        f"For data={config.data.type} with subsample={config.data.subsample}, the client_num is {len(data)}"
+    )
     for client_id, ds_ci in data.items():
         if client_id == 0:
             # skip the data holds on server
@@ -630,9 +634,15 @@ def get_data(config):
                 try:
                     import torch
                     from federatedscope.mf.dataloader import MFDataLoader
-                    if isinstance(ds, (torch.utils.data.Dataset, list)) or issubclass(type(ds), torch.utils.data.Dataset):
+                    if isinstance(
+                            ds,
+                        (torch.utils.data.Dataset, list)) or issubclass(
+                            type(ds), torch.utils.data.Dataset):
                         data_num_all_client[split_name].append(len(ds))
-                    elif isinstance(ds, (torch.utils.data.DataLoader, list)) or issubclass(type(ds), torch.utils.data.DataLoader):
+                    elif isinstance(
+                            ds,
+                        (torch.utils.data.DataLoader, list)) or issubclass(
+                            type(ds), torch.utils.data.DataLoader):
                         data_num_all_client[split_name].append(len(ds.dataset))
                     elif issubclass(type(ds), MFDataLoader):
                         data_num_all_client[split_name].append(ds.n_rating)
@@ -646,7 +656,8 @@ def get_data(config):
             if isinstance(ds_ci, Data):
                 for split_name in ["train_mask", "val_mask", "test_mask"]:
                     num_nodes = sum(ds_ci[split_name]).item()
-                    data_num_all_client[split_name.split("_")[0]].append(num_nodes)
+                    data_num_all_client[split_name.split("_")[0]].append(
+                        num_nodes)
 
     if config.data.plot_boxplot:
         index = []
@@ -656,7 +667,8 @@ def get_data(config):
             data_num_list.append(val)
         if index[1] == "test" and index[2] == "val":
             index[1], index[2] = index[2], index[1]
-            data_num_list[1], data_num_list[2] = data_num_list[2], data_num_list[1]
+            data_num_list[1], data_num_list[2] = data_num_list[
+                2], data_num_list[1]
         import matplotlib.pyplot as plt
         import matplotlib.pylab as pylab
         plt.clf()
@@ -664,18 +676,22 @@ def get_data(config):
         ticks_size = 17
         title_size = 22.5
         legend_size = 17
-        params = {'legend.fontsize': legend_size,
-                  'axes.labelsize': label_size,
-                  'axes.titlesize': title_size,
-                  'xtick.labelsize': ticks_size,
-                  'ytick.labelsize': ticks_size}
+        params = {
+            'legend.fontsize': legend_size,
+            'axes.labelsize': label_size,
+            'axes.titlesize': title_size,
+            'xtick.labelsize': ticks_size,
+            'ytick.labelsize': ticks_size
+        }
         pylab.rcParams.update(params)
         ax = plt.subplot()
         ax.violinplot(data_num_list)
-        ax.set_xticks(range(1, len(index)+1))
+        ax.set_xticks(range(1, len(index) + 1))
         ax.set_xticklabels(index)
         ax.set_ylabel("#Samples Per Client")
-        plt.savefig(f"{config.outdir}/visual_{config.data.type}.pdf", bbox_inches='tight', pad_inches=0)
+        plt.savefig(f"{config.outdir}/visual_{config.data.type}.pdf",
+                    bbox_inches='tight',
+                    pad_inches=0)
         plt.show()
         # TODO: prepare plot curves for and average the res codes
 
@@ -685,16 +701,24 @@ def get_data(config):
         if all_split_merged_num == []:
             all_split_merged_num.extend(v)
         else:
-            all_split_merged_num = [all_split_merged_num[i] + v[i] for i in range(len(v))]
+            all_split_merged_num = [
+                all_split_merged_num[i] + v[i] for i in range(len(v))
+            ]
     data_num_all_client["all"] = all_split_merged_num
     for k, v in data_num_all_client.items():
         if len(v) == 0:
-            logger.warning("The data distribution statistics info are nor correctly logged, maybe you used a data type we haven't support")
+            logger.warning(
+                "The data distribution statistics info are nor correctly logged, maybe you used a data type we haven't support"
+            )
         else:
             stats_res = stats.describe(v)
             if stats_res.minmax[1] == 0:
-                logger.warning(f"For data split {k}, the max sample num in the client is 0. Please check w    hether this is as you would like it to be")
-            logger.info(f"For data split {k}, the stats_res over all client is {stats_res}, the meadian is {sorted(v)[len(v) // 2]}, std is {math.sqrt(stats_res.variance)}")
+                logger.warning(
+                    f"For data split {k}, the max sample num in the client is 0. Please check w    hether this is as you would like it to be"
+                )
+            logger.info(
+                f"For data split {k}, the stats_res over all client is {stats_res}, the meadian is {sorted(v)[len(v) // 2]}, std is {math.sqrt(stats_res.variance)}"
+            )
 
     return data, modified_config
 

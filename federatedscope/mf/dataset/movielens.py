@@ -27,7 +27,9 @@ class VMFDataset:
             train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
                 client_ratings, split)
             data[clientId + 1] = {
-                "train": train_ratings, "val": val_ratings, "test": test_ratings
+                "train": train_ratings,
+                "val": val_ratings,
+                "test": test_ratings
             }
         self.data = data
 
@@ -47,7 +49,9 @@ class HMFDataset:
             train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
                 client_ratings, split)
             data[clientId + 1] = {
-                "train": train_ratings, "val": val_ratings, "test": test_ratings
+                "train": train_ratings,
+                "val": val_ratings,
+                "test": test_ratings
             }
         self.data = data
 
@@ -86,7 +90,7 @@ class MovieLensData(object):
             self._split_n_clients_rating_vmf(ratings, num_client, split)
 
     def _split_n_clients_rating_hmf(self, ratings: csc_matrix, num_client: int,
-                                split: list):
+                                    split: list):
         id_user = np.arange(self.n_user)
         shuffle(id_user)
         users_per_client = np.array_split(id_user, num_client)
@@ -96,7 +100,9 @@ class MovieLensData(object):
             train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
                 client_ratings, split)
             data[clientId + 1] = {
-                "train": train_ratings, "val": val_ratings, "test": test_ratings
+                "train": train_ratings,
+                "val": val_ratings,
+                "test": test_ratings
             }
         self.data = data
 
@@ -111,28 +117,29 @@ class MovieLensData(object):
             train_ratings, val_ratings, test_ratings = self._split_train_val_test_ratings(
                 client_ratings, split)
             data[clientId + 1] = {
-                "train": train_ratings, "val": val_ratings, "test": test_ratings
+                "train": train_ratings,
+                "val": val_ratings,
+                "test": test_ratings
             }
         self.data = data
 
-    def _split_train_val_test_ratings(self,
-                                      ratings: csc_matrix,
-                                      split: list):
+    def _split_train_val_test_ratings(self, ratings: csc_matrix, split: list):
         train_ratio, val_ratio, test_ratio = split
 
         n_ratings = ratings.count_nonzero()
         id_val_test = np.random.choice(n_ratings,
-                                   int(n_ratings * (val_ratio + test_ratio)),
-                                   replace=False)
+                                       int(n_ratings *
+                                           (val_ratio + test_ratio)),
+                                       replace=False)
 
         id_val = id_val_test[:int(n_ratings * val_ratio)]
         id_test = id_val_test[int(n_ratings * val_ratio):]
         id_train = list(set(np.arange(n_ratings)) - set(id_test) - set(id_val))
 
         ratings = ratings.tocoo()
-        val = coo_matrix((ratings.data[id_val],
-                           (ratings.row[id_val], ratings.col[id_val])),
-                          shape=ratings.shape)
+        val = coo_matrix(
+            (ratings.data[id_val], (ratings.row[id_val], ratings.col[id_val])),
+            shape=ratings.shape)
         test = coo_matrix((ratings.data[id_test],
                            (ratings.row[id_test], ratings.col[id_test])),
                           shape=ratings.shape)
@@ -140,7 +147,8 @@ class MovieLensData(object):
                             (ratings.row[id_train], ratings.col[id_train])),
                            shape=ratings.shape)
 
-        train_ratings, val_ratings, test_ratings = train.tocsc(), val.tocsc(), test.tocsc()
+        train_ratings, val_ratings, test_ratings = train.tocsc(), val.tocsc(
+        ), test.tocsc()
         return train_ratings, val_ratings, test_ratings
 
     def _load_meta(self):

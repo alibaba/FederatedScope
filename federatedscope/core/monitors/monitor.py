@@ -18,7 +18,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-global_all_monitors = []  # used in standalone mode, to merge sys metric results for all workers
+global_all_monitors = [
+]  # used in standalone mode, to merge sys metric results for all workers
 
 
 class Monitor(object):
@@ -89,7 +90,7 @@ class Monitor(object):
         system_metrics = {
             "id": self.monitored_object.ID,
             "fl_end_time_minutes": self.fl_end_wall_time.total_seconds() /
-                                   60 if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
+            60 if isinstance(self.fl_end_wall_time, datetime.timedelta) else 0,
             "total_model_size": self.total_model_size,
             "total_flops": self.total_flops,
             "total_upload_bytes": self.total_upload_bytes,
@@ -97,10 +98,10 @@ class Monitor(object):
             "global_convergence_round": self.global_convergence_round,
             "local_convergence_round": self.local_convergence_round,
             "global_convergence_time_minutes": self.
-                                                   global_convergence_wall_time.total_seconds() / 60 if isinstance(
+            global_convergence_wall_time.total_seconds() / 60 if isinstance(
                 self.global_convergence_wall_time, datetime.timedelta) else 0,
             "local_convergence_time_minutes": self.local_convergence_wall_time.
-                                                  total_seconds() / 60 if isinstance(
+            total_seconds() / 60 if isinstance(
                 self.local_convergence_wall_time, datetime.timedelta) else 0,
         }
         if verbose:
@@ -109,7 +110,9 @@ class Monitor(object):
             )
         return system_metrics
 
-    def merge_system_metrics_simulation_mode(self, file_io=True, from_global_monitors=False):
+    def merge_system_metrics_simulation_mode(self,
+                                             file_io=True,
+                                             from_global_monitors=False):
         """
             average the system metrics recorded in "system_metrics.json" by all workers
         :return:
@@ -146,8 +149,10 @@ class Monitor(object):
                     for k, v in res.items():
                         all_sys_metrics[k].append(v)
         else:
-            raise ValueError("file_io or from_monitors should be True: "
-                             f"but got file_io={file_io}, from_monitors={from_global_monitors}")
+            raise ValueError(
+                "file_io or from_monitors should be True: "
+                f"but got file_io={file_io}, from_monitors={from_global_monitors}"
+            )
 
         for k, v in all_sys_metrics.items():
             if k == "id":
@@ -204,7 +209,6 @@ class Monitor(object):
                 logger.error(
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
-
 
     def finish_fed_runner(self, fl_mode=None):
         self.compress_raw_res_file()
@@ -488,9 +492,16 @@ class Monitor(object):
             # update different keys round-wise: if find better round_wise_update_key, update     others at the same time
             else:
                 if round_wise_update_key not in [
-                    "val_loss", "test_loss", "loss",
-                    "val_avg_loss", "test_avg_loss", "avg_loss",
-                    "test_acc", "test_std", "val_acc", "val_std",
+                        "val_loss",
+                        "test_loss",
+                        "loss",
+                        "val_avg_loss",
+                        "test_avg_loss",
+                        "avg_loss",
+                        "test_acc",
+                        "test_std",
+                        "val_acc",
+                        "val_std",
                 ]:
                     raise NotImplementedError(
                         f"We currently support round_wise_update_key as one of "

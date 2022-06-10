@@ -44,7 +44,8 @@ class BasicMFNet(Module):
                                        device=pred.device,
                                        dtype=torch.float32).to_dense()
 
-        return mask * pred, label, torch.Tensor([float(np.prod(pred.size())) / len(ratings)])
+        return mask * pred, label, torch.Tensor(
+            [float(np.prod(pred.size())) / len(ratings)])
 
     def load_state_dict(self,
                         state_dict: 'OrderedDict[str, Tensor]',
