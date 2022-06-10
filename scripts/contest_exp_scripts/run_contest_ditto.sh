@@ -14,7 +14,9 @@ fi
 
 echo "HPO starts..."
 
-log=${outdir}/gin_best-weight_on_${dataset}.log
+personalization_regular_weight=0.01
+
+log=${outdir}/gin_weight-${personalization_regular_weight}_on_${dataset}.log
 for k in {1..3}
 do
     python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
@@ -22,6 +24,7 @@ do
     data.root ${root} \
     device ${cudaid} \
     federate.method Ditto \
+    personalization.regular_weight ${personalization_regular_weight} \
     seed $k >>${log} 2>&1
     echo "ditto k=${k} ends."
 done

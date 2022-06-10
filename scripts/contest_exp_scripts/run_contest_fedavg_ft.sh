@@ -7,13 +7,14 @@ root=./
 dataset=fs_contest_data
 method=fedavg_ft
 outdir=exp_out/${method}
-step=1
 
 if [ ! -d ${outdir} ];then
   mkdir -p ${outdir}
 fi
 
 echo "HPO starts..."
+
+step=1
 
 log=${outdir}/gin_lstep-${step}_on_${dataset}.log
 for k in {1..3}

@@ -7,7 +7,6 @@ root=./
 dataset=fs_contest_data
 method=fedbn_ft
 outdir=exp_out/${method}
-step=1
 
 if [ ! -d ${outdir} ];then
   mkdir -p ${outdir}
@@ -15,7 +14,9 @@ fi
 
 echo "HPO starts..."
 
-log=${outdir}/gin_patience-0_best-lr_lstep-${step}_on_${dataset}.log
+step=1
+
+log=${outdir}/gin_patience-0_lstep-${step}_on_${dataset}.log
 for k in {1..3}
 do
     python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedbn_gnn_minibatch_on_multi_task.yaml \
