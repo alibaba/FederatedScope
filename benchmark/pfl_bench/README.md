@@ -26,28 +26,30 @@ docker load < federatedscope_cuda10_torch18_app.tar & docker tag 188b4 alibaba/f
 
 # 3. Run the experiments
 We first use wandb sweep to find the best hyper-parameters, then repeat the results three times.
-The hyper-parameter search space and hyper-parameter optimization (HPO) scripts for all the methods and all the datasets are in the `scripts/personalization_exp_scripts/pfl_bench` directory and organized by dataset name.
+Here we provide some examples for FEMNIST-s02 at `benchmark/pfl_bench/FEMNIST-s02` for the hyper-parameter search space and hyper-parameter optimization (HPO) scripts, and the searched best configurations as yaml files for FEMNIST-s02 at `benchmark/pfl_bench/yaml_best_runs_example`.
+
+Since the searching scripts and best config yaml files for all experiments involve about 600 files and 6w+ code lines, we pack them in a small zip [file](https://federatedscope.oss-cn-beijing.aliyuncs.com/pfl_bench_scripts.zip), in which the scripts for all the methods and all the datasets are organized as multiple directories named by dataset name.
 
 ## 3.1 The searched best configs
-We put all the config yaml file in the directory `scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs`.
+We put all the config yaml file in the directory `benchmark/pfl_bench/yaml_best_runs`.
 To reproduce the experiments with searched best configurations, you can run the experiment as the following example:
 ```
-python federatedscope/main.py --cfg scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs/FedBN_FEMNIST-s02.yaml
+python federatedscope/main.py --cfg benchmark/pfl_bench/yaml_best_runs/FedBN_FEMNIST-s02.yaml
 ```
 Then all the metrics will be tracked in your logfile and send to wandb monitor.
 
 You can customize the yaml file such as your wandb project name, or directly add new config in the command such as 
 ```
-python federatedscope/main.py --cfg scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs/FedBN_FEMNIST-s02.yaml federate.local_update_steps 1
+python federatedscope/main.py --cfg benchmark/pfl_bench/yaml_best_runs/FedBN_FEMNIST-s02.yaml federate.local_update_steps 1
 ```
-More examples for other methods including the combined pFL method variants (e.g., `FedEM-FedBN-FedOPT-FT_cifar10-alpha01.yaml`) are in the directory `scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs`.
+More examples for other methods including the combined pFL method variants (e.g., `FedEM-FedBN-FedOPT-FT_cifar10-alpha01.yaml`) are in the directory `benchmark/pfl_bench/yaml_best_runs`.
 
 ## 3.2 Scripts for HPO
 We use wandb sweep to find the best hyper-parameters, here are some scripts to do the sweep,
 
 ### 3.2.1 For sweep machine
 0. login to the wandb host, if you need private hosting, try wandb login [here](https://docs.wandb.ai/guides/self-hosted/local).
-1. write your sweep HPO scripts, we provide the full HPO yamls in the `scripts/personalization_exp_scripts/pfl_bench` directory and organized by dataset name. See more details about sweep [here](https://docs.wandb.ai/guides/sweeps).
+1. write your sweep HPO scripts, we provide the full HPO yamls in the `benchmark/pfl_bench` directory and organized by dataset name. See more details about sweep [here](https://docs.wandb.ai/guides/sweeps).
 
 2. start your sweep by `wandb sweep my_hpo.yaml`, it will print the sweep id such as 
 ```
