@@ -28,7 +28,9 @@ docker load < federatedscope_cuda10_torch18_app.tar & docker tag 188b4 alibaba/f
 We first use wandb sweep to find the best hyper-parameters, then repeat the results three times.
 Here we provide some examples for FEMNIST-s02 at `benchmark/pfl_bench/FEMNIST-s02` for the hyper-parameter search space and hyper-parameter optimization (HPO) scripts, and the searched best configurations as yaml files for FEMNIST-s02 at `benchmark/pfl_bench/yaml_best_runs_example`.
 
-Since the searching scripts and best config yaml files for all experiments involve about 600 files and 6w+ code lines, we pack them in a small zip [file](https://federatedscope.oss-cn-beijing.aliyuncs.com/pfl_bench_scripts.zip), in which the scripts for all the methods and all the datasets are organized as multiple directories named by dataset name.
+Since the searching scripts and best config yaml files for all experiments involve about 600 files and 6w+ code lines, we omit them here.
+
+You can find the full scripts from the another [branch](https://github.com/alibaba/FederatedScope/tree/Feature/pfl_bench/scripts/personalization_exp_scripts/pfl_bench) or the packed small zip [file](https://federatedscope.oss-cn-beijing.aliyuncs.com/pfl_bench_scripts.zip), in which we organize the scripts for all the methods and all the datasets as multiple directories named by dataset name.
 
 ## 3.1 The searched best configs
 We put all the config yaml file in the directory `benchmark/pfl_bench/yaml_best_runs`.
