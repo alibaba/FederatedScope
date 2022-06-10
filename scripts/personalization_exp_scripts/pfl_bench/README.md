@@ -16,7 +16,10 @@ If you use other customized data directory, please replace the value of `data.ro
 # 2. Docker Environment
 The experiments are conducted on the *federatedscope-torch1.8-application* docker image, you can build it using the [Dockfile](https://github.com/alibaba/FederatedScope/blob/master/enviroment/docker_files/federatedscope-torch1.8-application.Dockerfile). 
 
-We also provide a built docker [image](https://federatedscope.oss-cn-beijing.aliyuncs.com/federatedscope_cuda10_torch18_app.tar), you can download it and creat your image as `docker load < federatedscope_cuda10_torch18_app.tar & docker tag 188b4 alibaba/federatedscope:app-env-torch1.8`
+We also provide a built docker [image](https://federatedscope.oss-cn-beijing.aliyuncs.com/federatedscope_cuda10_torch18_app.tar), you can download it and creat your image as 
+```
+docker load < federatedscope_cuda10_torch18_app.tar & docker tag 188b4 alibaba/federatedscope:app-env-torch1.8
+```
 
 # 3. Run the experiments
 We first use wandb sweep to find the best hyper-parameters, then repeat the results three times.
@@ -57,9 +60,9 @@ wandb: View sweep at: http://xx.xx.xxx.xxx:8080/your_sweep_name/pFL-bench/sweeps
     
    
 1. enter the container
-`
+```
 docker run -u root --gpus all -it --rm -v "/mnt1:/mnt" --name your_name-pfl-bench -w /mnt/user_name/FederatedScope alibaba/federatedscope:app-env-torch1.8 /bin/bash
-`
+```
    
 2. setup wandb and FederatedScope
 ```bash
