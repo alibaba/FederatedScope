@@ -5,18 +5,20 @@ It contains three federated datasets: Graph-DC, Graph-DT and Text-DT.
 Here we provide the datasets and scripts of the baselines.
 More details about the benchmark please refer to [https://arxiv.org/abs/2206.03436](https://arxiv.org/abs/2206.03436)
 
+**Notice**:
+Considering FederatedScope is an open-sourced library that updates frequently, to ensure the reproducibility of the experimental results, we create a new branch `feature/B-FHTL`. The users can reproduce the results by running the scripts under the directory ``.  
+
 ## Dataset
 ### Graph-DC
-The dataset Graph-DC is consisted of 13 graph classification tasks, where each task represents a client in federated learning. 
-You can download it from [url]().
+The dataset Graph-DC is consisted of 13 graph classification tasks. Each task represents a client in federated learning, and hold different learning goals. You can choose this dataset by setting `data.type` as `fs_contest_data`.
 
 ### Graph-DT
-The dataset Graph-DT is consisted of 17 graph tasks, including 10 binary classification tasks, 1 multi-class classification task and 5 regression tasks.
-You can download it from [url]().
+The dataset Graph-DT is consisted of 17 graph tasks, including 10 binary classification tasks, 1 multi-class classification task and 5 regression tasks. You can choose this dataset by setting `data.type` as ``.
+
 
 ### Text-DT
 The dataset Text-DT is consisted of 3 NLP tasks, including sentiment classification, reading compression and sentence pair similarity prediction. 
-You can download it from [url]().
+You can choose this dataset by setting `data.type` as ``.
 
 ## Scripts
 We provide some scripts used in the benchmark for users to reproduce the experimental results.
