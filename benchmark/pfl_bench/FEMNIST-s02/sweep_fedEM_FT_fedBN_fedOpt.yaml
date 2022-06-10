@@ -1,0 +1,50 @@
+
+program: federatedscope/main.py
+project: pFL-bench
+name: FedEM-FT-FedBN+fedOpt,FEMNIST-s02
+method: grid
+#method: bayes
+metric:
+  goal: maximize
+  name: best_client_summarized_weighted_avg/val_acc
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--cfg"
+  - "scripts/personalization_exp_scripts/pfl_bench/FEMNIST-s02/fedavg_convnet2_on_femnist.yaml"
+  - "outdir"
+  - "exp_pfl_bench"
+  - "wandb.use"
+  - "True"
+  - "wandb.name_project"
+  - "pFL-bench"
+  - "wandb.name_user"
+  - "daoyuan"
+  - "federate.method"
+  - "FedEM"
+  - "model.model_num_per_trainer"
+  - "3"
+  - "expname_tag"
+  - "+fedBN+finetune+fedOpt"
+  - "trainer.finetune.before_eval"
+  - "True"
+  - "trainer.finetune.steps"
+  - "5"
+  - "personalization.local_param"
+  - "['bn', 'norms']"  # FedBN
+  - "fedopt.use"
+  - "True"
+  - ${args_no_hyphens}
+parameters:
+  optimizer.lr:
+    values: [0.05, 0.005, 0.5, 0.01, 0.1]
+  federate.local_update_steps:
+    values: [1, 3]
+  fedopt.lr_server:
+    values: [ 0.5, 0.05, 1.5, 0.1, 1.0]
+
+early_terminate:
+  type: hyperband
+  min_iter: 5  # the first bucket indicates we called wandb at least 5 times
+
