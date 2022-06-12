@@ -6,7 +6,7 @@ Here we provide the datasets and scripts of the baselines.
 More details about the benchmark please refer to [https://arxiv.org/abs/2206.03436](https://arxiv.org/abs/2206.03436)
 
 **Notice**:
-Considering FederatedScope is an open-sourced library that updates frequently, to ensure the reproducibility of the experimental results, we create a new branch `feature/B-FHTL`. The users can reproduce the results by running the scripts under the directory ``.  
+Considering FederatedScope is an open-sourced library that updates frequently, to ensure the reproducibility of the experimental results, we create a new branch `feature/B-FHTL`. The users can reproduce the results by running the scripts under the directory `scripts/`, you can also copy the scripts from `benchmark/B-FHTL/${DATA_NAME}`.  
 
 ## Dataset
 ### Graph-DC
