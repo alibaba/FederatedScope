@@ -23,7 +23,8 @@ You can choose this dataset by setting `data.type` as `text-dt`.
 
 ## Scripts
 We provide some scripts used in the benchmark for users to reproduce the experimental results.
-The baselines include 
+The baselines include
+ - Isolated
  - FedAvg
  - FedAvg+FT
  - FedProx
