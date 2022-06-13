@@ -19,7 +19,6 @@ model:
   out_channels: 0
   task: graph
 personalization:
-  # local_param: ['encoder_atom', 'encoder', 'clf']   # to handle size-different pre & post layers
   local_param: [ 'encoder_atom', 'encoder', 'clf', 'norms' ]  # pre, post + FedBN
 optimizer:
   lr: 0.25
