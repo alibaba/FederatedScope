@@ -52,7 +52,7 @@ git switch feature/B-FHTL
 cd FederatedScope
 python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DC/fedavg.yaml
 
-# or running the hpo scripts
+# or run the hpo scripts
 cd scripts/B-FHTL_exp_scripts/Graph-DC/hpo
 bash run_fedavg_ft.sh 0 ./data
 ```
