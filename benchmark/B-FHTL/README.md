@@ -15,7 +15,7 @@ you can also copy the scripts from `benchmark/B-FHTL/${DATA_NAME}` into your own
 The dataset Graph-DC is consisted of 13 graph classification tasks. Each task represents a client in federated learning, and hold different learning goals. You can choose this dataset by setting `data.type` as `fs_contest_data`.
 
 ### Graph-DT
-The dataset Graph-DT is consisted of 17 graph tasks, including 10 binary classification tasks, 1 multi-class classification task and 5 regression tasks. You can choose this dataset by setting `data.type` as `graph-dt`.
+The dataset Graph-DT is consisted of 16 graph tasks, including 10 binary classification tasks, 6 regression tasks. You can choose this dataset by setting `data.type` as `graph-dt`.
 
 ### Text-DT
 The dataset Text-DT is consisted of 3 NLP tasks, including sentiment classification, reading compression and sentence pair similarity prediction. 
@@ -30,7 +30,7 @@ The baselines include
  - FedBn
  - FedBn+FT
  - Ditto
- - FedMaml
+ - FedMAML
  
 You can find the configurations of the baselines under the directory [`scripts/B-FHTL_exp_scripts/${DATA_NAME}/`](https://github.com/alibaba/FederatedScope/tree/feature/B-FHTL/scripts/B-FHTL_exp_scripts), where `DATA_NAME` is the name of the dataset.  
 We also provide hpo scripts to search the best hyper-parameters, you can refer to `scripts/B-FHTL_exp_scripts/${DATA_NAME}/hpo`.
