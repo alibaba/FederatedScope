@@ -13,7 +13,7 @@ FederatedScope is a comprehensive federated learning platform that provides conv
 A detailed tutorial is provided on our [website](https://federatedscope.io/).
 
 ## News
-**Declaration of Emergency**:
+**[06-13-2022] Declaration of Emergency**:
 Based on our preliminary findings, it seems that our project is receiving an unknown attack and the number of stars is increasing abnormally with some stars from "virtual" users. As of 2022 June 10, the number of stars is around 374. We are paying close attention to slove this issue. 
 
 **To attackers**: No matter what the purpose is, please stop attacking our project in this cheap way!
