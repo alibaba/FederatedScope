@@ -1,8 +1,10 @@
 import torch
 import os
-from torch_geometric.data import InMemoryDataset
+from torch_geometric.data import InMemoryDataset, Data
 from federatedscope.register import register_data
+from torch_geometric.datasets import TUDataset, MoleculeNet
 
+import numpy as np
 
 class FSContestDataset(InMemoryDataset):
     def __init__(self, root):
@@ -30,6 +32,61 @@ class FSContestDataset(InMemoryDataset):
         except:
             data = None
         return data
+
+    def process(self):
+        # Read data into huge `Data` list.
+        data_list = []
+        dnames = [
+            'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
+            'Mutagenicity', 'NCI109', 'PTC_MM', 'PTC_FR'
+        ]
+        test_dnames = ['HIV', 'BACE']
+
+        for name in dnames:
+            ds = TUDataset(self.root, name)
+            ds = [
+                Data(edge_index=graph.edge_index, x=graph.x, y=graph.y)
+                for graph in ds
+            ]
+            index = np.random.permutation(np.arange(len(ds)))
+            train_index = index[:int(0.6 * len(index))]
+            valid_index = index[int(0.6 * len(index)):int(0.8 * len(index))]
+            test_index = index[int(0.8 * len(index)):]
+            data = {
+                'train': [ds[idx] for idx in train_index],
+                'val': [ds[idx] for idx in valid_index],
+                'test': [ds[idx] for idx in test_index]
+            }
+            data_list.append(data)
+
+        for name in test_dnames:
+            ds = MoleculeNet(self.root, name)
+            ds = [
+                Data(edge_index=graph.edge_index, x=graph.x, y=graph.y[0])
+                for graph in ds
+            ]
+            index = np.random.permutation(np.arange(len(ds)))
+            # DO NOT USE ALL DATA
+            index = index[:1000]
+            train_index = index[:int(0.6 * len(index))]
+            valid_index = index[int(0.6 * len(index)):int(0.8 * len(index))]
+            test_index = index[int(0.8 * len(index)):]
+            data = {
+                'train': [ds[idx] for idx in train_index],
+                'val': [ds[idx] for idx in valid_index],
+                'test': [ds[idx] for idx in test_index]
+            }
+            data_list.append(data)
+
+        for idx, data in enumerate(data_list):
+            os.makedirs(os.path.join(self.processed_dir, str(idx)),
+                        exist_ok=True)
+            torch.save(data['train'],
+                       os.path.join(self.processed_dir, str(idx), 'train.pt'))
+            torch.save(data['val'],
+                       os.path.join(self.processed_dir, str(idx), 'val.pt'))
+            torch.save(data['test'],
+                       os.path.join(self.processed_dir, str(idx), 'test.pt'))
 
     def __getitem__(self, idx):
         data = {}
