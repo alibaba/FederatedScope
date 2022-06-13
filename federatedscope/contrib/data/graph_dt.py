@@ -110,9 +110,6 @@ class GraphDTDataset(InMemoryDataset):
         return data
 
     def process(self):
-        import warnings
-        warnings.filterwarnings("ignore")
-
         np.random.seed(0)
         splits = [0.8, 0.1, 0.1]
         path = 'graph_dt/'

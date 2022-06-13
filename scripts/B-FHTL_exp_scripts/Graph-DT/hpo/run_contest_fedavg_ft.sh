@@ -3,7 +3,7 @@ set -e
 cd ../../
 
 cudaid=$1
-root=./
+root=$2
 dataset=fs_contest_data
 method=fedavg_ft
 outdir=exp_out/${method}

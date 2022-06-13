@@ -3,7 +3,7 @@ set -e
 cd ../../
 
 cudaid=$1
-root=./
+root=$2
 dataset=graph-dt
 method=isolated
 outdir=exp_out/${method}
