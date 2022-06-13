@@ -1,11 +1,11 @@
 set -e
 
-cd ../../
+cd ../../../../
 
 cudaid=$1
 root=$2
 dataset=fs_contest_data
-method=fedopt
+method=maml
 outdir=exp_out/${method}
 
 if [ ! -d ${outdir} ];then
@@ -15,31 +15,34 @@ fi
 echo "HPO starts..."
 
 lrs=(0.01 0.1 0.05 0.005 0.5)
-local_updates=(1 2 4)
-lrs_s=(0.005 0.01 0.05 0.1 0.5)
-mom_s=(0. 0.01 0.05 0.1 0.5)
+innerlrs=(0.01 0.1 1.)
+local_updates=(1 2 5)
+ft_steps=(200 300)
 
 
 for (( i=0; i<${#lrs[@]}; i++ ))
 do
     for (( j=0; j<${#local_updates[@]}; j++ ))
     do
-        for (( is=0; is<${#lrs_s[@]}; is++ ))
+        for (( s=0; s<${#ft_steps[@]}; s++ ))
         do
-            for (( im=0; im<${#mom_s[@]}; im++ ))
+            for (( ii=0; ii<${#innerlrs[@]}; ii++))
             do
-                log=${outdir}/gin_lr-${lrs[$i]}_step-${local_updates[$j]}_slr-${lrs_s[is]}_smom-${mom_s[$im]}_on_${dataset}.log
+                log=${outdir}/gin_lr-${lrs[$i]}_step-${local_updates[$j]}_mstep-${ft_steps[$s]}_ilr-${innerlrs[$ii]}_on_${dataset}.log
                 for k in {1..3}
                 do
-                    python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
+                    python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DC/hpo/fedavg_gnn_minibatch_on_multi_task.yaml \
                     data.root ${root} \
                     device ${cudaid} \
                     data.type ${dataset} \
                     optimizer.lr ${lrs[$i]} \
                     federate.local_update_steps ${local_updates[$j]} \
-                    fedopt.use True \
-                    fedopt.lr_server ${lrs_s[$is]} \
-                    fedopt.momentum_server ${mom_s[$im]} \
+                    trainer.type graphmaml_trainer \
+                    trainer.finetune.before_eval True \
+                    trainer.finetune.steps ${ft_steps[$s]} \
+                    maml.use True \
+                    maml.inner_lr ${innerlrs[$ii]} \
+                    eval.freq 100 \
                     seed $k >>${log} 2>&1
                 done
                 python federatedscope/parse_exp_results.py --input ${log}

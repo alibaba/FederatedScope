@@ -1,11 +1,13 @@
 set -e
 
-cd ../../
+cd ../../../../
+
+pwd
 
 cudaid=$1
 root=$2
 dataset=fs_contest_data
-method=fedavg
+method=TTTT
 outdir=exp_out/${method}
 
 if [ ! -d ${outdir} ];then
@@ -25,7 +27,7 @@ do
         log=${outdir}/gin_lr-${lrs[$i]}_epoch-${local_updates[$j]}_on_${dataset}.log
         for k in {1..3}
         do
-            python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
+            python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DC/hpo/fedavg_gnn_minibatch_on_multi_task.yaml \
             data.root ${root} \
             device ${cudaid} \
             data.type ${dataset} \
