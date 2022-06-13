@@ -4,8 +4,8 @@ cd ../../
 
 cudaid=$1
 root=./
-dataset=fs_contest_data
-method=fedavg
+dataset=graph-dt
+method=isolated
 outdir=exp_out/${method}
 
 if [ ! -d ${outdir} ];then
@@ -17,13 +17,14 @@ echo "HPO starts..."
 log=${outdir}/gin_on_${dataset}.log
 for k in {1..3}
 do
-    python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
-    --cfg_client scripts/contest_exp_scripts/cfg_per_client.yaml \
+    python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml \
+    --cfg_client scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml \
     data.root ${root} \
     device ${cudaid} \
     data.type ${dataset} \
+    federate.method local \
     seed $k >>${log} 2>&1
-    echo "fedavg k=${k} ends."
+    echo "isolated k=${k} ends."
 done
 
 echo "HPO ends."

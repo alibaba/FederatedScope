@@ -19,8 +19,8 @@ personalization_regular_weight=0.01
 log=${outdir}/gin_weight-${personalization_regular_weight}_on_${dataset}.log
 for k in {1..3}
 do
-    python federatedscope/main.py --cfg scripts/contest_exp_scripts/fedavg_gnn_minibatch_on_multi_task.yaml \
-    --cfg_client scripts/contest_exp_scripts/cfg_per_client_ditto.yaml \
+    python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml \
+    --cfg_client scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client_ditto.yaml \
     data.root ${root} \
     device ${cudaid} \
     federate.method Ditto \
