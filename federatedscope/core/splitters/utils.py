@@ -58,11 +58,11 @@ def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10, p
             idx_k = np.where(label == k)[0]
             np.random.shuffle(idx_k)
             prop = np.random.dirichlet(np.repeat(alpha, client_num))
-            prop = np.array([
-                p * (len(idx_j) < num / client_num)
-                for p, idx_j in zip(prop, idx_slice)
-            ])
-            prop = prop / sum(prop)
+            #prop = np.array([
+            #    p * (len(idx_j) < num / client_num)
+            #    for p, idx_j in zip(prop, idx_slice)
+            #])
+            #prop = prop / sum(prop)
             prop = (np.cumsum(prop) * len(idx_k)).astype(int)[:-1]
             idx_slice = [
                 idx_j + idx.tolist()
