@@ -207,34 +207,36 @@ class Trainer(object):
         for hook in hooks_set["on_fit_start"]:
             hook(self.ctx)
 
-        for epoch_i in range(self.ctx.get(
-                "num_{}_epoch".format(dataset_name))):
-            self.ctx.cur_epoch_i = epoch_i
-            for hook in hooks_set["on_epoch_start"]:
-                hook(self.ctx)
+        test_only = self.ctx.cfg.trainer.test_only
+        if not test_only or (test_only and self.ctx.cur_data_split != 'train'):
+            for epoch_i in range(self.ctx.get(
+                    "num_{}_epoch".format(dataset_name))):
+                self.ctx.cur_epoch_i = epoch_i
+                for hook in hooks_set["on_epoch_start"]:
+                    hook(self.ctx)
 
-            for batch_i in range(
-                    self.ctx.get("num_{}_batch".format(dataset_name))):
-                self.ctx.cur_batch_i = batch_i
-                for hook in hooks_set["on_batch_start"]:
-                    hook(self.ctx)
-                for hook in hooks_set["on_batch_forward"]:
-                    hook(self.ctx)
-                if self.ctx.cur_mode == 'train':
-                    for hook in hooks_set["on_batch_backward"]:
+                for batch_i in range(
+                        self.ctx.get("num_{}_batch".format(dataset_name))):
+                    self.ctx.cur_batch_i = batch_i
+                    for hook in hooks_set["on_batch_start"]:
                         hook(self.ctx)
-                for hook in hooks_set["on_batch_end"]:
+                    for hook in hooks_set["on_batch_forward"]:
+                        hook(self.ctx)
+                    if self.ctx.cur_mode == 'train':
+                        for hook in hooks_set["on_batch_backward"]:
+                            hook(self.ctx)
+                    for hook in hooks_set["on_batch_end"]:
+                        hook(self.ctx)
+
+                    # Break in the final epoch
+                    if self.ctx.cur_mode == 'train' and epoch_i == self.ctx.num_train_epoch - 1:
+                        if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
+                            break
+
+                for hook in hooks_set["on_epoch_end"]:
                     hook(self.ctx)
-
-                # Break in the final epoch
-                if self.ctx.cur_mode == 'train' and epoch_i == self.ctx.num_train_epoch - 1:
-                    if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
-                        break
-
-            for hook in hooks_set["on_epoch_end"]:
+            for hook in hooks_set["on_fit_end"]:
                 hook(self.ctx)
-        for hook in hooks_set["on_fit_end"]:
-            hook(self.ctx)
 
         self.ctx.pop_mode()
         self.ctx.reset_used_dataset()
@@ -376,7 +378,7 @@ class GeneralTorchTrainer(Trainer):
         # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
 
         return self.ctx.num_samples_train, self.get_model_para(
-        ), self.ctx.eval_metrics
+        ), self.ctx.get("eval_metrics", None)
 
     def update(self, model_parameters):
         '''

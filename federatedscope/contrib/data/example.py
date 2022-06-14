@@ -21,7 +21,7 @@ def MyData(config):
     return data, config
 
 
-def call_my_data(config):
+def call_my_data(config, **kwargs):
     if config.data.type == "mydata":
         data, modified_config = MyData(config)
         return data, modified_config

@@ -377,9 +377,9 @@ def load_external_data(config=None):
     return data_local_dict, modified_config
 
 
-def get_data(config):
+def get_data(config, **kwargs):
     for func in register.data_dict.values():
-        data_and_config = func(config)
+        data_and_config = func(config, **kwargs)
         if data_and_config is not None:
             return data_and_config
     if config.data.type.lower() == 'toy':

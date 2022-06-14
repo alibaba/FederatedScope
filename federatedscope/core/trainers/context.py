@@ -79,6 +79,7 @@ class Context(dict):
                  model,
                  cfg,
                  data=None,
+                 tokenizer=None,
                  device=None,
                  init_dict=None,
                  init_attr=True):
@@ -90,6 +91,7 @@ class Context(dict):
         self.cfg = cfg
         self.model = model
         self.data = data
+        self.tokenizer = tokenizer
         self.device = device
         self.cur_mode = None
         self.cur_data_split = None

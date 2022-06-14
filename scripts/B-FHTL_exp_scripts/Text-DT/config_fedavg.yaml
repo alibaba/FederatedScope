@@ -1,0 +1,52 @@
+use_gpu: True
+device: 0
+seed: 12345
+outdir: exp/sts_imdb_squad/fedavg/
+federate:
+  mode: standalone
+  method: fedavg
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  total_round_num: 50
+  client_num: 3
+  save_to: ckpt
+data:
+  type: text-dt
+  dir:
+    sts: /mnt/dongchenhe.dch/datasets/glue_data/STS-B/
+    imdb: /mnt/dongchenhe.dch/datasets/imdb/
+    squad: /mnt/dongchenhe.dch/datasets/squad2.0/
+  max_seq_len:
+    sts: 128
+    imdb: 128
+    squad: 128
+  max_query_len: 64
+  trunc_stride: 32
+  max_tgt_len: 128
+  all_batch_size:
+    sts: 32
+    imdb: 32
+    squad: 32
+  num_workers: 0
+  cache_dir: cache
+model:
+  type: text-dt
+  bert_type: bert-base-uncased
+  dec_d_ffn: 2048
+  dec_dropout_prob: 0.2
+  num_dec_layers: 6
+  num_labels:
+    sts: 1
+    imdb: 2
+    squad: 2
+personalization:
+  local_param: ['classifier']
+trainer:
+  type: text-dt
+  disp_freq: 50
+  val_freq: 100000000  # eval freq across batches
+eval:
+  split: ['test']
+  best_res_update_round_wise_key: test_loss
+  freq: 100000000  # eval freq across rounds
+  report: ['raw']
