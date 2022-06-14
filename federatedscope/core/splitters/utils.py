@@ -10,14 +10,13 @@ def _split_according_to_prior(label, client_num, prior):
     for idx,client_prior in enumerate(prior):
         for each in client_prior:
             frequency[idx][each] += 1
-    frequency = frequency/np.sum(frequency)
-    nums = np.ceil(frequency * len(label)).astype(int)
+    sum_frequency = np.sum(frequency, axis=0)
 
     idx_slice = [[] for _ in range(client_num)]
     for k in range(classes):
         idx_k = np.where(label == k)[0]
         np.random.shuffle(idx_k)
-        nums_k = nums[:, k]
+        nums_k = np.ceil(frequency[:, k]/sum_frequency[k]*len(idx_k)).astype(int)
         while len(idx_k) < np.sum(nums_k):
             random_client = np.random.choice(range(client_num))
             if nums_k[random_client] > 0:
