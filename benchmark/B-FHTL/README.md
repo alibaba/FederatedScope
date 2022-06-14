@@ -10,7 +10,7 @@ Considering FederatedScope is an open-sourced library that updates frequently, t
 we create a new branch `feature/B-FHTL`. The users can reproduce the results by running the scripts under the directory [`scripts/B-FHTL_exp_scripts/`](https://github.com/alibaba/FederatedScope/tree/feature/B-FHTL/scripts/B-FHTL_exp_scripts), 
 you can also copy the scripts from `benchmark/B-FHTL/${DATA_NAME}` into your own directory.  
 
-## Dataset
+## Dataset 
 ### Graph-DC
 The dataset Graph-DC is consisted of 13 graph classification tasks. Each task represents a client in federated learning, and hold different learning goals. You can choose this dataset by setting `data.type` as `fs_contest_data`.
 
