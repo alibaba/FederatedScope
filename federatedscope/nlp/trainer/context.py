@@ -5,7 +5,7 @@ from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.model_builder import get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.contrib.auxiliaries.scheduler_builder import get_scheduler
+from federatedscope.nlp.auxiliaries.scheduler_builder import get_scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +16,6 @@ class MyContext(Context):
             self.trainable_para_names = get_trainable_para_names(self.model)
             self.criterion = get_criterion(self.cfg.criterion.type, self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
-            self.val_metrics = None
-            self.test_metrics = None
 
             self.optimizer = get_optimizer(
                 self.cfg.optimizer.type,

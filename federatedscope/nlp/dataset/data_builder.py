@@ -1,13 +1,14 @@
-import os.path as osp
 from torch.utils.data import DataLoader
 from federatedscope.register import register_data
-from federatedscope.contrib.data.sts import create_sts_dataset
-from federatedscope.contrib.data.imdb import create_imdb_dataset
-from federatedscope.contrib.data.squad import create_squad_dataset
+from federatedscope.nlp.auxiliaries.utils import setup_tokenizer
+from federatedscope.nlp.dataset.sts import create_sts_dataset
+from federatedscope.nlp.dataset.imdb import create_imdb_dataset
+from federatedscope.nlp.dataset.squad import create_squad_dataset
 
 
-def load_my_data(config, tokenizer, **kwargs):
+def load_textdt_data(config):
     model_type = config.model.bert_type
+    tokenizer = setup_tokenizer(config)
 
     # sts-b
     root = config.data.dir.sts
@@ -73,10 +74,10 @@ def load_my_data(config, tokenizer, **kwargs):
     return data_dict, config
 
 
-def call_my_data(config, **kwargs):
+def call_textdt_data(config):
     if config.data.type == "text-dt":
-        data, modified_config = load_my_data(config, **kwargs)
+        data, modified_config = load_textdt_data(config)
         return data, modified_config
 
 
-register_data('text-dt', call_my_data)
+register_data('text-dt', call_textdt_data)

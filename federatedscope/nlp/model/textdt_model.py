@@ -13,7 +13,7 @@ class ModelOutput(object):
 
 
 # Build your torch or tf model class here
-class MyModel(nn.Module):
+class TextDTModel(nn.Module):
     def __init__(self, config):  # server config
         super().__init__()
 
@@ -119,14 +119,14 @@ class MyModel(nn.Module):
 
 # Instantiate your model class with config and data
 def ModelBuilder(model_config, local_data):
-    model = MyModel(model_config)
+    model = TextDTModel(model_config)
     return model
 
 
-def call_my_net(model_config, local_data):
+def call_textdt_net(model_config, local_data):
     if model_config.type == "text-dt":
         model = ModelBuilder(model_config, local_data)
         return model
 
 
-register_model('text-dt', call_my_net)
+register_model('text-dt', call_textdt_net)

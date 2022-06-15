@@ -33,7 +33,6 @@ class Client(Worker):
                  state=-1,
                  config=None,
                  data=None,
-                 tokenizer=None,
                  model=None,
                  device='cpu',
                  strategy=None,
@@ -49,7 +48,6 @@ class Client(Worker):
         # trainer might need configurations other than those of trainer node
         self.trainer = get_trainer(model=model,
                                    data=data,
-                                   tokenizer=tokenizer,
                                    device=device,
                                    config=self._cfg,
                                    is_attacker=self.is_attacker)
@@ -193,7 +191,7 @@ class Client(Worker):
                 sample_size, model_para_all, results = self.trainer.train()
                 logger.info(
                     self._monitor.format_eval_res(results,
-                                                  rnd=self.state + 1,
+                                                  rnd=self.state,
                                                   role='Client #{}'.format(
                                                       self.ID),
                                                   return_raw=True))
@@ -286,23 +284,21 @@ class Client(Worker):
             if self._cfg.trainer.finetune.before_eval:
                 self.trainer.finetune()
             for split in self._cfg.eval.split:
-                eval_metrics = getattr(self.trainer.ctx, '{}_metrics'.format(split))
-                if eval_metrics is None:
-                    eval_metrics = self.trainer.evaluate(
-                        target_data_split_name=split)
+                eval_metrics = self.trainer.evaluate(
+                    target_data_split_name=split)
 
-                    if self._cfg.federate.mode == 'distributed':
-                        logger.info(
-                            self._monitor.format_eval_res(eval_metrics,
-                                                          rnd=self.state + 1,
-                                                          role='Client #{}'.format(
-                                                              self.ID)))
+                if self._cfg.federate.mode == 'distributed':
+                    logger.info(
+                        self._monitor.format_eval_res(eval_metrics,
+                                                      rnd=self.state,
+                                                      role='Client #{}'.format(
+                                                          self.ID)))
 
                 metrics.update(**eval_metrics)
 
             formatted_eval_res = self._monitor.format_eval_res(
                 metrics,
-                rnd=self.state + 1,
+                rnd=self.state,
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)

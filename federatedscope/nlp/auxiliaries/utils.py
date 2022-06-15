@@ -1,5 +1,6 @@
 import time
 import sys
+from transformers.models.bert import BertTokenizerFast
 
 
 class AverageMeter(object):
@@ -31,3 +32,13 @@ def reporthook(count, block_size, total_size):
     sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
                     (percent, progress_size / (1024 * 1024), speed, duration))
     sys.stdout.flush()
+
+
+def setup_tokenizer(config):
+    bos_token, eos_token, eoq_token = '[unused0]', '[unused1]', '[unused2]'
+    tokenizer = BertTokenizerFast.from_pretrained(
+        config.model.bert_type,
+        additional_special_tokens=[bos_token, eos_token, eoq_token],
+        skip_special_tokens=True,
+    )
+    return tokenizer

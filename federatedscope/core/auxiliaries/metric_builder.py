@@ -1,4 +1,5 @@
 from federatedscope.contrib.metrics import *
+from federatedscope.nlp.metrics import *
 import federatedscope.register as register
 
 

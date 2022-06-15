@@ -25,7 +25,14 @@ CLIENTS_TYPE = {
     "ditto": "normal",  # Ditto, + local training for distinct personalized models
     "fedsageplus": "fedsageplus",  # FedSage+ for graph data
     "gcflplus": "gcflplus",  # GCFL+ for graph data
-    "gradascent": "gradascent"
+    "gradascent": "gradascent",
+
+    "local-textdt": "textdt",
+    "fedavg-textdt": "textdt",
+    "fedprox-textdt": "textdt",
+    "fedbn-textdt": "textdt",
+    "ditto-textdt": "textdt",
+    "maml-textdt": "textdt",
 }
 
 SERVER_TYPE = {
@@ -35,4 +42,11 @@ SERVER_TYPE = {
     "ditto": "normal",  # Ditto, + local training for distinct personalized models
     "fedsageplus": "fedsageplus",  # FedSage+ for graph data
     "gcflplus": "gcflplus",  # GCFL+ for graph data
+
+    "local-textdt": "textdt",
+    "fedavg-textdt": "textdt",
+    "fedprox-textdt": "textdt",
+    "fedbn-textdt": "textdt",
+    "ditto-textdt": "textdt",
+    "maml-textdt": "textdt",
 }

@@ -42,9 +42,6 @@ class MetricCalculator(object):
         results = {}
         y_true, y_pred, y_prob = self._check_and_parse(ctx)
         for metric, func in self.eval_metric.items():
-            if ctx.cur_data_split == 'val' and metric not in {'loss', 'avg_loss', 'total'}:
-                continue
-
             results["{}_{}".format(ctx.cur_data_split,
                                    metric)] = func(ctx=ctx,
                                                    y_true=y_true,
@@ -61,9 +58,6 @@ class MetricCalculator(object):
 
         y_true = ctx.get("{}_y_true".format(ctx.cur_data_split))
         y_prob = ctx.get("{}_y_prob".format(ctx.cur_data_split))
-
-        if len(y_true) == 0 or len(y_prob) == 0:
-            return y_true, y_prob, []
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()

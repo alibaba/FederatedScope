@@ -2,7 +2,6 @@ import math
 import collections
 import string
 import re
-from tqdm import tqdm
 from transformers import BasicTokenizer
 from federatedscope.register import register_metric
 
@@ -310,7 +309,7 @@ def create_squad_answer_texts(examples, encoded_inputs, results, n_best_size, ma
         unique_id_to_result[result.unique_id] = result
 
     predicted_answer_texts = collections.OrderedDict()
-    for (example_index, example) in tqdm(enumerate(examples), total=len(examples)):
+    for (example_index, example) in enumerate(examples):
         features = example_index_to_features[example_index]
         prelim_predictions = []
         # keep track of the minimum score of null start+end of position 0
@@ -320,6 +319,9 @@ def create_squad_answer_texts(examples, encoded_inputs, results, n_best_size, ma
         null_end_logit = 0  # the end logit at the slice with min null score
 
         for (feature_index, feature) in enumerate(features):
+            if feature.unique_id not in unique_id_to_result:
+                continue
+
             result = unique_id_to_result[feature.unique_id]
             start_indexes = get_topk_indices(result.start_logits, n_best_size)
             end_indexes = get_topk_indices(result.end_logits, n_best_size)

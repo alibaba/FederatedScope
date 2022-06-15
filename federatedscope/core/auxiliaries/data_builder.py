@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import federatedscope.register as register
 from federatedscope.contrib.data import *
+from federatedscope.nlp.dataset import *
 
 
 def load_toy_data(config=None):
@@ -377,9 +378,9 @@ def load_external_data(config=None):
     return data_local_dict, modified_config
 
 
-def get_data(config, **kwargs):
+def get_data(config):
     for func in register.data_dict.values():
-        data_and_config = func(config, **kwargs)
+        data_and_config = func(config)
         if data_and_config is not None:
             return data_and_config
     if config.data.type.lower() == 'toy':

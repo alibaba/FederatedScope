@@ -3,7 +3,6 @@ from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 
 import torch
 import os
-import os.path as osp
 
 from federatedscope.core.configs.config import global_cfg
 
@@ -54,7 +53,7 @@ class ClientsAvgAggregator(Aggregator):
         assert self.model is not None
 
         ckpt = {'cur_round': cur_round, 'model': self.model.state_dict()}
-        torch.save(ckpt, osp.join(path, 'global_model.pt'))
+        torch.save(ckpt, path)
 
     def load_model(self, path):
         assert self.model is not None

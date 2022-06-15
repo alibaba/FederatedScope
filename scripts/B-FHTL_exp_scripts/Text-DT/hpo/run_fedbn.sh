@@ -22,6 +22,7 @@ do
     --cfg_client scripts/B-FHTL_exp_scripts/Text-DT/config_client_fedbn.yaml \
     device ${cudaid} \
     outdir $outdir/seed_$k \
+    federate.save_to $outdir/seed_$k/ckpt/global_model.pt \
     data.type ${dataset} \
     seed ${seeds[$k]} >>${log} 2>&1
 done

@@ -1,8 +1,9 @@
 import logging
 import copy
 import os
+
 import numpy as np
-from collections import OrderedDict
+
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
@@ -251,8 +252,8 @@ class Server(Worker):
                 if self.state < self.total_round_num:
                     # Move to next round of training
                     logger.info(
-                        '----------- Starting a new training round (Round #{:d}/{:d}) -------------'
-                        .format(self.state + 1, self._cfg.federate.total_round_num))
+                        '----------- Starting a new training round (Round #{:d}) -------------'
+                        .format(self.state))
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 
@@ -378,17 +379,10 @@ class Server(Worker):
         for each_client in eval_msg_buffer:
             client_eval_results = eval_msg_buffer[each_client]
             for key in client_eval_results.keys():
-                res = client_eval_results[key]
-                if isinstance(res, (dict, OrderedDict)):
-                    for k, v in res.items():
-                        cur_key = key + '_' + k
-                        if key not in metrics_all_clients:
-                            metrics_all_clients[cur_key] = list()
-                        metrics_all_clients[cur_key].append(float(v))
-                else:
-                    if key not in metrics_all_clients:
-                        metrics_all_clients[key] = list()
-                    metrics_all_clients[key].append(float(res))
+                if key not in metrics_all_clients:
+                    metrics_all_clients[key] = list()
+                metrics_all_clients[key].append(float(
+                    client_eval_results[key]))
         formatted_logs = self._monitor.format_eval_res(
             metrics_all_clients,
             rnd=self.state,

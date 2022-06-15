@@ -7,7 +7,7 @@ import logging
 import urllib.request
 from tqdm import tqdm
 from torch.utils.data.dataset import TensorDataset
-from federatedscope.contrib.auxiliaries.utils import reporthook
+from federatedscope.nlp.auxiliaries.utils import reporthook
 
 logger = logging.getLogger(__name__)
 

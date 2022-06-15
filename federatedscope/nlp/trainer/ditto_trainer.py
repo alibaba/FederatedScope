@@ -1,11 +1,14 @@
 import copy
-
 import torch
+import logging
 
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
+from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.nlp.auxiliaries.scheduler_builder import get_scheduler
 from typing import Type
+
+logger = logging.getLogger(__name__)
 
 
 def wrap_DittoTrainer(
@@ -56,6 +59,7 @@ def init_Ditto_ctx(base_trainer):
     `local_model` acts as personalized model will be optimized with regularization based on weights of `global_model`
 
     """
+    logger.info('Initializing Ditto ctx')
     ctx = base_trainer.ctx
     cfg = base_trainer.cfg
 
@@ -70,8 +74,23 @@ def init_Ditto_ctx(base_trainer):
     ctx.optimizer_for_local_model = get_optimizer(
         cfg.optimizer.type,
         ctx.local_model,
-        cfg.personalization.lr,
+        cfg.optimizer.lr,
         weight_decay=cfg.optimizer.weight_decay)
+
+    assert cfg.trainer.train_steps is not None
+    num_steps = cfg.trainer.train_steps * cfg.federate.total_round_num
+
+    ctx.scheduler_for_global_model = get_scheduler(
+        cfg.scheduler.type,
+        ctx.optimizer_for_global_model,
+        total_steps=num_steps,
+        warmup_steps=int(cfg.scheduler.warmup_ratio * num_steps))
+    ctx.scheduler_for_local_model = get_scheduler(
+        cfg.scheduler.type,
+        ctx.optimizer_for_local_model,
+        total_steps=num_steps * 3,
+        warmup_steps=int(cfg.scheduler.warmup_ratio * num_steps * 3))
+
     ctx.optimizer_for_local_model = wrap_regularized_optimizer(
         ctx.optimizer_for_local_model, cfg.personalization.regular_weight)
 
@@ -92,8 +111,6 @@ def init_Ditto_ctx(base_trainer):
 
 def hook_on_fit_start_set_regularized_para(ctx):
     # set the compared model data for local personalized model
-    ctx.global_model.to(ctx.device)
-    ctx.local_model.to(ctx.device)
     ctx.global_model.train()
     ctx.local_model.train()
     compared_global_model_para = [{
@@ -108,14 +125,23 @@ def hook_on_batch_start_switch_model(ctx):
                                  ctx.cur_batch_i <= ctx.num_train_batch_last_epoch_for_local_model
     use_local_model = last_epoch_use_local_model or ctx.cur_epoch_i <= ctx.num_train_epoch_for_local_model or \
                       ctx.cur_batch_i <= ctx.num_train_batch_for_local_model
-    if use_local_model:
-        ctx.model = ctx.local_model
 
-        ctx.optimizer = ctx.optimizer_for_local_model
-    else:
-        ctx.model = ctx.global_model
-        ctx.optimizer = ctx.optimizer_for_global_model
+    first_use_local_model = ctx.cur_epoch_i == 0 and ctx.cur_batch_i == 0
+    first_use_global_model = ctx.cur_epoch_i == ctx.num_train_epoch_for_local_model and \
+                             ctx.cur_batch_i == ctx.num_train_batch_for_local_model
+    if first_use_local_model or first_use_global_model:
+        ctx.model.to(torch.device("cpu"))
 
+        if use_local_model:
+            ctx.model = ctx.local_model
+            ctx.optimizer = ctx.optimizer_for_local_model
+            ctx.scheduler = ctx.scheduler_for_local_model
+        else:
+            ctx.model = ctx.global_model
+            ctx.optimizer = ctx.optimizer_for_global_model
+            ctx.scheduler = ctx.scheduler_for_global_model
+
+        ctx.model.to(ctx.device)
 
 # Note that Ditto only updates the para of global_model received from other FL participants,
 # and in the remaining steps, ctx.model has been = ctx.global_model, thus we do not need register the following hook
@@ -124,14 +150,15 @@ def hook_on_batch_start_switch_model(ctx):
 
 
 def hook_on_fit_start_switch_local_model(ctx):
+    ctx.model.to(torch.device("cpu"))
     ctx.model = ctx.local_model
     ctx.model.eval()
 
 
 def hook_on_fit_end_switch_global_model(ctx):
+    ctx.model.to(torch.device("cpu"))
     ctx.model = ctx.global_model
 
 
 def hook_on_fit_end_free_cuda(ctx):
-    ctx.global_model.to(torch.device("cpu"))
-    ctx.local_model.to(torch.device("cpu"))
+    ctx.model.to(torch.device("cpu"))

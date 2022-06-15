@@ -1,27 +1,21 @@
 use_gpu: True
 device: 5
 seed: 12345
-#outdir: exp/sts_imdb_squad/fedavg_ft/final/
-#outdir: exp/sts_imdb_squad/fedbn_ft/final/
-outdir: exp/sts_imdb_squad/maml/final_ft/
+outdir: exp/fedavg_ft/
 federate:
   mode: standalone
-#  method: fedavg
-#  method: fedbn
-  method: maml
+  method: fedavg-textdt
   local_update_steps: 1
   batch_or_epoch: epoch
   total_round_num: 1
   client_num: 3
-#  load_from: exp/sts_imdb_squad/fedavg/final/3/ckpt/
-#  load_from: exp/sts_imdb_squad/fedbn/final/3/ckpt/
-  load_from: exp/sts_imdb_squad/maml/final/3/ckpt/
+  load_from: exp/fedavg/ckpt
 data:
   type: text-dt
   dir:
-    sts: /mnt/dongchenhe.dch/datasets/glue_data/STS-B/
-    imdb: /mnt/dongchenhe.dch/datasets/imdb/
-    squad: /mnt/dongchenhe.dch/datasets/squad2.0/
+    sts: data/STS-B/
+    imdb: data/imdb/
+    squad: data/squad2.0/
   max_seq_len:
     sts: 128
     imdb: 128
@@ -38,9 +32,6 @@ data:
 model:
   type: text-dt
   bert_type: bert-base-uncased
-  dec_d_ffn: 2048
-  dec_dropout_prob: 0.2
-  num_dec_layers: 6
   num_labels:
     sts: 1
     imdb: 2
@@ -52,6 +43,4 @@ trainer:
   disp_freq: 50
   val_freq: 100000000  # eval freq across batches
 eval:
-  split: ['test']
-  best_res_update_round_wise_key: test_loss
   freq: 100000000  # eval freq across rounds

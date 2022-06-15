@@ -24,7 +24,7 @@ do
     device ${cudaid} \
     outdir $outdir/seed_$k \
     data.type ${dataset} \
-    federate.method fedavg \
+    federate.method fedavg-textdt \
     federate.load_from $ckpt_dir/seed_$k/ckpt \
     seed ${seeds[$k]} >>${log} 2>&1
 done

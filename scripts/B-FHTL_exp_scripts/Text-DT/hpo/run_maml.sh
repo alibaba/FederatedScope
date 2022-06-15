@@ -33,6 +33,7 @@ do
     --cfg_client scripts/B-FHTL_exp_scripts/Text-DT/config_client_maml.yaml \
     device ${cudaid} \
     outdir $outdir_train/seed_$k \
+    federate.save_to $outdir_train/seed_$k/ckpt/global_model.pt \
     data.type ${dataset} \
     seed ${seeds[$k]} >>${log_train} 2>&1
 
@@ -42,7 +43,7 @@ do
     device ${cudaid} \
     outdir $outdir_ft/seed_$k \
     data.type ${dataset} \
-    federate.method maml \
+    federate.method maml-textdt \
     federate.load_from $outdir_train/seed_$k/ckpt \
     seed ${seeds[$k]} >>${log_ft} 2>&1
 done

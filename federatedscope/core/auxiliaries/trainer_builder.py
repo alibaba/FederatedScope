@@ -3,6 +3,7 @@ import importlib
 
 import federatedscope.register as register
 from federatedscope.contrib.trainer import *
+from federatedscope.nlp.trainer import *
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,6 @@ TRAINER_CLASS_DICT = {
 
 def get_trainer(model=None,
                 data=None,
-                tokenizer=None,
                 device=None,
                 config=None,
                 only_for_eval=False,
@@ -84,7 +84,6 @@ def get_trainer(model=None,
             if trainer_cls is not None:
                 trainer = trainer_cls(model=model,
                                       data=data,
-                                      tokenizer=tokenizer,
                                       device=device,
                                       config=config,
                                       only_for_eval=only_for_eval)
@@ -109,6 +108,9 @@ def get_trainer(model=None,
         from federatedscope.core.trainers.trainer_Ditto import wrap_DittoTrainer
         # wrap style: instance a (class A) -> instance a (class A)
         trainer = wrap_DittoTrainer(trainer)
+    elif config.federate.method.lower() == "ditto-textdt":
+        from federatedscope.nlp.trainer.ditto_trainer import wrap_DittoTrainer
+        trainer = wrap_DittoTrainer(trainer)
     elif config.federate.method.lower() == "fedem":
         from federatedscope.core.trainers.trainer_FedEM import FedEMTrainer
         # copy construct style: instance a (class A) -> instance b (class B)
@@ -124,7 +126,11 @@ def get_trainer(model=None,
 
     # fed algorithm plug-in
     if config.fedprox.use:
-        from federatedscope.core.trainers.trainer_fedprox import wrap_fedprox_trainer
-        trainer = wrap_fedprox_trainer(trainer)
+        if config.federate.method.lower() == "fedprox":
+            from federatedscope.core.trainers.trainer_fedprox import wrap_fedprox_trainer
+            trainer = wrap_fedprox_trainer(trainer)
+        elif config.federate.method.lower() == "fedprox-textdt":
+            from federatedscope.nlp.trainer.fedprox_trainer import wrap_fedprox_trainer
+            trainer = wrap_fedprox_trainer(trainer)
 
     return trainer

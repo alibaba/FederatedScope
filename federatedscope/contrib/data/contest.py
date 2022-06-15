@@ -136,7 +136,7 @@ def load_fs_contest_data(config):
     return data_dict, config
 
 
-def call_fs_contest_data(config, **kwargs):
+def call_fs_contest_data(config):
     if config.data.type == "fs_contest_data":
         data, modified_config = load_fs_contest_data(config)
         return data, modified_config
