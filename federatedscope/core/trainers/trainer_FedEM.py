@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class FedEMTrainer(GeneralMultiModelTrainer):
     """
     The FedEM implementation, "Federated Multi-Task Learning under a Mixture of Distributions (NeurIPS 2021)"
@@ -41,7 +42,8 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             self.model_nums, self.ctx.num_train_batch).to(device)
         if self.cfg.model.type.lower() in ["vmfnet", "hmfnet"]:
             # for MF model, we need to use the ratio to adjust the loss
-            self.ctx.all_ratios_per_model = [[] for _ in range(self.model_nums)]
+            self.ctx.all_ratios_per_model = [[]
+                                             for _ in range(self.model_nums)]
         self.ctx.cur_batch_idx = -1
         # `ctx[f"{cur_data}_y_prob_ensemble"] = 0` in func `_hook_on_fit_end_ensemble_eval`
         #   -> self.ctx.test_y_prob_ensemble = 0
@@ -95,7 +97,8 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             trigger="on_batch_start",
             insert_pos=0)  # insert at the front
         # replace the original evaluation into the ensemble one
-        ensemble_hook = self._hook_on_fit_end_ensemble_eval_mf if self.cfg.model.type.lower() in ["vmfnet", "hmfnet"] else self._hook_on_fit_end_ensemble_eval
+        ensemble_hook = self._hook_on_fit_end_ensemble_eval_mf if self.cfg.model.type.lower(
+        ) in ["vmfnet", "hmfnet"] else self._hook_on_fit_end_ensemble_eval
         self.replace_hook_in_eval(new_hook=ensemble_hook,
                                   target_trigger="on_fit_end",
                                   target_hook_name="_hook_on_fit_end")
@@ -180,14 +183,14 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         ctx[f"{cur_data}_y_prob"] = []
         ctx[f"{cur_data}_y_true"] = []
 
-
     def _hook_on_fit_end_ensemble_eval_mf(self, ctx):
         """
             Ensemble evaluation for matrix factorization model
         """
         cur_data = ctx.cur_data_split
         batch_num = len(ctx[f"{cur_data}_y_prob"])
-        if f"{cur_data}_y_prob_ensemble" not in ctx or ctx[f"{cur_data}_y_prob_ensemble"] is None:
+        if f"{cur_data}_y_prob_ensemble" not in ctx or ctx[
+                f"{cur_data}_y_prob_ensemble"] is None:
             # ctx[f"{cur_data}_y_prob_ensemble"] = 0
             ctx[f"{cur_data}_y_prob_ensemble"] = [0 for i in range(batch_num)]
 
@@ -196,21 +199,29 @@ class FedEMTrainer(GeneralMultiModelTrainer):
                 ctx[f"{cur_data}_y_prob_ensemble"][batch_i] += ctx[f"{cur_data}_y_prob"][batch_i] \
                                                                * self.weights_internal_models[ctx.cur_model_idx].item()
             except IndexError as e:
-                logger.error(str(e) + f" When batch_i={batch_i}, cur_model_idx={ctx.cur_model_idx}")
+                logger.error(
+                    str(e) +
+                    f" When batch_i={batch_i}, cur_model_idx={ctx.cur_model_idx}"
+                )
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:
             for batch_i in range(batch_num):
                 try:
                     ctx[f"{cur_data}_total"] = 0
-                    pred = ctx[f"{cur_data}_y_prob_ensemble"][batch_i].todense()
+                    pred = ctx[f"{cur_data}_y_prob_ensemble"][batch_i].todense(
+                    )
                     label = ctx[f"{cur_data}_y_true"][batch_i].todense()
                     ctx[f"loss_batch_total_{cur_data}"] += ctx.criterion(
                         torch.Tensor(pred).to(ctx.device),
-                        torch.Tensor(label).to(ctx.device)
-                    ) * ctx[f"all_ratios_per_model"][ctx.cur_model_idx][batch_i]
+                        torch.Tensor(label).to(
+                            ctx.device)) * ctx[f"all_ratios_per_model"][
+                                ctx.cur_model_idx][batch_i]
                 except IndexError as e:
-                    logger.error(str(e) + f" When batch_i={batch_i}, cur_model_idx={ctx.cur_model_idx}")
+                    logger.error(
+                        str(e) +
+                        f" When batch_i={batch_i}, cur_model_idx={ctx.cur_model_idx}"
+                    )
 
             # set the eval_metrics
             if ctx.get("num_samples_{}".format(cur_data)) == 0:
@@ -223,17 +234,20 @@ class FedEMTrainer(GeneralMultiModelTrainer):
                 results = {
                     f"{ctx.cur_data_split}_avg_loss": ctx.get(
                         "loss_batch_total_{}".format(ctx.cur_data_split)) /
-                                                      ctx.get("num_samples_{}".format(ctx.cur_data_split)),
-                    f"{ctx.cur_data_split}_total": ctx.get("num_samples_{}".format(
-                        ctx.cur_data_split))
+                    ctx.get("num_samples_{}".format(ctx.cur_data_split)),
+                    f"{ctx.cur_data_split}_total": ctx.get(
+                        "num_samples_{}".format(ctx.cur_data_split))
                 }
-            if isinstance(results[f"{ctx.cur_data_split}_avg_loss"], torch.Tensor):
-                results[f"{ctx.cur_data_split}_avg_loss"] = results[f"{ctx.cur_data_split}_avg_loss"].item()
+            if isinstance(results[f"{ctx.cur_data_split}_avg_loss"],
+                          torch.Tensor):
+                results[f"{ctx.cur_data_split}_avg_loss"] = results[
+                    f"{ctx.cur_data_split}_avg_loss"].item()
             setattr(ctx, 'eval_metrics', results)
 
             # reset for next run_routine that may have different len([f"{cur_data}_y_prob"])
             ctx[f"{cur_data}_y_prob_ensemble"] = None
-            self.ctx.all_ratios_per_model = [[] for _ in range(self.model_nums)]
+            self.ctx.all_ratios_per_model = [[]
+                                             for _ in range(self.model_nums)]
 
         ctx[f"{cur_data}_y_prob"] = []
         ctx[f"{cur_data}_y_true"] = []
