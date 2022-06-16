@@ -112,14 +112,13 @@ class GraphDTDataset(InMemoryDataset):
     def process(self):
         np.random.seed(0)
         splits = [0.8, 0.1, 0.1]
-        path = 'graph_dt/'
         data_name_list = ['ESOL', 'FREESOLV', 'LIPO', 'BACE', 'BBBP', 'CLINTOX',
                           'MUTAG', 'PTC_MR', 'PTC_MM', 'PTC_FM', 'PTC_FR', 'NCI109', 'NCI1',
                           'alchemy_full', 'ZINC_full', 'QM9']
 
         for idx, name in enumerate(data_name_list):
             if name in ['ESOL', 'FREESOLV', 'LIPO', 'BACE', 'BBBP', 'CLINTOX']:
-                dataset = MoleculeNet(path, name)
+                dataset = MoleculeNet(self.root, name)
                 featurizer = GenFeatures()
                 ds = []
                 for graph in dataset:
@@ -127,11 +126,11 @@ class GraphDTDataset(InMemoryDataset):
                     ds.append(Data(edge_attr=graph.edge_attr, edge_index=graph.edge_index, x=graph.x, y=graph.y))
                 dataset = ds
             elif name == 'QM9':
-                path_ = path + '/QM9/'
+                path_ = self.root + '/QM9/'
                 dataset = QM9(path_)
                 dataset = [Data(edge_attr=graph.edge_attr, edge_index=graph.edge_index, x=graph.x, y=graph.y) for graph in dataset]
             else:
-                dataset = TUDataset(path, name)
+                dataset = TUDataset(self.root, name)
                 dataset = [Data(edge_attr=graph.edge_attr, edge_index=graph.edge_index, x=graph.x, y=graph.y) for graph in dataset]
 
             if name in ['ESOL']:
@@ -174,13 +173,12 @@ class GraphDTDataset(InMemoryDataset):
             pro_test = [dataset[i] for i in test_idx]
             pro_valid = [dataset[i] for i in valid_idx]
 
-            dir_path = 'graph_dt/processed/' + str(idx)
-            if not os.path.isdir(dir_path):
-                os.makedirs(dir_path)
+            if not os.path.isdir(os.path.join(self.processed_dir, str(idx))):
+                os.makedirs(os.path.join(self.processed_dir, str(idx)))
 
-            train_path = dir_path + '/train.pt'
-            test_path = dir_path + '/test.pt'
-            valid_path = dir_path + '/val.pt'
+            train_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
+            test_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
+            valid_path = os.path.join(self.processed_dir, str(idx), 'val.pt')
 
             if idx == 1:
                 for pro_data, data_path in zip([pro_train, pro_test, pro_valid], [train_path, test_path, valid_path]):
