@@ -59,7 +59,6 @@ def init_Ditto_ctx(base_trainer):
     `local_model` acts as personalized model will be optimized with regularization based on weights of `global_model`
 
     """
-    logger.info('Initializing Ditto ctx')
     ctx = base_trainer.ctx
     cfg = base_trainer.cfg
 

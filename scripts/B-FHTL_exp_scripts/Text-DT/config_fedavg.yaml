@@ -22,7 +22,6 @@ data:
     squad: 128
   max_query_len: 64
   trunc_stride: 32
-  max_tgt_len: 128
   batch_size: 32
   num_workers: 0
   cache_dir: cache

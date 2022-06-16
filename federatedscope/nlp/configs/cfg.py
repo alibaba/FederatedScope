@@ -3,45 +3,43 @@ from federatedscope.register import register_config
 
 
 def extend_textdt_cfg(cfg):
-    cfg.federate.load_from = None
+    cfg.federate.load_from = ''
 
-    cfg.model.bert_type = None
+    cfg.model.bert_type = 'bert-base-uncased'
     cfg.model.num_labels = CN()
-    cfg.model.num_labels.sts = None
-    cfg.model.num_labels.imdb = None
-    cfg.model.num_labels.squad = None
-    cfg.model.label_smoothing = None
-    cfg.model.maml = None
+    cfg.model.num_labels.sts = 1
+    cfg.model.num_labels.imdb = 2
+    cfg.model.num_labels.squad = 2
+    cfg.model.label_smoothing = 0.0
+    cfg.model.maml = False
 
-    cfg.eval.n_best_size = None
-    cfg.eval.max_answer_len = None
-    cfg.eval.null_score_diff_threshold = None
+    cfg.eval.n_best_size = 20
+    cfg.eval.max_answer_len = 30
+    cfg.eval.null_score_diff_threshold = 0.0
 
     cfg.data.dir = CN()
-    cfg.data.dir.sts = None
-    cfg.data.dir.imdb = None
-    cfg.data.dir.squad = None
+    cfg.data.dir.sts = 'data/STS-B'
+    cfg.data.dir.imdb = 'data/imdb'
+    cfg.data.dir.squad = 'data/squad2.0'
     cfg.data.max_seq_len = CN()
-    cfg.data.max_seq_len.sts = None
-    cfg.data.max_seq_len.imdb = None
-    cfg.data.max_seq_len.squad = None
-    cfg.data.max_tgt_len = None
-    cfg.data.max_query_len = None
-    cfg.data.trunc_stride = None
-    cfg.data.cache_dir = None
+    cfg.data.max_seq_len.sts = 128
+    cfg.data.max_seq_len.imdb = 128
+    cfg.data.max_seq_len.squad = 128
+    cfg.data.max_query_len = 64
+    cfg.data.trunc_stride = 32
+    cfg.data.cache_dir = ''
 
     cfg.scheduler = CN()
-    cfg.scheduler.type = None
-    cfg.scheduler.warmup_ratio = None
+    cfg.scheduler.type = 'step'
+    cfg.scheduler.warmup_ratio = 0.0
 
-    cfg.trainer.disp_freq = None
-    cfg.trainer.val_freq = None
-    cfg.trainer.grad_accum_count = None
-    cfg.trainer.train_steps = None
-    cfg.trainer.test_only = None
+    cfg.trainer.disp_freq = 50
+    cfg.trainer.val_freq = 100000000
+    cfg.trainer.grad_accum_count = 1
+    cfg.trainer.train_steps = 100
 
     cfg.maml = CN()
-    cfg.maml.inner_lr = None
+    cfg.maml.inner_lr = 1e-3
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_textdt_cfg)

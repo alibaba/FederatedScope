@@ -54,4 +54,4 @@ client_3:
     metrics: ['squad']
     n_best_size: 20  # total number of top-n best predictions to generate
     max_answer_len: 30  # maximum length of an answer that can be generated
-    null_score_diff_threshold: 0  # if null_score - best_non_null is greater than the threshold predict null
+    null_score_diff_threshold: 0.0  # if null_score - best_non_null is greater than the threshold predict null

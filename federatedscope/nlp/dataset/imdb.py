@@ -5,6 +5,7 @@ import logging
 import torch
 import urllib.request
 import tarfile
+import shutil
 from torch.utils.data.dataset import TensorDataset
 from federatedscope.nlp.auxiliaries.utils import reporthook
 
@@ -24,10 +25,11 @@ def create_imdb_examples(root, split):
         data_dir = '/'.join(osp.normpath(root).split('/')[:-1])
         os.makedirs(data_dir, exist_ok=True)
         data_name = osp.normpath(root).split('/')[-1]
-        data_file = osp.join(data_dir, '{}.zip'.format(data_name))
+        data_file = osp.join(data_dir, '{}.tar.gz'.format(data_name))
         urllib.request.urlretrieve(url, data_file, reporthook)
         with tarfile.open(data_file) as tar_ref:
             tar_ref.extractall(data_dir)
+        shutil.move(osp.join(data_dir, 'aclImdb'), osp.join(data_dir, data_name))
         os.remove(data_file)
 
     examples = []
