@@ -12,6 +12,7 @@ def extend_evaluation_cfg(cfg):
     cfg.eval.save_data = False
     cfg.eval.freq = 1
     cfg.eval.metrics = []
+    cfg.eval.task_type = ["classification", "regression", "ranking"][0]
     cfg.eval.split = ['test', 'val']
     cfg.eval.report = ['weighted_avg', 'avg', 'fairness',
                        'raw']  # by default, we report comprehensive results

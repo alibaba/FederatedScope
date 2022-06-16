@@ -7,6 +7,7 @@ from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 from federatedscope.register import register_trainer
 
 import logging
+from scipy import sparse
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,10 @@ class MFTrainer(GeneralTorchTrainer):
                     ctx.cur_data_split))
             }
         setattr(ctx, 'eval_metrics', results)
+        if self.cfg.federate.method.lower() in ["fedem"]:
+            # cache label for evaluation ensemble
+            ctx[f"{ctx.cur_data_split}_y_prob"] = []
+            ctx[f"{ctx.cur_data_split}_y_true"] = []
 
     def _hook_on_batch_end(self, ctx):
         # update statistics
@@ -79,12 +84,20 @@ class MFTrainer(GeneralTorchTrainer):
             ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
             ctx.batch_size)
 
+        if self.cfg.federate.method.lower() in ["fedem"]:
+            # cache label for evaluation ensemble
+            ctx.get("{}_y_true".format(ctx.cur_data_split)).append(
+                sparse.csr_matrix(ctx.y_true.detach().cpu().numpy()))
+            ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
+                sparse.csr_matrix(ctx.y_prob.detach().cpu().numpy()))
+
         # clean temp ctx
         ctx.data_batch = None
         ctx.batch_size = None
         ctx.loss_task = None
         ctx.loss_batch = None
         ctx.loss_regular = None
+        ctx.ratio_batch = None
         ctx.y_true = None
         ctx.y_prob = None
 
@@ -92,6 +105,7 @@ class MFTrainer(GeneralTorchTrainer):
         indices, ratings = ctx.data_batch
         pred, label, ratio = ctx.model(indices, ratings)
         ctx.loss_batch = ctx.criterion(pred, label) * ratio.item()
+        ctx.ratio_batch = ratio.item()
         ctx.y_prob = pred
         ctx.y_true = label
 

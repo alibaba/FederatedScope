@@ -1,18 +1,18 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: fedBN,SST2,FT,fedOpt
+name: ditto,MOVIELENS1M-H,FT,fedOpt
 method: grid
 #method: bayes
 metric:
-  goal: maximize
-  name: best_client_summarized_weighted_avg/val_acc
+  goal: minimize
+  name: best_client_summarized_weighted_avg/val_avg_loss
 command:
   - ${env}
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "scripts/personalization_exp_scripts/pfl_bench/SST2/fedavg_transformer_on_sst2.yaml"
+  - "scripts/personalization_exp_scripts/pfl_bench/MOVIELENS1M-H1000/hfl_fedavg_on_movielens1m.yaml"
   - "outdir"
   - "exp_pfl_bench"
   - "wandb.use"
@@ -21,26 +21,28 @@ command:
   - "pFL-bench"
   - "wandb.name_user"
   - "daoyuan"
+  - "federate.method"
+  - "Ditto"
   - "expname_tag"
-  - "fedBN_finetune"
+  - "finetune"
   - "trainer.finetune.before_eval"
   - "True"
   - "trainer.finetune.steps"
   - "5"
-  - "personalization.local_param"
-  - "['bn', 'norms', 'LayerNorm']"  # FedBN
   - "fedopt.use"
   - "True"
   - ${args_no_hyphens}
 parameters:
   optimizer.lr:
-    values: [0.05, 0.005, 0.5, 0.01, 0.1]
+    values: [0.05, 1, 0.5, 0.01, 0.1, 2]
   federate.local_update_steps:
-    values: [1, 3]
+    values: [1, 3, 6]
+  personalization.regular_weight:
+    values: [0.05, 0.1, 0.5, 0.8]
   fedopt.lr_server:
-    values: [ 0.5, 0.05, 1.5, 0.1, 1.0]
+    values: [ 0.5, 0.05, 0.9, 0.1 ]
 
 early_terminate:
   type: hyperband
-  min_iter: 5  # the first bucket indicates we called wandb at least 3 times
+  min_iter: 5
 

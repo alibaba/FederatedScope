@@ -6,6 +6,7 @@ from scipy.special import softmax
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score
 
 from federatedscope.core.auxiliaries.metric_builder import get_metric
+from scipy import sparse
 
 # Blind torch
 try:
@@ -69,13 +70,16 @@ class MetricCalculator(object):
         if y_prob.ndim == 2:
             y_prob = np.expand_dims(y_prob, axis=-1)
 
-        y_pred = np.argmax(y_prob, axis=1)
+        if ctx.cfg.eval.task_type == "regression":
+            y_pred = y_prob
+        else:
+            y_pred = np.argmax(y_prob, axis=1)
+            if not y_true.shape == y_pred.shape:
+                raise RuntimeError('Shape not match!')
 
         # check shape and type
-        if not isinstance(y_true, np.ndarray):
+        if not isinstance(y_true, np.ndarray) or not sparse.isspmatrix_csr(y_true):
             raise RuntimeError('Type not support!')
-        if not y_true.shape == y_pred.shape:
-            raise RuntimeError('Shape not match!')
         if not y_true.ndim == 2:
             raise RuntimeError(
                 'y_true must be 2-dim arrray, {}-dim given'.format(
@@ -175,6 +179,7 @@ def eval_rmse(y_true, y_pred, **kwargs):
 
 
 def eval_loss(ctx, **kwargs):
+    #  ctx.loss_batch = ctx.criterion(pred, label) * ratio.item()
     return ctx.get('loss_batch_total_{}'.format(ctx.cur_data_split))
 
 
