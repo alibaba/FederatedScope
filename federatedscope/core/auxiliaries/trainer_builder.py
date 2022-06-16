@@ -126,11 +126,7 @@ def get_trainer(model=None,
 
     # fed algorithm plug-in
     if config.fedprox.use:
-        if config.federate.method.lower() == "fedprox":
-            from federatedscope.core.trainers.trainer_fedprox import wrap_fedprox_trainer
-            trainer = wrap_fedprox_trainer(trainer)
-        elif config.federate.method.lower() == "fedprox-textdt":
-            from federatedscope.nlp.trainer.fedprox_trainer import wrap_fedprox_trainer
-            trainer = wrap_fedprox_trainer(trainer)
+        from federatedscope.core.trainers.trainer_fedprox import wrap_fedprox_trainer
+        trainer = wrap_fedprox_trainer(trainer)
 
     return trainer

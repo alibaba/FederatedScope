@@ -23,10 +23,7 @@ data:
   max_query_len: 64
   trunc_stride: 32
   max_tgt_len: 128
-  all_batch_size:
-    sts: 32
-    imdb: 32
-    squad: 32
+  batch_size: 32
   num_workers: 0
   cache_dir: cache
 model:

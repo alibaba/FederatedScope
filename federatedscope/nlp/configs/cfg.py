@@ -28,10 +28,6 @@ def extend_textdt_cfg(cfg):
     cfg.data.max_tgt_len = None
     cfg.data.max_query_len = None
     cfg.data.trunc_stride = None
-    cfg.data.all_batch_size = CN()
-    cfg.data.all_batch_size.sts = None
-    cfg.data.all_batch_size.imdb = None
-    cfg.data.all_batch_size.squad = None
     cfg.data.cache_dir = None
 
     cfg.scheduler = CN()

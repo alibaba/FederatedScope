@@ -6,20 +6,18 @@ if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(file_dir)
 
+from yacs.config import CfgNode
 from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
-from federatedscope.core.configs.config import global_cfg, CN
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
-from federatedscope.nlp.configs.cfg_client import extend_cfg_client
 
 if os.environ.get('https_proxy'):
     del os.environ['https_proxy']
 if os.environ.get('http_proxy'):
     del os.environ['http_proxy']
-
-os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
 
 if __name__ == '__main__':
@@ -38,8 +36,7 @@ if __name__ == '__main__':
     if args.cfg_client is None:
         cfg_client = None
     else:
-        cfg_client = CN.load_cfg(open(args.cfg_client, 'r'))
-        cfg_client = extend_cfg_client(init_cfg, cfg_client)
+        cfg_client = CfgNode.load_cfg(open(args.cfg_client, 'r'))
 
     runner = FedRunner(data=data,
                        server_class=get_server_cls(init_cfg),
