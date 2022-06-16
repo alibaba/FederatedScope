@@ -17,34 +17,29 @@ class GraphDCTest(unittest.TestCase):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
 
     def test_fedavg_standalone(self):
-        cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DC/fedavg.yaml", 'r'))
-        self.fedrunner(cfg_alg)
+        self.fedrunner("scripts/B-FHTL_exp_scripts/Graph-DC/fedavg.yaml")
 
     def test_fedavg_ft_standalone(self):
-        cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DC/fedavg_ft.yaml", 'r'))
-        self.fedrunner(cfg_alg)
+        self.fedrunner("scripts/B-FHTL_exp_scripts/Graph-DC/fedavg_ft.yaml")
 
     def test_ditto_standalone(self):
-        cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DC/ditto.yaml", 'r'))
-        self.fedrunner(cfg_alg)
+        self.fedrunner("scripts/B-FHTL_exp_scripts/Graph-DC/ditto.yaml")
 
     def test_fedbn_standalone(self):
-        cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DC/fedbn.yaml", 'r'))
-        self.fedrunner(cfg_alg)
+        self.fedrunner("scripts/B-FHTL_exp_scripts/Graph-DC/fedbn.yaml")
 
     def test_fedbn_ft_standalone(self):
-        cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DC/fedbn_ft.yaml", 'r'))
-        self.fedrunner(cfg_alg)
+        self.fedrunner("scripts/B-FHTL_exp_scripts/Graph-DC/fedbn_ft.yaml")
 
     def test_fedprox_standalone(self):
-        cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DC/fedprox.yaml", 'r'))
-        self.fedrunner(cfg_alg)
+        self.fedrunner("scripts/B-FHTL_exp_scripts/Graph-DC/fedprox.yaml")
 
     def test_fedmaml_standalone(self):
-        cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DC/fedmaml.yaml", 'r'))
-        self.fedrunner(cfg_alg)
+        self.fedrunner("scripts/B-FHTL_exp_scripts/Graph-DC/fedmaml.yaml")
 
     def fedrunner(self, cfg_alg):
+        cfg_alg = CfgNode.load_cfg(open(cfg_alg, 'r'))
+
         init_cfg = global_cfg.clone()
         init_cfg.merge_from_other_cfg(cfg_alg)
         init_cfg.federate.total_round_num = 10

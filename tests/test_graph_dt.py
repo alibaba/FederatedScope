@@ -16,36 +16,36 @@ class GraphDTTest(unittest.TestCase):
 
     def test_fedavg_standalone(self):
         self.fedrunner(
-            cfg_alg='../scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedavg_gnn_minibatch_on_multi_task.yaml',
-            cfg_client='../scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedavg_gnn_minibatch_on_multi_task.yaml',
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
         )
     #
     # def test_fedavg_ft_standalone(self):
     #     self.fedrunner(
-    #         cfg_alg='../scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml',
-    #         cfg_client='../scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
+    #         cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml',
+    #         cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
     #     )
     #
     # def test_ditto_standalone(self):
     #     self.fedrunner(
-    #         cfg_alg='../scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml',
-    #         cfg_client='../scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
+    #         cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml',
+    #         cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
     #     )
     #
     # def test_fedbn_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DT/fedbn.yaml", 'r'))
+    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedbn.yaml", 'r'))
     #     self.fedrunner(cfg_alg)
     #
     # def test_fedbn_ft_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DT/fedbn_ft.yaml", 'r'))
+    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedbn_ft.yaml", 'r'))
     #     self.fedrunner(cfg_alg)
     #
     # def test_fedprox_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DT/fedprox.yaml", 'r'))
+    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedprox.yaml", 'r'))
     #     self.fedrunner(cfg_alg)
     #
     # def test_fedmaml_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("../scripts/B-FHTL_exp_scripts/Graph-DT/fedmaml.yaml", 'r'))
+    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedmaml.yaml", 'r'))
     #     self.fedrunner(cfg_alg)
 
     def fedrunner(self, cfg_alg, cfg_client):
