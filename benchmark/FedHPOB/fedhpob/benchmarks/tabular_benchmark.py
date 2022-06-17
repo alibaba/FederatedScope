@@ -1,7 +1,8 @@
 import datetime
 import numpy as np
-from fedhpob.utils.tabular_dataloader import load_data
 
+from fedhpob.utils.util import dict2cfg
+from fedhpob.utils.tabular_dataloader import load_data
 from fedhpob.benchmarks.base_benchmark import BaseBenchmark
 
 
@@ -76,10 +77,10 @@ class TabularBenchmark(BaseBenchmark):
         return {'function_value': function_value, 'cost': cost}
 
     def get_configuration_space(self):
-        return self.meta_info['configuration_space']
+        return dict2cfg(self.meta_info['configuration_space'])
 
     def get_fidelity_space(self):
-        return self.meta_info['fidelity_space']
+        return dict2cfg(self.meta_info['fidelity_space'])
 
     def get_meta_info(self):
         return {
