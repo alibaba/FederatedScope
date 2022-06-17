@@ -140,8 +140,8 @@ class MAMLTrainer(GeneralTorchTrainer):
         setattr(ctx, "{}_squad_results".format(ctx.cur_data_split), [])
         setattr(ctx, 'accum_steps', 0)
 
-        self.maml = l2l.algorithms.MAML(ctx.model, lr=ctx.cfg.maml.inner_lr)
-        ctx.maml = self.maml.clone()
+        maml = l2l.algorithms.MAML(ctx.model, lr=ctx.cfg.maml.inner_lr)
+        ctx.maml = maml.clone()
 
     def _hook_on_batch_forward(self, ctx):
         task = ctx.cfg.data.type
@@ -197,11 +197,15 @@ class MAMLTrainer(GeneralTorchTrainer):
             if cur_step > 1:
                 if cur_step % ctx.cfg.trainer.disp_freq == 0 or ctx.cur_batch_i + 1 == ctx.num_train_batch:
                     if cur_task == 'sts':
-                        assert len(ctx.y_true) > 1
-                        y_true = ctx.y_true.detach().cpu().numpy().squeeze()
-                        y_pred = ctx.y_prob.detach().cpu().numpy().squeeze()
-                        total_y_true = np.concatenate(ctx.get('{}_y_true'.format(ctx.cur_data_split))).squeeze()
-                        total_y_pred = np.concatenate(ctx.get('{}_y_prob'.format(ctx.cur_data_split))).squeeze()
+                        y_true = ctx.y_true.detach().cpu().numpy()
+                        y_pred = ctx.y_prob.detach().cpu().numpy()
+                        total_y_true = np.concatenate(ctx.get('{}_y_true'.format(ctx.cur_data_split)))
+                        total_y_pred = np.concatenate(ctx.get('{}_y_prob'.format(ctx.cur_data_split)))
+
+                        if len(y_true) > 1: y_true = y_true.squeeze()
+                        if len(y_pred) > 1: y_pred = y_pred.squeeze()
+                        if len(total_y_pred) > 1: total_y_true = total_y_true.squeeze()
+                        if len(total_y_pred) > 1: total_y_pred = total_y_pred.squeeze()
 
                         logger.info('(Inner) Epoch: [{}/{}][{}/{}]\t'
                                     'LR: {:.2e}\t'
@@ -212,8 +216,8 @@ class MAMLTrainer(GeneralTorchTrainer):
                                             cur_step,
                                             ctx.cfg.trainer.train_steps,
                                             ctx.cfg.maml.inner_lr,
-                                            compute_sts_metrics(y_pred, y_true)['corr'],
-                                            compute_sts_metrics(total_y_pred, total_y_true)['corr'],
+                                            compute_sts_metrics(y_pred, y_true)['corr'] if len(y_pred) > 1 else 0,
+                                            compute_sts_metrics(total_y_pred, total_y_true)['corr'] if len(total_y_pred) > 1 else 0,
                                             loss=ctx.get('loss_agg_{}'.format(ctx.cur_data_split))))
 
                     elif cur_task in {'imdb', 'squad'}:
@@ -257,10 +261,15 @@ class MAMLTrainer(GeneralTorchTrainer):
             ctx.optimizer.step()
 
             if cur_task == 'sts':
-                y_true = ctx.y_true.detach().cpu().numpy().squeeze()
-                y_pred = ctx.y_prob.detach().cpu().numpy().squeeze()
-                total_y_true = np.concatenate(ctx.get('{}_y_true'.format(ctx.cur_data_split))).squeeze()
-                total_y_pred = np.concatenate(ctx.get('{}_y_prob'.format(ctx.cur_data_split))).squeeze()
+                y_true = ctx.y_true.detach().cpu().numpy()
+                y_pred = ctx.y_prob.detach().cpu().numpy()
+                total_y_true = np.concatenate(ctx.get('{}_y_true'.format(ctx.cur_data_split)))
+                total_y_pred = np.concatenate(ctx.get('{}_y_prob'.format(ctx.cur_data_split)))
+
+                if len(y_true) > 1: y_true = y_true.squeeze()
+                if len(y_pred) > 1: y_pred = y_pred.squeeze()
+                if len(total_y_pred) > 1: total_y_true = total_y_true.squeeze()
+                if len(total_y_pred) > 1: total_y_pred = total_y_pred.squeeze()
 
                 logger.info('(Outer) Epoch: [{}/{}][{}/{}]\t'
                             'LR: {:.2e}\t'
@@ -271,8 +280,8 @@ class MAMLTrainer(GeneralTorchTrainer):
                                     ctx.cur_batch_i + 1,
                                     ctx.num_train_batch,
                                     ctx.cfg.optimizer.lr,
-                                    compute_sts_metrics(y_pred, y_true)['corr'],
-                                    compute_sts_metrics(total_y_pred, total_y_true)['corr'],
+                                    compute_sts_metrics(y_pred, y_true)['corr'] if len(y_pred) > 1 else 0,
+                                    compute_sts_metrics(total_y_pred, total_y_true)['corr'] if len(total_y_pred) > 1 else 0,
                                     loss=ctx.get('loss_agg_{}'.format(ctx.cur_data_split))))
 
             elif cur_task in {'imdb', 'squad'}:

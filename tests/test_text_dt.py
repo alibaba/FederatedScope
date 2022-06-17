@@ -100,13 +100,18 @@ class TextDTTest(unittest.TestCase):
     def fedrunner(self, cfg_alg, cfg_client):
         init_cfg = global_cfg.clone()
         init_cfg.merge_from_other_cfg(cfg_alg)
+        init_cfg.data.debug = True
         init_cfg.data.root = 'test_data/'
         init_cfg.data.dir.sts = 'test_data/STS-B/'
         init_cfg.data.dir.imdb = 'test_data/imdb/'
         init_cfg.data.dir.squad = 'test_data/squad2.0/'
-        init_cfg.data.cache_dir = 'test_data/cache_debug/'
+        init_cfg.data.cache_dir = ''
         init_cfg.data.batch_size = 1
-        init_cfg.data.debug = True
+        init_cfg.data.max_seq_len.sts = 32
+        init_cfg.data.max_seq_len.imdb = 32
+        init_cfg.data.max_seq_len.squad = 32
+        init_cfg.data.max_query_len = 16
+        init_cfg.data.trunc_stride = 8
         if init_cfg.federate.total_round_num > 1:
             init_cfg.federate.total_round_num = 2
         setup_seed(init_cfg.seed)

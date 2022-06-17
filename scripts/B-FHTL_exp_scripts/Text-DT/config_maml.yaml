@@ -43,4 +43,5 @@ eval:
   freq: 100000000  # eval freq across rounds
   report: ['raw']
 maml:
+  use: True
   inner_lr: 1e-3
