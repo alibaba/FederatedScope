@@ -1,3 +1,5 @@
+import os
+
 from fedhpob.benchmarks.base_benchmark import BaseBenchmark
 from fedhpob.utils.surrogate_dataloader import build_surrogate_model, load_surrogate_model
 
@@ -13,12 +15,13 @@ class SurrogateBenchmark(BaseBenchmark):
                  cost_mode='estimated',
                  **kwargs):
         self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
-        try:
-            self.surrogate_models, self.meta_info, self.X, self.Y = load_surrogate_model(
-                modeldir, model, dname, algo)
-        except:
+        assert datadir or modeldir, 'Please provide at least one of `datadir` and `modeldir`.'
+        if not os.path.exists(os.path.join(modeldir, model, dname)):
             self.surrogate_models, self.meta_info, self.X, self.Y = build_surrogate_model(
                 datadir, model, dname, algo)
+        else:
+            self.surrogate_models, self.meta_info, self.X, self.Y = load_surrogate_model(
+                modeldir, model, dname, algo)
         super(SurrogateBenchmark, self).__init__(model, dname, algo, rng, **kwargs)
 
     def _check(self, configuration, fidelity):
@@ -31,12 +34,15 @@ class SurrogateBenchmark(BaseBenchmark):
         model = self.surrogate_models[self.rng.randint(seed) %
                                       len(self.surrogate_models)]
         x_in = []
-        for key in self.configuration_space:
+        cfg_keys = sorted(self.configuration_space)
+        fid_keys = sorted(self.fidelity_space)
+        for key in cfg_keys:
             x_in.append(configuration[key])
-        for key in self.fidelity_space:
+        for key in fid_keys:
             x_in.append(fidelity[key])
         return model.predict([x_in])[0]
 
+    # noinspection DuplicatedCode
     def objective_function(self,
                            configuration,
                            fidelity=None,
@@ -51,7 +57,14 @@ class SurrogateBenchmark(BaseBenchmark):
         }
 
     def get_configuration_space(self):
-        return self.meta_info['configuration_space']
+        new_list = []
+        for i in self.meta_info['configuration_space']:
+            if i == 'batch':
+                new_list.append('batch_size')
+            else:
+                new_list.append(i)
+
+        return new_list
 
     def get_fidelity_space(self):
         return self.meta_info['fidelity_space']
