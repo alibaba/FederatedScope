@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 import os.path as osp
-import shutil
 
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
@@ -106,7 +105,6 @@ class TextDTTest(unittest.TestCase):
         init_cfg.data.dir.imdb = 'test_data/imdb/'
         init_cfg.data.dir.squad = 'test_data/squad2.0/'
         init_cfg.data.cache_dir = 'test_data/cache/'
-
         if init_cfg.federate.total_round_num > 1:
             init_cfg.federate.total_round_num = 2
         setup_seed(init_cfg.seed)
