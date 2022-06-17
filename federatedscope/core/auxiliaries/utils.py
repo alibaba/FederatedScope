@@ -106,7 +106,8 @@ def update_logger(cfg, clear_before_add=False):
 def init_wandb(cfg):
     try:
         import wandb
-        # os.environ["WANDB_START_METHOD"] = "thread" # on some linux machines, we may need "thread" init
+        os.environ[
+            "WANDB_START_METHOD"] = "thread"  # on some linux machines, we may need "thread" init
     except ImportError:
         logger.error("cfg.wandb.use=True but not install the wandb package")
         exit()

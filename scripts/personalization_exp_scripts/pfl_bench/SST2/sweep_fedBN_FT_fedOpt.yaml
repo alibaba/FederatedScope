@@ -1,7 +1,7 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: fedBN,SST2,FT
+name: fedBN,SST2,FT,fedOpt
 method: grid
 #method: bayes
 metric:

@@ -103,10 +103,10 @@ federate:
   use_ss: false
 federate.local_update_steps: 3
 fedopt:
-  lr_server: 0.5
+  lr_server: 1.5
   type_optimizer: SGD
   use: true
-fedopt.lr_server: 0.5
+fedopt.lr_server: 1.5
 fedprox:
   use: false
 fedsageplus:
@@ -171,7 +171,7 @@ optimizer:
   type: SGD
   weight_decay: 0
 optimizer.lr: 0.1
-outdir: exp_pfl_bench/Ditto_convnet2_on_femnist_lr0.1_lstep3_+fedBN+fedOpt/sub_exp_20220531175901
+outdir: exp_pfl_bench/Ditto_convnet2_on_femnist_lr0.1_lstep3_+fedBN+fedOpt/sub_exp_20220602121903
 personalization:
   K: 5
   apfl_alpha: 0

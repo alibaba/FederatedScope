@@ -7,6 +7,8 @@ from collections import OrderedDict
 
 import yaml
 
+from scripts.personalization_exp_scripts.pfl_bench.res_analysis_plot.render_paper_res import highlight_tex_res_in_table
+
 api = wandb.Api()
 
 name_project = "daoyuan/pFL-bench"
@@ -169,6 +171,25 @@ filters_each_line_all_nlp = OrderedDict(
     ]
 )
 
+filters_each_line_all_rec = OrderedDict(
+    # {dataset_name: filter}
+    [
+        ("movielens1m",
+         {"$and":
+             [
+                 {"config.data.type": "HFLMovieLens1M"},
+             ]
+         }
+         ),
+        ("movielens10m",
+         {"$and":
+             [
+                 {"config.data.type": "VFLMovieLens10M"},
+             ]
+         }
+         ),
+    ]
+)
 
 sweep_name_2_id = dict()
 column_names_generalization = [
@@ -180,6 +201,16 @@ column_names_fair = [
     "best_client_summarized_avg/test_acc",
     "best_client_summarized_fairness/test_acc_std",
     "best_client_summarized_fairness/test_acc_bottom_decile"
+]
+column_names_generalization_loss = [
+    "best_client_summarized_weighted_avg/test_avg_loss",
+    "best_unseen_client_summarized_weighted_avg_unseen/test_avg_loss",
+    "participation_gap"
+]
+column_names_fair_loss = [
+    "best_client_summarized_avg/test_avg_loss",
+    "best_client_summarized_fairness/test_avg_loss_std",
+    "best_client_summarized_fairness/test_avg_loss_top_decile"  # reverse
 ]
 column_names_efficiency = [
     "sys_avg/total_flops",
@@ -193,8 +224,8 @@ sorted_method_name_pair = [
     ("isolated-train", "Isolated"),
     ("fedavg", "FedAvg"),
     ("fedavg-ft", "FedAvg-FT"),
-    ("fedopt", "FedOpt"),
-    ("fedopt-ft", "FedOpt-FT"),
+    #("fedopt", "FedOpt"),
+    #("fedopt-ft", "FedOpt-FT"),
     ("pfedme", "pFedMe"),
     ("ft-pfedme", "pFedMe-FT"),
     ("fedbn", "FedBN"),
@@ -214,12 +245,39 @@ sorted_method_name_pair = [
     ("fedbn-fedem-fedopt", "FedEM-FedBN-FedOPT"),
     ("fedbn-fedem-fedopt-ft", "FedEM-FedBN-FedOPT-FT"),
 ]
+sorted_method_name_pair_rec = [
+    # for the recommendation dataset, the mf model does not have the bn parameter
+    ("global-train", "Global-Train"),
+    ("isolated-train", "Isolated"),
+    ("fedavg", "FedAvg"),
+    ("fedavg-ft", "FedAvg-FT"),
+    ("fedavg-fedopt-ft", "FedAvg-FT-FedOpt"),
+    ("fedopt", "FedOpt"),
+    ("fedopt-ft", "FedOpt-FT"),
+    ("pfedme", "pFedMe"),
+    ("ft-pfedme", "pFedMe-FT"),
+    ("ditto", "Ditto"),
+    #("ditto-fedopt", "Ditto-FedOpt"),
+    ("ditto-ft", "Ditto-FT"),
+    ("ditto-fedopt-ft", "Ditto-FT-FedOpt"),
+    ("fedem", "FedEM"),
+    ("fedem-ft", "FedEM-FT"),
+    ("fedem-fedopt-ft", "FedEM-FT-FedOpt"),
+]
 sorted_method_name_to_print = OrderedDict(sorted_method_name_pair)
 expected_keys = set(list(sorted_method_name_to_print.keys()))
 expected_method_names = list(sorted_method_name_to_print.values())
-expected_datasets_name = ["cola", "sst2", "pubmed", "cora", "citeseer", "cifar10-alpha5", "cifar10-alpha05",
-                          "cifar10-alpha01", "FEMNIST-s02", "FEMNIST-s01", "FEMNIST-s005"]
-expected_seed_set = ["1"]
+
+expected_datasets_name = [
+    "cola", "sst2",
+    "pubmed", "cora", "citeseer",
+    "cifar10-alpha5", "cifar10-alpha05", "cifar10-alpha01",
+    "FEMNIST-s02", "FEMNIST-s01", "FEMNIST-s005",
+]
+expected_datasets_name_rec = [
+    "HFLMovieLens1M", "VFLMovieLens10M"
+]
+expected_seed_set = ["0"]
 expected_expname_tag = set()
 
 for method_name in expected_method_names:
@@ -227,10 +285,27 @@ for method_name in expected_method_names:
         for seed in expected_seed_set:
             expected_expname_tag.add(f"{method_name}_{dataset_name}_seed{seed}")
 from collections import defaultdict
+
 all_res_structed = defaultdict(dict)
 for expname_tag in expected_expname_tag:
     for metric in column_names_generalization + column_names_efficiency + column_names_fair:
         all_res_structed[expname_tag][metric] = "-"
+
+sorted_method_name_to_print_rec = OrderedDict(sorted_method_name_pair_rec)
+expected_keys_rec = set(list(sorted_method_name_to_print_rec.keys()))
+expected_method_names_rec = list(sorted_method_name_to_print_rec.values())
+expected_expname_tag_rec = set()
+
+for method_name in expected_method_names_rec:
+    for dataset_name in expected_datasets_name_rec:
+        for seed in expected_seed_set:
+            expected_expname_tag_rec.add(f"{method_name}_{dataset_name}_seed{seed}")
+
+all_res_structed_rec = defaultdict(dict)
+for expname_tag in expected_expname_tag_rec:
+    for metric in column_names_generalization_loss + column_names_efficiency + column_names_fair_loss:
+        all_res_structed_rec[expname_tag][metric] = "-"
+
 
 def bytes_to_unit_size(size_bytes):
     import math
@@ -241,6 +316,7 @@ def bytes_to_unit_size(size_bytes):
     p = math.pow(1024, i)
     s = round(size_bytes / p, 2)
     return f"{s}{size_name[i]}"
+
 
 def unit_size_to_bytes(size_str):
     if not isinstance(size_str, str):
@@ -256,6 +332,7 @@ def unit_size_to_bytes(size_str):
             idx = size_name.index(last_unit)
             p = math.pow(1024, idx)
             return float(size_str[:-1]) * p
+
 
 def get_best_runs_within_sweep(sweep_id_lists):
     best_run_list = []
@@ -279,10 +356,21 @@ def get_sweep_filter_by(filter_name, filters_each_line_table):
     return list(filtered_sweep_ids)
 
 
-order = '-' + 'summary_metrics.best_client_summarized_weighted_avg/val_acc'
+order_acc = '-' + 'summary_metrics.best_client_summarized_weighted_avg/val_acc'
+order_loss = '+' + 'summary_metrics.best_client_summarized_weighted_avg/val_avg_loss'
 
 
-def print_table_datasets_list(filters_each_line_table):
+def print_table_datasets_list(
+        filters_each_line_table,
+        order,
+        all_res_structed,
+        column_names_generalization,
+        column_names_efficiency,
+        column_names_fair,
+        expected_keys,
+        sorted_method_name_to_print,
+        percent=True
+):
     res_of_each_line_generalization = OrderedDict()
     res_of_each_line_fair = OrderedDict()
     res_of_each_line_efficiency = OrderedDict()
@@ -329,7 +417,8 @@ def print_table_datasets_list(filters_each_line_table):
                         res = best_run.summary[column_name]
                         res_all_generalization.append(res)
                     except KeyError:
-                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
+                        print(
+                            f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
                         wrong_sweep = True
                 if wrong_sweep:
                     continue
@@ -345,7 +434,8 @@ def print_table_datasets_list(filters_each_line_table):
                         res = best_run.summary[column_name]
                         res_all_fair.append(res)
                     except KeyError:
-                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
+                        print(
+                            f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
                         res_all_fair.append("-")
                         wrong_sweep = True
 
@@ -362,14 +452,17 @@ def print_table_datasets_list(filters_each_line_table):
 
                     res_all_efficiency.append(res)
                 except KeyError:
-                    print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
+                    print(
+                        f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
                     wrong_sweep = True
                     res_all_efficiency.append("-")
 
             run_header = str.lower(run_header)
+            run_header = run_header.replace("movielens1m-h", "movielens1m")
+            run_header = run_header.replace("movielens10m-v", "movielens10m")
 
             # fix some run_header error
-            #best_run_cfg = json.loads(best_run.json_config)
+            # best_run_cfg = json.loads(best_run.json_config)
             best_run_cfg = best_run.config
 
             def remove_a_key(d, remove_key):
@@ -379,12 +472,17 @@ def print_table_datasets_list(filters_each_line_table):
                             del d[key]
                         else:
                             remove_a_key(d[key], remove_key)
+
             remove_a_key(best_run_cfg, "cfg_check_funcs")
             old_run_header = run_header
             if best_run_cfg["trainer"]["finetune"]["before_eval"] is True and "ft" not in run_header:
                 run_header = run_header + ",ft"
-            elif best_run_cfg["fedopt"]["use"] is True and "fedopt" not in run_header:
+            if best_run_cfg["trainer"]["finetune"]["before_eval"] is False and "ft" in run_header:
+                run_header = run_header.replace(",ft", "")
+            if best_run_cfg["fedopt"]["use"] is True and "fedopt" not in run_header:
                 run_header = run_header + ",fedopt"
+            if best_run_cfg["fedopt"]["use"] is False and "fedopt" in run_header:
+                run_header = run_header.replace(",fedopt", "")
             if old_run_header != run_header:
                 print(f"processed {old_run_header} to new run header {run_header}")
 
@@ -401,23 +499,29 @@ def print_table_datasets_list(filters_each_line_table):
                 print(f"processed to new run header {run_header}")
                 res_of_all_sweeps[run_header] = res_all_generalization
 
+            # pre-process the expname, step 1. split by ",", get the method header atomic elements
             run_header = run_header.replace("-", ",")
             run_header = run_header.replace("+", ",")
             split_res = run_header.split(",")
             filter_split_res = []
             for sub in split_res:
+                # filter the dataset name
                 if "femnist" in sub or "cifar" in sub or "cora" in sub or "cola" in sub or "pubmed" in sub or "citeseer" in sub or "sst2" in sub \
                         or "s02" in sub or "s005" in sub or "s01" in sub \
-                        or "alpha5" in sub or "alpha0.5" in sub or "alpha0.1" in sub:
+                        or "alpha5" in sub or "alpha0.5" in sub or "alpha0.1" in sub \
+                        or "movielen" in sub:
                     pass
                 else:
                     filter_split_res.append(sub)
+            # pre-process the expname, step 2. combining the method header elements with "-"
             method_header = "-".join(sorted(filter_split_res))
             if method_header in unseen_keys:
                 unseen_keys.remove(method_header)
 
             # save all res into the structured dict
             cur_seed = best_run_cfg["seed"]
+            #`if method_header in ["fedopt", "fedopt-ft"]:
+            #`    continue
             exp_name_current = f"{sorted_method_name_to_print[method_header]}_{data_name}_seed{cur_seed}"
             for i, metric in enumerate(column_names_generalization):
                 all_res_structed[exp_name_current][metric] = res_all_generalization[i]
@@ -457,73 +561,140 @@ def print_table_datasets_list(filters_each_line_table):
     print("\n=============res_of_each_line [Generalization]===============" + ",".join(
         list(filters_each_line_table.keys())))
     # Acc, Unseen-ACC, Delta
+    res_to_print_matrix = []
+    times_ratio = 100 if percent else 1
     for key in sorted_method_name_to_print:
-        res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_generalization[key]]
+        res_to_print = ["{:.2f}".format(v * times_ratio) if v != "-" else v for v in
+                        res_of_each_line_generalization[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
+        #print(",".join(res_to_print))
+        res_to_print_matrix.append(res_to_print)
+
+    colum_order_per_data = ["-", "-", "-"]  # for the loss, the smaller the better
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order)
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
+
 
     print("\n=============res_of_each_line [Fairness]===============" + ",".join(list(filters_each_line_table.keys())))
+    res_to_print_matrix = []
     for key in sorted_method_name_to_print:
-        res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_fair[key]]
+        res_to_print = ["{:.2f}".format(v * times_ratio) if v != "-" else v for v in res_of_each_line_fair[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
-    print("\n=============res_of_each_line [All Efficiency]===============" + ",".join(
+        #print(",".join(res_to_print))
+        res_to_print_matrix.append(res_to_print)
+
+    colum_order_per_data = ["-", "-", "-"]
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order, filter_out=["Global-Train"])
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
+
+
+    #print("\n=============res_of_each_line [All Efficiency]===============" + ",".join(
+    #    list(filters_each_line_table.keys())))
+    ## FLOPS, UPLOAD, DOWNLOAD
+
+    #for key in sorted_method_name_to_print:
+    #    res_to_print = [str(v) for v in res_of_each_line_efficiency[key]]
+    #    res_to_print = [sorted_method_name_to_print[key]] + res_to_print
+    #    print(",".join(res_to_print))
+    print("\n=============res_of_each_line [flops, communication, acc/loss]===============" + ",".join(
         list(filters_each_line_table.keys())))
-    # FLOPS, UPLOAD, DOWNLOAD
-    for key in sorted_method_name_to_print:
-        res_to_print = [str(v) for v in res_of_each_line_efficiency[key]]
-        res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
-    print("\n=============res_of_each_line [flops, communication, acc]===============" + ",".join(
-        list(filters_each_line_table.keys())))
+    res_to_print_matrix = []
+
+    dataset_num = 2 if "cola" or "movie" in list(filters_each_line_table.keys()) else 3
     for key in sorted_method_name_to_print:
         res_of_each_line_commu_acc_trade[key] = []
-        dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
         for i in range(dataset_num):
-            res_of_each_line_commu_acc_trade[key].extend(
-                [str(res_of_each_line_efficiency[key][i * 4])] + \
-                [str(res_of_each_line_efficiency[key][i * 4 + 1])] + \
-                ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_generalization[key][i * 3:i * 3 + 1]]
-            )
+            try:
+                res_of_each_line_commu_acc_trade[key].extend(
+                    [str(res_of_each_line_efficiency[key][i * 4])] + \
+                    [str(res_of_each_line_efficiency[key][i * 4 + 1])] + \
+                    ["{:.2f}".format(v * times_ratio) if v != "-" else v for v in
+                     res_of_each_line_generalization[key][i * 3:i * 3 + 1]]
+                )
+            except:
+                print(f"error with index i={i}")
 
         res_to_print = [str(v) for v in res_of_each_line_commu_acc_trade[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
-    print("\n=============res_of_each_line [converge_round, acc]===============" + ",".join(
+        #print(",".join(res_to_print))
+        res_to_print_matrix.append(res_to_print)
+
+    colum_order_per_data = ["-", "-", "-"]
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order, need_scale=True,
+                                                     filter_out=["Global-Train", "Isolated"])
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
+
+    print("\n=============res_of_each_line [converge_round, acc/loss]===============" + ",".join(
         list(filters_each_line_table.keys())))
+    res_to_print_matrix = []
     for key in sorted_method_name_to_print:
         res_of_each_line_conver_acc_trade[key] = []
-        dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
         for i in range(dataset_num):
             res_of_each_line_conver_acc_trade[key].extend(
                 [str(res_of_each_line_efficiency[key][i * 4 + 3])] + \
                 # [str(res_of_each_line_efficiency[key][i * 4 + 4])] + \
-                ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_fair[key][i * 3:i * 3 + 1]]
+                ["{:.2f}".format(v * times_ratio) if v != "-" else v for v in
+                 res_of_each_line_fair[key][i * 3:i * 3 + 1]]
             )
 
         res_to_print = [str(v) for v in res_of_each_line_conver_acc_trade[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
-    # print("\n=============res_of_all_sweeps [Generalization]===============")
-    # for key in sorted(res_of_all_sweeps.keys()):
-    #     res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_all_sweeps[key]]
-    #     res_to_print = [key] + res_to_print
-    #     print(",".join(res_to_print))
-    #
+        res_to_print_matrix.append(res_to_print)
+        #print(",".join(res_to_print))
+
+    colum_order_per_data = ["-", "-"]
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order,
+                                                     filter_out=["Global-Train", "Isolated"], convergence_case=True)
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
 
 
-print_table_datasets_list(filters_each_line_main_table)
-print_table_datasets_list(filters_each_line_femnist_all_s)
-print_table_datasets_list(filters_each_line_all_cifar10)
-print_table_datasets_list(filters_each_line_all_nlp)
-print_table_datasets_list(filters_each_line_all_graph)
+def print_res_non_rec():
+    print_table_datasets_list(filters_each_line_main_table, order_acc, all_res_structed, column_names_generalization,
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
+    print_table_datasets_list(filters_each_line_femnist_all_s, order_acc, all_res_structed, column_names_generalization,
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
+    print_table_datasets_list(filters_each_line_all_cifar10, order_acc, all_res_structed, column_names_generalization,
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
+    print_table_datasets_list(filters_each_line_all_nlp, order_acc, all_res_structed, column_names_generalization,
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
+    print_table_datasets_list(filters_each_line_all_graph, order_acc, all_res_structed, column_names_generalization,
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
+    for expname_tag in expected_expname_tag:
+        for metric in column_names_generalization + column_names_efficiency + column_names_fair:
+            if all_res_structed[expname_tag][metric] == "-":
+                print(f"Missing {expname_tag} for metric {metric}")
 
-import json
-with open('best_res_all_metric.json', 'w') as fp:
-    json.dump(all_res_structed, fp)
+    with open('best_res_all_metric.json', 'w') as fp:
+        json.dump(all_res_structed, fp)
 
-for expname_tag in expected_expname_tag:
-    for metric in column_names_generalization + column_names_efficiency + column_names_fair:
-        if all_res_structed[expname_tag][metric] == "-":
-            print(f"Missing {expname_tag} for metric {metric}")
 
+def print_res_rec():
+    print_table_datasets_list(filters_each_line_all_rec, order_loss, all_res_structed_rec,
+                              column_names_generalization_loss,
+                              column_names_efficiency, column_names_fair_loss,
+                              expected_keys=expected_keys_rec,
+                              sorted_method_name_to_print=sorted_method_name_to_print_rec,
+                              percent=False)
+    #for expname_tag in expected_expname_tag_rec:
+    #    for metric in column_names_generalization_loss + column_names_efficiency + col#umn_names_fair_loss:
+    #        if all_res_structed_rec[expname_tag][metric] == "-":
+                #print(f"Missing {expname_tag} for metric {metric}")
+
+    with open('best_res_all_metric_rec.json', 'w') as fp:
+        json.dump(all_res_structed_rec, fp)
+
+
+print_res_non_rec()
+print_res_rec()

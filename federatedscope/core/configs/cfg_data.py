@@ -32,6 +32,7 @@ def extend_data_cfg(cfg):
     cfg.data.graphsaint.walk_length = 2
     cfg.data.graphsaint.num_steps = 30
     cfg.data.plot_boxplot = False
+    cfg.data.labelwise_boxplot = False
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_data_cfg)

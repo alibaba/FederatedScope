@@ -1,7 +1,7 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: ditto,MOVIELENS10M-V,FT
+name: ditto,MOVIELENS10M-V
 method: grid
 #method: bayes
 metric:

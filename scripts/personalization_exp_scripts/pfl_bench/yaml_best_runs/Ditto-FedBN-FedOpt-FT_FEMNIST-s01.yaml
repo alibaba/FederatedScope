@@ -80,7 +80,7 @@ eval:
   split:
   - test
   - val
-expname: Ditto_convnet2_on_femnist_lr0.05_lstep3_+finetune+fedBN+fedOpt
+expname: Ditto_convnet2_on_femnist_lr0.1_lstep3_+finetune+fedBN+fedOpt
 expname_tag: +finetune+fedBN+fedOpt
 federate:
   batch_or_epoch: epoch
@@ -166,12 +166,12 @@ nbafl:
   use: false
 optimizer:
   grad_clip: 5
-  lr: 0.05
+  lr: 0.1
   momentum: 0
   type: SGD
   weight_decay: 0
-optimizer.lr: 0.05
-outdir: exp_pfl_bench/Ditto_convnet2_on_femnist_lr0.05_lstep3_+finetune+fedBN+fedOpt/sub_exp_20220601100430
+optimizer.lr: 0.1
+outdir: exp_pfl_bench/Ditto_convnet2_on_femnist_lr0.1_lstep3_+finetune+fedBN+fedOpt/sub_exp_20220602053308
 personalization:
   K: 5
   apfl_alpha: 0

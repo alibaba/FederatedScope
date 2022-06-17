@@ -13,7 +13,7 @@ federate:
 data:
   root: data/
   type: VFLMovieLens10M
-  batch_size: 64
+  batch_size: 1024
   num_workers: 0
   splits: [0.7,0.15,0.15]
 model:
@@ -21,6 +21,7 @@ model:
   hidden: 20
 optimizer:
   lr: 1.
+  grad_clip: 5.0
 criterion:
   type: MSELoss
 trainer:
@@ -28,3 +29,4 @@ trainer:
 eval:
   freq: 10
   best_res_update_round_wise_key: val_avg_loss
+  task_type: regression

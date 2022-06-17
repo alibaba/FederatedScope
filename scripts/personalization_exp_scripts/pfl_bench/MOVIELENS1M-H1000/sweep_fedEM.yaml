@@ -1,7 +1,7 @@
 
 program: federatedscope/main.py
 project: pFL-bench
-name: FedEM,MOVIELENS1M-H,FT
+name: FedEM,MOVIELENS1M-H
 method: grid
 #method: bayes
 metric:

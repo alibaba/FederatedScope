@@ -639,11 +639,19 @@ def get_data(config):
                         (torch.utils.data.Dataset, list)) or issubclass(
                             type(ds), torch.utils.data.Dataset):
                         data_num_all_client[split_name].append(len(ds))
+
                     elif isinstance(
                             ds,
                         (torch.utils.data.DataLoader, list)) or issubclass(
                             type(ds), torch.utils.data.DataLoader):
                         data_num_all_client[split_name].append(len(ds.dataset))
+                        if config.data.labelwise_boxplot and "cifar" in config.data.type.lower():
+                            from collections import Counter
+                            all_labels = [ds.dataset[i][1] for i in range(len(ds.dataset))]
+                            label_wise_cnt = Counter(all_labels)
+                            for label, cnt in label_wise_cnt.items():
+                                data_num_all_client[label].append(cnt)
+
                     elif issubclass(type(ds), MFDataLoader):
                         data_num_all_client[split_name].append(ds.n_rating)
                 except:
@@ -663,6 +671,8 @@ def get_data(config):
         index = []
         data_num_list = []
         for key, val in data_num_all_client.items():
+            if config.data.labelwise_boxplot and key in ["train", "test", "val"]:
+                continue
             index.append(key)
             data_num_list.append(val)
         if index[1] == "test" and index[2] == "val":
@@ -683,17 +693,24 @@ def get_data(config):
             'xtick.labelsize': ticks_size,
             'ytick.labelsize': ticks_size
         }
+        if config.data.labelwise_boxplot:
+            index_order = np.argsort(np.array(index))
+            index = [index[i] for i in index_order]
+            data_num_list = [data_num_list[i] for i in index_order]
+
         pylab.rcParams.update(params)
         ax = plt.subplot()
         ax.violinplot(data_num_list)
         ax.set_xticks(range(1, len(index) + 1))
         ax.set_xticklabels(index)
         ax.set_ylabel("#Samples Per Client")
-        plt.savefig(f"{config.outdir}/visual_{config.data.type}.pdf",
+        fig_name = f"{config.outdir}/visual_{config.data.type}.pdf"
+        if config.data.labelwise_boxplot:
+            fig_name = f"{config.outdir}/visual_{config.data.type}_label.pdf"
+        plt.savefig(fig_name,
                     bbox_inches='tight',
                     pad_inches=0)
         plt.show()
-        # TODO: prepare plot curves for and average the res codes
 
     from scipy import stats
     all_split_merged_num = []
@@ -726,10 +743,11 @@ def get_data(config):
 def merge_data(all_data, merged_max_data_id):
     dataset_names = list(all_data[1].keys())  # e.g., train, test, val
     import torch.utils.data
-    assert isinstance(all_data[1]["test"], (dict, torch.utils.data.DataLoader)), \
-        "the data should be organized as the format similar to the following format" \
-        "1): {data_id: {train: {x:ndarray, y:ndarray}} }" \
-        "2): {data_id: {train: DataLoader }"
+    from federatedscope.mf.dataloader import MFDataLoader
+    assert isinstance(all_data[1]["test"], (dict, torch.utils.data.DataLoader, MFDataLoader)), \
+            "the data should be organized as the format similar to the following format" \
+            "1): {data_id: {train: {x:ndarray, y:ndarray}} }" \
+            "2): {data_id: {train: DataLoader }"
     if isinstance(all_data[1]["test"], dict):
         data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
         merged_data = {name: defaultdict(list) for name in dataset_names}
@@ -743,7 +761,7 @@ def merge_data(all_data, merged_max_data_id):
             for elem_name in data_elem_names:
                 merged_data[d_name][elem_name] = np.concatenate(
                     merged_data[d_name][elem_name])
-    elif isinstance(all_data[1]["test"], torch.utils.data.DataLoader):
+    elif issubclass(type(all_data[1]["test"]), torch.utils.data.DataLoader):
         merged_data = {name: all_data[1][name] for name in dataset_names}
         for data_id in range(2, merged_max_data_id):
             for d_name in dataset_names:
