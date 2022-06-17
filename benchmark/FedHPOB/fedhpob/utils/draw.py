@@ -45,12 +45,22 @@ def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
                 continue
             result = eval(row['result'])
             val_loss = result['val_avg_loss']
-            best_round = np.argmin(val_loss)
+            try:
+                best_round = np.argmin(val_loss)
+            except:
+                continue
             target.append(result[key][best_round])
         norm_regret = np.sort(1 - (np.array(target) / np.max(target)))
         y = np.arange(len(norm_regret)) / float(len(norm_regret) - 1)
         plt.plot(norm_regret, y)
-    plt.legend(data_list, fontsize=23, loc='lower right')
+    if data_list[0].endswith('datasets'):
+        legend = ['CoLA', 'SST2']
+    elif data_list[0].endswith('openml'):
+        legend = [x.split('@')[0] for x in data_list]
+    elif data_list[0].lower == 'cora':
+        legend = ['Cora', 'CiteSeer', 'PubMed']
+    else:
+        legend = [x.upper() for x in data_list]
     os.makedirs('figures', exist_ok=True)
     plt.savefig(f'figures/{model}_{sample_client}_{algo}_cdf.pdf', bbox_inches='tight')
     plt.close()
@@ -110,6 +120,7 @@ def get_mean_loss(traj_dict):
             rank_bbo += np.array(ys[:5])
             rank_mf += np.array(ys[-5:])
     xs = np.linspace(0, 1, 500)
+    print(str([round(x, 4) for x in (rank / len(traj_dict))[:,-1].tolist()]).replace(',', ' &'))
     return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(traj_dict)
 
 
@@ -117,16 +128,6 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, f
     os.makedirs('figures', exist_ok=True)
     # BBO + MF
     plt.figure(figsize=(10, 7.5))
-    plt.xticks(np.linspace(0, 1, 5),
-               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
-               fontsize=FONTSIZE)
-    if Y_label == 'Mean_rank':
-        plt.yticks(np.linspace(1, 10, 10), fontsize=FONTSIZE)
-    else:
-        plt.yticks(fontsize=FONTSIZE)
-
-    plt.xlabel('Fraction of budget', size=FONTSIZE)
-    plt.ylabel(Y_label, size=FONTSIZE)
 
     for idx, rank in enumerate(mean_ranks):
         plt.plot(xs,
@@ -134,27 +135,24 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, f
                  linewidth=1,
                  color=COLORS[idx],
                  markersize=MARKSIZE)
-    plt.legend(opt_all,
-               fontsize=23,
-               loc='lower right',
-               bbox_to_anchor=(1.35, 0))
+    plt.xticks(np.linspace(0, 1, 5),
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
+    if Y_label == 'Mean_rank':
+        plt.yticks(np.linspace(1, 10, 10), ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], fontsize=FONTSIZE)
+        plt.ylabel('Mean rank', size=FONTSIZE)
+        print(dataset, mean_ranks[:, -1].tolist())
+    else:
+        plt.yticks(fontsize=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f'figures/{dataset}_{family}_{suffix}_over_time_all_{Y_label}.pdf',
+        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_all_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
     # BBO
     plt.figure(figsize=(10, 7.5))
-    plt.xticks(np.linspace(0, 1, 5),
-               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
-               fontsize=FONTSIZE)
-    if Y_label == 'Mean_rank':
-        plt.yticks(np.linspace(1, 5, 5), fontsize=FONTSIZE)
-    else:
-        plt.yticks(fontsize=FONTSIZE)
-
-    plt.xlabel('Fraction of budget', size=FONTSIZE)
-    plt.ylabel(Y_label, size=FONTSIZE)
 
     for idx, rank in enumerate(mean_ranks_bbo):
         plt.plot(xs,
@@ -162,27 +160,24 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, f
                  linewidth=1,
                  color=COLORS[idx],
                  markersize=MARKSIZE)
-    plt.legend(opt_all[:5],
-               fontsize=23,
-               loc='lower right',
-               bbox_to_anchor=(1.35, 0))
+    plt.xticks(np.linspace(0, 1, 5),
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
+    if Y_label == 'Mean_rank':
+        plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'], fontsize=FONTSIZE)
+        plt.ylabel('Mean rank', size=FONTSIZE)
+    else:
+        plt.yticks(fontsize=FONTSIZE)
+        plt.ylabel(Y_label, size=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f'figures/{dataset}_{family}_{suffix}_over_time_bbo_{Y_label}.pdf',
+        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_bbo_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
     # MF
     plt.figure(figsize=(10, 7.5))
-    plt.xticks(np.linspace(0, 1, 5),
-               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
-               fontsize=FONTSIZE)
-    if Y_label == 'Mean_rank':
-        plt.yticks(np.linspace(1, 5, 5), fontsize=FONTSIZE)
-    else:
-        plt.yticks(fontsize=FONTSIZE)
-
-    plt.xlabel('Fraction of budget', size=FONTSIZE)
-    plt.ylabel(Y_label, size=FONTSIZE)
 
     for idx, rank in enumerate(mean_ranks_mf):
         plt.plot(xs,
@@ -190,12 +185,19 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, f
                  linewidth=1,
                  color=COLORS[idx + 5],
                  markersize=MARKSIZE)
-    plt.legend(opt_all[-5:],
-               fontsize=23,
-               loc='lower right',
-               bbox_to_anchor=(1.35, 0))
+    plt.xticks(np.linspace(0, 1, 5),
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
+    if Y_label == 'Mean_rank':
+        plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'], fontsize=FONTSIZE)
+        plt.ylabel('Mean rank', size=FONTSIZE)
+    else:
+        plt.yticks(fontsize=FONTSIZE)
+        plt.ylabel(Y_label, size=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f'figures/{dataset}_{family}_{suffix}_over_time_mf_{Y_label}.pdf',
+        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_mf_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
@@ -211,25 +213,25 @@ def rank_over_time(root,
         data_list = ['femnist', 'cifar10']
     elif family == 'gcn':
         data_list = ['cora', 'citeseer', 'pubmed']
-    elif family == 'transformer':
-        data_list = ['sst2', 'cola']
+    elif family == 'bert':
+        data_list = ['sst2@huggingface_datasets', 'cola@huggingface_datasets']
     elif family in ['mlp', 'lr']:
         data_list = [
             '10101@openml', '53@openml', '146818@openml', '146821@openml',
-            '9952@openml', '146822@openml', '31@openml', '3917@openml'
+             '146822@openml', '31@openml', '3917@openml'
         ]
     else:
         # All dataset
         data_list = [
-            'femnist', 'cifar10', 'cora', 'citeseer', 'pubmed', 'sst2', 'cola',
+            'femnist', 'cora', 'citeseer', 'pubmed', 'sst2', 'cola',
             'mlp', 'lr', '10101@openml', '53@openml', '146818@openml',
             '146821@openml', '9952@openml', '146822@openml', '31@openml',
             '3917@openml'
         ]
 
     # Please place these logs to one dir
-    bbo = ['rs', 'bo_gp', 'bo_rf', 'bo_kde', 'de']
-    mf = ['hb', 'bohb', 'dehb', 'tpe_md', 'tpe_hb']
+    bbo = ['RS', 'BO_GP', 'BO_RF', 'BO_KDE', 'DE']
+    mf = ['HB', 'BOHB', 'DEHB', 'TPE_MD', 'TPE_HB']
     opt_all = bbo + mf
 
     # Load trajectories
@@ -244,7 +246,7 @@ def rank_over_time(root,
             traj[dataset][i] = []
             for opt in opt_all:
                 for file in files_i:
-                    if file.startswith(f'{opt}_'):
+                    if file.startswith(f'{opt.lower()}_'):
                         traj[dataset][i].append(
                             logloader(os.path.join(path, file)))
 
@@ -252,6 +254,7 @@ def rank_over_time(root,
     family_rank = []
     for dataset in traj:
         if loss:
+            print(dataset)
             xs, mean_ranks, mean_ranks_bbo, mean_ranks_mf = get_mean_loss(traj[dataset])
             Y_label = 'Loss'
         else:
