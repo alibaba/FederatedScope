@@ -46,7 +46,7 @@ The naming pattern of the url of data files obeys the rule:
 https://federatedscope.oss-cn-beijing.aliyuncs.com/fedhpob_{BENCHMARK}_{MODE}.zip
 ```
 
-where `BENCHMARK` should be one of `cnn`, `bert`, `gcn`, `lr`, or `mlp`, and `MODE` should be one of `raw` or `surrogate`.
+where `{BENCHMARK}` should be one of `cnn`, `bert`, `gcn`, `lr`, or `mlp`, and `{MODE}` should be one of `raw` or `surrogate`.
 
 Then unzip the data file, move data under tabular mode to `~/data/tabular_data/` and data under surrogate mode to `~/data/surrogate_model`.
 
@@ -68,7 +68,7 @@ fidelity_space = benchmark.get_fidelity_space()
 # get results
 res = benchmark(config_space.sapmle_configuration(),
                 fidelity_space.sapmle_configuration(),
-                seed=1)
+                seed=12345)
 ```
 
 ## Reproduce the results in our paper
