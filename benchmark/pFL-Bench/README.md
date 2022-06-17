@@ -36,11 +36,11 @@ You can find the full scripts from the another [branch](https://github.com/aliba
 We put all the config yaml file in the directory `benchmark/pfl_bench/yaml_best_runs`.
 To reproduce the experiments with searched best configurations, you can run the experiment as the following example:
 ```
-## Pre-step-1: If you do not use our docker, please install Federated Scope according to the pre-steps
-# git clone https://github.com/alibaba/FederatedScope.git
-## Pre-step-2: follow https://github.com/alibaba/FederatedScope/blob/master/README.md to build the running environment
-## Pre-step-3: switch to the branch `feature/pFL_bench` if you want to run the codes with the version for paper's experiments.
-# git switch Feature/pfl_bench
+# Pre-step-1: If you do not use our docker, please install Federated Scope according to the pre-steps
+git clone https://github.com/alibaba/FederatedScope.git
+# Pre-step-2: follow https://github.com/alibaba/FederatedScope/blob/master/README.md to build the running environment
+# Pre-step-3: switch to the branch `feature/pFL_bench` if you want to run the codes with the version for paper's experiments.
+git switch Feature/pfl_bench
 
 # Try a run with the example yaml
 python federatedscope/main.py --cfg benchmark/pfl_bench/yaml_best_runs/FedBN_FEMNIST-s02.yaml
