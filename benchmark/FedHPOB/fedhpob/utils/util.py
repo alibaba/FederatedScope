@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import ConfigSpace as CS
 
 from datetime import datetime
 
@@ -68,3 +69,11 @@ def cfg2name(cfg):
     while os.path.exists(os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')):
         repeat += 1
     return os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')
+
+
+def dict2cfg(space):
+    configuration_space = CS.ConfigurationSpace()
+    for key, value in space.items():
+        hyperparameter = CS.CategoricalHyperparameter(key, choices=value)
+        configuration_space.add_hyperparameter(hyperparameter)
+    return configuration_space

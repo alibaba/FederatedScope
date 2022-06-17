@@ -1,5 +1,6 @@
 import datetime
 from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
 from federatedscope.core.fed_runner import FedRunner
 
@@ -25,10 +26,16 @@ class RawBenchmark(BaseBenchmark):
         disable_fs_logger(init_cfg, True)
         setup_seed(seed)
         modified_cfg = merge_cfg(init_cfg, configuration, fidelity)
+        data, modified_cfg = get_data(modified_cfg.clone())
         init_cfg.merge_from_other_cfg(modified_cfg)
         init_cfg.device = self.device
+        if self.algo == 'opt':
+            init_cfg.federate.share_local_model = False
+            init_cfg.federate.online_aggr = False
+            init_cfg.fedopt.use = True
+            init_cfg.federate.method = 'FedOpt'
         init_cfg.freeze()
-        runner = FedRunner(data=self.data,
+        runner = FedRunner(data=data,
                            server_class=get_server_cls(init_cfg),
                            client_class=get_client_cls(init_cfg),
                            config=init_cfg.clone())

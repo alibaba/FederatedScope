@@ -62,7 +62,7 @@ def computation_cost(cfg, fhb_cfg):
         1.0 / i for i in range(
             1,
             int(cfg.federate.client_num * cfg.federate.sample_client_rate) + 1)
-    ]) / fhb_cfg.cost.c
+    ]) * fhb_cfg.cost.c
     return t_client + fhb_cfg.cost.time_server
 
 
