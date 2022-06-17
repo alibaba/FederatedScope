@@ -227,26 +227,6 @@ def bytes_to_unit_size(size_bytes):
     s = round(size_bytes / p, 2)
     return f"{s}{size_name[i]}"
 
-def unit_size_to_bytes(size_str):
-    last_unit = size_str[-1]
-    # TODO
-    import math
-    if size_str == 0:
-        return "0"
-    size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
-    i = int(math.floor(math.log(size_str, 1024)))
-    p = math.pow(1024, i)
-    s = round(size_str / p, 2)
-    return f"{s}{size_name[i]}"
-
-def get_best_runs_within_sweep(sweep_id_lists):
-    best_run_list = []
-    for sweep_id in sweep_id_lists:
-        sweep = api.sweep(f"{name_project}/{sweep_id}")
-        best_run = sweep.best_run()
-        best_run_list.append(best_run)
-
-
 def get_sweep_filter_by(filter_name, filters_each_line_table):
     filter = filters_each_line_table[filter_name]
     filtered_runs = api.runs(name_project, filters=filter)

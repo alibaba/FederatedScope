@@ -7,6 +7,8 @@ from collections import OrderedDict
 
 import yaml
 
+from scripts.personalization_exp_scripts.pfl_bench.res_analysis_plot.render_paper_res import highlight_tex_res_in_table
+
 api = wandb.Api()
 
 name_project = "daoyuan/pFL-bench"
@@ -222,8 +224,8 @@ sorted_method_name_pair = [
     ("isolated-train", "Isolated"),
     ("fedavg", "FedAvg"),
     ("fedavg-ft", "FedAvg-FT"),
-    ("fedopt", "FedOpt"),
-    ("fedopt-ft", "FedOpt-FT"),
+    #("fedopt", "FedOpt"),
+    #("fedopt-ft", "FedOpt-FT"),
     ("pfedme", "pFedMe"),
     ("ft-pfedme", "pFedMe-FT"),
     ("fedbn", "FedBN"),
@@ -289,9 +291,9 @@ for expname_tag in expected_expname_tag:
     for metric in column_names_generalization + column_names_efficiency + column_names_fair:
         all_res_structed[expname_tag][metric] = "-"
 
-sorted_method_name_to_print = OrderedDict(sorted_method_name_pair_rec)
-expected_keys_rec = set(list(sorted_method_name_to_print.keys()))
-expected_method_names_rec = list(sorted_method_name_to_print.values())
+sorted_method_name_to_print_rec = OrderedDict(sorted_method_name_pair_rec)
+expected_keys_rec = set(list(sorted_method_name_to_print_rec.keys()))
+expected_method_names_rec = list(sorted_method_name_to_print_rec.values())
 expected_expname_tag_rec = set()
 
 for method_name in expected_method_names_rec:
@@ -366,6 +368,7 @@ def print_table_datasets_list(
         column_names_efficiency,
         column_names_fair,
         expected_keys,
+        sorted_method_name_to_print,
         percent=True
 ):
     res_of_each_line_generalization = OrderedDict()
@@ -517,6 +520,8 @@ def print_table_datasets_list(
 
             # save all res into the structured dict
             cur_seed = best_run_cfg["seed"]
+            #`if method_header in ["fedopt", "fedopt-ft"]:
+            #`    continue
             exp_name_current = f"{sorted_method_name_to_print[method_header]}_{data_name}_seed{cur_seed}"
             for i, metric in enumerate(column_names_generalization):
                 all_res_structed[exp_name_current][metric] = res_all_generalization[i]
@@ -553,31 +558,54 @@ def print_table_datasets_list(
                 res_of_each_line_fair[missing_header].extend(["-"] * 3)
                 res_of_each_line_efficiency[missing_header].extend(["-"] * 4)
 
-    # TODO: when print, just print the split with &, and rank the results, mark them with textbf, underline, red and blue.
     print("\n=============res_of_each_line [Generalization]===============" + ",".join(
         list(filters_each_line_table.keys())))
     # Acc, Unseen-ACC, Delta
+    res_to_print_matrix = []
     times_ratio = 100 if percent else 1
     for key in sorted_method_name_to_print:
         res_to_print = ["{:.2f}".format(v * times_ratio) if v != "-" else v for v in
                         res_of_each_line_generalization[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
+        #print(",".join(res_to_print))
+        res_to_print_matrix.append(res_to_print)
+
+    colum_order_per_data = ["-", "-", "-"]  # for the loss, the smaller the better
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order)
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
+
 
     print("\n=============res_of_each_line [Fairness]===============" + ",".join(list(filters_each_line_table.keys())))
+    res_to_print_matrix = []
     for key in sorted_method_name_to_print:
         res_to_print = ["{:.2f}".format(v * times_ratio) if v != "-" else v for v in res_of_each_line_fair[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
-    print("\n=============res_of_each_line [All Efficiency]===============" + ",".join(
-        list(filters_each_line_table.keys())))
-    # FLOPS, UPLOAD, DOWNLOAD
-    for key in sorted_method_name_to_print:
-        res_to_print = [str(v) for v in res_of_each_line_efficiency[key]]
-        res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
+        #print(",".join(res_to_print))
+        res_to_print_matrix.append(res_to_print)
+
+    colum_order_per_data = ["-", "-", "-"]
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order, filter_out=["Global-Train"])
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
+
+
+    #print("\n=============res_of_each_line [All Efficiency]===============" + ",".join(
+    #    list(filters_each_line_table.keys())))
+    ## FLOPS, UPLOAD, DOWNLOAD
+
+    #for key in sorted_method_name_to_print:
+    #    res_to_print = [str(v) for v in res_of_each_line_efficiency[key]]
+    #    res_to_print = [sorted_method_name_to_print[key]] + res_to_print
+    #    print(",".join(res_to_print))
     print("\n=============res_of_each_line [flops, communication, acc/loss]===============" + ",".join(
         list(filters_each_line_table.keys())))
+    res_to_print_matrix = []
+
     dataset_num = 2 if "cola" or "movie" in list(filters_each_line_table.keys()) else 3
     for key in sorted_method_name_to_print:
         res_of_each_line_commu_acc_trade[key] = []
@@ -594,9 +622,20 @@ def print_table_datasets_list(
 
         res_to_print = [str(v) for v in res_of_each_line_commu_acc_trade[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
+        #print(",".join(res_to_print))
+        res_to_print_matrix.append(res_to_print)
+
+    colum_order_per_data = ["-", "-", "-"]
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order, need_scale=True,
+                                                     filter_out=["Global-Train", "Isolated"])
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
+
     print("\n=============res_of_each_line [converge_round, acc/loss]===============" + ",".join(
         list(filters_each_line_table.keys())))
+    res_to_print_matrix = []
     for key in sorted_method_name_to_print:
         res_of_each_line_conver_acc_trade[key] = []
         for i in range(dataset_num):
@@ -609,26 +648,29 @@ def print_table_datasets_list(
 
         res_to_print = [str(v) for v in res_of_each_line_conver_acc_trade[key]]
         res_to_print = [sorted_method_name_to_print[key]] + res_to_print
-        print(",".join(res_to_print))
-    # print("\n=============res_of_all_sweeps [Generalization]===============")
-    # for key in sorted(res_of_all_sweeps.keys()):
-    #     res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_all_sweeps[key]]
-    #     res_to_print = [key] + res_to_print
-    #     print(",".join(res_to_print))
-    #
+        res_to_print_matrix.append(res_to_print)
+        #print(",".join(res_to_print))
+
+    colum_order_per_data = ["-", "-"]
+    # "+" indicates the larger, the better
+    rank_order = colum_order_per_data * len(filters_each_line_table)
+    res_to_print_matrix = highlight_tex_res_in_table(res_to_print_matrix, rank_order=rank_order,
+                                                     filter_out=["Global-Train", "Isolated"], convergence_case=True)
+    for res_to_print in res_to_print_matrix:
+        print("&".join(res_to_print) + "\\\\")
 
 
 def print_res_non_rec():
     print_table_datasets_list(filters_each_line_main_table, order_acc, all_res_structed, column_names_generalization,
-                              column_names_efficiency, column_names_fair, expected_keys)
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
     print_table_datasets_list(filters_each_line_femnist_all_s, order_acc, all_res_structed, column_names_generalization,
-                              column_names_efficiency, column_names_fair, expected_keys)
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
     print_table_datasets_list(filters_each_line_all_cifar10, order_acc, all_res_structed, column_names_generalization,
-                              column_names_efficiency, column_names_fair, expected_keys)
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
     print_table_datasets_list(filters_each_line_all_nlp, order_acc, all_res_structed, column_names_generalization,
-                              column_names_efficiency, column_names_fair, expected_keys)
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
     print_table_datasets_list(filters_each_line_all_graph, order_acc, all_res_structed, column_names_generalization,
-                              column_names_efficiency, column_names_fair, expected_keys)
+                              column_names_efficiency, column_names_fair, expected_keys, sorted_method_name_to_print)
     for expname_tag in expected_expname_tag:
         for metric in column_names_generalization + column_names_efficiency + column_names_fair:
             if all_res_structed[expname_tag][metric] == "-":
@@ -641,7 +683,9 @@ def print_res_non_rec():
 def print_res_rec():
     print_table_datasets_list(filters_each_line_all_rec, order_loss, all_res_structed_rec,
                               column_names_generalization_loss,
-                              column_names_efficiency, column_names_fair_loss, expected_keys=expected_keys_rec,
+                              column_names_efficiency, column_names_fair_loss,
+                              expected_keys=expected_keys_rec,
+                              sorted_method_name_to_print=sorted_method_name_to_print_rec,
                               percent=False)
     #for expname_tag in expected_expname_tag_rec:
     #    for metric in column_names_generalization_loss + column_names_efficiency + col#umn_names_fair_loss:
@@ -652,4 +696,5 @@ def print_res_rec():
         json.dump(all_res_structed_rec, fp)
 
 
+print_res_non_rec()
 print_res_rec()
