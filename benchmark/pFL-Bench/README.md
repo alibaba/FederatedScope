@@ -17,7 +17,7 @@ You can download the pre-processed datasets from our public mirror and unzip the
 If you use other customized data directory, please replace the value of `data.root` in the scripts accordingly.
 
 # 2. Docker Environment
-The experiments are conducted on the *federatedscope-torch1.8-application* docker image, you can build it using the [Dockfile](https://github.com/alibaba/FederatedScope/blob/master/enviroment/docker_files/federatedscope-torch1.8-application.Dockerfile). 
+The experiments are conducted on the *federatedscope-torch1.8-application* docker image, you can build it using the [Dockfile](https://github.com/alibaba/FederatedScope/blob/master/enviroment/docker_files/federatedscope-torch1.8-application.Dockerfile). If you do not want to use docker, you can also install the required package according to the steps depicted in the Dockfile.
 
 We also provide a built docker [image](https://federatedscope.oss-cn-beijing.aliyuncs.com/federatedscope_cuda10_torch18_app.tar), you can download it and creat your image as 
 ```
@@ -36,6 +36,13 @@ You can find the full scripts from the another [branch](https://github.com/aliba
 We put all the config yaml file in the directory `benchmark/pfl_bench/yaml_best_runs`.
 To reproduce the experiments with searched best configurations, you can run the experiment as the following example:
 ```
+## Pre-step-1: If you do not use our docker, please install Federated Scope according to the pre-steps
+# git clone https://github.com/alibaba/FederatedScope.git
+## Pre-step-2: follow https://github.com/alibaba/FederatedScope/blob/master/README.md to build the running environment
+## Pre-step-3: switch to the branch `feature/pFL_bench` if you want to run the codes with the version for paper's experiments.
+# git switch Feature/pfl_bench
+
+# Try a run with the example yaml
 python federatedscope/main.py --cfg benchmark/pfl_bench/yaml_best_runs/FedBN_FEMNIST-s02.yaml
 ```
 Then all the metrics will be tracked in your logfile and send to wandb monitor.
