@@ -18,7 +18,7 @@ def read_file(path):
     return data
 
 
-def create_imdb_examples(root, split):
+def create_imdb_examples(root, split, debug=False):
     if not osp.exists(osp.join(root, split)):
         logger.info('Downloading imdb dataset')
         url = 'https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz'
@@ -45,6 +45,9 @@ def create_imdb_examples(root, split):
         examples.append((data, 0))
     random.shuffle(examples)
 
+    if debug:
+        examples = examples[:100]
+
     if split == 'train':
         num_train_samples = int(0.9 * len(examples))
         return examples[:num_train_samples], examples[num_train_samples:]
@@ -52,7 +55,7 @@ def create_imdb_examples(root, split):
         return examples
 
 
-def create_imdb_dataset(root, split, tokenizer, max_seq_len, model_type, cache_dir=''):
+def create_imdb_dataset(root, split, tokenizer, max_seq_len, model_type, cache_dir='', debug=False):
     logger.info('Preprocessing {} {} dataset'.format('imdb', split))
     cache_file = osp.join(cache_dir, 'imdb', '_'.join(['imdb', split, str(max_seq_len), model_type]) + '.pt')
     if osp.exists(cache_file):
@@ -61,7 +64,7 @@ def create_imdb_dataset(root, split, tokenizer, max_seq_len, model_type, cache_d
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_imdb_examples(root, split)
+        examples = create_imdb_examples(root, split, debug)
         encoded_inputs = None
 
     def _create_dataset(examples_, encoded_inputs_=None):

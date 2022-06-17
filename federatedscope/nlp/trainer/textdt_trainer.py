@@ -90,14 +90,15 @@ class TextDTTrainer(GeneralTorchTrainer):
 
     def _load_model(self, ctx):
         load_path = ctx.cfg.federate.load_from
-        logger.info('Loading model from \'{}\''.format(load_path))
         global_ckpt_path = osp.join(load_path, 'global_model.pt')
-        global_ckpt = torch.load(global_ckpt_path, map_location='cpu')['model']
         client_ckpt_path = osp.join(load_path, 'client_model_{}.pt'.format(ctx.cfg.data.type))
-        client_ckpt = torch.load(client_ckpt_path, map_location='cpu')['model']
-        global_ckpt.update(client_ckpt)
-        model_ckpt = global_ckpt
-        ctx.model.load_state_dict(model_ckpt)
+        if osp.exists(global_ckpt_path) and osp.exists(client_ckpt_path):
+            logger.info('Loading model from \'{}\''.format(load_path))
+            global_ckpt = torch.load(global_ckpt_path, map_location='cpu')['model']
+            client_ckpt = torch.load(client_ckpt_path, map_location='cpu')['model']
+            global_ckpt.update(client_ckpt)
+            model_ckpt = global_ckpt
+            ctx.model.load_state_dict(model_ckpt)
 
     def _test(self, ctx):
         logger.info('==> Start test evaluation')

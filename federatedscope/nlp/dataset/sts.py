@@ -27,7 +27,7 @@ def read_tsv(file_path):
         return data
 
 
-def create_sts_examples(root, split):
+def create_sts_examples(root, split, debug=False):
     data_path = osp.join(root, split + '.tsv')
 
     if not osp.exists(data_path):
@@ -52,6 +52,9 @@ def create_sts_examples(root, split):
         label = float(line[label_id])
         examples.append(GlueExample(text_a, text_b, label))
 
+    if debug:
+        examples = examples[:100]
+
     if split == 'train':
         num_train_samples = int(0.9 * len(examples))
         return examples[:num_train_samples], examples[num_train_samples:]
@@ -59,7 +62,7 @@ def create_sts_examples(root, split):
         return examples
 
 
-def create_sts_dataset(root, split, tokenizer, max_seq_len, model_type, cache_dir=''):
+def create_sts_dataset(root, split, tokenizer, max_seq_len, model_type, cache_dir='', debug=False):
     logger.info('Preprocessing {} {} dataset'.format('sts', split))
     cache_file = osp.join(cache_dir, 'sts', '_'.join(['sts', split, str(max_seq_len), model_type]) + '.pt')
     if osp.exists(cache_file):
@@ -68,7 +71,7 @@ def create_sts_dataset(root, split, tokenizer, max_seq_len, model_type, cache_di
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_sts_examples(root, split)
+        examples = create_sts_examples(root, split, debug)
         encoded_inputs = None
 
     def _create_dataset(examples_, encoded_inputs_=None):

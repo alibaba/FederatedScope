@@ -28,6 +28,7 @@ def extend_textdt_cfg(cfg):
     cfg.data.max_query_len = 64
     cfg.data.trunc_stride = 32
     cfg.data.cache_dir = ''
+    cfg.data.debug = False
 
     cfg.scheduler = CN()
     cfg.scheduler.type = 'step'

@@ -14,17 +14,19 @@ def load_textdt_data(config):
     root = config.data.dir.sts
     max_seq_len = config.data.max_seq_len.sts
     sts_train, sts_dev = create_sts_dataset(root, 'train', tokenizer, max_seq_len,
-                                            model_type=model_type, cache_dir=config.data.cache_dir)
+                                            model_type=model_type, cache_dir=config.data.cache_dir,
+                                            debug=config.data.debug)
     sts_test = create_sts_dataset(root, 'dev', tokenizer, max_seq_len, model_type=model_type,
-                                  cache_dir=config.data.cache_dir)
+                                  cache_dir=config.data.cache_dir, debug=config.data.debug)
 
     # imdb
     root = config.data.dir.imdb
     max_seq_len = config.data.max_seq_len.imdb
     imdb_train, imdb_dev = create_imdb_dataset(root, 'train', tokenizer, max_seq_len,
-                                               model_type=model_type, cache_dir=config.data.cache_dir)
+                                               model_type=model_type, cache_dir=config.data.cache_dir,
+                                               debug=config.data.debug)
     imdb_test = create_imdb_dataset(root, 'test', tokenizer, max_seq_len, model_type=model_type,
-                                    cache_dir=config.data.cache_dir)
+                                    cache_dir=config.data.cache_dir, debug=config.data.debug)
 
     # squad
     root = config.data.dir.squad
@@ -32,9 +34,11 @@ def load_textdt_data(config):
     max_query_len = config.data.max_query_len
     trunc_stride = config.data.trunc_stride
     squad_train, squad_dev = create_squad_dataset(root, 'train', tokenizer, max_seq_len, max_query_len,
-                                                  trunc_stride, model_type=model_type, cache_dir=config.data.cache_dir)
+                                                  trunc_stride, model_type=model_type, cache_dir=config.data.cache_dir,
+                                                  debug=config.data.debug)
     squad_test = create_squad_dataset(root, 'dev', tokenizer, max_seq_len, max_query_len,
-                                      trunc_stride, model_type=model_type, cache_dir=config.data.cache_dir)
+                                      trunc_stride, model_type=model_type, cache_dir=config.data.cache_dir,
+                                      debug=config.data.debug)
 
     train_data = [sts_train, imdb_train, squad_train]
     dev_data = [sts_dev, imdb_dev, squad_dev]

@@ -130,7 +130,7 @@ def encode(tokenizer, text_a, text_b, max_seq_len, max_query_len, added_trunc_si
     return SquadEncodedInput(token_ids, token_type_ids, attention_mask, overflow_token_ids)
 
 
-def create_squad_examples(root, split):
+def create_squad_examples(root, split, debug=False):
     if not osp.exists(osp.join(root, split + '.json')):
         logger.info('Downloading squad dataset')
         url = 'https://rajpurkar.github.io/SQuAD-explorer/dataset/{}-v2.0.json'.format(split)
@@ -169,6 +169,9 @@ def create_squad_examples(root, split):
                 examples.append(SquadExample(qa_id, question, context, train_answer, val_answer,
                                              start_pos, end_pos, context_tokens, is_impossible))
 
+    if debug:
+        examples = examples[:100]
+
     if split == 'train':
         num_train_samples = int(0.9 * len(examples))
         return examples[:num_train_samples], examples[num_train_samples:]
@@ -176,7 +179,8 @@ def create_squad_examples(root, split):
         return examples
 
 
-def create_squad_dataset(root, split, tokenizer, max_seq_len, max_query_len, trunc_stride, model_type, cache_dir=''):
+def create_squad_dataset(root, split, tokenizer, max_seq_len, max_query_len, trunc_stride, model_type,
+                         cache_dir='', debug=False):
     logger.info('Preprocessing {} {} dataset'.format('squad', split))
     cache_file = osp.join(cache_dir, 'squad', '_'.join(['squad', split, str(max_seq_len), str(max_query_len),
                                                         str(trunc_stride), model_type]) + '.pt')
@@ -186,7 +190,7 @@ def create_squad_dataset(root, split, tokenizer, max_seq_len, max_query_len, tru
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_squad_examples(root, split)
+        examples = create_squad_examples(root, split, debug)
         encoded_inputs = None
 
     def _create_dataset(examples_, encoded_inputs_=None):
