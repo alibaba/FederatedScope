@@ -40,6 +40,7 @@ def extend_textdt_cfg(cfg):
     cfg.trainer.train_steps = 100
 
     cfg.maml = CN()
+    cfg.maml.use = False
     cfg.maml.inner_lr = 1e-3
 
     # --------------- register corresponding check function ----------

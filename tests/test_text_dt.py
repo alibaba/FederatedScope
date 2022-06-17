@@ -105,7 +105,7 @@ class TextDTTest(unittest.TestCase):
         init_cfg.data.dir.imdb = 'test_data/imdb/'
         init_cfg.data.dir.squad = 'test_data/squad2.0/'
         init_cfg.data.cache_dir = 'test_data/cache_debug/'
-        init_cfg.data.batch_size = 2
+        init_cfg.data.batch_size = 1
         init_cfg.data.debug = True
         if init_cfg.federate.total_round_num > 1:
             init_cfg.federate.total_round_num = 2
