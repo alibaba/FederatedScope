@@ -1,0 +1,24 @@
+arm0:
+  optimizer.lr: 0.01
+  optimizer.momentum: 0.1
+arm1:
+  optimizer.lr: 0.01
+  optimizer.momentum: 0.9
+arm2:
+  optimizer.lr: 0.02
+  optimizer.momentum: 0.2
+arm3:
+  optimizer.lr: 0.02
+  optimizer.momentum: 0.8
+arm4:
+  optimizer.lr: 0.04
+  optimizer.momentum: 0.1
+arm5:
+  optimizer.lr: 0.04
+  optimizer.momentum: 0.7
+arm6:
+  optimizer.lr: 0.08
+  optimizer.momentum: 0.3
+arm7:
+  optimizer.lr: 0.08
+  optimizer.momentum: 0.8

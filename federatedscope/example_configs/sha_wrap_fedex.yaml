@@ -1,0 +1,30 @@
+outdir: 'sha_wrap_fedex'
+use_gpu: True
+federate:
+  mode: 'standalone'
+  total_round_num: 20
+  make_global_eval: False
+  client_num: 5
+  share_local_model: True
+  online_aggr: True
+  use_diff: True
+trainer:
+  type: 'general'
+eval:
+  freq: 10
+data:
+  type: 'toy'
+model:
+  type: 'lr'
+hpo:
+  scheduler: sha
+  num_workers: 1
+  init_cand_num: 5
+  ss: federatedscope/example_configs/sha_wrap_fedex_ss.yaml
+  sha:
+    budgets: [2, 4]
+  fedex:
+    use: True
+    ss: 'federatedscope/example_configs/fedex_flat_search_space.yaml'
+#    ss: 'federatedscope/example_configs/fedex_grid_search_space.yaml'
+    diff: True

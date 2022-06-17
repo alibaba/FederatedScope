@@ -1,0 +1,18 @@
+use_gpu: True
+federate:
+  mode: 'standalone'
+  total_round_num: 10
+  make_global_eval: False
+  client_num: 5
+trainer:
+  type: 'general'
+eval:
+  freq: 5
+model:
+  type: 'lr'
+data:
+  type: 'toy'
+hpo:
+  num_workers: 3
+  init_cand_num: 3
+  ss: federatedscope/example_configs/toy_hpo_ss.yaml

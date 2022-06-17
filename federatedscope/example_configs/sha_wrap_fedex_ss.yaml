@@ -1,0 +1,3 @@
+hpo.fedex.eta0:
+  type: cate
+  choices: [-1.0, 0.005, 0.05]

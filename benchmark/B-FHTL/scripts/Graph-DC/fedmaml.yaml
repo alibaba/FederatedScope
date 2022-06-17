@@ -1,0 +1,39 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 20
+  improve_indicator_mode: mean
+federate:
+  mode: 'standalone'
+  make_global_eval: False
+  local_update_steps: 1
+  total_round_num: 400
+  share_local_model: False
+data:
+  root: data/
+  type: fs_contest_data
+  splitter: ooxx
+model:
+  type: gin
+  hidden: 64
+  out_channels: 0
+  task: graph
+personalization:
+  local_param: ['encoder_atom', 'encoder', 'clf']   # to handle size-different pre & post layers
+optimizer:
+  lr: 0.01
+  weight_decay: 0.0005
+  type: SGD
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: graphmaml_trainer
+  finetune:
+    before_eval: True
+    steps: 300
+eval:
+  freq: 5
+  metrics: ['acc', 'correct']
+maml:
+  use: True
+  inner_lr: 0.01

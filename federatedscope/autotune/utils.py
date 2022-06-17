@@ -1,68 +1,52 @@
 from copy import deepcopy
 import math
 
+import yaml
 import pandas as pd
+import ConfigSpace as CS
 
-from federatedscope.autotune.choice_types import Continuous, Discrete
 
-
-def split_raw_config(raw_dict):
-    '''
+def parse_search_space(config_path):
+    """Parse yaml format configuration to generate search space
     Arguments:
-        raw_dict (dict): the loaded yaml file.
-    Returns:
-        det_config (dict): determined hyper-parameters.
-        tbd_config (dict): to be determined hyper-parameters.
-    '''
-    det_config, tbd_config = dict(), dict()
+        config_path (str): the path of the yaml file.
+    :returns: the search space.
+    :rtype: ConfigSpace object
+    """
 
-    def traverse(root, rootname):
-        if isinstance(root, dict):
-            for k, v in root.items():
-                traverse(v, rootname + '.' + k if rootname else k)
+    ss = CS.ConfigurationSpace()
+
+    with open(config_path, 'r') as ips:
+        raw_ss_config = yaml.load(ips, Loader=yaml.FullLoader)
+
+    for k in raw_ss_config.keys():
+        name = k
+        v = raw_ss_config[k]
+        hyper_type = v['type']
+        del v['type']
+        v['name'] = name
+
+        if hyper_type == 'float':
+            hyper_config = CS.UniformFloatHyperparameter(**v)
+        elif hyper_type == 'int':
+            hyper_config = CS.UniformIntegerHyperparameter(**v)
+        elif hyper_type == 'cate':
+            hyper_config = CS.CategoricalHyperparameter(**v)
         else:
-            if isinstance(root, Continuous) or isinstance(root, Discrete):
-                tbd_config[rootname] = root
-            else:
-                det_config[rootname] = root
+            raise ValueError("Unsupported hyper type {}".format(hyper_type))
+        ss.add_hyperparameter(hyper_config)
 
-    traverse(raw_dict, '')
-    return det_config, tbd_config
-
-
-def generate_candidates(search_space):
-    '''
-    Arguments:
-        search_space (dict): the search space.
-    Returns:
-        cands (list): each eleemnt is a dict corresponding to a specific configuration.
-    '''
-
-    # enumerate all combinations
-    cands = []
-
-    def traverse(it, idx, cur):
-        if idx >= len(it):
-            cands.append(deepcopy(cur))
-            return
-        k = it[idx]
-        for val in search_space[k]:
-            cur[k] = val
-            traverse(it, idx + 1, cur)
-
-    keys = [key for key in search_space]
-    traverse(keys, 0, dict())
-
-    return cands
+    return ss
 
 
 def config2cmdargs(config):
     '''
     Arguments:
-        config (dict): key is cfg node name, value is the choice of hyper-parameter.
+        config (dict): key is cfg node name, value is the specified value.
     Returns:
         results (list): cmd args
     '''
+
     results = []
     for k, v in config.items():
         results.append(k)
@@ -77,6 +61,7 @@ def config2str(config):
     Returns:
         name (str): the string representation of this config
     '''
+
     vals = []
     for k in config:
         idx = k.rindex('.')
@@ -96,3 +81,53 @@ def summarize_hpo_results(configs, perfs, white_list=None, desc=False):
     d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
     df = pd.DataFrame(d, columns=cols)
     return df
+
+
+def parse_logs(file_list):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    FONTSIZE = 40
+    MARKSIZE = 25
+
+    def process(file):
+        history = []
+        with open(file, 'r') as F:
+            for line in F:
+                try:
+                    state, line = line.split('INFO: ')
+                    config = eval(line[line.find('{'):line.find('}') + 1])
+                    performance = float(
+                        line[line.find('performance'):].split(' ')[1])
+                    print(config, performance)
+                    history.append((config, performance))
+                except:
+                    continue
+        best_seen = np.inf
+        tol_budget = 0
+        x, y = [], []
+
+        for config, performance in history:
+            tol_budget += config['federate.total_round_num']
+            if best_seen > performance or config[
+                    'federate.total_round_num'] > tmp_b:
+                best_seen = performance
+            x.append(tol_budget)
+            y.append(best_seen)
+            tmp_b = config['federate.total_round_num']
+        return np.array(x) / tol_budget, np.array(y)
+
+    # Draw
+    plt.figure(figsize=(10, 7.5))
+    plt.xticks(fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
+
+    plt.xlabel('Fraction of budget', size=FONTSIZE)
+    plt.ylabel('Loss', size=FONTSIZE)
+
+    for file in file_list:
+        x, y = process(file)
+        plt.plot(x, y, linewidth=1, markersize=MARKSIZE)
+    plt.legend(file_list, fontsize=23, loc='lower right')
+    plt.savefig(f'exp2.pdf', bbox_inches='tight')
+    plt.close()

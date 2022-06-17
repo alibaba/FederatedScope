@@ -4,7 +4,6 @@ from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 import torch
 import os
 
-from federatedscope.core.configs.config import global_cfg
 
 
 class Aggregator(ABC):
@@ -20,10 +19,11 @@ class ClientsAvgAggregator(Aggregator):
     """Implementation of vanilla FedAvg refer to `Communication-efficient learning of deep networks from decentralized data` [McMahan et al., 2017]
         (http://proceedings.mlr.press/v54/mcmahan17a.html)
     """
-    def __init__(self, model=None, device='cpu'):
+    def __init__(self, model=None, device='cpu', config=None):
         super(Aggregator, self).__init__()
         self.model = model
         self.device = device
+        self.cfg = config
 
     def aggregate(self, agg_info):
         """
@@ -37,7 +37,7 @@ class ClientsAvgAggregator(Aggregator):
 
         models = agg_info["client_feedback"]
         recover_fun = agg_info['recover_fun'] if (
-            'recover_fun' in agg_info and global_cfg.federate.use_ss) else None
+            'recover_fun' in agg_info and self.cfg.federate.use_ss) else None
         avg_model = self._para_weighted_avg(models, recover_fun=recover_fun)
 
         return avg_model
@@ -76,15 +76,15 @@ class ClientsAvgAggregator(Aggregator):
             for i in range(len(models)):
                 local_sample_size, local_model = models[i]
 
-                if global_cfg.federate.ignore_weight:
+                if self.cfg.federate.ignore_weight:
                     weight = 1.0 / len(models)
-                elif global_cfg.federate.use_ss:
+                elif self.cfg.federate.use_ss:
                     # When using secret sharing, what the server receives are sample_size * model_para
                     weight = 1.0
                 else:
                     weight = local_sample_size / training_set_size
 
-                if not global_cfg.federate.use_ss:
+                if not self.cfg.federate.use_ss:
                     if isinstance(local_model[key], torch.Tensor):
                         local_model[key] = local_model[key].float()
                     else:
@@ -95,7 +95,7 @@ class ClientsAvgAggregator(Aggregator):
                 else:
                     avg_model[key] += local_model[key] * weight
 
-            if global_cfg.federate.use_ss and recover_fun:
+            if self.cfg.federate.use_ss and recover_fun:
                 avg_model[key] = recover_fun(avg_model[key])
                 # When using secret sharing, what the server receives are sample_size * model_para
                 avg_model[key] /= training_set_size
@@ -113,8 +113,8 @@ class NoCommunicationAggregator(Aggregator):
 
 
 class OnlineClientsAvgAggregator(ClientsAvgAggregator):
-    def __init__(self, model=None, device='cpu', src_device='cpu'):
-        super(OnlineClientsAvgAggregator, self).__init__(model, device)
+    def __init__(self, model=None, device='cpu', src_device='cpu', config=None):
+        super(OnlineClientsAvgAggregator, self).__init__(model, device, config)
         self.src_device = src_device
 
     def reset(self):
@@ -146,8 +146,8 @@ class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
     """"
         # conduct aggregation by interpolating global model from server and local models from clients
     """
-    def __init__(self, model=None, device='cpu', beta=1.0):
-        super(ServerClientsInterpolateAggregator, self).__init__(model, device)
+    def __init__(self, model=None, device='cpu', config=None, beta=1.0):
+        super(ServerClientsInterpolateAggregator, self).__init__(model, device, config)
         self.beta = beta  # the weight for local models used in interpolation
 
     def aggregate(self, agg_info):
@@ -170,10 +170,7 @@ class FedOptAggregator(ClientsAvgAggregator):
 
     """
     def __init__(self, config, model, device='cpu'):
-        super(FedOptAggregator, self).__init__(model, device)
-        self.cfg = config
-        self.model = model
-        self.device = device
+        super(FedOptAggregator, self).__init__(model, device, config)
         self.optimizer = get_optimizer(model=self.model,
                                        **config.fedopt.optimizer)
 
