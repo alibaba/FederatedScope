@@ -36,9 +36,21 @@ export PYTHONPATH=~/FedHPOB:$PYTHONPATH
 
 ### Step 2. Prepare data files
 
-**Note**: If you only want to use FedHPO-B, you can skip to **Step3**.
+**Note**: If you only want to use FedHPO-B with raw mode, you can skip to **Step3**.
 
+All data files are available on AliyunOSS, you need to download the data files and place them in the `~/data/tabular_data/` or `~/data/surrogate_model/`  before using FedHPO-B.
 
+The naming pattern of the url of data files obeys the rule:
+
+```
+https://federatedscope.oss-cn-beijing.aliyuncs.com/fedhpob_{BENCHMARK}_{MODE}.zip
+```
+
+where `BENCHMARK` should be one of `cnn`, `bert`, `gcn`, `lr`, or `mlp`, and `MODE` should be one of `raw` or `surrogate`.
+
+Then unzip the data file, move data under tabular mode to `~/data/tabular_data/` and data under surrogate mode to `~/data/surrogate_model`.
+
+Fortunately, we provide tools to automatically convert from tabular data to surrogate pickled model, so it is feasible to download only tabular data (it will take a few minutes to train the surrogate model).
 
 ### Step3. Start running
 
