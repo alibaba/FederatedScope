@@ -1,5 +1,5 @@
 asyn:
-  min_received_num: 1
+  min_received_num: 160
   min_received_rate: -1
   timeout: 3
   use: true
@@ -18,10 +18,10 @@ attack:
 backend: torch
 cfg_file: ''
 criterion:
-  type: CrossEntropyLoss
+  type: MSELoss
 data:
   args: []
-  batch_size: 32
+  batch_size: 1024
   cSBM_phi:
   - 0.5
   - 0.5
@@ -32,6 +32,7 @@ data:
     walk_length: 2
   loader: ''
   num_workers: 0
+  plot_boxplot: false
   pre_transform: []
   root: data/
   server_holds_all: false
@@ -40,22 +41,15 @@ data:
   - 10
   - 5
   splits:
-  - 0.6
-  - 0.2
-  - 0.2
+  - 0.7
+  - 0.15
+  - 0.15
   splitter: ''
   splitter_args: []
-  subsample: 0.05
+  subsample: 1
   target_transform: []
-  transform:
-  - - ToTensor
-    - {}
-  - - Normalize
-    - mean:
-      - 0.1307
-      std:
-      - 0.3081
-  type: femnist
+  transform: []
+  type: HFLMovieLens1M
 device: -1
 distribute:
   use: false
@@ -65,11 +59,9 @@ early_stop:
   patience: 5
   the_smaller_the_better: true
 eval:
-  best_res_update_round_wise_key: val_loss
+  best_res_update_round_wise_key: val_avg_loss
   freq: 10
-  metrics:
-  - acc
-  - correct
+  metrics: []
   monitoring: []
   report:
   - weighted_avg
@@ -80,33 +72,34 @@ eval:
   split:
   - test
   - val
-expname: Ditto_convnet2_on_femnist_lr0.1_lstep3_+fedBN+fedOpt
-expname_tag: +fedBN+fedOpt
+  task_type: regression
+expname: FedEM_HMFNet_on_HFLMovieLens1M_lr1.0_lstep1_finetune
+expname_tag: finetune
 federate:
   batch_or_epoch: epoch
-  client_num: 200
+  client_num: 1000
   data_weighted_aggr: false
   ignore_weight: false
   join_in_info: []
-  local_update_steps: 3
+  local_update_steps: 1
   make_global_eval: false
-  method: Ditto
+  method: FedEM
   mode: standalone
   online_aggr: false
   restore_from: ''
-  sample_client_num: 16
-  sample_client_rate: 0.1
+  sample_client_num: 160
+  sample_client_rate: 0.2
   save_to: ''
   share_local_model: false
   total_round_num: 1000
   unseen_clients_rate: 0.2
   use_ss: false
-federate.local_update_steps: 3
+federate.local_update_steps: 1
 fedopt:
-  lr_server: 1.5
+  lr_server: 0.9
   type_optimizer: SGD
   use: true
-fedopt.lr_server: 1.5
+fedopt.lr_server: 0.9
 fedprox:
   use: false
 fedsageplus:
@@ -149,54 +142,51 @@ hpo:
     elim_round_num: 3
   working_folder: hpo
 model:
-  dropout: 0
+  dropout: 0.5
   embed_size: 8
   graph_pooling: mean
-  hidden: 2048
+  hidden: 20
   in_channels: 0
   layer: 2
-  model_num_per_trainer: 1
-  num_item: 0
-  num_user: 0
-  out_channels: 62
+  model_num_per_trainer: 3
+  num_item: 3706
+  num_user: 6040
+  out_channels: 1
   task: node
-  type: convnet2
+  type: HMFNet
   use_bias: true
 nbafl:
   use: false
 optimizer:
   grad_clip: 5
-  lr: 0.1
+  lr: 1
   momentum: 0
   type: SGD
   weight_decay: 0
-optimizer.lr: 0.1
-outdir: exp_pfl_bench/Ditto_convnet2_on_femnist_lr0.1_lstep3_+fedBN+fedOpt/sub_exp_20220602121903
+optimizer.lr: 1
+outdir: exp_pfl_bench/FedEM_HMFNet_on_HFLMovieLens1M_lr1.0_lstep1_finetune
 personalization:
   K: 5
   apfl_alpha: 0
   beta: 1
-  local_param:
-  - bn
-  - norms
+  local_param: []
   local_update_steps: 1
-  lr: 0.01
-  regular_weight: 0.5
+  lr: 1
+  regular_weight: 0.1
   share_non_trainable_para: false
-personalization.regular_weight: 0.5
 regularizer:
   mu: 0
   type: ''
-seed: 1
+seed: 0
 sgdmf:
   use: false
 trainer:
   finetune:
-    before_eval: false
+    before_eval: true
     freeze_param: ''
     lr: 0.01
     steps: 5
-  type: cvtrainer
+  type: mftrainer
 use_gpu: true
 verbose: 1
 vertical:

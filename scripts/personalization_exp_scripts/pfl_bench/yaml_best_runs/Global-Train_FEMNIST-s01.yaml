@@ -80,33 +80,30 @@ eval:
   split:
   - test
   - val
-expname: Ditto_convnet2_on_femnist_lr0.1_lstep3_+fedBN+fedOpt
-expname_tag: +fedBN+fedOpt
+expname: global_convnet2_on_femnist_lr0.1_lstep1_global_train
+expname_tag: global_train
 federate:
   batch_or_epoch: epoch
-  client_num: 200
+  client_num: 1
   data_weighted_aggr: false
   ignore_weight: false
   join_in_info: []
-  local_update_steps: 3
+  local_update_steps: 1
   make_global_eval: false
-  method: Ditto
+  method: global
   mode: standalone
   online_aggr: false
   restore_from: ''
-  sample_client_num: 16
+  sample_client_num: 1
   sample_client_rate: 0.1
   save_to: ''
   share_local_model: false
   total_round_num: 1000
-  unseen_clients_rate: 0.2
+  unseen_clients_rate: 0
   use_ss: false
-federate.local_update_steps: 3
+federate.local_update_steps: 1
 fedopt:
-  lr_server: 1.5
-  type_optimizer: SGD
-  use: true
-fedopt.lr_server: 1.5
+  use: false
 fedprox:
   use: false
 fedsageplus:
@@ -171,19 +168,15 @@ optimizer:
   type: SGD
   weight_decay: 0
 optimizer.lr: 0.1
-outdir: exp_pfl_bench/Ditto_convnet2_on_femnist_lr0.1_lstep3_+fedBN+fedOpt/sub_exp_20220602121903
+outdir: exp_pfl_bench/global_convnet2_on_femnist_lr0.1_lstep1_global_train
 personalization:
   K: 5
-  apfl_alpha: 0
   beta: 1
-  local_param:
-  - bn
-  - norms
+  local_param: []
   local_update_steps: 1
   lr: 0.01
-  regular_weight: 0.5
+  regular_weight: 0.1
   share_non_trainable_para: false
-personalization.regular_weight: 0.5
 regularizer:
   mu: 0
   type: ''
