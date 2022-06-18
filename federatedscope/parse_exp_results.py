@@ -34,10 +34,13 @@ def main():
                 continue
             if line.startswith('{'):
                 line = line.replace("\'", "\"")
-                line = json.loads(s=line)
+                try:
+                    line = json.loads(s=line)
+                except:
+                    continue
                 if line['Round'] == 'Final' and line['Role'] == 'Server #':
-                    res = line['Results_raw']
                     if 'Results_raw' in line.keys():
+                        res = line['Results_raw']
                         if 'server_global_eval' in res.keys():
                             result_list_global.append(res['server_global_eval'])
                         if 'client_summarized_weighted_avg' in res.keys():

@@ -1,0 +1,46 @@
+use_gpu: True
+device: 0
+seed: 12345
+outdir: exp/fedprox/
+federate:
+  mode: standalone
+  method: fedprox-textdt
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  total_round_num: 50
+  client_num: 3
+  save_to: exp/fedprox/ckpt/global_model.pt
+data:
+  type: text-dt
+  dir:
+    sts: data/STS-B/
+    imdb: data/imdb/
+    squad: data/squad2.0/
+  max_seq_len:
+    sts: 128
+    imdb: 128
+    squad: 128
+  max_query_len: 64
+  trunc_stride: 32
+  batch_size: 32
+  num_workers: 0
+  cache_dir: cache
+model:
+  type: text-dt
+  bert_type: bert-base-uncased
+  num_labels:
+    sts: 1
+    imdb: 2
+    squad: 2
+personalization:
+  local_param: ['classifier']
+trainer:
+  type: text-dt
+  disp_freq: 50
+  val_freq: 100000000  # eval freq across batches
+eval:
+  freq: 100000000  # eval freq across rounds
+  report: ['raw']
+fedprox:
+  use: True
+  mu: 0.001
