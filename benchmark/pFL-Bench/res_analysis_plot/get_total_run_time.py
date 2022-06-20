@@ -1,10 +1,8 @@
-
 import wandb
 
 api = wandb.Api()
 
-name_project = ["daoyuan/pFL-bench",
-                "daoyuan/pfl-bench-best-repeat"]
+name_project = ["daoyuan/pFL-bench", "daoyuan/pfl-bench-best-repeat"]
 
 total_run_time = 0
 run_cnt = 0
@@ -19,14 +17,17 @@ def convert(seconds):
 
     days = seconds // seconds_in_day
     hours = (seconds - (days * seconds_in_day)) // seconds_in_hour
-    minutes = (seconds - (days * seconds_in_day) - (hours * seconds_in_hour)) // seconds_in_minute
+    minutes = (seconds - (days * seconds_in_day) -
+               (hours * seconds_in_hour)) // seconds_in_minute
 
     return "%d:%02d:%02d" % (days, hours, minutes)
 
 
 def print_run_time():
     print(f"Total_run_t: {convert(total_run_time)}, run_cnt={run_cnt}")
-    print(f"Total_run_t_finished: {convert(total_run_time_finished)}, run_cnt_finish={run_finish_cnt}")
+    print(
+        f"Total_run_t_finished: {convert(total_run_time_finished)}, run_cnt_finish={run_finish_cnt}"
+    )
 
 
 for p in name_project:

@@ -62,7 +62,8 @@ def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
     else:
         legend = [x.upper() for x in data_list]
     os.makedirs('figures', exist_ok=True)
-    plt.savefig(f'figures/{model}_{sample_client}_{algo}_cdf.pdf', bbox_inches='tight')
+    plt.savefig(f'figures/{model}_{sample_client}_{algo}_cdf.pdf',
+                bbox_inches='tight')
     plt.close()
 
     return target
@@ -94,7 +95,8 @@ def get_mean_rank(traj_dict):
             rank_bbo += rankdata(ys[:5], axis=0)
             rank_mf += rankdata(ys[-5:], axis=0)
     xs = np.linspace(0, 1, 500)
-    return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(traj_dict)
+    return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(
+        traj_dict)
 
 
 def get_mean_loss(traj_dict):
@@ -120,26 +122,28 @@ def get_mean_loss(traj_dict):
             rank_bbo += np.array(ys[:5])
             rank_mf += np.array(ys[-5:])
     xs = np.linspace(0, 1, 500)
-    print(str([round(x, 4) for x in (rank / len(traj_dict))[:,-1].tolist()]).replace(',', ' &'))
-    return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(traj_dict)
+    print(
+        str([round(x, 4) for x in (rank / len(traj_dict))[:, -1].tolist()
+             ]).replace(',', ' &'))
+    return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(
+        traj_dict)
 
 
-def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, family, suffix, Y_label):
+def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
+              family, suffix, Y_label):
     os.makedirs('figures', exist_ok=True)
     # BBO + MF
     plt.figure(figsize=(10, 7.5))
 
     for idx, rank in enumerate(mean_ranks):
-        plt.plot(xs,
-                 rank,
-                 linewidth=1,
-                 color=COLORS[idx],
-                 markersize=MARKSIZE)
+        plt.plot(xs, rank, linewidth=1, color=COLORS[idx], markersize=MARKSIZE)
     plt.xticks(np.linspace(0, 1, 5),
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
                fontsize=FONTSIZE)
     if Y_label == 'Mean_rank':
-        plt.yticks(np.linspace(1, 10, 10), ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], fontsize=FONTSIZE)
+        plt.yticks(np.linspace(1, 10, 10),
+                   ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+                   fontsize=FONTSIZE)
         plt.ylabel('Mean rank', size=FONTSIZE)
         print(dataset, mean_ranks[:, -1].tolist())
     else:
@@ -155,16 +159,13 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, f
     plt.figure(figsize=(10, 7.5))
 
     for idx, rank in enumerate(mean_ranks_bbo):
-        plt.plot(xs,
-                 rank,
-                 linewidth=1,
-                 color=COLORS[idx],
-                 markersize=MARKSIZE)
+        plt.plot(xs, rank, linewidth=1, color=COLORS[idx], markersize=MARKSIZE)
     plt.xticks(np.linspace(0, 1, 5),
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
                fontsize=FONTSIZE)
     if Y_label == 'Mean_rank':
-        plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'], fontsize=FONTSIZE)
+        plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'],
+                   fontsize=FONTSIZE)
         plt.ylabel('Mean rank', size=FONTSIZE)
     else:
         plt.yticks(fontsize=FONTSIZE)
@@ -189,7 +190,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, f
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
                fontsize=FONTSIZE)
     if Y_label == 'Mean_rank':
-        plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'], fontsize=FONTSIZE)
+        plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'],
+                   fontsize=FONTSIZE)
         plt.ylabel('Mean rank', size=FONTSIZE)
     else:
         plt.yticks(fontsize=FONTSIZE)
@@ -218,13 +220,13 @@ def rank_over_time(root,
     elif family in ['mlp', 'lr']:
         data_list = [
             '10101@openml', '53@openml', '146818@openml', '146821@openml',
-             '146822@openml', '31@openml', '3917@openml'
+            '146822@openml', '31@openml', '3917@openml'
         ]
     else:
         # All dataset
         data_list = [
-            'femnist', 'cora', 'citeseer', 'pubmed', 'sst2', 'cola',
-            'mlp', 'lr', '10101@openml', '53@openml', '146818@openml',
+            'femnist', 'cora', 'citeseer', 'pubmed', 'sst2', 'cola', 'mlp',
+            'lr', '10101@openml', '53@openml', '146818@openml',
             '146821@openml', '9952@openml', '146822@openml', '31@openml',
             '3917@openml'
         ]
@@ -255,10 +257,12 @@ def rank_over_time(root,
     for dataset in traj:
         if loss:
             print(dataset)
-            xs, mean_ranks, mean_ranks_bbo, mean_ranks_mf = get_mean_loss(traj[dataset])
+            xs, mean_ranks, mean_ranks_bbo, mean_ranks_mf = get_mean_loss(
+                traj[dataset])
             Y_label = 'Loss'
         else:
-            xs, mean_ranks, mean_ranks_bbo, mean_ranks_mf = get_mean_rank(traj[dataset])
+            xs, mean_ranks, mean_ranks_bbo, mean_ranks_mf = get_mean_rank(
+                traj[dataset])
             Y_label = 'Mean_rank'
         if len(family_rank):
             family_rank += mean_ranks
@@ -266,10 +270,13 @@ def rank_over_time(root,
             family_rank_mf += mean_ranks_mf
         else:
             family_rank, family_rank_bbo, family_rank_mf = mean_ranks, mean_ranks_bbo, mean_ranks_mf
-        draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset, family, suffix, Y_label)
+        draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all,
+                  dataset, family, suffix, Y_label)
 
     # Draw entire family
-    draw_rank(family_rank/len(traj), family_rank_bbo/len(traj), family_rank_mf/len(traj), xs, opt_all, 'entire', family, suffix, Y_label)
+    draw_rank(family_rank / len(traj), family_rank_bbo / len(traj),
+              family_rank_mf / len(traj), xs, opt_all, 'entire', family,
+              suffix, Y_label)
 
 
 if __name__ == '__main__':

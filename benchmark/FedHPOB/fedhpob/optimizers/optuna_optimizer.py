@@ -129,8 +129,8 @@ def run_optuna(cfg):
         benchmark=benchmark,
         valid_budgets=valid_budgets,
         configspace=cfg.benchmark.configuration_space[0]),
-                    timeout=None,
-                    n_trials=cfg.optimizer.n_iterations)
+                   timeout=None,
+                   n_trials=cfg.optimizer.n_iterations)
     return monitor.history_results
 
 

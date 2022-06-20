@@ -83,10 +83,7 @@ def build_surrogate_model(datadir, model, dname, algo, key='val_acc'):
         X = np.load(os.path.join(savedir, 'X.npy'))
         Y = np.load(os.path.join(savedir, 'Y.npy'))
 
-    new_X, new_Y = sampling(X,
-                            Y,
-                            over_rate=1,
-                            down_rate=1)
+    new_X, new_Y = sampling(X, Y, over_rate=1, down_rate=1)
 
     perm = np.random.permutation(np.arange(len(new_Y)))
     new_X, new_Y = new_X[perm], new_Y[perm]
