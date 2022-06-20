@@ -71,14 +71,15 @@ def run_hpbandster(cfg):
         cfg.benchmark.data,
         cfg.benchmark.algo,
         device=cfg.benchmark.device)
-    w = MyWorker(benchmark=benchmark,
-                 monitor=monitor,
-                 sleep_interval=0,
-                 cfg=cfg,
-                 nameserver='127.0.0.1',
-                 # nameserver=ns_host,
-                 nameserver_port=ns_port,
-                 run_id=cfg.optimizer.type)
+    w = MyWorker(
+        benchmark=benchmark,
+        monitor=monitor,
+        sleep_interval=0,
+        cfg=cfg,
+        nameserver='127.0.0.1',
+        # nameserver=ns_host,
+        nameserver_port=ns_port,
+        run_id=cfg.optimizer.type)
     w.run(background=True)
 
     # Allow at most max_stages stages

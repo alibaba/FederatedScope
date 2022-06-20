@@ -64,9 +64,13 @@ def disable_fs_logger(cfg, clear_before_add=False):
 
 def cfg2name(cfg):
     repeat = 0
-    dir = os.path.join(cfg.benchmark.out_dir, f'{cfg.benchmark.data}_{cfg.benchmark.model}_{cfg.benchmark.type}_{cfg.benchmark.algo}')
+    dir = os.path.join(
+        cfg.benchmark.out_dir,
+        f'{cfg.benchmark.data}_{cfg.benchmark.model}_{cfg.benchmark.type}_{cfg.benchmark.algo}'
+    )
     os.makedirs(dir, exist_ok=True)
-    while os.path.exists(os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')):
+    while os.path.exists(
+            os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')):
         repeat += 1
     return os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')
 
