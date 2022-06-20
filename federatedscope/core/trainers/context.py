@@ -147,7 +147,9 @@ class Context(dict):
             num_train_batch_last_epoch = num_train_batch
             num_total_train_batch = local_update_steps * num_train_batch
         elif num_train_batch == 0:
-            raise RuntimeError("The number of training batch is 0, please check 'batch_size' or set 'drop_last' as False")
+            raise RuntimeError(
+                "The number of training batch is 0, please check 'batch_size' or set 'drop_last' as False"
+            )
         else:
             num_train_epoch = math.ceil(local_update_steps / num_train_batch)
             num_train_batch_last_epoch = local_update_steps % num_train_batch or num_train_batch

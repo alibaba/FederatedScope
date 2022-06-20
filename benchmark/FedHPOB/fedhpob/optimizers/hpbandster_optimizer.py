@@ -14,7 +14,12 @@ logging.basicConfig(level=logging.WARNING)
 
 
 class MyWorker(Worker):
-    def __init__(self, benchmark, monitor, sleep_interval=0, cfg=None, **kwargs):
+    def __init__(self,
+                 benchmark,
+                 monitor,
+                 sleep_interval=0,
+                 cfg=None,
+                 **kwargs):
         super(MyWorker, self).__init__(**kwargs)
         self.benchmark = benchmark
         self.monitor = monitor
@@ -35,7 +40,10 @@ class MyWorker(Worker):
                 'loss' (scalar)
                 'info' (dict)
         """
-        main_fidelity = {'round': int(budget), 'sample_client': self.cfg.benchmark.sample_client}
+        main_fidelity = {
+            'round': int(budget),
+            'sample_client': self.cfg.benchmark.sample_client
+        }
         t_start = time.time()
         res = self.benchmark(config,
                              main_fidelity,
@@ -43,7 +51,7 @@ class MyWorker(Worker):
                              key='val_avg_loss',
                              fhb_cfg=self.cfg)
         time.sleep(self.sleep_interval)
-        self.monitor(res=res, sim_time=time.time()-t_start, budget=budget)
+        self.monitor(res=res, sim_time=time.time() - t_start, budget=budget)
         return ({
             'loss': float(res['function_value']
                           ),  # this is a mandatory field to run hyperband
@@ -58,10 +66,11 @@ def run_hpbandster(cfg):
     NS = hpns.NameServer(run_id=cfg.optimizer.type, host='127.0.0.1')
     NS.start()
     cfg = cfg.clone()
-    benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](cfg.benchmark.model,
-                                                         cfg.benchmark.data,
-                                                         cfg.benchmark.algo,
-                                                         device=cfg.benchmark.device)
+    benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](
+        cfg.benchmark.model,
+        cfg.benchmark.data,
+        cfg.benchmark.algo,
+        device=cfg.benchmark.device)
     w = MyWorker(benchmark=benchmark,
                  monitor=monitor,
                  sleep_interval=0,

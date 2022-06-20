@@ -37,22 +37,26 @@ def run_dehb(cfg):
     def objective(config, budget=None):
         if cfg.optimizer.type == 'de':
             budget = cfg.optimizer.max_budget
-        main_fidelity = {'round': int(budget), 'sample_client': cfg.benchmark.sample_client}
+        main_fidelity = {
+            'round': int(budget),
+            'sample_client': cfg.benchmark.sample_client
+        }
         t_start = time.time()
         res = benchmark(config,
                         main_fidelity,
                         seed=random.randint(1, 99),
                         key='val_avg_loss',
                         fhb_cfg=cfg)
-        monitor(res=res, sim_time=time.time()-t_start, budget=budget)
+        monitor(res=res, sim_time=time.time() - t_start, budget=budget)
         fitness, cost = res['function_value'], res['cost']
         return fitness, cost
 
     monitor = Monitor(cfg)
-    benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](cfg.benchmark.model,
-                                                         cfg.benchmark.data,
-                                                         cfg.benchmark.algo,
-                                                         device=cfg.benchmark.device)
+    benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](
+        cfg.benchmark.model,
+        cfg.benchmark.data,
+        cfg.benchmark.algo,
+        device=cfg.benchmark.device)
     if cfg.optimizer.type == 'de':
         optimizer = DE(
             cs=cfg.benchmark.configuration_space[0],

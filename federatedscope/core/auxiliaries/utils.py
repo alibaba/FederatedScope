@@ -64,7 +64,8 @@ def update_logger(cfg, clear_before_add=False):
     if cfg.outdir == "":
         cfg.outdir = os.path.join(os.getcwd(), "exp")
     if cfg.expname == "":
-        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on_{cfg.data.type}"
+        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on_{cfg.data.type}_lr{cfg.optimizer.lr}_lstep{cfg.federate.local_update_steps}"
+    cfg.expname = f"{cfg.expname}_{cfg.expname_tag}"
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
 
     # if exist, make directory with given name and time
@@ -90,6 +91,11 @@ def update_logger(cfg, clear_before_add=False):
     root_logger.addHandler(fh)
     # sys.stderr = sys.stdout
 
+    import socket
+    root_logger.info(
+        f"the current machine is at {socket.gethostbyname(socket.gethostname())}"
+    )
+    root_logger.info(f"the current dir is {os.getcwd()}")
     root_logger.info(f"the output dir is {cfg.outdir}")
 
     if cfg.wandb.use:
@@ -312,57 +318,61 @@ def logfile_2_wandb_dict(exp_log_f, raw_out=True):
     last_line = None
     for line in exp_log_f:
         last_line = line
-        if " Find new best result" in line:
-            # e.g.,
-            # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result for client_individual.test_acc with value 0.5911787974683544
-            parse_res = line.split("INFO: ")[1].split("with value")
-            best_key, best_val = parse_res[-2], parse_res[-1]
-            # client_individual.test_acc -> client_individual/test_acc
-            best_key = best_key.replace("Find new best result for",
-                                        "").replace(".", "/")
-            log_res_best[best_key.strip()] = float(best_val.strip())
-
+        exp_stop_normal, log_res = logline_2_wandb_dict(
+            exp_stop_normal, line, log_res_best, raw_out)
         if "'Role': 'Server #'" in line:
-            if raw_out:
-                line = line.split("INFO: ")[1]
-            res = line.replace("\'", "\"")
-            res = json.loads(s=res)
-            if res['Role'] == 'Server #':
-                cur_round = res['Round']
-            res.pop('Role')
-            if cur_round != "Final" and 'Results_raw' in res:
-                res.pop('Results_raw')
-
-            log_res = {}
-            for key, val in res.items():
-                if not isinstance(val, dict):
-                    log_res[key] = val
-                else:
-                    if cur_round != "Final":
-                        for key_inner, val_inner in val.items():
-                            assert not isinstance(
-                                val_inner, dict), "Un-expected log format"
-                            log_res[f"{key}/{key_inner}"] = val_inner
-
-                    else:
-                        exp_stop_normal = True
-                        if key == "Results_raw":
-                            for final_type, final_type_dict in res[
-                                    "Results_raw"].items():
-                                for inner_key, inner_val in final_type_dict.items(
-                                ):
-                                    log_res_best[
-                                        f"{final_type}/{inner_key}"] = inner_val
-                    #     log_res_best = {}
-                    #     for best_res_type, val_dict in val.items():
-                    #         for key_inner, val_inner in val_dict.items():
-                    #             assert not isinstance(val_inner, dict), "Un-expected log format"
-                    #             log_res_best[f"{best_res_type}/{key_inner}"] = val_inner
-            # if log_res_best is not None and "Results_weighted_avg/val_loss" in log_res and \
-            #         log_res_best["client_summarized_weighted_avg/val_loss"] > \
-            #         log_res["Results_weighted_avg/val_loss"]:
-            #     print("Missing the results of last round, update best results")
-            #     for key, val in log_res.items():
-            #         log_res_best[key.replace("Results", "client_summarized")] = val
             all_log_res.append(log_res)
     return all_log_res, exp_stop_normal, last_line, log_res_best
+
+
+def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
+    log_res = {}
+    if "INFO:" in line and "Find new best result for" in line:
+        # Logger type 1, each line for each metric, e.g.,
+        # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result for client_individual.test_acc with value 0.5911787974683544
+        line = line.split("INFO: ")[1]
+        parse_res = line.split("with value")
+        best_key, best_val = parse_res[-2], parse_res[-1]
+        # client_individual.test_acc -> client_individual/test_acc
+        best_key = best_key.replace("Find new best result for",
+                                    "").replace(".", "/")
+        log_res_best[best_key.strip()] = float(best_val.strip())
+
+    if "Find new best result:" in line:
+        # each line for all metric of a role, e.g.,
+        # Find new best result: {'Client #1': {'val_loss': 132.9812364578247, 'test_total': 36, 'test_avg_loss': 3.709533585442437, 'test_correct': 2.0, 'test_loss': 133.54320907592773, 'test_acc': 0.05555555555555555, 'val_total': 36, 'val_avg_loss': 3.693923234939575, 'val_correct': 4.0, 'val_acc': 0.1111111111111111}}
+        line = line.replace("Find new best result: ", "").replace("\'", "\"")
+        res = json.loads(s=line)
+        for best_type_key, val in res.items():
+            for inner_key, inner_val in val.items():
+                log_res_best[f"best_{best_type_key}/{inner_key}"] = inner_val
+
+    if "'Role': 'Server #'" in line:
+        if raw_out:
+            line = line.split("INFO: ")[1]
+        res = line.replace("\'", "\"")
+        res = json.loads(s=res)
+        cur_round = res['Round']
+        res.pop('Role')
+        if cur_round != "Final" and 'Results_raw' in res:
+            res.pop('Results_raw')
+        for key, val in res.items():
+            if not isinstance(val, dict):
+                log_res[key] = val
+            else:
+                if cur_round != "Final":
+                    for key_inner, val_inner in val.items():
+                        assert not isinstance(val_inner,
+                                              dict), "Un-expected log format"
+                        log_res[f"{key}/{key_inner}"] = val_inner
+
+                else:
+                    exp_stop_normal = True
+                    if key == "Results_raw":
+                        for final_type, final_type_dict in res[
+                                "Results_raw"].items():
+                            for inner_key, inner_val in final_type_dict.items(
+                            ):
+                                log_res_best[
+                                    f"{final_type}/{inner_key}"] = inner_val
+    return exp_stop_normal, log_res

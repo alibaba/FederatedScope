@@ -49,7 +49,8 @@ def communication_cost(cfg, model_size, fhb_cfg):
     t_up = model_size / fhb_cfg.cost.bandwidth.client_up
     t_down = max(
         cfg.federate.client_num * cfg.federate.sample_client_rate *
-        model_size / fhb_cfg.cost.bandwidth.server_up, model_size / fhb_cfg.cost.bandwidth.client_down)
+        model_size / fhb_cfg.cost.bandwidth.server_up,
+        model_size / fhb_cfg.cost.bandwidth.client_down)
     return t_up + t_down
 
 
