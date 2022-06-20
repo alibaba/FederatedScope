@@ -29,6 +29,9 @@ def get_client_cls(cfg):
     elif client_type == 'gcflplus':
         from federatedscope.gfl.gcflplus.worker import GCFLPlusClient
         client_class = GCFLPlusClient
+    elif client_type == 'textdt':
+        from federatedscope.nlp.worker.client import TextDTClient
+        client_class = TextDTClient
     else:
         client_class = Client
 
@@ -77,5 +80,8 @@ def get_server_cls(cfg):
     elif client_type == 'gcflplus':
         from federatedscope.gfl.gcflplus.worker import GCFLPlusServer
         return GCFLPlusServer
+    elif client_type == 'textdt':
+        from federatedscope.nlp.worker.server import TextDTServer
+        return TextDTServer
     else:
         return Server

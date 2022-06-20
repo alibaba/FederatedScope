@@ -1,6 +1,7 @@
 import federatedscope.register as register
 
 from federatedscope.contrib.model import *
+from federatedscope.nlp.model import *
 
 
 #def get_model(fed_data):

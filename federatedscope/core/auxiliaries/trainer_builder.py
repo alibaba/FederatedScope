@@ -2,7 +2,8 @@ import logging
 import importlib
 
 import federatedscope.register as register
-from federatedscope.contrib.model import *
+from federatedscope.contrib.trainer import *
+from federatedscope.nlp.trainer import *
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,9 @@ def get_trainer(model=None,
     elif config.federate.method.lower() == "ditto":
         from federatedscope.core.trainers.trainer_Ditto import wrap_DittoTrainer
         # wrap style: instance a (class A) -> instance a (class A)
+        trainer = wrap_DittoTrainer(trainer)
+    elif config.federate.method.lower() == "ditto-textdt":
+        from federatedscope.nlp.trainer.ditto_trainer import wrap_DittoTrainer
         trainer = wrap_DittoTrainer(trainer)
     elif config.federate.method.lower() == "fedem":
         from federatedscope.core.trainers.trainer_FedEM import FedEMTrainer

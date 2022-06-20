@@ -1,0 +1,57 @@
+client_1:
+  federate:
+    local_update_steps: 1
+  data:
+    type: sts
+  optimizer:
+    type: SGD
+    lr: 1e-3
+    weight_decay: 0.0
+    grad_clip: 1.0
+  scheduler:
+    type: step
+    warmup_ratio: 0.1
+  trainer:
+    train_steps: 50
+    grad_accum_count: 1
+  eval:
+    metrics: ['sts']
+client_2:
+  federate:
+    local_update_steps: 1
+  data:
+    type: imdb
+  optimizer:
+    type: SGD
+    lr: 1e-3
+    weight_decay: 0.0
+    grad_clip: 1.0
+  scheduler:
+    type: step
+    warmup_ratio: 0.1
+  trainer:
+    train_steps: 50
+    grad_accum_count: 1
+  eval:
+    metrics: ['acc']
+client_3:
+  federate:
+    local_update_steps: 1
+  data:
+    type: squad
+  optimizer:
+    type: SGD
+    lr: 1e-3
+    weight_decay: 0.0
+    grad_clip: 1.0
+  scheduler:
+    type: step
+    warmup_ratio: 0.1
+  trainer:
+    train_steps: 50
+    grad_accum_count: 1
+  eval:
+    metrics: ['squad']
+    n_best_size: 20  # total number of top-n best predictions to generate
+    max_answer_len: 30  # maximum length of an answer that can be generated
+    null_score_diff_threshold: 0.0  # if null_score - best_non_null is greater than the threshold predict null
