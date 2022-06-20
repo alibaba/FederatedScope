@@ -93,7 +93,7 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
                 f"Plz check whether this is you want.")
             return
 
-        if self.ctx.monitor.flops_per_sample == 0:
+        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 data = ctx.data
@@ -113,12 +113,13 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
             except:
-                logger.error(
+                logger.warning(
                     "current flop count implementation is for general NodeFullBatchTrainer case: "
                     "1) the ctx.model takes the "
                     "tuple (data.x, data.edge_index) or tuple (data.x, ctx.input_edge_index) as input."
                     "Please check the forward format or implement your own flop_count function"
                 )
+                self.ctx.monitor.flops_per_sample = -1  # warning at the first failure
 
 
 class LinkMiniBatchTrainer(GeneralTorchTrainer):
