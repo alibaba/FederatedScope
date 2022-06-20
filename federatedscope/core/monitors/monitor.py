@@ -139,6 +139,14 @@ class Monitor(object):
                     else:
                         for k, v in res.items():
                             all_sys_metrics[k].append(v)
+            id_to_be_merged = all_sys_metrics["id"]
+            if len(id_to_be_merged) != len(set(id_to_be_merged)):
+                logger.warning(
+                    f"The sys_metric_file ({sys_metric_f_name}) contains duplicated tracked sys-results with these ids: f{id_to_be_merged} "
+                    f"We will skip the merging as the merge is invalid. "
+                    f"Plz check whether you specify the 'outdir' as the same as the one of another older experiment."
+                )
+                return
         elif from_global_monitors:
             for monitor in global_all_monitors:
                 res = monitor.get_sys_metrics(verbose=False)
@@ -159,7 +167,7 @@ class Monitor(object):
                 avg_sys_metrics[k] = "sys_avg"
                 std_sys_metrics[k] = "sys_std"
             else:
-                v = np.array(v)
+                v = np.array(v).astype("float")
                 mean_res = np.mean(v)
                 std_res = np.std(v)
                 if "flops" in k or "bytes" in k or "size" in k:
