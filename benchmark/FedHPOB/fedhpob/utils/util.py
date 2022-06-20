@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import ConfigSpace as CS
 
 from datetime import datetime
 
@@ -63,12 +64,16 @@ def disable_fs_logger(cfg, clear_before_add=False):
 
 def cfg2name(cfg):
     repeat = 0
-    dir = os.path.join(
-        cfg.benchmark.out_dir,
-        f'{cfg.benchmark.data}_{cfg.benchmark.model}_{cfg.benchmark.type}_{cfg.benchmark.algo}'
-    )
+    dir = os.path.join(cfg.benchmark.out_dir, f'{cfg.benchmark.data}_{cfg.benchmark.model}_{cfg.benchmark.type}_{cfg.benchmark.algo}')
     os.makedirs(dir, exist_ok=True)
-    while os.path.exists(
-            os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')):
+    while os.path.exists(os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')):
         repeat += 1
     return os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')
+
+
+def dict2cfg(space):
+    configuration_space = CS.ConfigurationSpace()
+    for key, value in space.items():
+        hyperparameter = CS.CategoricalHyperparameter(key, choices=value)
+        configuration_space.add_hyperparameter(hyperparameter)
+    return configuration_space

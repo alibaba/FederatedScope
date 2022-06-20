@@ -75,7 +75,7 @@ def get_cs(dname, model, mode, alg='avg'):
                                                   upper=1.0))
 
     elif dname in [
-            '10101', '53', '146818', '146821', '9952', '146822', '31', '3917'
+            '10101@openml', '53@openml', '146818@openml', '146821@openml', '9952@openml', '146822@openml', '31@openml', '3917@openml'
     ]:
         # Openml tabular, raw and surrogate
         fidelity_space.add_hyperparameter(
@@ -87,21 +87,22 @@ def get_cs(dname, model, mode, alg='avg'):
         if model == 'lr':
             if mode == 'tabular':
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter(
-                        'lr', choices=[0.00001, 0.0001, 0.001, 0.01, 0.1,
-                                       1.0]))
+                    CS.CategoricalHyperparameter('lr',
+                                                 choices=[
+                                                     0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0
+                                                 ]))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter(
-                        'wd', choices=[0.0, 0.001, 0.01, 0.1]))
+                    CS.CategoricalHyperparameter('wd',
+                                                 choices=[0.0, 0.001, 0.01, 0.1]))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter(
-                        'batch', choices=[8, 16, 32, 64, 128, 256]))
+                    CS.CategoricalHyperparameter('batch_size',
+                                                 choices=[8, 16, 32, 64, 128, 256]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('dropout', choices=[0.0]))
                 if alg == 'avg':
                     configuration_space.add_hyperparameter(
-                        CS.CategoricalHyperparameter('step',
-                                                     choices=[1, 2, 3, 4]))
+                        CS.CategoricalHyperparameter(
+                            'step', choices=[1, 2, 3, 4]))
                 else:
                     configuration_space.add_hyperparameter(
                         CS.CategoricalHyperparameter('step', choices=[1]))
@@ -118,8 +119,8 @@ def get_cs(dname, model, mode, alg='avg'):
                                                   upper=1.0,
                                                   log=True))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter(
-                        'wd', choices=[0.0, 0.001, 0.01, 0.1]))
+                    CS.CategoricalHyperparameter('wd',
+                                                 choices=[0.0, 0.001, 0.01, 0.1]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('dropout', choices=[0.0]))
                 if alg == 'avg':
@@ -141,26 +142,26 @@ def get_cs(dname, model, mode, alg='avg'):
         elif model == 'mlp':
             if mode == 'tabular':
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter(
-                        'lr', choices=[0.00001, 0.0001, 0.001, 0.01, 0.1,
-                                       1.0]))
+                    CS.CategoricalHyperparameter('lr',
+                                                 choices=[
+                                                     0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0
+                                                 ]))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter(
-                        'wd', choices=[0.0, 0.001, 0.01, 0.1]))
+                    CS.CategoricalHyperparameter('wd',
+                                                 choices=[0.0, 0.001, 0.01, 0.1]))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter('batch',
+                    CS.CategoricalHyperparameter('batch_size',
                                                  choices=[32, 64, 128, 256]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('dropout', choices=[0.0]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('layer', choices=[2, 3, 4]))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter('hidden',
-                                                 choices=[16, 64, 256]))
+                    CS.CategoricalHyperparameter('hidden', choices=[16, 64, 256]))
                 if alg == 'avg':
                     configuration_space.add_hyperparameter(
-                        CS.CategoricalHyperparameter('step',
-                                                     choices=[1, 2, 3, 4]))
+                        CS.CategoricalHyperparameter(
+                            'step', choices=[1, 2, 3, 4]))
                 else:
                     configuration_space.add_hyperparameter(
                         CS.CategoricalHyperparameter('step', choices=[1]))
@@ -177,19 +178,18 @@ def get_cs(dname, model, mode, alg='avg'):
                                                   upper=1.0,
                                                   log=True))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter(
-                        'wd', choices=[0.0, 0.001, 0.01, 0.1]))
+                    CS.CategoricalHyperparameter('wd',
+                                                 choices=[0.0, 0.001, 0.01, 0.1]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('dropout', choices=[0.0]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('layer', choices=[2, 3, 4]))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter('hidden',
-                                                 choices=[16, 64, 256]))
+                    CS.CategoricalHyperparameter('hidden', choices=[16, 64, 256]))
                 if alg == 'avg':
                     configuration_space.add_hyperparameter(
-                        CS.CategoricalHyperparameter('step',
-                                                     choices=[1, 2, 3, 4]))
+                        CS.CategoricalHyperparameter(
+                            'step', choices=[1, 2, 3, 4]))
                 else:
                     configuration_space.add_hyperparameter(
                         CS.CategoricalHyperparameter('step', choices=[1]))
@@ -224,10 +224,12 @@ def get_cs(dname, model, mode, alg='avg'):
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('dropout', choices=[0.0, 0.5]))
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter('batch', choices=[16, 32, 64]))
+                CS.CategoricalHyperparameter('batch_size',
+                                             choices=[16, 32, 64]))
             if alg == 'avg':
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
+                    CS.CategoricalHyperparameter(
+                        'step', choices=[1, 2, 3, 4]))
         elif mode in ['surrogate', 'raw']:
             configuration_space.add_hyperparameter(
                 CS.UniformFloatHyperparameter('lr',
@@ -240,13 +242,12 @@ def get_cs(dname, model, mode, alg='avg'):
             configuration_space.add_hyperparameter(
                 CS.UniformFloatHyperparameter('dropout', lower=.0, upper=.5))
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter('batch', choices=[16, 32, 64]))
+                CS.CategoricalHyperparameter('batch_size',
+                                             choices=[16, 32, 64]))
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
-            if alg == 'avg':
-                configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
-    elif dname in ['sst2', 'cola']:
+                CS.CategoricalHyperparameter('step',
+                                             choices=[1, 2, 3, 4]))
+    elif dname in ['sst2@huggingface_datasets', 'cola@huggingface_datasets']:
         # Transformer tabular and surrogate
         fidelity_space.add_hyperparameter(
             CS.CategoricalHyperparameter('round',
@@ -254,6 +255,9 @@ def get_cs(dname, model, mode, alg='avg'):
         fidelity_space.add_hyperparameter(
             CS.CategoricalHyperparameter('sample_rate',
                                          choices=[0.2, 0.4, 0.6, 0.8, 1.0]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('batch_size',
+                                         choices=[8, 16, 32, 64, 128]))
         if mode == 'tabular':
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('lr',
@@ -267,12 +271,10 @@ def get_cs(dname, model, mode, alg='avg'):
                                              choices=[0.0, 0.001, 0.01, 0.1]))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('dropout', choices=[0.0, 0.5]))
-            configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter('batch',
-                                             choices=[8, 16, 32, 64, 128]))
             if alg == 'avg':
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
+                    CS.CategoricalHyperparameter(
+                        'step', choices=[1, 2, 3, 4]))
             else:
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('step', choices=[1]))
@@ -293,9 +295,6 @@ def get_cs(dname, model, mode, alg='avg'):
                                              choices=[0.0, 0.001, 0.01, 0.1]))
             configuration_space.add_hyperparameter(
                 CS.UniformFloatHyperparameter('dropout', lower=.0, upper=.5))
-            configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter('step',
-                                             choices=[1, 2, 3, 4, 5, 6, 7, 8]))
             if alg == 'avg':
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter(
@@ -411,6 +410,5 @@ def add_configs(cfg):
     cfg.benchmark.configuration_space = [configuration_space
                                          ]  # avoid invalid type
     cfg.benchmark.fidelity_space = [fidelity_space]  # avoid invalid type
-
 
 initial_cfg(fhb_cfg)

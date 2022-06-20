@@ -63,8 +63,8 @@ def run_hpbandster(cfg):
     if cfg.optimizer.type == 'bo_kde':
         cfg.optimizer.min_budget = cfg.optimizer.max_budget
     monitor = Monitor(cfg)
-    NS = hpns.NameServer(run_id=cfg.optimizer.type, host='127.0.0.1')
-    NS.start()
+    NS = hpns.NameServer(run_id=cfg.optimizer.type, host='127.0.0.1', port=0)
+    ns_host, ns_port = NS.start()
     cfg = cfg.clone()
     benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](
         cfg.benchmark.model,
@@ -76,6 +76,8 @@ def run_hpbandster(cfg):
                  sleep_interval=0,
                  cfg=cfg,
                  nameserver='127.0.0.1',
+                 # nameserver=ns_host,
+                 nameserver_port=ns_port,
                  run_id=cfg.optimizer.type)
     w.run(background=True)
 
@@ -90,6 +92,7 @@ def run_hpbandster(cfg):
         'configspace': cfg.benchmark.configuration_space[0],
         'run_id': cfg.optimizer.type,
         'nameserver': '127.0.0.1',
+        'nameserver_port': ns_port,
         'eta': cfg.optimizer.hpbandster.eta,
         'min_budget': cfg.optimizer.min_budget,
         'max_budget': cfg.optimizer.max_budget

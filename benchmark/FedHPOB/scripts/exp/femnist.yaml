@@ -1,0 +1,6 @@
+benchmark:
+  device: 0
+optimizer:
+  min_budget: 3
+  max_budget: 81
+  limit_time: 172800000

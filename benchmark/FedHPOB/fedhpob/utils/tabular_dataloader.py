@@ -29,17 +29,6 @@ def load_data(root, model, dname, algo):
     return df, info
 
 
-# TODO: removepreprocessing
-def group_by_seed(names, repeat=3):
-    names = sorted(names)
-    if len(names) % repeat != 0:
-        raise FileNotFoundError('Missing file!')
-    index = np.arange(0, len(names), repeat, dtype=np.int32)
-    names_group = [names[i:i + repeat] for i in index]
-    return names_group
-
-
-# TODO: remove preprocessing
 def logs2info(dname, root, sample_client_rate=[0.2, 0.4, 0.6, 0.8, 1.0]):
     sample_client_rate = set(sample_client_rate)
     dir_names = [f'out_{dname}_' + str(x) for x in sample_client_rate]
@@ -145,9 +134,12 @@ def logs2df(dname,
                     except:
                         continue
                     for key in metrics_dict:
-                        if results['Role'] == 'Global-Eval-Server #':
-                            metrics_dict[key].append(
-                                results['Results_raw'][key])
+                        if results['Role'] in ['Server #', 'Global-Eval-Server #'] and 'Results_raw' in results.keys():
+                            try:
+                                metrics_dict[key].append(
+                                    results['Results_raw'][key])
+                            except KeyError:
+                                continue
                         elif 'Results_weighted_avg' not in results:
                             continue
                         else:
