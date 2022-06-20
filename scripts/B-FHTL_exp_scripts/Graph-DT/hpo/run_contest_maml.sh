@@ -19,7 +19,7 @@ ft_step=10
 log=${outdir}/gin_mstep-${ft_step}_on_${dataset}.log
 for k in {1..3}
 do
-    python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedavg_gnn_minibatch_on_multi_task.yaml \
+    python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedmaml_gnn_minibatch_on_multi_task.yaml \
     --cfg_client scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client_maml.yaml \
     data.root ${root} \
     device ${cudaid} \

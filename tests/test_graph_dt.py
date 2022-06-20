@@ -17,36 +17,44 @@ class GraphDTTest(unittest.TestCase):
     def test_fedavg_standalone(self):
         self.fedrunner(
             cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedavg_gnn_minibatch_on_multi_task.yaml',
-            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml',
         )
-    #
-    # def test_fedavg_ft_standalone(self):
-    #     self.fedrunner(
-    #         cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml',
-    #         cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
-    #     )
-    #
-    # def test_ditto_standalone(self):
-    #     self.fedrunner(
-    #         cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/fedavg_gnn_minibatch_on_multi_task.yaml',
-    #         cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml'
-    #     )
-    #
-    # def test_fedbn_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedbn.yaml", 'r'))
-    #     self.fedrunner(cfg_alg)
-    #
-    # def test_fedbn_ft_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedbn_ft.yaml", 'r'))
-    #     self.fedrunner(cfg_alg)
-    #
-    # def test_fedprox_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedprox.yaml", 'r'))
-    #     self.fedrunner(cfg_alg)
-    #
-    # def test_fedmaml_standalone(self):
-    #     cfg_alg = CfgNode.load_cfg(open("scripts/B-FHTL_exp_scripts/Graph-DT/fedmaml.yaml", 'r'))
-    #     self.fedrunner(cfg_alg)
+
+    def test_fedavg_ft_standalone(self):
+        self.fedrunner(
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedavg_ft_gnn_minibatch_on_multi_task.yaml',
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml',
+        )
+
+    def test_ditto_standalone(self):
+        self.fedrunner(
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/ditto_gnn_minibatch_on_multi_task.yaml',
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client_ditto.yaml',
+        )
+
+    def test_fedbn_standalone(self):
+        self.fedrunner(
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedbn_gnn_minibatch_on_multi_task.yaml',
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client_bn.yaml',
+        )
+
+    def test_fedbn_ft_standalone(self):
+        self.fedrunner(
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedbn_gnn_minibatch_on_multi_task.yaml',
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client_bn.yaml',
+        )
+
+    def test_fedprox_standalone(self):
+        self.fedrunner(
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedprox_gnn_minibatch_on_multi_task.yaml',
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client.yaml',
+        )
+
+    def test_fedmaml_standalone(self):
+        self.fedrunner(
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedmaml_gnn_minibatch_on_multi_task.yaml',
+            cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client_maml.yaml',
+        )
 
     def fedrunner(self, cfg_alg, cfg_client):
         cfg_alg = CfgNode.load_cfg(open(cfg_alg, 'r'))
@@ -54,9 +62,7 @@ class GraphDTTest(unittest.TestCase):
 
         init_cfg = global_cfg.clone()
         init_cfg.merge_from_other_cfg(cfg_alg)
-        init_cfg.federate.total_round_num = 5
-        init_cfg.eval.freq = 5
-        init_cfg.data.root = 'test_data/'
+        init_cfg.data.root = 'test-data'
         setup_seed(init_cfg.seed)
         update_logger(init_cfg)
 
@@ -73,8 +79,8 @@ class GraphDTTest(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         self.assertLess(
-            test_best_results["client_summarized_weighted_avg"]['test_loss'],
-            500)
+            test_best_results["client_individual"]['test_avg_loss'],
+            100)
 
 
 if __name__ == '__main__':
