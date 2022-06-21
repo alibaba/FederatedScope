@@ -184,8 +184,8 @@ class Context(dict):
             len(self.cur_data_splits_used_by_routine) != 0 else None
 
     def check_data_split(self, target_data_split_name):
-        if self.ctx.get(
-                f"{target_data_split_name}_data") is None and self.ctx.get(
+        if self.get(
+                f"{target_data_split_name}_data") is None and self.get(
             f"{target_data_split_name}_loader") is None:
             raise ValueError(
                 f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
