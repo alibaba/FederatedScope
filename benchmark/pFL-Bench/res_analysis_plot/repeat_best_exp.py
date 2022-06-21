@@ -24,15 +24,19 @@ filters_each_line_main_table = OrderedDict(
         #      ]
         #  }
         #  ),
-        ("FEMNIST-s02",
-         {"$and":
-             [
-                 {"config.data.type": "femnist"},
-                 {"config.federate.sample_client_rate": 0.2},
-                 {"state": "finished"},
-             ]
-         }
-         ),
+        ("FEMNIST-s02", {
+            "$and": [
+                {
+                    "config.data.type": "femnist"
+                },
+                {
+                    "config.federate.sample_client_rate": 0.2
+                },
+                {
+                    "state": "finished"
+                },
+            ]
+        }),
         # ("cifar10-alpha05",
         #  {"$and":
         #      [
@@ -41,134 +45,151 @@ filters_each_line_main_table = OrderedDict(
         #      ]
         #  }
         #  ),
-        ("sst2",
-         {"$and":
-             [
-                 {"config.data.type": "sst2@huggingface_datasets"},
-             ]
-         }
-         ),
-        ("pubmed",
-         {"$and":
-             [
-                 {"config.data.type": "pubmed"},
-             ]
-         }
-         ),
-    ]
-)
+        ("sst2", {
+            "$and": [
+                {
+                    "config.data.type": "sst2@huggingface_datasets"
+                },
+            ]
+        }),
+        ("pubmed", {
+            "$and": [
+                {
+                    "config.data.type": "pubmed"
+                },
+            ]
+        }),
+    ])
 
 filters_each_line_all_cifar10 = OrderedDict(
     # {dataset_name: filter}
     [
-        ("cifar10-alpha5",
-         {"$and":
-             [
-                 {"config.data.type": "CIFAR10@torchvision"},
-                 {"config.data.splitter_args": [{"alpha": 5}]},
-             ]
-         }
-         ),
-        ("cifar10-alpha05",
-         {"$and":
-             [
-                 {"config.data.type": "CIFAR10@torchvision"},
-                 {"config.data.splitter_args": [{"alpha": 0.5}]},
-             ]
-         }
-         ),
-        ("cifar10-alpha01",
-         {"$and":
-             [
-                 {"config.data.type": "CIFAR10@torchvision"},
-                 {"config.data.splitter_args": [{"alpha": 0.1}]},
-             ]
-         }
-         ),
-    ]
-)
+        ("cifar10-alpha5", {
+            "$and": [
+                {
+                    "config.data.type": "CIFAR10@torchvision"
+                },
+                {
+                    "config.data.splitter_args": [{
+                        "alpha": 5
+                    }]
+                },
+            ]
+        }),
+        ("cifar10-alpha05", {
+            "$and": [
+                {
+                    "config.data.type": "CIFAR10@torchvision"
+                },
+                {
+                    "config.data.splitter_args": [{
+                        "alpha": 0.5
+                    }]
+                },
+            ]
+        }),
+        ("cifar10-alpha01", {
+            "$and": [
+                {
+                    "config.data.type": "CIFAR10@torchvision"
+                },
+                {
+                    "config.data.splitter_args": [{
+                        "alpha": 0.1
+                    }]
+                },
+            ]
+        }),
+    ])
 
 filters_each_line_femnist_all_s = OrderedDict(
     # {dataset_name: filter}
     [
-        ("FEMNIST-s02",
-         {"$and":
-             [
-                 {"config.data.type": "femnist"},
-                 {"config.federate.sample_client_rate": 0.2},
-                 {"state": "finished"},
-             ]
-         }
-         ),
-        ("FEMNIST-s01",
-         {"$and":
-             [
-                 {"config.data.type": "femnist"},
-                 {"config.federate.sample_client_rate": 0.1},
-                 {"state": "finished"},
-             ]
-         }
-         ),
-        ("FEMNIST-s005",
-         {"$and":
-             [
-                 {"config.data.type": "femnist"},
-                 {"config.federate.sample_client_rate": 0.05},
-                 {"state": "finished"},
-             ]
-         }
-         ),
-
-    ]
-)
+        ("FEMNIST-s02", {
+            "$and": [
+                {
+                    "config.data.type": "femnist"
+                },
+                {
+                    "config.federate.sample_client_rate": 0.2
+                },
+                {
+                    "state": "finished"
+                },
+            ]
+        }),
+        ("FEMNIST-s01", {
+            "$and": [
+                {
+                    "config.data.type": "femnist"
+                },
+                {
+                    "config.federate.sample_client_rate": 0.1
+                },
+                {
+                    "state": "finished"
+                },
+            ]
+        }),
+        ("FEMNIST-s005", {
+            "$and": [
+                {
+                    "config.data.type": "femnist"
+                },
+                {
+                    "config.federate.sample_client_rate": 0.05
+                },
+                {
+                    "state": "finished"
+                },
+            ]
+        }),
+    ])
 
 filters_each_line_all_graph = OrderedDict(
     # {dataset_name: filter}
     [
-        ("pubmed",
-         {"$and":
-             [
-                 {"config.data.type": "pubmed"},
-             ]
-         }
-         ),
-        ("cora",
-         {"$and":
-             [
-                 {"config.data.type": "cora"},
-             ]
-         }
-         ),
-        ("citeseer",
-         {"$and":
-             [
-                 {"config.data.type": "citeseer"},
-             ]
-         }
-         ),
-    ]
-)
+        ("pubmed", {
+            "$and": [
+                {
+                    "config.data.type": "pubmed"
+                },
+            ]
+        }),
+        ("cora", {
+            "$and": [
+                {
+                    "config.data.type": "cora"
+                },
+            ]
+        }),
+        ("citeseer", {
+            "$and": [
+                {
+                    "config.data.type": "citeseer"
+                },
+            ]
+        }),
+    ])
 
 filters_each_line_all_nlp = OrderedDict(
     # {dataset_name: filter}
     [
-        ("cola",
-         {"$and":
-             [
-                 {"config.data.type": "cola@huggingface_datasets"},
-             ]
-         }
-         ),
-        ("sst2",
-         {"$and":
-             [
-                 {"config.data.type": "sst2@huggingface_datasets"},
-             ]
-         }
-         ),
-    ]
-)
-
+        ("cola", {
+            "$and": [
+                {
+                    "config.data.type": "cola@huggingface_datasets"
+                },
+            ]
+        }),
+        ("sst2", {
+            "$and": [
+                {
+                    "config.data.type": "sst2@huggingface_datasets"
+                },
+            ]
+        }),
+    ])
 
 sweep_name_2_id = dict()
 column_names_generalization = [
@@ -188,34 +209,34 @@ column_names_efficiency = [
     "sys_avg/global_convergence_round",
     # "sys_avg/local_convergence_round"
 ]
-sorted_keys = OrderedDict(
-    [("global-train", "Global Train"),
-     ("isolated-train", "Isolated"),
-     ("fedavg", "FedAvg"),
-     ("fedavg-ft", "FedAvg-FT"),
-     ("fedopt", "FedOpt"),
-     ("fedopt-ft", "FedOpt-FT"),
-     ("pfedme", "pFedMe"),
-     ("ft-pfedme", "pFedMe-FT"),
-     ("fedbn", "FedBN"),
-     ("fedbn-ft", "FedBN-FT"),
-     ("fedbn-fedopt", "FedBN-FedOPT"),
-     ("fedbn-fedopt-ft", "FedBN-FedOPT-FT"),
-     ("ditto", "Ditto"),
-     ("ditto-ft", "Ditto-FT"),
-     ("ditto-fedbn", "Ditto-FedBN"),
-     ("ditto-fedbn-ft", "Ditto-FedBN-FT"),
-     ("ditto-fedbn-fedopt", "Ditto-FedBN-FedOpt"),
-     ("ditto-fedbn-fedopt-ft", "Ditto-FedBN-FedOpt-FT"),
-     ("fedem", "FedEM"),
-     ("fedem-ft", "FedEM-FT"),
-     ("fedbn-fedem", "FedEM-FedBN"),
-     ("fedbn-fedem-ft", "FedEM-FedBN-FT"),
-     ("fedbn-fedem-fedopt", "FedEM-FedBN-FedOPT"),
-     ("fedbn-fedem-fedopt-ft", "FedEM-FedBN-FedOPT-FT"),
-     ]
-)
+sorted_keys = OrderedDict([
+    ("global-train", "Global Train"),
+    ("isolated-train", "Isolated"),
+    ("fedavg", "FedAvg"),
+    ("fedavg-ft", "FedAvg-FT"),
+    ("fedopt", "FedOpt"),
+    ("fedopt-ft", "FedOpt-FT"),
+    ("pfedme", "pFedMe"),
+    ("ft-pfedme", "pFedMe-FT"),
+    ("fedbn", "FedBN"),
+    ("fedbn-ft", "FedBN-FT"),
+    ("fedbn-fedopt", "FedBN-FedOPT"),
+    ("fedbn-fedopt-ft", "FedBN-FedOPT-FT"),
+    ("ditto", "Ditto"),
+    ("ditto-ft", "Ditto-FT"),
+    ("ditto-fedbn", "Ditto-FedBN"),
+    ("ditto-fedbn-ft", "Ditto-FedBN-FT"),
+    ("ditto-fedbn-fedopt", "Ditto-FedBN-FedOpt"),
+    ("ditto-fedbn-fedopt-ft", "Ditto-FedBN-FedOpt-FT"),
+    ("fedem", "FedEM"),
+    ("fedem-ft", "FedEM-FT"),
+    ("fedbn-fedem", "FedEM-FedBN"),
+    ("fedbn-fedem-ft", "FedEM-FedBN-FT"),
+    ("fedbn-fedem-fedopt", "FedEM-FedBN-FedOPT"),
+    ("fedbn-fedem-fedopt-ft", "FedEM-FedBN-FedOPT-FT"),
+])
 expected_keys = set(list(sorted_keys.keys()))
+
 
 def bytes_to_unit_size(size_bytes):
     import math
@@ -226,6 +247,7 @@ def bytes_to_unit_size(size_bytes):
     p = math.pow(1024, i)
     s = round(size_bytes / p, 2)
     return f"{s}{size_name[i]}"
+
 
 def get_sweep_filter_by(filter_name, filters_each_line_table):
     filter = filters_each_line_table[filter_name]
@@ -247,7 +269,6 @@ def get_runs_filter_by(filter_name, filters_each_line_table):
     return filtered_runs
 
 
-
 order = '-' + 'summary_metrics.best_client_summarized_weighted_avg/val_acc'
 
 
@@ -267,8 +288,9 @@ def print_table_datasets_list(filters_each_line_table):
             res_all_fair = []
             res_all_efficiency = []
             if best_run.state != "finished":
-                print(f"==================Waring: the best_run with id={best_run} has state {best_run.state}. "
-                      )
+                print(
+                    f"==================Waring: the best_run with id={best_run} has state {best_run.state}. "
+                )
 
             def remove_a_key(d, remove_key):
                 if isinstance(d, dict):
@@ -283,16 +305,16 @@ def print_table_datasets_list(filters_each_line_table):
             run_header = best_run_cfg.expname_tag
             run_header = run_header.split("_")[0]
 
-
-
             # for generalization results
-            if "isolated" in run_header.lower() or "global" in run_header.lower():
+            if "isolated" in run_header.lower(
+            ) or "global" in run_header.lower():
                 try:
                     res = best_run.summary[column_names_generalization[0]]
                     res_all_generalization.append(res)
                 except KeyError:
                     print(
-                        f"KeyError with key={column_names_generalization[0]}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
+                        f"KeyError with key={column_names_generalization[0]}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}"
+                    )
                     wrong_sweep = True
                 if wrong_sweep:
                     continue
@@ -304,11 +326,14 @@ def print_table_datasets_list(filters_each_line_table):
                         res = best_run.summary[column_name]
                         res_all_generalization.append(res)
                     except KeyError:
-                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
+                        print(
+                            f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}"
+                        )
                         wrong_sweep = True
                 if wrong_sweep:
                     continue
-                res_all_generalization.append(res_all_generalization[-1] - res_all_generalization[-2])
+                res_all_generalization.append(res_all_generalization[-1] -
+                                              res_all_generalization[-2])
             # -============== for fairness results ======
             for column_name in column_names_fair:
                 if "global" in run_header:
@@ -320,7 +345,9 @@ def print_table_datasets_list(filters_each_line_table):
                         res = best_run.summary[column_name]
                         res_all_fair.append(res)
                     except KeyError:
-                        print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
+                        print(
+                            f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}"
+                        )
                         res_all_fair.append("-")
                         wrong_sweep = True
 
@@ -337,25 +364,32 @@ def print_table_datasets_list(filters_each_line_table):
 
                     res_all_efficiency.append(res)
                 except KeyError:
-                    print(f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}")
+                    print(
+                        f"KeyError with key={column_name}, sweep_id={sweep_id}, sweep_name={run_header}, best_run_id={best_run.id}"
+                    )
                     wrong_sweep = True
                     res_all_efficiency.append("-")
 
-
             old_run_header = run_header
-            if best_run_cfg["trainer"]["finetune"]["before_eval"] is True and "ft" not in run_header:
+            if best_run_cfg["trainer"]["finetune"][
+                    "before_eval"] is True and "ft" not in run_header:
                 run_header = run_header + ",ft"
-            elif best_run_cfg["fedopt"]["use"] is True and "fedopt" not in run_header:
+            elif best_run_cfg["fedopt"][
+                    "use"] is True and "fedopt" not in run_header:
                 run_header = run_header + ",fedopt"
             if old_run_header != run_header:
-                print(f"processed {old_run_header} to new run header {run_header}")
+                print(
+                    f"processed {old_run_header} to new run header {run_header}"
+                )
 
             if run_header not in res_of_all_sweeps:
                 res_of_all_sweeps[run_header] = res_all_generalization
                 sweep_name_2_id[run_header] = sweep_id
             else:
-                print(f"processed duplicated sweep with name {run_header}, plz check it with id {sweep_id}. "
-                      f"The first appeared sweep has id {sweep_name_2_id[run_header]}")
+                print(
+                    f"processed duplicated sweep with name {run_header}, plz check it with id {sweep_id}. "
+                    f"The first appeared sweep has id {sweep_name_2_id[run_header]}"
+                )
 
                 while run_header + "_dup" in res_of_all_sweeps:
                     run_header = run_header + "_dup"
@@ -379,7 +413,8 @@ def print_table_datasets_list(filters_each_line_table):
                 unseen_keys.remove(method_header)
 
             # save config
-            parent_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+            parent_dir = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..")
             best_cfg_dir = os.path.join(parent_dir, "yaml_best_rums")
             os.makedirs(best_cfg_dir, exist_ok=True)
             yaml_f_name = f"best_{sorted_keys[method_header]}_on_{data_name}.yaml"
@@ -387,49 +422,64 @@ def print_table_datasets_list(filters_each_line_table):
                 yaml.dump(best_run_cfg, yml_f, allow_unicode=True)
 
             if method_header not in res_of_each_line_generalization:
-                res_of_each_line_generalization[method_header] = res_all_generalization
+                res_of_each_line_generalization[
+                    method_header] = res_all_generalization
                 res_of_each_line_fair[method_header] = res_all_fair
                 res_of_each_line_efficiency[method_header] = res_all_efficiency
             else:
-                res_of_each_line_generalization[method_header].extend(res_all_generalization)
+                res_of_each_line_generalization[method_header].extend(
+                    res_all_generalization)
                 res_of_each_line_fair[method_header].extend(res_all_fair)
-                res_of_each_line_efficiency[method_header].extend(res_all_efficiency)
+                res_of_each_line_efficiency[method_header].extend(
+                    res_all_efficiency)
 
         for missing_header in unseen_keys:
-            print(f"the header is missing {missing_header} in dataset {data_name}")
+            print(
+                f"the header is missing {missing_header} in dataset {data_name}"
+            )
             if missing_header not in res_of_each_line_generalization:
                 res_of_each_line_generalization[missing_header] = ["-"] * 3
                 res_of_each_line_fair[missing_header] = ["-"] * 3
                 res_of_each_line_efficiency[missing_header] = ["-"] * 4
             else:
-                res_of_each_line_generalization[missing_header].extend(["-"] * 3)
+                res_of_each_line_generalization[missing_header].extend(["-"] *
+                                                                       3)
                 res_of_each_line_fair[missing_header].extend(["-"] * 3)
                 res_of_each_line_efficiency[missing_header].extend(["-"] * 4)
 
-    print("\n=============res_of_each_line [Generalization]===============" + ",".join(
-        list(filters_each_line_table.keys())))
+    print("\n=============res_of_each_line [Generalization]===============" +
+          ",".join(list(filters_each_line_table.keys())))
     # Acc, Unseen-ACC, Delta
     for key in sorted_keys:
-        res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_generalization[key]]
+        res_to_print = [
+            "{:.2f}".format(v * 100) if v != "-" else v
+            for v in res_of_each_line_generalization[key]
+        ]
         res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
-    print("\n=============res_of_each_line [Fairness]===============" + ",".join(list(filters_each_line_table.keys())))
+    print("\n=============res_of_each_line [Fairness]===============" +
+          ",".join(list(filters_each_line_table.keys())))
     for key in sorted_keys:
-        res_to_print = ["{:.2f}".format(v * 100) if v != "-" else v for v in res_of_each_line_fair[key]]
+        res_to_print = [
+            "{:.2f}".format(v * 100) if v != "-" else v
+            for v in res_of_each_line_fair[key]
+        ]
         res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
-    print("\n=============res_of_each_line [All Efficiency]===============" + ",".join(
-        list(filters_each_line_table.keys())))
+    print("\n=============res_of_each_line [All Efficiency]===============" +
+          ",".join(list(filters_each_line_table.keys())))
     # FLOPS, UPLOAD, DOWNLOAD
     for key in sorted_keys:
         res_to_print = [str(v) for v in res_of_each_line_efficiency[key]]
         res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
-    print("\n=============res_of_each_line [flops, communication, acc]===============" + ",".join(
-        list(filters_each_line_table.keys())))
+    print(
+        "\n=============res_of_each_line [flops, communication, acc]==============="
+        + ",".join(list(filters_each_line_table.keys())))
     for key in sorted_keys:
         res_of_each_line_commu_acc_trade[key] = []
-        dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
+        dataset_num = 2 if "cola" in list(
+            filters_each_line_table.keys()) else 3
         for i in range(dataset_num):
             res_of_each_line_commu_acc_trade[key].extend(
                 [str(res_of_each_line_efficiency[key][i * 4])] + \
@@ -440,11 +490,13 @@ def print_table_datasets_list(filters_each_line_table):
         res_to_print = [str(v) for v in res_of_each_line_commu_acc_trade[key]]
         res_to_print = [sorted_keys[key]] + res_to_print
         print(",".join(res_to_print))
-    print("\n=============res_of_each_line [converge_round, acc]===============" + ",".join(
-        list(filters_each_line_table.keys())))
+    print(
+        "\n=============res_of_each_line [converge_round, acc]==============="
+        + ",".join(list(filters_each_line_table.keys())))
     for key in sorted_keys:
         res_of_each_line_conver_acc_trade[key] = []
-        dataset_num = 2 if "cola" in list(filters_each_line_table.keys()) else 3
+        dataset_num = 2 if "cola" in list(
+            filters_each_line_table.keys()) else 3
         for i in range(dataset_num):
             res_of_each_line_conver_acc_trade[key].extend(
                 [str(res_of_each_line_efficiency[key][i * 4 + 3])] + \
@@ -462,25 +514,33 @@ def print_table_datasets_list(filters_each_line_table):
     #     print(",".join(res_to_print))
     #
 
+
 def generate_repeat_scripts(best_cfg_path, seed_sets=None):
     file_cnt = 0
     if seed_sets is None:
         seed_sets = [2, 3]
     from os import listdir
     from os.path import isfile, join
-    onlyfiles = [f for f in listdir(best_cfg_path) if isfile(join(best_cfg_path, f))]
+    onlyfiles = [
+        f for f in listdir(best_cfg_path) if isfile(join(best_cfg_path, f))
+    ]
     for file_name in onlyfiles:
         exp_name = file_name
         exp_name = exp_name.replace(".yaml", "")
         method, data = exp_name.split("_")
         for seed in seed_sets:
-            print(f"python federatedscope/main.py --cfg scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs/{file_name} seed {seed} expname_tag {exp_name}_seed{seed} wandb.name_project pfl-bench-best-repeat")
+            print(
+                f"python federatedscope/main.py --cfg scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs/{file_name} seed {seed} expname_tag {exp_name}_seed{seed} wandb.name_project pfl-bench-best-repeat"
+            )
             file_cnt += 1
             if file_cnt % 10 == 0:
-                print(f"Seed={seed}, totally generated {file_cnt} run scripts\n\n")
+                print(
+                    f"Seed={seed}, totally generated {file_cnt} run scripts\n\n"
+                )
 
     print(f"Seed={seed_sets}, totally generated {file_cnt} run scripts")
-    print(f"=============================== END ===============================")
+    print(
+        f"=============================== END ===============================")
 
 
 def generate_res_table():
@@ -493,4 +553,6 @@ def generate_res_table():
 
 seed_sets = [2, 3]
 for seed in seed_sets:
-    generate_repeat_scripts("/mnt/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs", seed_sets=[seed])
+    generate_repeat_scripts(
+        "/mnt/daoyuanchen.cdy/FederatedScope/scripts/personalization_exp_scripts/pfl_bench/yaml_best_runs",
+        seed_sets=[seed])

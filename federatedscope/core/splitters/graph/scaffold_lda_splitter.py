@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 RDLogger.DisableLog('rdApp.*')
 
+
 class GenFeatures:
     r"""Implementation of 'CanonicalAtomFeaturizer' and 'CanonicalBondFeaturizer' in DGL.
     Source: https://lifesci.dgl.ai/_modules/dgllife/utils/featurizers.html
@@ -25,11 +26,10 @@ class GenFeatures:
     """
     def __init__(self):
         self.symbols = [
-            'C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg',
-            'Na', 'Ca', 'Fe', 'As', 'Al', 'I', 'B', 'V', 'K', 'Tl',
-            'Yb', 'Sb', 'Sn', 'Ag', 'Pd', 'Co', 'Se', 'Ti', 'Zn',
-            'H', 'Li', 'Ge', 'Cu', 'Au', 'Ni', 'Cd', 'In', 'Mn',
-            'Zr', 'Cr', 'Pt', 'Hg', 'Pb', 'other'
+            'C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg', 'Na', 'Ca',
+            'Fe', 'As', 'Al', 'I', 'B', 'V', 'K', 'Tl', 'Yb', 'Sb', 'Sn', 'Ag',
+            'Pd', 'Co', 'Se', 'Ti', 'Zn', 'H', 'Li', 'Ge', 'Cu', 'Au', 'Ni',
+            'Cd', 'In', 'Mn', 'Zr', 'Cr', 'Pt', 'Hg', 'Pb', 'other'
         ]
 
         self.hybridizations = [
@@ -68,16 +68,17 @@ class GenFeatures:
             radical_electrons = atom.GetNumRadicalElectrons()
             hybridization = [0.] * len(self.hybridizations)
             if atom.GetHybridization() in self.hybridizations:
-                hybridization[self.hybridizations.index(atom.GetHybridization())] = 1.
+                hybridization[self.hybridizations.index(
+                    atom.GetHybridization())] = 1.
             else:
                 hybridization[self.hybridizations.index('other')] = 1.
             aromaticity = 1. if atom.GetIsAromatic() else 0.
             hydrogens = [0.] * 5
             hydrogens[atom.GetTotalNumHs()] = 1.
 
-            x = torch.tensor(symbol + degree + implicit +
-                             [formal_charge] + [radical_electrons] +
-                             hybridization + [aromaticity] + hydrogens)
+            x = torch.tensor(symbol + degree + implicit + [formal_charge] +
+                             [radical_electrons] + hybridization +
+                             [aromaticity] + hydrogens)
             xs.append(x)
 
         data.x = torch.stack(xs, dim=0)
@@ -139,7 +140,7 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     ]
     label = np.zeros(len(dataset))
     for i in range(len(scaffold_list)):
-        label[scaffold_list[i]] = i+1
+        label[scaffold_list[i]] = i + 1
     label = torch.LongTensor(label)
     # Split data to list
     idx_slice = dirichlet_distribution_noniid_slice(label, client_num, alpha)
@@ -168,7 +169,8 @@ class ScaffoldLdaSplitter:
             ds = featurizer(ds)
             data.append(ds)
         dataset = data
-        idx_slice = gen_scaffold_lda_split(dataset, self.client_num, self.alpha)
+        idx_slice = gen_scaffold_lda_split(dataset, self.client_num,
+                                           self.alpha)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
 

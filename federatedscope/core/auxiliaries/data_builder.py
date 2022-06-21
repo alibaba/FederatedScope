@@ -10,7 +10,10 @@ logger = logging.getLogger(__name__)
 try:
     from federatedscope.contrib.data import *
 except ImportError as error:
-    logger.warning(f'{error} in `federatedscope.contrib.data`, some modules are not available.')
+    logger.warning(
+        f'{error} in `federatedscope.contrib.data`, some modules are not available.'
+    )
+
 
 def load_toy_data(config=None):
 

@@ -209,7 +209,7 @@ class GeneralTorchTrainer(Trainer):
                 f"Plz check whether this is you want.")
             return
 
-        if self.ctx.monitor.flops_per_sample == 0:
+        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 x, y = [_.to(ctx.device) for _ in ctx.data_batch]
@@ -224,12 +224,13 @@ class GeneralTorchTrainer(Trainer):
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
             except:
-                logger.error(
+                logger.warning(
                     "current flop count implementation is for general trainer case: "
                     "1) ctx.data_batch = [x, y]; and"
                     "2) the ctx.model takes only x as input."
                     "Please check the forward format or implement your own flop_count function"
                 )
+                self.ctx.monitor.flops_per_sample = -1  # warning at the first failure
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward

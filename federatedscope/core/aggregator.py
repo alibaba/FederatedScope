@@ -5,7 +5,6 @@ import torch
 import os
 
 
-
 class Aggregator(ABC):
     def __init__(self):
         pass
@@ -113,7 +112,11 @@ class NoCommunicationAggregator(Aggregator):
 
 
 class OnlineClientsAvgAggregator(ClientsAvgAggregator):
-    def __init__(self, model=None, device='cpu', src_device='cpu', config=None):
+    def __init__(self,
+                 model=None,
+                 device='cpu',
+                 src_device='cpu',
+                 config=None):
         super(OnlineClientsAvgAggregator, self).__init__(model, device, config)
         self.src_device = src_device
 
@@ -147,7 +150,8 @@ class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
         # conduct aggregation by interpolating global model from server and local models from clients
     """
     def __init__(self, model=None, device='cpu', config=None, beta=1.0):
-        super(ServerClientsInterpolateAggregator, self).__init__(model, device, config)
+        super(ServerClientsInterpolateAggregator,
+              self).__init__(model, device, config)
         self.beta = beta  # the weight for local models used in interpolation
 
     def aggregate(self, agg_info):

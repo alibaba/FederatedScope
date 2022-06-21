@@ -18,7 +18,8 @@ class TabularBenchmark(BaseBenchmark):
         self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
         self.table, self.meta_info = load_data(datadir, model, dname, algo)
         self.eval_freq = self.meta_info['eval_freq']
-        super(TabularBenchmark, self).__init__(model, dname, algo, rng, **kwargs)
+        super(TabularBenchmark, self).__init__(model, dname, algo, rng,
+                                               **kwargs)
 
     def _check(self, configuration, fidelity):
         for key, value in configuration.items():

@@ -20,6 +20,8 @@ def extend_evaluation_cfg(cfg):
     # Monitoring, e.g., 'dissim' for B-local dissimilarity
     cfg.eval.monitoring = []
 
+    cfg.eval.count_flops = True
+
     # ------------------------------------------------------------------------ #
     # wandb related options
     # ------------------------------------------------------------------------ #
@@ -27,6 +29,7 @@ def extend_evaluation_cfg(cfg):
     cfg.wandb.use = False
     cfg.wandb.name_user = ''
     cfg.wandb.name_project = ''
+    cfg.wandb.online_track = True
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_evaluation_cfg)

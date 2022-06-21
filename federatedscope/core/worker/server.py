@@ -7,7 +7,6 @@ import numpy as np
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
-from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout
@@ -245,12 +244,14 @@ class Server(Worker):
             min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        if check_eval_result:
-            min_received_num = len(list(self.comm_manager.neighbors.keys()))
+        if check_eval_result and self._cfg.federate.mode.lower(
+        ) == "standalone":
+            # in evaluation stage and standalone simulation mode, we assume
+            # strong synchronization that receives responses from all clients
+            min_received_num = len(self.comm_manager.get_neighbors().keys())
 
         move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
-
             if not check_eval_result:  # in the training process
                 # Get all the message
                 train_msg_buffer = self.msg_buffer['train'][self.state]
@@ -314,6 +315,9 @@ class Server(Worker):
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
+                if self.mode == 'standalone' and self._cfg.wandb.online_track and self._cfg.wandb.use:
+                    self._monitor.merge_system_metrics_simulation_mode(
+                        file_io=False, from_global_monitors=True)
                 self.check_and_save()
 
         else:
@@ -384,12 +388,7 @@ class Server(Worker):
             forms=["raw"],
             return_raw=True)
         logger.info(formatted_best_res)
-        self.save_formatted_results(formatted_best_res)
-
-    def save_formatted_results(self, formatted_res):
-        with open(os.path.join(self._cfg.outdir, "eval_results.log"),
-                  "a") as outfile:
-            outfile.write(str(formatted_res) + "\n")
+        self._monitor.save_formatted_results(formatted_best_res)
 
     def save_client_eval_results(self):
         """
@@ -421,35 +420,48 @@ class Server(Worker):
 
         round = max(self.msg_buffer['eval'].keys())
         eval_msg_buffer = self.msg_buffer['eval'][round]
-        metrics_all_clients = dict()
-        for each_client in eval_msg_buffer:
-            client_eval_results = eval_msg_buffer[each_client]
-            for key in client_eval_results.keys():
-                if key not in metrics_all_clients:
-                    metrics_all_clients[key] = list()
-                metrics_all_clients[key].append(float(
-                    client_eval_results[key]))
-        formatted_logs = self._monitor.format_eval_res(
-            metrics_all_clients,
-            rnd=self.state,
-            role='Server #',
-            forms=self._cfg.eval.report)
-        logger.info(formatted_logs)
-        update_best_result(self.best_results,
-                           metrics_all_clients,
-                           results_type="client_individual",
-                           round_wise_update_key=self._cfg.eval.
-                           best_res_update_round_wise_key)
-        self.save_formatted_results(formatted_logs)
-        for form in self._cfg.eval.report:
-            if form != "raw":
-                update_best_result(self.best_results,
-                                   formatted_logs[f"Results_{form}"],
-                                   results_type=f"client_summarized_{form}",
-                                   round_wise_update_key=self._cfg.eval.
-                                   best_res_update_round_wise_key)
+        eval_res_participated_clients = []
+        for client_id in eval_msg_buffer:
+            if eval_msg_buffer[client_id] is None:
+                continue
+            eval_res_participated_clients.append(eval_msg_buffer[client_id])
 
-        return formatted_logs
+        formatted_logs_all_set = dict()
+        for merge_type, eval_res_set in [
+            ("participated", eval_res_participated_clients),
+        ]:
+            if eval_res_set != []:
+                metrics_all_clients = dict()
+                for client_eval_results in eval_res_set:
+                    for key in client_eval_results.keys():
+                        if key not in metrics_all_clients:
+                            metrics_all_clients[key] = list()
+                        metrics_all_clients[key].append(
+                            float(client_eval_results[key]))
+                formatted_logs = self._monitor.format_eval_res(
+                    metrics_all_clients,
+                    rnd=self.state,
+                    role='Server #',
+                    forms=self._cfg.eval.report)
+                logger.info(formatted_logs)
+                formatted_logs_all_set.update(formatted_logs)
+                self._monitor.update_best_result(
+                    self.best_results,
+                    metrics_all_clients,
+                    results_type="client_individual",
+                    round_wise_update_key=self._cfg.eval.
+                    best_res_update_round_wise_key)
+                self._monitor.save_formatted_results(formatted_logs)
+                for form in self._cfg.eval.report:
+                    if form != "raw":
+                        self._monitor.update_best_result(
+                            self.best_results,
+                            formatted_logs[f"Results_{form}"],
+                            results_type=f"client_summarized_{form}",
+                            round_wise_update_key=self._cfg.eval.
+                            best_res_update_round_wise_key)
+
+        return formatted_logs_all_set
 
     def broadcast_model_para(self,
                              msg_type='model_para',
@@ -603,14 +615,15 @@ class Server(Worker):
                     role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
-                update_best_result(self.best_results,
-                                   formatted_eval_res['Results_raw'],
-                                   results_type="server_global_eval",
-                                   round_wise_update_key=self._cfg.eval.
-                                   best_res_update_round_wise_key)
+                self._monitor.update_best_result(
+                    self.best_results,
+                    formatted_eval_res['Results_raw'],
+                    results_type="server_global_eval",
+                    round_wise_update_key=self._cfg.eval.
+                    best_res_update_round_wise_key)
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
-                self.save_formatted_results(formatted_eval_res)
+                self._monitor.save_formatted_results(formatted_eval_res)
                 logger.info(formatted_eval_res)
             self.check_and_save()
         else:
