@@ -20,21 +20,21 @@ def extend_training_cfg(cfg):
 
     cfg.train.optimizer = CN(new_allowed=True)
     cfg.train.optimizer.type = 'SGD'
-    cfg.train.lr = 0.1
+    cfg.train.optimizer.lr = 0.1
 
     # ------------------------------------------------------------------------ #
     # Finetune related options
     # ------------------------------------------------------------------------ #
     cfg.finetune = CN()
 
-    cfg.fintune.before_eval = False
-    cfg.fintune.local_update_steps = 1
+    cfg.finetune.before_eval = False
+    cfg.finetune.local_update_steps = 1
     cfg.finetune.batch_or_epoch = 'epoch'
     cfg.finetune.freeze_param = ""
 
-    cfg.fintune.optimizer = CN(new_allowed=True)
-    cfg.fintune.optimizer.type = 'SGD'
-    cfg.finetune.lr = 0.1
+    cfg.finetune.optimizer = CN(new_allowed=True)
+    cfg.finetune.optimizer.type = 'SGD'
+    cfg.finetune.optimizer.lr = 0.1
 
     # ------------------------------------------------------------------------ #
     # Gradient related options

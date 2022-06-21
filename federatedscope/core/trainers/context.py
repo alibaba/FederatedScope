@@ -1,7 +1,6 @@
 import math
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.model_builder import get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.eunms import MODE
@@ -183,3 +182,11 @@ class Context(dict):
         self.cur_data_splits_used_by_routine.pop()
         self.cur_data_split = self.cur_data_splits_used_by_routine[-1] if \
             len(self.cur_data_splits_used_by_routine) != 0 else None
+
+    def check_data_split(self, target_data_split_name):
+        if self.ctx.get(
+                f"{target_data_split_name}_data") is None and self.ctx.get(
+            f"{target_data_split_name}_loader") is None:
+            raise ValueError(
+                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
+            )
