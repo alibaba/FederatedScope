@@ -36,7 +36,7 @@ class NodeTrainerTest(unittest.TestCase):
 
         cfg.train.optimizer.lr = 0.25
         cfg.train.optimizer.weight_decay = 0.0005
-        cfg.optimizer.type = 'SGD'
+        cfg.train.optimizer.type = 'SGD'
 
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'nodefullbatch_trainer'
