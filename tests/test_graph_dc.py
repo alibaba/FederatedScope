@@ -42,8 +42,8 @@ class GraphDCTest(unittest.TestCase):
 
         init_cfg = global_cfg.clone()
         init_cfg.merge_from_other_cfg(cfg_alg)
-        init_cfg.federate.total_round_num = 5
-        init_cfg.eval.freq = 5
+        init_cfg.federate.total_round_num = 1
+        init_cfg.eval.freq = 1
         setup_seed(init_cfg.seed)
         update_logger(init_cfg)
 

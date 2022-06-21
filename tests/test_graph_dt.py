@@ -59,11 +59,16 @@ class GraphDTTest(unittest.TestCase):
     def fedrunner(self, cfg_alg, cfg_client):
         cfg_alg = CfgNode.load_cfg(open(cfg_alg, 'r'))
         client_cfg = CfgNode.load_cfg(open(cfg_client, 'r'))
+        opts = []
+        for i in range(16):
+            opts.append('client_' + str(i+1) + '.federate.local_update_steps')
+            opts.append(1)
+        client_cfg.merge_from_list(opts)
 
         init_cfg = global_cfg.clone()
         init_cfg.merge_from_other_cfg(cfg_alg)
-        init_cfg.federate.total_round_num = 5
-        init_cfg.eval.freq = 5
+        init_cfg.federate.total_round_num = 1
+        init_cfg.eval.freq = 1
         init_cfg.data.root = 'test-data'
         setup_seed(init_cfg.seed)
         update_logger(init_cfg)
