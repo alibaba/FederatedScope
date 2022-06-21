@@ -30,10 +30,9 @@ def wrap_pFedMeTrainer(
                                         trigger="on_fit_end",
                                         insert_pos=-1)
 
-    base_trainer.replace_hook_in_train(
-        new_hook=_hook_on_batch_forward_flop_count,
-        target_trigger="on_batch_forward",
-        target_hook_name="_hook_on_batch_forward_flop_count")
+    base_trainer.register_hook_in_train(new_hook=_hook_on_batch_end_flop_count,
+                                        trigger="on_batch_end",
+                                        insert_pos=-1)
     base_trainer.register_hook_in_train(new_hook=_hook_on_epoch_end_flop_count,
                                         trigger="on_epoch_end",
                                         insert_pos=-1)
@@ -109,17 +108,10 @@ def hook_on_batch_start_init_pfedme(ctx):
                                      1) % ctx.pFedMe_K
 
 
-def _hook_on_batch_forward_flop_count(ctx):
-    if ctx.monitor.flops_per_sample == 0:
-        # calculate the flops_per_sample
-        x, _ = [_.to(ctx.device) for _ in ctx.data_batch]
-        from fvcore.nn import FlopCountAnalysis
-        flops_one_batch = FlopCountAnalysis(ctx.model, x).total()
-        # besides the normal forward flops, pFedMe introduces
-        # 1) the regularization adds the cost of number of model parameters
-        flops_one_batch += ctx.monitor.total_model_size / 2
-        ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
-    ctx.monitor.total_flops += ctx.monitor.flops_per_sample * ctx.batch_size
+def _hook_on_batch_end_flop_count(ctx):
+    # besides the normal forward flops, pFedMe introduces
+    # 1) the regularization adds the cost of number of model parameters
+    ctx.monitor.total_flops += ctx.monitor.total_model_size / 2
 
 
 def _hook_on_epoch_end_flop_count(ctx):

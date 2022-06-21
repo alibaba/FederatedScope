@@ -95,7 +95,7 @@ class MFTrainer(GeneralTorchTrainer):
                 f"Plz check whether this is you want.")
             return
 
-        if self.ctx.monitor.flops_per_sample == 0:
+        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 indices, ratings = ctx.data_batch
@@ -115,11 +115,12 @@ class MFTrainer(GeneralTorchTrainer):
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
             except:
-                logger.error(
+                logger.warning(
                     "current flop count implementation is for general NodeFullBatchTrainer case: "
                     "1) the ctx.model takes tuple (indices, ratings) as input."
                     "Please check the forward format or implement your own flop_count function"
                 )
+                self.ctx.monitor.flops_per_sample = -1  # warning at the first failure
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward
