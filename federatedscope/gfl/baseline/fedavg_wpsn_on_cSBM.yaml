@@ -29,6 +29,5 @@ trainer:
   type: nodeminibatch_trainer
 finetune:
   local_update_steps: 2
-  stepsize: 0.25
 eval:
   metrics: ['acc', 'correct']
