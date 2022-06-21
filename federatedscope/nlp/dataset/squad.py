@@ -144,6 +144,8 @@ def create_squad_examples(root, split, debug=False):
 
     examples = []
     for i, entry in tqdm(enumerate(data), total=len(data)):
+        if debug and len(examples) > 20:
+            break
         for paragraph in entry['paragraphs']:
             context = paragraph['context']
             for qa in paragraph['qas']:
@@ -170,7 +172,7 @@ def create_squad_examples(root, split, debug=False):
                                              start_pos, end_pos, context_tokens, is_impossible))
 
     if debug:
-        examples = examples[:100]
+        examples = examples[:20]
 
     if split == 'train':
         num_train_samples = int(0.9 * len(examples))
