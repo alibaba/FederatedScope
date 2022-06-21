@@ -100,24 +100,24 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
 
     def register_default_hooks_ft(self):
-        self.register_hook_in_train(self._hook_on_fit_start_init,
+        self.register_hook_in_ft(self._hook_on_fit_start_init,
                                     "on_fit_start")
-        self.register_hook_in_train(
+        self.register_hook_in_ft(
             self._hook_on_fit_start_calculate_model_size, "on_fit_start")
-        self.register_hook_in_train(self._hook_on_epoch_start,
+        self.register_hook_in_ft(self._hook_on_epoch_start,
                                     "on_epoch_start")
-        self.register_hook_in_train(self._hook_on_batch_start_init,
+        self.register_hook_in_ft(self._hook_on_batch_start_init,
                                     "on_batch_start")
-        self.register_hook_in_train(self._hook_on_batch_forward,
+        self.register_hook_in_ft(self._hook_on_batch_forward,
                                     "on_batch_forward")
-        self.register_hook_in_train(self._hook_on_batch_forward_regularizer,
+        self.register_hook_in_ft(self._hook_on_batch_forward_regularizer,
                                     "on_batch_forward")
-        self.register_hook_in_train(self._hook_on_batch_forward_flop_count,
+        self.register_hook_in_ft(self._hook_on_batch_forward_flop_count,
                                     "on_batch_forward")
-        self.register_hook_in_train(self._hook_on_batch_backward,
+        self.register_hook_in_ft(self._hook_on_batch_backward,
                                     "on_batch_backward")
-        self.register_hook_in_train(self._hook_on_batch_end, "on_batch_end")
-        self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
+        self.register_hook_in_ft(self._hook_on_batch_end, "on_batch_end")
+        self.register_hook_in_ft(self._hook_on_fit_end, "on_fit_end")
 
     def register_default_hooks_eval(self):
         # test/val

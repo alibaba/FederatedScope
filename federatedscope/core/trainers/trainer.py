@@ -67,7 +67,8 @@ class Trainer(object):
         # register necessary hooks into self.hooks_in_train and self.hooks_in_eval
         if not only_for_eval:
             self.register_default_hooks_train()
-        self.register_default_hooks_ft()
+        if self.cfg.finetune.before_eval:
+            self.register_default_hooks_ft()
         self.register_default_hooks_eval()
 
         if self.cfg.federate.mode == 'distributed':
@@ -150,6 +151,16 @@ class Trainer(object):
                                base_hook=None,
                                insert_mode="before"):
         hooks_dict = self.hooks_in_train
+        self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
+                            new_hook, trigger)
+
+    def register_hook_in_ft(self,
+                               new_hook,
+                               trigger,
+                               insert_pos=None,
+                               base_hook=None,
+                               insert_mode="before"):
+        hooks_dict = self.hooks_in_ft
         self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
                             new_hook, trigger)
 
