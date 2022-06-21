@@ -113,7 +113,7 @@ class TextDTTest(unittest.TestCase):
         init_cfg.data.max_query_len = 16
         init_cfg.data.trunc_stride = 8
         if init_cfg.federate.total_round_num > 1:
-            init_cfg.federate.total_round_num = 2
+            init_cfg.federate.total_round_num = 1
         setup_seed(init_cfg.seed)
         update_logger(init_cfg)
 

@@ -170,7 +170,7 @@ def create_squad_examples(root, split, debug=False):
                                              start_pos, end_pos, context_tokens, is_impossible))
 
     if debug:
-        examples = examples[:100]
+        examples = examples[:10]
 
     if split == 'train':
         num_train_samples = int(0.9 * len(examples))
