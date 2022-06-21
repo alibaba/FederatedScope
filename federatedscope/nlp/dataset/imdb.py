@@ -46,7 +46,7 @@ def create_imdb_examples(root, split, debug=False):
     random.shuffle(examples)
 
     if debug:
-        examples = examples[:100]
+        examples = examples[:20]
 
     if split == 'train':
         num_train_samples = int(0.9 * len(examples))

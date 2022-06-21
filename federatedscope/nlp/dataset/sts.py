@@ -53,7 +53,7 @@ def create_sts_examples(root, split, debug=False):
         examples.append(GlueExample(text_a, text_b, label))
 
     if debug:
-        examples = examples[:100]
+        examples = examples[:20]
 
     if split == 'train':
         num_train_samples = int(0.9 * len(examples))
