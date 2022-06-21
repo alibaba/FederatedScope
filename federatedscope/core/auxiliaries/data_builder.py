@@ -503,7 +503,7 @@ def load_external_data(config=None):
                     shuffle=False,
                     num_workers=modified_config.data.num_workers)
 
-        if len(train_labels) > 0:
+        if modified_config.data.consistent_label_distribution and len(train_labels) > 0:
             train_label_distribution = train_labels
 
     return data_local_dict, modified_config
