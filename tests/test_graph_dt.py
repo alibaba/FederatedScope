@@ -77,9 +77,10 @@ class GraphDTTest(unittest.TestCase):
                                config_client=client_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
+        print('Test best results is ')
         print(test_best_results)
         self.assertLess(
-            test_best_results["client_individual"]['test_avg_loss'],
+            test_best_results['client_individual']['val_avg_loss'],
             100)
 
 
