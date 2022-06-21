@@ -1,9 +1,10 @@
 import collections
 import copy
 import logging
-import os
-import numpy as np
 
+from federatedscope.core.auxiliaries.eunms import MODE
+from federatedscope.core.auxiliaries.decorators import check_data_split
+from federatedscope.core.auxiliaries.decorators import use_diff
 from federatedscope.core.auxiliaries import utils
 from federatedscope.core.trainers.context import Context
 from federatedscope.core.monitors.metric_calculator import MetricCalculator
@@ -61,10 +62,12 @@ class Trainer(object):
 
         # By default, use the same trigger keys
         self.hooks_in_eval = copy.deepcopy(self.hooks_in_train)
+        self.hooks_in_ft = copy.deepcopy(self.hooks_in_train)
 
         # register necessary hooks into self.hooks_in_train and self.hooks_in_eval
         if not only_for_eval:
             self.register_default_hooks_train()
+        self.register_default_hooks_ft()
         self.register_default_hooks_eval()
 
         if self.cfg.federate.mode == 'distributed':
@@ -80,6 +83,9 @@ class Trainer(object):
         pass
 
     def register_default_hooks_eval(self):
+        pass
+
+    def register_default_hooks_ft(self):
         pass
 
     def reset_hook_in_train(self, target_trigger, target_hook_name=None):
@@ -184,23 +190,28 @@ class Trainer(object):
         else:
             hooks_dict[trigger].insert(insert_pos, new_hook)
 
+    @use_diff
+    @check_data_split
     def train(self, target_data_split_name="train", hooks_set=None):
-        pass
+        hooks_set = hooks_set or self.hooks_in_train
 
+        self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+
+        return self.ctx.num_samples_train, self.get_model_para(), self.ctx.eval_metrics
+
+    @check_data_split
     def evaluate(self, target_data_split_name="test", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_eval
-        if self.ctx.get(
-                f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
-            logger.warning(
-                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer, will skip evaluation"
-                f"If this is not the case you want, please check whether there is typo for the name"
-            )
-            self.ctx.eval_metrics = {}
-        else:
-            self._run_routine("test", hooks_set, target_data_split_name)
+
+        self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
 
         return self.ctx.eval_metrics
+
+    @check_data_split
+    def finetune(self, target_data_split_name="train", hooks_set=None):
+        hooks_set = hooks_set or self.hooks_in_ft
+
+        self._run_routine(MODE.FINETUNE, hooks_set, target_data_split_name)
 
     def _run_routine(self, mode, hooks_set, dataset_name=None):
         """Run the hooks_set and maintain the mode
@@ -302,9 +313,6 @@ class Trainer(object):
         logger.info(f"After register default hooks,\n"
                     f"\tthe hooks_in_train is: {self.hooks_in_train};\n"
                     f"\tthe hooks_in_eval is {self.hooks_in_eval}")
-
-    def finetune(self):
-        pass
 
     def _param_filter(self, state_dict, filter_keywords=None):
         '''

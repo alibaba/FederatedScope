@@ -80,7 +80,7 @@ def init_pFedMe_ctx(base_trainer):
         ctx.optimizer, cfg.personalization.regular_weight)
     for g in ctx.optimizer.param_groups:
         g['lr'] = cfg.personalization.lr
-    ctx.pFedMe_outer_lr = cfg.optimizer.lr
+    ctx.pFedMe_outer_lr = cfg.train.optimizer.lr
 
 
 def hook_on_fit_start_set_local_para_tmp(ctx):

@@ -67,13 +67,6 @@ def init_Ditto_ctx(base_trainer):
     ctx.local_model = copy.deepcopy(ctx.model)  # the personalized model
     ctx.models = [ctx.local_model, ctx.global_model]
 
-    ctx.optimizer_for_global_model = get_optimizer(ctx.global_model,
-                                                   **cfg.optimizer)
-    ctx.optimizer_for_local_model = get_optimizer(ctx.local_model,
-                                                  **cfg.optimizer)
-    ctx.optimizer_for_local_model = wrap_regularized_optimizer(
-        ctx.optimizer_for_local_model, cfg.personalization.regular_weight)
-
     ctx.model = ctx.global_model
     del ctx.optimizer
 
@@ -98,6 +91,15 @@ def hook_on_fit_start_set_regularized_para(ctx):
     compared_global_model_para = [{
         "params": list(ctx.global_model.parameters())
     }]
+
+    ctx.optimizer_for_global_model = get_optimizer(ctx.global_model,
+                                                   **ctx.cfg.train.optimizer)
+    ctx.optimizer_for_local_model = get_optimizer(ctx.local_model,
+                                                  **ctx.cfg.train.optimizer)
+
+    ctx.optimizer_for_local_model = wrap_regularized_optimizer(
+        ctx.optimizer_for_local_model, ctx.cfg.personalization.regular_weight)
+
     ctx.optimizer_for_local_model.set_compared_para_group(
         compared_global_model_para)
 

@@ -6,6 +6,7 @@ federate:
   client_num: 3
   total_round_num: 100
   method: fedsageplus
+train:
   batch_or_epoch: epoch
 data:
   root: data/

@@ -9,33 +9,38 @@ def extend_training_cfg(cfg):
     cfg.trainer = CN()
 
     cfg.trainer.type = 'general'
-    cfg.trainer.finetune = CN()
-    cfg.trainer.finetune.before_eval = False
-    cfg.trainer.finetune.steps = 5
-    cfg.trainer.finetune.lr = 0.01
-    cfg.trainer.finetune.freeze_param = ""  # parameters frozen in fine-tuning stage
-    # cfg.trainer.finetune.only_psn = True
 
     # ------------------------------------------------------------------------ #
-    # Optimizer related options
+    # Training related options
     # ------------------------------------------------------------------------ #
-    cfg.optimizer = CN(new_allowed=True)
+    cfg.train = CN()
 
-    cfg.optimizer.type = 'SGD'
-    cfg.optimizer.lr = 0.1
+    cfg.train.local_update_steps = 1
+    cfg.train.batch_or_epoch = 'batch'
+
+    cfg.train.optimizer = CN(new_allowed=True)
+    cfg.train.optimizer.type = 'SGD'
+    cfg.train.lr = 0.1
+
+    # ------------------------------------------------------------------------ #
+    # Finetune related options
+    # ------------------------------------------------------------------------ #
+    cfg.finetune = CN()
+
+    cfg.fintune.before_eval = False
+    cfg.fintune.local_update_steps = 1
+    cfg.finetune.batch_or_epoch = 'epoch'
+    cfg.finetune.freeze_param = ""
+
+    cfg.fintune.optimizer = CN(new_allowed=True)
+    cfg.fintune.optimizer.type = 'SGD'
+    cfg.finetune.lr = 0.1
 
     # ------------------------------------------------------------------------ #
     # Gradient related options
     # ------------------------------------------------------------------------ #
     cfg.grad = CN()
     cfg.grad.grad_clip = -1.0  # negative numbers indicate we do not clip grad
-
-    # ------------------------------------------------------------------------ #
-    # lr_scheduler related options
-    # ------------------------------------------------------------------------ #
-    # cfg.lr_scheduler = CN()
-    # cfg.lr_scheduler.type = 'StepLR'
-    # cfg.lr_scheduler.schlr_params = dict()
 
     # ------------------------------------------------------------------------ #
     # Early stopping related options
@@ -57,6 +62,17 @@ def extend_training_cfg(cfg):
 
 
 def assert_training_cfg(cfg):
+    if cfg.train.batch_or_epoch not in ['batch', 'epoch']:
+        raise ValueError(
+            "Value of 'cfg.train.batch_or_epoch' must be chosen from ['batch', 'epoch']."
+        )
+
+    if cfg.finetune.batch_or_epoch not in ['batch', 'epoch']:
+        raise ValueError(
+            "Value of 'cfg.finetune.batch_or_epoch' must be chosen from ['batch', 'epoch']."
+        )
+
+    # TODO: should not be here?
     if cfg.backend not in ['torch', 'tensorflow']:
         raise ValueError(
             "Value of 'cfg.backend' must be chosen from ['torch', 'tensorflow']."
@@ -69,9 +85,9 @@ def assert_training_cfg(cfg):
         raise ValueError(
             "We only support run with cpu when backend is tensorflow")
 
-    if cfg.trainer.finetune.before_eval is False and cfg.trainer.finetune.steps <= 0:
+    if cfg.finetune.before_eval is False and cfg.finetune.local_update_steps <= 0:
         raise ValueError(
-            f"When adopting fine-tuning, please set a valid local fine-tune steps, got {cfg.trainer.finetune.steps}"
+            f"When adopting fine-tuning, please set a valid local fine-tune steps, got {cfg.finetune.local_update_steps}"
         )
 
 

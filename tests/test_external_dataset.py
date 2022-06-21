@@ -21,9 +21,9 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.eval.metrics = ['acc']
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 1
+        cfg.train.local_update_steps = 1
         cfg.federate.total_round_num = 20
-        cfg.federate.batch_or_epoch = 'epoch'
+        cfg.train.batch_or_epoch = 'epoch'
         cfg.federate.client_num = 5
         cfg.federate.sample_client_rate = 0.2
 
@@ -46,8 +46,8 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.model.hidden = 2048
         cfg.model.out_channels = 10
 
-        cfg.optimizer.lr = 0.01
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 0.01
+        cfg.train.optimizer.weight_decay = 0.0
         cfg.grad.grad_clip = 5.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
@@ -65,9 +65,9 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.eval.metrics = ['acc']
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 1
+        cfg.train.local_update_steps = 1
         cfg.federate.total_round_num = 20
-        cfg.federate.batch_or_epoch = 'epoch'
+        cfg.train.batch_or_epoch = 'epoch'
         cfg.federate.client_num = 5
         cfg.federate.sample_client_rate = 0.2
 
@@ -87,8 +87,8 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.model.embed_size = 0
         cfg.model.out_channels = 2
 
-        cfg.optimizer.lr = 0.8
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 0.8
+        cfg.train.optimizer.weight_decay = 0.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'nlptrainer'

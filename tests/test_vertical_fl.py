@@ -25,7 +25,7 @@ class vFLTest(unittest.TestCase):
         cfg.model.type = 'lr'
         cfg.model.use_bias = False
 
-        cfg.optimizer.lr = 0.05
+        cfg.train.optimizer.lr = 0.05
 
         cfg.data.type = 'vertical_fl_data'
         cfg.data.size = 50

@@ -25,8 +25,8 @@ class ToyLRTest(unittest.TestCase):
         cfg.data.type = 'toy'
         cfg.trainer.type = 'general'
         cfg.model.type = 'lr'
-        cfg.trainer.finetune.before_eval = True
-        cfg.trainer.finetune.steps = 5
+        cfg.finetune.before_eval = True
+        cfg.finetune.local_update_steps = 5
 
         return backup_cfg
 

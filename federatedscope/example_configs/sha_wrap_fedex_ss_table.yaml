@@ -8,11 +8,11 @@ hpo.fedex.gamma:
 fedopt.optimizer.lr:
   type: cate
   choices: [0.001, 0.01, 0.1, 1.0]
-federate.local_update_steps:
+train.local_update_steps:
   type: int
   lower: 1
   upper: 8
-optimizer.lr:
+train.optimizer.lr:
   type: float
   lower: 0.002
   upper: 0.05

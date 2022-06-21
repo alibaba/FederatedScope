@@ -286,10 +286,10 @@ class Client(Worker):
         join_in_info = dict()
         for requirement in requirements:
             if requirement.lower() == 'num_sample':
-                if self._cfg.federate.batch_or_epoch == 'batch':
-                    num_sample = self._cfg.federate.local_update_steps * self._cfg.data.batch_size
+                if self._cfg.train.batch_or_epoch == 'batch':
+                    num_sample = self._cfg.train.local_update_steps * self._cfg.data.batch_size
                 else:
-                    num_sample = self._cfg.federate.local_update_steps * self.trainer.ctx.num_train_batch
+                    num_sample = self._cfg.train.local_update_steps * self.trainer.ctx.num_train_batch
                 join_in_info['num_sample'] = num_sample
             else:
                 raise ValueError(
@@ -331,7 +331,7 @@ class Client(Worker):
             metrics = list(self.best_results.values())[0]
         else:
             metrics = {}
-            if self._cfg.trainer.finetune.before_eval:
+            if self._cfg.finetune.before_eval:
                 self.trainer.finetune()
             for split in self._cfg.eval.split:
                 eval_metrics = self.trainer.evaluate(

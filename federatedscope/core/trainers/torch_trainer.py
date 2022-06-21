@@ -10,6 +10,9 @@ except ImportError:
     DataLoader = None
     Dataset = None
 
+from federatedscope.core.auxiliaries.eunms import MODE
+from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.decorators import check_data_split
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
@@ -56,31 +59,6 @@ class GeneralTorchTrainer(Trainer):
             raise TypeError("Type of data should be dict.")
         return init_dict
 
-    def train(self, target_data_split_name="train", hooks_set=None):
-        hooks_set = hooks_set or self.hooks_in_train
-        if self.ctx.get(
-                f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
-            raise ValueError(
-                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
-            )
-        if self.cfg.federate.use_diff:
-            # TODO: any issue for subclasses?
-            before_metric = self.evaluate(target_data_split_name='val')
-
-        self._run_routine("train", hooks_set, target_data_split_name)
-        result_metric = self.ctx.eval_metrics
-
-        if self.cfg.federate.use_diff:
-            # TODO: any issue for subclasses?
-            after_metric = self.evaluate(target_data_split_name='val')
-            result_metric['val_total'] = before_metric['val_total']
-            result_metric['val_avg_loss_before'] = before_metric[
-                'val_avg_loss']
-            result_metric['val_avg_loss_after'] = after_metric['val_avg_loss']
-
-        return self.ctx.num_samples_train, self.get_model_para(), result_metric
-
     def update(self, model_parameters):
         '''
             Called by the FL client to update the model parameters
@@ -94,55 +72,13 @@ class GeneralTorchTrainer(Trainer):
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=False)
 
+    @check_data_split
     def evaluate(self, target_data_split_name="test"):
         with torch.no_grad():
             super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
 
         return self.ctx.eval_metrics
 
-    #def validate(self, target_data_split_name="val"):
-    #    with torch.no_grad():
-    #        super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
-
-    #    return self.ctx.eval_metrics
-
-    def finetune(self, target_data_split_name="train", hooks_set=None):
-
-        # freeze the parameters during the fine-tune stage
-        require_grad_changed_paras = set()
-        if self.cfg.trainer.finetune.freeze_param != "":
-            preserved_paras = self._param_filter(
-                self.ctx.model.state_dict(),
-                self.cfg.trainer.finetune.freeze_param)
-            for name, param in self.ctx.model.named_parameters():
-                if name not in preserved_paras and param.requires_grad is True:
-                    param.requires_grad = False
-                    require_grad_changed_paras.add(name)
-
-        # change the optimization configs
-        original_lrs = []
-        for g in self.ctx.optimizer.param_groups:
-            original_lrs.append(g['lr'])
-            g['lr'] = self.cfg.trainer.finetune.lr
-        original_epoch_num = self.ctx["num_train_epoch"]
-        original_batch_num = self.ctx["num_train_batch"]
-        self.ctx["num_train_epoch"] = 1
-        self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
-
-        # do the fine-tuning process
-        self.train(target_data_split_name, hooks_set)
-
-        # restore the state before fine-tuning
-        if len(require_grad_changed_paras) > 0:
-            for name, param in self.ctx.model.named_parameters():
-                if name in require_grad_changed_paras:
-                    param.requires_grad = True
-
-        for i, g in enumerate(self.ctx.optimizer.param_groups):
-            g['lr'] = original_lrs[i]
-
-        self.ctx["num_train_epoch"] = original_epoch_num
-        self.ctx["num_train_batch"] = original_batch_num
 
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,
@@ -164,6 +100,27 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_train(self._hook_on_batch_end, "on_batch_end")
         self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
 
+    def register_default_hooks_ft(self):
+        self.register_hook_in_train(self._hook_on_fit_start_init,
+                                    "on_fit_start")
+        self.register_hook_in_train(
+            self._hook_on_fit_start_calculate_model_size, "on_fit_start")
+        self.register_hook_in_train(self._hook_on_epoch_start,
+                                    "on_epoch_start")
+        self.register_hook_in_train(self._hook_on_batch_start_init,
+                                    "on_batch_start")
+        self.register_hook_in_train(self._hook_on_batch_forward,
+                                    "on_batch_forward")
+        self.register_hook_in_train(self._hook_on_batch_forward_regularizer,
+                                    "on_batch_forward")
+        self.register_hook_in_train(self._hook_on_batch_forward_flop_count,
+                                    "on_batch_forward")
+        self.register_hook_in_train(self._hook_on_batch_backward,
+                                    "on_batch_backward")
+        self.register_hook_in_train(self._hook_on_batch_end, "on_batch_end")
+        self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
+
+
     def register_default_hooks_eval(self):
         # test/val
         self.register_hook_in_eval(self._hook_on_fit_start_init,
@@ -177,8 +134,12 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
     def _hook_on_fit_start_init(self, ctx):
-        # prepare model
+        # prepare model and optimizer
         ctx.model.to(ctx.device)
+
+        if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
+            # Initialize optimizer here to avoid the reuse of optimizers across different routines
+            ctx.optimizer = get_optimizer(ctx.model, **ctx.cfg[ctx.cur_mode].optimizer)
 
         # prepare statistics
         setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
