@@ -28,7 +28,7 @@ do
         data.type ${dataset} \
         fedprox.use True \
         fedprox.mu ${mus[$im]} \
-        eval.metrics "['acc', 'correct' 'loss_regular']" \
+        eval.metrics "['acc', 'correct', 'loss_regular']" \
         seed $k >>${log} 2>&1
         echo "fedprox k=${k} ends."
     done

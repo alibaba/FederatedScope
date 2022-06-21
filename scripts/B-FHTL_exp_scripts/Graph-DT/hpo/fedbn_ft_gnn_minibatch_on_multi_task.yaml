@@ -1,0 +1,31 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 0
+  improve_indicator_mode: mean
+federate:
+  mode: 'standalone'
+  make_global_eval: False
+  total_round_num: 200
+  share_local_model: False
+  sample_client_num: 16
+data:
+  root: data/
+  type: graph-dt
+  splitter: ooxx
+model:
+  type: gin
+  hidden: 64
+personalization:
+  local_param: [ 'encoder_atom', 'encoder', 'clf', 'norms' ]  # pre, post + FedBN
+optimizer:
+  weight_decay: 0.0005
+  type: SGD
+trainer:
+  type: graphminibatch_trainer
+  finetune:
+  before_eval: True
+  steps: 1
+eval:
+  freq: 5
+  metrics: ['acc', 'correct']
