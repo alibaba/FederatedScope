@@ -79,7 +79,6 @@ class GeneralTorchTrainer(Trainer):
 
         return self.ctx.eval_metrics
 
-
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,
                                     "on_fit_start")
@@ -120,7 +119,6 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_train(self._hook_on_batch_end, "on_batch_end")
         self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
 
-
     def register_default_hooks_eval(self):
         # test/val
         self.register_hook_in_eval(self._hook_on_fit_start_init,
@@ -139,7 +137,8 @@ class GeneralTorchTrainer(Trainer):
 
         if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
             # Initialize optimizer here to avoid the reuse of optimizers across different routines
-            ctx.optimizer = get_optimizer(ctx.model, **ctx.cfg[ctx.cur_mode].optimizer)
+            ctx.optimizer = get_optimizer(ctx.model,
+                                          **ctx.cfg[ctx.cur_mode].optimizer)
 
         # prepare statistics
         setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)

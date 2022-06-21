@@ -197,7 +197,8 @@ class Trainer(object):
 
         self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
 
-        return self.ctx.num_samples_train, self.get_model_para(), self.ctx.eval_metrics
+        return self.ctx.num_samples_train, self.get_model_para(
+        ), self.ctx.eval_metrics
 
     @check_data_split
     def evaluate(self, target_data_split_name="test", hooks_set=None):
