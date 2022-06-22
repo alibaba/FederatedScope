@@ -73,14 +73,6 @@ def init_pFedMe_ctx(base_trainer):
     # will be copied from model every run_routine
     ctx.pFedMe_local_model_tmp = None
 
-    # the optimizer used in pFedMe is based on Moreau Envelopes regularization
-    # besides, there are two distinct lr for the approximate model and base model
-    ctx.optimizer = wrap_regularized_optimizer(
-        ctx.optimizer, cfg.personalization.regular_weight)
-    for g in ctx.optimizer.param_groups:
-        g['lr'] = cfg.personalization.lr
-    ctx.pFedMe_outer_lr = cfg.train.optimizer.lr
-
 
 def hook_on_fit_start_set_local_para_tmp(ctx):
     ctx.pFedMe_local_model_tmp = copy.deepcopy(ctx.model)
@@ -89,6 +81,14 @@ def hook_on_fit_start_set_local_para_tmp(ctx):
         "params": list(ctx.pFedMe_local_model_tmp.parameters())
     }]
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
+
+    # the optimizer used in pFedMe is based on Moreau Envelopes regularization
+    # besides, there are two distinct lr for the approximate model and base model
+    ctx.optimizer = wrap_regularized_optimizer(
+        ctx.optimizer, ctx.cfg.personalization.regular_weight)
+    for g in ctx.optimizer.param_groups:
+        g['lr'] = ctx.cfg.personalization.lr
+    ctx.pFedMe_outer_lr = ctx.cfg.train.optimizer.lr
 
 
 def hook_on_batch_start_init_pfedme(ctx):
