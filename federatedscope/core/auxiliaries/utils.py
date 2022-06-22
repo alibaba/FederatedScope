@@ -380,8 +380,15 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
 
 
 def format_log_hooks(hooks_set):
-    print_dict = collections.defaultdict(list)
-    for trigger, hooks in hooks_set.items():
-        for hook in hooks:
-            print_dict[trigger].append(hook.__name__)
-    return json.dumps(print_dict, indent=2).replace('\n', '\n\t')
+    def format_dict(target_dict):
+        print_dict = collections.defaultdict(list)
+        for k, v in target_dict.items():
+            for element in v:
+                print_dict.append(element.__name__)
+        return print_dict
+
+    if isinstance(hooks_set, list):
+        print_obj = [format_dict(_) for _ in hooks_set]
+    elif isinstance(hooks_set, dict):
+        print_obj = format_dict(hooks_set)
+    return json.dumps(print_obj, indent=2).replace('\n', '\n\t')

@@ -128,7 +128,7 @@ class Trainer(object):
                         hook_idx].__name__:
                     del_one = hooks_dict[target_trigger].pop(hook_idx)
                     logger.info(
-                        f"Remove the hook `{del_one}` from hooks_set at trigger `{target_trigger}`"
+                        f"Remove the hook `{del_one.__name__}` from hooks_set at trigger `{target_trigger}`"
                     )
                     del_one_hook_idx = hook_idx
                     break
