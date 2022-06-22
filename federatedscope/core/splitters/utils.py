@@ -28,7 +28,7 @@ def _split_according_to_prior(label, client_num, prior):
         np.random.shuffle(idx_slice[i])
     return idx_slice
 
-def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=10, prior=None):
+def dirichlet_distribution_noniid_slice(label, client_num, alpha, min_size=1, prior=None):
     r"""Get sample index list for each client from the Dirichlet distribution.
     https://github.com/FedML-AI/FedML/blob/master/fedml_core/non_iid_partition/noniid_partition.py
 
