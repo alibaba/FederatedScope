@@ -12,7 +12,6 @@ except ImportError:
 
 from federatedscope.core.auxiliaries.eunms import MODE
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.auxiliaries.decorators import check_data_split
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
@@ -72,7 +71,6 @@ class GeneralTorchTrainer(Trainer):
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=False)
 
-    @check_data_split
     def evaluate(self, target_data_split_name="test"):
         with torch.no_grad():
             super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
