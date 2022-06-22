@@ -384,7 +384,7 @@ def format_log_hooks(hooks_set):
         print_dict = collections.defaultdict(list)
         for k, v in target_dict.items():
             for element in v:
-                print_dict.append(element.__name__)
+                print_dict[k].append(element.__name__)
         return print_dict
 
     if isinstance(hooks_set, list):
