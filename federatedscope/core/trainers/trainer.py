@@ -3,7 +3,6 @@ import copy
 import logging
 
 from federatedscope.core.auxiliaries.eunms import MODE
-from federatedscope.core.auxiliaries.decorators import check_data_split
 from federatedscope.core.auxiliaries.decorators import use_diff
 from federatedscope.core.auxiliaries import utils
 from federatedscope.core.trainers.context import Context
@@ -202,26 +201,30 @@ class Trainer(object):
             hooks_dict[trigger].insert(insert_pos, new_hook)
 
     @use_diff
-    @check_data_split
     def train(self, target_data_split_name="train", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_train
+
+        self.ctx.check_data_split(target_data_split_name)
 
         self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
 
         return self.ctx.num_samples_train, self.get_model_para(
         ), self.ctx.eval_metrics
 
-    @check_data_split
     def evaluate(self, target_data_split_name="test", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_eval
 
-        self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
+        if self.ctx.check_data_split(target_data_split_name, skip=True):
+            self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
+        else:
+            self.ctx.eval_metrics = dict()
 
         return self.ctx.eval_metrics
 
-    @check_data_split
     def finetune(self, target_data_split_name="train", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_ft
+
+        self.ctx.check_data_split(target_data_split_name)
 
         self._run_routine(MODE.FINETUNE, hooks_set, target_data_split_name)
 

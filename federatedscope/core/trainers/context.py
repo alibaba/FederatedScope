@@ -1,9 +1,12 @@
 import math
+import logging
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.model_builder import get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.eunms import MODE
+
+logger = logging.getLogger(__name__)
 
 
 class Context(dict):
@@ -183,10 +186,19 @@ class Context(dict):
         self.cur_data_split = self.cur_data_splits_used_by_routine[-1] if \
             len(self.cur_data_splits_used_by_routine) != 0 else None
 
-    def check_data_split(self, target_data_split_name):
+    def check_data_split(self, target_data_split_name, skip=False):
         if self.get(
                 f"{target_data_split_name}_data") is None and self.get(
             f"{target_data_split_name}_loader") is None:
-            raise ValueError(
-                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
-            )
+            if skip:
+                logger.warning(
+                    f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer, will skip evaluation"
+                    f"If this is not the case you want, please check whether there is typo for the name"
+                )
+                return False
+            else:
+                raise ValueError(
+                    f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
+                )
+        else:
+            return True
