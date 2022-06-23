@@ -4,7 +4,8 @@ import logging
 import os
 import numpy as np
 
-from federatedscope.core.auxiliaries import utils
+from federatedscope.core.auxiliaries.utils import format_log_hooks
+from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
 from federatedscope.core.trainers.context import Context
 from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
@@ -127,7 +128,7 @@ class Trainer(object):
                         hook_idx].__name__:
                     del_one = hooks_dict[target_trigger].pop(hook_idx)
                     logger.info(
-                        f"Remove the hook `{del_one}` from hooks_set at trigger `{target_trigger}`"
+                        f"Remove the hook `{del_one.__name__}` from hooks_set at trigger `{target_trigger}`"
                     )
                     del_one_hook_idx = hook_idx
                     break
@@ -300,8 +301,8 @@ class Trainer(object):
             f"Filtered para names in local update: {filtered_para_names}.")
 
         logger.info(f"After register default hooks,\n"
-                    f"\tthe hooks_in_train is: {self.hooks_in_train};\n"
-                    f"\tthe hooks_in_eval is {self.hooks_in_eval}")
+                    f"\tthe hooks_in_train is:\n\t{format_log_hooks(self.hooks_in_train)};\n"
+                    f"\tthe hooks_in_eval is:\n\t{format_log_hooks(self.hooks_in_eval)}")
 
     def finetune(self):
         pass
@@ -325,7 +326,7 @@ class Trainer(object):
 
         trainable_filter = lambda p: True if self.cfg.personalization.share_non_trainable_para else \
             lambda p: p in self.ctx.trainable_para_names
-        keyword_filter = utils.filter_by_specified_keywords
+        keyword_filter = filter_by_specified_keywords
         return dict(
             filter(
                 lambda elem: trainable_filter(elem[1]) and keyword_filter(

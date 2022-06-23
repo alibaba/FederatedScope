@@ -1,3 +1,4 @@
+import collections
 import copy
 import json
 import logging
@@ -376,3 +377,18 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
                                 log_res_best[
                                     f"{final_type}/{inner_key}"] = inner_val
     return exp_stop_normal, log_res
+
+
+def format_log_hooks(hooks_set):
+    def format_dict(target_dict):
+        print_dict = collections.defaultdict(list)
+        for k, v in target_dict.items():
+            for element in v:
+                print_dict[k].append(element.__name__)
+        return print_dict
+
+    if isinstance(hooks_set, list):
+        print_obj = [format_dict(_) for _ in hooks_set]
+    elif isinstance(hooks_set, dict):
+        print_obj = format_dict(hooks_set)
+    return json.dumps(print_obj, indent=2).replace('\n', '\n\t')
