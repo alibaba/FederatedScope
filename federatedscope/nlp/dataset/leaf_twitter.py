@@ -129,10 +129,11 @@ class LEAF_TWITTER(LEAF):
             text_dict[key] = []
             texts, targets = data[key]
             if self.transform:
-                text_dict[key] = LocalDataset(texts, targets, self.transform,
+                text_dict[key] = LocalDataset(texts, targets, None,
+                                              self.transform,
                                               self.target_transform)
             else:
-                text_dict[key] = LocalDataset(texts, targets,
+                text_dict[key] = LocalDataset(texts, targets, None,
                                               self._to_bag_of_word,
                                               self.target_transform)
 

@@ -95,11 +95,12 @@ class LocalDataset(Dataset):
     Convert data list to torch Dataset to save memory usage.
     """
 
-    def __init__(self, Xs, targets, transform=None, target_transform=None):
+    def __init__(self, Xs, targets, pre_process=None, transform=None, target_transform=None):
         assert len(Xs) == len(
             targets), "The number of data and labels are not equal."
         self.Xs = np.array(Xs)
         self.targets = np.array(targets)
+        self.pre_process = pre_process
         self.transform = transform
         self.target_transform = target_transform
 
@@ -108,6 +109,9 @@ class LocalDataset(Dataset):
 
     def __getitem__(self, idx):
         data, target = self.Xs[idx], self.targets[idx]
+        if self.pre_process:
+            data = self.pre_process(data)
+
         if self.transform:
             data = self.transform(data)
 
