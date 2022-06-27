@@ -315,7 +315,8 @@ class Server(Worker):
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
-                if self.mode == 'standalone' and self._cfg.wandb.online_track and self._cfg.wandb.use:
+                print(self._cfg)
+                if self.mode == 'standalone' and self._monitor.wandb.online_track and self._monitor.wandb.use:
                     self._monitor.merge_system_metrics_simulation_mode(
                         file_io=False, from_global_monitors=True)
                 self.check_and_save()
