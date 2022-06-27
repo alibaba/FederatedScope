@@ -32,14 +32,6 @@ First of all, users need to clone the source code and install the required packa
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
 ```
-You can install the dependencies from the requirement file:
-```
-# For minimal version
-conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-forge -c nvidia
-
-# For application version
-conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
-```
 #### Use Docker
 
 You can build docker image and run with docker env (cuda 11 and torch 1.10):
