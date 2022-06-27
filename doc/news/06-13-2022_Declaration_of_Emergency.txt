@@ -1,0 +1,6 @@
+[06-13-2022] Declaration of Emergency:
+Based on our preliminary findings, it seems that our project is receiving an unknown attack. The number of stars increases abnormally with around 200 stars from "virtual" users. As of June 10 2022, the number of stars was around 374. We are paying close attention to solve this issue.
+
+To attackers: No matter what the purpose is, please stop attacking our project in this cheap way!
+
+To developers/researchers: You are always welcome to contribute and join FederatedScope; we believe we together can advance the field of Federated Learning!

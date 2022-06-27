@@ -6,7 +6,7 @@ if [ ! -d "out_fedprox_femnist" ];then
   mkdir out_fedprox_femnist
 fi
 
-echo "VFL starts..."
+echo "fedprox on femnist starts..."
 
 mus=(0.01 0.1 1. 10. 100.)
 

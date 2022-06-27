@@ -1,12 +1,13 @@
 import collections
 import math
-import numpy
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.model_builder import get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
+
+
 
 
 class LifecycleDict(dict):
@@ -111,7 +112,6 @@ class Context(LifecycleDict):
         self.cur_data_splits_used_by_routine = list()
 
         # Process training data
-        self.pre_calculate_batch_epoch_num()
         if self.train_data is not None or self.train_loader is not None:
             # Calculate the number of update steps during training given the local_update_steps
             num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch = self.pre_calculate_batch_epoch_num(
@@ -150,10 +150,10 @@ class Context(LifecycleDict):
 
     def pre_calculate_batch_epoch_num(self):
         # train
-        calculate_batch_epoch_num(self.cfg.federate.local_update_steps, self.num_train_data, self.cfg.data.batch_size, self.cfg.data.drop_last)
+        return calculate_batch_epoch_num(self.cfg.federate.local_update_steps, self.num_train_data, self.cfg.data.batch_size, self.cfg.data.drop_last)
         # finetune
-        calculate_batch_epoch_num(self.cfg.finetune.steps, self.num_{}_data, self.cfg.data.batch_size, self.cfg.data.drop_last)
-        return
+        # calculate_batch_epoch_num(self.cfg.finetune.steps, self.num_{}_data, self.cfg.data.batch_size, self.cfg.data.drop_last)
+
 
     def append_mode(self, mode):
         if mode in self.mode_stack:

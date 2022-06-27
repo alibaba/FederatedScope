@@ -20,15 +20,12 @@ class MPNNs2s(nn.Module):
         hidden (int): Size for the output node representations. Default to 64.
 
     """
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 num_nn,
-                 hidden=64):
+    def __init__(self, in_channels, out_channels, num_nn, hidden=64):
         super(MPNNs2s, self).__init__()
         self.lin0 = torch.nn.Linear(in_channels, hidden)
 
-        nn = Sequential(Linear(num_nn, 16), ReLU(), Linear(16, hidden * hidden))
+        nn = Sequential(Linear(num_nn, 16), ReLU(),
+                        Linear(16, hidden * hidden))
         self.conv = NNConv(hidden, hidden, nn, aggr='add')
         self.gru = GRU(hidden, hidden)
 

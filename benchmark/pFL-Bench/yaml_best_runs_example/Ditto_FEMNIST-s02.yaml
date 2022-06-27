@@ -1,0 +1,201 @@
+asyn:
+  min_received_num: 1
+  min_received_rate: -1
+  timeout: 3
+  use: true
+attack:
+  alpha_TV: 0.001
+  alpha_prop_loss: 0
+  attack_method: ''
+  attacker_id: -1
+  classifier_PIA: randomforest
+  info_diff_type: l2
+  inject_round: 0
+  max_ite: 400
+  reconstruct_lr: 0.01
+  reconstruct_optim: Adam
+  target_label_ind: -1
+backend: torch
+cfg_file: ''
+criterion:
+  type: CrossEntropyLoss
+data:
+  args: []
+  batch_size: 32
+  cSBM_phi:
+  - 0.5
+  - 0.5
+  - 0.5
+  drop_last: false
+  graphsaint:
+    num_steps: 30
+    walk_length: 2
+  loader: ''
+  num_workers: 0
+  pre_transform: []
+  root: data/
+  shuffle: true
+  sizes:
+  - 10
+  - 5
+  splits:
+  - 0.6
+  - 0.2
+  - 0.2
+  splitter: ''
+  splitter_args: []
+  subsample: 0.05
+  target_transform: []
+  transform:
+  - - ToTensor
+    - {}
+  - - Normalize
+    - mean:
+      - 0.1307
+      std:
+      - 0.3081
+  type: femnist
+device: -1
+distribute:
+  use: false
+early_stop:
+  delta: 0
+  improve_indicator_mode: best
+  patience: 3
+  the_smaller_the_better: true
+eval:
+  best_res_update_round_wise_key: val_loss
+  freq: 10
+  metrics:
+  - acc
+  - correct
+  monitoring: []
+  report:
+  - weighted_avg
+  - avg
+  - fairness
+  - raw
+  save_data: false
+  split:
+  - test
+  - val
+expname: Ditto_convnet2_on_femnist_lr0.05_lstep3_
+expname_tag: ''
+federate:
+  batch_or_epoch: epoch
+  client_num: 200
+  data_weighted_aggr: false
+  ignore_weight: false
+  join_in_info: []
+  local_update_steps: 3
+  make_global_eval: false
+  method: Ditto
+  mode: standalone
+  online_aggr: false
+  restore_from: ''
+  sample_client_num: 32
+  sample_client_rate: 0.2
+  save_to: ''
+  share_local_model: false
+  total_round_num: 1000
+  unseen_clients_rate: 0.2
+  use_ss: false
+federate.local_update_steps: 3
+fedopt:
+  use: false
+fedprox:
+  use: false
+fedsageplus:
+  a: 1
+  b: 1
+  c: 1
+  fedgen_epoch: 200
+  gen_hidden: 128
+  hide_portion: 0.5
+  loc_epoch: 1
+  num_pred: 5
+gcflplus:
+  EPS_1: 0.05
+  EPS_2: 0.1
+  seq_length: 5
+  standardize: false
+hpo:
+  fedex:
+    cutoff: 0
+    diff: false
+    flatten_ss: true
+    gamma: 0
+    num_arms: 16
+    sched: auto
+    ss: ''
+    use: false
+  init_cand_num: 16
+  init_strategy: random
+  larger_better: false
+  log_scale: false
+  metric: client_summarized_weighted_avg.test_loss
+  pbt:
+    max_stage: 5
+    perf_threshold: 0.1
+  plot_interval: 1
+  scheduler: bruteforce
+  sha:
+    budgets: []
+    elim_rate: 3
+    elim_round_num: 3
+  working_folder: hpo
+model:
+  dropout: 0
+  embed_size: 8
+  graph_pooling: mean
+  hidden: 2048
+  in_channels: 0
+  layer: 2
+  model_num_per_trainer: 1
+  num_item: 0
+  num_user: 0
+  out_channels: 62
+  task: node
+  type: convnet2
+  use_bias: true
+nbafl:
+  use: false
+optimizer:
+  grad_clip: 5
+  lr: 0.05
+  momentum: 0
+  type: SGD
+  weight_decay: 0
+optimizer.lr: 0.05
+outdir: exp_pfl_bench/Ditto_convnet2_on_femnist_lr0.05_lstep3_/sub_exp_20220523003100
+personalization:
+  K: 5
+  beta: 1
+  local_param: []
+  local_update_steps: 1
+  lr: 0.01
+  regular_weight: 0.2
+  share_non_trainable_para: false
+personalization.regular_weight: 0.2
+regularizer:
+  mu: 0
+  type: ''
+seed: 1
+sgdmf:
+  use: false
+trainer:
+  finetune:
+    before_eval: false
+    freeze_param: ''
+    lr: 0.01
+    steps: 5
+  type: cvtrainer
+use_gpu: true
+verbose: 1
+vertical:
+  use: false
+wandb:
+  name_project: pFL-bench
+  name_user: daoyuan
+  online_track: true
+  use: true

@@ -9,12 +9,17 @@ from collections import defaultdict
 
 import numpy as np
 
+from federatedscope.core.auxiliaries.utils import logline_2_wandb_dict
+
 try:
     import torch
 except ImportError:
     torch = None
 
 logger = logging.getLogger(__name__)
+
+global_all_monitors = [
+]  # used in standalone mode, to merge sys metric results for all workers
 
 
 class Monitor(object):
@@ -25,8 +30,10 @@ class Monitor(object):
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
     def __init__(self, cfg, monitored_object=None):
+        self.log_res_best = {}
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
+        self.wandb_online_track = cfg.wandb.online_track if cfg.wandb.use else False
         # self.use_tensorboard = cfg.use_tensorboard
 
         self.monitored_object = monitored_object
@@ -50,6 +57,16 @@ class Monitor(object):
         self.local_convergence_round = 0  # total fl rounds to convergence
         self.local_convergence_wall_time = 0
 
+        if self.wandb_online_track:
+            global_all_monitors.append(self)
+        if self.use_wandb:
+            try:
+                import wandb
+            except ImportError:
+                logger.error(
+                    "cfg.wandb.use=True but not install the wandb package")
+                exit()
+
     def global_converged(self):
         self.global_convergence_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
@@ -64,6 +81,12 @@ class Monitor(object):
         self.fl_end_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
 
+        system_metrics = self.get_sys_metrics()
+        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+        with open(sys_metric_f_name, "a") as f:
+            f.write(json.dumps(system_metrics) + "\n")
+
+    def get_sys_metrics(self, verbose=True):
         system_metrics = {
             "id": self.monitored_object.ID,
             "fl_end_time_minutes": self.fl_end_wall_time.total_seconds() /
@@ -81,47 +104,77 @@ class Monitor(object):
             total_seconds() / 60 if isinstance(
                 self.local_convergence_wall_time, datetime.timedelta) else 0,
         }
-        logger.info(
-            f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}"
-        )
-        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
-        with open(sys_metric_f_name, "a") as f:
-            f.write(json.dumps(system_metrics) + "\n")
+        if verbose:
+            logger.info(
+                f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}"
+            )
+        return system_metrics
 
-    def merge_system_metrics_simulation_mode(self):
+    def merge_system_metrics_simulation_mode(self,
+                                             file_io=True,
+                                             from_global_monitors=False):
         """
             average the system metrics recorded in "system_metrics.json" by all workers
         :return:
         """
-        sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
-        if not os.path.exists(sys_metric_f_name):
-            logger.warning(
-                "You have not tracked the workers' system metrics in $outdir$/system_metrics.log, "
-                "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
-            )
-            return
 
         all_sys_metrics = defaultdict(list)
         avg_sys_metrics = defaultdict()
         std_sys_metrics = defaultdict()
-        with open(sys_metric_f_name, "r") as f:
-            for line in f:
-                res = json.loads(line)
+
+        if file_io:
+            sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
+            if not os.path.exists(sys_metric_f_name):
+                logger.warning(
+                    "You have not tracked the workers' system metrics in $outdir$/system_metrics.log, "
+                    "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
+                )
+                return
+            with open(sys_metric_f_name, "r") as f:
+                for line in f:
+                    res = json.loads(line)
+                    if all_sys_metrics is None:
+                        all_sys_metrics = res
+                        all_sys_metrics["id"] = "all"
+                    else:
+                        for k, v in res.items():
+                            all_sys_metrics[k].append(v)
+            id_to_be_merged = all_sys_metrics["id"]
+            if len(id_to_be_merged) != len(set(id_to_be_merged)):
+                logger.warning(
+                    f"The sys_metric_file ({sys_metric_f_name}) contains duplicated tracked sys-results with these ids: f{id_to_be_merged} "
+                    f"We will skip the merging as the merge is invalid. "
+                    f"Plz check whether you specify the 'outdir' as the same as the one of another older experiment."
+                )
+                return
+        elif from_global_monitors:
+            for monitor in global_all_monitors:
+                res = monitor.get_sys_metrics(verbose=False)
                 if all_sys_metrics is None:
                     all_sys_metrics = res
                     all_sys_metrics["id"] = "all"
                 else:
                     for k, v in res.items():
                         all_sys_metrics[k].append(v)
+        else:
+            raise ValueError(
+                "file_io or from_monitors should be True: "
+                f"but got file_io={file_io}, from_monitors={from_global_monitors}"
+            )
 
         for k, v in all_sys_metrics.items():
             if k == "id":
                 avg_sys_metrics[k] = "sys_avg"
                 std_sys_metrics[k] = "sys_std"
             else:
-                v = np.array(v)
-                avg_sys_metrics[f"sys_avg/{k}"] = np.mean(v)
-                std_sys_metrics[f"sys_std/{k}"] = np.std(v)
+                v = np.array(v).astype("float")
+                mean_res = np.mean(v)
+                std_res = np.std(v)
+                if "flops" in k or "bytes" in k or "size" in k:
+                    mean_res = self.convert_size(mean_res)
+                    std_res = self.convert_size(std_res)
+                avg_sys_metrics[f"sys_avg/{k}"] = mean_res
+                std_sys_metrics[f"sys_std/{k}"] = std_res
 
         logger.info(
             f"After merging the system metrics from all works, we got avg: {avg_sys_metrics}"
@@ -129,16 +182,48 @@ class Monitor(object):
         logger.info(
             f"After merging the system metrics from all works, we got std: {std_sys_metrics}"
         )
-        with open(sys_metric_f_name, "a") as f:
-            f.write(json.dumps(avg_sys_metrics) + "\n")
-            f.write(json.dumps(std_sys_metrics) + "\n")
+        if file_io:
+            with open(sys_metric_f_name, "a") as f:
+                f.write(json.dumps(avg_sys_metrics) + "\n")
+                f.write(json.dumps(std_sys_metrics) + "\n")
+
+        if self.use_wandb and self.wandb_online_track:
+            try:
+                import wandb
+                # wandb.log(avg_sys_metrics)
+                # wandb.log(std_sys_metrics)
+                for k, v in avg_sys_metrics.items():
+                    wandb.summary[k] = v
+                for k, v in std_sys_metrics.items():
+                    wandb.summary[k] = v
+            except ImportError:
+                logger.error(
+                    "cfg.wandb.use=True but not install the wandb package")
+                exit()
+
+    def save_formatted_results(self, formatted_res):
+        line = str(formatted_res) + "\n"
+        with open(os.path.join(self.outdir, "eval_results.log"),
+                  "a") as outfile:
+            outfile.write(line)
+        if self.use_wandb and self.wandb_online_track:
+            try:
+                import wandb
+                exp_stop_normal = False
+                exp_stop_normal, log_res = logline_2_wandb_dict(
+                    exp_stop_normal, line, self.log_res_best, raw_out=False)
+                wandb.log(log_res)
+            except ImportError:
+                logger.error(
+                    "cfg.wandb.use=True but not install the wandb package")
+                exit()
 
     def finish_fed_runner(self, fl_mode=None):
         self.compress_raw_res_file()
         if fl_mode == "standalone":
             self.merge_system_metrics_simulation_mode()
 
-        if self.use_wandb:
+        if self.use_wandb and not self.wandb_online_track:
             try:
                 import wandb
             except ImportError:
@@ -163,7 +248,9 @@ class Monitor(object):
                     for line in f:
                         res = json.loads(line)
                         if res["id"] in ["sys_avg", "sys_std"]:
-                            wandb.log(res)
+                            # wandb.log(res)
+                            for k, v in res.items():
+                                wandb.summary[k] = v
 
     def compress_raw_res_file(self):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
@@ -316,6 +403,16 @@ class Monitor(object):
                 avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
         return b_local_dissimilarity
 
+    def convert_size(self, size_bytes):
+        import math
+        if size_bytes == 0:
+            return "0"
+        size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
+        i = int(math.floor(math.log(size_bytes, 1024)))
+        p = math.pow(1024, i)
+        s = round(size_bytes / p, 2)
+        return f"{s}{size_name[i]}"
+
     def track_model_size(self, models):
         """
             calculate the total model size given the models hold by the worker/trainer
@@ -356,95 +453,130 @@ class Monitor(object):
     def track_download_bytes(self, bytes):
         self.total_download_bytes += bytes
 
-
-def update_best_result(best_results,
-                       new_results,
-                       results_type,
-                       round_wise_update_key="val_loss"):
-    """
-        update best evaluation results.
-        by default, the update is based on validation loss with `round_wise_update_key="val_loss" `
-    """
-    update_best_this_round = False
-    if not isinstance(new_results, dict):
-        raise ValueError(
-            f"update best results require `results` a dict, but got {type(new_results)}"
-        )
-    else:
-        if results_type not in best_results:
-            best_results[results_type] = dict()
-        best_result = best_results[results_type]
-        # update different keys separately: the best values can be in different rounds
-        if round_wise_update_key is None:
-            for key in new_results:
-                cur_result = new_results[key]
-                if 'loss' in key or 'std' in key:  # the smaller, the better
-                    if results_type == "client_individual":
-                        cur_result = min(cur_result)
-                    if key not in best_result or cur_result < best_result[key]:
-                        best_result[key] = cur_result
-                        update_best_this_round = True
-
-                elif 'acc' in key:  # the larger, the better
-                    if results_type == "client_individual":
-                        cur_result = max(cur_result)
-                    if key not in best_result or cur_result > best_result[key]:
-                        best_result[key] = cur_result
-                        update_best_this_round = True
-                else:
-                    # unconcerned metric
-                    pass
-        # update different keys round-wise: if find better round_wise_update_key, update others at the same time
+    def update_best_result(self,
+                           best_results,
+                           new_results,
+                           results_type,
+                           round_wise_update_key="val_loss"):
+        """
+            update best evaluation results.
+            by default, the update is based on validation loss with     `round_wise_update_key="val_loss" `
+        """
+        update_best_this_round = False
+        if not isinstance(new_results, dict):
+            raise ValueError(
+                f"update best results require `results` a dict, but got {type(new_results)}"
+            )
         else:
-            if round_wise_update_key not in [
-                    "val_loss", "val_acc", "val_std", "test_loss", "test_acc",
-                    "test_std", "test_avg_loss", "loss"
-            ]:
-                raise NotImplementedError(
-                    f"We currently support round_wise_update_key as one of "
-                    f"['val_loss', 'val_acc', 'val_std', 'test_loss', 'test_acc', 'test_std'] "
-                    f"for round-wise best results update, but got {round_wise_update_key}."
-                )
+            if results_type not in best_results:
+                best_results[results_type] = dict()
+            best_result = best_results[results_type]
+            # update different keys separately: the best values can be in different rounds
+            if round_wise_update_key is None:
+                for key in new_results:
+                    cur_result = new_results[key]
+                    if 'loss' in key or 'std' in key:  # the smaller, the better
+                        if results_type in [
+                                "client_individual", "unseen_client_individual"
+                        ]:
+                            cur_result = min(cur_result)
+                        if key not in best_result or cur_result < best_result[
+                                key]:
+                            best_result[key] = cur_result
+                            update_best_this_round = True
 
-            found_round_wise_update_key = False
-            sorted_keys = []
-            for key in new_results:
-                if round_wise_update_key in key:
-                    sorted_keys.insert(0, key)
-                    found_round_wise_update_key = True
-                else:
-                    sorted_keys.append(key)
-            if not found_round_wise_update_key:
-                raise ValueError(
-                    "Your specified eval.best_res_update_round_wise_key is not in target results, "
-                    "use another key or check the name. \n"
-                    f"Got eval.best_res_update_round_wise_key={round_wise_update_key}, "
-                    f"the keys of results are {list(new_results.keys())}")
+                    elif 'acc' in key:  # the larger, the better
+                        if results_type in [
+                                "client_individual", "unseen_client_individual"
+                        ]:
+                            cur_result = max(cur_result)
+                        if key not in best_result or cur_result > best_result[
+                                key]:
+                            best_result[key] = cur_result
+                            update_best_this_round = True
+                    else:
+                        # unconcerned metric
+                        pass
+            # update different keys round-wise: if find better round_wise_update_key, update     others at the same time
+            else:
+                if round_wise_update_key not in [
+                        "val_loss",
+                        "test_loss",
+                        "loss",
+                        "val_avg_loss",
+                        "test_avg_loss",
+                        "avg_loss",
+                        "test_acc",
+                        "test_std",
+                        "val_acc",
+                        "val_std",
+                ]:
+                    raise NotImplementedError(
+                        f"We currently support round_wise_update_key as one of "
+                        f"['val_loss', 'test_loss', 'loss', 'val_avg_loss', 'test_avg_loss', 'avg_loss,''val_acc', 'val_std', 'test_acc', 'test_std'] "
+                        f"for round-wise best results update, but got {round_wise_update_key}."
+                    )
 
-            for key in sorted_keys:
-                cur_result = new_results[key]
-                if update_best_this_round or \
-                        ('loss' in round_wise_update_key and 'loss' in key) or \
-                        ('std' in round_wise_update_key and 'std' in key):
-                    # The smaller the better
-                    if results_type == "client_individual":
-                        cur_result = min(cur_result)
+                found_round_wise_update_key = False
+                sorted_keys = []
+                for key in new_results:
+                    if round_wise_update_key in key:
+                        sorted_keys.insert(0, key)
+                        found_round_wise_update_key = True
+                    else:
+                        sorted_keys.append(key)
+                if not found_round_wise_update_key:
+                    raise ValueError(
+                        "Your specified eval.best_res_update_round_wise_key is not in target results, "
+                        "use another key or check the name. \n"
+                        f"Got eval.best_res_update_round_wise_key={round_wise_update_key}, "
+                        f"the keys of results are {list(new_results.keys())}")
+
+                for key in sorted_keys:
+                    cur_result = new_results[key]
                     if update_best_this_round or \
-                            key not in best_result or cur_result < best_result[key]:
-                        best_result[key] = cur_result
-                        update_best_this_round = True
-                elif update_best_this_round or \
-                        'acc' in round_wise_update_key and 'acc' in key:
-                    # The larger the better
-                    if results_type == "client_individual":
-                        cur_result = max(cur_result)
-                    if update_best_this_round or \
-                            key not in best_result or cur_result > best_result[key]:
-                        best_result[key] = cur_result
-                        update_best_this_round = True
-                else:
-                    # unconcerned metric
-                    pass
+                            ('loss' in round_wise_update_key and 'loss' in key) or \
+                            ('std' in round_wise_update_key and 'std' in key):
+                        # The smaller the better
+                        if results_type in [
+                                "client_individual", "unseen_client_individual"
+                        ]:
+                            cur_result = min(cur_result)
+                        if update_best_this_round or \
+                                key not in best_result or cur_result < best_result[key]:
+                            best_result[key] = cur_result
+                            update_best_this_round = True
+                    elif update_best_this_round or \
+                            'acc' in round_wise_update_key and 'acc' in key:
+                        # The larger the better
+                        if results_type in [
+                                "client_individual", "unseen_client_individual"
+                        ]:
+                            cur_result = max(cur_result)
+                        if update_best_this_round or \
+                                key not in best_result or cur_result > best_result[key]:
+                            best_result[key] = cur_result
+                            update_best_this_round = True
+                    else:
+                        # unconcerned metric
+                        pass
 
-    if update_best_this_round:
-        logger.info(f"Find new best result: {best_results}")
+        if update_best_this_round:
+            line = f"Find new best result: {best_results}"
+            logging.info(line)
+            if self.use_wandb and self.wandb_online_track:
+                try:
+                    import wandb
+                    exp_stop_normal = False
+                    exp_stop_normal, log_res = logline_2_wandb_dict(
+                        exp_stop_normal,
+                        line,
+                        self.log_res_best,
+                        raw_out=False)
+                    #wandb.log(self.log_res_best)
+                    for k, v in self.log_res_best.items():
+                        wandb.summary[k] = v
+                except ImportError:
+                    logger.error(
+                        "cfg.wandb.use=True but not install the wandb package")
+                    exit()

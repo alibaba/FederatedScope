@@ -4,7 +4,6 @@ import logging
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
-from federatedscope.core.monitors.monitor import update_best_result
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
@@ -352,11 +351,12 @@ class Client(Worker):
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)
-            update_best_result(self.best_results,
-                               formatted_eval_res['Results_raw'],
-                               results_type=f"client #{self.ID}",
-                               round_wise_update_key=self._cfg.eval.
-                               best_res_update_round_wise_key)
+            self._monitor.update_best_result(
+                self.best_results,
+                formatted_eval_res['Results_raw'],
+                results_type=f"client #{self.ID}",
+                round_wise_update_key=self._cfg.eval.
+                best_res_update_round_wise_key)
             self.history_results = merge_dict(
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check_best(self.history_results[

@@ -61,9 +61,8 @@ class CN(CfgNode):
         """
         _assert_with_logging(
             len(cfg_list) % 2 == 0,
-            "Override list has odd length: {}; it must be a list of pairs".format(
-                cfg_list
-            ),
+            "Override list has odd length: {}; it must be a list of pairs".
+            format(cfg_list),
         )
         root = self
         for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
@@ -74,15 +73,16 @@ class CN(CfgNode):
             key_list = full_key.split(".")
             d = self
             for subkey in key_list[:-1]:
-                _assert_with_logging(
-                    subkey in d, "Non-existent key: {}".format(full_key)
-                )
+                _assert_with_logging(subkey in d,
+                                     "Non-existent key: {}".format(full_key))
                 d = d[subkey]
             subkey = key_list[-1]
-            _assert_with_logging(subkey in d or d.is_new_allowed(), "Non-existent key: {}".format(full_key))
+            _assert_with_logging(subkey in d or d.is_new_allowed(),
+                                 "Non-existent key: {}".format(full_key))
             value = self._decode_cfg_value(v)
             if subkey in d:
-                value = _check_and_coerce_cfg_value_type(value, d[subkey], subkey, full_key)
+                value = _check_and_coerce_cfg_value_type(
+                    value, d[subkey], subkey, full_key)
             d[subkey] = value
 
         self.assert_cfg()
@@ -197,6 +197,7 @@ def init_global_cfg(cfg):
     # The dir used to save log, exp_config, models, etc,.
     cfg.outdir = 'exp'
     cfg.expname = ''  # detailed exp name to distinguish different sub-exp
+    cfg.expname_tag = ''  # detailed exp tag to distinguish different sub-exp with the same expname
 
     # extend user customized configs
     for func in register.config_dict.values():

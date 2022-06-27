@@ -22,20 +22,25 @@ def run_smac(cfg):
             'sample_client': cfg.benchmark.sample_client
         }
         t_start = time.time()
-        res = benchmark(config, main_fidelity, seed=random.randint(1, 99), key='val_avg_loss', fhb_cfg=cfg)
-        monitor(res=res, sim_time=time.time()-t_start, budget=budget)
+        res = benchmark(config,
+                        main_fidelity,
+                        seed=random.randint(1, 99),
+                        key='val_avg_loss',
+                        fhb_cfg=cfg)
+        monitor(res=res, sim_time=time.time() - t_start, budget=budget)
         return res['function_value']
 
     monitor = Monitor(cfg)
-    benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](cfg.benchmark.model,
-                                                         cfg.benchmark.data,
-                                                         cfg.benchmark.algo,
-                                                         device=cfg.benchmark.device)
+    benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](
+        cfg.benchmark.model,
+        cfg.benchmark.data,
+        cfg.benchmark.algo,
+        device=cfg.benchmark.device)
 
     scenario = Scenario({
         "run_obj": "quality",  # Optimize quality (alternatively runtime)
-        "runcount-limit":
-        cfg.optimizer.n_iterations,  # Max number of function evaluations
+        "runcount-limit": cfg.optimizer.
+        n_iterations,  # Max number of function evaluations
         "cs": cfg.benchmark.configuration_space[0],
         "output_dir": cfg.benchmark.type,
         "deterministic": "true",

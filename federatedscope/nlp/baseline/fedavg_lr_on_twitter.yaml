@@ -11,7 +11,7 @@ data:
   root: data/
   type: twitter
   batch_size: 5
-  subsample: 1.0
+  subsample: 0.005
   num_workers: 0
 model:
   type: lr
@@ -27,3 +27,5 @@ trainer:
 eval:
   freq: 10
   metrics: ['acc', 'correct']
+  split: ['train']
+  best_res_update_round_wise_key: 'train_loss'

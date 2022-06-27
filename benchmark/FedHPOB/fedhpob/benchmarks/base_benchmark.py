@@ -41,8 +41,7 @@ class BaseBenchmark(abc.ABC):
 
     def _cost(self, configuration, fidelity, **kwargs):
         cost_model = get_cost_model(mode=self.cost_mode)
-        t = cost_model(self.cfg, configuration, fidelity,
-                       self.data, **kwargs)
+        t = cost_model(self.cfg, configuration, fidelity, self.data, **kwargs)
         return t
 
     def _init_fidelity(self, fidelity):
