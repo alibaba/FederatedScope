@@ -7,22 +7,16 @@ __version__ = '0.1.9'
 URL = 'https://github.com/alibaba/FederatedScope'
 
 minimal_requires = [
-    'numpy', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas==1.4.1',
-    'grpcio>=1.45.0', 'grpcio-tools', 'pyyaml>=5.1', 'fvcore', 'iopath',
-    'wandb', 'tensorboard', 'tensorboardX', 'pympler', 'protobuf==3.19.4'
-]
-
-full_requires = [
-    'pyg==2.0.4', 'rdkit==2021.09.4=py39hccf6a74_0', 'nltk', 'sentencepiece',
-    'textgrid', 'typeguard', 'torchtext', 'transformers==4.16.2',
-    'tokenizers==0.10.3', 'datasets'
+    'numpy', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas', 'grpcio>=1.45.0',
+    'grpcio-tools', 'pyyaml>=5.1', 'fvcore', 'iopath', 'wandb', 'tensorboard',
+    'tensorboardX', 'pympler', 'protobuf==3.19.4'
 ]
 
 test_requires = ['unittest']
 
 dev_requires = test_requires + ['pre-commit']
 
-benchmark_hpo_requires = full_requires + [
+benchmark_hpo_requires = [
     'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.3.3', 'optuna==2.10.0'
 ]
 
@@ -52,7 +46,6 @@ setuptools.setup(
     ],
     install_requires=minimal_requires,
     extras_require={
-        'full': full_requires,
         'test': test_requires,
         'dev': dev_requires,
         'benchmark_hpo': benchmark_hpo_requires,

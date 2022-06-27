@@ -40,7 +40,10 @@ conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-f
 # For application version
 conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
 ```
-or build docker image and run with docker env (cuda 11 and torch 1.10):
+#### Use Docker
+
+You can build docker image and run with docker env (cuda 11 and torch 1.10):
+
 ```
 docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
 docker run --gpus device=all --rm -it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash
@@ -56,12 +59,35 @@ enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 Note: You can choose to use cuda 10 and torch 1.8 via changing `torch1.10` to `torch1.8`.
 The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/enviroment/docker_files).
 
+#### Use Conda
+
+We recommend using a new conda environment to install FederatedScope:
+
+```bash
+conda create -n fs python=3.9
+```
+
+If your backend is torch, please install  torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
+
+```bash
+conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+```
+
 Finally, after all the dependencies are installed, run:
+
+* For minimal version:
+
 ```bash
 python setup.py install
 
 # Or (for dev mode)
-pip install -e .
+pip install -e . [dev]
+```
+
+* For application version including graph, nlp and speech (**optinal**):
+
+```bash
+bash enviroment/extra_dependencies_torch1.10-application.sh
 ```
 
 ### Step 2. Prepare datasets
