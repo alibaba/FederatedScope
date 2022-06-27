@@ -3,13 +3,13 @@ from __future__ import absolute_import, division, print_function
 import setuptools
 
 __name__ = 'federatedscope'
-__version__ = '0.2.0'
+__version__ = '0.1.9'
 URL = 'https://github.com/rayrayraykk/FederatedScope'
 
 minimal_requires = [
-    'numpy==1.21.2', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas==1.4.1',
-    'grpcio>=1.45.0', 'grpcio-tools', 'yaml>=5.1', 'fvcore', 'iopath', 'wandb'
-    'tensorboard', 'tensorboardX', 'pympler', 'protobuf==3.19.4'
+    'numpy', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas==1.4.1',
+    'grpcio>=1.45.0', 'grpcio-tools', 'pyyaml>=5.1', 'fvcore', 'iopath',
+    'wandb', 'tensorboard', 'tensorboardX', 'pympler', 'protobuf==3.19.4'
 ]
 
 full_requires = [
@@ -22,12 +22,14 @@ test_requires = ['unittest']
 
 dev_requires = test_requires + ['pre-commit']
 
-benchmark_hpo_requires = []
+benchmark_hpo_requires = full_requires + [
+    'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.3.3', 'optuna==2.10.0'
+]
 
-# TODO: add requirement for pfl
+# TODO: add requirements for pfl
 benchmark_pfl_requires = []
 
-# TODO: add requirement for htl
+# TODO: add requirements for htl
 benchmark_htl_requires = []
 
 with open("README.md", "r") as fh:
