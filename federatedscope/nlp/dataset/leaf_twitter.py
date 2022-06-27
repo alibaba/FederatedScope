@@ -31,7 +31,6 @@ class LEAF_TWITTER(LEAF):
         target_transform: transform for y.
 
     """
-
     def __init__(self,
                  root,
                  name='twitter',
@@ -52,7 +51,8 @@ class LEAF_TWITTER(LEAF):
         if name != 'twitter':
             raise ValueError(f'`name` should be `twitter`.')
         else:
-            if not os.path.exists(osp.join(osp.join(root, name, 'raw'), 'embs.json')):
+            if not os.path.exists(
+                    osp.join(osp.join(root, name, 'raw'), 'embs.json')):
                 self.download()
                 self.extract()
             print('Loading embs...')
@@ -167,7 +167,6 @@ class LEAF_TWITTER(LEAF):
         for num, file in enumerate(files):
             with open(osp.join(raw_path, file), 'r') as f:
                 raw_data = json.load(f)
-
             user_list = list(raw_data['user_data'].keys())
             n_tasks = math.ceil(len(user_list) * self.s_frac)
             random.shuffle(user_list)

@@ -19,14 +19,15 @@ def is_exists(path, names):
 
 class LEAF(Dataset):
     """Base class for LEAF dataset from "LEAF: A Benchmark for Federated Settings"
-    
+
     Arguments:
         root (str): root path.
         name (str): name of dataset, in `LEAF_NAMES`.
         transform: transform for x.
         target_transform: transform for y.
-    
+
     """
+
     def __init__(self, root, name, transform, target_transform):
         self.root = root
         self.name = name
@@ -93,8 +94,10 @@ class LocalDataset(Dataset):
     """
     Convert data list to torch Dataset to save memory usage.
     """
+
     def __init__(self, Xs, targets, transform=None, target_transform=None):
-        assert len(Xs) == len(targets), "The number of data and labels are not equal."
+        assert len(Xs) == len(
+            targets), "The number of data and labels are not equal."
         self.Xs = np.array(Xs)
         self.targets = np.array(targets)
         self.transform = transform
@@ -112,5 +115,3 @@ class LocalDataset(Dataset):
             target = self.target_transform(target)
 
         return data, target
-
-
