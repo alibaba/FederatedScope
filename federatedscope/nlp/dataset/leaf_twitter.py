@@ -2,6 +2,8 @@ import os
 import random
 import pickle
 import json
+
+import numpy as np
 import torch
 import math
 
@@ -17,7 +19,7 @@ from federatedscope.cv.dataset.leaf import LEAF
 from federatedscope.nlp.dataset.utils import *
 
 
-class LEAF_NLP(LEAF):
+class LEAF_TWITTER(LEAF):
     """
     LEAF NLP dataset from
     
@@ -35,19 +37,28 @@ class LEAF_NLP(LEAF):
     """
     def __init__(self,
                  root,
-                 name,
+                 name='twitter',
+                 max_len=140,
                  s_frac=0.3,
                  tr_frac=0.8,
                  val_frac=0.0,
                  seed=123,
                  transform=None,
                  target_transform=None):
-        # TODO: remove twitter
         self.s_frac = s_frac
         self.tr_frac = tr_frac
         self.val_frac = val_frac
         self.seed = seed
-        super(LEAF_NLP, self).__init__(root, name, transform, target_transform)
+        self.max_len = max_len
+        if name != 'twitter':
+            raise ValueError(f'`name` should be `twitter`.')
+        else:
+            print('Loading embs...')
+            with open(osp.join(osp.join(root, name, 'raw'), 'embs.json'), 'r') as inf:
+                embs = json.load(inf)
+            self.id2word = embs['vocab']
+            self.word2id = {v: k for k, v in enumerate(self.id2word)}
+        super(LEAF_TWITTER, self).__init__(root, name, transform, target_transform)
         files = os.listdir(self.processed_dir)
         files = [f for f in files if f.startswith('task_')]
         if len(files):
@@ -57,12 +68,14 @@ class LEAF_NLP(LEAF):
             for file in files:
                 train_data, train_targets = torch.load(
                     osp.join(self.processed_dir, file, 'train.pt'))
-                test_data, test_targets = torch.load(
-                    osp.join(self.processed_dir, file, 'test.pt'))
                 self.data_dict[int(file[5:])] = {
-                    'train': (train_data, train_targets),
-                    'test': (test_data, test_targets)
+                    'train': (train_data, train_targets)
                 }
+                if osp.exists(osp.join(self.processed_dir, file, 'test.pt')):
+                    test_data, test_targets = torch.load(
+                        osp.join(self.processed_dir, file, 'test.pt'))
+                    self.data_dict[int(file[5:])]['test'] = (test_data,
+                                                             test_targets)
                 if osp.exists(osp.join(self.processed_dir, file, 'val.pt')):
                     val_data, val_targets = torch.load(
                         osp.join(self.processed_dir, file, 'val.pt'))
@@ -105,6 +118,15 @@ class LEAF_NLP(LEAF):
 
                 if self.transform is not None:
                     text = self.transform(text)
+                else:
+                    # Bag of word
+                    bag = np.zeros(len(self.word2id))
+                    for i in text:
+                        if i != -1:
+                            bag[i] += 1
+                        else:
+                            break
+                    text = torch.FloatTensor(bag)
 
                 if self.target_transform is not None:
                     target = self.target_transform(target)
@@ -116,76 +138,35 @@ class LEAF_NLP(LEAF):
     def tokenizer(self, data, targets):
         """
         TOKENIZER = {
-            'shakespeare': {
-                'x': word_to_indices,
-                'y': letter_to_vec
-            },
             'twitter': {
                 'x': bag_of_words,
                 'y': target_to_binary
-            },
-            'subreddit': {
-                'x': token_to_ids,
-                'y': token_to_ids
             }
         }
         """
-        if self.name == 'shakespeare':
-            data = [
-                word_to_indices(re.sub(r"   *", r' ', raw_text))
-                for raw_text in data
-            ]
-            targets = [letter_to_vec(raw_target) for raw_target in targets]
+        # [ID, Date, Query, User, Content]
+        processed_data = []
+        for raw_text in data:
+            ids = [self.word2id[w] if w in self.word2id else 0 for w in split_line(raw_text[4])]
+            if len(ids) < self.max_len:
+                ids += [-1] * (self.max_len-len(ids))
+            else:
+                ids = ids[: self.max_len]
+            processed_data.append(ids)
+        targets = [target_to_binary(raw_target) for raw_target in targets]
 
-        elif self.name == 'twitter':
-            # Loading bag of word embeddings
-            with open(osp.join(self.raw_dir, 'embs.json'), 'r') as inf:
-                embs = json.load(inf)
-            id2word = embs['vocab']
-            word2id = {v: k for k, v in enumerate(id2word)}
-            # [ID, Date, Query, User, Content]
-            data = [bag_of_words(raw_text[4], word2id) for raw_text in data]
-            targets = [target_to_binary(raw_target) for raw_target in targets]
-
-        elif self.name == 'subreddit':
-            with open(osp.join(self.raw_dir, 'reddit_vocab.pck'), 'rb') as inf:
-                vocab_file = pickle.load(inf)
-            vocab = defaultdict(lambda: vocab_file['unk_symbol'])
-            vocab.update(vocab_file['vocab'])
-
-            data_x_by_seq, data_y_by_seq, mask_by_seq = [], [], []
-
-            for c, l in zip(data, targets):
-                data_x_by_seq.extend(c)
-                data_y_by_seq.extend(l['target_tokens'])
-                mask_by_seq.extend(l['count_tokens'])
-
-            data, targets, mask = data_x_by_seq, data_y_by_seq, mask_by_seq
-
-            data = token_to_ids(data, vocab)
-            targets = token_to_ids(targets, vocab)
-            # Next word prediction
-            targets = [words[-1] for words in targets]
-
-        return data, targets
+        return processed_data, targets
 
     def process(self):
         raw_path = osp.join(self.raw_dir, "all_data")
         files = os.listdir(raw_path)
         files = [f for f in files if f.endswith('.json')]
 
-        if self.name == 'subreddit':
-            self.s_frac = 1.0
-
-        n_tasks = math.ceil(len(files) * self.s_frac)
-        random.shuffle(files)
-        files = files[:n_tasks]
-
         print("Preprocess data (Please leave enough space)...")
 
         idx = 0
         reddit_idx = []
-        for num, file in enumerate(tqdm(files)):
+        for num, file in enumerate(files):
             with open(osp.join(raw_path, file), 'r') as f:
                 raw_data = json.load(f)
 
@@ -193,16 +174,9 @@ class LEAF_NLP(LEAF):
             n_tasks = math.ceil(len(user_list) * self.s_frac)
             random.shuffle(user_list)
             user_list = user_list[:n_tasks]
-            for user in user_list:
+            for user in tqdm(user_list):
                 data, targets = raw_data['user_data'][user]['x'], raw_data[
                     'user_data'][user]['y']
-
-                # Filter the user within 50 contents
-                if self.name == 'twitter' and len(data) <= 50:
-                    continue
-                if self.name == 'subreddit':
-                    if user not in reddit_idx:
-                        reddit_idx.append(user)
 
                 # Tokenize
                 data, targets = self.tokenizer(data, targets)
@@ -214,24 +188,7 @@ class LEAF_NLP(LEAF):
                     data = torch.LongTensor(data)
                     targets = torch.LongTensor(targets)
 
-                if self.name == 'subreddit':
-                    # subreddit has fixed split
-                    train_data, test_data, val_data = None, None, None
-                    train_targets, test_targets, val_targets = None, None, None
-                    if file.startswith('train'):
-                        train_data = data
-                        train_targets = targets
-                    elif file.startswith('test'):
-                        test_data = data
-                        test_targets = targets
-                    elif file.startswith('val'):
-                        val_data = data
-                        val_targets = targets
-                    else:
-                        continue
-                    save_path = osp.join(self.processed_dir,
-                                         f"task_{reddit_idx.index(user)}")
-                else:
+                try:
                     train_data, test_data, train_targets, test_targets =\
                         train_test_split(
                             data,
@@ -239,22 +196,26 @@ class LEAF_NLP(LEAF):
                             train_size=self.tr_frac,
                             random_state=self.seed
                         )
+                except ValueError:
+                    train_data = data
+                    train_targets = targets
+                    test_data, test_targets = None, None
 
-                    if self.val_frac > 0:
-                        try:
-                            val_data, test_data, val_targets, test_targets = \
-                                train_test_split(
-                                    test_data,
-                                    test_targets,
-                                    train_size=self.val_frac / (1.-self.tr_frac),
-                                    random_state=self.seed
-                                )
-                        except:
-                            val_data, val_targets = None, None
-
-                    else:
+                if self.val_frac > 0:
+                    try:
+                        val_data, test_data, val_targets, test_targets = \
+                            train_test_split(
+                                test_data,
+                                test_targets,
+                                train_size=self.val_frac / (1.-self.tr_frac),
+                                random_state=self.seed
+                            )
+                    except:
                         val_data, val_targets = None, None
-                    save_path = osp.join(self.processed_dir, f"task_{idx}")
+
+                else:
+                    val_data, val_targets = None, None
+                save_path = osp.join(self.processed_dir, f"task_{idx}")
                 os.makedirs(save_path, exist_ok=True)
 
                 save_local_data(dir_path=save_path,

@@ -7,11 +7,11 @@ class LDASplitter(object):
         self.client_num = client_num
         self.alpha = alpha
 
-    def __call__(self, dataset):
+    def __call__(self, dataset, prior=None):
         dataset = [ds for ds in dataset]
         label = np.array([y for x, y in dataset])
         idx_slice = dirichlet_distribution_noniid_slice(
-            label, self.client_num, self.alpha)
+            label, self.client_num, self.alpha, prior=prior)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
 

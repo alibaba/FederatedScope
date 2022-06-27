@@ -485,11 +485,15 @@ def load_external_data(config=None):
     }
 
     # Build dict of Dataloader
+    train_label_distribution = None
     for split in dataset:
         if dataset[split] is None:
             continue
-        for i, ds in enumerate(splitter(dataset[split])):
+        train_labels = list()
+        for i, ds in enumerate(splitter(dataset[split], prior=train_label_distribution)):
+            labels = [x[1] for x in ds]
             if split == 'train':
+                train_labels.append(labels)
                 data_local_dict[i + 1][split] = DataLoader(
                     ds,
                     batch_size=modified_config.data.batch_size,
@@ -501,6 +505,9 @@ def load_external_data(config=None):
                     batch_size=modified_config.data.batch_size,
                     shuffle=False,
                     num_workers=modified_config.data.num_workers)
+
+        if modified_config.data.consistent_label_distribution and len(train_labels) > 0:
+            train_label_distribution = train_labels
 
     return data_local_dict, modified_config
 
