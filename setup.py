@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import setuptools
 
 __name__ = 'federatedscope'
-__version__ = '0.1.9'
+__version__ = '0.1.0'
 URL = 'https://github.com/alibaba/FederatedScope'
 
 minimal_requires = [
@@ -12,7 +12,7 @@ minimal_requires = [
     'tensorboardX', 'pympler', 'protobuf==3.19.4'
 ]
 
-test_requires = ['unittest']
+test_requires = []
 
 dev_requires = test_requires + ['pre-commit']
 

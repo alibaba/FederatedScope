@@ -57,6 +57,7 @@ We recommend using a new conda environment to install FederatedScope:
 
 ```bash
 conda create -n fs python=3.9
+conda activate fs
 ```
 
 If your backend is torch, please install  torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
@@ -73,7 +74,7 @@ Finally, after all the dependencies are installed, run:
 python setup.py install
 
 # Or (for dev mode)
-pip install -e . [dev]
+pip install -e .[dev]
 ```
 
 * For application version including graph, nlp and speech (**optinal**):
