@@ -4,7 +4,7 @@ import setuptools
 
 __name__ = 'federatedscope'
 __version__ = '0.1.9'
-URL = 'https://github.com/rayrayraykk/FederatedScope'
+URL = 'https://github.com/alibaba/FederatedScope'
 
 minimal_requires = [
     'numpy', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas==1.4.1',
