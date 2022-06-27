@@ -1,5 +1,8 @@
 import zipfile
 import os
+import torch
+
+import numpy as np
 import os.path as osp
 
 from torch.utils.data import Dataset
@@ -84,3 +87,30 @@ class LEAF(Dataset):
 
     def process(self):
         raise NotImplementedError
+
+
+class LocalDataset(Dataset):
+    """
+    Convert data list to torch Dataset to save memory usage.
+    """
+    def __init__(self, Xs, targets, transform=None, target_transform=None):
+        assert len(Xs) == len(targets), "The number of data and labels are not equal."
+        self.Xs = np.array(Xs)
+        self.targets = np.array(targets)
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __len__(self):
+        return len(self.Xs)
+
+    def __getitem__(self, idx):
+        data, target = self.Xs[idx], self.targets[idx]
+        if self.transform:
+            data = self.transform(data)
+
+        if self.target_transform:
+            target = self.target_transform(target)
+
+        return data, target
+
+
