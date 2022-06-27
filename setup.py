@@ -4,27 +4,56 @@ from __future__ import division
 
 import setuptools
 
+__name__ = 'federatedscope'
+__version__ = '0.2.0'
+URL = 'https://github.com/rayrayraykk/FederatedScope'
+
+minimal_requires = [
+    'torch', 'networkx', 'numpy', 'grpcio>=1.45.0', 'grpcio-tools', 'yaml>=5.1'
+]
+
+full_requires = [
+    'torch', 'networkx', 'numpy', 'grpcio>=1.45.0', 'grpcio-tools', 'yaml>=5.1'
+]
+
+test_requires = ['unittest']
+
+dev_requires = test_requires + ['pre-commit']
+
+benchmark_hpo_requires = []
+
+# TODO: add requirement for pfl
+benchmark_pfl_requires = []
+
+# TODO: add requirement for htl
+benchmark_htl_requires = []
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="federatedscope",
-    version="0.1.0",
+    name=__name__,
+    version=__version__,
     author="Alibaba Damo Academy",
     author_email="",
     description="Federated learning package",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="",
+    url=URL,
+    download_url=f'{URL}/archive/{__version__}.tar.gz',
     packages=[
         package for package in setuptools.find_packages()
-        if package.startswith('federatedscope')
+        if package.startswith(__name__)
     ],
-    install_requires=[
-        'torch', 'networkx', 'numpy', 'grpcio>=1.45.0', 'grpcio-tools'
-    ],
-    setup_requires=[],
-    extras_require={'yaml': ['yaml>=5.1']},
+    install_requires=minimal_requires,
+    extras_require={
+        'full': full_requires,
+        'test': test_requires,
+        'dev': dev_requires,
+        'benchmark_hpo': benchmark_hpo_requires,
+        'benchmark_pfl': benchmark_pfl_requires,
+        'benchmark_htl': benchmark_htl_requires,
+    },
     license="Apache License 2.0",
     classifiers=[
         "Programming Language :: Python :: 3",
