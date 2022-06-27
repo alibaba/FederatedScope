@@ -7,12 +7,15 @@ __version__ = '0.2.0'
 URL = 'https://github.com/rayrayraykk/FederatedScope'
 
 minimal_requires = [
-    'numpy>=1.21.2', 'scikit-learn>=1.0.2', 'scipy>=1.7.3', 'pandas>=1.4.1',
-    'grpcio>=1.45.0', 'grpcio-tools', 'yaml>=5.1'
+    'numpy==1.21.2', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas==1.4.1',
+    'grpcio>=1.45.0', 'grpcio-tools', 'yaml>=5.1', 'fvcore', 'iopath', 'wandb'
+    'tensorboard', 'tensorboardX', 'pympler', 'protobuf==3.19.4'
 ]
 
 full_requires = [
-    'torch', 'networkx', 'numpy', 'grpcio>=1.45.0', 'grpcio-tools', 'yaml>=5.1'
+    'pyg==2.0.4', 'rdkit==2021.09.4=py39hccf6a74_0', 'nltk', 'sentencepiece',
+    'textgrid', 'typeguard', 'torchtext', 'transformers==4.16.2',
+    'tokenizers==0.10.3', 'datasets'
 ]
 
 test_requires = ['unittest']
