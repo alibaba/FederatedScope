@@ -405,8 +405,8 @@ class Monitor(object):
 
     def convert_size(self, size_bytes):
         import math
-        if size_bytes == 0:
-            return "0"
+        if size_bytes <= 0:
+            return str(size_bytes)
         size_name = ("", "K", "M", "G", "T", "P", "E", "Z", "Y")
         i = int(math.floor(math.log(size_bytes, 1024)))
         p = math.pow(1024, i)

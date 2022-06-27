@@ -1,30 +1,26 @@
 import os
 import random
-import pickle
 import json
 
-import numpy as np
 import torch
 import math
 
 import os.path as osp
 
 from tqdm import tqdm
-from collections import defaultdict
-
 from sklearn.model_selection import train_test_split
 
 from federatedscope.core.auxiliaries.utils import save_local_data, download_url
-from federatedscope.cv.dataset.leaf import LEAF
+from federatedscope.cv.dataset.leaf import LEAF, LocalDataset
 from federatedscope.nlp.dataset.utils import *
 
 
 class LEAF_TWITTER(LEAF):
     """
     LEAF NLP dataset from
-    
+
     leaf.cmu.edu
-    
+
     Arguments:
         root (str): root path.
         name (str): name of dataset, ‘shakespeare’ or ‘xxx’.
@@ -45,6 +41,8 @@ class LEAF_TWITTER(LEAF):
                  seed=123,
                  transform=None,
                  target_transform=None):
+        self.root = root
+        self.name = name
         self.s_frac = s_frac
         self.tr_frac = tr_frac
         self.val_frac = val_frac
@@ -53,12 +51,18 @@ class LEAF_TWITTER(LEAF):
         if name != 'twitter':
             raise ValueError(f'`name` should be `twitter`.')
         else:
+            if not os.path.exists(
+                    osp.join(osp.join(root, name, 'raw'), 'embs.json')):
+                self.download()
+                self.extract()
             print('Loading embs...')
-            with open(osp.join(osp.join(root, name, 'raw'), 'embs.json'), 'r') as inf:
+            with open(osp.join(osp.join(root, name, 'raw'), 'embs.json'),
+                      'r') as inf:
                 embs = json.load(inf)
             self.id2word = embs['vocab']
             self.word2id = {v: k for k, v in enumerate(self.id2word)}
-        super(LEAF_TWITTER, self).__init__(root, name, transform, target_transform)
+        super(LEAF_TWITTER, self).__init__(root, name, transform,
+                                           target_transform)
         files = os.listdir(self.processed_dir)
         files = [f for f in files if f.startswith('task_')]
         if len(files):
@@ -97,15 +101,26 @@ class LEAF_TWITTER(LEAF):
         for name in self.raw_file_names:
             download_url(f'{url}/{name}', self.raw_dir)
 
+    def _to_bag_of_word(self, text):
+        bag = np.zeros(len(self.word2id))
+        for i in text:
+            if i != -1:
+                bag[i] += 1
+            else:
+                break
+        text = torch.FloatTensor(bag)
+
+        return text
+
     def __getitem__(self, index):
         """
         Arguments:
             index (int): Index
 
         :returns:
-            dict: {'train':[(text, target)], 
-                   'test':[(text, target)], 
-                   'val':[(text, target)]} 
+            dict: {'train':Dataset,
+                   'test':Dataset,
+                   'val':Dataset}
             where target is the target class.
         """
         text_dict = {}
@@ -113,45 +128,29 @@ class LEAF_TWITTER(LEAF):
         for key in data:
             text_dict[key] = []
             texts, targets = data[key]
-            for idx in range(targets.shape[0]):
-                text = texts[idx]
-
-                if self.transform is not None:
-                    text = self.transform(text)
-                else:
-                    # Bag of word
-                    bag = np.zeros(len(self.word2id))
-                    for i in text:
-                        if i != -1:
-                            bag[i] += 1
-                        else:
-                            break
-                    text = torch.FloatTensor(bag)
-
-                if self.target_transform is not None:
-                    target = self.target_transform(target)
-
-                text_dict[key].append((text, targets[idx]))
+            if self.transform:
+                text_dict[key] = LocalDataset(texts, targets, None,
+                                              self.transform,
+                                              self.target_transform)
+            else:
+                text_dict[key] = LocalDataset(texts, targets, None,
+                                              self._to_bag_of_word,
+                                              self.target_transform)
 
         return text_dict
 
     def tokenizer(self, data, targets):
-        """
-        TOKENIZER = {
-            'twitter': {
-                'x': bag_of_words,
-                'y': target_to_binary
-            }
-        }
-        """
         # [ID, Date, Query, User, Content]
         processed_data = []
         for raw_text in data:
-            ids = [self.word2id[w] if w in self.word2id else 0 for w in split_line(raw_text[4])]
+            ids = [
+                self.word2id[w] if w in self.word2id else 0
+                for w in split_line(raw_text[4])
+            ]
             if len(ids) < self.max_len:
-                ids += [-1] * (self.max_len-len(ids))
+                ids += [-1] * (self.max_len - len(ids))
             else:
-                ids = ids[: self.max_len]
+                ids = ids[:self.max_len]
             processed_data.append(ids)
         targets = [target_to_binary(raw_target) for raw_target in targets]
 
@@ -169,7 +168,6 @@ class LEAF_TWITTER(LEAF):
         for num, file in enumerate(files):
             with open(osp.join(raw_path, file), 'r') as f:
                 raw_data = json.load(f)
-
             user_list = list(raw_data['user_data'].keys())
             n_tasks = math.ceil(len(user_list) * self.s_frac)
             random.shuffle(user_list)
@@ -189,7 +187,7 @@ class LEAF_TWITTER(LEAF):
                     targets = torch.LongTensor(targets)
 
                 try:
-                    train_data, test_data, train_targets, test_targets =\
+                    train_data, test_data, train_targets, test_targets = \
                         train_test_split(
                             data,
                             targets,
@@ -207,7 +205,7 @@ class LEAF_TWITTER(LEAF):
                             train_test_split(
                                 test_data,
                                 test_targets,
-                                train_size=self.val_frac / (1.-self.tr_frac),
+                                train_size=self.val_frac / (1. - self.tr_frac),
                                 random_state=self.seed
                             )
                     except:
