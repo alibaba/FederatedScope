@@ -11,6 +11,7 @@ categories:
       - 'fix'
       - 'bugfix'
       - 'bug'
+      - 'hotfix'
   - title: '🧰 Maintenance'
     label: 'chore'
 exclude-labels:
