@@ -26,7 +26,7 @@ We provide an end-to-end example for users to start running a standard FL course
 
 ### Step 1. Installation
 
-First of all, users need to clone the source code and install the required packages (we suggest python version >= 3.9).
+First of all, users need to clone the source code and install the required packages (we suggest python version >= 3.9). You can choose between the following two installation methods (via docker or conda) to install FederatedScope.
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
