@@ -3,13 +3,13 @@ from __future__ import absolute_import, division, print_function
 import setuptools
 
 __name__ = 'federatedscope'
-__version__ = '0.1.0'
+__version__ = '0.1.9'
 URL = 'https://github.com/alibaba/FederatedScope'
 
 minimal_requires = [
-    'numpy', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas', 'grpcio>=1.45.0',
-    'grpcio-tools', 'pyyaml>=5.1', 'fvcore', 'iopath', 'wandb', 'tensorboard',
-    'tensorboardX', 'pympler', 'protobuf==3.19.4'
+    'numpy<1.23.0', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas',
+    'grpcio>=1.45.0', 'grpcio-tools', 'pyyaml>=5.1', 'fvcore', 'iopath',
+    'wandb', 'tensorboard', 'tensorboardX', 'pympler', 'protobuf==3.19.4'
 ]
 
 test_requires = []

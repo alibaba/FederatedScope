@@ -53,7 +53,7 @@ The docker images are based on the nvidia-docker. Please pre-install the NVIDIA 
 
 #### Use Conda
 
-We recommend using a new conda environment to install FederatedScope:
+We recommend using a new virtual environment to install FederatedScope:
 
 ```bash
 conda create -n fs python=3.9
@@ -66,9 +66,9 @@ If your backend is torch, please install  torch in advance ([torch-get-started](
 conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
 ```
 
-Finally, after all the dependencies are installed, run:
+Finally, after all the dependencies are installed, you can install from `source`, `conda` or `pip`:
 
-* For minimal version:
+##### From source
 
 ```bash
 python setup.py install
@@ -77,7 +77,19 @@ python setup.py install
 pip install -e .[dev]
 ```
 
-* For application version including graph, nlp and speech (**optinal**):
+##### From conda
+
+```bash
+conda install -c federatedscope federatedscope
+```
+
+##### From pip
+
+```bash
+python -m pip install federatedscope
+```
+
+Now, you have successfully installed the minimal version of FederatedScope. (**Optinal**) For application version including graph, nlp and speech, run:
 
 ```bash
 bash enviroment/extra_dependencies_torch1.10-application.sh
