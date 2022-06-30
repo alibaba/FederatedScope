@@ -60,13 +60,20 @@ conda create -n fs python=3.9
 conda activate fs
 ```
 
-If your backend is torch, please install  torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
+If your backend is torch, please install torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
 
 ```bash
 conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
 ```
 
-Finally, after all the dependencies are installed, you can install from `source`, `conda` or `pip`:
+For users with Apple M1 chips:
+```bash
+conda install pytorch torchvision torchaudio -c pytorch
+# Downgrade torchvision to avoid segmentation fault
+python -m pip install torchvision==0.11.3
+```
+
+Finally, after the backend is installed, you can install FederatedScope from `source`, `conda` or `pip`:
 
 ##### From source
 
