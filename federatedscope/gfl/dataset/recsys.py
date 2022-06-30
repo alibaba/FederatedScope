@@ -126,7 +126,11 @@ class RecSys(InMemoryDataset):
     def download(self):
         # Download to `self.raw_dir`.
         url = 'https://github.com/FedML-AI/FedGraphNN/tree/main/data/recommender_system'
-        url = osp.join(url, self.name)
+        if self.name.startswith('FL'):
+            suffix = self.name[2:]
+        else:
+            suffix = self.name
+        url = osp.join(url, suffix)
         for name in self.raw_file_names:
             download_url(f'{url}/{name}', self.raw_dir)
 
