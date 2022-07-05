@@ -490,7 +490,8 @@ def load_external_data(config=None):
         if dataset[split] is None:
             continue
         train_labels = list()
-        for i, ds in enumerate(splitter(dataset[split], prior=train_label_distribution)):
+        for i, ds in enumerate(
+                splitter(dataset[split], prior=train_label_distribution)):
             labels = [x[1] for x in ds]
             if split == 'train':
                 train_labels.append(labels)
@@ -506,7 +507,8 @@ def load_external_data(config=None):
                     shuffle=False,
                     num_workers=modified_config.data.num_workers)
 
-        if modified_config.data.consistent_label_distribution and len(train_labels) > 0:
+        if modified_config.data.consistent_label_distribution and len(
+                train_labels) > 0:
             train_label_distribution = train_labels
 
     return data_local_dict, modified_config
@@ -570,8 +572,11 @@ def get_data(config):
         return data, modified_config
     else:
         # Invalid data_idx
-        if config.distribute.data_idx < 0 or config.distribute.data_idx > len(data):
-            data_idx = np.random.uniform(np.arange(len(data)))
+        if config.distribute.data_idx not in data.keys():
+            data_idx = np.random.choice(list(data.keys()))
+            logger.warning(
+                f"The provided data_idx={config.distribute.data_idx} is invalid, so that we randomly sample a data_idx as {data_idx}"
+            )
         else:
             data_idx = config.distribute.data_idx
         return data[data_idx], config
