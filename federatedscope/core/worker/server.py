@@ -120,7 +120,9 @@ class Server(Worker):
 
         # Sampler
         client_info = kwargs['client_info'] if 'client_info' in kwargs else None
-        self.sampler = get_sampler(sample_strategy=self._cfg.federate.sampler, client_num=self.client_num, client_info=client_info)
+        self.sampler = get_sampler(sample_strategy=self._cfg.federate.sampler,
+                                   client_num=self.client_num,
+                                   client_info=client_info)
 
         # Register message handlers
         self.msg_handlers = dict()

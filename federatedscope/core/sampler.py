@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+
 class Sampler(ABC):
     """
     The strategies of sampling clients for each training round
@@ -10,7 +11,7 @@ class Sampler(ABC):
         client_state: a dict to manager the state of clients (idle or busy)
     """
     def __init__(self, client_num):
-        self.client_state = np.asarray([1]*(client_num+1))
+        self.client_state = np.asarray([1] * (client_num + 1))
         # Set the state of server (index=0) to 'working'
         self.client_state[0] = 0
 
@@ -27,13 +28,15 @@ class Sampler(ABC):
         elif state == 'working':
             self.client_state[indices] = 0
         else:
-            raise ValueError(f"The state of client should be 'idle' or 'working', but got {state}")
+            raise ValueError(
+                f"The state of client should be 'idle' or 'working', but got {state}"
+            )
+
 
 class UniformSampler(Sampler):
     """
     To uniformly sample the clients from all the idle clients
     """
-
     def __init__(self, client_num):
         super(UniformSampler, self).__init__(client_num)
 
@@ -42,7 +45,9 @@ class UniformSampler(Sampler):
         To sample clients
         """
         idle_clients = np.nonzero(self.client_state)[0]
-        sampled_clients = np.random.choice(idle_clients, size=size, replace=False).tolist()
+        sampled_clients = np.random.choice(idle_clients,
+                                           size=size,
+                                           replace=False).tolist()
         self.change_state(sampled_clients, 'working')
         return sampled_clients
 
@@ -51,7 +56,6 @@ class GroupSampler(Sampler):
     """
     To grouply sample the clients based on their responsiveness (or other client information of the clients)
     """
-
     def __init__(self, client_num, client_info, bins=10):
         super(GroupSampler, self).__init__(client_num)
         self.bins = bins
@@ -62,8 +66,12 @@ class GroupSampler(Sampler):
         """
         To update the client information
         """
-        self.client_info = np.asarray([1.0] + [x for x in client_info]) #client_info[0] is preversed for the server
-        assert len(self.client_info) == len(self.client_state), f"The first dimension of client_info is mismatched with client_num"
+        self.client_info = np.asarray(
+            [1.0] + [x for x in client_info
+                     ])  #client_info[0] is preversed for the server
+        assert len(self.client_info) == len(
+            self.client_state
+        ), f"The first dimension of client_info is mismatched with client_num"
 
     def partition(self):
         """
@@ -73,10 +81,11 @@ class GroupSampler(Sampler):
         :returns: a iteration of candidates
         """
         sorted_index = np.argsort(self.client_info)
-        num_per_bins = np.int(len(sorted_index)/self.bins)
+        num_per_bins = np.int(len(sorted_index) / self.bins)
 
         # grouped clients
-        self.grouped_clients = np.split(sorted_index, np.cumsum([num_per_bins]*(self.bins-1)))
+        self.grouped_clients = np.split(
+            sorted_index, np.cumsum([num_per_bins] * (self.bins - 1)))
 
         return self.permutation()
 
@@ -113,4 +122,3 @@ class GroupSampler(Sampler):
             self.change_state(item, 'working')
 
         return sampled_clients
-
