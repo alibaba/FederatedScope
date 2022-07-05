@@ -54,7 +54,12 @@ setuptools.setup(
     },
     license="Apache License 2.0",
     classifiers=[
+        "Development Status :: 4 - Beta",
+        "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],

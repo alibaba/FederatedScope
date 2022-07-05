@@ -23,4 +23,4 @@ repos:
     rev: "4.0"
     hooks:
       - id: pyroma
-        args: [--min=9, .]
+        args: [--min=10, .]

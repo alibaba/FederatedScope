@@ -82,6 +82,7 @@ python setup.py install
 
 # Or (for dev mode)
 pip install -e .[dev]
+pre-commit install
 ```
 
 ##### From conda
