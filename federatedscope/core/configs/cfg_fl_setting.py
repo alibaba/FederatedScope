@@ -33,6 +33,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.save_to = ''
     cfg.federate.join_in_info = [
     ]  # The information requirements (from server) for join_in
+    cfg.federate.sampler = 'uniform' # the strategy for sampling client in each training round, ['uniform', 'group']
 
     # ------------------------------------------------------------------------ #
     # Distribute training related options

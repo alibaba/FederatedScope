@@ -9,6 +9,7 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
+from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
@@ -116,6 +117,10 @@ class Server(Worker):
         self.sample_client_num = int(self._cfg.federate.sample_client_num)
         self.join_in_client_num = 0
         self.join_in_info = dict()
+
+        # Sampler
+        client_info = kwargs['client_info'] if 'client_info' in kwargs else None
+        self.sampler = get_sampler(sample_strategy=self._cfg.federate.sampler, client_num=self.client_num, client_info=client_info)
 
         # Register message handlers
         self.msg_handlers = dict()
@@ -476,12 +481,12 @@ class Server(Worker):
         """
 
         if sample_client_num > 0:
-            receiver = np.random.choice(np.arange(1, self.client_num + 1),
-                                        size=sample_client_num,
-                                        replace=False).tolist()
+            receiver = self.sampler.sample(size=sample_client_num)
         else:
             # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
+            if msg_type == 'model_para':
+                self.sampler.change_state(receiver, 'working')
 
         if self._noise_injector is not None and msg_type == 'model_para':
             # Inject noise only when broadcast parameters
@@ -642,6 +647,7 @@ class Server(Worker):
         """
 
         round, sender, content = message.state, message.sender, message.content
+        self.sampler.change_state(sender, 'idle')
         # For a new round
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
