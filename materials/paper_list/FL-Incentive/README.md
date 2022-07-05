@@ -4,7 +4,7 @@
 | Title                                                        | Venue      | Link                                        | Year
 | ------------------------------------------------------------ | ---------- |---------------------------------------------|-----------|
  | A Comprehensive Survey of Incentive Mechanism for Federated Learning | arxiv | [pdf](https://arxiv.org/pdf/2106.15406.pdf) | 2021 |
- | A Survey of Incentive Mechanism Design for Federated Learning | {IEEE} Trans. Emerg. Top. Comput.|  [pdf](https://ieeexplore.ieee.org/document/9369019) | 2022 |
+ | A Survey of Incentive Mechanism Design for Federated Learning | IEEE Trans. Emerg. Top. Comput.|  [pdf](https://ieeexplore.ieee.org/document/9369019) | 2022 |
 
 ## 2022
 | Title                                                        | Venue      | Link                                        |
