@@ -26,21 +26,16 @@ We provide an end-to-end example for users to start running a standard FL course
 
 ### Step 1. Installation
 
-First of all, users need to clone the source code and install the required packages (we suggest python version >= 3.9).
+First of all, users need to clone the source code and install the required packages (we suggest python version >= 3.9). You can choose between the following two installation methods (via docker or conda) to install FederatedScope.
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
 ```
-You can install the dependencies from the requirement file:
-```
-# For minimal version
-conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-forge -c nvidia
+#### Use Docker
 
-# For application version
-conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
-```
-or build docker image and run with docker env (cuda 11 and torch 1.10):
+You can build docker image and run with docker env (cuda 11 and torch 1.10):
+
 ```
 docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
 docker run --gpus device=all --rm -it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash
@@ -56,12 +51,55 @@ enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 Note: You can choose to use cuda 10 and torch 1.8 via changing `torch1.10` to `torch1.8`.
 The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/enviroment/docker_files).
 
-Finally, after all the dependencies are installed, run:
+#### Use Conda
+
+We recommend using a new virtual environment to install FederatedScope:
+
+```bash
+conda create -n fs python=3.9
+conda activate fs
+```
+
+If your backend is torch, please install torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
+
+```bash
+conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+```
+
+For users with Apple M1 chips:
+```bash
+conda install pytorch torchvision torchaudio -c pytorch
+# Downgrade torchvision to avoid segmentation fault
+python -m pip install torchvision==0.11.3
+```
+
+Finally, after the backend is installed, you can install FederatedScope from `source`, `conda` or `pip`:
+
+##### From source
+
 ```bash
 python setup.py install
 
 # Or (for dev mode)
-pip install -e .
+pip install -e .[dev]
+```
+
+##### From conda
+
+```bash
+conda install -c federatedscope federatedscope
+```
+
+##### From pip
+
+```bash
+python -m pip install federatedscope
+```
+
+Now, you have successfully installed the minimal version of FederatedScope. (**Optinal**) For application version including graph, nlp and speech, run:
+
+```bash
+bash enviroment/extra_dependencies_torch1.10-application.sh
 ```
 
 ### Step 2. Prepare datasets

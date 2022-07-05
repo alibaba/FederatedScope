@@ -42,6 +42,7 @@ class LEAF_NLP(LEAF):
                  seed=123,
                  transform=None,
                  target_transform=None):
+        # TODO: remove twitter
         self.s_frac = s_frac
         self.tr_frac = tr_frac
         self.val_frac = val_frac
@@ -210,7 +211,7 @@ class LEAF_NLP(LEAF):
                     data = torch.LongTensor(np.stack(data))
                     targets = torch.LongTensor(np.stack(targets))
                 else:
-                    data = torch.Longtensor(data)
+                    data = torch.LongTensor(data)
                     targets = torch.LongTensor(targets)
 
                 if self.name == 'subreddit':
