@@ -46,6 +46,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.distribute.client_port = 50050
     cfg.distribute.role = 'client'
     cfg.distribute.data_file = 'data'
+    cfg.distribute.data_idx = -1
     cfg.distribute.grpc_max_send_message_length = 100 * 1024 * 1024
     cfg.distribute.grpc_max_receive_message_length = 100 * 1024 * 1024
     cfg.distribute.grpc_enable_http_proxy = False
