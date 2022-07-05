@@ -566,7 +566,15 @@ def get_data(config):
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
 
-    return data, modified_config
+    if config.federate.mode.lower() == 'standalone':
+        return data, modified_config
+    else:
+        # Invalid data_idx
+        if config.distribute.data_idx < 0 or config.distribute.data_idx > len(data):
+            data_idx = np.random.uniform(np.arange(len(data)))
+        else:
+            data_idx = config.distribute.data_idx
+        return data[data_idx], config
 
 
 def merge_data(all_data):
