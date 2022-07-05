@@ -1,0 +1,54 @@
+{% set name = "federatedscope" %}
+{% set version = "0.1.9" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/federatedscope-{{ version }}.tar.gz
+  sha256: f7802afa41b7edc34adb3128fbadd18ceb2a92521384e57b9d7cbb9aae894ea6
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - pip
+    - python >=3.9
+  run:
+    - fvcore
+    - grpcio >=1.45.0
+    - grpcio-tools
+    - iopath
+    - numpy <1.23.0
+    - pandas
+    - protobuf ==3.19.4
+    - pympler
+    - python >=3.9
+    - pyyaml >=5.1
+    - scikit-learn >=1.0.2
+    - scipy ==1.7.3
+    - tensorboard
+    - tensorboardx
+    - wandb
+
+test:
+  imports:
+    - federatedscope
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/alibaba/FederatedScope
+  summary: Federated learning package
+  license: Apache-2.0
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - rayrayraykk
