@@ -29,9 +29,9 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: graphminibatch_trainer
-    finetune:
-      before_eval: True
-      steps: 5
+  finetune:
+    before_eval: True
+    steps: 5
 eval:
   freq: 5
   metrics: ['acc', 'correct']

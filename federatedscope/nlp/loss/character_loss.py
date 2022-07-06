@@ -1,7 +1,6 @@
 import torch
 
 from federatedscope.register import register_criterion
-
 """
 Norm for Letters freq from FedEM:
 https://github.com/omarfoq/FedEM/blob/13f366c41c14b234147c2662c258b8a9db2f38cc/utils/constants.py

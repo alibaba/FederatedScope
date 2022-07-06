@@ -8,9 +8,9 @@ class MyNet(object):
 
 # Instantiate your model class with config and data
 def ModelBuilder(model_config, local_data):
-    
+
     model = MyNet()
-    
+
     return model
 
 
