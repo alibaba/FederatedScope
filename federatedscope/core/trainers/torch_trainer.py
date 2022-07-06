@@ -91,10 +91,6 @@ class GeneralTorchTrainer(Trainer):
             if isinstance(model_parameters[key], list):
                 model_parameters[key] = torch.FloatTensor(
                     model_parameters[key])
-            elif isinstance(model_parameters[key], int):
-                model_parameters[key] = torch.LongTensor([model_parameters[key]])
-            elif isinstance(model_parameters[key], float):
-                model_parameters[key] = torch.FloatTensor([model_parameters[key]])
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=False)
 

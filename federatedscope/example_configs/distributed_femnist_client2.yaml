@@ -27,7 +27,7 @@ data:
   transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
 model:
   type: convnet2
-  hidden: 2048
+  hidden: 128 
   out_channels: 62
 optimizer:
   lr: 0.01

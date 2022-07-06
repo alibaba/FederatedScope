@@ -18,7 +18,7 @@ class ConvNet2(Module):
                  w=32,
                  hidden=2048,
                  class_num=10,
-                 use_bn=True,
+                 use_bn=False,
                  dropout=.0):
         super(ConvNet2, self).__init__()
 
