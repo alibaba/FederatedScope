@@ -84,8 +84,9 @@ def assert_fl_setting_cfg(cfg):
                 ), "Please configure the cfg.federate. in distributed mode. "
 
     # sample client num pre-process
-    sample_client_num_valid = (0 < cfg.federate.sample_client_num <=
-                               cfg.federate.client_num) and cfg.federate.client_num != 0
+    sample_client_num_valid = (
+        0 < cfg.federate.sample_client_num <=
+        cfg.federate.client_num) and cfg.federate.client_num != 0
     sample_client_rate_valid = (0 < cfg.federate.sample_client_rate <= 1)
 
     sample_cfg_valid = sample_client_rate_valid or sample_client_num_valid
@@ -109,7 +110,8 @@ def assert_fl_setting_cfg(cfg):
 
     if non_sample_case or not sample_cfg_valid:
         # (a) use all clients
-        # in standalone mode, federate.client_num may be modified from 0 to num_of_all_clients after loading the data
+        # in standalone mode, federate.client_num may be modified from 0 to
+        # num_of_all_clients after loading the data
         if cfg.federate.client_num != 0:
             cfg.federate.sample_client_num = cfg.federate.client_num
     else:
