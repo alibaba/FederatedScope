@@ -4,9 +4,13 @@ import copy
 import numpy as np
 
 parser = argparse.ArgumentParser(description='FederatedScope result parsing')
-parser.add_argument('--input', help='path of exp results', required=True,
+parser.add_argument('--input',
+                    help='path of exp results',
+                    required=True,
                     type=str)
-parser.add_argument('--round', help='path of exp results', required=True,
+parser.add_argument('--round',
+                    help='path of exp results',
+                    required=True,
                     type=int)
 args = parser.parse_args()
 

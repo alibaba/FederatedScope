@@ -134,8 +134,9 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     scaffold_list = [
         list(scaffold_set)
         for (scaffold,
-             scaffold_set) in sorted(scaffolds.items(), key=lambda x:
-                                     (len(x[1]), x[1][0]), reverse=True)
+             scaffold_set) in sorted(scaffolds.items(),
+                                     key=lambda x: (len(x[1]), x[1][0]),
+                                     reverse=True)
     ]
     label = np.zeros(len(dataset))
     for i in range(len(scaffold_list)):

@@ -32,8 +32,16 @@ class Server(Worker):
         device: The device to run local training and evaluation
         strategy: redundant attribute
     """
-    def __init__(self, ID=-1, state=0, config=None, data=None, model=None,
-                 client_num=5, total_round_num=10, device='cpu', strategy=None,
+    def __init__(self,
+                 ID=-1,
+                 state=0,
+                 config=None,
+                 data=None,
+                 model=None,
+                 client_num=5,
+                 total_round_num=10,
+                 device='cpu',
+                 strategy=None,
                  **kwargs):
 
         super(Server, self).__init__(ID, state, config, model, strategy)
@@ -52,7 +60,8 @@ class Server(Worker):
             model.to(device)
         # Build aggregator
         self.aggregator = get_aggregator(self._cfg.federate.method,
-                                         model=model, device=device,
+                                         model=model,
+                                         device=device,
                                          online=self._cfg.federate.online_aggr,
                                          config=self._cfg)
         if self._cfg.federate.restore_from != '':
@@ -86,8 +95,12 @@ class Server(Worker):
             assert self.model is not None
             assert self.data is not None
             self.trainer = get_trainer(
-                model=self.model, data=self.data, device=self.device,
-                config=self._cfg, only_for_eval=True, monitor=self._monitor
+                model=self.model,
+                data=self.data,
+                device=self.device,
+                config=self._cfg,
+                only_for_eval=True,
+                monitor=self._monitor
             )  # the trainer is only used for global evaluation
             self.trainers = [self.trainer]
             if self.model_num > 1:
@@ -117,7 +130,8 @@ class Server(Worker):
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
-            self.comm_manager = gRPCCommManager(host=host, port=port,
+            self.comm_manager = gRPCCommManager(host=host,
+                                                port=port,
                                                 client_num=client_num)
             logger.info('Server #{:d}: Listen to {}:{}...'.format(
                 self.ID, host, port))
@@ -215,7 +229,8 @@ class Server(Worker):
 
         self.terminate(msg_type='finish')
 
-    def check_and_move_on(self, check_eval_result=False,
+    def check_and_move_on(self,
+                          check_eval_result=False,
                           min_received_num=None):
         """
         To check the message_buffer. When enough messages are receiving, some events
@@ -367,8 +382,11 @@ class Server(Worker):
         if self._cfg.federate.save_to != '':
             self.aggregator.save_model(self._cfg.federate.save_to, self.state)
         formatted_best_res = self._monitor.format_eval_res(
-            results=self.best_results, rnd="Final", role='Server #',
-            forms=["raw"], return_raw=True)
+            results=self.best_results,
+            rnd="Final",
+            role='Server #',
+            forms=["raw"],
+            return_raw=True)
         logger.info(formatted_best_res)
         self._monitor.save_formatted_results(formatted_best_res)
 
@@ -385,8 +403,10 @@ class Server(Worker):
                   "a") as outfile:
             for client_id, client_eval_results in eval_msg_buffer.items():
                 formatted_res = self._monitor.format_eval_res(
-                    client_eval_results, rnd=self.state,
-                    role='Client #{}'.format(client_id), return_raw=True)
+                    client_eval_results,
+                    rnd=self.state,
+                    role='Client #{}'.format(client_id),
+                    return_raw=True)
                 logger.info(formatted_res)
                 outfile.write(str(formatted_res) + "\n")
 
@@ -419,12 +439,15 @@ class Server(Worker):
                         metrics_all_clients[key].append(
                             float(client_eval_results[key]))
                 formatted_logs = self._monitor.format_eval_res(
-                    metrics_all_clients, rnd=self.state, role='Server #',
+                    metrics_all_clients,
+                    rnd=self.state,
+                    role='Server #',
                     forms=self._cfg.eval.report)
                 logger.info(formatted_logs)
                 formatted_logs_all_set.update(formatted_logs)
                 self._monitor.update_best_result(
-                    self.best_results, metrics_all_clients,
+                    self.best_results,
+                    metrics_all_clients,
                     results_type="client_individual",
                     round_wise_update_key=self._cfg.eval.
                     best_res_update_round_wise_key)
@@ -440,7 +463,8 @@ class Server(Worker):
 
         return formatted_logs_all_set
 
-    def broadcast_model_para(self, msg_type='model_para',
+    def broadcast_model_para(self,
+                             msg_type='model_para',
                              sample_client_num=-1):
         """
         To broadcast the message to all clients or sampled clients
@@ -476,9 +500,11 @@ class Server(Worker):
             model_para = {} if skip_broadcast else self.model.state_dict()
 
         self.comm_manager.send(
-            Message(msg_type=msg_type, sender=self.ID, receiver=receiver,
-                    state=min(self.state,
-                              self.total_round_num), content=model_para))
+            Message(msg_type=msg_type,
+                    sender=self.ID,
+                    receiver=receiver,
+                    state=min(self.state, self.total_round_num),
+                    content=model_para))
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
@@ -489,12 +515,15 @@ class Server(Worker):
         """
 
         self.comm_manager.send(
-            Message(msg_type='address', sender=self.ID,
+            Message(msg_type='address',
+                    sender=self.ID,
                     receiver=list(self.comm_manager.neighbors.keys()),
                     state=self.state,
                     content=self.comm_manager.get_neighbors()))
 
-    def check_buffer(self, cur_round, min_received_num,
+    def check_buffer(self,
+                     cur_round,
+                     min_received_num,
                      check_eval_result=False):
         """
         To check the message buffer
@@ -558,9 +587,11 @@ class Server(Worker):
         self._monitor.finish_fl()
 
         self.comm_manager.send(
-            Message(msg_type=msg_type, sender=self.ID,
+            Message(msg_type=msg_type,
+                    sender=self.ID,
                     receiver=list(self.comm_manager.neighbors.keys()),
-                    state=self.state, content=model_para))
+                    state=self.state,
+                    content=model_para))
 
     def eval(self):
         """
@@ -579,11 +610,14 @@ class Server(Worker):
                         target_data_split_name=split)
                     metrics.update(**eval_metrics)
                 formatted_eval_res = self._monitor.format_eval_res(
-                    metrics, rnd=self.state, role='Server #',
+                    metrics,
+                    rnd=self.state,
+                    role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
                 self._monitor.update_best_result(
-                    self.best_results, formatted_eval_res['Results_raw'],
+                    self.best_results,
+                    formatted_eval_res['Results_raw'],
                     results_type="server_global_eval",
                     round_wise_update_key=self._cfg.eval.
                     best_res_update_round_wise_key)
@@ -644,8 +678,10 @@ class Server(Worker):
                 self.comm_manager.add_neighbors(neighbor_id=sender,
                                                 address=address)
                 self.comm_manager.send(
-                    Message(msg_type='assign_client_id', sender=self.ID,
-                            receiver=[sender], state=self.state,
+                    Message(msg_type='assign_client_id',
+                            sender=self.ID,
+                            receiver=[sender],
+                            state=self.state,
                             content=str(sender)))
             else:
                 self.comm_manager.add_neighbors(neighbor_id=sender,
@@ -653,8 +689,10 @@ class Server(Worker):
 
             if len(self._cfg.federate.join_in_info) != 0:
                 self.comm_manager.send(
-                    Message(msg_type='ask_for_join_in_info', sender=self.ID,
-                            receiver=[sender], state=self.state,
+                    Message(msg_type='ask_for_join_in_info',
+                            sender=self.ID,
+                            receiver=[sender],
+                            state=self.state,
                             content=self._cfg.federate.join_in_info.copy()))
 
         self.trigger_for_start()

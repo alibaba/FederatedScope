@@ -14,8 +14,16 @@ class vFLServer(Server):
     Implementation of Vertical FL refer to `Private federated learning on vertically partitioned data via entity resolution and additively homomorphic encryption` [Hardy, et al., 2017]
     (https://arxiv.org/abs/1711.10677)
     """
-    def __init__(self, ID=-1, state=0, config=None, data=None, model=None,
-                 client_num=5, total_round_num=10, device='cpu', strategy=None,
+    def __init__(self,
+                 ID=-1,
+                 state=0,
+                 config=None,
+                 data=None,
+                 model=None,
+                 client_num=5,
+                 total_round_num=10,
+                 device='cpu',
+                 strategy=None,
                  **kwargs):
         super(vFLServer,
               self).__init__(ID, state, config, data, model, client_num,
@@ -37,9 +45,11 @@ class vFLServer(Server):
 
     def broadcast_public_keys(self):
         self.comm_manager.send(
-            Message(msg_type='public_keys', sender=self.ID,
+            Message(msg_type='public_keys',
+                    sender=self.ID,
                     receiver=list(self.comm_manager.get_neighbors().keys()),
-                    state=self.state, content=self.public_key))
+                    state=self.state,
+                    content=self.public_key))
 
     def broadcast_model_para(self):
 
@@ -49,8 +59,10 @@ class vFLServer(Server):
             theta_slices = self.theta[cur_idx:cur_idx +
                                       self.dims[int(client_id)]]
             self.comm_manager.send(
-                Message(msg_type='model_para', sender=self.ID,
-                        receiver=client_id, state=self.state,
+                Message(msg_type='model_para',
+                        sender=self.ID,
+                        receiver=client_id,
+                        state=self.state,
                         content=theta_slices))
             cur_idx += self.dims[int(client_id)]
 
@@ -67,11 +79,15 @@ class vFLServer(Server):
         if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
             metrics = self.evaluate()
             self._monitor.update_best_result(
-                self.best_results, metrics, results_type='server_global_eval',
+                self.best_results,
+                metrics,
+                results_type='server_global_eval',
                 round_wise_update_key=self._cfg.eval.
                 best_res_update_round_wise_key)
             formatted_logs = self._monitor.format_eval_res(
-                metrics, rnd=self.state, role='Global-Eval-Server #',
+                metrics,
+                rnd=self.state,
+                role='Global-Eval-Server #',
                 forms=self._cfg.eval.report)
             logger.info(formatted_logs)
 
@@ -84,11 +100,15 @@ class vFLServer(Server):
         else:
             metrics = self.evaluate()
             self._monitor.update_best_result(
-                self.best_results, metrics, results_type='server_global_eval',
+                self.best_results,
+                metrics,
+                results_type='server_global_eval',
                 round_wise_update_key=self._cfg.eval.
                 best_res_update_round_wise_key)
             formatted_logs = self._monitor.format_eval_res(
-                metrics, rnd=self.state, role='Server #',
+                metrics,
+                rnd=self.state,
+                role='Server #',
                 forms=self._cfg.eval.report)
             logger.info(formatted_logs)
 

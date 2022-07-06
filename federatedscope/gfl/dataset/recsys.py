@@ -90,8 +90,13 @@ class RecSys(InMemoryDataset):
             transformed version. The data object will be transformed before
             being saved to disk. (default: :obj:`None`)
     """
-    def __init__(self, root, name, FL=False, splits=[0.8, 0.1, 0.1],
-                 transform=None, pre_transform=None):
+    def __init__(self,
+                 root,
+                 name,
+                 FL=False,
+                 splits=[0.8, 0.1, 0.1],
+                 transform=None,
+                 pre_transform=None):
         self.FL = FL
         if self.FL:
             self.name = 'FL' + name

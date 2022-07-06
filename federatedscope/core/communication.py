@@ -58,8 +58,10 @@ class gRPCCommManager(object):
              global_cfg.distribute.grpc_enable_http_proxy),
         ]
         self.server_funcs = gRPCComServeFunc()
-        self.grpc_server = self.serve(max_workers=client_num, host=host,
-                                      port=port, options=options)
+        self.grpc_server = self.serve(max_workers=client_num,
+                                      host=host,
+                                      port=port,
+                                      options=options)
         self.neighbors = dict()
         self.monitor = None  # used to track the communication related metrics
 
@@ -99,8 +101,9 @@ class gRPCCommManager(object):
             """
             This part is referred to https://grpc.io/docs/languages/python/basics/#creating-a-stub
             """
-            channel = grpc.insecure_channel(
-                receiver_address, options=(('grpc.enable_http_proxy', 0), ))
+            channel = grpc.insecure_channel(receiver_address,
+                                            options=(('grpc.enable_http_proxy',
+                                                      0), ))
             stub = gRPC_comm_manager_pb2_grpc.gRPCComServeFuncStub(channel)
             return stub, channel
 

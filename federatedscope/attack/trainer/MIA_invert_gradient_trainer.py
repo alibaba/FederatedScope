@@ -38,11 +38,13 @@ def wrap_GradientAscentTrainer(
     base_trainer.ctx.inject_round = base_trainer.cfg.attack.inject_round
 
     base_trainer.register_hook_in_train(new_hook=hook_on_fit_start_count_round,
-                                        trigger='on_fit_start', insert_mode=-1)
+                                        trigger='on_fit_start',
+                                        insert_mode=-1)
 
     base_trainer.register_hook_in_train(
         new_hook=hook_on_batch_start_replace_data_batch,
-        trigger='on_batch_start', insert_mode=-1)
+        trigger='on_batch_start',
+        insert_mode=-1)
 
     base_trainer.replace_hook_in_train(
         new_hook=hook_on_batch_backward_invert_gradient,
@@ -50,7 +52,8 @@ def wrap_GradientAscentTrainer(
         target_hook_name='_hook_on_batch_backward')
 
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_fit_start_loss_on_target_data, trigger='on_fit_start',
+        new_hook=hook_on_fit_start_loss_on_target_data,
+        trigger='on_fit_start',
         insert_mode=-1)
 
     # plot the target data loss at the end of fitting

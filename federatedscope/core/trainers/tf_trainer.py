@@ -101,10 +101,12 @@ class GeneralTFTrainer(Trainer):
                     ctx.model.input_x: ctx.data_batch['x'],
                     ctx.model.input_y: ctx.data_batch['y']
                 }
-                _, batch_loss, y_true, y_prob = ctx.model.sess.run([
-                    ctx.model.train_op, ctx.model.losses, ctx.model.input_y,
-                    ctx.model.out
-                ], feed_dict=feed_dict)
+                _, batch_loss, y_true, y_prob = ctx.model.sess.run(
+                    [
+                        ctx.model.train_op, ctx.model.losses,
+                        ctx.model.input_y, ctx.model.out
+                    ],
+                    feed_dict=feed_dict)
                 ctx.loss_batch = batch_loss
                 ctx.y_true = y_true
                 ctx.y_prob = y_prob

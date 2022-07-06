@@ -138,7 +138,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
     for idx, rank in enumerate(mean_ranks):
         plt.plot(xs, rank, linewidth=1, color=COLORS[idx], markersize=MARKSIZE)
     plt.xticks(np.linspace(0, 1, 5),
-               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'], fontsize=FONTSIZE)
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
     if Y_label == 'Mean_rank':
         plt.yticks(np.linspace(1, 10, 10),
                    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
@@ -160,7 +161,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
     for idx, rank in enumerate(mean_ranks_bbo):
         plt.plot(xs, rank, linewidth=1, color=COLORS[idx], markersize=MARKSIZE)
     plt.xticks(np.linspace(0, 1, 5),
-               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'], fontsize=FONTSIZE)
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
     if Y_label == 'Mean_rank':
         plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'],
                    fontsize=FONTSIZE)
@@ -179,10 +181,14 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
     plt.figure(figsize=(10, 7.5))
 
     for idx, rank in enumerate(mean_ranks_mf):
-        plt.plot(xs, rank, linewidth=1, color=COLORS[idx + 5],
+        plt.plot(xs,
+                 rank,
+                 linewidth=1,
+                 color=COLORS[idx + 5],
                  markersize=MARKSIZE)
     plt.xticks(np.linspace(0, 1, 5),
-               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'], fontsize=FONTSIZE)
+               labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
+               fontsize=FONTSIZE)
     if Y_label == 'Mean_rank':
         plt.yticks(np.linspace(1, 5, 5), ['1', '2', '3', '4', '5'],
                    fontsize=FONTSIZE)
@@ -198,7 +204,11 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
     plt.close()
 
 
-def rank_over_time(root, family='all', mode='tabular', algo='avg', repeat=5,
+def rank_over_time(root,
+                   family='all',
+                   mode='tabular',
+                   algo='avg',
+                   repeat=5,
                    loss=False):
     suffix = f'{mode}_{algo}'
     if family == 'cnn':

@@ -8,7 +8,10 @@ def index_to_mask(index, size, device='cpu'):
     return mask
 
 
-def random_planetoid_splits(data, num_classes, percls_trn=20, val_lb=500,
+def random_planetoid_splits(data,
+                            num_classes,
+                            percls_trn=20,
+                            val_lb=500,
                             Flag=0):
 
     indices = []

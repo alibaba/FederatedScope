@@ -9,7 +9,8 @@ except ImportError:
 def get_dataloader(dataset, config):
     if config.backend == 'torch':
         from torch.utils.data import DataLoader
-        dataloader = DataLoader(dataset, batch_size=config.data.batch_size,
+        dataloader = DataLoader(dataset,
+                                batch_size=config.data.batch_size,
                                 shuffle=config.data.shuffle,
                                 num_workers=config.data.num_workers,
                                 pin_memory=True)

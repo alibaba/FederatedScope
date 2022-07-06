@@ -73,7 +73,12 @@ class Context(dict):
         except KeyError:
             raise AttributeError("Attribute {} is not found".format(item))
 
-    def __init__(self, model, cfg, data=None, device=None, init_dict=None,
+    def __init__(self,
+                 model,
+                 cfg,
+                 data=None,
+                 device=None,
+                 init_dict=None,
                  init_attr=True):
         if init_dict is None:
             super(Context, self).__init__()

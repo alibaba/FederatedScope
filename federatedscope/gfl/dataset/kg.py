@@ -93,10 +93,13 @@ class KG(InMemoryDataset):
         edge_index = torch.stack([row, col], dim=0)
         edge_type = torch.cat([edge_type, edge_type + len(relations_dict)])
         num_nodes = len(entities_dict)
-        data = Data(num_nodes=num_nodes, edge_index=edge_index,
-                    edge_type=edge_type, **kwargs)
+        data = Data(num_nodes=num_nodes,
+                    edge_index=edge_index,
+                    edge_type=edge_type,
+                    **kwargs)
         edge_index = torch.cat((data.train_edge_index, data.valid_edge_index,
-                                data.test_edge_index), dim=-1)
+                                data.test_edge_index),
+                               dim=-1)
         edge_type = torch.cat(
             (data.train_edge_type, data.valid_edge_type, data.test_edge_type),
             dim=0)
@@ -108,8 +111,10 @@ class KG(InMemoryDataset):
                         size(-1):-data.test_edge_index.size(-1)] = True
         test_edge_mask = torch.zeros(num_edges, dtype=torch.bool)
         test_edge_mask[-data.test_edge_index.size(-1):] = True
-        data = Data(edge_index=edge_index, index_orig=torch.arange(num_nodes),
-                    edge_type=edge_type, num_nodes=num_nodes,
+        data = Data(edge_index=edge_index,
+                    index_orig=torch.arange(num_nodes),
+                    edge_type=edge_type,
+                    num_nodes=num_nodes,
                     train_edge_mask=train_edge_mask,
                     valid_edge_mask=valid_edge_mask,
                     test_edge_mask=test_edge_mask,

@@ -31,7 +31,8 @@ def get_model(model_config, local_data, backend='torch'):
                     local_data, dict
             ) and 'test' in local_data and 'x' in local_data['test']:
                 model = LogisticRegression(
-                    in_channels=local_data['test']['x'].shape[-1], class_num=1,
+                    in_channels=local_data['test']['x'].shape[-1],
+                    class_num=1,
                     use_bias=model_config.use_bias)
             else:
                 if isinstance(local_data, dict):
@@ -51,7 +52,8 @@ def get_model(model_config, local_data, backend='torch'):
         elif backend == 'tensorflow':
             from federatedscope.cross_backends import LogisticRegression
             model = LogisticRegression(
-                in_channels=local_data['test']['x'].shape[-1], class_num=1,
+                in_channels=local_data['test']['x'].shape[-1],
+                class_num=1,
                 use_bias=model_config.use_bias)
         else:
             raise ValueError
@@ -70,10 +72,9 @@ def get_model(model_config, local_data, backend='torch'):
             data = local_data
 
         x, _ = data
-        model = MLP(
-            channel_list=[x.shape[-1]] + [model_config.hidden] *
-            (model_config.layer - 1) + [model_config.out_channels],
-            dropout=model_config.dropout)
+        model = MLP(channel_list=[x.shape[-1]] + [model_config.hidden] *
+                    (model_config.layer - 1) + [model_config.out_channels],
+                    dropout=model_config.dropout)
 
     elif model_config.type.lower() == 'quadratic':
         from federatedscope.tabular.model import QuadraticModel

@@ -194,9 +194,11 @@ def get_reconstructor(atk_method, **kwargs):
         logger.info(
             '--------- Getting reconstructor: DLG --------------------')
 
-        return DLG(max_ite=kwargs['max_ite'], lr=kwargs['lr'],
+        return DLG(max_ite=kwargs['max_ite'],
+                   lr=kwargs['lr'],
                    federate_loss_fn=kwargs['federate_loss_fn'],
-                   device=kwargs['device'], federate_lr=kwargs['federate_lr'],
+                   device=kwargs['device'],
+                   federate_lr=kwargs['federate_lr'],
                    optim=kwargs['optim'],
                    info_diff_type=kwargs['info_diff_type'],
                    federate_method=kwargs['federate_method'])
@@ -205,7 +207,8 @@ def get_reconstructor(atk_method, **kwargs):
         logger.info(
             '--------- Getting reconstructor: InvertGradient --------------------'
         )
-        return InvertGradient(max_ite=kwargs['max_ite'], lr=kwargs['lr'],
+        return InvertGradient(max_ite=kwargs['max_ite'],
+                              lr=kwargs['lr'],
                               federate_loss_fn=kwargs['federate_loss_fn'],
                               device=kwargs['device'],
                               federate_lr=kwargs['federate_lr'],
@@ -293,11 +296,13 @@ def get_passive_PIA_auxiliary_dataset(dataset_name):
             weights = np.random.normal(loc=0.0, scale=1.0, size=feature_num)
             bias = np.random.normal(loc=0.0, scale=1.0)
 
-            prop_weights = np.random.normal(loc=0.0, scale=1.0,
+            prop_weights = np.random.normal(loc=0.0,
+                                            scale=1.0,
                                             size=feature_num)
             prop_bias = np.random.normal(loc=0.0, scale=1.0)
 
-            x = np.random.normal(loc=0.0, scale=0.5,
+            x = np.random.normal(loc=0.0,
+                                 scale=0.5,
                                  size=(instance_num, feature_num))
             y = np.sum(x * weights, axis=-1) + bias
             y = np.expand_dims(y, -1)

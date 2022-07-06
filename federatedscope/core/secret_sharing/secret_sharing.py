@@ -61,7 +61,8 @@ class AdditiveSecretSharing(SecretSharing):
         last_seq = self.mod_funs(secret -
                                  self.mod_funs(np.sum(secret_seq, axis=0)))
 
-        secret_seq = np.append(secret_seq, np.expand_dims(last_seq, axis=0),
+        secret_seq = np.append(secret_seq,
+                               np.expand_dims(last_seq, axis=0),
                                axis=0)
         return secret_seq
 

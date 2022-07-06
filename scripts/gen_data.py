@@ -3,7 +3,9 @@ import pickle
 import os
 
 
-def generate_data(client_num=3, instance_num=1000, feature_num=5,
+def generate_data(client_num=3,
+                  instance_num=1000,
+                  feature_num=5,
                   save_data=True):
     """
     Generate data in FedRunner format
@@ -37,7 +39,8 @@ def generate_data(client_num=3, instance_num=1000, feature_num=5,
     data = dict()
     for each_client in range(1, client_num + 1):
         data[each_client] = dict()
-        client_x = np.random.normal(loc=0.0, scale=0.5 * each_client,
+        client_x = np.random.normal(loc=0.0,
+                                    scale=0.5 * each_client,
                                     size=(instance_num, feature_num))
         client_y = np.sum(client_x * weights, axis=-1) + bias
         client_y = np.expand_dims(client_y, -1)
@@ -45,7 +48,8 @@ def generate_data(client_num=3, instance_num=1000, feature_num=5,
         data[each_client]['train'] = client_data
 
     # test data
-    test_x = np.random.normal(loc=0.0, scale=1.0,
+    test_x = np.random.normal(loc=0.0,
+                              scale=1.0,
                               size=(instance_num, feature_num))
     test_y = np.sum(test_x * weights, axis=-1) + bias
     test_y = np.expand_dims(test_y, -1)
@@ -54,7 +58,8 @@ def generate_data(client_num=3, instance_num=1000, feature_num=5,
         data[each_client]['test'] = test_data
 
     # val data
-    val_x = np.random.normal(loc=0.0, scale=1.0,
+    val_x = np.random.normal(loc=0.0,
+                             scale=1.0,
                              size=(instance_num, feature_num))
     val_y = np.sum(val_x * weights, axis=-1) + bias
     val_y = np.expand_dims(val_y, -1)

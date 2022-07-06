@@ -20,11 +20,12 @@ def get_rnn(model_config, local_data):
 
     # check the task
     if model_config.type == 'lstm':
-        model = LSTM(
-            in_channels=x.shape[1]
-            if not model_config.in_channels else model_config.in_channels,
-            hidden=model_config.hidden, out_channels=model_config.out_channels,
-            embed_size=model_config.embed_size, dropout=model_config.dropout)
+        model = LSTM(in_channels=x.shape[1] if not model_config.in_channels
+                     else model_config.in_channels,
+                     hidden=model_config.hidden,
+                     out_channels=model_config.out_channels,
+                     embed_size=model_config.embed_size,
+                     dropout=model_config.dropout)
     else:
         raise ValueError(f'No model named {model_config.type}!')
 

@@ -7,8 +7,14 @@ from fedhpob.benchmarks.base_benchmark import BaseBenchmark
 
 
 class TabularBenchmark(BaseBenchmark):
-    def __init__(self, model, dname, algo, datadir='data/tabular_data/',
-                 rng=None, cost_mode='estimated', **kwargs):
+    def __init__(self,
+                 model,
+                 dname,
+                 algo,
+                 datadir='data/tabular_data/',
+                 rng=None,
+                 cost_mode='estimated',
+                 **kwargs):
         self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
         self.table, self.meta_info = load_data(datadir, model, dname, algo)
         self.eval_freq = self.meta_info['eval_freq']
@@ -41,8 +47,12 @@ class TabularBenchmark(BaseBenchmark):
         result = result.iloc[idx]["result"]
         return result
 
-    def objective_function(self, configuration, fidelity, key='val_acc',
-                           seed=1, **kwargs):
+    def objective_function(self,
+                           configuration,
+                           fidelity,
+                           key='val_acc',
+                           seed=1,
+                           **kwargs):
         fidelity = self._init_fidelity(fidelity)
         self._check(configuration, fidelity)
         result = self._search(

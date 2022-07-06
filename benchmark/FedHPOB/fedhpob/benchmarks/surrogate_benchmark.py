@@ -5,8 +5,14 @@ from fedhpob.utils.surrogate_dataloader import build_surrogate_model, load_surro
 
 
 class SurrogateBenchmark(BaseBenchmark):
-    def __init__(self, model, dname, algo, modeldir='data/surrogate_model/',
-                 datadir='data/tabular_data/', rng=None, cost_mode='estimated',
+    def __init__(self,
+                 model,
+                 dname,
+                 algo,
+                 modeldir='data/surrogate_model/',
+                 datadir='data/tabular_data/',
+                 rng=None,
+                 cost_mode='estimated',
                  **kwargs):
         self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
         assert datadir or modeldir, 'Please provide at least one of `datadir` and `modeldir`.'
@@ -38,7 +44,10 @@ class SurrogateBenchmark(BaseBenchmark):
         return model.predict([x_in])[0]
 
     # noinspection DuplicatedCode
-    def objective_function(self, configuration, fidelity=None, seed=1,
+    def objective_function(self,
+                           configuration,
+                           fidelity=None,
+                           seed=1,
                            **kwargs):
         fidelity = self._init_fidelity(fidelity)
         self._check(configuration, fidelity)

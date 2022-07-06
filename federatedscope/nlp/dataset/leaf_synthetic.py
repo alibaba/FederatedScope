@@ -40,9 +40,18 @@ class LEAF_SYNTHETIC(LEAF):
         box (list): box of `x`, default=(-1.0, 1.0).
     
     """
-    def __init__(self, root, name='synthetic', n_components=3, n_tasks=300,
-                 n_test=5000, n_val=5000, dim=150, noise_level=0.1, alpha=0.4,
-                 box=(-1.0, 1.0), uniform_marginal=True):
+    def __init__(self,
+                 root,
+                 name='synthetic',
+                 n_components=3,
+                 n_tasks=300,
+                 n_test=5000,
+                 n_val=5000,
+                 dim=150,
+                 noise_level=0.1,
+                 alpha=0.4,
+                 box=(-1.0, 1.0),
+                 uniform_marginal=True):
 
         self.root = root
         self.n_components = n_components
@@ -121,7 +130,8 @@ class LEAF_SYNTHETIC(LEAF):
                 alpha=self.alpha)
 
     def generate_components(self):
-        self.theta = np.random.uniform(self.box[0], self.box[1],
+        self.theta = np.random.uniform(self.box[0],
+                                       self.box[1],
                                        size=(self.n_components, self.dim))
 
     def generate_data(self, task_id, n_samples=10000):
@@ -130,7 +140,8 @@ class LEAF_SYNTHETIC(LEAF):
         y = np.zeros(n_samples)
 
         if self.uniform_marginal:
-            x = np.random.uniform(self.box[0], self.box[1],
+            x = np.random.uniform(self.box[0],
+                                  self.box[1],
                                   size=(n_samples, self.dim))
         else:
             raise NotImplementedError(
@@ -156,7 +167,9 @@ class LEAF_SYNTHETIC(LEAF):
         with open(path_, 'wb') as f:
             pickle.dump(metadata, f)
 
-    def get_num_samples(self, num_tasks, min_num_samples=50,
+    def get_num_samples(self,
+                        num_tasks,
+                        min_num_samples=50,
                         max_num_samples=1000):
         num_samples = np.random.lognormal(4, 2, num_tasks).astype(int)
         num_samples = [
@@ -177,7 +190,10 @@ class LEAF_SYNTHETIC(LEAF):
                 val_data, val_targets = self.generate_data(task_id, self.n_val)
             else:
                 val_data, val_targets = None, None
-            save_local_data(dir_path=save_path, train_data=train_data,
-                            train_targets=train_targets, test_data=test_data,
-                            test_targets=test_targets, val_data=val_data,
+            save_local_data(dir_path=save_path,
+                            train_data=train_data,
+                            train_targets=train_targets,
+                            test_data=test_data,
+                            test_targets=test_targets,
+                            val_data=val_data,
                             val_targets=val_targets)

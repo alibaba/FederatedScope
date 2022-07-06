@@ -37,7 +37,8 @@ def eval_fl_algo(x):
 
     init_cfg.freeze()
 
-    runner = FedRunner(data=data, server_class=get_server_cls(init_cfg),
+    runner = FedRunner(data=data,
+                       server_class=get_server_cls(init_cfg),
                        client_class=get_client_cls(init_cfg),
                        config=init_cfg.clone())
     results = runner.run()
@@ -62,27 +63,37 @@ def main():
     X_init = np.array([[0.005], [0.05], [0.5]])
     Y_init = target_function(X_init)
 
-    bo = GPBayesianOptimization(variables_list=space.parameters, X=X_init,
+    bo = GPBayesianOptimization(variables_list=space.parameters,
+                                X=X_init,
                                 Y=Y_init)
     bo.run_optimization(target_function, 15)
 
     mu_plot, var_plot = bo.model.predict(x_plot)
 
     plt.figure(figsize=(12, 8))
-    plt.plot(bo.loop_state.X, bo.loop_state.Y, "ro", markersize=10,
+    plt.plot(bo.loop_state.X,
+             bo.loop_state.Y,
+             "ro",
+             markersize=10,
              label="Observations")
     #plt.plot(x_plot, y_plot, "k", label="Objective Function")
     #plt.plot(x_plot, mu_plot, "C0", label="Model")
-    plt.fill_between(x_plot[:, 0], mu_plot[:, 0] + np.sqrt(var_plot)[:, 0],
-                     mu_plot[:, 0] - np.sqrt(var_plot)[:, 0], color="C0",
+    plt.fill_between(x_plot[:, 0],
+                     mu_plot[:, 0] + np.sqrt(var_plot)[:, 0],
+                     mu_plot[:, 0] - np.sqrt(var_plot)[:, 0],
+                     color="C0",
                      alpha=0.6)
 
-    plt.fill_between(x_plot[:, 0], mu_plot[:, 0] + 2 * np.sqrt(var_plot)[:, 0],
-                     mu_plot[:, 0] - 2 * np.sqrt(var_plot)[:, 0], color="C0",
+    plt.fill_between(x_plot[:, 0],
+                     mu_plot[:, 0] + 2 * np.sqrt(var_plot)[:, 0],
+                     mu_plot[:, 0] - 2 * np.sqrt(var_plot)[:, 0],
+                     color="C0",
                      alpha=0.4)
 
-    plt.fill_between(x_plot[:, 0], mu_plot[:, 0] + 3 * np.sqrt(var_plot)[:, 0],
-                     mu_plot[:, 0] - 3 * np.sqrt(var_plot)[:, 0], color="C0",
+    plt.fill_between(x_plot[:, 0],
+                     mu_plot[:, 0] + 3 * np.sqrt(var_plot)[:, 0],
+                     mu_plot[:, 0] - 3 * np.sqrt(var_plot)[:, 0],
+                     color="C0",
                      alpha=0.2)
     plt.legend(loc=2, prop={'size': LEGEND_SIZE})
     plt.xlabel(r"$x$")

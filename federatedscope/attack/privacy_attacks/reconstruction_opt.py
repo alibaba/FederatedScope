@@ -26,8 +26,15 @@ class DLG(object):
 
 
     """
-    def __init__(self, max_ite, lr, federate_loss_fn, device, federate_method,
-                 federate_lr=None, optim='Adam', info_diff_type='l2',
+    def __init__(self,
+                 max_ite,
+                 lr,
+                 federate_loss_fn,
+                 device,
+                 federate_method,
+                 federate_lr=None,
+                 optim='Adam',
+                 info_diff_type='l2',
                  is_one_hot_label=False):
 
         if federate_method.lower() == "fedavg":
@@ -54,7 +61,9 @@ class DLG(object):
         if self.optim.lower() == 'adam':
             optimizer = torch.optim.Adam(parameters, lr=self.lr)
         elif self.optim.lower() == 'sgd':  # actually gd
-            optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9,
+            optimizer = torch.optim.SGD(parameters,
+                                        lr=self.lr,
+                                        momentum=0.9,
                                         nesterov=True)
         elif self.optim.lower() == 'lbfgs':
             optimizer = torch.optim.LBFGS(parameters)
@@ -73,7 +82,8 @@ class DLG(object):
                 dummy_label.view(-1, ).type(torch.LongTensor).to(
                     torch.device(self.device)))
 
-            gradient = torch.autograd.grad(loss, model.parameters(),
+            gradient = torch.autograd.grad(loss,
+                                           model.parameters(),
                                            create_graph=True)
             info_diff = 0
             for g_dumby, gt in zip(gradient, original_info):
@@ -165,14 +175,18 @@ class DLG(object):
                 grad.to(torch.device(self.device)) for k, grad in original_info
             ]
 
-        label = iDLG_trick(original_gradient, num_class=num_class,
+        label = iDLG_trick(original_gradient,
+                           num_class=num_class,
                            is_one_hot_label=self.is_one_hot_label)
         label = label.to(torch.device(self.device))
 
         # setup optimizer
         optimizer = self._setup_optimizer([dummy_data])
 
-        self._run_simple_reconstruct(model, optimizer, dummy_data, label=label,
+        self._run_simple_reconstruct(model,
+                                     optimizer,
+                                     dummy_data,
+                                     label=label,
                                      original_gradient=original_gradient,
                                      closure_fn=self._gradient_closure)
 
@@ -201,14 +215,26 @@ class InvertGradient(DLG):
             - info_diff_type (str): The type of loss between the ground-truth gradient/parameter updates info and the reconstructed info; default: "l2"
             - is_one_hot_label (bool): whether the label is one-hot; default: False
     '''
-    def __init__(self, max_ite, lr, federate_loss_fn, device, federate_method,
-                 federate_lr=None, alpha_TV=0.001, info_diff_type='sim',
-                 optim='Adam', is_one_hot_label=False):
-        super(InvertGradient,
-              self).__init__(max_ite, lr, federate_loss_fn, device,
-                             federate_method, federate_lr=federate_lr,
-                             optim=optim, info_diff_type=info_diff_type,
-                             is_one_hot_label=is_one_hot_label)
+    def __init__(self,
+                 max_ite,
+                 lr,
+                 federate_loss_fn,
+                 device,
+                 federate_method,
+                 federate_lr=None,
+                 alpha_TV=0.001,
+                 info_diff_type='sim',
+                 optim='Adam',
+                 is_one_hot_label=False):
+        super(InvertGradient, self).__init__(max_ite,
+                                             lr,
+                                             federate_loss_fn,
+                                             device,
+                                             federate_method,
+                                             federate_lr=federate_lr,
+                                             optim=optim,
+                                             info_diff_type=info_diff_type,
+                                             is_one_hot_label=is_one_hot_label)
         self.alpha_TV = alpha_TV
         if self.info_diff_type != 'sim':
             logger.info(
@@ -227,7 +253,8 @@ class InvertGradient(DLG):
                 dummy_label.view(-1, ).type(torch.LongTensor).to(
                     torch.device(self.device)))
 
-            gradient = torch.autograd.grad(loss, model.parameters(),
+            gradient = torch.autograd.grad(loss,
+                                           model.parameters(),
                                            create_graph=True)
             gradient_diff = 0
 

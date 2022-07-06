@@ -25,19 +25,24 @@ def wrap_nbafl_trainer(
 
     # ---------------- action-level plug-in -----------------------
     base_trainer.register_hook_in_train(new_hook=record_initialization,
-                                        trigger='on_fit_start', insert_pos=-1)
+                                        trigger='on_fit_start',
+                                        insert_pos=-1)
 
     base_trainer.register_hook_in_eval(new_hook=record_initialization,
-                                       trigger='on_fit_start', insert_pos=-1)
+                                       trigger='on_fit_start',
+                                       insert_pos=-1)
 
     base_trainer.register_hook_in_train(new_hook=del_initialization,
-                                        trigger='on_fit_end', insert_pos=-1)
+                                        trigger='on_fit_end',
+                                        insert_pos=-1)
 
     base_trainer.register_hook_in_eval(new_hook=del_initialization,
-                                       trigger='on_fit_end', insert_pos=-1)
+                                       trigger='on_fit_end',
+                                       insert_pos=-1)
 
     base_trainer.register_hook_in_train(new_hook=inject_noise_in_upload,
-                                        trigger='on_fit_end', insert_pos=-1)
+                                        trigger='on_fit_end',
+                                        insert_pos=-1)
     return base_trainer
 
 

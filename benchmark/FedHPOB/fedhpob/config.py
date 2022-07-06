@@ -22,11 +22,12 @@ def get_cs(dname, model, mode, alg='avg'):
                                          choices=[0.2, 0.4, 0.6, 0.8, 1.0]))
         if mode == 'tabular':
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter(
-                    'lr', choices=[
-                        0.01, 0.01668, 0.02783, 0.04642, 0.07743, 0.12915,
-                        0.21544, 0.35938, 0.59948, 1.0
-                    ]))
+                CS.CategoricalHyperparameter('lr',
+                                             choices=[
+                                                 0.01, 0.01668, 0.02783,
+                                                 0.04642, 0.07743, 0.12915,
+                                                 0.21544, 0.35938, 0.59948, 1.0
+                                             ]))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('wd',
                                              choices=[0.0, 0.001, 0.01, 0.1]))
@@ -47,7 +48,9 @@ def get_cs(dname, model, mode, alg='avg'):
                                                  choices=[0.0, 0.9]))
         elif mode in ['surrogate', 'raw']:
             configuration_space.add_hyperparameter(
-                CS.UniformFloatHyperparameter('lr', lower=1e-2, upper=1.0,
+                CS.UniformFloatHyperparameter('lr',
+                                              lower=1e-2,
+                                              upper=1.0,
                                               log=True))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('wd',
@@ -62,10 +65,13 @@ def get_cs(dname, model, mode, alg='avg'):
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('step', choices=[1]))
                 configuration_space.add_hyperparameter(
-                    CS.UniformFloatHyperparameter('lrserver', lower=1e-1,
-                                                  upper=1.0, log=True))
+                    CS.UniformFloatHyperparameter('lrserver',
+                                                  lower=1e-1,
+                                                  upper=1.0,
+                                                  log=True))
                 configuration_space.add_hyperparameter(
-                    CS.UniformFloatHyperparameter('momentumsserver', lower=0.0,
+                    CS.UniformFloatHyperparameter('momentumsserver',
+                                                  lower=0.0,
                                                   upper=1.0))
 
     elif dname in [
@@ -108,7 +114,9 @@ def get_cs(dname, model, mode, alg='avg'):
                                                      choices=[0.0, 0.9]))
             elif mode in ['surrogate', 'raw']:
                 configuration_space.add_hyperparameter(
-                    CS.UniformFloatHyperparameter('lr', lower=1e-5, upper=1.0,
+                    CS.UniformFloatHyperparameter('lr',
+                                                  lower=1e-5,
+                                                  upper=1.0,
                                                   log=True))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter(
@@ -123,11 +131,14 @@ def get_cs(dname, model, mode, alg='avg'):
                     configuration_space.add_hyperparameter(
                         CS.CategoricalHyperparameter('step', choices=[1]))
                     configuration_space.add_hyperparameter(
-                        CS.UniformFloatHyperparameter('lrserver', lower=1e-1,
-                                                      upper=1.0, log=True))
+                        CS.UniformFloatHyperparameter('lrserver',
+                                                      lower=1e-1,
+                                                      upper=1.0,
+                                                      log=True))
                     configuration_space.add_hyperparameter(
                         CS.UniformFloatHyperparameter('momentumsserver',
-                                                      lower=0.0, upper=1.0))
+                                                      lower=0.0,
+                                                      upper=1.0))
         elif model == 'mlp':
             if mode == 'tabular':
                 configuration_space.add_hyperparameter(
@@ -162,7 +173,9 @@ def get_cs(dname, model, mode, alg='avg'):
                                                      choices=[0.0, 0.9]))
             elif mode in ['surrogate', 'raw']:
                 configuration_space.add_hyperparameter(
-                    CS.UniformFloatHyperparameter('lr', lower=1e-5, upper=1.0,
+                    CS.UniformFloatHyperparameter('lr',
+                                                  lower=1e-5,
+                                                  upper=1.0,
                                                   log=True))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter(
@@ -182,11 +195,14 @@ def get_cs(dname, model, mode, alg='avg'):
                     configuration_space.add_hyperparameter(
                         CS.CategoricalHyperparameter('step', choices=[1]))
                     configuration_space.add_hyperparameter(
-                        CS.UniformFloatHyperparameter('lrserver', lower=1e-1,
-                                                      upper=1.0, log=True))
+                        CS.UniformFloatHyperparameter('lrserver',
+                                                      lower=1e-1,
+                                                      upper=1.0,
+                                                      log=True))
                     configuration_space.add_hyperparameter(
                         CS.UniformFloatHyperparameter('momentumsserver',
-                                                      lower=0.0, upper=1.0))
+                                                      lower=0.0,
+                                                      upper=1.0))
     elif dname in ['femnist', 'cifar10']:
         # CNN tabular and surrogate
         fidelity_space.add_hyperparameter(
@@ -197,11 +213,12 @@ def get_cs(dname, model, mode, alg='avg'):
                                          choices=[0.2, 0.4, 0.6, 0.8, 1.0]))
         if mode == 'tabular':
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter(
-                    'lr', choices=[
-                        0.01, 0.01668, 0.02783, 0.04642, 0.07743, 0.12915,
-                        0.21544, 0.35938, 0.59948, 1.0
-                    ]))
+                CS.CategoricalHyperparameter('lr',
+                                             choices=[
+                                                 0.01, 0.01668, 0.02783,
+                                                 0.04642, 0.07743, 0.12915,
+                                                 0.21544, 0.35938, 0.59948, 1.0
+                                             ]))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('wd',
                                              choices=[0.0, 0.001, 0.01, 0.1]))
@@ -215,7 +232,9 @@ def get_cs(dname, model, mode, alg='avg'):
                     CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
         elif mode in ['surrogate', 'raw']:
             configuration_space.add_hyperparameter(
-                CS.UniformFloatHyperparameter('lr', lower=1e-2, upper=1.0,
+                CS.UniformFloatHyperparameter('lr',
+                                              lower=1e-2,
+                                              upper=1.0,
                                               log=True))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('wd',
@@ -240,11 +259,12 @@ def get_cs(dname, model, mode, alg='avg'):
                                          choices=[8, 16, 32, 64, 128]))
         if mode == 'tabular':
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter(
-                    'lr', choices=[
-                        0.01, 0.01668, 0.02783, 0.04642, 0.07743, 0.12915,
-                        0.21544, 0.35938, 0.59948, 1.0
-                    ]))
+                CS.CategoricalHyperparameter('lr',
+                                             choices=[
+                                                 0.01, 0.01668, 0.02783,
+                                                 0.04642, 0.07743, 0.12915,
+                                                 0.21544, 0.35938, 0.59948, 1.0
+                                             ]))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('wd',
                                              choices=[0.0, 0.001, 0.01, 0.1]))
@@ -264,7 +284,9 @@ def get_cs(dname, model, mode, alg='avg'):
                                                  choices=[0.0, 0.9]))
         elif mode in ['surrogate', 'raw']:
             configuration_space.add_hyperparameter(
-                CS.UniformFloatHyperparameter('lr', lower=1e-2, upper=1.0,
+                CS.UniformFloatHyperparameter('lr',
+                                              lower=1e-2,
+                                              upper=1.0,
                                               log=True))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('wd',
@@ -279,10 +301,13 @@ def get_cs(dname, model, mode, alg='avg'):
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('step', choices=[1]))
                 configuration_space.add_hyperparameter(
-                    CS.UniformFloatHyperparameter('lrserver', lower=1e-1,
-                                                  upper=1.0, log=True))
+                    CS.UniformFloatHyperparameter('lrserver',
+                                                  lower=1e-1,
+                                                  upper=1.0,
+                                                  log=True))
                 configuration_space.add_hyperparameter(
-                    CS.UniformFloatHyperparameter('momentumsserver', lower=0.0,
+                    CS.UniformFloatHyperparameter('momentumsserver',
+                                                  lower=0.0,
                                                   upper=1.0))
     return configuration_space, fidelity_space
 

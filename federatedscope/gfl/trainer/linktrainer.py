@@ -26,13 +26,15 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         super().register_default_hooks_eval()
         self.register_hook_in_eval(
             new_hook=self._hook_on_epoch_start_data2device,
-            trigger='on_fit_start', insert_pos=-1)
+            trigger='on_fit_start',
+            insert_pos=-1)
 
     def register_default_hooks_train(self):
         super().register_default_hooks_train()
         self.register_hook_in_train(
             new_hook=self._hook_on_epoch_start_data2device,
-            trigger='on_fit_start', insert_pos=-1)
+            trigger='on_fit_start',
+            insert_pos=-1)
 
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
@@ -43,11 +45,12 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
             for mode in ["train", "val", "test"]:
                 edges = data.edge_index.T[data[MODE2MASK[mode]]]
                 # Use an index loader
-                index_loader = DataLoader(
-                    range(edges.size(0)), self.cfg.data.batch_size,
-                    shuffle=self.cfg.data.shuffle if mode == 'train' else
-                    False, drop_last=self.cfg.data.drop_last
-                    if mode == 'train' else False)
+                index_loader = DataLoader(range(edges.size(0)),
+                                          self.cfg.data.batch_size,
+                                          shuffle=self.cfg.data.shuffle
+                                          if mode == 'train' else False,
+                                          drop_last=self.cfg.data.drop_last
+                                          if mode == 'train' else False)
                 init_dict["{}_loader".format(mode)] = index_loader
                 init_dict["num_{}_data".format(mode)] = edges.size(0)
                 init_dict["{}_data".format(mode)] = None

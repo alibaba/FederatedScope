@@ -26,7 +26,8 @@ def plot_target_loss(loss_list, outdir):
 def sav_target_loss(loss_list, outdir):
     target_data_loss = np.vstack(loss_list)
     np.savetxt(os.path.join(outdir, 'target_loss.txt'),
-               target_data_loss.transpose(), delimiter=',')
+               target_data_loss.transpose(),
+               delimiter=',')
 
 
 def callback_funcs_for_finish(self, message: Message):

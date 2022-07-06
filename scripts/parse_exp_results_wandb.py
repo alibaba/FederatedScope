@@ -6,17 +6,25 @@ import re
 from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
 
 parser = argparse.ArgumentParser(description='FederatedScope result parsing')
-parser.add_argument('--exp_dir', help='path of exp results', required=True,
+parser.add_argument('--exp_dir',
+                    help='path of exp results',
+                    required=True,
                     type=str)
-parser.add_argument('--project', help='project name used in wandb',
-                    required=True, type=str)
+parser.add_argument('--project',
+                    help='project name used in wandb',
+                    required=True,
+                    type=str)
 parser.add_argument('--user', help='wandb user name', required=True, type=str)
 parser.add_argument('--need_contain_str_in_exp_dir',
                     help='whether need contain some strings in exp_dir',
-                    required=False, default="", type=str)
+                    required=False,
+                    default="",
+                    type=str)
 parser.add_argument('--filter_str_in_exp_dir',
                     help='whether filter exp_dir that contain some strings',
-                    required=False, default="", type=str)
+                    required=False,
+                    default="",
+                    type=str)
 args = parser.parse_args()
 
 
@@ -91,11 +99,14 @@ def main():
                     method_name, exp_name = path_split[-3], path_split[-2]
                     dataset_name = exp_name.split("_")[-1]
 
-                wandb.init(project=args.project, entity=args.user,
-                           config=parsed_yaml, group=dataset_name,
+                wandb.init(project=args.project,
+                           entity=args.user,
+                           config=parsed_yaml,
+                           group=dataset_name,
                            job_type=method_name,
                            name=method_name + "-" + exp_name,
-                           notes=f"{method_name}, {exp_name}", reinit=True)
+                           notes=f"{method_name}, {exp_name}",
+                           reinit=True)
                 wandb.log(log_res_best)
                 for log_res in all_log_res:
                     wandb.log(log_res)

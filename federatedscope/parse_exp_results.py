@@ -4,7 +4,9 @@ import copy
 import numpy as np
 
 parser = argparse.ArgumentParser(description='FederatedScope result parsing')
-parser.add_argument('--input', help='path of exp results', required=True,
+parser.add_argument('--input',
+                    help='path of exp results',
+                    required=True,
                     type=str)
 args = parser.parse_args()
 

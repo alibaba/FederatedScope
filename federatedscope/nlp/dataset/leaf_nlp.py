@@ -33,8 +33,15 @@ class LEAF_NLP(LEAF):
         target_transform: transform for y.
 
     """
-    def __init__(self, root, name, s_frac=0.3, tr_frac=0.8, val_frac=0.0,
-                 seed=123, transform=None, target_transform=None):
+    def __init__(self,
+                 root,
+                 name,
+                 s_frac=0.3,
+                 tr_frac=0.8,
+                 val_frac=0.0,
+                 seed=123,
+                 transform=None,
+                 target_transform=None):
         # TODO: remove twitter
         self.s_frac = s_frac
         self.tr_frac = tr_frac
@@ -250,8 +257,11 @@ class LEAF_NLP(LEAF):
                     save_path = osp.join(self.processed_dir, f"task_{idx}")
                 os.makedirs(save_path, exist_ok=True)
 
-                save_local_data(dir_path=save_path, train_data=train_data,
+                save_local_data(dir_path=save_path,
+                                train_data=train_data,
                                 train_targets=train_targets,
-                                test_data=test_data, test_targets=test_targets,
-                                val_data=val_data, val_targets=val_targets)
+                                test_data=test_data,
+                                test_targets=test_targets,
+                                val_data=val_data,
+                                val_targets=val_targets)
                 idx += 1

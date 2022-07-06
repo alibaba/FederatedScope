@@ -4,8 +4,10 @@ import json
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    '-f', help='path to .txt file containing word embedding information;',
-    type=str, default='glove.6B.300d.txt')
+    '-f',
+    help='path to .txt file containing word embedding information;',
+    type=str,
+    default='glove.6B.300d.txt')
 
 args = parser.parse_args()
 

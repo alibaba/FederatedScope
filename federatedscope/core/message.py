@@ -14,8 +14,13 @@ class Message(object):
         state: The training round of the message, which is determined by the sender and used to filter out the outdated messages.
         strategy: redundant attribute
     """
-    def __init__(self, msg_type=None, sender=0, receiver=0, state=0,
-                 content=None, strategy=None):
+    def __init__(self,
+                 msg_type=None,
+                 sender=0,
+                 receiver=0,
+                 state=0,
+                 content=None,
+                 strategy=None):
         self._msg_type = msg_type
         self._sender = sender
         self._receiver = receiver
@@ -122,8 +127,8 @@ class Message(object):
         elif isinstance(value, list) or isinstance(value, tuple):
             m_list = gRPC_comm_manager_pb2.mList()
             for each in value:
-                m_list.list_value.append(self.create_by_type(
-                    each, nested=True))
+                m_list.list_value.append(self.create_by_type(each,
+                                                             nested=True))
             if nested:
                 msg_value = gRPC_comm_manager_pb2.MsgValue()
                 msg_value.list_msg.MergeFrom(m_list)

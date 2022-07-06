@@ -50,12 +50,15 @@ class RelTypeSplitter(BaseTransform):
                                                     num_edges)]] = True
                 test_edge_mask = torch.zeros(num_edges, dtype=torch.bool)
                 test_edge_mask[indices[-round(test_ratio * num_edges):]] = True
-            sub_g = Data(
-                x=data.x, edge_index=edge_index, index_orig=data.index_orig,
-                edge_type=edge_type, train_edge_mask=train_edge_mask,
-                valid_edge_mask=valid_edge_mask, test_edge_mask=test_edge_mask,
-                input_edge_index=to_undirected(
-                    edge_index.T[train_edge_mask].T))
+            sub_g = Data(x=data.x,
+                         edge_index=edge_index,
+                         index_orig=data.index_orig,
+                         edge_type=edge_type,
+                         train_edge_mask=train_edge_mask,
+                         valid_edge_mask=valid_edge_mask,
+                         test_edge_mask=test_edge_mask,
+                         input_edge_index=to_undirected(
+                             edge_index.T[train_edge_mask].T))
             data_list.append(sub_g)
 
         return data_list

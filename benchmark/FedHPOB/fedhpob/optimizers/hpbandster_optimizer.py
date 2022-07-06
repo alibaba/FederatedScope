@@ -14,7 +14,11 @@ logging.basicConfig(level=logging.WARNING)
 
 
 class MyWorker(Worker):
-    def __init__(self, benchmark, monitor, sleep_interval=0, cfg=None,
+    def __init__(self,
+                 benchmark,
+                 monitor,
+                 sleep_interval=0,
+                 cfg=None,
                  **kwargs):
         super(MyWorker, self).__init__(**kwargs)
         self.benchmark = benchmark
@@ -41,8 +45,11 @@ class MyWorker(Worker):
             'sample_client': self.cfg.benchmark.sample_client
         }
         t_start = time.time()
-        res = self.benchmark(config, main_fidelity, seed=random.randint(1, 99),
-                             key='val_avg_loss', fhb_cfg=self.cfg)
+        res = self.benchmark(config,
+                             main_fidelity,
+                             seed=random.randint(1, 99),
+                             key='val_avg_loss',
+                             fhb_cfg=self.cfg)
         time.sleep(self.sleep_interval)
         self.monitor(res=res, sim_time=time.time() - t_start, budget=budget)
         return ({
@@ -60,7 +67,9 @@ def run_hpbandster(cfg):
     ns_host, ns_port = NS.start()
     cfg = cfg.clone()
     benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](
-        cfg.benchmark.model, cfg.benchmark.data, cfg.benchmark.algo,
+        cfg.benchmark.model,
+        cfg.benchmark.data,
+        cfg.benchmark.algo,
         device=cfg.benchmark.device)
     w = MyWorker(
         benchmark=benchmark,

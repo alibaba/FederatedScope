@@ -12,7 +12,8 @@ class GeneratorFemnist(nn.Module):
 
         module_list = []
         module_list.append(
-            nn.Linear(in_features=noise_dim, out_features=4 * 4 * 256,
+            nn.Linear(in_features=noise_dim,
+                      out_features=4 * 4 * 256,
                       bias=False))
         module_list.append(nn.BatchNorm1d(num_features=4 * 4 * 256))
         module_list.append(nn.ReLU())
@@ -23,24 +24,33 @@ class GeneratorFemnist(nn.Module):
         module_list = []
 
         module_list.append(
-            nn.ConvTranspose2d(in_channels=256, out_channels=128,
-                               kernel_size=(3, 3), stride=(1, 1), bias=False))
+            nn.ConvTranspose2d(in_channels=256,
+                               out_channels=128,
+                               kernel_size=(3, 3),
+                               stride=(1, 1),
+                               bias=False))
         module_list.append(nn.BatchNorm2d(128))
         module_list.append(nn.ReLU())
         self.body2 = nn.Sequential(*module_list)
 
         module_list = []
         module_list.append(
-            nn.ConvTranspose2d(in_channels=128, out_channels=64,
-                               kernel_size=(3, 3), stride=(2, 2), bias=False))
+            nn.ConvTranspose2d(in_channels=128,
+                               out_channels=64,
+                               kernel_size=(3, 3),
+                               stride=(2, 2),
+                               bias=False))
         module_list.append(nn.BatchNorm2d(64))
         module_list.append(nn.ReLU())
         self.body3 = nn.Sequential(*module_list)
 
         module_list = []
         module_list.append(
-            nn.ConvTranspose2d(in_channels=64, out_channels=1,
-                               kernel_size=(4, 4), stride=(2, 2), bias=False))
+            nn.ConvTranspose2d(in_channels=64,
+                               out_channels=1,
+                               kernel_size=(4, 4),
+                               stride=(2, 2),
+                               bias=False))
         module_list.append(nn.BatchNorm2d(1))
         module_list.append(nn.Tanh())
         self.body4 = nn.Sequential(*module_list)

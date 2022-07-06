@@ -407,8 +407,10 @@ def avg_res_of_seeds():
                     all_res_structed[expname_tag][metric] = res
 
 
-def highlight_tex_res_in_table(res_to_print_matrix_raw, rank_order,
-                               need_scale=False, filter_out=None,
+def highlight_tex_res_in_table(res_to_print_matrix_raw,
+                               rank_order,
+                               need_scale=False,
+                               filter_out=None,
                                convergence_case=False):
     res_to_print_matrix = []
     if filter_out is not None:
@@ -547,7 +549,8 @@ def print_paper_table_from_repeat(filters_each_line_table):
     # "+" indicates the larger, the better
     rank_order = colum_order_per_data * len(filters_each_line_table)
     res_to_print_matrix = highlight_tex_res_in_table(
-        res_to_print_matrix, rank_order=rank_order,
+        res_to_print_matrix,
+        rank_order=rank_order,
         filter_out=["Global-Train"])
     for res_to_print in res_to_print_matrix:
         print("&".join(res_to_print) + "\\\\")
@@ -585,7 +588,9 @@ def print_paper_table_from_repeat(filters_each_line_table):
     # "+" indicates the larger, the better
     rank_order = colum_order_per_data * len(filters_each_line_table)
     res_to_print_matrix = highlight_tex_res_in_table(
-        res_to_print_matrix, rank_order=rank_order, need_scale=True,
+        res_to_print_matrix,
+        rank_order=rank_order,
+        need_scale=True,
         filter_out=["Global-Train", "Isolated"])
     for res_to_print in res_to_print_matrix:
         print("&".join(res_to_print) + "\\\\")
@@ -614,8 +619,10 @@ def print_paper_table_from_repeat(filters_each_line_table):
     # "+" indicates the larger, the better
     rank_order = colum_order_per_data * len(filters_each_line_table)
     res_to_print_matrix = highlight_tex_res_in_table(
-        res_to_print_matrix, rank_order=rank_order,
-        filter_out=["Global-Train", "Isolated"], convergence_case=True)
+        res_to_print_matrix,
+        rank_order=rank_order,
+        filter_out=["Global-Train", "Isolated"],
+        convergence_case=True)
     for res_to_print in res_to_print_matrix:
         print("&".join(res_to_print) + "\\\\")
 
@@ -722,7 +729,8 @@ def plot_generalization_lines(all_res_pd, data_cate, data_cate_name):
         plt.legend(bbox_to_anchor=(1, 1), loc=2, ncol=2, borderaxespad=0.)
         plt.tight_layout()
         plt.savefig(f"generalization_all_{data_cate_name}_{i}.pdf",
-                    bbox_inches='tight', pad_inches=0)
+                    bbox_inches='tight',
+                    pad_inches=0)
 
         plt.show()
 
@@ -748,11 +756,18 @@ def plot_tradeoff(all_res_pd, data_cate, data_cate_name, metric_a, metric_b,
     sns.set()
     fig, axes = plt.subplots(1, 1, figsize=(2, 3))
 
-    ax = sns.scatterplot(
-        ax=axes, data=plot_data, x=metric_a, y=metric_b, hue="method",
-        style="method", markers=True, hue_order=[
-            m for m in expected_method_names if m not in filter_out_methods
-        ], s=100)
+    ax = sns.scatterplot(ax=axes,
+                         data=plot_data,
+                         x=metric_a,
+                         y=metric_b,
+                         hue="method",
+                         style="method",
+                         markers=True,
+                         hue_order=[
+                             m for m in expected_method_names
+                             if m not in filter_out_methods
+                         ],
+                         s=100)
     ax.set(xlabel=column_name_for_plot[metric_a],
            ylabel=column_name_for_plot[metric_b])
     # plt.gca().invert_xaxis()
@@ -764,7 +779,8 @@ def plot_tradeoff(all_res_pd, data_cate, data_cate_name, metric_a, metric_b,
 
     plt.legend(bbox_to_anchor=(1, 1), loc=2, ncol=2, borderaxespad=0.)
     plt.tight_layout()
-    plt.savefig(f"{fig_time}_{data_cate_name}.pdf", bbox_inches='tight',
+    plt.savefig(f"{fig_time}_{data_cate_name}.pdf",
+                bbox_inches='tight',
                 pad_inches=0)
 
     plt.show()
@@ -795,19 +811,22 @@ def plot_line_figs():
 
 def plot_trade_off_figs(filters_each_line_main_table):
     for data_name in list(filters_each_line_main_table.keys()):
-        plot_tradeoff(all_res_pd_repeat, [data_name], data_cate_name=data_name,
+        plot_tradeoff(all_res_pd_repeat, [data_name],
+                      data_cate_name=data_name,
                       metric_a="communication_bytes",
                       metric_b="best_client_summarized_weighted_avg/test_acc",
                       fig_time="com-acc")
 
     for data_name in list(filters_each_line_main_table.keys()):
-        plot_tradeoff(all_res_pd_repeat, [data_name], data_cate_name=data_name,
+        plot_tradeoff(all_res_pd_repeat, [data_name],
+                      data_cate_name=data_name,
                       metric_a="total_flops",
                       metric_b="best_client_summarized_weighted_avg/test_acc",
                       fig_time="flops-acc")
 
     for data_name in list(filters_each_line_main_table.keys()):
-        plot_tradeoff(all_res_pd_repeat, [data_name], data_cate_name=data_name,
+        plot_tradeoff(all_res_pd_repeat, [data_name],
+                      data_cate_name=data_name,
                       metric_a="sys_avg/global_convergence_round",
                       metric_b="best_client_summarized_weighted_avg/test_acc",
                       fig_time="round-acc")

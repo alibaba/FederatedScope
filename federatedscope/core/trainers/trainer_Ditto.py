@@ -23,24 +23,31 @@ def wrap_DittoTrainer(
     # ---------------- action-level plug-in -----------------------
     base_trainer.register_hook_in_train(
         new_hook=hook_on_fit_start_set_regularized_para,
-        trigger="on_fit_start", insert_pos=0)
+        trigger="on_fit_start",
+        insert_pos=0)
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_batch_start_switch_model, trigger="on_batch_start",
+        new_hook=hook_on_batch_start_switch_model,
+        trigger="on_batch_start",
         insert_pos=0)
     base_trainer.register_hook_in_train(new_hook=_hook_on_batch_end_flop_count,
-                                        trigger="on_batch_end", insert_pos=-1)
+                                        trigger="on_batch_end",
+                                        insert_pos=-1)
     # evaluation is based on the local personalized model
     base_trainer.register_hook_in_eval(
-        new_hook=hook_on_fit_start_switch_local_model, trigger="on_fit_start",
+        new_hook=hook_on_fit_start_switch_local_model,
+        trigger="on_fit_start",
         insert_pos=0)
     base_trainer.register_hook_in_eval(
-        new_hook=hook_on_fit_end_switch_global_model, trigger="on_fit_end",
+        new_hook=hook_on_fit_end_switch_global_model,
+        trigger="on_fit_end",
         insert_pos=-1)
 
     base_trainer.register_hook_in_train(new_hook=hook_on_fit_end_free_cuda,
-                                        trigger="on_fit_end", insert_pos=-1)
+                                        trigger="on_fit_end",
+                                        insert_pos=-1)
     base_trainer.register_hook_in_eval(new_hook=hook_on_fit_end_free_cuda,
-                                       trigger="on_fit_end", insert_pos=-1)
+                                       trigger="on_fit_end",
+                                       insert_pos=-1)
 
     return base_trainer
 

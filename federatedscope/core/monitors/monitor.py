@@ -110,7 +110,8 @@ class Monitor(object):
             )
         return system_metrics
 
-    def merge_system_metrics_simulation_mode(self, file_io=True,
+    def merge_system_metrics_simulation_mode(self,
+                                             file_io=True,
                                              from_global_monitors=False):
         """
             average the system metrics recorded in "system_metrics.json" by all workers
@@ -262,7 +263,11 @@ class Monitor(object):
                     shutil.copyfileobj(f_in, f_out)
             os.remove(old_f_name)
 
-    def format_eval_res(self, results, rnd, role=-1, forms=None,
+    def format_eval_res(self,
+                        results,
+                        rnd,
+                        role=-1,
+                        forms=None,
                         return_raw=False):
         """
         format the evaluation results from trainer.ctx.eval_results
@@ -448,7 +453,10 @@ class Monitor(object):
     def track_download_bytes(self, bytes):
         self.total_download_bytes += bytes
 
-    def update_best_result(self, best_results, new_results, results_type,
+    def update_best_result(self,
+                           best_results,
+                           new_results,
+                           results_type,
                            round_wise_update_key="val_loss"):
         """
             update best evaluation results.
@@ -561,7 +569,9 @@ class Monitor(object):
                     import wandb
                     exp_stop_normal = False
                     exp_stop_normal, log_res = logline_2_wandb_dict(
-                        exp_stop_normal, line, self.log_res_best,
+                        exp_stop_normal,
+                        line,
+                        self.log_res_best,
                         raw_out=False)
                     #wandb.log(self.log_res_best)
                     for k, v in self.log_res_best.items():

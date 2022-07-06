@@ -19,7 +19,9 @@ def load_toy_data(config=None):
 
     generate = config.federate.mode.lower() == 'standalone'
 
-    def _generate_data(client_num=5, instance_num=1000, feature_num=5,
+    def _generate_data(client_num=5,
+                       instance_num=1000,
+                       feature_num=5,
                        save_data=False):
         """
         Generate data in FedRunner format
@@ -53,7 +55,8 @@ def load_toy_data(config=None):
         data = dict()
         for each_client in range(1, client_num + 1):
             data[each_client] = dict()
-            client_x = np.random.normal(loc=0.0, scale=0.5 * each_client,
+            client_x = np.random.normal(loc=0.0,
+                                        scale=0.5 * each_client,
                                         size=(instance_num, feature_num))
             client_y = np.sum(client_x * weights, axis=-1) + bias
             client_y = np.expand_dims(client_y, -1)
@@ -61,7 +64,8 @@ def load_toy_data(config=None):
             data[each_client]['train'] = client_data
 
         # test data
-        test_x = np.random.normal(loc=0.0, scale=1.0,
+        test_x = np.random.normal(loc=0.0,
+                                  scale=1.0,
                                   size=(instance_num, feature_num))
         test_y = np.sum(test_x * weights, axis=-1) + bias
         test_y = np.expand_dims(test_y, -1)
@@ -70,7 +74,8 @@ def load_toy_data(config=None):
             data[each_client]['test'] = test_data
 
         # val data
-        val_x = np.random.normal(loc=0.0, scale=1.0,
+        val_x = np.random.normal(loc=0.0,
+                                 scale=1.0,
                                  size=(instance_num, feature_num))
         val_y = np.sum(val_x * weights, axis=-1) + bias
         val_y = np.expand_dims(val_y, -1)
@@ -178,11 +183,15 @@ def load_external_data(config=None):
         # Perform split on different dataset
         if 'train' in func_args:
             # Split train to (train, val)
-            dataset_train = dataset_func(root=config.data.root, train=True,
-                                         **filtered_args, **transform_funcs)
+            dataset_train = dataset_func(root=config.data.root,
+                                         train=True,
+                                         **filtered_args,
+                                         **transform_funcs)
             dataset_val = None
-            dataset_test = dataset_func(root=config.data.root, train=False,
-                                        **filtered_args, **transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        train=False,
+                                        **filtered_args,
+                                        **transform_funcs)
             if splits:
                 train_size = int(splits[0] * len(dataset_train))
                 val_size = len(dataset_train) - train_size
@@ -192,24 +201,36 @@ def load_external_data(config=None):
 
         elif 'split' in func_args:
             # Use raw split
-            dataset_train = dataset_func(root=config.data.root, split='train',
-                                         **filtered_args, **transform_funcs)
-            dataset_val = dataset_func(root=config.data.root, split='valid',
-                                       **filtered_args, **transform_funcs)
-            dataset_test = dataset_func(root=config.data.root, split='test',
-                                        **filtered_args, **transform_funcs)
+            dataset_train = dataset_func(root=config.data.root,
+                                         split='train',
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = dataset_func(root=config.data.root,
+                                       split='valid',
+                                       **filtered_args,
+                                       **transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        split='test',
+                                        **filtered_args,
+                                        **transform_funcs)
         elif 'classes' in func_args:
             # Use raw split
             dataset_train = dataset_func(root=config.data.root,
-                                         classes='train', **filtered_args,
+                                         classes='train',
+                                         **filtered_args,
                                          **transform_funcs)
-            dataset_val = dataset_func(root=config.data.root, classes='valid',
-                                       **filtered_args, **transform_funcs)
-            dataset_test = dataset_func(root=config.data.root, classes='test',
-                                        **filtered_args, **transform_funcs)
+            dataset_val = dataset_func(root=config.data.root,
+                                       classes='valid',
+                                       **filtered_args,
+                                       **transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        classes='test',
+                                        **filtered_args,
+                                        **transform_funcs)
         else:
             # Use config.data.splits
-            dataset = dataset_func(root=config.data.root, **filtered_args,
+            dataset = dataset_func(root=config.data.root,
+                                   **filtered_args,
                                    **transform_funcs)
             train_size = int(splits[0] * len(dataset))
             val_size = int(splits[1] * len(dataset))
@@ -263,15 +284,20 @@ def load_external_data(config=None):
             tokenizer = AutoTokenizer.from_pretrained(
                 config.model.type.split('@')[0])
 
-            x_all = tokenizer(x_all, return_tensors='pt', padding=True,
-                              truncation=True, max_length=raw_args['max_len'])
+            x_all = tokenizer(x_all,
+                              return_tensors='pt',
+                              padding=True,
+                              truncation=True,
+                              max_length=raw_args['max_len'])
             data = [{key: value[i]
                      for key, value in x_all.items()}
                     for i in range(len(next(iter(x_all.values()))))]
             if 'classification' in config.model.task.lower():
                 targets = label_to_index(y_all)
             else:
-                y_all = tokenizer(y_all, return_tensors='pt', padding=True,
+                y_all = tokenizer(y_all,
+                                  return_tensors='pt',
+                                  padding=True,
                                   truncation=True,
                                   max_length=raw_args['max_len'])
                 targets = [{key: value[i]
@@ -378,7 +404,8 @@ def load_external_data(config=None):
             raw_args = {}
         assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
         filtered_args = filter_dict(load_dataset, raw_args)
-        dataset = load_dataset(path=config.data.root, name=name,
+        dataset = load_dataset(path=config.data.root,
+                               name=name,
                                **filtered_args)
         if config.model.type.endswith('transformers'):
             from transformers import AutoTokenizer
@@ -389,8 +416,11 @@ def load_external_data(config=None):
             x_all = [i['sentence'] for i in dataset[split]]
             targets = [i['label'] for i in dataset[split]]
 
-            x_all = tokenizer(x_all, return_tensors='pt', padding=True,
-                              truncation=True, max_length=raw_args['max_len'])
+            x_all = tokenizer(x_all,
+                              return_tensors='pt',
+                              padding=True,
+                              truncation=True,
+                              max_length=raw_args['max_len'])
             data = [{key: value[i]
                      for key, value in x_all.items()}
                     for i in range(len(next(iter(x_all.values()))))]
@@ -420,7 +450,9 @@ def load_external_data(config=None):
         train_data, test_data, train_targets, test_targets = train_test_split(
             data, targets, train_size=splits[0], random_state=config.seed)
         val_data, test_data, val_targets, test_targets = train_test_split(
-            test_data, test_targets, train_size=splits[1] / (1. - splits[0]),
+            test_data,
+            test_targets,
+            train_size=splits[1] / (1. - splits[0]),
             random_state=config.seed)
         data_dict = {
             'train': [(x, y) for x, y in zip(train_data, train_targets)],
@@ -464,11 +496,14 @@ def load_external_data(config=None):
             if split == 'train':
                 train_labels.append(labels)
                 data_local_dict[i + 1][split] = DataLoader(
-                    ds, batch_size=modified_config.data.batch_size,
-                    shuffle=True, num_workers=modified_config.data.num_workers)
+                    ds,
+                    batch_size=modified_config.data.batch_size,
+                    shuffle=True,
+                    num_workers=modified_config.data.num_workers)
             else:
                 data_local_dict[i + 1][split] = DataLoader(
-                    ds, batch_size=modified_config.data.batch_size,
+                    ds,
+                    batch_size=modified_config.data.batch_size,
                     shuffle=False,
                     num_workers=modified_config.data.num_workers)
 

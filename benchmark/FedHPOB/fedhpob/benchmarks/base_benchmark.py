@@ -32,7 +32,9 @@ class BaseBenchmark(abc.ABC):
 
     def __call__(self, configuration, fidelity, seed=1, **kwargs):
         return self.objective_function(configuration=configuration,
-                                       fidelity=fidelity, seed=seed, **kwargs)
+                                       fidelity=fidelity,
+                                       seed=seed,
+                                       **kwargs)
 
     def _check(self, configuration, fidelity):
         pass

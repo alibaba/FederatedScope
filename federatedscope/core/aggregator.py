@@ -112,7 +112,10 @@ class NoCommunicationAggregator(Aggregator):
 
 
 class OnlineClientsAvgAggregator(ClientsAvgAggregator):
-    def __init__(self, model=None, device='cpu', src_device='cpu',
+    def __init__(self,
+                 model=None,
+                 device='cpu',
+                 src_device='cpu',
                  config=None):
         super(OnlineClientsAvgAggregator, self).__init__(model, device, config)
         self.src_device = src_device

@@ -33,8 +33,10 @@ def load_mf_dataset(config=None):
         dataset = getattr(
             importlib.import_module("federatedscope.mf.dataset.movielens"),
             MFDATA_CLASS_DICT[config.data.type.lower()])(
-                root=config.data.root, num_client=config.federate.client_num,
-                train_portion=config.data.splits[0], download=True)
+                root=config.data.root,
+                num_client=config.federate.client_num,
+                train_portion=config.data.splits[0],
+                download=True)
     else:
         raise NotImplementedError("Dataset {} is not implemented.".format(
             config.data.type))
@@ -42,12 +44,17 @@ def load_mf_dataset(config=None):
     data_local_dict = collections.defaultdict(dict)
     for id_client, data in dataset.data.items():
         data_local_dict[id_client]["train"] = MFDataLoader(
-            data["train"], shuffle=config.data.shuffle,
-            batch_size=config.data.batch_size, drop_last=config.data.drop_last,
+            data["train"],
+            shuffle=config.data.shuffle,
+            batch_size=config.data.batch_size,
+            drop_last=config.data.drop_last,
             theta=config.sgdmf.theta)
         data_local_dict[id_client]["test"] = MFDataLoader(
-            data["test"], shuffle=False, batch_size=config.data.batch_size,
-            drop_last=config.data.drop_last, theta=config.sgdmf.theta)
+            data["test"],
+            shuffle=False,
+            batch_size=config.data.batch_size,
+            drop_last=config.data.drop_last,
+            theta=config.sgdmf.theta)
 
     # Modify config
     config.merge_from_list(['model.num_user', dataset.n_user])
@@ -66,8 +73,12 @@ class MFDataLoader(object):
         drop_last (bool): drop the last batch if True
         theta (int): the maximal number of ratings for each user
     """
-    def __init__(self, data: csc_matrix, batch_size: int, shuffle=True,
-                 drop_last=False, theta=None):
+    def __init__(self,
+                 data: csc_matrix,
+                 batch_size: int,
+                 shuffle=True,
+                 drop_last=False,
+                 theta=None):
         super(MFDataLoader, self).__init__()
         self.dataset = self._trim_data(data, theta)
         self.shuffle = shuffle

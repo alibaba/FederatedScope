@@ -93,7 +93,11 @@ class LocalDataset(Dataset):
     """
     Convert data list to torch Dataset to save memory usage.
     """
-    def __init__(self, Xs, targets, pre_process=None, transform=None,
+    def __init__(self,
+                 Xs,
+                 targets,
+                 pre_process=None,
+                 transform=None,
                  target_transform=None):
         assert len(Xs) == len(
             targets), "The number of data and labels are not equal."

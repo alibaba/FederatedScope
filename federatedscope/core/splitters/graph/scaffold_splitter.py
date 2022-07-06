@@ -37,8 +37,9 @@ def gen_scaffold_split(dataset, client_num=5):
     scaffold_list = [
         list(scaffold_set)
         for (scaffold,
-             scaffold_set) in sorted(scaffolds.items(), key=lambda x:
-                                     (len(x[1]), x[1][0]), reverse=True)
+             scaffold_set) in sorted(scaffolds.items(),
+                                     key=lambda x: (len(x[1]), x[1][0]),
+                                     reverse=True)
     ]
     scaffold_idxs = sum(scaffold_list, [])
     # Split data to list

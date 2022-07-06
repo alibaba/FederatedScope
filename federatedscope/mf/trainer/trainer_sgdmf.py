@@ -20,7 +20,8 @@ def wrap_MFTrainer(base_trainer: Type[MFTrainer]) -> Type[MFTrainer]:
 
     # ---------------- action-level plug-in -----------------------
     base_trainer.replace_hook_in_train(
-        new_hook=hook_on_batch_backward, target_trigger="on_batch_backward",
+        new_hook=hook_on_batch_backward,
+        target_trigger="on_batch_backward",
         target_hook_name="_hook_on_batch_backward")
 
     return base_trainer
@@ -73,15 +74,21 @@ def hook_on_batch_backward(ctx):
 
     # Inject noise
     ctx.model.embed_user.grad.data += get_random(
-        "Normal", sample_shape=ctx.model.embed_user.shape, params={
+        "Normal",
+        sample_shape=ctx.model.embed_user.shape,
+        params={
             "loc": 0,
             "scale": ctx.scale
-        }, device=ctx.model.embed_user.device)
+        },
+        device=ctx.model.embed_user.device)
     ctx.model.embed_item.grad.data += get_random(
-        "Normal", sample_shape=ctx.model.embed_item.shape, params={
+        "Normal",
+        sample_shape=ctx.model.embed_item.shape,
+        params={
             "loc": 0,
             "scale": ctx.scale
-        }, device=ctx.model.embed_item.device)
+        },
+        device=ctx.model.embed_item.device)
     ctx.optimizer.step()
 
     # Embedding clipping

@@ -25,14 +25,20 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
     elif aggregator_type == 'clients_avg':
         if online:
             return OnlineClientsAvgAggregator(
-                model=model, device=device, config=config, src_device=device
+                model=model,
+                device=device,
+                config=config,
+                src_device=device
                 if config.federate.share_local_model else 'cpu')
         else:
-            return ClientsAvgAggregator(model=model, device=device,
+            return ClientsAvgAggregator(model=model,
+                                        device=device,
                                         config=config)
     elif aggregator_type == 'server_clients_interpolation':
         return ServerClientsInterpolateAggregator(
-            model=model, device=device, config=config,
+            model=model,
+            device=device,
+            config=config,
             beta=config.personalization.beta)
     elif aggregator_type == 'no_communication':
         return NoCommunicationAggregator()

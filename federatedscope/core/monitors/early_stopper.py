@@ -8,7 +8,10 @@ class EarlyStopper(object):
         Track the history of metric (e.g., validation loss),
         check whether should stop (training) process if the metric doesn't improve after a given patience.
     """
-    def __init__(self, patience=5, delta=0, improve_indicator_mode='best',
+    def __init__(self,
+                 patience=5,
+                 delta=0,
+                 improve_indicator_mode='best',
                  the_smaller_the_better=True):
         """
         Args:

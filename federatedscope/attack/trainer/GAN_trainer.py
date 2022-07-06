@@ -32,19 +32,23 @@ def wrap_GANTrainer(
     # ---- action-level plug-in -------
 
     base_trainer.register_hook_in_train(new_hook=hood_on_fit_start_generator,
-                                        trigger='on_fit_start', insert_mode=-1)
+                                        trigger='on_fit_start',
+                                        insert_mode=-1)
     base_trainer.register_hook_in_train(new_hook=hook_on_gan_cra_train,
                                         trigger='on_batch_start',
                                         insert_mode=-1)
     base_trainer.register_hook_in_train(
         new_hook=hook_on_batch_injected_data_generation,
-        trigger='on_batch_start', insert_mode=-1)
+        trigger='on_batch_start',
+        insert_mode=-1)
     base_trainer.register_hook_in_train(
         new_hook=hook_on_batch_forward_injected_data,
-        trigger='on_batch_forward', insert_mode=-1)
+        trigger='on_batch_forward',
+        insert_mode=-1)
 
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_data_injection_sav_data, trigger='on_fit_end',
+        new_hook=hook_on_data_injection_sav_data,
+        trigger='on_fit_end',
         insert_mode=-1)
 
     return base_trainer

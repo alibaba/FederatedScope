@@ -67,7 +67,9 @@ def logs2info(dname, root, sample_client_rate=[0.2, 0.4, 0.6, 0.8, 1.0]):
     return info
 
 
-def logs2df(dname, root='', sample_client_rate=[0.2, 0.4, 0.6, 0.8, 1.0],
+def logs2df(dname,
+            root='',
+            sample_client_rate=[0.2, 0.4, 0.6, 0.8, 1.0],
             metrics=[
                 'train_avg_loss', 'val_avg_loss', 'test_avg_loss', 'train_acc',
                 'val_acc', 'test_acc', 'train_f1', 'val_f1', 'test_f1'
