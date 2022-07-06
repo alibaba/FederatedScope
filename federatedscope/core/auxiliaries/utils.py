@@ -114,7 +114,8 @@ def init_wandb(cfg):
     exp_name = cfg.expname
 
     tmp_cfg = copy.deepcopy(cfg)
-    tmp_cfg.cfg_check_funcs = []
+    # workaround to test wandb
+    #tmp_cfg.cfg_check_funcs = []
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
