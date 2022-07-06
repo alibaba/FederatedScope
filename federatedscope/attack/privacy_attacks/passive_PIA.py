@@ -14,15 +14,8 @@ class PassivePropertyInference():
     This is an implementation of the passive property inference （algorithm 3）in Exploiting Unintended Feature Leakage in Collaborative Learning:
     https://arxiv.org/pdf/1805.04049.pdf
     '''
-    def __init__(self,
-                 classier: str,
-                 fl_model_criterion,
-                 device,
-                 grad_clip,
-                 dataset_name,
-                 fl_local_update_num,
-                 fl_type_optimizer,
-                 fl_lr,
+    def __init__(self, classier: str, fl_model_criterion, device, grad_clip,
+                 dataset_name, fl_local_update_num, fl_type_optimizer, fl_lr,
                  batch_size=100):
         # self.auxiliary_dataset['x']: n * d_feature; x is the parameter updates
         # self.auxiliary_dataset['y']: n * 1; y is the
@@ -53,15 +46,13 @@ class PassivePropertyInference():
     #     return train_data_batch, test_data_batch
 
     def _get_batch(self, data):
-        prop_ind = np.random.choice(np.where(data['prop'] == 1)[0],
-                                    self.batch_size,
-                                    replace=True)
+        prop_ind = np.random.choice(
+            np.where(data['prop'] == 1)[0], self.batch_size, replace=True)
         x_batch_prop = data['x'][prop_ind, :]
         y_batch_prop = data['y'][prop_ind, :]
 
-        nprop_ind = np.random.choice(np.where(data['prop'] == 0)[0],
-                                     self.batch_size,
-                                     replace=True)
+        nprop_ind = np.random.choice(
+            np.where(data['prop'] == 0)[0], self.batch_size, replace=True)
         x_batch_nprop = data['x'][nprop_ind, :]
         y_batch_nprop = data['y'][nprop_ind, :]
 
@@ -91,8 +82,7 @@ class PassivePropertyInference():
         # print(model)
         model.load_state_dict(previous_para, strict=False)
 
-        optimizer = get_optimizer(type=self.fl_type_optimizer,
-                                  model=model,
+        optimizer = get_optimizer(type=self.fl_type_optimizer, model=model,
                                   lr=self.fl_lr)
 
         for _ in range(self.fl_local_update_num):
@@ -151,9 +141,7 @@ class PassivePropertyInference():
         from sklearn.model_selection import train_test_split
         x_train, x_test, y_train, y_test = train_test_split(
             self.dataset_prop_classifier['x'],
-            self.dataset_prop_classifier['y'],
-            test_size=0.33,
-            random_state=42)
+            self.dataset_prop_classifier['y'], test_size=0.33, random_state=42)
         self.classifier.fit(x_train, y_train)
 
         y_pred = self.property_inference(x_test)

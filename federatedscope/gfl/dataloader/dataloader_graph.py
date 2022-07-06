@@ -47,8 +47,8 @@ def load_graphlevel_dataset(config=None):
         # Add feat for datasets without attrubute
         if name in ['IMDB-BINARY', 'IMDB-MULTI'
                     ] and 'pre_transform' not in transforms_funcs:
-            transforms_funcs['pre_transform'] = transforms.Constant(value=1.0,
-                                                                    cat=False)
+            transforms_funcs['pre_transform'] = transforms.Constant(
+                value=1.0, cat=False)
         dataset = TUDataset(path, name, **transforms_funcs)
         if splitter is None:
             raise ValueError('Please set the graph.')
@@ -100,9 +100,7 @@ def load_graphlevel_dataset(config=None):
                 tmp_dataset = TUDataset(path, dname, **transforms_funcs)
             else:
                 tmp_dataset = TUDataset(
-                    path,
-                    dname,
-                    pre_transform=None,
+                    path, dname, pre_transform=None,
                     transform=transforms_funcs['transform']
                     if 'transform' in transforms_funcs else None)
             dataset.append(tmp_dataset)
@@ -128,16 +126,13 @@ def load_graphlevel_dataset(config=None):
         test_idx = index[int(len(gs) * sum(splits[:2])):]
         dataloader = {
             'num_label': get_numGraphLabels(gs),
-            'train': DataLoader([gs[idx] for idx in train_idx],
-                                batch_size,
+            'train': DataLoader([gs[idx] for idx in train_idx], batch_size,
                                 shuffle=True,
                                 num_workers=config.data.num_workers),
-            'val': DataLoader([gs[idx] for idx in valid_idx],
-                              batch_size,
+            'val': DataLoader([gs[idx] for idx in valid_idx], batch_size,
                               shuffle=False,
                               num_workers=config.data.num_workers),
-            'test': DataLoader([gs[idx] for idx in test_idx],
-                               batch_size,
+            'test': DataLoader([gs[idx] for idx in test_idx], batch_size,
                                shuffle=False,
                                num_workers=config.data.num_workers),
         }

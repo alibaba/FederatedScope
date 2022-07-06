@@ -20,10 +20,7 @@ class RandomSplitter(BaseTransform):
         drop_edge(float): Drop edges (drop_edge / client_num) for each client whthin overlapping part.
         
     """
-    def __init__(self,
-                 client_num,
-                 sampling_rate=None,
-                 overlapping_rate=0,
+    def __init__(self, client_num, sampling_rate=None, overlapping_rate=0,
                  drop_edge=0):
 
         self.ovlap = overlapping_rate
@@ -53,13 +50,11 @@ class RandomSplitter(BaseTransform):
 
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
-            data,
-            node_attrs=['x', 'y', 'train_mask', 'val_mask', 'test_mask'],
+            data, node_attrs=['x', 'y', 'train_mask', 'val_mask', 'test_mask'],
             to_undirected=True)
-        nx.set_node_attributes(G,
-                               dict([(nid, nid)
-                                     for nid in range(nx.number_of_nodes(G))]),
-                               name="index_orig")
+        nx.set_node_attributes(
+            G, dict([(nid, nid) for nid in range(nx.number_of_nodes(G))]),
+            name="index_orig")
 
         client_node_idx = {idx: [] for idx in range(self.client_num)}
 

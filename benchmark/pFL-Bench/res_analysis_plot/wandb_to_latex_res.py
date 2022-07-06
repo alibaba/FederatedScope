@@ -388,14 +388,10 @@ order_acc = '-' + 'summary_metrics.best_client_summarized_weighted_avg/val_acc'
 order_loss = '+' + 'summary_metrics.best_client_summarized_weighted_avg/val_avg_loss'
 
 
-def print_table_datasets_list(filters_each_line_table,
-                              order,
-                              all_res_structed,
+def print_table_datasets_list(filters_each_line_table, order, all_res_structed,
                               column_names_generalization,
-                              column_names_efficiency,
-                              column_names_fair,
-                              expected_keys,
-                              sorted_method_name_to_print,
+                              column_names_efficiency, column_names_fair,
+                              expected_keys, sorted_method_name_to_print,
                               percent=True):
     res_of_each_line_generalization = OrderedDict()
     res_of_each_line_fair = OrderedDict()
@@ -646,8 +642,7 @@ def print_table_datasets_list(filters_each_line_table,
     # "+" indicates the larger, the better
     rank_order = colum_order_per_data * len(filters_each_line_table)
     res_to_print_matrix = highlight_tex_res_in_table(
-        res_to_print_matrix,
-        rank_order=rank_order,
+        res_to_print_matrix, rank_order=rank_order,
         filter_out=["Global-Train"])
     for res_to_print in res_to_print_matrix:
         print("&".join(res_to_print) + "\\\\")
@@ -689,9 +684,7 @@ def print_table_datasets_list(filters_each_line_table,
     # "+" indicates the larger, the better
     rank_order = colum_order_per_data * len(filters_each_line_table)
     res_to_print_matrix = highlight_tex_res_in_table(
-        res_to_print_matrix,
-        rank_order=rank_order,
-        need_scale=True,
+        res_to_print_matrix, rank_order=rank_order, need_scale=True,
         filter_out=["Global-Train", "Isolated"])
     for res_to_print in res_to_print_matrix:
         print("&".join(res_to_print) + "\\\\")
@@ -719,10 +712,8 @@ def print_table_datasets_list(filters_each_line_table,
     # "+" indicates the larger, the better
     rank_order = colum_order_per_data * len(filters_each_line_table)
     res_to_print_matrix = highlight_tex_res_in_table(
-        res_to_print_matrix,
-        rank_order=rank_order,
-        filter_out=["Global-Train", "Isolated"],
-        convergence_case=True)
+        res_to_print_matrix, rank_order=rank_order,
+        filter_out=["Global-Train", "Isolated"], convergence_case=True)
     for res_to_print in res_to_print_matrix:
         print("&".join(res_to_print) + "\\\\")
 
@@ -759,13 +750,9 @@ def print_res_non_rec():
 
 def print_res_rec():
     print_table_datasets_list(
-        filters_each_line_all_rec,
-        order_loss,
-        all_res_structed_rec,
-        column_names_generalization_loss,
-        column_names_efficiency,
-        column_names_fair_loss,
-        expected_keys=expected_keys_rec,
+        filters_each_line_all_rec, order_loss, all_res_structed_rec,
+        column_names_generalization_loss, column_names_efficiency,
+        column_names_fair_loss, expected_keys=expected_keys_rec,
         sorted_method_name_to_print=sorted_method_name_to_print_rec,
         percent=False)
     #for expname_tag in expected_expname_tag_rec:

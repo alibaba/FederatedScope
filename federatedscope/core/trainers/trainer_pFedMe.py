@@ -19,23 +19,18 @@ def wrap_pFedMeTrainer(
 
     # ---------------- action-level plug-in -----------------------
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_fit_start_set_local_para_tmp,
-        trigger="on_fit_start",
+        new_hook=hook_on_fit_start_set_local_para_tmp, trigger="on_fit_start",
         insert_pos=-1)
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_epoch_end_update_local,
-        trigger="on_epoch_end",
+        new_hook=hook_on_epoch_end_update_local, trigger="on_epoch_end",
         insert_pos=-1)
     base_trainer.register_hook_in_train(new_hook=hook_on_fit_end_update_local,
-                                        trigger="on_fit_end",
-                                        insert_pos=-1)
+                                        trigger="on_fit_end", insert_pos=-1)
 
     base_trainer.register_hook_in_train(new_hook=_hook_on_batch_end_flop_count,
-                                        trigger="on_batch_end",
-                                        insert_pos=-1)
+                                        trigger="on_batch_end", insert_pos=-1)
     base_trainer.register_hook_in_train(new_hook=_hook_on_epoch_end_flop_count,
-                                        trigger="on_epoch_end",
-                                        insert_pos=-1)
+                                        trigger="on_epoch_end", insert_pos=-1)
 
     # for "on_batch_start" trigger: replace the original hooks into new ones of pFedMe
     # 1) cache the original hooks for "on_batch_start"
@@ -46,8 +41,7 @@ def wrap_pFedMeTrainer(
     # 2) replace the original hooks for "on_batch_start"
     base_trainer.replace_hook_in_train(
         new_hook=hook_on_batch_start_init_pfedme,
-        target_trigger="on_batch_start",
-        target_hook_name=None)
+        target_trigger="on_batch_start", target_hook_name=None)
     base_trainer.replace_hook_in_eval(new_hook=hook_on_batch_start_init_pfedme,
                                       target_trigger="on_batch_start",
                                       target_hook_name=None)

@@ -4,9 +4,7 @@ import copy
 import numpy as np
 
 parser = argparse.ArgumentParser(description='FederatedScope result parsing')
-parser.add_argument('--input',
-                    help='path of exp results',
-                    required=True,
+parser.add_argument('--input', help='path of exp results', required=True,
                     type=str)
 args = parser.parse_args()
 
@@ -24,7 +22,6 @@ def main():
     result_list_wavg = []
     result_list_avg = []
     result_list_global = []
-    
 
     with open(args.input, 'r') as ips:
         for line in ips:
@@ -39,13 +36,14 @@ def main():
                     res = line['Results_raw']
                     if 'Results_raw' in line.keys():
                         if 'server_global_eval' in res.keys():
-                            result_list_global.append(res['server_global_eval'])
+                            result_list_global.append(
+                                res['server_global_eval'])
                         if 'client_summarized_weighted_avg' in res.keys():
-                            result_list_wavg.append(res['client_summarized_weighted_avg'])
+                            result_list_wavg.append(
+                                res['client_summarized_weighted_avg'])
                         if 'client_summarized_avg' in res.keys():
-                            result_list_avg.append(res['client_summarized_avg'])
-                            
-
+                            result_list_avg.append(
+                                res['client_summarized_avg'])
 
     print(args.input)
     if len(result_list_wavg):

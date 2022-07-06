@@ -27,7 +27,6 @@ class LEAF(Dataset):
         target_transform: transform for y.
 
     """
-
     def __init__(self, root, name, transform, target_transform):
         self.root = root
         self.name = name
@@ -94,8 +93,8 @@ class LocalDataset(Dataset):
     """
     Convert data list to torch Dataset to save memory usage.
     """
-
-    def __init__(self, Xs, targets, pre_process=None, transform=None, target_transform=None):
+    def __init__(self, Xs, targets, pre_process=None, transform=None,
+                 target_transform=None):
         assert len(Xs) == len(
             targets), "The number of data and labels are not equal."
         self.Xs = np.array(Xs)

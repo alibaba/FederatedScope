@@ -19,16 +19,13 @@ from hpbandster.optimizers.randomsearch import RandomSearch
 
 parser = argparse.ArgumentParser(
     description='Example 1 - sequential and local execution.')
-parser.add_argument('--min_budget',
-                    type=float,
+parser.add_argument('--min_budget', type=float,
                     help='Minimum budget used during the optimization.',
                     default=1)
-parser.add_argument('--max_budget',
-                    type=float,
+parser.add_argument('--max_budget', type=float,
                     help='Maximum budget used during the optimization.',
                     default=27)
-parser.add_argument('--n_iterations',
-                    type=int,
+parser.add_argument('--n_iterations', type=int,
                     help='Number of iterations performed by the optimizer',
                     default=4)
 args = parser.parse_args()
@@ -68,8 +65,7 @@ def eval_fl_algo(x, b):
 
     init_cfg.freeze()
 
-    runner = FedRunner(data=data,
-                       server_class=get_server_cls(init_cfg),
+    runner = FedRunner(data=data, server_class=get_server_cls(init_cfg),
                        client_class=get_client_cls(init_cfg),
                        config=init_cfg.clone())
     results = runner.run()
@@ -118,9 +114,7 @@ class MyWorker(Worker):
     def get_configspace():
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameter(
-            CS.UniformFloatHyperparameter('lr',
-                                          lower=1e-4,
-                                          upper=1.0,
+            CS.UniformFloatHyperparameter('lr', lower=1e-4, upper=1.0,
                                           log=True))
         config_space.add_hyperparameter(
             CS.UniformFloatHyperparameter('dropout', lower=.0, upper=.5))
@@ -140,10 +134,8 @@ def main():
     #          run_id = 'example1', nameserver='127.0.0.1',
     #          min_budget=args.min_budget, max_budget=args.max_budget
     #       )
-    rs = RandomSearch(configspace=w.get_configspace(),
-                      run_id='example1',
-                      nameserver='127.0.0.1',
-                      min_budget=args.min_budget,
+    rs = RandomSearch(configspace=w.get_configspace(), run_id='example1',
+                      nameserver='127.0.0.1', min_budget=args.min_budget,
                       max_budget=args.max_budget)
     #res = bohb.run(n_iterations=args.n_iterations)
     res = rs.run(n_iterations=args.n_iterations)

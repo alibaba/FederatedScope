@@ -50,16 +50,9 @@ def add_gRPCComServeFuncServicer_to_server(servicer, server):
 class gRPCComServeFunc(object):
     """Missing associated documentation comment in .proto file."""
     @staticmethod
-    def sendMessage(request,
-                    target,
-                    options=(),
-                    channel_credentials=None,
-                    call_credentials=None,
-                    insecure=False,
-                    compression=None,
-                    wait_for_ready=None,
-                    timeout=None,
-                    metadata=None):
+    def sendMessage(request, target, options=(), channel_credentials=None,
+                    call_credentials=None, insecure=False, compression=None,
+                    wait_for_ready=None, timeout=None, metadata=None):
         return grpc.experimental.unary_unary(
             request, target, '/gRPCComServeFunc/sendMessage',
             gRPC__comm__manager__pb2.MessageRequest.SerializeToString,

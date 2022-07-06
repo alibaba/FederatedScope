@@ -13,13 +13,8 @@ class FedEMTrainer(GeneralMultiModelTrainer):
     The FedEM implementation, "Federated Multi-Task Learning under a Mixture of Distributions (NeurIPS 2021)"
     based on the Algorithm 1 in their paper and official codes: https://github.com/omarfoq/FedEM
     """
-    def __init__(self,
-                 model_nums,
-                 models_interact_mode="sequential",
-                 model=None,
-                 data=None,
-                 device=None,
-                 config=None,
+    def __init__(self, model_nums, models_interact_mode="sequential",
+                 model=None, data=None, device=None, config=None,
                  base_trainer: Type[GeneralTorchTrainer] = None):
         super(FedEMTrainer,
               self).__init__(model_nums, models_interact_mode, model, data,
@@ -53,34 +48,28 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         # ---------------- train hooks -----------------------
         self.register_hook_in_train(
             new_hook=self.hook_on_fit_start_mixture_weights_update,
-            trigger="on_fit_start",
-            insert_pos=0)  # insert at the front
+            trigger="on_fit_start", insert_pos=0)  # insert at the front
         self.register_hook_in_train(
             new_hook=self._hook_on_fit_start_flop_count,
             trigger="on_fit_start",
             insert_pos=1  # follow the mixture operation
         )
         self.register_hook_in_train(new_hook=self._hook_on_fit_end_flop_count,
-                                    trigger="on_fit_end",
-                                    insert_pos=-1)
+                                    trigger="on_fit_end", insert_pos=-1)
         self.register_hook_in_train(
             new_hook=self.hook_on_batch_forward_weighted_loss,
-            trigger="on_batch_forward",
-            insert_pos=-1)
+            trigger="on_batch_forward", insert_pos=-1)
         self.register_hook_in_train(
             new_hook=self.hook_on_batch_start_track_batch_idx,
-            trigger="on_batch_start",
-            insert_pos=0)  # insert at the front
+            trigger="on_batch_start", insert_pos=0)  # insert at the front
         # ---------------- eval hooks -----------------------
         self.register_hook_in_eval(
             new_hook=self.hook_on_batch_end_gather_loss,
-            trigger="on_batch_end",
-            insert_pos=0
+            trigger="on_batch_end", insert_pos=0
         )  # insert at the front, (we need gather the loss before clean it)
         self.register_hook_in_eval(
             new_hook=self.hook_on_batch_start_track_batch_idx,
-            trigger="on_batch_start",
-            insert_pos=0)  # insert at the front
+            trigger="on_batch_start", insert_pos=0)  # insert at the front
         # replace the original evaluation into the ensemble one
         self.replace_hook_in_eval(new_hook=self._hook_on_fit_end_ensemble_eval,
                                   target_trigger="on_fit_end",
@@ -125,8 +114,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
 
             self.weights_data_sample = f_softmax(
                 (torch.log(self.weights_internal_models) -
-                 ctx.all_losses_model_batch.T),
-                dim=1).T
+                 ctx.all_losses_model_batch.T), dim=1).T
             self.weights_internal_models = self.weights_data_sample.mean(dim=1)
 
             # restore the model_ctx

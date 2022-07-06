@@ -20,19 +20,13 @@ def raw2loader(raw_data, config=None):
         sampler = raw_data
     elif config.data.loader == 'graphsaint-rw':
         loader = GraphSAINTRandomWalkSampler(
-            raw_data,
-            batch_size=config.data.batch_size,
+            raw_data, batch_size=config.data.batch_size,
             walk_length=config.data.graphsaint.walk_length,
-            num_steps=config.data.graphsaint.num_steps,
-            sample_coverage=0)
-        subgraph_sampler = NeighborSampler(raw_data.edge_index,
-                                           sizes=[-1],
-                                           batch_size=4096,
-                                           shuffle=False,
+            num_steps=config.data.graphsaint.num_steps, sample_coverage=0)
+        subgraph_sampler = NeighborSampler(raw_data.edge_index, sizes=[-1],
+                                           batch_size=4096, shuffle=False,
                                            num_workers=config.data.num_workers)
-        sampler = dict(data=raw_data,
-                       train=loader,
-                       val=subgraph_sampler,
+        sampler = dict(data=raw_data, train=loader, val=subgraph_sampler,
                        test=subgraph_sampler)
     else:
         raise TypeError('Unsupported DataLoader Type {}'.format(
@@ -59,16 +53,10 @@ def load_linklevel_dataset(config=None):
 
     if name in ['epinions', 'ciao']:
         from federatedscope.gfl.dataset.recsys import RecSys
-        dataset = RecSys(path,
-                         name,
-                         FL=True,
-                         splits=config.data.splits,
+        dataset = RecSys(path, name, FL=True, splits=config.data.splits,
                          **transforms_funcs)
-        global_dataset = RecSys(path,
-                                name,
-                                FL=False,
-                                splits=config.data.splits,
-                                **transforms_funcs)
+        global_dataset = RecSys(path, name, FL=False,
+                                splits=config.data.splits, **transforms_funcs)
     elif name in ['fb15k-237', 'wn18', 'fb15k', 'toy']:
         from federatedscope.gfl.dataset.kg import KG
         dataset = KG(path, name, **transforms_funcs)

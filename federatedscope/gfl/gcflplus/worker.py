@@ -13,16 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class GCFLPlusServer(Server):
-    def __init__(self,
-                 ID=-1,
-                 state=0,
-                 config=None,
-                 data=None,
-                 model=None,
-                 client_num=5,
-                 total_round_num=10,
-                 device='cpu',
-                 strategy=None,
+    def __init__(self, ID=-1, state=0, config=None, data=None, model=None,
+                 client_num=5, total_round_num=10, device='cpu', strategy=None,
                  **kwargs):
         super(GCFLPlusServer,
               self).__init__(ID, state, config, data, model, client_num,
@@ -146,11 +138,9 @@ class GCFLPlusServer(Server):
                         # aggregator.update(result)
                         # Send to Clients
                         self.comm_manager.send(
-                            Message(msg_type='model_para',
-                                    sender=self.ID,
+                            Message(msg_type='model_para', sender=self.ID,
                                     receiver=cluster.tolist(),
-                                    state=self.state,
-                                    content=result))
+                                    state=self.state, content=result))
 
                     # Move to next round of training
                     logger.info(
@@ -183,8 +173,7 @@ class GCFLPlusClient(Client):
         self.state = round
         sample_size, model_para, results = self.trainer.train()
         logger.info(
-            self._monitor.format_eval_res(results,
-                                          rnd=self.state,
+            self._monitor.format_eval_res(results, rnd=self.state,
                                           role='Client #{}'.format(self.ID)))
 
         # Compute norm of W & norm of grad
@@ -201,8 +190,6 @@ class GCFLPlusClient(Client):
         convGradsNorm = norm(convGradsNorm)
 
         self.comm_manager.send(
-            Message(msg_type='model_para',
-                    sender=self.ID,
-                    receiver=[sender],
+            Message(msg_type='model_para', sender=self.ID, receiver=[sender],
                     state=self.state,
                     content=(sample_size, model_para, dW, convGradsNorm)))

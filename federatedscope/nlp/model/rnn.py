@@ -3,13 +3,8 @@ import torch.nn.functional as F
 
 
 class LSTM(nn.Module):
-    def __init__(self,
-                 in_channels,
-                 hidden,
-                 out_channels,
-                 n_layers=2,
-                 embed_size=8,
-                 dropout=.0):
+    def __init__(self, in_channels, hidden, out_channels, n_layers=2,
+                 embed_size=8, dropout=.0):
         super(LSTM, self).__init__()
         self.in_channels = in_channels
         self.hidden = hidden

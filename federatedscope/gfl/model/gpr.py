@@ -52,10 +52,8 @@ class GPR_prop(MessagePassing):
         self.temp.data[-1] = (1 - self.alpha)**self.K
 
     def forward(self, x, edge_index, edge_weight=None):
-        edge_index, norm = gcn_norm(edge_index,
-                                    edge_weight,
-                                    num_nodes=x.size(0),
-                                    dtype=x.dtype)
+        edge_index, norm = gcn_norm(edge_index, edge_weight,
+                                    num_nodes=x.size(0), dtype=x.dtype)
 
         hidden = x * (self.temp[0])
         for k in range(self.K):
@@ -85,16 +83,8 @@ class GPR_Net(torch.nn.Module):
         Init (str): init method in ['SGC', 'PPR', 'NPPR', 'Random', 'WS']
     
     """
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 hidden=64,
-                 K=10,
-                 dropout=.0,
-                 ppnp='GPR_prop',
-                 alpha=0.1,
-                 Init='PPR',
-                 Gamma=None):
+    def __init__(self, in_channels, out_channels, hidden=64, K=10, dropout=.0,
+                 ppnp='GPR_prop', alpha=0.1, Init='PPR', Gamma=None):
         super(GPR_Net, self).__init__()
         self.lin1 = Linear(in_channels, hidden)
         self.lin2 = Linear(hidden, out_channels)

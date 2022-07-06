@@ -22,12 +22,8 @@ def load_cv_dataset(config=None):
     transforms_funcs = get_transform(config, 'torchvision')
 
     if name in ['femnist', 'celeba']:
-        dataset = LEAF_CV(root=path,
-                          name=name,
-                          s_frac=config.data.subsample,
-                          tr_frac=splits[0],
-                          val_frac=splits[1],
-                          seed=1234,
+        dataset = LEAF_CV(root=path, name=name, s_frac=config.data.subsample,
+                          tr_frac=splits[0], val_frac=splits[1], seed=1234,
                           **transforms_funcs)
     else:
         raise ValueError(f'No dataset named: {name}!')
@@ -40,19 +36,16 @@ def load_cv_dataset(config=None):
     data_local_dict = dict()
     for client_idx in range(client_num):
         dataloader = {
-            'train': DataLoader(dataset[client_idx]['train'],
-                                batch_size,
+            'train': DataLoader(dataset[client_idx]['train'], batch_size,
                                 shuffle=config.data.shuffle,
                                 num_workers=config.data.num_workers),
-            'test': DataLoader(dataset[client_idx]['test'],
-                               batch_size,
+            'test': DataLoader(dataset[client_idx]['test'], batch_size,
                                shuffle=False,
                                num_workers=config.data.num_workers)
         }
         if 'val' in dataset[client_idx]:
             dataloader['val'] = DataLoader(dataset[client_idx]['val'],
-                                           batch_size,
-                                           shuffle=False,
+                                           batch_size, shuffle=False,
                                            num_workers=config.data.num_workers)
 
         data_local_dict[client_idx + 1] = dataloader

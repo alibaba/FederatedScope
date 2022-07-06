@@ -15,10 +15,10 @@ def sampling(X, Y, over_rate=1, down_rate=1.0, cvg_score=0.5):
     over_X = np.repeat(X[rel_score > cvg_score], over_rate, axis=0)
     over_Y = np.repeat(Y[rel_score > cvg_score], over_rate, axis=0)
 
-    mask = np.random.choice(X[rel_score <= cvg_score].shape[0],
-                            size=int(X[rel_score <= cvg_score].shape[0] *
-                                     down_rate),
-                            replace=False)
+    mask = np.random.choice(
+        X[rel_score <= cvg_score].shape[0],
+        size=int(X[rel_score <= cvg_score].shape[0] * down_rate),
+        replace=False)
     down_X = np.array(X[rel_score <= cvg_score])[mask]
     down_Y = np.array(Y[rel_score <= cvg_score])[mask]
     return np.concatenate([over_X, down_X],
@@ -95,11 +95,7 @@ def build_surrogate_model(datadir, model, dname, algo, key='val_acc'):
             regr = RandomForestRegressor(n_estimators=n_estimators,
                                          max_depth=max_depth)
             # dict_keys(['fit_time', 'score_time', 'estimator', 'test_score', 'train_score'])
-            res = sk_cross_validate(regr,
-                                    new_X,
-                                    new_Y,
-                                    cv=10,
-                                    n_jobs=-1,
+            res = sk_cross_validate(regr, new_X, new_Y, cv=10, n_jobs=-1,
                                     scoring='neg_mean_absolute_error',
                                     return_estimator=True,
                                     return_train_score=True)

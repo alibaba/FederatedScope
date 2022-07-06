@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import argparse
-import os 
+import os
 import sys
 import unittest
 
@@ -11,16 +11,14 @@ sys.path.append(file_dir)
 parser = argparse.ArgumentParser('test runner')
 parser.add_argument('--list_tests', action='store_true', help='list all tests')
 parser.add_argument('--pattern', default='test_*.py', help='test file pattern')
-parser.add_argument('--test_dir',
-                    default='tests',
+parser.add_argument('--test_dir', default='tests',
                     help='directory to be tested')
 args = parser.parse_args()
 
 
 def gather_test_cases(test_dir, pattern, list_tests):
     test_suite = unittest.TestSuite()
-    discover = unittest.defaultTestLoader.discover(test_dir,
-                                                   pattern=pattern,
+    discover = unittest.defaultTestLoader.discover(test_dir, pattern=pattern,
                                                    top_level_dir=None)
     for suite_discovered in discover:
 

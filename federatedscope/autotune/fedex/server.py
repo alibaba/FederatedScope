@@ -25,16 +25,8 @@ def discounted_mean(trace, factor=1.0):
 class FedExServer(Server):
     """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
     """
-    def __init__(self,
-                 ID=-1,
-                 state=0,
-                 config=None,
-                 data=None,
-                 model=None,
-                 client_num=5,
-                 total_round_num=10,
-                 device='cpu',
-                 strategy=None,
+    def __init__(self, ID=-1, state=0, config=None, data=None, model=None,
+                 client_num=5, total_round_num=10, device='cpu', strategy=None,
                  **kwargs):
 
         # initialize action space and the policy
@@ -141,8 +133,7 @@ class FedExServer(Server):
 
         return cfg_idx, sampled_cfg
 
-    def broadcast_model_para(self,
-                             msg_type='model_para',
+    def broadcast_model_para(self, msg_type='model_para',
                              sample_client_num=-1):
         """
         To broadcast the message to all clients or sampled clients
@@ -180,11 +171,8 @@ class FedExServer(Server):
                 'hyperparam': sampled_cfg
             }
             self.comm_manager.send(
-                Message(msg_type=msg_type,
-                        sender=self.ID,
-                        receiver=[rcv_idx],
-                        state=self.state,
-                        content=content))
+                Message(msg_type=msg_type, sender=self.ID, receiver=[rcv_idx],
+                        state=self.state, content=content))
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
@@ -267,8 +255,7 @@ class FedExServer(Server):
             .format(self.ID, self._theta, self._trace['entropy'][-1],
                     self._trace['mle'][-1]))
 
-    def check_and_move_on(self,
-                          check_eval_result=False,
+    def check_and_move_on(self, check_eval_result=False,
                           min_received_num=None):
         """
         To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
@@ -416,11 +403,9 @@ class FedExServer(Server):
             else:
                 model_para = self.model.state_dict()
             self.comm_manager.send(
-                Message(msg_type='finish',
-                        sender=self.ID,
+                Message(msg_type='finish', sender=self.ID,
                         receiver=list(self.comm_manager.neighbors.keys()),
-                        state=self.state,
-                        content=model_para))
+                        state=self.state, content=model_para))
 
         if self.state == self.total_round_num:
             #break out the loop for distributed mode

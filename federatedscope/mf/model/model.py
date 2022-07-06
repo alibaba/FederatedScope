@@ -17,37 +17,26 @@ class BasicMFNet(Module):
         super(BasicMFNet, self).__init__()
 
         self.embed_user = Parameter(
-            torch.normal(mean=0,
-                         std=0.1,
-                         size=(num_user, num_hidden),
-                         requires_grad=True,
-                         dtype=torch.float32))
+            torch.normal(mean=0, std=0.1, size=(num_user, num_hidden),
+                         requires_grad=True, dtype=torch.float32))
         self.register_parameter('embed_user', self.embed_user)
         self.embed_item = Parameter(
-            torch.normal(mean=0,
-                         std=0.1,
-                         size=(num_item, num_hidden),
-                         requires_grad=True,
-                         dtype=torch.float32))
+            torch.normal(mean=0, std=0.1, size=(num_item, num_hidden),
+                         requires_grad=True, dtype=torch.float32))
         self.register_parameter('embed_item', self.embed_item)
 
     def forward(self, indices, ratings):
         pred = torch.matmul(self.embed_user, self.embed_item.T)
-        label = torch.sparse_coo_tensor(indices,
-                                        ratings,
-                                        size=pred.shape,
+        label = torch.sparse_coo_tensor(indices, ratings, size=pred.shape,
                                         device=pred.device,
                                         dtype=torch.float32).to_dense()
-        mask = torch.sparse_coo_tensor(indices,
-                                       np.ones(len(ratings)),
-                                       size=pred.shape,
-                                       device=pred.device,
+        mask = torch.sparse_coo_tensor(indices, np.ones(len(ratings)),
+                                       size=pred.shape, device=pred.device,
                                        dtype=torch.float32).to_dense()
 
         return mask * pred, label, float(np.prod(pred.size())) / len(ratings)
 
-    def load_state_dict(self,
-                        state_dict: 'OrderedDict[str, Tensor]',
+    def load_state_dict(self, state_dict: 'OrderedDict[str, Tensor]',
                         strict: bool = True):
 
         state_dict[self.name_reserve] = getattr(self, self.name_reserve)

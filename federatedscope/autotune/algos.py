@@ -25,8 +25,7 @@ def make_trial(trial_cfg):
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
     # TODO: enable client-wise configuration
-    Fed_runner = FedRunner(data=data,
-                           server_class=get_server_cls(trial_cfg),
+    Fed_runner = FedRunner(data=data, server_class=get_server_cls(trial_cfg),
                            client_class=get_client_cls(trial_cfg),
                            config=trial_cfg.clone())
     results = Fed_runner.run()
@@ -184,11 +183,10 @@ class ModelFreeBase(Scheduler):
     def optimize(self):
         perfs = self._evaluate(self._init_configs)
 
-        results = summarize_hpo_results(self._init_configs,
-                                        perfs,
-                                        white_list=set(
-                                            self._search_space.keys()),
-                                        desc=self._cfg.hpo.larger_better)
+        results = summarize_hpo_results(
+            self._init_configs, perfs,
+            white_list=set(self._search_space.keys()),
+            desc=self._cfg.hpo.larger_better)
         logger.info(
             "====================================== HPO Final ========================================"
         )
@@ -248,8 +246,7 @@ class IterativeScheduler(ModelFreeBase):
         while not self._stop_criterion(current_configs, last_results):
             current_perfs = self._iteration(current_configs)
             last_results = summarize_hpo_results(
-                current_configs,
-                current_perfs,
+                current_configs, current_perfs,
                 white_list=set(self._search_space.keys()),
                 desc=self._cfg.hpo.larger_better)
             self._stage += 1
@@ -385,9 +382,8 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
             new_init_configs.append(new_trial_cfg)
 
         self._search_space.add_hyperparameter(
-            CS.CategoricalHyperparameter("hpo.table.idx",
-                                         choices=list(
-                                             range(len(new_init_configs)))))
+            CS.CategoricalHyperparameter(
+                "hpo.table.idx", choices=list(range(len(new_init_configs)))))
 
         return new_init_configs
 

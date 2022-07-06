@@ -10,12 +10,7 @@ from fedhpob.utils.cost_model import merge_cfg
 
 
 class RawBenchmark(BaseBenchmark):
-    def __init__(self,
-                 model,
-                 dname,
-                 algo,
-                 rng=None,
-                 cost_mode='estimated',
+    def __init__(self, model, dname, algo, rng=None, cost_mode='estimated',
                  **kwargs):
         self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
         self.device = kwargs['device']
@@ -35,8 +30,7 @@ class RawBenchmark(BaseBenchmark):
             init_cfg.fedopt.use = True
             init_cfg.federate.method = 'FedOpt'
         init_cfg.freeze()
-        runner = FedRunner(data=data,
-                           server_class=get_server_cls(init_cfg),
+        runner = FedRunner(data=data, server_class=get_server_cls(init_cfg),
                            client_class=get_client_cls(init_cfg),
                            config=init_cfg.clone())
         results = runner.run()
@@ -47,12 +41,8 @@ class RawBenchmark(BaseBenchmark):
         else:
             return [results['client_summarized_weighted_avg'][key]]
 
-    def objective_function(self,
-                           configuration,
-                           fidelity=None,
-                           key='val_avg_loss',
-                           seed=1,
-                           **kwargs):
+    def objective_function(self, configuration, fidelity=None,
+                           key='val_avg_loss', seed=1, **kwargs):
         fidelity = self._init_fidelity(fidelity)
         self._check(configuration, fidelity)
         start_time = datetime.datetime.now()

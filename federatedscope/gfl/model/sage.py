@@ -18,11 +18,7 @@ class SAGE_Net(torch.nn.Module):
         dropout (float): dropout ratio, default=.0.
 
     """
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 hidden=64,
-                 max_depth=2,
+    def __init__(self, in_channels, out_channels, hidden=64, max_depth=2,
                  dropout=.0):
         super(SAGE_Net, self).__init__()
 
@@ -80,8 +76,7 @@ class SAGE_Net(torch.nn.Module):
                     x = self.convs[i]((x, x_target), edge_index)
                     if i != self.num_layers - 1:
                         x = F.relu(x)
-                        x = F.dropout(x,
-                                      p=self.dropout,
+                        x = F.dropout(x, p=self.dropout,
                                       training=self.training)
             else:
                 for conv in self.convs[:-1]:

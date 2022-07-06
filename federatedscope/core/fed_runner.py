@@ -20,12 +20,8 @@ class FedRunner(object):
         config: The configurations of the FL course.
         client_config: The clients' configurations.
     """
-    def __init__(self,
-                 data,
-                 server_class=Server,
-                 client_class=Client,
-                 config=None,
-                 client_config=None):
+    def __init__(self, data, server_class=Server, client_class=Client,
+                 config=None, client_config=None):
         self.data = data
         self.server_class = server_class
         self.client_class = client_class
@@ -158,8 +154,7 @@ class FedRunner(object):
         if self.mode == 'standalone':
             if self.server_id in self.data:
                 server_data = self.data[self.server_id]
-                model = get_model(self.cfg.model,
-                                  server_data,
+                model = get_model(self.cfg.model, server_data,
                                   backend=self.cfg.backend)
             else:
                 server_data = None
@@ -169,8 +164,7 @@ class FedRunner(object):
             kw = {'shared_comm_queue': self.shared_comm_queue}
         elif self.mode == 'distributed':
             server_data = self.data
-            model = get_model(self.cfg.model,
-                              server_data,
+            model = get_model(self.cfg.model, server_data,
                               backend=self.cfg.backend)
             kw = self.server_address
         else:
@@ -180,14 +174,10 @@ class FedRunner(object):
         if self.server_class:
             self._server_device = self.gpu_manager.auto_choice()
             server = self.server_class(
-                ID=self.server_id,
-                config=self.cfg,
-                data=server_data,
-                model=model,
-                client_num=self.cfg.federate.client_num,
+                ID=self.server_id, config=self.cfg, data=server_data,
+                model=model, client_num=self.cfg.federate.client_num,
                 total_round_num=self.cfg.federate.total_round_num,
-                device=self._server_device,
-                **kw)
+                device=self._server_device, **kw)
 
             if self.cfg.nbafl.use:
                 from federatedscope.core.trainers.trainer_nbafl import wrap_nbafl_server
@@ -227,14 +217,11 @@ class FedRunner(object):
             client_device = self._server_device if self.cfg.federate.share_local_model else self.gpu_manager.auto_choice(
             )
             client = self.client_class(
-                ID=client_id,
-                server_id=self.server_id,
-                config=client_specific_config,
-                data=client_data,
-                model=client_model or get_model(client_specific_config.model,
-                                                client_data,
-                                                backend=self.cfg.backend),
-                device=client_device,
+                ID=client_id, server_id=self.server_id,
+                config=client_specific_config, data=client_data,
+                model=client_model
+                or get_model(client_specific_config.model, client_data,
+                             backend=self.cfg.backend), device=client_device,
                 **kw)
         else:
             raise ValueError

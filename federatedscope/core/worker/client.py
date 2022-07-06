@@ -27,17 +27,8 @@ class Client(Worker):
         device: The device to run local training and evaluation
         strategy: redundant attribute
     """
-    def __init__(self,
-                 ID=-1,
-                 server_id=None,
-                 state=-1,
-                 config=None,
-                 data=None,
-                 model=None,
-                 device='cpu',
-                 strategy=None,
-                 *args,
-                 **kwargs):
+    def __init__(self, ID=-1, server_id=None, state=-1, config=None, data=None,
+                 model=None, device='cpu', strategy=None, *args, **kwargs):
 
         super(Client, self).__init__(ID, state, config, model, strategy)
 
@@ -48,9 +39,7 @@ class Client(Worker):
 
         # Build Trainer
         # trainer might need configurations other than those of trainer node
-        self.trainer = get_trainer(model=model,
-                                   data=data,
-                                   device=device,
+        self.trainer = get_trainer(model=model, data=data, device=device,
                                    config=self._cfg,
                                    is_attacker=self.is_attacker,
                                    monitor=self._monitor)
@@ -93,11 +82,11 @@ class Client(Worker):
             self.comm_manager = gRPCCommManager(
                 host=host, port=port, client_num=self._cfg.federate.client_num)
             logger.info('Client: Listen to {}:{}...'.format(host, port))
-            self.comm_manager.add_neighbors(neighbor_id=server_id,
-                                            address={
-                                                'host': server_host,
-                                                'port': server_port
-                                            })
+            self.comm_manager.add_neighbors(
+                neighbor_id=server_id, address={
+                    'host': server_host,
+                    'port': server_port
+                })
             self.local_address = {
                 'host': self.comm_manager.host,
                 'port': self.comm_manager.port
@@ -132,10 +121,8 @@ class Client(Worker):
         To send 'join_in' message to the server for joining in the FL course.
         """
         self.comm_manager.send(
-            Message(msg_type='join_in',
-                    sender=self.ID,
-                    receiver=[self.server_id],
-                    content=self.local_address))
+            Message(msg_type='join_in', sender=self.ID,
+                    receiver=[self.server_id], content=self.local_address))
 
     def run(self):
         """
@@ -187,13 +174,12 @@ class Client(Worker):
                                 sub_model_idx][key]
 
                 self.comm_manager.send(
-                    Message(msg_type='model_para',
-                            sender=self.ID,
-                            receiver=[self.server_id],
-                            state=self.state,
-                            content=(sample_size, first_aggregate_model_para[0]
-                                     if single_model_case else
-                                     first_aggregate_model_para)))
+                    Message(
+                        msg_type='model_para', sender=self.ID,
+                        receiver=[self.server_id], state=self.state,
+                        content=(sample_size, first_aggregate_model_para[0]
+                                 if single_model_case else
+                                 first_aggregate_model_para)))
 
         else:
             round, sender, content = message.state, message.sender, message.content
@@ -211,11 +197,9 @@ class Client(Worker):
             else:
                 sample_size, model_para_all, results = self.trainer.train()
                 logger.info(
-                    self._monitor.format_eval_res(results,
-                                                  rnd=self.state,
-                                                  role='Client #{}'.format(
-                                                      self.ID),
-                                                  return_raw=True))
+                    self._monitor.format_eval_res(
+                        results, rnd=self.state,
+                        role='Client #{}'.format(self.ID), return_raw=True))
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
@@ -242,10 +226,8 @@ class Client(Worker):
                         content_frame = model_para_list_all[0][frame_idx] if single_model_case else \
                             [model_para_list[frame_idx] for model_para_list in model_para_list_all]
                         self.comm_manager.send(
-                            Message(msg_type='ss_model_para',
-                                    sender=self.ID,
-                                    receiver=[neighbor],
-                                    state=self.state,
+                            Message(msg_type='ss_model_para', sender=self.ID,
+                                    receiver=[neighbor], state=self.state,
                                     content=content_frame))
                         frame_idx += 1
                 content_frame = model_para_list_all[0][frame_idx] if single_model_case else \
@@ -254,10 +236,8 @@ class Client(Worker):
                                                          content_frame)]
             else:
                 self.comm_manager.send(
-                    Message(msg_type='model_para',
-                            sender=self.ID,
-                            receiver=[sender],
-                            state=self.state,
+                    Message(msg_type='model_para', sender=self.ID,
+                            receiver=[sender], state=self.state,
                             content=(sample_size, model_para_all)))
 
     def callback_funcs_for_assign_id(self, message: Message):
@@ -295,10 +275,8 @@ class Client(Worker):
                     'Fail to get the join in information with type {}'.format(
                         requirement))
         self.comm_manager.send(
-            Message(msg_type='join_in_info',
-                    sender=self.ID,
-                    receiver=[self.server_id],
-                    state=self.state,
+            Message(msg_type='join_in_info', sender=self.ID,
+                    receiver=[self.server_id], state=self.state,
                     content=join_in_info))
 
     def callback_funcs_for_address(self, message: Message):
@@ -338,36 +316,27 @@ class Client(Worker):
 
                 if self._cfg.federate.mode == 'distributed':
                     logger.info(
-                        self._monitor.format_eval_res(eval_metrics,
-                                                      rnd=self.state,
-                                                      role='Client #{}'.format(
-                                                          self.ID)))
+                        self._monitor.format_eval_res(
+                            eval_metrics, rnd=self.state,
+                            role='Client #{}'.format(self.ID)))
 
                 metrics.update(**eval_metrics)
 
             formatted_eval_res = self._monitor.format_eval_res(
-                metrics,
-                rnd=self.state,
-                role='Client #{}'.format(self.ID),
-                forms='raw',
-                return_raw=True)
+                metrics, rnd=self.state, role='Client #{}'.format(self.ID),
+                forms='raw', return_raw=True)
             self._monitor.update_best_result(
-                self.best_results,
-                formatted_eval_res['Results_raw'],
-                results_type=f"client #{self.ID}",
-                round_wise_update_key=self._cfg.eval.
-                best_res_update_round_wise_key)
+                self.best_results, formatted_eval_res['Results_raw'],
+                results_type=f"client #{self.ID}", round_wise_update_key=self.
+                _cfg.eval.best_res_update_round_wise_key)
             self.history_results = merge_dict(
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check_best(self.history_results[
                 self._cfg.eval.best_res_update_round_wise_key])
 
         self.comm_manager.send(
-            Message(msg_type='metrics',
-                    sender=self.ID,
-                    receiver=[sender],
-                    state=self.state,
-                    content=metrics))
+            Message(msg_type='metrics', sender=self.ID, receiver=[sender],
+                    state=self.state, content=metrics))
 
     def callback_funcs_for_finish(self, message: Message):
         """

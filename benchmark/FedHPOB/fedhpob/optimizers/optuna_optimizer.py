@@ -36,16 +36,12 @@ def sample_config_from_optuna(trial: Trial, cs: CS.ConfigurationSpace):
 
         if isinstance(hp, CS.UniformFloatHyperparameter):
             value = float(
-                trial.suggest_float(name=hp_name,
-                                    low=hp.lower,
-                                    high=hp.upper,
+                trial.suggest_float(name=hp_name, low=hp.lower, high=hp.upper,
                                     log=hp.log))
 
         elif isinstance(hp, CS.UniformIntegerHyperparameter):
             value = int(
-                trial.suggest_int(name=hp_name,
-                                  low=hp.lower,
-                                  high=hp.upper,
+                trial.suggest_int(name=hp_name, low=hp.lower, high=hp.upper,
                                   log=hp.log))
 
         elif isinstance(hp, CS.CategoricalHyperparameter):
@@ -55,9 +51,7 @@ def sample_config_from_optuna(trial: Trial, cs: CS.ConfigurationSpace):
 
         elif isinstance(hp, CS.OrdinalHyperparameter):
             num_vars = len(hp.sequence)
-            index = trial.suggest_int(hp_name,
-                                      low=0,
-                                      high=num_vars - 1,
+            index = trial.suggest_int(hp_name, low=0, high=num_vars - 1,
                                       log=False)
             hp_type = type(hp.default_value)
             value = hp.sequence[index]
@@ -81,11 +75,8 @@ def run_optuna(cfg):
                 'sample_client': cfg.benchmark.sample_client
             }
             t_start = time.time()
-            res = benchmark(config,
-                            main_fidelity,
-                            seed=random.randint(1, 99),
-                            key='val_avg_loss',
-                            fhb_cfg=cfg)
+            res = benchmark(config, main_fidelity, seed=random.randint(1, 99),
+                            key='val_avg_loss', fhb_cfg=cfg)
             monitor(res=res, sim_time=time.time() - t_start, budget=budget)
             trial.report(res['function_value'], step=budget)
 
@@ -97,9 +88,7 @@ def run_optuna(cfg):
 
     monitor = Monitor(cfg)
     benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](
-        cfg.benchmark.model,
-        cfg.benchmark.data,
-        cfg.benchmark.algo,
+        cfg.benchmark.model, cfg.benchmark.data, cfg.benchmark.algo,
         device=cfg.benchmark.device)
     sampler = TPESampler(seed=cfg.optimizer.seed)
     study = optuna.create_study(direction='minimize', sampler=sampler)
@@ -124,13 +113,11 @@ def run_optuna(cfg):
     else:
         raise NotImplementedError
 
-    study.optimize(func=partial(
-        objective,
-        benchmark=benchmark,
-        valid_budgets=valid_budgets,
-        configspace=cfg.benchmark.configuration_space[0]),
-                   timeout=None,
-                   n_trials=cfg.optimizer.n_iterations)
+    study.optimize(
+        func=partial(objective, benchmark=benchmark,
+                     valid_budgets=valid_budgets,
+                     configspace=cfg.benchmark.configuration_space[0]),
+        timeout=None, n_trials=cfg.optimizer.n_iterations)
     return monitor.history_results
 
 

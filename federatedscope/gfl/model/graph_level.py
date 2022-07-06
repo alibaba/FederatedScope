@@ -43,14 +43,8 @@ class GNN_Net_Graph(torch.nn.Module):
         gnn (str): name of gnn type, use ("gcn" or "gin").
         pooling (str): pooling method, use ("add", "mean" or "max").
     """
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 hidden=64,
-                 max_depth=2,
-                 dropout=.0,
-                 gnn='gcn',
-                 pooling='add'):
+    def __init__(self, in_channels, out_channels, hidden=64, max_depth=2,
+                 dropout=.0, gnn='gcn', pooling='add'):
         super(GNN_Net_Graph, self).__init__()
         self.dropout = dropout
         # Embedding (pre) layer
@@ -58,35 +52,24 @@ class GNN_Net_Graph(torch.nn.Module):
         self.encoder = Linear(in_channels, hidden)
         # GNN layer
         if gnn == 'gcn':
-            self.gnn = GCN_Net(in_channels=hidden,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               max_depth=max_depth,
+            self.gnn = GCN_Net(in_channels=hidden, out_channels=hidden,
+                               hidden=hidden, max_depth=max_depth,
                                dropout=dropout)
         elif gnn == 'sage':
-            self.gnn = SAGE_Net(in_channels=hidden,
-                                out_channels=hidden,
-                                hidden=hidden,
-                                max_depth=max_depth,
+            self.gnn = SAGE_Net(in_channels=hidden, out_channels=hidden,
+                                hidden=hidden, max_depth=max_depth,
                                 dropout=dropout)
         elif gnn == 'gat':
-            self.gnn = GAT_Net(in_channels=hidden,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               max_depth=max_depth,
+            self.gnn = GAT_Net(in_channels=hidden, out_channels=hidden,
+                               hidden=hidden, max_depth=max_depth,
                                dropout=dropout)
         elif gnn == 'gin':
-            self.gnn = GIN_Net(in_channels=hidden,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               max_depth=max_depth,
+            self.gnn = GIN_Net(in_channels=hidden, out_channels=hidden,
+                               hidden=hidden, max_depth=max_depth,
                                dropout=dropout)
         elif gnn == 'gpr':
-            self.gnn = GPR_Net(in_channels=hidden,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               K=max_depth,
-                               dropout=dropout)
+            self.gnn = GPR_Net(in_channels=hidden, out_channels=hidden,
+                               hidden=hidden, K=max_depth, dropout=dropout)
         else:
             raise ValueError(f'Unsupported gnn type: {gnn}.')
 

@@ -9,10 +9,8 @@ class LogisticRegression(object):
                                       name='input_x')
         self.input_y = tf.placeholder(tf.float32, [None, 1], name='input_y')
 
-        self.out = self.fc_layer(input_x=self.input_x,
-                                 in_channels=in_channels,
-                                 class_num=class_num,
-                                 use_bias=use_bias)
+        self.out = self.fc_layer(input_x=self.input_x, in_channels=in_channels,
+                                 class_num=class_num, use_bias=use_bias)
 
         with tf.name_scope('loss'):
             self.losses = tf.losses.mean_squared_error(predictions=self.out,
@@ -32,14 +30,13 @@ class LogisticRegression(object):
 
     def fc_layer(self, input_x, in_channels, class_num, use_bias=True):
         with tf.name_scope('fc'):
-            fc_w = tf.Variable(tf.truncated_normal([in_channels, class_num],
-                                                   stddev=0.1),
-                               name='weight')
+            fc_w = tf.Variable(
+                tf.truncated_normal([in_channels, class_num], stddev=0.1),
+                name='weight')
             if use_bias:
                 fc_b = tf.Variable(tf.constant(0.0, shape=[
                     class_num,
-                ]),
-                                   name='bias')
+                ]), name='bias')
                 fc_out = tf.nn.bias_add(tf.matmul(input_x, fc_w), fc_b)
             else:
                 fc_out = tf.matmul(input_x, fc_w)

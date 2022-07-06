@@ -22,8 +22,7 @@ def build_feature(words, threshold):
     from nltk.corpus import stopwords as nltk_stopwords
     # use bag-of-words representation of paper titles as the features of papers
     stopwords = sklearn_stopwords.union(set(nltk_stopwords.words('english')))
-    vectorizer = CountVectorizer(min_df=int(threshold),
-                                 stop_words=stopwords,
+    vectorizer = CountVectorizer(min_df=int(threshold), stop_words=stopwords,
                                  tokenizer=LemmaTokenizer())
     features_paper = vectorizer.fit_transform(words)
 
@@ -49,8 +48,8 @@ def build_graph(path, filename, FL=0, threshold=15):
             nid, title = int(cols[0]), cols[3]
             desc[nid] = title
 
-    features = np.array(build_feature(desc, threshold).todense(),
-                        dtype=np.float32)
+    features = np.array(
+        build_feature(desc, threshold).todense(), dtype=np.float32)
 
     # Build graph structure
     with open(osp.join(path, filename), 'r') as f:
@@ -109,11 +108,7 @@ class DBLPNew(InMemoryDataset):
             transformed version. The data object will be transformed before
             being saved to disk. (default: :obj:`None`)
     """
-    def __init__(self,
-                 root,
-                 FL=0,
-                 splits=[0.5, 0.2, 0.3],
-                 transform=None,
+    def __init__(self, root, FL=0, splits=[0.5, 0.2, 0.3], transform=None,
                  pre_transform=None):
         self.FL = FL
         if self.FL == 0:

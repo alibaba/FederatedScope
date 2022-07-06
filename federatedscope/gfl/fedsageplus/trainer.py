@@ -8,12 +8,7 @@ from federatedscope.gfl.trainer.nodetrainer import NodeFullBatchTrainer
 
 
 class LocalGenTrainer(NodeFullBatchTrainer):
-    def __init__(self,
-                 model,
-                 data,
-                 device,
-                 config,
-                 only_for_eval=False,
+    def __init__(self, model, data, device, config, only_for_eval=False,
                  monitor=None):
         super(LocalGenTrainer, self).__init__(model, data, device, config,
                                               only_for_eval, monitor)
@@ -28,10 +23,8 @@ class LocalGenTrainer(NodeFullBatchTrainer):
             mask], nc_pred[mask]
         loss_num = self.criterion_num(pred_missing, batch.num_missing[mask])
         loss_feat = self.criterion_feat(
-            pred_feats=pred_feat,
-            true_feats=batch.x_missing[mask],
-            pred_missing=pred_missing,
-            true_missing=batch.num_missing[mask],
+            pred_feats=pred_feat, true_feats=batch.x_missing[mask],
+            pred_missing=pred_missing, true_missing=batch.num_missing[mask],
             num_pred=self.cfg.fedsageplus.num_pred).requires_grad_()
         loss_clf = ctx.criterion(nc_pred, batch.y[mask])
         ctx.batch_size = torch.sum(mask).item()

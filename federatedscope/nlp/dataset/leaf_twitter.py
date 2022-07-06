@@ -31,15 +31,8 @@ class LEAF_TWITTER(LEAF):
         target_transform: transform for y.
 
     """
-    def __init__(self,
-                 root,
-                 name='twitter',
-                 max_len=140,
-                 s_frac=0.3,
-                 tr_frac=0.8,
-                 val_frac=0.0,
-                 seed=123,
-                 transform=None,
+    def __init__(self, root, name='twitter', max_len=140, s_frac=0.3,
+                 tr_frac=0.8, val_frac=0.0, seed=123, transform=None,
                  target_transform=None):
         self.root = root
         self.name = name
@@ -216,11 +209,8 @@ class LEAF_TWITTER(LEAF):
                 save_path = osp.join(self.processed_dir, f"task_{idx}")
                 os.makedirs(save_path, exist_ok=True)
 
-                save_local_data(dir_path=save_path,
-                                train_data=train_data,
+                save_local_data(dir_path=save_path, train_data=train_data,
                                 train_targets=train_targets,
-                                test_data=test_data,
-                                test_targets=test_targets,
-                                val_data=val_data,
-                                val_targets=val_targets)
+                                test_data=test_data, test_targets=test_targets,
+                                val_data=val_data, val_targets=val_targets)
                 idx += 1

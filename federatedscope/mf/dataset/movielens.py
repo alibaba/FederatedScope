@@ -92,8 +92,7 @@ class MovieLensData(object):
     def _split_train_test_ratings(self, ratings: csc_matrix,
                                   test_portion: float):
         n_ratings = ratings.count_nonzero()
-        id_test = np.random.choice(n_ratings,
-                                   int(n_ratings * test_portion),
+        id_test = np.random.choice(n_ratings, int(n_ratings * test_portion),
                                    replace=False)
         id_train = list(set(np.arange(n_ratings)) - set(id_test))
 
@@ -114,16 +113,13 @@ class MovieLensData(object):
             logger.info("Processing data into {} parties.")
             fpath = os.path.join(self.root, self.base_folder, self.filename,
                                  self.raw_file)
-            data = pd.read_csv(fpath,
-                               sep="::",
-                               engine="python",
-                               usecols=[0, 1, 2],
-                               names=["userId", "movieId", "rating"],
-                               dtype={
-                                   "userId": np.int32,
-                                   "movieId": np.int32,
-                                   "rating": np.float32
-                               })
+            data = pd.read_csv(
+                fpath, sep="::", engine="python", usecols=[0, 1, 2],
+                names=["userId", "movieId", "rating"], dtype={
+                    "userId": np.int32,
+                    "movieId": np.int32,
+                    "rating": np.float32
+                })
             # Map idx
             unique_id_item, unique_id_user = np.sort(
                 data["movieId"].unique()), np.sort(data["userId"].unique())

@@ -40,12 +40,11 @@ class HideGraph(BaseTransform):
 
         data.ids_missing = [[] for _ in range(data.num_nodes)]
 
-        G = to_networkx(data,
-                        node_attrs=[
-                            'x', 'y', 'train_mask', 'val_mask', 'test_mask',
-                            'index_orig', 'ids_missing'
-                        ],
-                        to_undirected=True)
+        G = to_networkx(
+            data, node_attrs=[
+                'x', 'y', 'train_mask', 'val_mask', 'test_mask', 'index_orig',
+                'ids_missing'
+            ], to_undirected=True)
 
         for missing_node in hide_ids:
             neighbors = G.neighbors(missing_node)

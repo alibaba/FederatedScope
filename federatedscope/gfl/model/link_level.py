@@ -10,14 +10,8 @@ from federatedscope.gfl.model.gpr import GPR_Net
 
 
 class GNN_Net_Link(torch.nn.Module):
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 hidden=64,
-                 max_depth=2,
-                 dropout=.0,
-                 gnn='gcn',
-                 layers=2):
+    def __init__(self, in_channels, out_channels, hidden=64, max_depth=2,
+                 dropout=.0, gnn='gcn', layers=2):
         r"""GNN model with LinkPredictor for link prediction tasks.
 
         Arguments:
@@ -35,35 +29,24 @@ class GNN_Net_Link(torch.nn.Module):
 
         # GNN layer
         if gnn == 'gcn':
-            self.gnn = GCN_Net(in_channels=in_channels,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               max_depth=max_depth,
+            self.gnn = GCN_Net(in_channels=in_channels, out_channels=hidden,
+                               hidden=hidden, max_depth=max_depth,
                                dropout=dropout)
         elif gnn == 'sage':
-            self.gnn = SAGE_Net(in_channels=in_channels,
-                                out_channels=hidden,
-                                hidden=hidden,
-                                max_depth=max_depth,
+            self.gnn = SAGE_Net(in_channels=in_channels, out_channels=hidden,
+                                hidden=hidden, max_depth=max_depth,
                                 dropout=dropout)
         elif gnn == 'gat':
-            self.gnn = GAT_Net(in_channels=in_channels,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               max_depth=max_depth,
+            self.gnn = GAT_Net(in_channels=in_channels, out_channels=hidden,
+                               hidden=hidden, max_depth=max_depth,
                                dropout=dropout)
         elif gnn == 'gin':
-            self.gnn = GIN_Net(in_channels=in_channels,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               max_depth=max_depth,
+            self.gnn = GIN_Net(in_channels=in_channels, out_channels=hidden,
+                               hidden=hidden, max_depth=max_depth,
                                dropout=dropout)
         elif gnn == 'gpr':
-            self.gnn = GPR_Net(in_channels=in_channels,
-                               out_channels=hidden,
-                               hidden=hidden,
-                               K=max_depth,
-                               dropout=dropout)
+            self.gnn = GPR_Net(in_channels=in_channels, out_channels=hidden,
+                               hidden=hidden, K=max_depth, dropout=dropout)
         else:
             raise ValueError(f'Unsupported gnn type: {gnn}.')
 

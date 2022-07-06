@@ -24,13 +24,11 @@ class LouvainSplitter(BaseTransform):
 
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
-            data,
-            node_attrs=['x', 'y', 'train_mask', 'val_mask', 'test_mask'],
+            data, node_attrs=['x', 'y', 'train_mask', 'val_mask', 'test_mask'],
             to_undirected=True)
-        nx.set_node_attributes(G,
-                               dict([(nid, nid)
-                                     for nid in range(nx.number_of_nodes(G))]),
-                               name="index_orig")
+        nx.set_node_attributes(
+            G, dict([(nid, nid) for nid in range(nx.number_of_nodes(G))]),
+            name="index_orig")
         partition = community_louvain.best_partition(G)
 
         cluster2node = {}

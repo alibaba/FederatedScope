@@ -26,7 +26,6 @@ def get_target_data(dataset_name, pth=None):
             data_dim = [num_syn_data]
             data_dim.extend(data_feature_dim)
             syn_data = torch.randn(data_dim)
-            syn_label = torch.randint(low=0,
-                                      high=num_class,
+            syn_label = torch.randint(low=0, high=num_class,
                                       size=(num_syn_data, ))
             return [syn_data, syn_label]

@@ -27,26 +27,25 @@ if "GEN_CERT" in os.environ:
     os.makedirs(dir_name, exist_ok=True)
 
     # Generate an openssl.cnf file to set the distinguished name
-    cnf_file = os.path.join(os.getenv("CONDA_DIR", "/usr/lib"), "ssl", "openssl.cnf")
+    cnf_file = os.path.join(os.getenv("CONDA_DIR", "/usr/lib"), "ssl",
+                            "openssl.cnf")
     if not os.path.isfile(cnf_file):
         with open(cnf_file, "w") as fh:
             fh.write(OPENSSL_CONFIG)
 
     # Generate a certificate if one doesn't exist on disk
-    subprocess.check_call(
-        [
-            "openssl",
-            "req",
-            "-new",
-            "-newkey=rsa:2048",
-            "-days=365",
-            "-nodes",
-            "-x509",
-            "-subj=/C=XX/ST=XX/L=XX/O=generated/CN=generated",
-            f"-keyout={pem_file}",
-            f"-out={pem_file}",
-        ]
-    )
+    subprocess.check_call([
+        "openssl",
+        "req",
+        "-new",
+        "-newkey=rsa:2048",
+        "-days=365",
+        "-nodes",
+        "-x509",
+        "-subj=/C=XX/ST=XX/L=XX/O=generated/CN=generated",
+        f"-keyout={pem_file}",
+        f"-out={pem_file}",
+    ])
     # Restrict access to the file
     os.chmod(pem_file, stat.S_IRUSR | stat.S_IWUSR)
     c.ServerApp.certfile = pem_file

@@ -31,20 +31,14 @@ def raw2loader(raw_data, config=None):
         raw_data.edge_index = add_self_loops(raw_data.edge_index,
                                              num_nodes=raw_data.x.shape[0])[0]
         loader = GraphSAINTRandomWalkSampler(
-            raw_data,
-            batch_size=config.data.batch_size,
+            raw_data, batch_size=config.data.batch_size,
             walk_length=config.data.graphsaint.walk_length,
-            num_steps=config.data.graphsaint.num_steps,
-            sample_coverage=0)
+            num_steps=config.data.graphsaint.num_steps, sample_coverage=0)
         #save_dir=dataset.processed_dir)
-        subgraph_sampler = NeighborSampler(raw_data.edge_index,
-                                           sizes=[-1],
-                                           batch_size=4096,
-                                           shuffle=False,
+        subgraph_sampler = NeighborSampler(raw_data.edge_index, sizes=[-1],
+                                           batch_size=4096, shuffle=False,
                                            num_workers=config.data.num_workers)
-        sampler = dict(data=raw_data,
-                       train=loader,
-                       val=subgraph_sampler,
+        sampler = dict(data=raw_data, train=loader, val=subgraph_sampler,
                        test=subgraph_sampler)
     elif config.data.loader == 'neighbor':
         # Sampler would crash if there was isolated node.
@@ -52,20 +46,15 @@ def raw2loader(raw_data, config=None):
                                              num_nodes=raw_data.x.shape[0])[0]
 
         train_idx = raw_data.train_mask.nonzero(as_tuple=True)[0]
-        loader = NeighborSampler(raw_data.edge_index,
-                                 node_idx=train_idx,
+        loader = NeighborSampler(raw_data.edge_index, node_idx=train_idx,
                                  sizes=config.data.sizes,
                                  batch_size=config.data.batch_size,
                                  shuffle=config.data.shuffle,
                                  num_workers=config.data.num_workers)
-        subgraph_sampler = NeighborSampler(raw_data.edge_index,
-                                           sizes=[-1],
-                                           batch_size=4096,
-                                           shuffle=False,
+        subgraph_sampler = NeighborSampler(raw_data.edge_index, sizes=[-1],
+                                           batch_size=4096, shuffle=False,
                                            num_workers=config.data.num_workers)
-        sampler = dict(data=raw_data,
-                       train=loader,
-                       val=subgraph_sampler,
+        sampler = dict(data=raw_data, train=loader, val=subgraph_sampler,
                        test=subgraph_sampler)
 
     return sampler
@@ -95,51 +84,33 @@ def load_nodelevel_dataset(config=None):
             'pubmed': [3943, 3943, INF],
         }
 
-        dataset = Planetoid(path,
-                            name,
-                            split='random',
+        dataset = Planetoid(path, name, split='random',
                             num_train_per_class=num_split[name][0],
                             num_val=num_split[name][1],
-                            num_test=num_split[name][2],
-                            **transforms_funcs)
+                            num_test=num_split[name][2], **transforms_funcs)
         dataset = splitter(dataset[0])
-        global_dataset = Planetoid(path,
-                                   name,
-                                   split='random',
+        global_dataset = Planetoid(path, name, split='random',
                                    num_train_per_class=num_split[name][0],
                                    num_val=num_split[name][1],
                                    num_test=num_split[name][2],
                                    **transforms_funcs)
     elif name == "dblp_conf":
         from federatedscope.gfl.dataset.dblp_new import DBLPNew
-        dataset = DBLPNew(path,
-                          FL=1,
-                          splits=config.data.splits,
+        dataset = DBLPNew(path, FL=1, splits=config.data.splits,
                           **transforms_funcs)
-        global_dataset = DBLPNew(path,
-                                 FL=0,
-                                 splits=config.data.splits,
+        global_dataset = DBLPNew(path, FL=0, splits=config.data.splits,
                                  **transforms_funcs)
     elif name == "dblp_org":
         from federatedscope.gfl.dataset.dblp_new import DBLPNew
-        dataset = DBLPNew(path,
-                          FL=2,
-                          splits=config.data.splits,
+        dataset = DBLPNew(path, FL=2, splits=config.data.splits,
                           **transforms_funcs)
-        global_dataset = DBLPNew(path,
-                                 FL=0,
-                                 splits=config.data.splits,
+        global_dataset = DBLPNew(path, FL=0, splits=config.data.splits,
                                  **transforms_funcs)
     elif name.startswith("csbm"):
         from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
         dataset = dataset_ContextualSBM(
-            root=path,
-            name=name if len(name) > len("csbm") else None,
-            theta=config.data.cSBM_phi,
-            epsilon=3.25,
-            n=2500,
-            d=5,
-            p=1000,
+            root=path, name=name if len(name) > len("csbm") else None,
+            theta=config.data.cSBM_phi, epsilon=3.25, n=2500, d=5, p=1000,
             train_percent=0.2)
         global_dataset = None
     else:

@@ -1,16 +1,14 @@
 import torch
 from torch_geometric.utils import to_networkx
 
+
 def index_to_mask(index, size, device='cpu'):
     mask = torch.zeros(size, dtype=torch.bool, device=device)
     mask[index] = 1
     return mask
 
 
-def random_planetoid_splits(data,
-                            num_classes,
-                            percls_trn=20,
-                            val_lb=500,
+def random_planetoid_splits(data, num_classes, percls_trn=20, val_lb=500,
                             Flag=0):
 
     indices = []

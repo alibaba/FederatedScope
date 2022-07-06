@@ -40,9 +40,7 @@ if __name__ == '__main__':
 
     init_cfg.freeze()
 
-    runner = FedRunner(data=data,
-                       server_class=get_server_cls(init_cfg),
+    runner = FedRunner(data=data, server_class=get_server_cls(init_cfg),
                        client_class=get_client_cls(init_cfg),
-                       config=init_cfg.clone(),
-                       client_config=client_cfg)
+                       config=init_cfg.clone(), client_config=client_cfg)
     _ = runner.run()

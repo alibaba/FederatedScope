@@ -30,16 +30,9 @@ class GANCRA():
             - round_num (int): the FL round that starting the attack; default: -1.
 
     '''
-    def __init__(self,
-                 target_label_ind,
-                 fl_model,
-                 device='cpu',
-                 dataset_name=None,
-                 noise_dim=100,
-                 batch_size=16,
-                 generator_train_epoch=10,
-                 lr=0.001,
-                 sav_pth='data/',
+    def __init__(self, target_label_ind, fl_model, device='cpu',
+                 dataset_name=None, noise_dim=100, batch_size=16,
+                 generator_train_epoch=10, lr=0.001, sav_pth='data/',
                  round_num=-1):
 
         # get dataset's corresponding generator

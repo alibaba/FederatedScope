@@ -57,8 +57,7 @@ class VATLoss(nn.Module):
                 for _ in range(self.ip):
                     dn.requires_grad_()
                     x_neighbor = Batch(x=nodefea + self.xi * dn,
-                                       edge_index=graph.edge_index,
-                                       y=graph.y,
+                                       edge_index=graph.edge_index, y=graph.y,
                                        edge_attr=graph.edge_attr,
                                        batch=graph.batch)
                     pred_hat = model(x_neighbor)
@@ -69,18 +68,15 @@ class VATLoss(nn.Module):
                     # adv_distance.backward()
                     # dn = _l2_normalize(dn.grad)
                     dn = _l2_normalize(
-                        torch.autograd.grad(outputs=adv_distance,
-                                            inputs=dn,
+                        torch.autograd.grad(outputs=adv_distance, inputs=dn,
                                             retain_graph=True)[0])
                     model.zero_grad()
                     del x_neighbor, pred_hat, adv_distance
 
             # calc LDS
             rn_adv = dn * self.eps
-            x_adv = Batch(x=nodefea + rn_adv,
-                          edge_index=graph.edge_index,
-                          y=graph.y,
-                          edge_attr=graph.edge_attr,
+            x_adv = Batch(x=nodefea + rn_adv, edge_index=graph.edge_index,
+                          y=graph.y, edge_attr=graph.edge_attr,
                           batch=graph.batch)
             pred_hat = model(x_adv)
             lds = criterion(pred_hat, pred)

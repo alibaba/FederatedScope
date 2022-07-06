@@ -90,8 +90,8 @@ def ContextualSBM(n, d, Lambda, p, mu, train_percent=0.01, u=None):
         Z = np.random.normal(0, 1, [1, p])
         x[i] = np.sqrt(mu / n) * y[i] * u + Z / np.sqrt(p)
     data = Data(x=torch.tensor(x, dtype=torch.float32),
-                edge_index=torch.tensor(edge_index),
-                y=torch.tensor((y + 1) // 2, dtype=torch.int64))
+                edge_index=torch.tensor(edge_index), y=torch.tensor(
+                    (y + 1) // 2, dtype=torch.int64))
     # order edge list and remove duplicates if any.
     data.coalesce()
 
@@ -208,19 +208,9 @@ class dataset_ContextualSBM(InMemoryDataset):
 
     #     url = 'https://github.com/kimiyoung/planetoid/raw/master/data'
 
-    def __init__(self,
-                 root,
-                 name=None,
-                 n=800,
-                 d=5,
-                 p=100,
-                 Lambda=None,
-                 mu=None,
-                 epsilon=0.1,
-                 theta=[-0.5, -0.25, 0.25, 0.5],
-                 train_percent=0.01,
-                 transform=None,
-                 pre_transform=None):
+    def __init__(self, root, name=None, n=800, d=5, p=100, Lambda=None,
+                 mu=None, epsilon=0.1, theta=[-0.5, -0.25, 0.25, 0.5],
+                 train_percent=0.01, transform=None, pre_transform=None):
 
         now = datetime.now()
         surfix = now.strftime('%b_%d_%Y-%H:%M').lower()
@@ -308,8 +298,7 @@ class dataset_ContextualSBM(InMemoryDataset):
                         name_split_idx = self.name.index('_', 2)
                         name = self.name[:name_split_idx] + '_{}'.format(
                             i) + self.name[name_split_idx:]
-                        _ = save_data_to_pickle(tmp_data,
-                                                p2root=self.raw_dir,
+                        _ = save_data_to_pickle(tmp_data, p2root=self.raw_dir,
                                                 file_name=name)
 
                 else:
@@ -317,8 +306,7 @@ class dataset_ContextualSBM(InMemoryDataset):
                                                 self._p, self._mu,
                                                 self._train_percent)
 
-                    _ = save_data_to_pickle(tmp_data,
-                                            p2root=self.raw_dir,
+                    _ = save_data_to_pickle(tmp_data, p2root=self.raw_dir,
                                             file_name=self.name)
             else:
                 # file exists already. Do nothing.
@@ -363,10 +351,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    dataset_ContextualSBM(root=args.root,
-                          name=args.name,
-                          theta=args.phi,
-                          epsilon=args.epsilon,
-                          n=args.num_nodes,
-                          d=args.avg_degree,
-                          p=args.num_features)
+    dataset_ContextualSBM(root=args.root, name=args.name, theta=args.phi,
+                          epsilon=args.epsilon, n=args.num_nodes,
+                          d=args.avg_degree, p=args.num_features)

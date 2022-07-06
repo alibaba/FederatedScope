@@ -118,21 +118,16 @@ def init_wandb(cfg):
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
-    wandb.init(project=cfg.wandb.name_project,
-               entity=cfg.wandb.name_user,
-               config=cfg_yaml,
-               group=dataset_name,
-               job_type=method_name,
-               name=exp_name,
-               notes=f"{method_name}, {exp_name}")
+    wandb.init(project=cfg.wandb.name_project, entity=cfg.wandb.name_user,
+               config=cfg_yaml, group=dataset_name, job_type=method_name,
+               name=exp_name, notes=f"{method_name}, {exp_name}")
 
 
 def get_dataset(type, root, transform, target_transform, download=True):
     if isinstance(type, str):
         if hasattr(torchvision.datasets, type):
             return getattr(torchvision.datasets,
-                           type)(root=root,
-                                 transform=transform,
+                           type)(root=root, transform=transform,
                                  target_transform=target_transform,
                                  download=download)
         else:
@@ -141,12 +136,8 @@ def get_dataset(type, root, transform, target_transform, download=True):
         raise TypeError()
 
 
-def save_local_data(dir_path,
-                    train_data=None,
-                    train_targets=None,
-                    test_data=None,
-                    test_targets=None,
-                    val_data=None,
+def save_local_data(dir_path, train_data=None, train_targets=None,
+                    test_data=None, test_targets=None, val_data=None,
                     val_targets=None):
     r"""
     https://github.com/omarfoq/FedEM/blob/main/data/femnist/generate_data.py

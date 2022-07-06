@@ -30,20 +30,12 @@ class Trainer(object):
         "on_batch_backward", "on_batch_end", "on_epoch_end", "on_fit_end"
     ]
 
-    def __init__(self,
-                 model,
-                 data,
-                 device,
-                 config,
-                 only_for_eval=False,
+    def __init__(self, model, data, device, config, only_for_eval=False,
                  monitor=None):
         self.cfg = config
         self.metric_calculator = MetricCalculator(config.eval.metrics)
 
-        self.ctx = Context(model,
-                           self.cfg,
-                           data,
-                           device,
+        self.ctx = Context(model, self.cfg, data, device,
                            init_dict=self.parse_data(data))
 
         if monitor is None:
@@ -101,15 +93,13 @@ class Trainer(object):
                               target_hook_name):
         del_one_hook_idx = self.reset_hook_in_train(
             target_trigger=target_trigger, target_hook_name=target_hook_name)
-        self.register_hook_in_train(new_hook=new_hook,
-                                    trigger=target_trigger,
+        self.register_hook_in_train(new_hook=new_hook, trigger=target_trigger,
                                     insert_pos=del_one_hook_idx)
 
     def replace_hook_in_eval(self, new_hook, target_trigger, target_hook_name):
         del_one_hook_idx = self.reset_hook_in_eval(
             target_trigger=target_trigger, target_hook_name=target_hook_name)
-        self.register_hook_in_eval(new_hook=new_hook,
-                                   trigger=target_trigger,
+        self.register_hook_in_eval(new_hook=new_hook, trigger=target_trigger,
                                    insert_pos=del_one_hook_idx)
 
     def _reset_hook_in_trigger(self, hooks_dict, target_hook_name,
@@ -138,22 +128,14 @@ class Trainer(object):
                 )
         return del_one_hook_idx
 
-    def register_hook_in_train(self,
-                               new_hook,
-                               trigger,
-                               insert_pos=None,
-                               base_hook=None,
-                               insert_mode="before"):
+    def register_hook_in_train(self, new_hook, trigger, insert_pos=None,
+                               base_hook=None, insert_mode="before"):
         hooks_dict = self.hooks_in_train
         self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
                             new_hook, trigger)
 
-    def register_hook_in_eval(self,
-                              new_hook,
-                              trigger,
-                              insert_pos=None,
-                              base_hook=None,
-                              insert_mode="before"):
+    def register_hook_in_eval(self, new_hook, trigger, insert_pos=None,
+                              base_hook=None, insert_mode="before"):
         hooks_dict = self.hooks_in_eval
         self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
                             new_hook, trigger)
@@ -300,9 +282,11 @@ class Trainer(object):
             f"Num of filtered para names in local update: {len(filtered_para_names)}. \n"
             f"Filtered para names in local update: {filtered_para_names}.")
 
-        logger.info(f"After register default hooks,\n"
-                    f"\tthe hooks_in_train is:\n\t{format_log_hooks(self.hooks_in_train)};\n"
-                    f"\tthe hooks_in_eval is:\n\t{format_log_hooks(self.hooks_in_eval)}")
+        logger.info(
+            f"After register default hooks,\n"
+            f"\tthe hooks_in_train is:\n\t{format_log_hooks(self.hooks_in_train)};\n"
+            f"\tthe hooks_in_eval is:\n\t{format_log_hooks(self.hooks_in_eval)}"
+        )
 
     def finetune(self):
         pass

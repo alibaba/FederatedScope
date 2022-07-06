@@ -21,23 +21,17 @@ def get_cnn(model_config, local_data):
 
     # check the task
     if model_config.type == 'convnet2':
-        model = ConvNet2(in_channels=x.shape[1],
-                         h=x.shape[2],
-                         w=x.shape[3],
+        model = ConvNet2(in_channels=x.shape[1], h=x.shape[2], w=x.shape[3],
                          hidden=model_config.hidden,
                          class_num=model_config.out_channels,
                          dropout=model_config.dropout)
     elif model_config.type == 'convnet5':
-        model = ConvNet5(in_channels=x.shape[1],
-                         h=x.shape[2],
-                         w=x.shape[3],
+        model = ConvNet5(in_channels=x.shape[1], h=x.shape[2], w=x.shape[3],
                          hidden=model_config.hidden,
                          class_num=model_config.out_channels,
                          dropout=model_config.dropout)
     elif model_config.type == 'vgg11':
-        model = VGG11(in_channels=x.shape[1],
-                      h=x.shape[2],
-                      w=x.shape[3],
+        model = VGG11(in_channels=x.shape[1], h=x.shape[2], w=x.shape[3],
                       hidden=model_config.hidden,
                       class_num=model_config.out_channels,
                       dropout=model_config.dropout)

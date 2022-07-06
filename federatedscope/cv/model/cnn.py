@@ -12,14 +12,8 @@ from torch.nn import ReLU
 
 
 class ConvNet2(Module):
-    def __init__(self,
-                 in_channels,
-                 h=32,
-                 w=32,
-                 hidden=2048,
-                 class_num=10,
-                 use_bn=True,
-                 dropout=.0):
+    def __init__(self, in_channels, h=32, w=32, hidden=2048, class_num=10,
+                 use_bn=True, dropout=.0):
         super(ConvNet2, self).__init__()
 
         self.conv1 = Conv2d(in_channels, 32, 5, padding=2)
@@ -51,12 +45,7 @@ class ConvNet2(Module):
 
 
 class ConvNet5(Module):
-    def __init__(self,
-                 in_channels,
-                 h=32,
-                 w=32,
-                 hidden=2048,
-                 class_num=10,
+    def __init__(self, in_channels, h=32, w=32, hidden=2048, class_num=10,
                  dropout=.0):
         super(ConvNet5, self).__init__()
 
@@ -111,12 +100,7 @@ class ConvNet5(Module):
 
 
 class VGG11(Module):
-    def __init__(self,
-                 in_channels,
-                 h=32,
-                 w=32,
-                 hidden=128,
-                 class_num=10,
+    def __init__(self, in_channels, h=32, w=32, hidden=128, class_num=10,
                  dropout=.0):
         super(VGG11, self).__init__()
 

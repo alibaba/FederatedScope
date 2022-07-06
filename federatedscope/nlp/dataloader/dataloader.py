@@ -24,20 +24,13 @@ def load_nlp_dataset(config=None):
     transforms_funcs = get_transform(config, 'torchtext')
 
     if name in ['shakespeare', 'subreddit']:
-        dataset = LEAF_NLP(root=path,
-                           name=name,
-                           s_frac=config.data.subsample,
-                           tr_frac=splits[0],
-                           val_frac=splits[1],
-                           seed=config.seed,
-                           **transforms_funcs)
+        dataset = LEAF_NLP(root=path, name=name, s_frac=config.data.subsample,
+                           tr_frac=splits[0], val_frac=splits[1],
+                           seed=config.seed, **transforms_funcs)
     if name == 'twitter':
-        dataset = LEAF_TWITTER(root=path,
-                               name='twitter',
-                               s_frac=config.data.subsample,
-                               tr_frac=splits[0],
-                               val_frac=splits[1],
-                               seed=config.seed,
+        dataset = LEAF_TWITTER(root=path, name='twitter',
+                               s_frac=config.data.subsample, tr_frac=splits[0],
+                               val_frac=splits[1], seed=config.seed,
                                **transforms_funcs)
     elif name == 'synthetic':
         dataset = LEAF_SYNTHETIC(root=path)
@@ -52,20 +45,17 @@ def load_nlp_dataset(config=None):
     data_local_dict = dict()
     for client_idx in range(client_num):
         dataloader = {
-            'train': DataLoader(dataset[client_idx]['train'],
-                                batch_size,
+            'train': DataLoader(dataset[client_idx]['train'], batch_size,
                                 shuffle=config.data.shuffle,
                                 num_workers=config.data.num_workers)
         }
         if 'test' in dataset[client_idx]:
-            dataloader['test'] = DataLoader(dataset[client_idx]['test'],
-                                 batch_size,
-                                 shuffle=False,
-                                 num_workers=config.data.num_workers)
+            dataloader['test'] = DataLoader(
+                dataset[client_idx]['test'], batch_size, shuffle=False,
+                num_workers=config.data.num_workers)
         if 'val' in dataset[client_idx]:
             dataloader['val'] = DataLoader(dataset[client_idx]['val'],
-                                           batch_size,
-                                           shuffle=False,
+                                           batch_size, shuffle=False,
                                            num_workers=config.data.num_workers)
 
         data_local_dict[client_idx + 1] = dataloader

@@ -28,27 +28,18 @@ TRAINER_CLASS_DICT = {
 }
 
 
-def get_trainer(model=None,
-                data=None,
-                device=None,
-                config=None,
-                only_for_eval=False,
-                is_attacker=False,
-                monitor=None):
+def get_trainer(model=None, data=None, device=None, config=None,
+                only_for_eval=False, is_attacker=False, monitor=None):
     if config.trainer.type == 'general':
         if config.backend == 'torch':
             from federatedscope.core.trainers import GeneralTorchTrainer
-            trainer = GeneralTorchTrainer(model=model,
-                                          data=data,
-                                          device=device,
-                                          config=config,
+            trainer = GeneralTorchTrainer(model=model, data=data,
+                                          device=device, config=config,
                                           only_for_eval=only_for_eval,
                                           monitor=monitor)
         elif config.backend == 'tensorflow':
             from federatedscope.core.trainers import GeneralTFTrainer
-            trainer = GeneralTFTrainer(model=model,
-                                       data=data,
-                                       device=device,
+            trainer = GeneralTFTrainer(model=model, data=data, device=device,
                                        config=config,
                                        only_for_eval=only_for_eval,
                                        monitor=monitor)
@@ -85,11 +76,8 @@ def get_trainer(model=None,
 
         trainer_cls = getattr(importlib.import_module(name=dict_path),
                               TRAINER_CLASS_DICT[config.trainer.type.lower()])
-        trainer = trainer_cls(model=model,
-                              data=data,
-                              device=device,
-                              config=config,
-                              only_for_eval=only_for_eval,
+        trainer = trainer_cls(model=model, data=data, device=device,
+                              config=config, only_for_eval=only_for_eval,
                               monitor=monitor)
     else:
         # try to find user registered trainer
@@ -97,9 +85,7 @@ def get_trainer(model=None,
         for func in register.trainer_dict.values():
             trainer_cls = func(config.trainer.type)
             if trainer_cls is not None:
-                trainer = trainer_cls(model=model,
-                                      data=data,
-                                      device=device,
+                trainer = trainer_cls(model=model, data=data, device=device,
                                       config=config,
                                       only_for_eval=only_for_eval,
                                       monitor=monitor)

@@ -30,11 +30,7 @@ class GIN_Net(torch.nn.Module):
         dropout (float): dropout ratio, default=.0.
     
     """
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 hidden=64,
-                 max_depth=2,
+    def __init__(self, in_channels, out_channels, hidden=64, max_depth=2,
                  dropout=.0):
         super(GIN_Net, self).__init__()
         self.convs = ModuleList()

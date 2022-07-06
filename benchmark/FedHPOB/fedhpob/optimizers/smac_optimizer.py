@@ -22,19 +22,14 @@ def run_smac(cfg):
             'sample_client': cfg.benchmark.sample_client
         }
         t_start = time.time()
-        res = benchmark(config,
-                        main_fidelity,
-                        seed=random.randint(1, 99),
-                        key='val_avg_loss',
-                        fhb_cfg=cfg)
+        res = benchmark(config, main_fidelity, seed=random.randint(1, 99),
+                        key='val_avg_loss', fhb_cfg=cfg)
         monitor(res=res, sim_time=time.time() - t_start, budget=budget)
         return res['function_value']
 
     monitor = Monitor(cfg)
     benchmark = cfg.benchmark.cls[0][cfg.benchmark.type](
-        cfg.benchmark.model,
-        cfg.benchmark.data,
-        cfg.benchmark.algo,
+        cfg.benchmark.model, cfg.benchmark.data, cfg.benchmark.algo,
         device=cfg.benchmark.device)
 
     scenario = Scenario({
@@ -47,8 +42,7 @@ def run_smac(cfg):
         "limit_resources": False
     })
     if cfg.optimizer.type == 'bo_gp':
-        smac = SMAC4BB(model_type='gp',
-                       scenario=scenario,
+        smac = SMAC4BB(model_type='gp', scenario=scenario,
                        tae_runner=optimization_function_wrapper)
     elif cfg.optimizer.type == 'bo_rf':
         smac = SMAC4HPO(scenario=scenario,

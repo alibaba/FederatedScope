@@ -7,13 +7,8 @@ from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 
 
 class GeneralMultiModelTrainer(GeneralTorchTrainer):
-    def __init__(self,
-                 model_nums,
-                 models_interact_mode="sequential",
-                 model=None,
-                 data=None,
-                 device=None,
-                 config=None,
+    def __init__(self, model_nums, models_interact_mode="sequential",
+                 model=None, data=None, device=None, config=None,
                  base_trainer: Type[GeneralTorchTrainer] = None):
         """
             `GeneralMultiModelTrainer` supports train/eval via multiple internal models
@@ -153,23 +148,15 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 f"Invalid models_interact_mode, should be `sequential` or `parallel`,"
                 f" but got {self.models_interact_mode}")
 
-    def register_hook_in_train(self,
-                               new_hook,
-                               trigger,
-                               model_idx=0,
-                               insert_pos=None,
-                               base_hook=None,
+    def register_hook_in_train(self, new_hook, trigger, model_idx=0,
+                               insert_pos=None, base_hook=None,
                                insert_mode="before"):
         hooks_dict = self.hooks_in_train_multiple_models[model_idx]
         self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
                             new_hook, trigger)
 
-    def register_hook_in_eval(self,
-                              new_hook,
-                              trigger,
-                              model_idx=0,
-                              insert_pos=None,
-                              base_hook=None,
+    def register_hook_in_eval(self, new_hook, trigger, model_idx=0,
+                              insert_pos=None, base_hook=None,
                               insert_mode="before"):
         hooks_dict = self.hooks_in_eval_multiple_models[model_idx]
         self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
@@ -257,9 +244,9 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 f"model_parameters should has the same length to self.model_nums, " \
                 f"but got {len(model_parameters)} and {self.model_nums} respectively"
             for model_idx in range(self.model_nums):
-                self.ctx.models[model_idx].load_state_dict(self._param_filter(
-                    model_parameters[model_idx]),
-                                                           strict=False)
+                self.ctx.models[model_idx].load_state_dict(
+                    self._param_filter(model_parameters[model_idx]),
+                    strict=False)
 
     def train(self, target_data_split_name="train"):
         # return multiple model paras

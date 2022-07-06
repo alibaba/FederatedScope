@@ -85,8 +85,8 @@ class MendGraph(nn.Module):
                 new_edges.append(
                     np.asarray([i, num_node + i * self.num_pred + j]))
 
-        new_edges = torch.tensor(np.asarray(new_edges).reshape((-1, 2)),
-                                 dtype=torch.int64).T
+        new_edges = torch.tensor(
+            np.asarray(new_edges).reshape((-1, 2)), dtype=torch.int64).T
         new_edges = new_edges.to(device)
         if len(new_edges) > 0:
             fill_edges = torch.hstack((edge_index, new_edges))
@@ -102,32 +102,21 @@ class MendGraph(nn.Module):
 
 
 class LocalSage_Plus(nn.Module):
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 hidden,
-                 gen_hidden,
-                 dropout=0.5,
-                 num_pred=5):
+    def __init__(self, in_channels, out_channels, hidden, gen_hidden,
+                 dropout=0.5, num_pred=5):
         super(LocalSage_Plus, self).__init__()
 
         self.encoder_model = SAGE_Net(in_channels=in_channels,
-                                      out_channels=gen_hidden,
-                                      hidden=hidden,
-                                      max_depth=2,
-                                      dropout=dropout)
+                                      out_channels=gen_hidden, hidden=hidden,
+                                      max_depth=2, dropout=dropout)
         self.reg_model = NumPredictor(latent_dim=gen_hidden)
-        self.gen = FeatGenerator(latent_dim=gen_hidden,
-                                 dropout=dropout,
-                                 num_pred=num_pred,
-                                 feat_shape=in_channels)
+        self.gen = FeatGenerator(latent_dim=gen_hidden, dropout=dropout,
+                                 num_pred=num_pred, feat_shape=in_channels)
         self.mend_graph = MendGraph(num_pred)
 
         self.classifier = SAGE_Net(in_channels=in_channels,
-                                   out_channels=out_channels,
-                                   hidden=hidden,
-                                   max_depth=2,
-                                   dropout=dropout)
+                                   out_channels=out_channels, hidden=hidden,
+                                   max_depth=2, dropout=dropout)
 
     def forward(self, data):
         x = self.encoder_model(data)

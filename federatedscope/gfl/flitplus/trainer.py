@@ -9,32 +9,24 @@ class FLITTrainer(GeneralTorchTrainer):
     def register_default_hooks_train(self):
         super(FLITTrainer, self).register_default_hooks_train()
         self.register_hook_in_train(new_hook=record_initialization_local,
-                                    trigger='on_fit_start',
-                                    insert_pos=-1)
+                                    trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_train(new_hook=del_initialization_local,
-                                    trigger='on_fit_end',
-                                    insert_pos=-1)
+                                    trigger='on_fit_end', insert_pos=-1)
         self.register_hook_in_train(new_hook=record_initialization_global,
-                                    trigger='on_fit_start',
-                                    insert_pos=-1)
+                                    trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_train(new_hook=del_initialization_global,
-                                    trigger='on_fit_end',
-                                    insert_pos=-1)
+                                    trigger='on_fit_end', insert_pos=-1)
 
     def register_default_hooks_eval(self):
         super(FLITTrainer, self).register_default_hooks_eval()
         self.register_hook_in_eval(new_hook=record_initialization_local,
-                                   trigger='on_fit_start',
-                                   insert_pos=-1)
+                                   trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_eval(new_hook=del_initialization_local,
-                                   trigger='on_fit_end',
-                                   insert_pos=-1)
+                                   trigger='on_fit_end', insert_pos=-1)
         self.register_hook_in_eval(new_hook=record_initialization_global,
-                                   trigger='on_fit_start',
-                                   insert_pos=-1)
+                                   trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_eval(new_hook=del_initialization_global,
-                                   trigger='on_fit_end',
-                                   insert_pos=-1)
+                                   trigger='on_fit_end', insert_pos=-1)
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
@@ -129,20 +121,16 @@ class FedFocalTrainer(GeneralTorchTrainer):
     def register_default_hooks_train(self):
         super(FedFocalTrainer, self).register_default_hooks_train()
         self.register_hook_in_train(new_hook=record_initialization_local,
-                                    trigger='on_fit_start',
-                                    insert_pos=-1)
+                                    trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_train(new_hook=del_initialization_local,
-                                    trigger='on_fit_end',
-                                    insert_pos=-1)
+                                    trigger='on_fit_end', insert_pos=-1)
 
     def register_default_hooks_eval(self):
         super(FedFocalTrainer, self).register_default_hooks_eval()
         self.register_hook_in_eval(new_hook=record_initialization_local,
-                                   trigger='on_fit_start',
-                                   insert_pos=-1)
+                                   trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_eval(new_hook=del_initialization_local,
-                                   trigger='on_fit_end',
-                                   insert_pos=-1)
+                                   trigger='on_fit_end', insert_pos=-1)
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
@@ -180,20 +168,16 @@ class FedVATTrainer(GeneralTorchTrainer):
     def register_default_hooks_train(self):
         super(FedVATTrainer, self).register_default_hooks_train()
         self.register_hook_in_train(new_hook=record_initialization_local,
-                                    trigger='on_fit_start',
-                                    insert_pos=-1)
+                                    trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_train(new_hook=del_initialization_local,
-                                    trigger='on_fit_end',
-                                    insert_pos=-1)
+                                    trigger='on_fit_end', insert_pos=-1)
 
     def register_default_hooks_eval(self):
         super(FedVATTrainer, self).register_default_hooks_eval()
         self.register_hook_in_eval(new_hook=record_initialization_local,
-                                   trigger='on_fit_start',
-                                   insert_pos=-1)
+                                   trigger='on_fit_start', insert_pos=-1)
         self.register_hook_in_eval(new_hook=del_initialization_local,
-                                   trigger='on_fit_end',
-                                   insert_pos=-1)
+                                   trigger='on_fit_end', insert_pos=-1)
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)

@@ -47,19 +47,15 @@ class FedExClient(Client):
         self.state = round
         sample_size, model_para_all, results = self.trainer.train()
         logger.info(
-            self._monitor.format_eval_res(results,
-                                          rnd=self.state,
+            self._monitor.format_eval_res(results, rnd=self.state,
                                           role='Client #{}'.format(self.ID),
                                           return_raw=True))
 
         results['arms'] = arms
         content = (sample_size, model_para_all, results)
         self.comm_manager.send(
-            Message(msg_type='model_para',
-                    sender=self.ID,
-                    receiver=[sender],
-                    state=self.state,
-                    content=content))
+            Message(msg_type='model_para', sender=self.ID, receiver=[sender],
+                    state=self.state, content=content))
 
     def callback_funcs_for_evaluate(self, message: Message):
         sender = message.sender
@@ -81,8 +77,5 @@ class FedExClient(Client):
                                 eval_metrics[key]))
                 metrics.update(**eval_metrics)
         self.comm_manager.send(
-            Message(msg_type='metrics',
-                    sender=self.ID,
-                    receiver=[sender],
-                    state=self.state,
-                    content=metrics))
+            Message(msg_type='metrics', sender=self.ID, receiver=[sender],
+                    state=self.state, content=metrics))
