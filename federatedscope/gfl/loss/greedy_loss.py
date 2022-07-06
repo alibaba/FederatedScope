@@ -5,16 +5,19 @@ import torch.nn.functional as F
 
 def GreedyLoss(pred_feats, true_feats, pred_missing, true_missing, num_pred):
     r"""Greedy loss is a loss function of cacluating the MSE loss for the feature.
-    https://proceedings.neurips.cc//paper/2021/file/34adeb8e3242824038aa65460a47c29e-Paper.pdf
-    Fedsageplus models from the "Subgraph Federated Learning with Missing Neighbor Generation" (FedSage+) paper, in NeurIPS'21
+    https://proceedings.neurips.cc//paper/2021/file/ \
+    34adeb8e3242824038aa65460a47c29e-Paper.pdf
+    Fedsageplus models from the "Subgraph Federated Learning with Missing
+    Neighbor Generation" (FedSage+) paper, in NeurIPS'21
     Source: https://github.com/zkhku/fedsage
-    
+
     Arguments:
         pred_feats (torch.Tensor): generated missing features
         true_feats (torch.Tensor): real missing features
         pred_missing (torch.Tensor): number of predicted missing node
         true_missing (torch.Tensor): number of missing node
-        num_pred (int): hyperparameters which limit the maximum value of the prediction
+        num_pred (int): hyperparameters which limit the maximum value of the \
+        prediction
     :returns:
         loss : the Greedy Loss
     :rtype:

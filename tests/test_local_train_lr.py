@@ -5,7 +5,8 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
-from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
+from federatedscope.core.auxiliaries.worker_builder import get_server_cls, \
+    get_client_cls
 
 
 class ToyLRTest(unittest.TestCase):

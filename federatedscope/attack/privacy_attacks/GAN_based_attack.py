@@ -7,27 +7,36 @@ import matplotlib.pyplot as plt
 
 class GANCRA():
     '''
-    The implementation of GAN based class representative attack. https://dl.acm.org/doi/abs/10.1145/3133956.3134012
+    The implementation of GAN based class representative attack.
+    https://dl.acm.org/doi/abs/10.1145/3133956.3134012
 
     References:
 
         Hitaj, Briland, Giuseppe Ateniese, and Fernando Perez-Cruz.
-    "Deep models under the GAN: information leakage from collaborative deep learning."
-    Proceedings of the 2017 ACM SIGSAC conference on computer and communications security. 2017.
+    "Deep models under the GAN: information leakage from collaborative deep
+    learning." Proceedings of the 2017 ACM SIGSAC conference on computer
+    and communications security. 2017.
 
 
 
         Args:
             - target_label_ind (int): the label index whose representative
             - fl_model (object):
-            - device (str or int): the device to run; 'cpu' or the device index to select; default: 'cpu'.
+            - device (str or int): the device to run; 'cpu' or the device
+            index to select; default: 'cpu'.
             - dataset_name (str): the dataset name; default: None
-            - noise_dim (int): the dimension of the noise that fed into the generator; default: 100
-            - batch_size (int): the number of data generated into training; default: 16
-            - generator_train_epoch (int): the number of training steps when training the generator; default: 10
-            - lr (float): the learning rate of the generator training; default: 0.001
-            - sav_pth (str): the path to save the generated data; default: 'data/'
-            - round_num (int): the FL round that starting the attack; default: -1.
+            - noise_dim (int): the dimension of the noise that fed into the
+            generator; default: 100
+            - batch_size (int): the number of data generated into training;
+            default: 16
+            - generator_train_epoch (int): the number of training steps
+            when training the generator; default: 10
+            - lr (float): the learning rate of the generator training;
+            default: 0.001
+            - sav_pth (str): the path to save the generated data; default:
+            'data/'
+            - round_num (int): the FL round that starting the attack;
+            default: -1.
 
     '''
     def __init__(self,
@@ -86,7 +95,8 @@ class GANCRA():
         Get the generator loss based on the discriminator's output
 
         Args:
-            discriminator_output (Tensor): the discriminator's output; size: batch_size * n_class
+            discriminator_output (Tensor): the discriminator's output;
+                size: batch_size * n_class
 
         Returns: generator_loss
 
@@ -142,9 +152,6 @@ class GANCRA():
         return generated_images.detach(), generated_label.detach()
 
     def sav_image(self, generated_data):
-
-        fig = plt.figure(figsize=(4, 4))
-
         ind = min(generated_data.shape[0], 16)
 
         for i in range(ind):

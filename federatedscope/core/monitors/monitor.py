@@ -24,8 +24,10 @@ global_all_monitors = [
 
 class Monitor(object):
     """
-        Provide the monitoring functionalities such as formatting the evaluation results into diverse metrics.
-        Besides the prediction related performance, the monitor also can track efficiency related metrics for a worker
+        Provide the monitoring functionalities such as formatting the
+        evaluation results into diverse metrics.
+        Besides the prediction related performance, the monitor also can
+        track efficiency related metrics for a worker
     """
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
@@ -33,25 +35,36 @@ class Monitor(object):
         self.log_res_best = {}
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
-        self.wandb_online_track = cfg.wandb.online_track if cfg.wandb.use else False
+        self.wandb_online_track = cfg.wandb.online_track if cfg.wandb.use \
+            else False
         # self.use_tensorboard = cfg.use_tensorboard
 
         self.monitored_object = monitored_object
 
-        # =========  efficiency indicators of the worker to be monitored ================
-        # leveraged the flops counter provided by [fvcore](https://github.com/facebookresearch/fvcore)
-        self.total_model_size = 0  # model size used in the worker, in terms of number of parameters
-        self.flops_per_sample = 0  # average flops for forwarding each data sample
-        self.flop_count = 0  # used to calculated the running mean for flops_per_sample
-        self.total_flops = 0  # total computation flops to convergence until current fl round
-        self.total_upload_bytes = 0  # total upload space cost in bytes until current fl round
-        self.total_download_bytes = 0  # total download space cost in bytes until current fl round
+        # =======  efficiency indicators of the worker to be monitored =======
+        # leveraged the flops counter provided by [fvcore](
+        # https://github.com/facebookresearch/fvcore)
+        self.total_model_size = 0  # model size used in the worker, in terms
+        # of number of parameters
+        self.flops_per_sample = 0  # average flops for forwarding each data
+        # sample
+        self.flop_count = 0  # used to calculated the running mean for
+        # flops_per_sample
+        self.total_flops = 0  # total computation flops to convergence until
+        # current fl round
+        self.total_upload_bytes = 0  # total upload space cost in bytes
+        # until current fl round
+        self.total_download_bytes = 0  # total download space cost in bytes
+        # until current fl round
         self.fl_begin_wall_time = datetime.datetime.now()
         self.fl_end_wall_time = 0
-        # for the metrics whose names includes "convergence", 0 indicates the worker does not converge yet
+        # for the metrics whose names includes "convergence", 0 indicates
+        # the worker does not converge yet
         # Note:
-        # 1) the convergence wall time is prone to fluctuations due to possible resource competition during FL courses
-        # 2) the global/local indicates whether the early stopping triggered with global-aggregation/local-training
+        # 1) the convergence wall time is prone to fluctuations due to
+        # possible resource competition during FL courses
+        # 2) the global/local indicates whether the early stopping triggered
+        # with global-aggregation/local-training
         self.global_convergence_round = 0  # total fl rounds to convergence
         self.global_convergence_wall_time = 0
         self.local_convergence_round = 0  # total fl rounds to convergence
@@ -106,15 +119,16 @@ class Monitor(object):
         }
         if verbose:
             logger.info(
-                f"In worker #{self.monitored_object.ID}, the system-related metrics are: {str(system_metrics)}"
-            )
+                f"In worker #{self.monitored_object.ID}, the system-related "
+                f"metrics are: {str(system_metrics)}")
         return system_metrics
 
     def merge_system_metrics_simulation_mode(self,
                                              file_io=True,
                                              from_global_monitors=False):
         """
-            average the system metrics recorded in "system_metrics.json" by all workers
+            average the system metrics recorded in "system_metrics.json" by
+            all workers
         :return:
         """
 
@@ -126,9 +140,10 @@ class Monitor(object):
             sys_metric_f_name = os.path.join(self.outdir, "system_metrics.log")
             if not os.path.exists(sys_metric_f_name):
                 logger.warning(
-                    "You have not tracked the workers' system metrics in $outdir$/system_metrics.log, "
-                    "we will skip the merging. Plz check whether you do not want to call monitor.finish_fl()"
-                )
+                    "You have not tracked the workers' system metrics in "
+                    "$outdir$/system_metrics.log, "
+                    "we will skip the merging. Plz check whether you do not "
+                    "want to call monitor.finish_fl()")
                 return
             with open(sys_metric_f_name, "r") as f:
                 for line in f:
@@ -142,10 +157,12 @@ class Monitor(object):
             id_to_be_merged = all_sys_metrics["id"]
             if len(id_to_be_merged) != len(set(id_to_be_merged)):
                 logger.warning(
-                    f"The sys_metric_file ({sys_metric_f_name}) contains duplicated tracked sys-results with these ids: f{id_to_be_merged} "
+                    f"The sys_metric_file ({sys_metric_f_name}) contains "
+                    f"duplicated tracked sys-results with these ids: "
+                    f"f{id_to_be_merged} "
                     f"We will skip the merging as the merge is invalid. "
-                    f"Plz check whether you specify the 'outdir' as the same as the one of another older experiment."
-                )
+                    f"Plz check whether you specify the 'outdir' "
+                    f"as the same as the one of another older experiment.")
                 return
         elif from_global_monitors:
             for monitor in global_all_monitors:
@@ -157,10 +174,9 @@ class Monitor(object):
                     for k, v in res.items():
                         all_sys_metrics[k].append(v)
         else:
-            raise ValueError(
-                "file_io or from_monitors should be True: "
-                f"but got file_io={file_io}, from_monitors={from_global_monitors}"
-            )
+            raise ValueError("file_io or from_monitors should be True: "
+                             f"but got file_io={file_io}, from_monitors"
+                             f"={from_global_monitors}")
 
         for k, v in all_sys_metrics.items():
             if k == "id":
@@ -177,11 +193,11 @@ class Monitor(object):
                 std_sys_metrics[f"sys_std/{k}"] = std_res
 
         logger.info(
-            f"After merging the system metrics from all works, we got avg: {avg_sys_metrics}"
-        )
+            f"After merging the system metrics from all works, we got avg:"
+            f" {avg_sys_metrics}")
         logger.info(
-            f"After merging the system metrics from all works, we got std: {std_sys_metrics}"
-        )
+            f"After merging the system metrics from all works, we got std:"
+            f" {std_sys_metrics}")
         if file_io:
             with open(sys_metric_f_name, "a") as f:
                 f.write(json.dumps(avg_sys_metrics) + "\n")
@@ -231,7 +247,8 @@ class Monitor(object):
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
 
-            from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
+            from federatedscope.core.auxiliaries.utils import \
+                logfile_2_wandb_dict
             with open(os.path.join(self.outdir, "eval_results.log"),
                       "r") as exp_log_f:
                 # track the prediction related performance
@@ -256,8 +273,8 @@ class Monitor(object):
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
         if os.path.exists(old_f_name):
             logger.info(
-                "We will compress the file eval_results.raw into a .gz file, and delete the old one"
-            )
+                "We will compress the file eval_results.raw into a .gz file, "
+                "and delete the old one")
             with open(old_f_name, 'rb') as f_in:
                 with gzip.open(old_f_name + ".gz", 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
@@ -273,29 +290,36 @@ class Monitor(object):
         format the evaluation results from trainer.ctx.eval_results
 
         Args:
-            results (dict): a dict to store the evaluation results {metric: value}
+            results (dict): a dict to store the evaluation results {metric:
+            value}
             rnd (int|string): FL round
             role (int|string): the output role
             forms (list): format type
             return_raw (bool): return either raw results, or other results
 
         Returns:
-            round_formatted_results (dict): a formatted results with different forms and roles,
+            round_formatted_results (dict): a formatted results with
+            different forms and roles,
             e.g.,
             {
             'Role': 'Server #',
             'Round': 200,
             'Results_weighted_avg': {
-                'test_avg_loss': 0.58, 'test_acc': 0.67, 'test_correct': 3356, 'test_loss': 2892, 'test_total': 5000
+                'test_avg_loss': 0.58, 'test_acc': 0.67, 'test_correct':
+                3356, 'test_loss': 2892, 'test_total': 5000
                 },
             'Results_avg': {
-                'test_avg_loss': 0.57, 'test_acc': 0.67, 'test_correct': 3356, 'test_loss': 2892, 'test_total': 5000
+                'test_avg_loss': 0.57, 'test_acc': 0.67, 'test_correct':
+                3356, 'test_loss': 2892, 'test_total': 5000
                 },
             'Results_fairness': {
                 'test_correct': 3356,      'test_total': 5000,
-                'test_avg_loss_std': 0.04, 'test_avg_loss_bottom_decile': 0.52, 'test_avg_loss_top_decile': 0.64,
-                'test_acc_std': 0.06,      'test_acc_bottom_decile': 0.60,      'test_acc_top_decile': 0.75,
-                'test_loss_std': 214.17,   'test_loss_bottom_decile': 2644.64,  'test_loss_top_decile': 3241.23
+                'test_avg_loss_std': 0.04, 'test_avg_loss_bottom_decile':
+                0.52, 'test_avg_loss_top_decile': 0.64,
+                'test_acc_std': 0.06,      'test_acc_bottom_decile': 0.60,
+                'test_acc_top_decile': 0.75,
+                'test_loss_std': 214.17,   'test_loss_bottom_decile':
+                2644.64, 'test_loss_top_decile': 3241.23
                 },
             }
         """
@@ -314,7 +338,8 @@ class Monitor(object):
                     dataset_name = key.split("_")[0]
                     if f'{dataset_name}_total' not in results:
                         raise ValueError(
-                            "Results to be formatted should be include the dataset_num in the dict,"
+                            "Results to be formatted should be include the "
+                            "dataset_num in the dict,"
                             f"with key = {dataset_name}_total")
                     else:
                         dataset_num = np.array(
@@ -354,7 +379,8 @@ class Monitor(object):
                   "a") as outfile:
             outfile.write(str(round_formatted_results_raw) + "\n")
 
-        return round_formatted_results_raw if return_raw else round_formatted_results
+        return round_formatted_results_raw if return_raw else \
+            round_formatted_results
 
     def calc_blocal_dissim(self, last_model, local_updated_models):
         '''
@@ -363,7 +389,8 @@ class Monitor(object):
             local_updated_models (list): each element is ooxx.
         Returns:
             b_local_dissimilarity (dict): the measurements proposed in
-            "Tian Li, Anit Kumar Sahu, Manzil Zaheer, and et al. Federated Optimization in Heterogeneous Networks".
+            "Tian Li, Anit Kumar Sahu, Manzil Zaheer, and et al. Federated
+            Optimization in Heterogeneous Networks".
         '''
         # for k, v in last_model.items():
         #    print(k, v)
@@ -415,27 +442,30 @@ class Monitor(object):
 
     def track_model_size(self, models):
         """
-            calculate the total model size given the models hold by the worker/trainer
+            calculate the total model size given the models hold by the
+            worker/trainer
 
         :param models: torch.nn.Module or list of torch.nn.Module
         :return:
         """
         if self.total_model_size != 0:
             logger.warning(
-                "the total_model_size is not zero. You may have been calculated the total_model_size before"
-            )
+                "the total_model_size is not zero. You may have been "
+                "calculated the total_model_size before")
 
         if not hasattr(models, '__iter__'):
             models = [models]
         for model in models:
             assert isinstance(model, torch.nn.Module), \
-                f"the `model` should be type torch.nn.Module when calculating its size, but got {type(model)}"
+                f"the `model` should be type torch.nn.Module when " \
+                f"calculating its size, but got {type(model)}"
             for name, para in model.named_parameters():
                 self.total_model_size += para.numel()
 
     def track_avg_flops(self, flops, sample_num=1):
         """
-            update the average flops for forwarding each data sample, for most models and tasks,
+            update the average flops for forwarding each data sample,
+            for most models and tasks,
             the averaging is not needed as the input shape is fixed
 
         :param flops: flops/
@@ -460,22 +490,25 @@ class Monitor(object):
                            round_wise_update_key="val_loss"):
         """
             update best evaluation results.
-            by default, the update is based on validation loss with     `round_wise_update_key="val_loss" `
+            by default, the update is based on validation loss with
+            `round_wise_update_key="val_loss" `
         """
         update_best_this_round = False
         if not isinstance(new_results, dict):
             raise ValueError(
-                f"update best results require `results` a dict, but got {type(new_results)}"
-            )
+                f"update best results require `results` a dict, but got"
+                f" {type(new_results)}")
         else:
             if results_type not in best_results:
                 best_results[results_type] = dict()
             best_result = best_results[results_type]
-            # update different keys separately: the best values can be in different rounds
+            # update different keys separately: the best values can be in
+            # different rounds
             if round_wise_update_key is None:
                 for key in new_results:
                     cur_result = new_results[key]
-                    if 'loss' in key or 'std' in key:  # the smaller, the better
+                    if 'loss' in key or 'std' in key:  # the smaller,
+                        # the better
                         if results_type in [
                                 "client_individual", "unseen_client_individual"
                         ]:
@@ -497,7 +530,8 @@ class Monitor(object):
                     else:
                         # unconcerned metric
                         pass
-            # update different keys round-wise: if find better round_wise_update_key, update     others at the same time
+            # update different keys round-wise: if find better
+            # round_wise_update_key, update others at the same time
             else:
                 if round_wise_update_key not in [
                         "val_loss",
@@ -512,10 +546,12 @@ class Monitor(object):
                         "val_std",
                 ]:
                     raise NotImplementedError(
-                        f"We currently support round_wise_update_key as one of "
-                        f"['val_loss', 'test_loss', 'loss', 'val_avg_loss', 'test_avg_loss', 'avg_loss,''val_acc', 'val_std', 'test_acc', 'test_std'] "
-                        f"for round-wise best results update, but got {round_wise_update_key}."
-                    )
+                        f"We currently support round_wise_update_key as one "
+                        f"of ['val_loss', 'test_loss', 'loss', "
+                        f"'val_avg_loss', 'test_avg_loss', 'avg_loss,"
+                        f"''val_acc', 'val_std', 'test_acc', 'test_std'] "
+                        f"for round-wise best results update, but got"
+                        f" {round_wise_update_key}.")
 
                 found_round_wise_update_key = False
                 sorted_keys = []
@@ -527,15 +563,18 @@ class Monitor(object):
                         sorted_keys.append(key)
                 if not found_round_wise_update_key:
                     raise ValueError(
-                        "Your specified eval.best_res_update_round_wise_key is not in target results, "
+                        "Your specified eval.best_res_update_round_wise_key "
+                        "is not in target results, "
                         "use another key or check the name. \n"
-                        f"Got eval.best_res_update_round_wise_key={round_wise_update_key}, "
+                        f"Got eval.best_res_update_round_wise_key"
+                        f"={round_wise_update_key}, "
                         f"the keys of results are {list(new_results.keys())}")
 
                 for key in sorted_keys:
                     cur_result = new_results[key]
                     if update_best_this_round or \
-                            ('loss' in round_wise_update_key and 'loss' in key) or \
+                            ('loss' in round_wise_update_key and 'loss' in
+                             key) or \
                             ('std' in round_wise_update_key and 'std' in key):
                         # The smaller the better
                         if results_type in [
@@ -543,7 +582,8 @@ class Monitor(object):
                         ]:
                             cur_result = min(cur_result)
                         if update_best_this_round or \
-                                key not in best_result or cur_result < best_result[key]:
+                                key not in best_result or cur_result < \
+                                best_result[key]:
                             best_result[key] = cur_result
                             update_best_this_round = True
                     elif update_best_this_round or \
@@ -554,7 +594,8 @@ class Monitor(object):
                         ]:
                             cur_result = max(cur_result)
                         if update_best_this_round or \
-                                key not in best_result or cur_result > best_result[key]:
+                                key not in best_result or cur_result > \
+                                best_result[key]:
                             best_result[key] = cur_result
                             update_best_this_round = True
                     else:
@@ -573,7 +614,7 @@ class Monitor(object):
                         line,
                         self.log_res_best,
                         raw_out=False)
-                    #wandb.log(self.log_res_best)
+                    # wandb.log(self.log_res_best)
                     for k, v in self.log_res_best.items():
                         wandb.summary[k] = v
                 except ImportError:

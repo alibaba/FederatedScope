@@ -1,17 +1,20 @@
 import torch
-import torch.nn.functional as F
-from federatedscope.attack.auxiliary.utils import iDLG_trick, total_variation, get_info_diff_loss
+from federatedscope.attack.auxiliary.utils import iDLG_trick, \
+    total_variation, get_info_diff_loss
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class DLG(object):
-    """Implementation of the paper "Deep Leakage from Gradients": https://papers.nips.cc/paper/2019/file/60a6c4002cc7b29142def8871531281a-Paper.pdf
+    """Implementation of the paper "Deep Leakage from Gradients":
+    https://papers.nips.cc/paper/2019/file/ \
+    60a6c4002cc7b29142def8871531281a-Paper.pdf
 
     References:
 
-        Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients." Advances in Neural Information Processing Systems 32 (2019).
+        Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients."
+        Advances in Neural Information Processing Systems 32 (2019).
 
         Args:
             - max_ite (int): the max iteration number;
@@ -19,10 +22,15 @@ class DLG(object):
             - federate_loss_fn (object): The loss function used in FL training;
             - device (str): the device running the reconstruction;
             - federate_method (str): The federated learning method;
-            - federate_lr (float):The learning rate used in FL training; default None.
-            - optim (str): The optimization method used in reconstruction; default: "Adam"; supported: 'sgd', 'adam', 'lbfgs'
-            - info_diff_type (str): The type of loss between the ground-truth gradient/parameter updates info and the reconstructed info; default: "l2"
-            - is_one_hot_label (bool): whether the label is one-hot; default: False
+            - federate_lr (float):The learning rate used in FL training;
+            default None.
+            - optim (str): The optimization method used in reconstruction;
+            default: "Adam"; supported: 'sgd', 'adam', 'lbfgs'
+            - info_diff_type (str): The type of loss between the
+            ground-truth gradient/parameter updates info and the
+            reconstructed info; default: "l2"
+            - is_one_hot_label (bool): whether the label is one-hot;
+            default: False
 
 
     """
@@ -38,7 +46,8 @@ class DLG(object):
                  is_one_hot_label=False):
 
         if federate_method.lower() == "fedavg":
-            # check whether the received info is parameter. If yes, the reconstruction attack requires the learning rate of FL
+            # check whether the received info is parameter. If yes,
+            # the reconstruction attack requires the learning rate of FL
             assert federate_lr is not None
 
         self.info_is_para = federate_method.lower() == "fedavg"
@@ -116,7 +125,8 @@ class DLG(object):
             P_{t} = P - \eta g,
         where
         :math:`P_{t}` is the parameters updated by the client at current round;
-        :math:`P` is the parameters of the global model at the end of the last round;
+        :math:`P` is the parameters of the global model at the end of the
+        last round;
         :math:`\eta` is the learning rate of clients' local training;
         :math:`g` is the gradient
 
@@ -124,11 +134,15 @@ class DLG(object):
 
         Arguments:
             - model (object): The model owned by the Server
-            - original_info (dict): The model parameter updates received by Server
-            - model_para_name (list): The list of model name. Be sure the :attr:`model_para_name` is consistent with the the key name in :attr:`original_info`
+            - original_info (dict): The model parameter updates received by
+            Server
+            - model_para_name (list): The list of model name. Be sure the
+            :attr:`model_para_name` is consistent with the the key name in
+            :attr:`original_info`
 
         :returns:
-            - original_gradient (list): the list of the gradient corresponding to the model updates
+            - original_gradient (list): the list of the gradient
+            corresponding to the model updates
 
         '''
         original_gradient = [
@@ -146,13 +160,17 @@ class DLG(object):
 
         Args:
             model: The model used in FL; Type: object
-            original_info: The message received to perform reconstruction, usually the gradient/parameter updates; Type: list
-            data_feature_dim: The feature dimension of dataset; Type: list or Tensor.Size
+            original_info: The message received to perform reconstruction,
+            usually the gradient/parameter updates; Type: list
+            data_feature_dim: The feature dimension of dataset; Type: list
+            or Tensor.Size
             num_class: the number of total classes in the dataset; Type: int
-            batch_size: the number of samples in the batch that generate the original_info; Type: int
+            batch_size: the number of samples in the batch that
+            generate the original_info; Type: int
 
         :returns:
-            - The reconstructed data (Tensor); Size: [batch_size, data_feature_dim]
+            - The reconstructed data (Tensor); Size: [batch_size,
+            data_feature_dim]
             - The reconstructed label (Tensor): Size: [batch_size]
 
 
@@ -195,12 +213,16 @@ class DLG(object):
 
 class InvertGradient(DLG):
     '''
-    The implementation of "Inverting Gradients - How easy is it to break privacy in federated learning?".
-    Link: https://proceedings.neurips.cc/paper/2020/hash/c4ede56bbd98819ae6112b20ac6bf145-Abstract.html
+    The implementation of "Inverting Gradients - How easy is it to break
+    privacy in federated learning?".
+    Link: https://proceedings.neurips.cc/paper/2020/hash/ \
+    c4ede56bbd98819ae6112b20ac6bf145-Abstract.html
 
     References:
 
-        Geiping, Jonas, et al. "Inverting gradients-how easy is it to break privacy in federated learning?." Advances in Neural Information Processing Systems 33 (2020): 16937-16947.
+        Geiping, Jonas, et al. "Inverting gradients-how easy is it to break
+        privacy in federated learning?." Advances in Neural Information
+        Processing Systems 33 (2020): 16937-16947.
 
     Args:
             - max_ite (int): the max iteration number;
@@ -208,12 +230,20 @@ class InvertGradient(DLG):
             - federate_loss_fn (object): The loss function used in FL training;
             - device (str): the device running the reconstruction;
             - federate_method (str): The federated learning method;
-            - federate_lr (float): The learning rate used in FL training; default: None.
-            - alpha_TV (float): the hyper-parameter of the total variance term; default: 0.001
-            - info_diff_type (str): The type of loss between the ground-truth gradient/parameter updates info and the reconstructed info; default: "l2"
-            - optim (str): The optimization method used in reconstruction; default: "Adam"; supported: 'sgd', 'adam', 'lbfgs'
-            - info_diff_type (str): The type of loss between the ground-truth gradient/parameter updates info and the reconstructed info; default: "l2"
-            - is_one_hot_label (bool): whether the label is one-hot; default: False
+            - federate_lr (float): The learning rate used in FL training;
+            default: None.
+            - alpha_TV (float): the hyper-parameter of the total variance
+            term; default: 0.001
+            - info_diff_type (str): The type of loss between the
+            ground-truth gradient/parameter updates info and the
+            reconstructed info; default: "l2"
+            - optim (str): The optimization method used in reconstruction;
+            default: "Adam"; supported: 'sgd', 'adam', 'lbfgs'
+            - info_diff_type (str): The type of loss between the
+            ground-truth gradient/parameter updates info and the
+            reconstructed info; default: "l2"
+            - is_one_hot_label (bool): whether the label is one-hot;
+            default: False
     '''
     def __init__(self,
                  max_ite,
@@ -238,8 +268,8 @@ class InvertGradient(DLG):
         self.alpha_TV = alpha_TV
         if self.info_diff_type != 'sim':
             logger.info(
-                'Force the info_diff_type to be cosine similarity loss in InvertGradient attack method!'
-            )
+                'Force the info_diff_type to be cosine similarity loss in '
+                'InvertGradient attack method!')
             self.info_diff_type = 'sim'
             self.info_diff_loss = get_info_diff_loss(self.info_diff_type)
 

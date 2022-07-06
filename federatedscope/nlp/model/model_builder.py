@@ -33,7 +33,9 @@ def get_rnn(model_config, local_data):
 
 
 def get_transformer(model_config, local_data):
-    from transformers import AutoModelForPreTraining, AutoModelForQuestionAnswering, AutoModelForSequenceClassification, AutoModelForTokenClassification, AutoModelWithLMHead, AutoModel
+    from transformers import AutoModelForPreTraining, \
+        AutoModelForQuestionAnswering, AutoModelForSequenceClassification, \
+        AutoModelForTokenClassification, AutoModelWithLMHead, AutoModel
 
     model_func_dict = {
         'PreTraining'.lower(): AutoModelForPreTraining,
@@ -44,7 +46,9 @@ def get_transformer(model_config, local_data):
         'Auto'.lower(): AutoModel
     }
     assert model_config.task.lower(
-    ) in model_func_dict, f'model_config.task should be in {model_func_dict.keys()} when using pre_trained transformer model '
+    ) in model_func_dict, f'model_config.task should be in' \
+                          f' {model_func_dict.keys()} ' \
+                          f'when using pre_trained transformer model '
     path, _ = model_config.type.split('@')
     model = model_func_dict[model_config.task.lower()].from_pretrained(
         path, num_labels=model_config.out_channels)

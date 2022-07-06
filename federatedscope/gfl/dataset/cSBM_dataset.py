@@ -5,7 +5,8 @@
 #
 # Distributed under terms of the MIT license.
 """
-cSBM is a configurable random graph model for studying homophily and heterophily.
+cSBM is a configurable random graph model for studying homophily and
+heterophily.
 Source: https://github.com/jianhao2016/GPRGNN
 
 This is a script for contexual SBM model and its dataset generator.
@@ -30,14 +31,16 @@ from federatedscope.gfl.dataset.utils import random_planetoid_splits
 
 
 def ContextualSBM(n, d, Lambda, p, mu, train_percent=0.01, u=None):
-    """To generate a graph with specified homophilic degree, avg node degree, feature dimension, etc.
+    """To generate a graph with specified homophilic degree, avg node
+    degree, feature dimension, etc.
     Arguments:
         n (int): the number of nodes.
         d (int): the average node degree.
         Lambda (float): the parameter controlling homophilic degree.
         p (float): the dimension of node feature.
         mu (float): the mean of node feature.
-        train_percent (float): (optional) the fraction of nodes used for training.
+        train_percent (float): (optional) the fraction of nodes used for
+        training.
         u (numpy.Array): (optional) the parameter controlling the node feature.
     :returns:
         data : the constructed graph.
@@ -51,7 +54,7 @@ def ContextualSBM(n, d, Lambda, p, mu, train_percent=0.01, u=None):
     # Lambda = 1 # parameters
     # p = 1000 # feature dim
     # mu = 1 # mean of Gaussian
-    gamma = n / p
+    # gamma = n / p
 
     c_in = d + np.sqrt(d) * Lambda
     c_out = d - np.sqrt(d) * Lambda
@@ -113,7 +116,7 @@ def ContextualSBM(n, d, Lambda, p, mu, train_percent=0.01, u=None):
 
 def parameterized_Lambda_and_mu(theta, p, n, epsilon=0.1):
     '''
-    based on claim 3 in the paper, 
+    based on claim 3 in the paper,
 
         lambda^2 + mu^2/gamma = 1 + epsilon.
 
@@ -172,7 +175,8 @@ class dataset_ContextualSBM(InMemoryDataset):
     r"""Create synthetic dataset based on the contextual SBM from the paper:
     https://arxiv.org/pdf/1807.09596.pdf
 
-    Use the similar class as InMemoryDataset, but not requiring the root folder.
+    Use the similar class as InMemoryDataset, but not requiring the root
+    folder.
 
        See `here <https://pytorch-geometric.readthedocs.io/en/latest/notes/
     create_dataset.html#creating-in-memory-datasets>`__ for the accompanying
@@ -189,10 +193,10 @@ class dataset_ContextualSBM(InMemoryDataset):
         d: avg degree of nodes
         p: dimenstion of feature vector.
 
-        Lambda, mu: parameters balancing the mixture of information, 
+        Lambda, mu: parameters balancing the mixture of information,
                     if not specified, use parameterized method to generate.
 
-        epsilon, theta: gap between boundary and chosen ellipsoid. theta is 
+        epsilon, theta: gap between boundary and chosen ellipsoid. theta is
                         angle of between the selected parameter and x-axis.
                         choosen between [0, 1] => 0 = 0, 1 = pi/2
 
@@ -264,15 +268,6 @@ class dataset_ContextualSBM(InMemoryDataset):
             self.p = self.data.p.item()
             self.d = self.data.d.item()
             self.train_percent = self.data.train_percent.item()
-
-
-#     @property
-#     def raw_dir(self):
-#         return osp.join(self.root, self.name, 'raw')
-
-#     @property
-#     def processed_dir(self):
-#         return osp.join(self.root, self.name, 'processed')
 
     @property
     def raw_file_names(self):
@@ -351,7 +346,10 @@ class dataset_ContextualSBM(InMemoryDataset):
     def __repr__(self):
         return '{}()'.format(self.name)
 
+
 if __name__ == '__main__':
+    import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--phi', type=float, default=1)
     parser.add_argument('--epsilon', type=float, default=3.25)

@@ -11,17 +11,19 @@ class GeneralTFTrainer(Trainer):
                 f"{target_data_split_name}_data") is None and self.ctx.get(
                     f"{target_data_split_name}_loader") is None:
             raise ValueError(
-                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
-            )
+                f"No {target_data_split_name}_data or"
+                f" {target_data_split_name}_loader in the trainer")
         self._run_routine("train", hooks_set, target_data_split_name)
 
-        # TODO: The return values should be more flexible? Now: sample_num, model_para, results={k:v}
+        # TODO: The return values should be more flexible? Now: sample_num,
+        #  model_para, results={k:v}
 
         return self.ctx.num_samples_train, self.ctx.model.state_dict(
         ), self.ctx.eval_metrics
 
     def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
+        modes
 
         """
         init_dict = dict()

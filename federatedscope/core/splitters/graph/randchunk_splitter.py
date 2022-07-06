@@ -7,12 +7,13 @@ class RandChunkSplitter:
 
     def __call__(self, dataset):
         r"""Split dataset via random chunk.
-        
+
         Arguments:
             dataset (List or PyG.dataset): The datasets.
-            
+
         Returns:
-            data_list (List(List(PyG.data))): Splited dataset via random chunk split.
+            data_list (List(List(PyG.data))): Splited dataset via random
+            chunk split.
         """
         data_list = []
         dataset = [ds for ds in dataset]

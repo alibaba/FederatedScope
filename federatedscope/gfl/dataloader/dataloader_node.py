@@ -2,7 +2,8 @@ import torch
 import numpy as np
 
 from torch_geometric.datasets import Planetoid
-from torch_geometric.utils import add_self_loops, remove_self_loops, to_undirected
+from torch_geometric.utils import add_self_loops, remove_self_loops, \
+    to_undirected
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
@@ -13,12 +14,14 @@ INF = np.iinfo(np.int64).max
 
 
 def raw2loader(raw_data, config=None):
-    """Transform a graph into either dataloader for graph-sampling-based mini-batch training
+    """Transform a graph into either dataloader for graph-sampling-based
+    mini-batch training
     or still a graph for full-batch training.
     Arguments:
         raw_data (PyG.Data): a raw graph.
     :returns:
-        sampler (object): a Dict containing loader and subgraph_sampler or still a PyG.Data object.
+        sampler (object): a Dict containing loader and subgraph_sampler or
+        still a PyG.Data object.
     """
     # change directed graph to undirected
     raw_data.edge_index = to_undirected(
@@ -36,7 +39,6 @@ def raw2loader(raw_data, config=None):
             walk_length=config.data.graphsaint.walk_length,
             num_steps=config.data.graphsaint.num_steps,
             sample_coverage=0)
-        #save_dir=dataset.processed_dir)
         subgraph_sampler = NeighborSampler(raw_data.edge_index,
                                            sizes=[-1],
                                            batch_size=4096,
@@ -131,7 +133,8 @@ def load_nodelevel_dataset(config=None):
                                  splits=config.data.splits,
                                  **transforms_funcs)
     elif name.startswith("csbm"):
-        from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
+        from federatedscope.gfl.dataset.cSBM_dataset import \
+            dataset_ContextualSBM
         dataset = dataset_ContextualSBM(
             root=path,
             name=name if len(name) > len("csbm") else None,

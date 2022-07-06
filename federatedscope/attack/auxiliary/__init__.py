@@ -1,5 +1,6 @@
 from federatedscope.attack.auxiliary.utils import *
-from federatedscope.attack.auxiliary.attack_trainer_builder import wrap_attacker_trainer
+from federatedscope.attack.auxiliary.attack_trainer_builder import \
+    wrap_attacker_trainer
 
 __all__ = [
     'get_passive_PIA_auxiliary_dataset', 'iDLG_trick', 'cos_sim',

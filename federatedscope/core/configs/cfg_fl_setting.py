@@ -7,9 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 def extend_fl_setting_cfg(cfg):
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Federate learning related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.federate = CN()
 
     cfg.federate.client_num = 0
@@ -20,12 +20,14 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.local_update_steps = 1
     cfg.federate.batch_or_epoch = 'batch'
     cfg.federate.share_local_model = False
-    cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is the number of training samples in dataset.
+    cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is
+    # the number of training samples in dataset.
     cfg.federate.online_aggr = False
     cfg.federate.make_global_eval = False
     cfg.federate.use_diff = False
 
-    # the method name is used to internally determine composition of different aggregators, messages, handlers, etc.,
+    # the method name is used to internally determine composition of
+    # different aggregators, messages, handlers, etc.,
     cfg.federate.method = "FedAvg"
     cfg.federate.ignore_weight = False
     cfg.federate.use_ss = False  # Whether to apply Secret Sharing
@@ -33,11 +35,12 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.save_to = ''
     cfg.federate.join_in_info = [
     ]  # The information requirements (from server) for join_in
-    cfg.federate.sampler = 'uniform'  # the strategy for sampling client in each training round, ['uniform', 'group']
+    cfg.federate.sampler = 'uniform'  # the strategy for sampling client in
+    # each training round, ['uniform', 'group']
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Distribute training related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.distribute = CN()
 
     cfg.distribute.use = False
@@ -52,9 +55,9 @@ def extend_fl_setting_cfg(cfg):
     cfg.distribute.grpc_max_receive_message_length = 100 * 1024 * 1024
     cfg.distribute.grpc_enable_http_proxy = False
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Vertical FL related options (for demo)
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.vertical = CN()
     cfg.vertical.use = False
     cfg.vertical.encryption = 'paillier'
@@ -68,11 +71,12 @@ def extend_fl_setting_cfg(cfg):
 def assert_fl_setting_cfg(cfg):
     if cfg.federate.batch_or_epoch not in ['batch', 'epoch']:
         raise ValueError(
-            "Value of 'cfg.federate.batch_or_epoch' must be chosen from ['batch', 'epoch']."
-        )
+            "Value of 'cfg.federate.batch_or_epoch' must be chosen from ["
+            "'batch', 'epoch'].")
 
     assert cfg.federate.mode in ["standalone", "distributed"], \
-        f"Please specify the cfg.federate.mode as the string standalone or distributed. But got {cfg.federate.mode}."
+        f"Please specify the cfg.federate.mode as the string standalone or " \
+        f"distributed. But got {cfg.federate.mode}."
 
     # =============  client num related  ==============
     assert not (cfg.federate.client_num == 0
@@ -87,9 +91,9 @@ def assert_fl_setting_cfg(cfg):
     sample_cfg_valid = sample_client_rate_valid or sample_client_num_valid
     non_sample_case = cfg.federate.method in ["local", "global"]
     if non_sample_case and sample_cfg_valid:
-        logger.warning(
-            "In local/global training mode, the sampling related configs are in-valid, we will use all clients. "
-        )
+        logger.warning("In local/global training mode, "
+                       "the sampling related configs are in-valid, "
+                       "we will use all clients. ")
 
     if cfg.federate.method == "global":
         cfg.federate.client_num = 1
@@ -99,8 +103,9 @@ def assert_fl_setting_cfg(cfg):
         if cfg.federate.make_global_eval:
             cfg.federate.make_global_eval = False
             logger.warning(
-                "In global training mode, we will conduct global evaluation in a proxy client rather than the server. The configuration cfg.federate.make_global_eval will be False."
-            )
+                "In global training mode, we will conduct global evaluation "
+                "in a proxy client rather than the server. The configuration "
+                "cfg.federate.make_global_eval will be False.")
 
     if non_sample_case or not sample_cfg_valid:
         # (a) use all clients
@@ -115,18 +120,23 @@ def assert_fl_setting_cfg(cfg):
                 int(cfg.federate.sample_client_rate * cfg.federate.client_num))
             if sample_client_num_valid:
                 logger.warning(
-                    f"Users specify both valid sample_client_rate as {cfg.federate.sample_client_rate} "
+                    f"Users specify both valid sample_client_rate as"
+                    f" {cfg.federate.sample_client_rate} "
                     f"and sample_client_num as {old_sample_client_num}.\n"
-                    f"\t\tWe will use the sample_client_rate value to calculate "
-                    f"the actual number of participated clients as {cfg.federate.sample_client_num}."
-                )
-            # (b.2) use sample_client_num, commented since the below two lines do not change anything
+                    f"\t\tWe will use the sample_client_rate value to "
+                    f"calculate "
+                    f"the actual number of participated clients as"
+                    f" {cfg.federate.sample_client_num}.")
+            # (b.2) use sample_client_num, commented since the below two
+            # lines do not change anything
             # elif sample_client_num_valid:
-            #     cfg.federate.sample_client_num = cfg.federate.sample_client_num
+            #     cfg.federate.sample_client_num = \
+            #     cfg.federate.sample_client_num
 
     if cfg.federate.use_ss:
         assert cfg.federate.client_num == cfg.federate.sample_client_num, \
-            "Currently, we support secret sharing only in all-client-participation case"
+            "Currently, we support secret sharing only in " \
+            "all-client-participation case"
 
         assert cfg.federate.method != "local", \
             "Secret sharing is not supported in local training mode"
@@ -134,7 +144,8 @@ def assert_fl_setting_cfg(cfg):
     # =============   aggregator related   ================
     assert (not cfg.federate.online_aggr) or (
         not cfg.federate.use_ss
-    ), "Have not supported to use online aggregator and secrete sharing at the same time"
+    ), "Have not supported to use online aggregator and secrete sharing at " \
+       "the same time"
 
 
 register_config("fl_setting", extend_fl_setting_cfg)

@@ -11,12 +11,17 @@ logger = logging.getLogger(__name__)
 
 class FedRunner(object):
     """
-    This class is used to construct an FL course, which includes `_set_up` and `run`.
+    This class is used to construct an FL course, which includes `_set_up`
+    and `run`.
 
     Arguments:
-        data: The data used in the FL courses, which are formatted as {'ID':data} for standalone mode. More details can be found in federatedscope.core.auxiliaries.data_builder .
-        server_class: The server class is used for instantiating a (customized) server.
-        client_class: The client class is used for instantiating a (customized) client.
+        data: The data used in the FL courses, which are formatted as {
+        'ID':data} for standalone mode. More details can be found in
+        federatedscope.core.auxiliaries.data_builder .
+        server_class: The server class is used for instantiating a (
+        customized) server.
+        client_class: The client class is used for instantiating a (
+        customized) client.
         config: The configurations of the FL course.
         client_config: The clients' configurations.
     """
@@ -39,7 +44,8 @@ class FedRunner(object):
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
             self._setup_for_standalone()
-            # in standalone mode, by default, we print the trainer info only once for better logs readability
+            # in standalone mode, by default, we print the trainer info only
+            # once for better logs readability
             trainer_representative = self.client[1].trainer
             if trainer_representative is not None:
                 trainer_representative.print_trainer_meta_info()
@@ -54,17 +60,23 @@ class FedRunner(object):
 
         self.client = dict()
         assert self.cfg.federate.client_num != 0, \
-            "In standalone mode, self.cfg.federate.client_num should be non-zero. " \
-            "This is usually cased by using synthetic data and users not specify a non-zero value for client_num"
+            "In standalone mode, self.cfg.federate.client_num should be " \
+            "non-zero. " \
+            "This is usually cased by using synthetic data and users not " \
+            "specify a non-zero value for client_num"
 
-        # assume the client-wise data are consistent in their input&output shape
+        # assume the client-wise data are consistent in their input&output
+        # shape
         self._shared_client_model = get_model(
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
 
         if self.cfg.federate.method == "global":
             assert 0 in self.data and self.data[
-                0] is not None, "In global training mode, we will use a proxy client to hold all the data. Please put the whole dataset in data[0], i.e., the same style with global evaluation mode"
+                0] is not None, "In global training mode, we will use a " \
+                                "proxy client to hold all the data. Please " \
+                                "put the whole dataset in data[0], i.e., " \
+                                "the same style with global evaluation mode"
             from federatedscope.core.auxiliaries.data_builder import merge_data
             self.data[1] = merge_data(all_data=self.data)
 
@@ -83,7 +95,8 @@ class FedRunner(object):
         if self.cfg.distribute.role == 'server':
             self.server = self._setup_server()
         elif self.cfg.distribute.role == 'client':
-            # When we set up the client in the distributed mode, we assume the server has been set up and number with #0
+            # When we set up the client in the distributed mode, we assume
+            # the server has been set up and number with #0
             self.client_address = {
                 'host': self.cfg.distribute.client_host,
                 'port': self.cfg.distribute.client_port
@@ -92,8 +105,10 @@ class FedRunner(object):
 
     def run(self):
         """
-        To run an FL course, which is called after server/client has been set up.
-        For the standalone mode, a shared message queue will be set up to simulate ``receiving message``.
+        To run an FL course, which is called after server/client has been
+        set up.
+        For the standalone mode, a shared message queue will be set up to
+        simulate ``receiving message``.
         """
         if self.mode == 'standalone':
             # trigger the FL course
@@ -101,7 +116,8 @@ class FedRunner(object):
                 self.client[each_client].join_in()
 
             if self.cfg.federate.online_aggr:
-                # any broadcast operation would be executed client-by-client to avoid the existence of #clients messages at the same time.
+                # any broadcast operation would be executed client-by-client
+                # to avoid the existence of #clients messages at the same time.
                 # currently, only consider centralized topology
                 def is_broadcast(msg):
                     return len(msg.receiver) >= 1 and msg.sender == 0
@@ -165,7 +181,8 @@ class FedRunner(object):
                 server_data = None
                 model = get_model(
                     self.cfg.model, self.data[1], backend=self.cfg.backend
-                )  # get the model according to client's data if the server does not own data
+                )  # get the model according to client's data if the server
+                # does not own data
             kw = {'shared_comm_queue': self.shared_comm_queue}
         elif self.mode == 'distributed':
             server_data = self.data
@@ -190,7 +207,8 @@ class FedRunner(object):
                 **kw)
 
             if self.cfg.nbafl.use:
-                from federatedscope.core.trainers.trainer_nbafl import wrap_nbafl_server
+                from federatedscope.core.trainers.trainer_nbafl import \
+                    wrap_nbafl_server
                 wrap_nbafl_server(server)
 
         else:
@@ -224,8 +242,9 @@ class FedRunner(object):
                 client_specific_config.merge_from_other_cfg(
                     self.client_cfg.get('client_{}'.format(client_id)))
                 client_specific_config.freeze()
-            client_device = self._server_device if self.cfg.federate.share_local_model else self.gpu_manager.auto_choice(
-            )
+            client_device = self._server_device if \
+                self.cfg.federate.share_local_model else \
+                self.gpu_manager.auto_choice()
             client = self.client_class(
                 ID=client_id,
                 server_id=self.server_id,
@@ -249,14 +268,15 @@ class FedRunner(object):
 
     def _handle_msg(self, msg, rcv=-1):
         """
-        To simulate the message handling process (used only for the standalone mode)
+        To simulate the message handling process (used only for the
+        standalone mode)
         """
         if rcv != -1:
             # simulate broadcast one-by-one
             self.client[rcv].msg_handlers[msg.msg_type](msg)
             return
 
-        sender, receiver = msg.sender, msg.receiver
+        _, receiver = msg.sender, msg.receiver
         download_bytes, upload_bytes = msg.count_bytes()
         if not isinstance(receiver, list):
             receiver = [receiver]

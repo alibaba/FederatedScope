@@ -72,7 +72,7 @@ def load_graphlevel_dataset(config=None):
             ]
         elif name.endswith('mix'.upper()):
             if 'pre_transform' not in transforms_funcs:
-                raise ValueError(f'pre_transform is None!')
+                raise ValueError('pre_transform is None!')
             dnames = [
                 'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
                 'ENZYMES', 'DD', 'PROTEINS', 'COLLAB', 'IMDB-BINARY',

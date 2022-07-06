@@ -69,7 +69,8 @@ def hook_on_fit_start_count_round(ctx):
 
 def hook_on_batch_start_replace_data_batch(ctx):
     # replace the data batch to the target data
-    # check whether need to replace the data; if yes, replace the current batch to target batch
+    # check whether need to replace the data; if yes, replace the current
+    # batch to target batch
     if ctx.finish_injected == False and ctx.round >= ctx.inject_round:
         logger.info("---------- inject the target data ---------")
         ctx["data_batch"] = ctx.target_data

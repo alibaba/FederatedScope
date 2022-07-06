@@ -3,7 +3,8 @@ import torch.nn.functional as F
 from torch.nn import Linear, Sequential
 from torch_geometric.data import Data
 from torch_geometric.data.batch import Batch
-from torch_geometric.nn.glob import global_add_pool, global_mean_pool, global_max_pool
+from torch_geometric.nn.glob import global_add_pool, global_mean_pool, \
+    global_max_pool
 
 from federatedscope.gfl.model.gcn import GCN_Net
 from federatedscope.gfl.model.sage import SAGE_Net
@@ -31,9 +32,9 @@ class AtomEncoder(torch.nn.Module):
 
 
 class GNN_Net_Graph(torch.nn.Module):
-    r"""GNN model with pre-linear layer, pooling layer 
+    r"""GNN model with pre-linear layer, pooling layer
         and output layer for graph classification tasks.
-        
+
     Arguments:
         in_channels (int): input channels.
         out_channels (int): output channels.

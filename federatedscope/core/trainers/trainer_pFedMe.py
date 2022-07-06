@@ -8,10 +8,13 @@ from typing import Type
 def wrap_pFedMeTrainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
     """
-    Build a `pFedMeTrainer` with a plug-in manner, by registering new functions into specific `BaseTrainer`
+    Build a `pFedMeTrainer` with a plug-in manner, by registering new
+    functions into specific `BaseTrainer`
 
-    The pFedMe implementation, "Personalized Federated Learning with Moreau Envelopes (NeurIPS 2020)"
-    is based on the Algorithm 1 in their paper and official codes: https://github.com/CharlieDinh/pFedMe
+    The pFedMe implementation, "Personalized Federated Learning with Moreau
+    Envelopes (NeurIPS 2020)"
+    is based on the Algorithm 1 in their paper and official codes:
+    https://github.com/CharlieDinh/pFedMe
     """
 
     # ---------------- attribute-level plug-in -----------------------
@@ -37,12 +40,13 @@ def wrap_pFedMeTrainer(
                                         trigger="on_epoch_end",
                                         insert_pos=-1)
 
-    # for "on_batch_start" trigger: replace the original hooks into new ones of pFedMe
+    # for "on_batch_start" trigger: replace the original hooks into new ones
+    # of pFedMe
     # 1) cache the original hooks for "on_batch_start"
-    base_trainer.ctx.original_hook_on_batch_start_train = base_trainer.hooks_in_train[
-        "on_batch_start"]
-    base_trainer.ctx.original_hook_on_batch_start_eval = base_trainer.hooks_in_eval[
-        "on_batch_start"]
+    base_trainer.ctx.original_hook_on_batch_start_train = \
+        base_trainer.hooks_in_train["on_batch_start"]
+    base_trainer.ctx.original_hook_on_batch_start_eval = \
+        base_trainer.hooks_in_eval["on_batch_start"]
     # 2) replace the original hooks for "on_batch_start"
     base_trainer.replace_hook_in_train(
         new_hook=hook_on_batch_start_init_pfedme,
@@ -58,7 +62,8 @@ def wrap_pFedMeTrainer(
 def init_pFedMe_ctx(base_trainer):
     """
     init necessary attributes used in pFedMe,
-    some new attributes will be with prefix `pFedMe` optimizer to avoid namespace pollution
+    some new attributes will be with prefix `pFedMe` optimizer to avoid
+    namespace pollution
     """
     ctx = base_trainer.ctx
     cfg = base_trainer.cfg
@@ -69,12 +74,14 @@ def init_pFedMe_ctx(base_trainer):
     ctx.num_train_epoch *= ctx.pFedMe_K
     ctx.pFedMe_approx_fit_counter = 0
 
-    # the local_model_tmp is used to be the referenced parameter when finding the approximate \theta in paper
+    # the local_model_tmp is used to be the referenced parameter when
+    # finding the approximate \theta in paper
     # will be copied from model every run_routine
     ctx.pFedMe_local_model_tmp = None
 
     # the optimizer used in pFedMe is based on Moreau Envelopes regularization
-    # besides, there are two distinct lr for the approximate model and base model
+    # besides, there are two distinct lr for the approximate model and base
+    # model
     ctx.optimizer = wrap_regularized_optimizer(
         ctx.optimizer, cfg.personalization.regular_weight)
     for g in ctx.optimizer.param_groups:
@@ -84,7 +91,8 @@ def init_pFedMe_ctx(base_trainer):
 
 def hook_on_fit_start_set_local_para_tmp(ctx):
     ctx.pFedMe_local_model_tmp = copy.deepcopy(ctx.model)
-    # set the compared model data, then the optimizer will find approximate model using trainer.cfg.personalization.lr
+    # set the compared model data, then the optimizer will find approximate
+    # model using trainer.cfg.personalization.lr
     compared_global_model_para = [{
         "params": list(ctx.pFedMe_local_model_tmp.parameters())
     }]
@@ -102,7 +110,8 @@ def hook_on_batch_start_init_pfedme(ctx):
                 hook(ctx)
         ctx.data_batch_cache = copy.deepcopy(ctx.data_batch)
     else:
-        # reuse the data_cache since the original hook `_hook_on_batch_end` will clean `data_batch`
+        # reuse the data_cache since the original hook `_hook_on_batch_end`
+        # will clean `data_batch`
         ctx.data_batch = copy.deepcopy(ctx.data_batch_cache)
     ctx.pFedMe_approx_fit_counter = (ctx.pFedMe_approx_fit_counter +
                                      1) % ctx.pFedMe_K
@@ -123,10 +132,13 @@ def hook_on_epoch_end_update_local(ctx):
     # update local weight after finding approximate theta
     for client_param, local_para_tmp in zip(
             ctx.model.parameters(), ctx.pFedMe_local_model_tmp.parameters()):
-        local_para_tmp.data = local_para_tmp.data - ctx.optimizer.regular_weight * \
-                              ctx.pFedMe_outer_lr * (local_para_tmp.data - client_param.data)
+        local_para_tmp.data = local_para_tmp.data - \
+                              ctx.optimizer.regular_weight * \
+                              ctx.pFedMe_outer_lr * (local_para_tmp.data -
+                                                     client_param.data)
 
-    # set the compared model data, then the optimizer will find approximate model using trainer.cfg.personalization.lr
+    # set the compared model data, then the optimizer will find approximate
+    # model using trainer.cfg.personalization.lr
     compared_global_model_para = [{
         "params": list(ctx.pFedMe_local_model_tmp.parameters())
     }]

@@ -12,9 +12,11 @@ import numpy as np
 
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
+from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
+    get_server_cls
 from federatedscope.core.fed_runner import FedRunner
-from federatedscope.autotune.utils import parse_search_space, config2cmdargs, config2str, summarize_hpo_results
+from federatedscope.autotune.utils import parse_search_space, \
+    config2cmdargs, config2str, summarize_hpo_results
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,8 @@ def make_trial(trial_cfg):
 
 
 class TrialExecutor(threading.Thread):
-    """This class is responsible for executing the FL procedure with a given trial configuration in another thread.
+    """This class is responsible for executing the FL procedure with
+    a given trial configuration in another thread.
     """
     def __init__(self, cfg_idx, signal, returns, trial_config):
         threading.Thread.__init__(self)
@@ -72,8 +75,8 @@ def get_scheduler(init_cfg):
         scheduler = ModelFreeBase(init_cfg)
     elif init_cfg.hpo.scheduler == 'sha':
         scheduler = SuccessiveHalvingAlgo(init_cfg)
-    elif init_cfg.hpo.scheduler == 'pbt':
-        scheduler = PBT(init_cfg)
+    # elif init_cfg.hpo.scheduler == 'pbt':
+    #     scheduler = PBT(init_cfg)
     elif init_cfg.hpo.scheduler == 'wrap_sha':
         scheduler = SHAWrapFedex(init_cfg)
     return scheduler
@@ -85,7 +88,8 @@ class Scheduler(object):
     def __init__(self, cfg):
         """
             Arguments:
-                cfg (yacs.Node): dict like object, where each key-value pair corresponds to a field and its choices.
+                cfg (yacs.Node): dict like object, where each key-value pair
+                corresponds to a field and its choices.
         """
 
         self._cfg = cfg
@@ -101,12 +105,14 @@ class Scheduler(object):
         raise NotImplementedError
 
     def _evaluate(self, configs):
-        """To evaluate (i.e., conduct the FL procedure) for a given collection of configurations.
+        """To evaluate (i.e., conduct the FL procedure) for a given
+        collection of configurations.
         """
         raise NotImplementedError
 
     def optimize(self):
-        """To optimize the hyperparameters, that is, executing the HPO algorithm and then returning the results.
+        """To optimize the hyperparameters, that is, executing the HPO
+        algorithm and then returning the results.
         """
         raise NotImplementedError
 
@@ -190,18 +196,16 @@ class ModelFreeBase(Scheduler):
                                             self._search_space.keys()),
                                         desc=self._cfg.hpo.larger_better)
         logger.info(
-            "====================================== HPO Final ========================================"
-        )
+            "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
-        logger.info(
-            "====================================================================================="
-        )
+        logger.info("====================================================")
 
         return results
 
 
 class IterativeScheduler(ModelFreeBase):
-    """The base class for HPO algorithms that divide the whole optimization procedure into iterations.
+    """The base class for HPO algorithms that divide the whole optimization
+    procedure into iterations.
     """
     def _setup(self):
         self._stage = 0
@@ -212,7 +216,8 @@ class IterativeScheduler(ModelFreeBase):
 
         Arguments:
             configs (list): each element is a trial configuration.
-            last_results (DataFrame): each row corresponds to a specific configuration as well as its latest performance.
+            last_results (DataFrame): each row corresponds to a specific
+            configuration as well as its latest performance.
         :returns: whether to terminate.
         :rtype: bool
         """
@@ -254,12 +259,10 @@ class IterativeScheduler(ModelFreeBase):
                 desc=self._cfg.hpo.larger_better)
             self._stage += 1
             logger.info(
-                "====================================== Stage{} ========================================"
+                "========================== Stage{} =========================="
                 .format(self._stage))
             logger.info("\n{}".format(last_results))
-            logger.info(
-                "======================================================================================="
-            )
+            logger.info("====================================================")
             current_configs = self._generate_next_population(
                 current_configs, current_perfs)
 
@@ -267,7 +270,9 @@ class IterativeScheduler(ModelFreeBase):
 
 
 class SuccessiveHalvingAlgo(IterativeScheduler):
-    """Successive Halving Algorithm (SHA) tailored to FL setting, where, in each iteration, just a limited number of communication rounds are allowed for each trial.
+    """Successive Halving Algorithm (SHA) tailored to FL setting, where,
+    in each iteration, just a limited number of communication rounds are
+    allowed for each trial.
     """
     def _setup(self):
         init_configs = super(SuccessiveHalvingAlgo, self)._setup()
@@ -358,7 +363,7 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
         return neighbor
 
     def _setup(self):
-        #self._cache_yaml()
+        # self._cache_yaml()
         init_configs = super(SHAWrapFedex, self)._setup()
         new_init_configs = []
         for idx, trial_cfg in enumerate(init_configs):
@@ -393,8 +398,12 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
 
 
 # TODO: refactor PBT to enable async parallel
-#class PBT(IterativeScheduler):
-#    """Population-based training (the full paper "Population Based Training of Neural Networks" can be found at https://arxiv.org/abs/1711.09846)  tailored to FL setting, where, in each iteration, just a limited number of communication rounds are allowed for each trial (We will provide the asynchornous version later).
+# class PBT(IterativeScheduler):
+#    """Population-based training (the full paper "Population Based Training
+#    of Neural Networks" can be found at https://arxiv.org/abs/1711.09846)
+#    tailored to FL setting, where, in each iteration, just a limited number
+#    of communication rounds are allowed for each trial (We will provide the
+#    asynchornous version later).
 #    """
 #    def _setup(self, raw_search_space):
 #        _ = super(PBT, self)._setup(raw_search_space)
@@ -405,12 +414,14 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
 #                sample_size=global_cfg.hpo.sha.elim_rate**
 #                global_cfg.hpo.sha.elim_round_num)
 #        elif global_cfg.hpo.init_strategy == 'grid':
-#            init_configs = grid_search(raw_search_space,
-#                                       sample_size=global_cfg.hpo.sha.elim_rate
-#                                       **global_cfg.hpo.sha.elim_round_num)
+#            init_configs = grid_search(raw_search_space, \
+#                sample_size=global_cfg.hpo.sha.elim_rate \
+#                **global_cfg.hpo.sha.elim_round_num)
 #        else:
 #            raise ValueError(
-#                "SHA needs to use random/grid search to pick {} configs from the search space as initial candidates, but `{}` is specified as `hpo.init_strategy`"
+#                "SHA needs to use random/grid search to pick {} configs
+#                from the search space as initial candidates, but `{}` is
+#                specified as `hpo.init_strategy`"
 #                .format(
 #                    global_cfg.hpo.sha.elim_rate**
 #                    global_cfg.hpo.sha.elim_round_num,
@@ -448,7 +459,8 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
 #                # explore
 #                for k in new_cfg:
 #                    if isinstance(new_cfg[k], float):
-#                        # according to the exploration strategy of the PBT paper
+#                        # according to the exploration strategy of the PBT
+#                        paper
 #                        new_cfg[k] *= float(np.random.choice([0.8, 1.2]))
 #            else:
 #                new_cfg['federate.restore_from'] = configs[i][

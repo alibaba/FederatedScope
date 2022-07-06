@@ -49,7 +49,8 @@ def update_logger(cfg, clear_before_add=False):
     if clear_before_add:
         root_logger.handlers = []
         handler = logging.StreamHandler()
-        logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+        logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(" \
+                      "message)s"
         handler.setFormatter(logging.Formatter(logging_fmt))
         root_logger.addHandler(handler)
 
@@ -65,7 +66,9 @@ def update_logger(cfg, clear_before_add=False):
     if cfg.outdir == "":
         cfg.outdir = os.path.join(os.getcwd(), "exp")
     if cfg.expname == "":
-        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on_{cfg.data.type}_lr{cfg.optimizer.lr}_lstep{cfg.federate.local_update_steps}"
+        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on" \
+                      f"_{cfg.data.type}_lr{cfg.optimizer.lr}_lste" \
+                      f"p{cfg.federate.local_update_steps}"
     cfg.expname = f"{cfg.expname}_{cfg.expname_tag}"
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
 
@@ -93,9 +96,8 @@ def update_logger(cfg, clear_before_add=False):
     # sys.stderr = sys.stdout
 
     import socket
-    root_logger.info(
-        f"the current machine is at {socket.gethostbyname(socket.gethostname())}"
-    )
+    root_logger.info(f"the current machine is at"
+                     f" {socket.gethostbyname(socket.gethostname())}")
     root_logger.info(f"the current dir is {os.getcwd()}")
     root_logger.info(f"the output dir is {cfg.outdir}")
 
@@ -189,8 +191,10 @@ def filter_by_specified_keywords(param_name, filter_keywords):
 
 def get_random(type, sample_shape, params, device):
     if not hasattr(distributions, type):
-        raise NotImplementedError("Distribution {} is not implemented, please refer to ```torch.distributions```" \
-                                  "(https://pytorch.org/docs/stable/distributions.html).".format(type))
+        raise NotImplementedError("Distribution {} is not implemented, "
+                                  "please refer to ```torch.distributions```"
+                                  "(https://pytorch.org/docs/stable/ "
+                                  "distributions.html).".format(type))
     generator = getattr(distributions, type)(**params)
     return generator.sample(sample_shape=sample_shape).to(device)
 
@@ -231,7 +235,8 @@ def merge_dict(dict1, dict2):
 def download_url(url: str, folder='folder'):
     r"""Downloads the content of an url to a folder.
 
-    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master/torch_geometric/data/download.py`
+    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master
+    /torch_geometric/data/download.py`
 
     Args:
         url (string): The url of target file.
@@ -305,13 +310,17 @@ class Timeout(object):
 
 def logfile_2_wandb_dict(exp_log_f, raw_out=True):
     """
-        parse the logfiles [exp_print.log, eval_results.log] into wandb_dict that contains non-nested dicts
+        parse the logfiles [exp_print.log, eval_results.log] into
+        wandb_dict that contains non-nested dicts
 
     :param exp_log_f: opened exp_log file
-    :param raw_out: True indicates "exp_print.log", otherwise indicates "eval_results.log",
-        the difference is whether contains the logger header such as "2022-05-02 16:55:02,843 (client:197) INFO:"
+    :param raw_out: True indicates "exp_print.log", otherwise indicates
+    "eval_results.log",
+        the difference is whether contains the logger header such as
+        "2022-05-02 16:55:02,843 (client:197) INFO:"
 
-    :return: tuple including (all_log_res, exp_stop_normal, last_line, log_res_best)
+    :return: tuple including (all_log_res, exp_stop_normal, last_line,
+    log_res_best)
     """
     log_res_best = {}
     exp_stop_normal = False
@@ -330,7 +339,8 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
     log_res = {}
     if "INFO:" in line and "Find new best result for" in line:
         # Logger type 1, each line for each metric, e.g.,
-        # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result for client_individual.test_acc with value 0.5911787974683544
+        # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result
+        # for client_individual.test_acc with value 0.5911787974683544
         line = line.split("INFO: ")[1]
         parse_res = line.split("with value")
         best_key, best_val = parse_res[-2], parse_res[-1]
@@ -341,7 +351,12 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
 
     if "Find new best result:" in line:
         # each line for all metric of a role, e.g.,
-        # Find new best result: {'Client #1': {'val_loss': 132.9812364578247, 'test_total': 36, 'test_avg_loss': 3.709533585442437, 'test_correct': 2.0, 'test_loss': 133.54320907592773, 'test_acc': 0.05555555555555555, 'val_total': 36, 'val_avg_loss': 3.693923234939575, 'val_correct': 4.0, 'val_acc': 0.1111111111111111}}
+        # Find new best result: {'Client #1': {'val_loss':
+        # 132.9812364578247, 'test_total': 36, 'test_avg_loss':
+        # 3.709533585442437, 'test_correct': 2.0, 'test_loss':
+        # 133.54320907592773, 'test_acc': 0.05555555555555555, 'val_total':
+        # 36, 'val_avg_loss': 3.693923234939575, 'val_correct': 4.0,
+        # 'val_acc': 0.1111111111111111}}
         line = line.replace("Find new best result: ", "").replace("\'", "\"")
         res = json.loads(s=line)
         for best_type_key, val in res.items():

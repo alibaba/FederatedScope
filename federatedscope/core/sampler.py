@@ -29,8 +29,8 @@ class Sampler(ABC):
             self.client_state[indices] = 0
         else:
             raise ValueError(
-                f"The state of client should be 'idle' or 'working', but got {state}"
-            )
+                f"The state of client should be 'idle' or 'working', but got"
+                f" {state}")
 
 
 class UniformSampler(Sampler):
@@ -54,7 +54,8 @@ class UniformSampler(Sampler):
 
 class GroupSampler(Sampler):
     """
-    To grouply sample the clients based on their responsiveness (or other client information of the clients)
+    To grouply sample the clients based on their responsiveness (or other
+    client information of the clients)
     """
     def __init__(self, client_num, client_info, bins=10):
         super(GroupSampler, self).__init__(client_num)
@@ -68,14 +69,15 @@ class GroupSampler(Sampler):
         """
         self.client_info = np.asarray(
             [1.0] + [x for x in client_info
-                     ])  #client_info[0] is preversed for the server
+                     ])  # client_info[0] is preversed for the server
         assert len(self.client_info) == len(
             self.client_state
-        ), f"The first dimension of client_info is mismatched with client_num"
+        ), "The first dimension of client_info is mismatched with client_num"
 
     def partition(self):
         """
-        To partition the clients into groups according to the client information
+        To partition the clients into groups according to the client
+        information
 
         Arguments:
         :returns: a iteration of candidates

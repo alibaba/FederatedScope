@@ -120,8 +120,6 @@ class VGG11(Module):
                  dropout=.0):
         super(VGG11, self).__init__()
 
-        cfg = [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-
         self.conv1 = Conv2d(in_channels, 64, 3, padding=1)
         self.bn1 = BatchNorm2d(64)
 

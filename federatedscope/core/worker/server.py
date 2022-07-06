@@ -6,7 +6,8 @@ import numpy as np
 
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
-from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
+from federatedscope.core.communication import StandaloneCommManager, \
+    gRPCCommManager
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
@@ -20,7 +21,8 @@ logger = logging.getLogger(__name__)
 class Server(Worker):
     """
     The Server class, which describes the behaviors of server in an FL course.
-    The behaviors are described by the handled functions (named as callback_funcs_for_xxx).
+    The behaviors are described by the handled functions (named as
+    callback_funcs_for_xxx).
 
     Arguments:
         ID: The unique ID of the server, which is set to 0 by default
@@ -66,11 +68,11 @@ class Server(Worker):
                                          online=self._cfg.federate.online_aggr,
                                          config=self._cfg)
         if self._cfg.federate.restore_from != '':
-            cur_round = self.aggregator.load_model(
-                self._cfg.federate.restore_from)
+            _ = self.aggregator.load_model(self._cfg.federate.restore_from)
             logger.info("Restored the model from {}-th round's ckpt")
 
-        if int(config.model.model_num_per_trainer) != config.model.model_num_per_trainer or \
+        if int(config.model.model_num_per_trainer) != \
+                config.model.model_num_per_trainer or \
                 config.model.model_num_per_trainer < 1:
             raise ValueError(
                 f"model_num_per_trainer should be integer and >= 1, "
@@ -105,7 +107,8 @@ class Server(Worker):
             )  # the trainer is only used for global evaluation
             self.trainers = [self.trainer]
             if self.model_num > 1:
-                # By default, the evaluation is conducted by calling trainer[i].eval over all internal models
+                # By default, the evaluation is conducted by calling
+                # trainer[i].eval over all internal models
                 self.trainers.extend([
                     copy.deepcopy(self.trainer)
                     for _ in range(self.model_num - 1)
@@ -119,7 +122,8 @@ class Server(Worker):
         self.join_in_info = dict()
 
         # Sampler
-        client_info = kwargs['client_info'] if 'client_info' in kwargs else None
+        client_info = kwargs['client_info'] if 'client_info' in kwargs else \
+            None
         self.sampler = get_sampler(sample_strategy=self._cfg.federate.sampler,
                                    client_num=self.client_num,
                                    client_info=client_info)
@@ -171,7 +175,8 @@ class Server(Worker):
 
         Arguments:
             msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received message
+            callback_func: The handling functions to handle the received
+            message
         """
         self.msg_handlers[msg_type] = callback_func
 
@@ -183,7 +188,8 @@ class Server(Worker):
 
     def run(self):
         """
-        To start the FL course, listen and handle messages (for distributed mode).
+        To start the FL course, listen and handle messages (for distributed
+        mode).
         """
 
         # Begin: Broadcast model parameters and start to FL train
@@ -213,17 +219,19 @@ class Server(Worker):
                         min_received_num=min_received_num)
                     if not move_on_flag and not move_on_flag_eval:
                         num_failure += 1
-                        # Terminate the training if the number of failure exceeds the maximum number (default value: 10)
+                        # Terminate the training if the number of failure
+                        # exceeds the maximum number (default value: 10)
                         if time_counter.exceed_max_failure(num_failure):
-                            logger.info(
-                                '----------- Training fails at round #{:d} -------------'
-                                .format(self.state))
+                            logger.info(f'----------- Training fails at round '
+                                        f'#{self.state}-------------')
                             break
 
-                        # Time out, broadcast the model para and re-start the training round
+                        # Time out, broadcast the model para and re-start
+                        # the training round
                         logger.info(
-                            '----------- Re-starting the training round (Round #{:d}) for {:d} time -------------'
-                            .format(self.state, num_failure))
+                            f'----------- Re-starting the training round ('
+                            f'Round #{self.state}) for {num_failure} time '
+                            f'-------------')
                         # Clean the msg_buffer
                         self.msg_buffer['train'][self.state].clear()
 
@@ -240,12 +248,13 @@ class Server(Worker):
                           check_eval_result=False,
                           min_received_num=None):
         """
-        To check the message_buffer. When enough messages are receiving, some events
-        (such as perform aggregation, evaluation, and move to the next training round) would be triggered.
+        To check the message_buffer. When enough messages are receiving,
+        some events (such as perform aggregation, evaluation, and move to
+        the next training round) would be triggered.
 
         Arguments:
-            check_eval_result (bool): If True, check the message buffer for evaluation;
-            and check the message buffer for training otherwise.
+            check_eval_result (bool): If True, check the message buffer for
+            evaluation; and check the message buffer for training otherwise.
         """
         if min_received_num is None:
             min_received_num = self._cfg.federate.sample_client_num
@@ -257,7 +266,8 @@ class Server(Worker):
             # strong synchronization that receives responses from all clients
             min_received_num = len(self.comm_manager.get_neighbors().keys())
 
-        move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
+        move_on_flag = True  # To record whether moving to a new training
+        # round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
             if not check_eval_result:  # in the training process
                 # Get all the message
@@ -270,8 +280,8 @@ class Server(Worker):
                         if self.model_num == 1:
                             msg_list.append(train_msg_buffer[client_id])
                         else:
-                            train_data_size, model_para_multiple = train_msg_buffer[
-                                client_id]
+                            train_data_size, model_para_multiple = \
+                                train_msg_buffer[client_id]
                             msg_list.append((train_data_size,
                                              model_para_multiple[model_idx]))
 
@@ -292,18 +302,19 @@ class Server(Worker):
                     model.load_state_dict(result, strict=False)
 
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
+                if self.state % self._cfg.eval.freq == 0 and self.state != \
+                        self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server #{:d}: Starting evaluation at the end of round {:d}.'
-                        .format(self.ID, self.state - 1))
+                        f'Server #{self.ID}: Starting evaluation at the end '
+                        f'of round {self.state - 1}.')
                     self.eval()
 
                 if self.state < self.total_round_num:
                     # Move to next round of training
                     logger.info(
-                        '----------- Starting a new training round (Round #{:d}) -------------'
-                        .format(self.state))
+                        f'----------- Starting a new training round (Round '
+                        f'#{self.state}) -------------')
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 
@@ -312,9 +323,8 @@ class Server(Worker):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logger.info(
-                        'Server #{:d}: Training is finished! Starting evaluation.'
-                        .format(self.ID))
+                    logger.info('Server #{:d}: Training is finished! Starting '
+                                'evaluation.'.format(self.ID))
                     self.eval()
 
             else:  # in the evaluation process
@@ -322,7 +332,9 @@ class Server(Worker):
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
-                if self.mode == 'standalone' and self._monitor.wandb_online_track and self._monitor.use_wandb:
+                if self.mode == 'standalone' and \
+                        self._monitor.wandb_online_track and \
+                        self._monitor.use_wandb:
                     self._monitor.merge_system_metrics_simulation_mode(
                         file_io=False, from_global_monitors=True)
                 self.check_and_save()
@@ -339,12 +351,14 @@ class Server(Worker):
 
         # early stopping
         if "Results_weighted_avg" in self.history_results and \
-                self._cfg.eval.best_res_update_round_wise_key in self.history_results['Results_weighted_avg']:
+                self._cfg.eval.best_res_update_round_wise_key in \
+                self.history_results['Results_weighted_avg']:
             should_stop = self.early_stopper.track_and_check(
                 self.history_results['Results_weighted_avg'][
                     self._cfg.eval.best_res_update_round_wise_key])
         elif "Results_avg" in self.history_results and \
-                self._cfg.eval.best_res_update_round_wise_key in self.history_results['Results_avg']:
+                self._cfg.eval.best_res_update_round_wise_key in \
+                self.history_results['Results_avg']:
             should_stop = self.early_stopper.track_and_check(
                 self.history_results['Results_avg'][
                     self._cfg.eval.best_res_update_round_wise_key])
@@ -363,9 +377,8 @@ class Server(Worker):
             self.state = self.total_round_num + 1
 
         if should_stop or self.state == self.total_round_num:
-            logger.info(
-                'Server #{:d}: Final evaluation is finished! Starting merging results.'
-                .format(self.ID))
+            logger.info('Server #{:d}: Final evaluation is finished! Starting '
+                        'merging results.'.format(self.ID))
             # last round or early stopped
             self.save_best_results()
             if not self._cfg.federate.make_global_eval:
@@ -399,7 +412,8 @@ class Server(Worker):
 
     def save_client_eval_results(self):
         """
-            save the evaluation results of each client when the fl course early stopped or terminated
+            save the evaluation results of each client when the fl course
+            early stopped or terminated
 
         :return:
         """
@@ -478,8 +492,10 @@ class Server(Worker):
 
         Arguments:
             msg_type: 'model_para' or other user defined msg_type
-            sample_client_num: the number of sampled clients in the broadcast behavior.
-                And sample_client_num = -1 denotes to broadcast to all the clients.
+            sample_client_num: the number of sampled clients in the
+            broadcast behavior.
+                And sample_client_num = -1 denotes to broadcast to all the
+                clients.
         """
 
         if sample_client_num > 0:
@@ -518,7 +534,8 @@ class Server(Worker):
 
     def broadcast_client_address(self):
         """
-        To broadcast the communication addresses of clients (used for additive secret sharing)
+        To broadcast the communication addresses of clients (used for
+        additive secret sharing)
         """
 
         self.comm_manager.send(
@@ -538,7 +555,8 @@ class Server(Worker):
         Arguments:
         cur_round (int): The current round number
         min_received_num (int): The minimal number of the receiving messages
-        check_eval_result (bool): To check training results for evaluation results
+        check_eval_result (bool): To check training results for evaluation
+        results
         :returns: Whether enough messages have been received or not
         :rtype: bool
         """
@@ -602,11 +620,13 @@ class Server(Worker):
 
     def eval(self):
         """
-        To conduct evaluation. When cfg.federate.make_global_eval=True, a global evaluation is conducted by the server.
+        To conduct evaluation. When cfg.federate.make_global_eval=True,
+        a global evaluation is conducted by the server.
         """
 
         if self._cfg.federate.make_global_eval:
-            # By default, the evaluation is conducted one-by-one for all internal models;
+            # By default, the evaluation is conducted one-by-one for all
+            # internal models;
             # for other cases such as ensemble, override the eval function
             for i in range(self.model_num):
                 trainer = self.trainers[i]
@@ -639,13 +659,15 @@ class Server(Worker):
 
     def callback_funcs_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters, which triggers check_and_move_on
-            (perform aggregation when enough feedback has been received).
+        The handling function for receiving model parameters, which triggers
+            check_and_move_on (perform aggregation when enough feedback has
+            been received).
         This handling function is widely used in various FL courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver, state, and content.
-                More detail can be found in federatedscope.core.message
+            message: The received message, which includes sender, receiver,
+                state, and content. More detail can be found in
+                federatedscope.core.message
         """
 
         round, sender, content = message.state, message.sender, message.content
@@ -663,9 +685,11 @@ class Server(Worker):
 
     def callback_funcs_for_join_in(self, message: Message):
         """
-        The handling function for receiving the join in information. The server might request for some information
-            (such as num_of_samples) if necessary, assign IDs for the servers.
-        If all the clients have joined in, the training process will be triggered.
+        The handling function for receiving the join in information. The
+        server might request for some information (such as num_of_samples)
+        if necessary, assign IDs for the servers.
+        If all the clients have joined in, the training process will be
+        triggered.
 
         Arguments:
             message: The received message
@@ -707,7 +731,8 @@ class Server(Worker):
 
     def callback_funcs_for_metrics(self, message: Message):
         """
-        The handling function for receiving the evaluation results, which triggers check_and_move_on
+        The handling function for receiving the evaluation results,
+        which triggers check_and_move_on
             (perform aggregation when enough feedback has been received).
 
         Arguments:

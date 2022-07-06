@@ -6,7 +6,8 @@ import numpy as np
 class EarlyStopper(object):
     """
         Track the history of metric (e.g., validation loss),
-        check whether should stop (training) process if the metric doesn't improve after a given patience.
+        check whether should stop (training) process if the metric doesn't
+        improve after a given patience.
     """
     def __init__(self,
                  patience=5,
@@ -15,12 +16,16 @@ class EarlyStopper(object):
                  the_smaller_the_better=True):
         """
         Args:
-            patience (int): How long to wait after last time the monitored metric improved.
-                            Note that the actual_checking_round = patience * cfg.eval.freq
+            patience (int): How long to wait after last time the monitored
+            metric improved.
+                            Note that the
+                            actual_checking_round = patience * cfg.eval.freq
                             Default: 5
-            delta (float): Minimum change in the monitored metric to indicate an improvement.
+            delta (float): Minimum change in the monitored metric to
+            indicate an improvement.
                             Default: 0
-            improve_indicator_mode (str): Early stop when no improve to last `patience` round, in ['mean', 'best']
+            improve_indicator_mode (str): Early stop when no improve to
+            last `patience` round, in ['mean', 'best']
         """
         assert 0 <= patience == int(
             patience
