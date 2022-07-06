@@ -11,7 +11,6 @@ federate:
   local_update_steps: 1
   batch_or_epoch: epoch
   total_round_num: 300
-  sample_client_rate: 0.2
 distribute:
   use: True
   server_host: '127.0.0.1'
