@@ -106,6 +106,7 @@ class PassiveServer(Server):
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
+        self.sampler.change_state(sender, 'idle')
         # For a new round
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
@@ -175,6 +176,7 @@ class PassivePIAServer(Server):
         # print(self.optimizer)
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
+        self.sampler.change_state(sender, 'idle')
         # For a new round
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
