@@ -216,7 +216,7 @@ class Client(Worker):
                     role='Client #{}'.format(self.ID),
                     return_raw=True)
                 logger.info(train_log_res)
-                if self._cfg.wandb.client_train_info:
+                if self._cfg.wandb.use and self._cfg.wandb.client_train_info:
                     self._monitor.save_formatted_results(train_log_res,
                                                          save_to_file="")
 
