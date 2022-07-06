@@ -158,7 +158,7 @@ class FedRunner(object):
         if self.mode == 'standalone':
             if self.cfg.federate.merge_test:
                 from federatedscope.core.auxiliaries.data_builder import merge_test_data
-                num_of_sample, server_data = merge_test_data(all_data=self.data)
+                num_of_sample_per_client, server_test_data = merge_test_data(all_data=self.data)
                 model = get_model(self.cfg.model,
                               server_data,
                               backend=self.cfg.backend)
