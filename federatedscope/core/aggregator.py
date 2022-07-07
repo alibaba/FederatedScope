@@ -94,8 +94,9 @@ class ClientsAvgAggregator(Aggregator):
                 else:
                     try:
                         avg_model[key] += local_model[key] * weight
-
-
+                    except:
+                        print(key, avg_model[key].shape, local_model[key].shape)
+                        raise ValueError
 
             if self.cfg.federate.use_ss and recover_fun:
                 avg_model[key] = recover_fun(avg_model[key])
