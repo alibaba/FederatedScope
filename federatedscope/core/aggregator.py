@@ -92,7 +92,10 @@ class ClientsAvgAggregator(Aggregator):
                 if i == 0:
                     avg_model[key] = local_model[key] * weight
                 else:
-                    avg_model[key] += local_model[key] * weight
+                    try:
+                        avg_model[key] += local_model[key] * weight
+
+
 
             if self.cfg.federate.use_ss and recover_fun:
                 avg_model[key] = recover_fun(avg_model[key])
