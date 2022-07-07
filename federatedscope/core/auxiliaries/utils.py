@@ -102,16 +102,17 @@ def update_logger(cfg, clear_before_add=False):
 
     if cfg.wandb.use:
         import sys
-        sys.stderr = sys.stdout  # make both stderr and stdout sent to wandb server
+        sys.stderr = sys.stdout  # make both stderr and stdout sent to wandb
+        # server
         init_wandb(cfg)
 
 
 def init_wandb(cfg):
     try:
         import wandb
-        # on some linux machines, we may need "thread" init to avoid memory leakage
-        os.environ[
-            "WANDB_START_METHOD"] = "thread"
+        # on some linux machines, we may need "thread" init to avoid memory
+        # leakage
+        os.environ["WANDB_START_METHOD"] = "thread"
     except ImportError:
         logger.error("cfg.wandb.use=True but not install the wandb package")
         exit()
