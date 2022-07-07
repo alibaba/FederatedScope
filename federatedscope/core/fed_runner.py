@@ -71,6 +71,10 @@ class FedRunner(object):
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
 
+        if self.cfg.backend == 'torch':
+            import torch
+            torch.set_num_threads(1)
+
         if self.cfg.federate.method == "global":
             assert 0 in self.data and self.data[
                 0] is not None, "In global training mode, we will use a " \
