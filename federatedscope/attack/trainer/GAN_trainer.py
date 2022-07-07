@@ -22,7 +22,8 @@ def wrap_GANTrainer(
 
     # ---------------- attribute-level plug-in -----------------------
 
-    base_trainer.ctx.target_label_ind = base_trainer.cfg.attack.target_label_ind
+    base_trainer.ctx.target_label_ind = \
+        base_trainer.cfg.attack.target_label_ind
     base_trainer.ctx.gan_cra = GANCRA(base_trainer.cfg.attack.target_label_ind,
                                       base_trainer.ctx.model,
                                       dataset_name=base_trainer.cfg.data.type,

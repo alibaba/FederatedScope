@@ -1,5 +1,7 @@
-# You can refer to pyphe for the detail implementation. (https://github.com/data61/python-paillier/blob/master/phe/paillier.py)
-# Or implement an effective version of Paillier (<Public-key cryptosystems based on composite degree residuosity classes>)
+# You can refer to pyphe for the detail implementation. (
+# https://github.com/data61/python-paillier/blob/master/phe/paillier.py)
+# Or implement an effective version of Paillier (<Public-key cryptosystems
+# based on composite degree residuosity classes>)
 
 DEFAULT_KEYSIZE = 3072
 

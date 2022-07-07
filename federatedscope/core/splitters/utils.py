@@ -41,7 +41,8 @@ def dirichlet_distribution_noniid_slice(label,
                                         min_size=1,
                                         prior=None):
     r"""Get sample index list for each client from the Dirichlet distribution.
-    https://github.com/FedML-AI/FedML/blob/master/fedml_core/non_iid_partition/noniid_partition.py
+    https://github.com/FedML-AI/FedML/blob/master/fedml_core/non_iid
+    partition/noniid_partition.py
 
     Arguments:
         label (np.array): Label list to be split.
@@ -59,7 +60,9 @@ def dirichlet_distribution_noniid_slice(label,
 
     num = len(label)
     classes = len(np.unique(label))
-    assert num > client_num * min_size, f'The number of sample should be greater than {client_num * min_size}.'
+    assert num > client_num * min_size, f'The number of sample should be ' \
+                                        f'greater than' \
+                                        f' {client_num * min_size}.'
     size = 0
     while size < min_size:
         idx_slice = [[] for _ in range(client_num)]
@@ -68,11 +71,11 @@ def dirichlet_distribution_noniid_slice(label,
             idx_k = np.where(label == k)[0]
             np.random.shuffle(idx_k)
             prop = np.random.dirichlet(np.repeat(alpha, client_num))
-            #prop = np.array([
+            # prop = np.array([
             #    p * (len(idx_j) < num / client_num)
             #    for p, idx_j in zip(prop, idx_slice)
-            #])
-            #prop = prop / sum(prop)
+            # ])
+            # prop = prop / sum(prop)
             prop = (np.cumsum(prop) * len(idx_k)).astype(int)[:-1]
             idx_slice = [
                 idx_j + idx.tolist()

@@ -7,8 +7,8 @@ try:
     from federatedscope.contrib.metrics import *
 except ImportError as error:
     logger.warning(
-        f'{error} in `federatedscope.contrib.metrics`, some modules are not available.'
-    )
+        f'{error} in `federatedscope.contrib.metrics`, some modules are not '
+        f'available.')
 
 
 def get_metric(types):

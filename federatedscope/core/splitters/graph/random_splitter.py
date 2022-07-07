@@ -12,13 +12,16 @@ EPSILON = 1e-5
 class RandomSplitter(BaseTransform):
     r"""
     Split Data into small data via random sampling.
-    
+
     Args:
         client_num (int): Split data into client_num of pieces.
-        sampling_rate (str): Samples of the unique nodes for each client, eg. '0.2,0.2,0.2'.
-        overlapping_rate(float): Additional samples of overlapping data, eg. '0.4'
-        drop_edge(float): Drop edges (drop_edge / client_num) for each client whthin overlapping part.
-        
+        sampling_rate (str): Samples of the unique nodes for each client,
+        eg. '0.2,0.2,0.2'.
+        overlapping_rate(float): Additional samples of overlapping data,
+        eg. '0.4'
+        drop_edge(float): Drop edges (drop_edge / client_num) for each
+        client whthin overlapping part.
+
     """
     def __init__(self,
                  client_num,
@@ -38,13 +41,13 @@ class RandomSplitter(BaseTransform):
 
         if len(self.sampling_rate) != client_num:
             raise ValueError(
-                f'The client_num ({client_num}) should be equal to the lenghth of sampling_rate and overlapping_rate.'
-            )
+                f'The client_num ({client_num}) should be equal to the '
+                f'lenghth of sampling_rate and overlapping_rate.')
 
         if abs((sum(self.sampling_rate) + self.ovlap) - 1) > EPSILON:
             raise ValueError(
-                f'The sum of sampling_rate:{self.sampling_rate} and overlapping_rate({self.ovlap}) should be 1.'
-            )
+                f'The sum of sampling_rate:{self.sampling_rate} and '
+                f'overlapping_rate({self.ovlap}) should be 1.')
 
         self.client_num = client_num
         self.drop_edge = drop_edge

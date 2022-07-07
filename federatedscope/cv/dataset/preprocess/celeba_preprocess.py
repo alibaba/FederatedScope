@@ -1,8 +1,8 @@
-# ------------------------------------------------------------------------ #
+# ---------------------------------------------------------------------- #
 # A preprocess script for JSON file all_data.json to json with images
 # To get raw all_data.json, see:
 # https://github.com/TalwalkarLab/leaf/tree/master/data/celeba
-# ------------------------------------------------------------------------ #
+# ---------------------------------------------------------------------- #
 
 import json
 import math

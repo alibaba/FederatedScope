@@ -3,9 +3,9 @@ from federatedscope.register import register_config
 
 
 def extend_data_cfg(cfg):
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Dataset related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.data = CN()
 
     cfg.data.root = 'data'
@@ -14,7 +14,8 @@ def extend_data_cfg(cfg):
     cfg.data.splitter = ''
     cfg.data.splitter_args = []  # args for splitter, eg. [{'alpha': 0.5}]
     cfg.data.transform = [
-    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [
+    # 0.1307], 'std': [0.3081]}]]
     cfg.data.target_transform = []  # target_transform for y, use as above
     cfg.data.pre_transform = [
     ]  # pre_transform for `torch_geometric` dataset, use as above
@@ -44,12 +45,17 @@ def extend_data_cfg(cfg):
 
 def assert_data_cfg(cfg):
     if cfg.data.loader == 'graphsaint-rw':
-        assert cfg.model.layer == cfg.data.graphsaint.walk_length, 'Sample size mismatch'
+        assert cfg.model.layer == cfg.data.graphsaint.walk_length, 'Sample ' \
+                                                                   'size ' \
+                                                                   'mismatch'
     if cfg.data.loader == 'neighbor':
         assert cfg.model.layer == len(cfg.data.sizes), 'Sample size mismatch'
     if '@' in cfg.data.type:
-        assert cfg.federate.client_num > 0, '`federate.client_num` should be greater than 0 when using external data'
-        assert cfg.data.splitter, '`data.splitter` should not be empty when using external data'
+        assert cfg.federate.client_num > 0, '`federate.client_num` should ' \
+                                            'be greater than 0 when using ' \
+                                            'external data'
+        assert cfg.data.splitter, '`data.splitter` should not be empty when ' \
+                                  'using external data'
 
 
 register_config("data", extend_data_cfg)

@@ -63,8 +63,10 @@ class VATLoss(nn.Module):
                                        batch=graph.batch)
                     pred_hat = model(x_neighbor)
                     # logp_hat = F.log_softmax(pred_hat, dim=1)
-                    # adv_distance = F.kl_div(logp_hat, logp, reduction='batchmean')
-                    # adv_distance = ((pred - pred_hat) ** 2).sum(axis=0).sqrt()
+                    # adv_distance = F.kl_div(logp_hat, logp,
+                    # reduction='batchmean')
+                    # adv_distance = ((pred - pred_hat) ** 2).sum(
+                    # axis=0).sqrt()
                     adv_distance = criterion(pred_hat, pred)
                     # adv_distance.backward()
                     # dn = _l2_normalize(dn.grad)

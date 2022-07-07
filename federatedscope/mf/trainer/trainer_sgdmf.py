@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def wrap_MFTrainer(base_trainer: Type[MFTrainer]) -> Type[MFTrainer]:
-    """Build `SGDMFTrainer` with a plug-in manner, by registering new functions into specific `MFTrainer`
+    """Build `SGDMFTrainer` with a plug-in manner, by registering new
+    functions into specific `MFTrainer`
 
     """
 
@@ -29,7 +30,8 @@ def wrap_MFTrainer(base_trainer: Type[MFTrainer]) -> Type[MFTrainer]:
 
 def init_sgdmf_ctx(base_trainer):
     """Init necessary attributes used in SGDMF,
-    some new attributes will be with prefix `SGDMF` optimizer to avoid namespace pollution
+    some new attributes will be with prefix `SGDMF` optimizer to avoid
+    namespace pollution
 
     """
     ctx = base_trainer.ctx

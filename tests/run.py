@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import argparse
-import os 
+import os
 import sys
 import unittest
 

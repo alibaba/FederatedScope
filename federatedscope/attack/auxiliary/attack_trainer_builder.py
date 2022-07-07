@@ -1,7 +1,8 @@
 def wrap_attacker_trainer(base_trainer, config):
     '''Wrap the trainer for attack client.
     Args:
-        base_trainer (core.trainers.GeneralTorchTrainer): the trainer that will be wrapped;
+        base_trainer (core.trainers.GeneralTorchTrainer): the trainer that
+        will be wrapped;
         config (yacs.config.CfgNode): the configure;
 
     :returns:

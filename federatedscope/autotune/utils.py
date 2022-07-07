@@ -1,6 +1,3 @@
-from copy import deepcopy
-import math
-
 import yaml
 import pandas as pd
 import ConfigSpace as CS
@@ -57,7 +54,8 @@ def config2cmdargs(config):
 def config2str(config):
     '''
     Arguments:
-        config (dict): key is cfg node name, value is the choice of hyper-parameter.
+        config (dict): key is cfg node name, value is the choice of
+        hyper-parameter.
     Returns:
         name (str): the string representation of this config
     '''
@@ -104,7 +102,7 @@ def parse_logs(file_list):
                 except:
                     continue
         best_seen = np.inf
-        tol_budget = 0
+        tol_budget, tmp_b = 0, 0
         x, y = [], []
 
         for config, performance in history:
@@ -129,5 +127,5 @@ def parse_logs(file_list):
         x, y = process(file)
         plt.plot(x, y, linewidth=1, markersize=MARKSIZE)
     plt.legend(file_list, fontsize=23, loc='lower right')
-    plt.savefig(f'exp2.pdf', bbox_inches='tight')
+    plt.savefig('exp2.pdf', bbox_inches='tight')
     plt.close()

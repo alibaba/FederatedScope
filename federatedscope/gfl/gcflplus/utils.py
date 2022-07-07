@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import networkx as nx
 from dtaidistance import dtw
 """
     Utils from: https://github.com/Oxfordblue7/GCFL

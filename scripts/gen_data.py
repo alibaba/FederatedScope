@@ -2,10 +2,11 @@ import numpy as np
 import pickle
 import os
 
+
 def generate_data(client_num=3,
-                   instance_num=1000,
-                   feature_num=5,
-                   save_data=True):
+                  instance_num=1000,
+                  feature_num=5,
+                  save_data=True):
     """
     Generate data in FedRunner format
     Args:
@@ -100,5 +101,6 @@ def generate_data(client_num=3,
                 pickle.dump(save_client_data, f)
 
     return data
+
 
 data = generate_data()

@@ -1,7 +1,7 @@
-#import os
-#import sys
-#file_dir = os.path.join(os.path.dirname(__file__), '../..')
-#sys.path.append(file_dir)
+# import os
+# import sys
+# file_dir = os.path.join(os.path.dirname(__file__), '../..')
+# sys.path.append(file_dir)
 import logging
 import math
 import yaml
@@ -47,8 +47,8 @@ class Continuous(tuple):
     """Represents a continuous search space, e.g., in the range [0.001, 0.1].
     """
     def __new__(cls, lb, ub):
-        assert ub >= lb, "Invalid configuration where ub:{} is less than lb:{}".format(
-            ub, lb)
+        assert ub >= lb, "Invalid configuration where ub:{} is less than " \
+                         "lb:{}".format(ub, lb)
         return tuple.__new__(cls, [lb, ub])
 
     def __repr__(self):
@@ -108,15 +108,18 @@ class Discrete(tuple):
 
     def grid(self, grid_cnt):
         num_original = len(self)
-        assert grid_cnt <= num_original, "There are only {} choices to produce grids, but {} required".format(
-            num_original, grid_cnt)
+        assert grid_cnt <= num_original, "There are only {} choices to " \
+                                         "produce grids, but {} " \
+                                         "required".format(num_original,
+                                                           grid_cnt)
         if grid_cnt == 1:
             selected = [self[len(self) // 2]]
         else:
             optimistic_step_size = (num_original - 1) // grid_cnt
             between_end_len = optimistic_step_size * (grid_cnt - 1)
             remainder = (num_original - 1) - between_end_len
-            one_side_remainder = remainder // 2 if remainder % 2 == 0 else remainder // 2 + 1
+            one_side_remainder = remainder // 2 if remainder % 2 == 0 else \
+                remainder // 2 + 1
             if one_side_remainder <= optimistic_step_size // 2:
                 step_size = optimistic_step_size
             else:
@@ -139,7 +142,7 @@ def disc_constructor(loader, node):
 
 yaml.add_constructor(u'!disc', disc_constructor)
 
-#if __name__=="__main__":
+# if __name__=="__main__":
 #    obj = Continuous(0.0, 0.01)
 #    print(obj.grid(1), obj.grid(2), obj.grid(3))
 #    for _ in range(3):

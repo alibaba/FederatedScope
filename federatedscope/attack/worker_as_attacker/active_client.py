@@ -31,16 +31,13 @@ def sav_target_loss(loss_list, outdir):
 
 
 def callback_funcs_for_finish(self, message: Message):
-    logger.info(
-        "================= receiving Finish Message ============================"
-    )
-    if message.content != None:
+    logger.info("============== receiving Finish Message ==============")
+    if message.content is not None:
         self.trainer.update(message.content)
     if self.is_attacker and self._cfg.attack.attack_method.lower(
     ) == "gradascent":
         logger.info(
-            "================= start attack post-processing ======================="
-        )
+            "============== start attack post-processing ==============")
         plot_target_loss(self.trainer.ctx.target_data_loss,
                          self.trainer.ctx.outdir)
         sav_target_loss(self.trainer.ctx.target_data_loss,

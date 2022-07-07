@@ -7,7 +7,8 @@ from federatedscope.core.message import Message
 from federatedscope.core.worker.server import Server
 from federatedscope.core.worker.client import Client
 from federatedscope.core.auxiliaries.utils import merge_dict
-from federatedscope.gfl.gcflplus.utils import compute_pairwise_distances, min_cut, norm
+from federatedscope.gfl.gcflplus.utils import compute_pairwise_distances, \
+    min_cut, norm
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +78,8 @@ class GCFLPlusServer(Server):
                     msg_list = list()
                     for client_id in train_msg_buffer:
                         if self.model_num == 1:
-                            train_data_size, model_para, _, convGradsNorm = train_msg_buffer[
-                                client_id]
+                            train_data_size, model_para, _, convGradsNorm = \
+                                train_msg_buffer[client_id]
                             self.seqs_grads[client_id].append(convGradsNorm)
                             msg_list.append((train_data_size, model_para))
                         else:
@@ -89,7 +90,8 @@ class GCFLPlusServer(Server):
                     for cluster in self.cluster_indices:
                         max_norm, mean_norm = self.compute_update_norm(cluster)
                         # create new cluster
-                        if mean_norm < self._cfg.gcflplus.EPS_1 and max_norm > self._cfg.gcflplus.EPS_2 and len(
+                        if mean_norm < self._cfg.gcflplus.EPS_1 and max_norm\
+                                > self._cfg.gcflplus.EPS_2 and len(
                                 cluster) > 2 and self.state > 20 and all(
                                     len(value) >= self._cfg.gcflplus.seq_length
                                     for value in self.seqs_grads.values()):
@@ -121,7 +123,8 @@ class GCFLPlusServer(Server):
                     ] for cluster_id in self.cluster_indices]
 
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
+                if self.state % self._cfg.eval.freq == 0 and self.state != \
+                        self.total_round_num:
                     #  Evaluate
                     logger.info(
                         'Server #{:d}: Starting evaluation at round {:d}.'.
@@ -134,7 +137,8 @@ class GCFLPlusServer(Server):
                         for key in cluster:
                             content = self.msg_buffer['train'][self.state -
                                                                1][key]
-                            train_data_size, model_para, client_dw, convGradsNorm = content
+                            train_data_size, model_para, client_dw,  \
+                                convGradsNorm = content
                             msg_lsit.append((train_data_size, model_para))
 
                         agg_info = {
@@ -154,16 +158,15 @@ class GCFLPlusServer(Server):
 
                     # Move to next round of training
                     logger.info(
-                        '----------- Starting a new training round (Round #{:d}) -------------'
-                        .format(self.state))
+                        f'----------- Starting a new traininground(Round '
+                        f'#{self.state}) -------------')
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 
                 else:
                     # Final Evaluate
-                    logger.info(
-                        'Server #{:d}: Training is finished! Starting evaluation.'
-                        .format(self.ID))
+                    logger.info('Server #{:d}: Training is finished! Starting '
+                                'evaluation.'.format(self.ID))
                     self.eval()
 
             else:  # in the evaluation process

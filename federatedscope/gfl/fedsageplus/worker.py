@@ -11,7 +11,8 @@ from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.gfl.trainer.nodetrainer import NodeMiniBatchTrainer
 from federatedscope.gfl.model.fedsageplus import LocalSage_Plus, FedSage_Plus
 from federatedscope.gfl.fedsageplus.utils import GraphMender, HideGraph
-from federatedscope.gfl.fedsageplus.trainer import LocalGenTrainer, FedGenTrainer
+from federatedscope.gfl.fedsageplus.trainer import LocalGenTrainer, \
+    FedGenTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,15 @@ class FedSagePlusServer(Server):
         FedSage+ consists of three of training stages.
         Stage1: 0, local pre-train for generator.
         Stage2: -> 2 * fedgen_epoch, federated training for generator.
-        Stage3: -> 2 * fedgen_epoch + total_round_num: federated training for GraphSAGE Classifier
+        Stage3: -> 2 * fedgen_epoch + total_round_num: federated training
+        for GraphSAGE Classifier
         """
         super(FedSagePlusServer,
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
 
-        assert self.model_num == 1, "Not supported multi-model for FedSagePlusServer"
+        assert self.model_num == 1, "Not supported multi-model for " \
+                                    "FedSagePlusServer"
 
         # If state < fedgen_epoch and state % 2 == 0:
         #     Server receive [model, embedding, label]
@@ -100,7 +103,7 @@ class FedSagePlusServer(Server):
                         state=self.state))
 
     def callback_funcs_gradient(self, message: Message):
-        round, sender, content = message.state, message.sender, message.content
+        round, _, content = message.state, message.sender, message.content
         gen_grad, ID = content
         # For a new round
         if round not in self.msg_buffer['train'].keys():
@@ -131,7 +134,8 @@ class FedSagePlusServer(Server):
         # Transmit model and embedding to get gradient back
         if self.check_buffer(
                 self.state, self.client_num
-        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state % 2 == 0:
+        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
+                % 2 == 0:
             # FedGen: we should wait for all messages
             for sender in self.msg_buffer['train'][self.state]:
                 content = self.msg_buffer['train'][self.state][sender]
@@ -143,15 +147,15 @@ class FedSagePlusServer(Server):
                             receiver=receiver_IDs,
                             state=self.state + 1,
                             content=[gen_para, embedding, label, sender]))
-                logger.info(
-                    f'\tServer #{self.ID}: Transmit gen_para to {receiver_IDs} @{self.state//2}.'
-                )
+                logger.info(f'\tServer #{self.ID}: Transmit gen_para to'
+                            f' {receiver_IDs} @{self.state//2}.')
             self.state += 1
 
         # Sum up gradient client-wisely and send back
         if self.check_buffer(
                 self.state, self.client_num
-        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state % 2 == 1 and self.grad_cnt == self.client_num * (
+        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
+                % 2 == 1 and self.grad_cnt == self.client_num * (
                 self.client_num - 1):
             for ID in self.msg_buffer['train'][self.state]:
                 grad = self.msg_buffer['train'][self.state][ID]
@@ -205,7 +209,8 @@ class FedSagePlusServer(Server):
                 self.aggregator.update(result)
 
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
+                if self.state % self._cfg.eval.freq == 0 and self.state != \
+                        self.total_round_num:
                     #  Evaluate
                     logger.info(
                         'Server #{:d}: Starting evaluation at round {:d}.'.
@@ -215,16 +220,15 @@ class FedSagePlusServer(Server):
                 if self.state < self.total_round_num:
                     # Move to next round of training
                     logger.info(
-                        '----------- Starting a new training round (Round #{:d}) -------------'
-                        .format(self.state))
+                        f'----------- Starting a new training round(Round '
+                        f'#{self.state}) -------------')
                     self.broadcast_model_para(
                         msg_type='model_para',
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logger.info(
-                        'Server #{:d}: Training is finished! Starting evaluation.'
-                        .format(self.ID))
+                    logger.info('Server #{:d}: Training is finished! Starting '
+                                'evaluation.'.format(self.ID))
                     self.eval()
 
             else:  # in the evaluation process
@@ -275,7 +279,7 @@ class FedSagePlusClient(Client):
         self.register_handlers('setup', self.callback_funcs_for_setup_fedsage)
 
     def callback_funcs_for_local_pre_train(self, message: Message):
-        round, sender, content = message.state, message.sender, message.content
+        round, sender, _ = message.state, message.sender, message.content
         # Local pre-train
         logger.info(f'\tClient #{self.ID} pre-train start...')
         for i in range(self._cfg.fedsageplus.loc_epoch):
@@ -335,7 +339,7 @@ class FedSagePlusClient(Client):
         logger.info(f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
 
     def callback_funcs_for_setup_fedsage(self, message: Message):
-        round, sender, content = message.state, message.sender, message.content
+        round, sender, _ = message.state, message.sender, message.content
         self.filled_data = GraphMender(model=self.fedgen,
                                        impaired_data=self.hide_data.cpu(),
                                        original_data=self.data)

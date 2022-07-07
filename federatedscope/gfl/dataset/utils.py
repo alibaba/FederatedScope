@@ -1,6 +1,7 @@
 import torch
 from torch_geometric.utils import to_networkx
 
+
 def index_to_mask(index, size, device='cpu'):
     mask = torch.zeros(size, dtype=torch.bool, device=device)
     mask[index] = 1

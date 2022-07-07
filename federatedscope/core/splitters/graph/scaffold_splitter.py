@@ -26,7 +26,7 @@ def gen_scaffold_split(dataset, client_num=5):
     scaffolds = {}
     for idx, data in enumerate(dataset):
         smiles = data.smiles
-        mol = Chem.MolFromSmiles(smiles)
+        _ = Chem.MolFromSmiles(smiles)
         scaffold = generate_scaffold(smiles)
         if scaffold not in scaffolds:
             scaffolds[scaffold] = [idx]
@@ -53,12 +53,13 @@ class ScaffoldSplitter:
 
     def __call__(self, dataset):
         r"""Split dataset with smiles string into scaffold split
-        
+
         Arguments:
             dataset (List or PyG.dataset): The molecular datasets.
-            
+
         Returns:
-            data_list (List(List(PyG.data))): Splited dataset via scaffold split.
+            data_list (List(List(PyG.data))): Splited dataset via scaffold
+            split.
         """
         dataset = [ds for ds in dataset]
         idx_slice = gen_scaffold_split(dataset)

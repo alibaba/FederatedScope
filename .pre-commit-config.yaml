@@ -15,12 +15,8 @@ repos:
     rev: 4.0.1
     hooks:
       - id: flake8
-  - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
   - repo: https://github.com/regebro/pyroma
     rev: "4.0"
     hooks:
       - id: pyroma
-        args: [--min=9, .]
+        args: [--min=10, .]

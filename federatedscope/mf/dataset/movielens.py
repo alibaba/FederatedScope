@@ -2,7 +2,8 @@ import os
 import pickle
 import logging
 
-from torchvision.datasets.utils import check_integrity, download_and_extract_archive, calculate_md5
+from torchvision.datasets.utils import check_integrity, \
+    download_and_extract_archive, calculate_md5
 import pandas as pd
 from numpy.random import shuffle
 from scipy.sparse import coo_matrix
@@ -175,13 +176,14 @@ class MovieLens1M(MovieLensData):
 
     Arguments:
         root (str): Root directory of dataset where directory
-            ``MoviesLen1M`` exists or will be saved to if download is set to True.
+            ``MoviesLen1M`` exists or will be saved to if download is
+            set to True.
         config (callable): Parameters related to matrix factorization.
         train_size (float, optional): The proportion of training data.
         test_size (float, optional): The proportion of test data.
-        download  (bool, optional): If true, downloads the dataset from the internet and
-            puts it in root directory. If dataset is already downloaded, it is not
-            downloaded again.
+        download  (bool, optional): If true, downloads the dataset from the
+        internet and puts it in root directory. If dataset is already
+        downloaded, it is not downloaded again.
 
     """
     base_folder = 'MovieLens1M'
@@ -201,12 +203,15 @@ class MovieLens10M(MovieLensData):
 
     Arguments:
         root (str): Root directory of dataset where directory
-            ``MoviesLen1M`` exists or will be saved to if download is set to True.
+            ``MoviesLen1M`` exists or will be saved to if download is
+            set to True.
         config (callable): Parameters related to matrix factorization.
         train_size (float, optional): The proportion of training data.
         test_size (float, optional): The proportion of test data.
-        download  (bool, optional): If true, downloads the dataset from the internet and
-            puts it in root directory. If dataset is already downloaded, it is not
+        download  (bool, optional): If true, downloads the dataset from the
+        internet and
+            puts it in root directory. If dataset is already downloaded,
+            it is not
             downloaded again.
 
     """

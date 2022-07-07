@@ -8,12 +8,14 @@ logger = logging.getLogger(__name__)
 
 
 class FedExClient(Client):
-    """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
+    """Some code snippets are borrowed from the open-sourced FedEx (
+    https://github.com/mkhodak/FedEx)
     """
     def _apply_hyperparams(self, hyperparams):
         """Apply the given hyperparameters
         Arguments:
-            hyperparams (dict): keys are hyperparameter names and values are specific choices.
+            hyperparams (dict): keys are hyperparameter names \
+                and values are specific choices.
         """
 
         cmd_args = []
@@ -43,7 +45,7 @@ class FedExClient(Client):
 
         self.trainer.update(model_params)
 
-        #self.model.load_state_dict(content)
+        # self.model.load_state_dict(content)
         self.state = round
         sample_size, model_para_all, results = self.trainer.train()
         logger.info(
@@ -64,7 +66,7 @@ class FedExClient(Client):
     def callback_funcs_for_evaluate(self, message: Message):
         sender = message.sender
         self.state = message.state
-        if message.content != None:
+        if message.content is not None:
             model_params = message.content["model_param"]
             self.trainer.update(model_params)
         if self._cfg.trainer.finetune.before_eval:
@@ -75,10 +77,10 @@ class FedExClient(Client):
             for key in eval_metrics:
 
                 if self._cfg.federate.mode == 'distributed':
-                    logger.info(
-                        'Client #{:d}: (Evaluation ({:s} set) at Round #{:d}) {:s} is {:.6f}'
-                        .format(self.ID, split, self.state, key,
-                                eval_metrics[key]))
+                    logger.info('Client #{:d}: (Evaluation ({:s} set) at '
+                                'Round #{:d}) {:s} is {:.6f}'.format(
+                                    self.ID, split, self.state, key,
+                                    eval_metrics[key]))
                 metrics.update(**eval_metrics)
         self.comm_manager.send(
             Message(msg_type='metrics',

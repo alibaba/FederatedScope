@@ -2,7 +2,8 @@ import copy
 import logging
 
 from federatedscope.core.message import Message
-from federatedscope.core.communication import StandaloneCommManager, gRPCCommManager
+from federatedscope.core.communication import StandaloneCommManager, \
+    gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
@@ -15,10 +16,12 @@ logger = logging.getLogger(__name__)
 class Client(Worker):
     """
     The Client class, which describes the behaviors of client in an FL course.
-    The behaviors are described by the handling functions (named as callback_funcs_for_xxx)
+    The behaviors are described by the handling functions (named as
+    callback_funcs_for_xxx)
 
     Arguments:
-        ID: The unique ID of the client, which is assigned by the server when joining the FL course
+        ID: The unique ID of the client, which is assigned by the server
+        when joining the FL course
         server_id: (Default) 0
         state: The training round
         config: The configuration
@@ -42,9 +45,11 @@ class Client(Worker):
         super(Client, self).__init__(ID, state, config, model, strategy)
 
         # Attack only support the stand alone model;
-        # Check if is a attacker; a client is a attacker if the config.attack.attack_method is provided
+        # Check if is a attacker; a client is a attacker if the
+        # config.attack.attack_method is provided
         self.is_attacker = config.attack.attacker_id == ID and \
-                           config.attack.attack_method != '' and config.federate.mode == 'standalone'
+            config.attack.attack_method != '' and \
+            config.federate.mode == 'standalone'
 
         # Build Trainer
         # trainer might need configurations other than those of trainer node
@@ -60,9 +65,10 @@ class Client(Worker):
         self.history_results = dict()
         # in local or global training mode, we do use the early stopper.
         # Otherwise, we set patience=0 to deactivate the local early-stopper
-        patience = self._cfg.early_stop.patience if self._cfg.federate.method in [
-            "local", "global"
-        ] else 0
+        patience = self._cfg.early_stop.patience if \
+            self._cfg.federate.method in [
+                "local", "global"
+            ] else 0
         self.early_stopper = EarlyStopper(
             patience, self._cfg.early_stop.delta,
             self._cfg.early_stop.improve_indicator_mode,
@@ -109,7 +115,8 @@ class Client(Worker):
 
         Arguments:
             msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received message
+            callback_func: The handling functions to handle the received
+            message
         """
         self.msg_handlers[msg_type] = callback_func
 
@@ -139,7 +146,8 @@ class Client(Worker):
 
     def run(self):
         """
-        To listen to the message and handle them accordingly  (used for distributed mode)
+        To listen to the message and handle them accordingly (used for
+        distributed mode)
         """
         while True:
             msg = self.comm_manager.receive()
@@ -151,11 +159,13 @@ class Client(Worker):
 
     def callback_funcs_for_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters, which triggers the local training process.
+        The handling function for receiving model parameters,
+        which triggers the local training process.
         This handling function is widely used in various FL courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver, state, and content.
+            message: The received message, which includes sender, receiver,
+            state, and content.
                 More detail can be found in federatedscope.core.message
         """
         if 'ss' in message.msg_type:
@@ -171,11 +181,13 @@ class Client(Worker):
                 single_model_case = True
                 if isinstance(first_aggregate_model_para, list):
                     assert isinstance(first_aggregate_model_para[0], dict), \
-                        "aggregate_model_para should a list of multiple state_dict for multiple models"
+                        "aggregate_model_para should a list of multiple " \
+                        "state_dict for multiple models"
                     single_model_case = False
                 else:
                     assert isinstance(first_aggregate_model_para, dict), \
-                        "aggregate_model_para should a state_dict for single model case"
+                        "aggregate_model_para should " \
+                        "a state_dict for single model case"
                     first_aggregate_model_para = [first_aggregate_model_para]
                     model_list = [[model] for model in model_list]
 
@@ -196,17 +208,17 @@ class Client(Worker):
                                      first_aggregate_model_para)))
 
         else:
-            round, sender, content = message.state, message.sender, message.content
+            round, sender, content = message.state, message.sender, \
+                                     message.content
             self.trainer.update(content)
             self.state = round
-            if self.early_stopper.early_stopped and self._cfg.federate.method in [
-                    "local", "global"
-            ]:
-                sample_size, model_para_all, results = 0, self.trainer.get_model_para(
-                ), {}
-                logger.info(
-                    f"Client #{self.ID} has been early stopped, we will skip the local training"
-                )
+            if self.early_stopper.early_stopped and \
+                    self._cfg.federate.method in ["local", "global"]:
+                sample_size, model_para_all, results = \
+                    0, self.trainer.get_model_para(
+                    ), {}
+                logger.info(f"Client #{self.ID} has been early stopped, "
+                            f"we will skip the local training")
                 self._monitor.local_converged()
             else:
                 sample_size, model_para_all, results = self.trainer.train()
@@ -225,7 +237,8 @@ class Client(Worker):
                 single_model_case = True
                 if isinstance(model_para_all, list):
                     assert isinstance(model_para_all[0], dict), \
-                        "model_para should a list of multiple state_dict for multiple models"
+                        "model_para should a list of " \
+                        "multiple state_dict for multiple models"
                     single_model_case = False
                 else:
                     assert isinstance(model_para_all, dict), \
@@ -237,13 +250,16 @@ class Client(Worker):
                         model_para[key] = model_para[key] * sample_size
                     model_para_list = self.ss_manager.secret_split(model_para)
                     model_para_list_all.append(model_para_list)
-                    #print(model_para)
-                    #print(self.ss_manager.secret_reconstruct(model_para_list))
+                    # print(model_para)
+                    # print(self.ss_manager.secret_reconstruct(
+                    # model_para_list))
                 frame_idx = 0
                 for neighbor in self.comm_manager.neighbors:
                     if neighbor != self.server_id:
-                        content_frame = model_para_list_all[0][frame_idx] if single_model_case else \
-                            [model_para_list[frame_idx] for model_para_list in model_para_list_all]
+                        content_frame = model_para_list_all[0][frame_idx] if \
+                            single_model_case else \
+                            [model_para_list[frame_idx] for model_para_list
+                             in model_para_list_all]
                         self.comm_manager.send(
                             Message(msg_type='ss_model_para',
                                     sender=self.ID,
@@ -251,8 +267,10 @@ class Client(Worker):
                                     state=self.state,
                                     content=content_frame))
                         frame_idx += 1
-                content_frame = model_para_list_all[0][frame_idx] if single_model_case else \
-                        [model_para_list[frame_idx] for model_para_list in model_para_list_all]
+                content_frame = model_para_list_all[0][frame_idx] if \
+                    single_model_case else \
+                    [model_para_list[frame_idx] for model_para_list in
+                     model_para_list_all]
                 self.msg_buffer['train'][self.state] = [(sample_size,
                                                          content_frame)]
             else:
@@ -265,7 +283,8 @@ class Client(Worker):
 
     def callback_funcs_for_assign_id(self, message: Message):
         """
-        The handling function for receiving the client_ID assigned by the server (during the joining process),
+        The handling function for receiving the client_ID assigned by the
+        server (during the joining process),
         which is used in the distributed mode.
 
         Arguments:
@@ -289,9 +308,11 @@ class Client(Worker):
         for requirement in requirements:
             if requirement.lower() == 'num_sample':
                 if self._cfg.federate.batch_or_epoch == 'batch':
-                    num_sample = self._cfg.federate.local_update_steps * self._cfg.data.batch_size
+                    num_sample = self._cfg.federate.local_update_steps * \
+                                 self._cfg.data.batch_size
                 else:
-                    num_sample = self._cfg.federate.local_update_steps * self.trainer.ctx.num_train_batch
+                    num_sample = self._cfg.federate.local_update_steps * \
+                                 self.trainer.ctx.num_train_batch
                 join_in_info['num_sample'] = num_sample
             else:
                 raise ValueError(
@@ -306,7 +327,8 @@ class Client(Worker):
 
     def callback_funcs_for_address(self, message: Message):
         """
-        The handling function for receiving other clients' IP addresses, which is used for constructing a complex topology
+        The handling function for receiving other clients' IP addresses,
+        which is used for constructing a complex topology
 
         Arguments:
             message: The received message
@@ -325,7 +347,7 @@ class Client(Worker):
         """
         sender = message.sender
         self.state = message.state
-        if message.content != None:
+        if message.content is not None:
             self.trainer.update(message.content)
         if self.early_stopper.early_stopped and self._cfg.federate.method in [
                 "local", "global"
@@ -374,23 +396,25 @@ class Client(Worker):
 
     def callback_funcs_for_finish(self, message: Message):
         """
-        The handling function for receiving the signal of finishing the FL course
+        The handling function for receiving the signal of finishing the FL
+        course
 
         Arguments:
             message: The received message
         """
         logger.info(
-            f"================= client {self.ID} received finish message ============================"
-        )
+            f"================= client {self.ID} received finish message "
+            f"=================")
 
-        if message.content != None:
+        if message.content is not None:
             self.trainer.update(message.content)
 
         self._monitor.finish_fl()
 
     def callback_funcs_for_converged(self, message: Message):
         """
-        The handling function for receiving the signal that the FL course converged
+        The handling function for receiving the signal that the FL course
+        converged
 
         Arguments:
             message: The received message

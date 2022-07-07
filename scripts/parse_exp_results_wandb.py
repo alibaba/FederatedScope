@@ -14,10 +14,7 @@ parser.add_argument('--project',
                     help='project name used in wandb',
                     required=True,
                     type=str)
-parser.add_argument('--user',
-                    help='wandb user name',
-                    required=True,
-                    type=str)
+parser.add_argument('--user', help='wandb user name', required=True, type=str)
 parser.add_argument('--need_contain_str_in_exp_dir',
                     help='whether need contain some strings in exp_dir',
                     required=False,
@@ -74,7 +71,8 @@ def main():
     for exp_i, cfg_f_name in enumerate(cfg_file_list):
         with open(exp_log_f_list[exp_i], 'r') as exp_log_f:
             print(f'Process {exp_log_f_list[exp_i]}')
-            all_log_res, exp_stop_normal, last_line, log_res_best = logfile_2_wandb_dict(exp_log_f)
+            all_log_res, exp_stop_normal, last_line, log_res_best = logfile_2_wandb_dict(
+                exp_log_f)
 
             exp_stop_normal = True if " Find new best result" in last_line else exp_stop_normal
             if exp_stop_normal:
@@ -89,18 +87,24 @@ def main():
                 path_split = cfg_f_name.split("/")
 
                 # e.g., xxx/FedBN/convnet2_0.01_3_bs64_on_femnist/sub_exp_03-14_19:16:51/config.yaml
-                if re.match("sub_exp_\d{2}-\d{2}_\d{2}:\d{2}:\d{2}", path_split[-2]):
+                if re.match("sub_exp_\d{2}-\d{2}_\d{2}:\d{2}:\d{2}",
+                            path_split[-2]):
                     print(path_split[-2])
                     print("will merger the sub_exp_xxx & exp_name")
-                    method_name, exp_name = path_split[-4], path_split[-3] + "--" + path_split[-2]
+                    method_name, exp_name = path_split[
+                        -4], path_split[-3] + "--" + path_split[-2]
                     dataset_name = path_split[-3].split("_")[-1]
                 else:
                     # e.g., xxx/FedBN/convnet2_0.01_3_bs64_on_femnist/config.yaml
                     method_name, exp_name = path_split[-3], path_split[-2]
                     dataset_name = exp_name.split("_")[-1]
 
-                wandb.init(project=args.project, entity=args.user, config=parsed_yaml,
-                           group=dataset_name, job_type=method_name, name=method_name + "-" + exp_name,
+                wandb.init(project=args.project,
+                           entity=args.user,
+                           config=parsed_yaml,
+                           group=dataset_name,
+                           job_type=method_name,
+                           name=method_name + "-" + exp_name,
                            notes=f"{method_name}, {exp_name}",
                            reinit=True)
                 wandb.log(log_res_best)

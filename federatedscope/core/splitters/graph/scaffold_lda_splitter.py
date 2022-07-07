@@ -5,8 +5,10 @@ import torch
 from rdkit import Chem
 from rdkit import RDLogger
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
-from federatedscope.core.splitters.graph.scaffold_splitter import generate_scaffold
+from federatedscope.core.splitters.utils import \
+    dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.graph.scaffold_splitter import \
+    generate_scaffold
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,8 @@ RDLogger.DisableLog('rdApp.*')
 
 
 class GenFeatures:
-    r"""Implementation of 'CanonicalAtomFeaturizer' and 'CanonicalBondFeaturizer' in DGL.
+    r"""Implementation of 'CanonicalAtomFeaturizer' and
+    'CanonicalBondFeaturizer' in DGL.
     Source: https://lifesci.dgl.ai/_modules/dgllife/utils/featurizers.html
 
     Arguments:
@@ -123,7 +126,7 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     scaffolds = {}
     for idx, data in enumerate(dataset):
         smiles = data.smiles
-        mol = Chem.MolFromSmiles(smiles)
+        _ = Chem.MolFromSmiles(smiles)
         scaffold = generate_scaffold(smiles)
         if scaffold not in scaffolds:
             scaffolds[scaffold] = [idx]
@@ -148,11 +151,13 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
 
 
 class ScaffoldLdaSplitter:
-    r"""First adopt scaffold splitting and then assign the samples to clients according to Latent Dirichlet Allocation.
+    r"""First adopt scaffold splitting and then assign the samples to
+    clients according to Latent Dirichlet Allocation.
 
     Arguments:
         dataset (List or PyG.dataset): The molecular datasets.
-        alpha (float): Partition hyperparameter in LDA, smaller alpha generates more extreme heterogeneous scenario.
+        alpha (float): Partition hyperparameter in LDA, smaller alpha
+        generates more extreme heterogeneous scenario.
 
     Returns:
         data_list (List(List(PyG.data))): Splited dataset via scaffold split.
