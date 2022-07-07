@@ -92,9 +92,9 @@ class GeneralTorchTrainer(Trainer):
                 model_parameters[key] = torch.FloatTensor(
                     model_parameters[key])
             elif isinstance(model_parameters[key], int):
-                model_parameters[key] = torch.LongTensor([model_parameters[key]])
+                model_parameters[key] = torch.tensor(model_parameters[key], dtype=torch.long)
             elif isinstance(model_parameters[key], float):
-                model_parameters[key] = torch.FloatTensor([model_parameters[key]])
+                model_parameters[key] = torch.tensor(model_parameters[key], dtype=torch.float)
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=False)
 
