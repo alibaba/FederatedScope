@@ -7,14 +7,15 @@ try:
     from federatedscope.contrib.model import *
 except ImportError as error:
     logger.warning(
-        f'{error} in `federatedscope.contrib.model`, some modules are not available.'
-    )
+        f'{error} in `federatedscope.contrib.model`, some modules are not '
+        f'available.')
 
 
 def get_model(model_config, local_data, backend='torch'):
     """
     Arguments:
-        local_data (object): the model to be instantiated is responsible for the given data.
+        local_data (object): the model to be instantiated is
+        responsible for the given data.
     Returns:
         model (torch.Module): the instantiated model.
     """

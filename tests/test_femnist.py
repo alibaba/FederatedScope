@@ -9,6 +9,7 @@ from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_c
 
 SAMPLE_CLIENT_NUM = 5
 
+
 class FEMNISTTest(unittest.TestCase):
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -62,7 +63,8 @@ class FEMNISTTest(unittest.TestCase):
         data, modified_cfg = get_data(init_cfg.clone())
         init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
-        self.assertEqual(init_cfg.federate.sample_client_num, SAMPLE_CLIENT_NUM)
+        self.assertEqual(init_cfg.federate.sample_client_num,
+                         SAMPLE_CLIENT_NUM)
 
         Fed_runner = FedRunner(data=data,
                                server_class=get_server_cls(init_cfg),

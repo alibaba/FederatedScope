@@ -49,7 +49,7 @@ class LEAF_TWITTER(LEAF):
         self.seed = seed
         self.max_len = max_len
         if name != 'twitter':
-            raise ValueError(f'`name` should be `twitter`.')
+            raise ValueError('`name` should be `twitter`.')
         else:
             if not os.path.exists(
                     osp.join(osp.join(root, name, 'raw'), 'embs.json')):
@@ -164,7 +164,6 @@ class LEAF_TWITTER(LEAF):
         print("Preprocess data (Please leave enough space)...")
 
         idx = 0
-        reddit_idx = []
         for num, file in enumerate(files):
             with open(osp.join(raw_path, file), 'r') as f:
                 raw_data = json.load(f)

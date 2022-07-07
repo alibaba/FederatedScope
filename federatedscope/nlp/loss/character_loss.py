@@ -3,7 +3,8 @@ import torch
 from federatedscope.register import register_criterion
 """
 Norm for Letters freq from FedEM:
-https://github.com/omarfoq/FedEM/blob/13f366c41c14b234147c2662c258b8a9db2f38cc/utils/constants.py
+https://github.com/omarfoq/FedEM/blob/ \
+13f366c41c14b234147c2662c258b8a9db2f38cc/utils/constants.py
 """
 CHARACTERS_WEIGHTS = {
     '\n': 0.43795308843799086,
@@ -31,13 +32,15 @@ CHARACTERS_WEIGHTS = {
     'y': 0.6388302610200002
 }
 
-ALL_LETTERS = "\n !\"&'(),-.0123456789:;>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[]abcdefghijklmnopqrstuvwxyz}"
+ALL_LETTERS = "\n !\"&'(),-.0123456789:;>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[" \
+              "]abcdefghijklmnopqrstuvwxyz}"
 
 
 def create_character_loss(type, device):
     """
     Character_loss from FedEM:
-    https://github.com/omarfoq/FedEM/blob/13f366c41c14b234147c2662c258b8a9db2f38cc/utils/utils.py
+    https://github.com/omarfoq/FedEM/blob/ \
+    13f366c41c14b234147c2662c258b8a9db2f38cc/utils/utils.py
     """
     if type == 'character_loss':
         all_characters = ALL_LETTERS

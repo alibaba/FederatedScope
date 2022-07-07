@@ -1,5 +1,6 @@
 """
-Copyright (c) 2021 Matthias Fey, Jiaxuan You <matthias.fey@tu-dortmund.de, jiaxuan@cs.stanford.edu>
+Copyright (c) 2021 Matthias Fey, Jiaxuan You <matthias.fey@tu-dortmund.de,
+jiaxuan@cs.stanford.edu>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

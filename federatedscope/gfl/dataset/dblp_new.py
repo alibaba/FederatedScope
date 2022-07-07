@@ -5,7 +5,8 @@ import torch
 from torch_geometric.data import InMemoryDataset, download_url
 from torch_geometric.utils import from_networkx
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS as sklearn_stopwords
+from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS as \
+    sklearn_stopwords
 
 
 class LemmaTokenizer(object):
@@ -99,7 +100,8 @@ class DBLPNew(InMemoryDataset):
     r"""
     Args:
         root (string): Root directory where the dataset should be saved.
-        FL (Bool): Federated setting, `0` for DBLP, `1` for FLDBLPbyConf, `2` for FLDBLPbyOrg
+        FL (Bool): Federated setting, `0` for DBLP, `1` for FLDBLPbyConf,
+        `2` for FLDBLPbyOrg
         transform (callable, optional): A function/transform that takes in an
             :obj:`torch_geometric.data.Data` object and returns a transformed
             version. The data object will be transformed before every access.

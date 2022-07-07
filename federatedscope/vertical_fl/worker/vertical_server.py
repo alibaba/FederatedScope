@@ -10,8 +10,12 @@ logger = logging.getLogger(__name__)
 
 class vFLServer(Server):
     """
-    The server class for vertical FL, which customizes the handled functions. Please refer to the tutorial for more details about the implementation algorithm
-    Implementation of Vertical FL refer to `Private federated learning on vertically partitioned data via entity resolution and additively homomorphic encryption` [Hardy, et al., 2017]
+    The server class for vertical FL, which customizes the handled
+    functions. Please refer to the tutorial for more details about the
+    implementation algorithm
+    Implementation of Vertical FL refer to `Private federated learning on
+    vertically partitioned data via entity resolution and additively
+    homomorphic encryption` [Hardy, et al., 2017]
     (https://arxiv.org/abs/1711.10677)
     """
     def __init__(self,
@@ -28,8 +32,9 @@ class vFLServer(Server):
         super(vFLServer,
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
-        self.public_key, self.private_key = abstract_paillier.generate_paillier_keypair(
-            n_length=config.vertical.key_size)
+        cfg_key_size = config.vertical.key_size
+        self.public_key, self.private_key = \
+            abstract_paillier.generate_paillier_keypair(n_length=cfg_key_size)
         self.dims = [0] + config.vertical.dims
         self.theta = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
         self.lr = config.optimizer.lr
@@ -76,7 +81,8 @@ class vFLServer(Server):
         self.theta = self.theta - self.lr * avg_gradients
 
         self.state += 1
-        if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
+        if self.state % self._cfg.eval.freq == 0 and self.state != \
+                self.total_round_num:
             metrics = self.evaluate()
             self._monitor.update_best_result(
                 self.best_results,
@@ -93,9 +99,8 @@ class vFLServer(Server):
 
         if self.state < self.total_round_num:
             # Move to next round of training
-            logger.info(
-                '----------- Starting a new training round (Round #{:d}) -------------'
-                .format(self.state))
+            logger.info(f'----------- Starting a new training round (Round '
+                        f'#{self.state}) -------------')
             self.broadcast_model_para()
         else:
             metrics = self.evaluate()

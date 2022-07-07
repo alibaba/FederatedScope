@@ -15,7 +15,8 @@ class Aggregator(ABC):
 
 
 class ClientsAvgAggregator(Aggregator):
-    """Implementation of vanilla FedAvg refer to `Communication-efficient learning of deep networks from decentralized data` [McMahan et al., 2017]
+    """Implementation of vanilla FedAvg refer to `Communication-efficient
+    learning of deep networks from decentralized data` [McMahan et al., 2017]
         (http://proceedings.mlr.press/v54/mcmahan17a.html)
     """
     def __init__(self, model=None, device='cpu', config=None):
@@ -78,7 +79,8 @@ class ClientsAvgAggregator(Aggregator):
                 if self.cfg.federate.ignore_weight:
                     weight = 1.0 / len(models)
                 elif self.cfg.federate.use_ss:
-                    # When using secret sharing, what the server receives are sample_size * model_para
+                    # When using secret sharing, what the server receives
+                    # are sample_size * model_para
                     weight = 1.0
                 else:
                     weight = local_sample_size / training_set_size
@@ -96,7 +98,8 @@ class ClientsAvgAggregator(Aggregator):
 
             if self.cfg.federate.use_ss and recover_fun:
                 avg_model[key] = recover_fun(avg_model[key])
-                # When using secret sharing, what the server receives are sample_size * model_para
+                # When using secret sharing, what the server receives are
+                # sample_size * model_para
                 avg_model[key] /= training_set_size
                 avg_model[key] = torch.FloatTensor(avg_model[key])
 
@@ -147,7 +150,8 @@ class OnlineClientsAvgAggregator(ClientsAvgAggregator):
 
 class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
     """"
-        # conduct aggregation by interpolating global model from server and local models from clients
+        # conduct aggregation by interpolating global model from server and
+        local models from clients
     """
     def __init__(self, model=None, device='cpu', config=None, beta=1.0):
         super(ServerClientsInterpolateAggregator,
@@ -158,8 +162,10 @@ class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
         models = agg_info["client_feedback"]
         global_model = self.model
         elem_each_client = next(iter(models))
-        assert len(elem_each_client) == 2, f"Require (sample_size, model_para) tuple for each client, " \
-                                           f"i.e., len=2, but got len={len(elem_each_client)}"
+        assert len(elem_each_client) == 2, f"Require (sample_size, " \
+                                           f"model_para) tuple for each " \
+                                           f"client, i.e., len=2, but got " \
+                                           f"len={len(elem_each_client)}"
         avg_model_by_clients = self._para_weighted_avg(models)
         global_local_models = [((1 - self.beta), global_model.state_dict()),
                                (self.beta, avg_model_by_clients)]
@@ -169,7 +175,8 @@ class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
 
 
 class FedOptAggregator(ClientsAvgAggregator):
-    """Implementation of FedOpt refer to `Adaptive Federated Optimization` [Reddi et al., 2021]
+    """Implementation of FedOpt refer to `Adaptive Federated Optimization` [
+    Reddi et al., 2021]
         (https://openreview.net/forum?id=LkFG3lB13U5)
 
     """

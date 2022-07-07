@@ -9,8 +9,8 @@ try:
     from federatedscope.contrib.trainer import *
 except ImportError as error:
     logger.warning(
-        f'{error} in `federatedscope.contrib.trainer`, some modules are not available.'
-    )
+        f'{error} in `federatedscope.contrib.trainer`, some modules are not '
+        f'available.')
 
 TRAINER_CLASS_DICT = {
     "cvtrainer": "CVTrainer",
@@ -134,7 +134,8 @@ def get_trainer(model=None,
     if is_attacker:
         logger.info(
             '---------------- This client is an attacker --------------------')
-        from federatedscope.attack.auxiliary.attack_trainer_builder import wrap_attacker_trainer
+        from federatedscope.attack.auxiliary.attack_trainer_builder import \
+            wrap_attacker_trainer
         trainer = wrap_attacker_trainer(trainer, config)
 
     # fed algorithm plug-in

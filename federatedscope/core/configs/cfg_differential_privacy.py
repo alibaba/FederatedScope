@@ -3,9 +3,9 @@ from federatedscope.register import register_config
 
 
 def extend_dp_cfg(cfg):
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # nbafl(dp) related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.nbafl = CN()
 
     # Params
@@ -15,9 +15,9 @@ def extend_dp_cfg(cfg):
     cfg.nbafl.w_clip = 1.
     cfg.nbafl.constant = 30.
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # VFL-SGDMF(dp) related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.sgdmf = CN()
 
     cfg.sgdmf.use = False  # if use sgdmf algorithm
@@ -25,7 +25,8 @@ def extend_dp_cfg(cfg):
     cfg.sgdmf.epsilon = 4.  # \epsilon in dp
     cfg.sgdmf.delta = 0.5  # \delta in dp
     cfg.sgdmf.constant = 1.  # constant
-    cfg.sgdmf.theta = -1  # -1 means per-rating privacy, otherwise per-user privacy
+    cfg.sgdmf.theta = -1  # -1 means per-rating privacy, otherwise per-user
+    # privacy
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_dp_cfg)

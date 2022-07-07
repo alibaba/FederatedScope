@@ -1,6 +1,5 @@
 from federatedscope.core.auxiliaries.utils import get_random
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
-#from federatedscope.core.worker.server import Server
 from typing import Type
 from copy import deepcopy
 
@@ -10,7 +9,8 @@ import torch
 
 def wrap_nbafl_trainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
-    """Implementation of NbAFL refer to `Federated Learning with Differential Privacy: Algorithms and Performance Analysis` [et al., 2020]
+    """Implementation of NbAFL refer to `Federated Learning with
+    Differential Privacy: Algorithms and Performance Analysis` [et al., 2020]
         (https://ieeexplore.ieee.org/abstract/document/9069945/)
 
         Arguments:
@@ -58,16 +58,19 @@ def init_nbafl_ctx(base_trainer):
     cfg.regularizer.type = 'proximal_regularizer'
     cfg.regularizer.mu = cfg.nbafl.mu
     cfg.freeze()
-    from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
+    from federatedscope.core.auxiliaries.regularizer_builder import \
+        get_regularizer
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
 
     # set noise scale during upload
-    ctx.nbafl_scale_u = cfg.nbafl.w_clip * cfg.federate.total_round_num * cfg.nbafl.constant / ctx.num_train_data / cfg.nbafl.epsilon
+    ctx.nbafl_scale_u = cfg.nbafl.w_clip * cfg.federate.total_round_num * \
+        cfg.nbafl.constant / ctx.num_train_data / \
+        cfg.nbafl.epsilon
 
 
-# ------------------------------------------------------------------------ #
+# ---------------------------------------------------------------------- #
 # Additional functions for NbAFL algorithm
-# ------------------------------------------------------------------------ #
+# ---------------------------------------------------------------------- #
 
 
 # Trainer
@@ -111,7 +114,8 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
 
     if len(sample_client_num) > 0:
         # Inject noise
-        L = cfg.federate.sample_client_num if cfg.federate.sample_client_num > 0 else cfg.federate.client_num
+        L = cfg.federate.sample_client_num if cfg.federate.sample_client_num\
+                                              > 0 else cfg.federate.client_num
         if cfg.federate.total_round_num > np.sqrt(cfg.federate.client_num) * L:
             scale_d = 2 * cfg.nbafl.w_clip * cfg.nbafl.constant * np.sqrt(
                 np.power(cfg.federate.total_round_num, 2) -
@@ -125,7 +129,7 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
                 }, p.device)
 
 
-#def wrap_nbafl_server(server: Type[Server]) -> Type[Server]:
+# def wrap_nbafl_server(server: Type[Server]) -> Type[Server]:
 def wrap_nbafl_server(server):
     """Register noise injector for the server
 

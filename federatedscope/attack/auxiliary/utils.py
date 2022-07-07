@@ -19,12 +19,14 @@ def cross_entropy_for_onehot(pred, target):
 
 def iDLG_trick(original_gradient, num_class, is_one_hot_label=False):
     '''
-    Using iDLG trick to recover the label. Paper: "iDLG: Improved Deep Leakage from Gradients", link: https://arxiv.org/abs/2001.02610
+    Using iDLG trick to recover the label. Paper: "iDLG: Improved Deep
+    Leakage from Gradients", link: https://arxiv.org/abs/2001.02610
 
     Args:
         original_gradient: the gradient of the FL model; type: list
         num_class: the total number of class in the data
-        is_one_hot_label: whether the dataset's label is in the form of one hot. Type: bool
+        is_one_hot_label: whether the dataset's label is in the form of one
+        hot. Type: bool
 
     Returns:
         The recovered label by iDLG trick.
@@ -111,7 +113,8 @@ def get_classifier(classifier: str, model=None):
 
 def get_data_info(dataset_name):
     '''
-    Get the dataset information, including the feature dimension, number of total classes, whether the label is represented in one-hot version
+    Get the dataset information, including the feature dimension, number of
+    total classes, whether the label is represented in one-hot version
 
     Args:
         dataset_name:dataset name; str
@@ -133,15 +136,14 @@ def get_data_sav_fn(dataset_name):
     if dataset_name.lower() == 'femnist':
         return sav_femnist_image
     else:
-        logger.info(
-            "Reconstructed data saving function is not provided for dataset: {}"
-            .format(dataset_name))
+        logger.info(f"Reconstructed data saving function is not provided for "
+                    f"dataset: {dataset_name}")
         return None
 
 
 def sav_femnist_image(data, sav_pth, name):
 
-    fig = plt.figure(figsize=(4, 4))
+    _ = plt.figure(figsize=(4, 4))
     # print(data.shape)
 
     if len(data.shape) == 2:
@@ -182,7 +184,8 @@ def get_reconstructor(atk_method, **kwargs):
     '''
 
     Args:
-        atk_method: the attack method name, and currently supporting "DLG: deep leakage from gradient", and "IG: Inverting gradient" ; Type: str
+        atk_method: the attack method name, and currently supporting "DLG:
+        deep leakage from gradient", and "IG: Inverting gradient" ; Type: str
         **kwargs: other arguments
 
     Returns:
@@ -190,7 +193,8 @@ def get_reconstructor(atk_method, **kwargs):
     '''
 
     if atk_method.lower() == 'dlg':
-        from federatedscope.attack.privacy_attacks.reconstruction_opt import DLG
+        from federatedscope.attack.privacy_attacks.reconstruction_opt import\
+            DLG
         logger.info(
             '--------- Getting reconstructor: DLG --------------------')
 
@@ -203,10 +207,10 @@ def get_reconstructor(atk_method, **kwargs):
                    info_diff_type=kwargs['info_diff_type'],
                    federate_method=kwargs['federate_method'])
     elif atk_method.lower() == 'ig':
-        from federatedscope.attack.privacy_attacks.reconstruction_opt import InvertGradient
+        from federatedscope.attack.privacy_attacks.reconstruction_opt import\
+            InvertGradient
         logger.info(
-            '--------- Getting reconstructor: InvertGradient --------------------'
-        )
+            '------- Getting reconstructor: InvertGradient ------------------')
         return InvertGradient(max_ite=kwargs['max_ite'],
                               lr=kwargs['lr'],
                               federate_loss_fn=kwargs['federate_loss_fn'],
@@ -233,7 +237,8 @@ def get_generator(dataset_name):
 
     '''
     if dataset_name == 'femnist':
-        from federatedscope.attack.models.gan_based_model import GeneratorFemnist
+        from federatedscope.attack.models.gan_based_model import \
+            GeneratorFemnist
         return GeneratorFemnist
     else:
         ValueError(
@@ -316,5 +321,5 @@ def get_passive_PIA_auxiliary_dataset(dataset_name):
         return _generate_data()
     else:
         ValueError(
-            'The data: {} cannot be loaded. Please specify the data load function.'
+            'The data cannot be loaded. Please specify the data load function.'
         )

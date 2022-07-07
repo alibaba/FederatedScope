@@ -1,5 +1,6 @@
 """This file is part of https://github.com/pyg-team/pytorch_geometric
-Copyright (c) 2021 Matthias Fey, Jiaxuan You <matthias.fey@tu-dortmund.de, jiaxuan@cs.stanford.edu>
+Copyright (c) 2021 Matthias Fey, Jiaxuan You <matthias.fey@tu-dortmund.de,
+jiaxuan@cs.stanford.edu>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +58,8 @@ class KG(InMemoryDataset):
         ]
 
     def download(self):
-        url = 'https://github.com/MichSchli/RelationPrediction/tree/master/data/'
+        url = 'https://github.com/MichSchli/RelationPrediction/tree/master' \
+              '/data/'
         urls = {
             'fb15k': url + 'FB15k',
             'fb15k-237': url + 'FB-Toutanova',

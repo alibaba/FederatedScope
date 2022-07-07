@@ -1,6 +1,7 @@
 """
 Utils for language models.
-from https://github.com/litian96/FedProx/blob/master/flearn/utils/language_utils.py 
+from https://github.com/litian96/FedProx/blob/ \
+master/flearn/utils/language_utils.py
 """
 
 import re
@@ -10,7 +11,8 @@ from collections import Counter
 # ------------------------
 # utils for shakespeare dataset
 
-ALL_LETTERS = "\n !\"&'(),-.0123456789:;>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[]abcdefghijklmnopqrstuvwxyz}"
+ALL_LETTERS = "\n !\"&'(),-.0123456789:;>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[" \
+              "]abcdefghijklmnopqrstuvwxyz}"
 NUM_LETTERS = len(ALL_LETTERS)
 
 

@@ -29,7 +29,8 @@ def get_gnn(model_config, local_data):
 
     if model_config.task == 'node':
         if model_config.type == 'gcn':
-            # assume `data` is a dict where key is the client index, and value is a PyG object
+            # assume `data` is a dict where key is the client index,
+            # and value is a PyG object
             model = GCN_Net(data.x.shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,

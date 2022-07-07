@@ -6,15 +6,16 @@ from torch_geometric.nn import GCNConv
 
 
 class GCN_Net(torch.nn.Module):
-    r""" GCN model from the "Semi-supervised Classification with Graph Convolutional Networks" paper, in ICLR'17.
-    
+    r""" GCN model from the "Semi-supervised Classification with Graph
+    Convolutional Networks" paper, in ICLR'17.
+
     Arguments:
         in_channels (int): dimension of input.
         out_channels (int): dimension of output.
         hidden (int): dimension of hidden units, default=64.
         max_depth (int): layers of GNN, default=2.
         dropout (float): dropout ratio, default=.0.
-    
+
     """
     def __init__(self,
                  in_channels,

@@ -41,7 +41,8 @@ def get_client_cls(cfg):
         client_atk_type = None
 
     if client_atk_type == 'gradascent':
-        from federatedscope.attack.worker_as_attacker.active_client import add_atk_method_to_Client_GradAscent
+        from federatedscope.attack.worker_as_attacker.active_client import \
+            add_atk_method_to_Client_GradAscent
         logger.info("=========== add method to current client class ")
         client_class = add_atk_method_to_Client_GradAscent(client_class)
     return client_class
@@ -53,10 +54,12 @@ def get_server_cls(cfg):
         return FedExServer
 
     if cfg.attack.attack_method.lower() in ['dlg', 'ig']:
-        from federatedscope.attack.worker_as_attacker.server_attacker import PassiveServer
+        from federatedscope.attack.worker_as_attacker.server_attacker import\
+            PassiveServer
         return PassiveServer
     elif cfg.attack.attack_method.lower() in ['passivepia']:
-        from federatedscope.attack.worker_as_attacker.server_attacker import PassivePIAServer
+        from federatedscope.attack.worker_as_attacker.server_attacker import\
+            PassivePIAServer
         return PassivePIAServer
 
     if cfg.vertical.use:

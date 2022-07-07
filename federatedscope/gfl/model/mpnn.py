@@ -10,8 +10,10 @@ from torch_geometric.nn import NNConv, Set2Set
 
 
 class MPNNs2s(nn.Module):
-    r"""MPNN from "Neural Message Passing for Quantum Chemistry" for regression and classification on graphs.
-    Source: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/qm9_nn_conv.py
+    r"""MPNN from "Neural Message Passing for Quantum Chemistry" for
+    regression and classification on graphs.
+    Source: https://github.com/pyg-team/pytorch_geometric/blob/master
+    /examples/qm9_nn_conv.py
 
         Arguments:
         in_channels (int): Size for the input node features.
@@ -35,9 +37,11 @@ class MPNNs2s(nn.Module):
 
     def forward(self, data):
         if isinstance(data, Batch):
-            x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
+            x, edge_index, edge_attr, batch = data.x, data.edge_index, \
+                                              data.edge_attr, data.batch
         elif isinstance(data, tuple):
-            x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
+            x, edge_index, edge_attr, batch = data.x, data.edge_index, \
+                                              data.edge_attr, data.batch
         else:
             raise TypeError('Unsupported data type!')
 

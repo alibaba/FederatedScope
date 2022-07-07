@@ -12,13 +12,14 @@ from federatedscope.core.configs.config import global_cfg
 
 class HideGraph(BaseTransform):
     r"""
-    Generate impaired graph with labels and features to train NeighGen, 
+    Generate impaired graph with labels and features to train NeighGen,
     hide Node from validation set from raw graph.
-    
+
     Arguments:
         hidden_portion (int): hidden_portion of validation set.
-        num_pred (int): hyperparameters which limit the maximum value of the prediction
-        
+        num_pred (int): hyperparameters which limit
+            the maximum value of the prediction
+
     :returns:
         filled_data : impaired graph with attribute "num_missing"
     :rtype:

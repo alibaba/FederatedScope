@@ -5,9 +5,9 @@ from federatedscope.register import register_config
 
 
 def extend_asyn_cfg(cfg):
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Asynchronous related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.asyn = CN()
 
     cfg.asyn.use = True
@@ -23,7 +23,8 @@ def assert_asyn_cfg(cfg):
     # to ensure a valid timeout seconds
     assert isinstance(cfg.asyn.timeout, int) or isinstance(
         cfg.asyn.timeout, float
-    ), "The timeout (seconds) must be an int or a float value, but {} is got".format(
+    ), "The timeout (seconds) must be an int or a float value, but {} is " \
+       "got".format(
         type(cfg.asyn.timeout))
 
     # min received num pre-process
@@ -39,13 +40,14 @@ def assert_asyn_cfg(cfg):
             int(cfg.asyn.min_received_rate * cfg.federate.sample_client_num))
         if min_received_num_valid:
             logging.warning(
-                f"Users specify both valid min_received_rate as {cfg.asyn.min_received_rate} "
+                f"Users specify both valid min_received_rate as"
+                f" {cfg.asyn.min_received_rate} "
                 f"and min_received_num as {old_min_received_num}.\n"
                 f"\t\tWe will use the min_received_rate value to calculate "
-                f"the actual number of participated clients as {cfg.asyn.min_received_num}."
-            )
-    # (a.2) use min_received_num, commented since the below two lines do not change anything
-    # elif min_received_rate:
+                f"the actual number of participated clients as"
+                f" {cfg.asyn.min_received_num}.")
+    # (a.2) use min_received_num, commented since the below two lines do not
+    # change anything elif min_received_rate:
     #     cfg.asyn.min_received_num = cfg.asyn.min_received_num
     if not (min_received_num_valid or min_received_rate_valid):
         # (b) non-sampling case, use all clients

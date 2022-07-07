@@ -73,8 +73,9 @@ class GPR_prop(MessagePassing):
 
 
 class GPR_Net(torch.nn.Module):
-    r"""GPR-GNN model from the "Adaptive Universal Generalized PageRank Graph Neural Network" paper, in ICLR'21
-    
+    r"""GPR-GNN model from the "Adaptive Universal Generalized PageRank
+    Graph Neural Network" paper, in ICLR'21
+
     Arguments:
         in_channels (int): dimension of input.
         out_channels (int): dimension of output.
@@ -83,7 +84,7 @@ class GPR_Net(torch.nn.Module):
         dropout (float): dropout ratio, default=.0.
         ppnp (str): propagation method in ['PPNP', 'GPR_prop']
         Init (str): init method in ['SGC', 'PPR', 'NPPR', 'Random', 'WS']
-    
+
     """
     def __init__(self,
                  in_channels,

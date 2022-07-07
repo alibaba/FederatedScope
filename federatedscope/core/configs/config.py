@@ -13,8 +13,10 @@ logger = logging.getLogger(__name__)
 
 class CN(CfgNode):
     """
-        An extended configuration system based on [yacs](https://github.com/rbgirshick/yacs).
-        The two-level tree structure consists of several internal dict-like containers to allow simple key-value access and management.
+        An extended configuration system based on [yacs](
+        https://github.com/rbgirshick/yacs).
+        The two-level tree structure consists of several internal dict-like
+        containers to allow simple key-value access and management.
 
     """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
@@ -33,7 +35,8 @@ class CN(CfgNode):
 
     def merge_from_file(self, cfg_filename):
         """
-            load configs from a yaml file, another cfg instance or a list stores the keys and values.
+            load configs from a yaml file, another cfg instance or a list
+            stores the keys and values.
 
         :param cfg_filename (string):
         :return:
@@ -54,7 +57,8 @@ class CN(CfgNode):
     def merge_from_list(self, cfg_list):
         """
            load configs from a list stores the keys and values.
-           modified `merge_from_list` in `yacs.config.py` to allow adding new keys if `is_new_allowed()` returns True
+           modified `merge_from_list` in `yacs.config.py` to allow adding
+           new keys if `is_new_allowed()` returns True
 
         :param cfg_list (list):
         :return:
@@ -98,7 +102,8 @@ class CN(CfgNode):
 
     def clean_unused_sub_cfgs(self):
         """
-            Clean the un-used secondary-level CfgNode, whose `.use` attribute is `True`
+            Clean the un-used secondary-level CfgNode, whose `.use`
+            attribute is `True`
 
         :return:
         """
@@ -116,7 +121,8 @@ class CN(CfgNode):
     def freeze(self, inform=True):
         """
             1) make the cfg attributes immutable;
-            2) save the frozen cfg_check_funcs into "self.outdir/config.yaml" for better reproducibility;
+            2) save the frozen cfg_check_funcs into
+            "self.outdir/config.yaml" for better reproducibility;
             3) if self.wandb.use=True, update the frozen config
 
         :return:
@@ -173,9 +179,9 @@ def init_global_cfg(cfg):
     :return: configuration use by the experiment.
     '''
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Basic options, first level configs
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
 
     cfg.backend = 'torch'
 
@@ -197,7 +203,8 @@ def init_global_cfg(cfg):
     # The dir used to save log, exp_config, models, etc,.
     cfg.outdir = 'exp'
     cfg.expname = ''  # detailed exp name to distinguish different sub-exp
-    cfg.expname_tag = ''  # detailed exp tag to distinguish different sub-exp with the same expname
+    cfg.expname_tag = ''  # detailed exp tag to distinguish different
+    # sub-exp with the same expname
 
     # extend user customized configs
     for func in register.config_dict.values():

@@ -6,27 +6,27 @@ import argparse
 import re
 from bson.json_util import loads
 
-KEYWORDS = ['AAAI', 'Association for the Advancement of Artificial Intelligence', \
-            'CIKM', 'Conference on Information and Knowledge Management', \
-            'CVPR', 'Conference on Computer Vision and Pattern Recognition', \
-            'ECIR', 'European Conference on Information Retrieval', \
-            'ECML', 'European Conference on Machine Learning', \
-            'EDBT', 'International Conference on Extending Database Technology', \
-            'ICDE', 'International Conference on Data Engineering', \
-            'ICDM', 'International Conference on Data Mining', \
-            'ICML', 'International Conference on Machine Learning', \
-            'IJCAI', 'International Joint Conference on Artificial Intelligence', \
-            'PAKDD', 'Pacific-Asia Conference on Knowledge Discovery and Data Mining', \
-            'PKDD', 'Principles and Practice of Knowledge Discovery in Databases', \
-            'KDD', 'Knowledge Discovery and Data Mining', \
-            'PODS', 'Principles of Database Systems', \
-            'SIGIR', 'Special Interest Group on Information Retrieval', \
-            'SIGMOD', 'Special Interest Group on Management of Data', \
-            'VLDB', 'Very Large Data Bases', \
-            'WWW', 'World Wide Web Conference', \
-            'WSDM', 'Web Search and Data Mining', \
-            'SDM', 'SIAM International Conference on Data Mining']
-
+KEYWORDS = [
+    'AAAI', 'Association for the Advancement of Artificial Intelligence',
+    'CIKM', 'Conference on Information and Knowledge Management', 'CVPR',
+    'Conference on Computer Vision and Pattern Recognition', 'ECIR',
+    'European Conference on Information Retrieval', 'ECML',
+    'European Conference on Machine Learning', 'EDBT',
+    'International Conference on Extending Database Technology', 'ICDE',
+    'International Conference on Data Engineering', 'ICDM',
+    'International Conference on Data Mining', 'ICML',
+    'International Conference on Machine Learning', 'IJCAI',
+    'International Joint Conference on Artificial Intelligence', 'PAKDD',
+    'Pacific-Asia Conference on Knowledge Discovery and Data Mining', 'PKDD',
+    'Principles and Practice of Knowledge Discovery in Databases', 'KDD',
+    'Knowledge Discovery and Data Mining', 'PODS',
+    'Principles of Database Systems'
+    'SIGIR', 'Special Interest Group on Information Retrieval', 'SIGMOD',
+    'Special Interest Group on Management of Data', 'VLDB',
+    'Very Large Data Bases', 'WWW', 'World Wide Web Conference', 'WSDM',
+    'Web Search and Data Mining', 'SDM',
+    'SIAM International Conference on Data Mining'
+]
 CONF2ORG = {
     'AAAI': 'AAAI',
     'CIKM': 'ACM',
@@ -90,16 +90,19 @@ def extract_considered():
                     json_text = ''.join(ele_contents)
                     json_text = re.sub(r'NumberInt\s*\(\s*(\S+)\s*\)',
                                        r'{"$numberInt": "\1"}', json_text)
-                    #print(json_text[:-1])
-                    #ele = json.loads(json_text[:-1])
+                    # print(json_text[:-1])
+                    # ele = json.loads(json_text[:-1])
                     if json_text[-1] == ',':
                         ele = loads(json_text[:-1])
                     else:
                         ele = loads(json_text)
-                    #if ('venue' in ele and '_id' in ele['venue']) and 'fos' in ele and 'references' in ele:
+                    # if ('venue' in ele and '_id' in ele['venue']) and
+                    # 'fos' in ele and 'references' in ele:
                     if '_id' in ele and 'venue' in ele and 'raw' in ele[
-                            'venue'] and ele['venue']['raw'] and 'fos' in ele and ele[
-                                'fos'] and 'references' in ele and 'title' in ele and ele[
+                            'venue'] and ele['venue']['raw'] and 'fos' in \
+                            ele and ele[
+                                'fos'] and 'references' in ele and 'title' \
+                            in ele and ele[
                                     'title']:
                         raw_vanue_name = ele['venue']['raw'].lower()
                         if re.search(pat, raw_vanue_name):
@@ -111,7 +114,7 @@ def extract_considered():
                                 ','.join(ele['fos']).replace('\n', '').replace(
                                     '\t', ' '), ','.join(ele['references'])))
                             rsvd += 1
-                    #print(ele)
+                    # print(ele)
                     cnt += 1
                     if cnt % 100000 == 0:
                         print(rsvd, cnt, "======>")
@@ -123,9 +126,13 @@ def extract_considered():
 
 
 """
-{'ICDM': 4589, 'KDD': 5476, 'IJCAI': 7586, 'VLDB': 5314, 'PAKDD': 2242, 'ECIR': 1482, 'ICML': 8322, 'CIKM': 5931, 'WWW': 5553, 'CVPR': 13355, 'EDBT': 1636, 'AAAI': 9695, 'ECML': 2216, 'SIGMOD': 4206, 'ICDE': 4330, 'PODS': 1670, 'SDM': 1624, 'SIGIR': 4619, 'WSDM': 746, 'PKDD': 547}
-======================
-{'IEEE': 22274, 'ACM': 28201, 'the IJCAI, Inc.': 7586, 'VLDB': 5314, 'Springer': 8123, 'PMLR': 8322, 'AAAI': 9695, 'SIAM': 1624}
+    {'ICDM': 4589, 'KDD': 5476, 'IJCAI': 7586, 'VLDB': 5314, 'PAKDD': 2242,
+    'ECIR': 1482, 'ICML': 8322, 'CIKM': 5931, 'WWW': 5553, 'CVPR': 13355,
+    'EDBT': 1636, 'AAAI': 9695, 'ECML': 2216, 'SIGMOD': 4206, 'ICDE': 4330,
+    'PODS': 1670, 'SDM': 1624, 'SIGIR': 4619, 'WSDM': 746, 'PKDD': 547}
+    ======================
+    {'IEEE': 22274, 'ACM': 28201, 'the IJCAI, Inc.': 7586, 'VLDB': 5314,
+    'Springer': 8123, 'PMLR': 8322, 'AAAI': 9695, 'SIAM': 1624}
 """
 
 

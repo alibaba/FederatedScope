@@ -8,12 +8,14 @@ from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def raw2loader(raw_data, config=None):
-    """Transform a graph into either dataloader for graph-sampling-based mini-batch training
+    """Transform a graph into either dataloader for graph-sampling-based
+    mini-batch training
     or still a graph for full-batch training.
     Arguments:
         raw_data (PyG.Data): a raw graph.
     :returns:
-        sampler (object): a Dict containing loader and subgraph_sampler or still a PyG.Data object.
+        sampler (object): a Dict containing loader and subgraph_sampler or
+        still a PyG.Data object.
     """
 
     if config.data.loader == '':

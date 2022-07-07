@@ -2,7 +2,8 @@ import grpc
 from concurrent import futures
 
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.proto import gRPC_comm_manager_pb2, gRPC_comm_manager_pb2_grpc
+from federatedscope.core.proto import gRPC_comm_manager_pb2, \
+    gRPC_comm_manager_pb2_grpc
 from federatedscope.core.gRPC_server import gRPCComServeFunc
 from federatedscope.core.message import Message
 
@@ -14,7 +15,8 @@ class StandaloneCommManager(object):
     def __init__(self, comm_queue, monitor=None):
         self.comm_queue = comm_queue
         self.neighbors = dict()
-        self.monitor = monitor  # used to track the communication related metrics
+        self.monitor = monitor  # used to track the communication related
+        # metrics
 
     def receive(self):
         # we don't need receive() in standalone
@@ -44,7 +46,8 @@ class StandaloneCommManager(object):
 
 class gRPCCommManager(object):
     """
-        The implementation of gRPCCommManager is referred to the tutorial on https://grpc.io/docs/languages/python/
+        The implementation of gRPCCommManager is referred to the tutorial on
+        https://grpc.io/docs/languages/python/
     """
     def __init__(self, host='0.0.0.0', port='50050', client_num=2):
         self.host = host
@@ -67,7 +70,8 @@ class gRPCCommManager(object):
 
     def serve(self, max_workers, host, port, options):
         """
-        This function is referred to https://grpc.io/docs/languages/python/basics/#starting-the-server
+        This function is referred to
+        https://grpc.io/docs/languages/python/basics/#starting-the-server
         """
         server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=max_workers),
@@ -93,13 +97,14 @@ class gRPCCommManager(object):
             else:
                 return self.neighbors[neighbor_id]
         else:
-            #Get all neighbors
+            # Get all neighbors
             return self.neighbors
 
     def _send(self, receiver_address, message):
         def _create_stub(receiver_address):
             """
-            This part is referred to https://grpc.io/docs/languages/python/basics/#creating-a-stub
+            This part is referred to
+            https://grpc.io/docs/languages/python/basics/#creating-a-stub
             """
             channel = grpc.insecure_channel(receiver_address,
                                             options=(('grpc.enable_http_proxy',
