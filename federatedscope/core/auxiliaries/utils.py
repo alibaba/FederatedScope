@@ -120,7 +120,7 @@ def init_wandb(cfg):
     tmp_cfg = copy.deepcopy(cfg)
     if tmp_cfg.is_frozen():
         tmp_cfg.defrost()
-    tmp_cfg.cfg_check_funcs = []
+    tmp_cfg.cfg_check_funcs.clear()
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
