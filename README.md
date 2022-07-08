@@ -22,7 +22,7 @@ A detailed tutorial is provided on our [website](https://federatedscope.io/).
 
 ## Quick Start
 
-We provide an end-to-end example for users to start running a standard FL course with FederatedScope.
+We provide an end-to-end example for users to start running a standard FL course with FederatedScope.fafafaf
 
 ### Step 1. Installation
 
