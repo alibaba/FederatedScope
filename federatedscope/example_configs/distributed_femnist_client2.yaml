@@ -39,5 +39,5 @@ criterion:
 trainer:
   type: cvtrainer
 eval:
-  freq: 10
+  freq: 1
   metrics: ['acc', 'correct']
