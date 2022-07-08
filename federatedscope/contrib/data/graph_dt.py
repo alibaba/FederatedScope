@@ -177,7 +177,7 @@ class GraphDTDataset(InMemoryDataset):
                 os.makedirs(os.path.join(self.processed_dir, str(idx)))
 
             train_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
-            test_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
+            test_path = os.path.join(self.processed_dir, str(idx), 'test.pt')
             valid_path = os.path.join(self.processed_dir, str(idx), 'val.pt')
 
             if idx == 1:
