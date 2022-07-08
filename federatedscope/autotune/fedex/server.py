@@ -23,7 +23,8 @@ def discounted_mean(trace, factor=1.0):
 
 
 class FedExServer(Server):
-    """Some code snippets are borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx)
+    """Some code snippets are borrowed from the open-sourced FedEx (
+    https://github.com/mkhodak/FedEx)
     """
     def __init__(self,
                  ID=-1,
@@ -203,9 +204,13 @@ class FedExServer(Server):
         return self.check_and_move_on()
 
     def update_policy(self, feedbacks):
-        """Update the policy. This implementation is borrowed from the open-sourced FedEx (https://github.com/mkhodak/FedEx/blob/150fac03857a3239429734d59d319da71191872e/hyper.py#L151)
+        """Update the policy. This implementation is borrowed from the
+        open-sourced FedEx (
+        https://github.com/mkhodak/FedEx/blob/ \
+        150fac03857a3239429734d59d319da71191872e/hyper.py#L151)
         Arguments:
-            feedbacks (list): each element is a dict containing "arms" and necessary feedback.
+            feedbacks (list): each element is a dict containing "arms" and
+            necessary feedback.
         """
 
         index = [elem['arms'] for elem in feedbacks]
@@ -271,7 +276,9 @@ class FedExServer(Server):
                           check_eval_result=False,
                           min_received_num=None):
         """
-        To check the message_buffer, when enough messages are receiving, trigger some events (such as perform aggregation, evaluation, and move to the next training round)
+        To check the message_buffer, when enough messages are receiving,
+        trigger some events (such as perform aggregation, evaluation,
+        and move to the next training round)
         """
         if min_received_num is None:
             min_received_num = self._cfg.federate.sample_client_num
@@ -280,7 +287,8 @@ class FedExServer(Server):
         if check_eval_result:
             min_received_num = len(list(self.comm_manager.neighbors.keys()))
 
-        move_on_flag = True  # To record whether moving to a new training round or finishing the evaluation
+        move_on_flag = True  # To record whether moving to a new training
+        # round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:  # in the training process
@@ -296,8 +304,8 @@ class FedExServer(Server):
                             msg_list.append(
                                 tuple(train_msg_buffer[client_id][0:2]))
                         else:
-                            train_data_size, model_para_multiple = train_msg_buffer[
-                                client_id][0:2]
+                            train_data_size, model_para_multiple = \
+                                train_msg_buffer[client_id][0:2]
                             msg_list.append((train_data_size,
                                              model_para_multiple[model_idx]))
 
@@ -308,6 +316,8 @@ class FedExServer(Server):
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
+                        from federatedscope.core.auxiliaries.utils import \
+                            calc_blocal_dissim
                         B_val = calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
                         formatted_eval_res = self._monitor.format_eval_res(
@@ -321,13 +331,14 @@ class FedExServer(Server):
                     }
                     result = aggregator.aggregate(agg_info)
                     model.load_state_dict(result, strict=False)
-                    #aggregator.update(result)
+                    # aggregator.update(result)
 
                 # update the policy
                 self.update_policy(mab_feedbacks)
 
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
+                if self.state % self._cfg.eval.freq == 0 and self.state != \
+                        self.total_round_num:
                     #  Evaluate
                     logger.info(
                         'Server #{:d}: Starting evaluation at round {:d}.'.
@@ -337,8 +348,8 @@ class FedExServer(Server):
                 if self.state < self.total_round_num:
                     # Move to next round of training
                     logger.info(
-                        '----------- Starting a new training round (Round #{:d}) -------------'
-                        .format(self.state))
+                        f'----------- Starting a new training round (Round '
+                        f'#{self.state}) -------------')
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 
@@ -347,9 +358,8 @@ class FedExServer(Server):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logger.info(
-                        'Server #{:d}: Training is finished! Starting evaluation.'
-                        .format(self.ID))
+                    logger.info('Server #{:d}: Training is finished! Starting '
+                                'evaluation.'.format(self.ID))
                     self.eval()
 
             else:  # in the evaluation process
@@ -371,12 +381,14 @@ class FedExServer(Server):
         should_stop = False
 
         if "Results_weighted_avg" in self.history_results and \
-                self._cfg.eval.best_res_update_round_wise_key in self.history_results['Results_weighted_avg']:
+                self._cfg.eval.best_res_update_round_wise_key in \
+                self.history_results['Results_weighted_avg']:
             should_stop = self.early_stopper.track_and_check(
                 self.history_results['Results_weighted_avg'][
                     self._cfg.eval.best_res_update_round_wise_key])
         elif "Results_avg" in self.history_results and \
-                self._cfg.eval.best_res_update_round_wise_key in self.history_results['Results_avg']:
+                self._cfg.eval.best_res_update_round_wise_key in \
+                self.history_results['Results_avg']:
             should_stop = self.early_stopper.track_and_check(
                 self.history_results['Results_avg'][
                     self._cfg.eval.best_res_update_round_wise_key])
@@ -387,9 +399,8 @@ class FedExServer(Server):
             self.state = self.total_round_num + 1
 
         if should_stop or self.state == self.total_round_num:
-            logger.info(
-                'Server #{:d}: Final evaluation is finished! Starting merging results.'
-                .format(self.ID))
+            logger.info('Server #{:d}: Final evaluation is finished! Starting '
+                        'merging results.'.format(self.ID))
             # last round
             self.save_best_results()
 
@@ -423,5 +434,5 @@ class FedExServer(Server):
                         content=model_para))
 
         if self.state == self.total_round_num:
-            #break out the loop for distributed mode
+            # break out the loop for distributed mode
             self.state += 1

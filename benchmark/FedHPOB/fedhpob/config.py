@@ -313,9 +313,9 @@ def get_cs(dname, model, mode, alg='avg'):
 
 
 def initial_cfg(cfg):
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # benchmark related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.benchmark = CN()
     cfg.benchmark.cls = [{
         'raw': RawBenchmark,
@@ -323,7 +323,7 @@ def initial_cfg(cfg):
         'surrogate': SurrogateBenchmark
     }]
 
-    # ************************************************************************ #
+    # ********************************************************************** #
     cfg.benchmark.type = 'raw'
     cfg.benchmark.model = 'gcn'
     cfg.benchmark.data = 'cora'
@@ -331,14 +331,15 @@ def initial_cfg(cfg):
     cfg.benchmark.sample_client = 1.0  # only for optimizer
     cfg.benchmark.algo = 'avg'  # ['avg', 'opt']
     cfg.benchmark.out_dir = 'exp_results'
-    # ************************************************************************ #
+    # ********************************************************************** #
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # cost related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.cost = CN()
     cfg.cost.type = 'estimated'  # in ['raw', 'estimated']
-    cfg.cost.c = 1  # lambda for exponential distribution, time consumed in client
+    cfg.cost.c = 1  # lambda for exponential distribution, time consumed in
+    # client
     cfg.cost.time_server = 0  # time consumed in server, `0` for real time
 
     # bandwidth for estimated cost
@@ -348,9 +349,9 @@ def initial_cfg(cfg):
     cfg.cost.bandwidth.server_up = 0.25 * 1024 * 1024 * 8 / 32
     cfg.cost.bandwidth.server_down = 0.75 * 1024 * 1024 * 8 / 32
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # optimizer related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.optimizer = CN()
     cfg.optimizer.type = 'de'
     cfg.optimizer.min_budget = 1
@@ -359,21 +360,21 @@ def initial_cfg(cfg):
     cfg.optimizer.seed = 1
     cfg.optimizer.limit_time = 86400  # one day
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # hpbandster related options (rs, bo_kde, hb, bohb)
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.optimizer.hpbandster = CN()
     cfg.optimizer.hpbandster.eta = 3
     cfg.optimizer.hpbandster.max_stages = 5
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # smac related options (bo_gp, bo_rf)
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.optimizer.smac = CN()
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # dehb related options (dehb, de)
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.optimizer.dehb = CN()
     cfg.optimizer.dehb.strategy = 'rand1_bin'
     cfg.optimizer.dehb.mutation_factor = 0.5
@@ -389,17 +390,17 @@ def initial_cfg(cfg):
     cfg.optimizer.dehb.de = CN()
     cfg.optimizer.dehb.de.pop_size = 20
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # optuna related options (tpe_md, tpe_hb)
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.optimizer.optuna = CN()
     cfg.optimizer.optuna.reduction_factor = 3
 
 
 def add_configs(cfg):
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # HPO search space related options, which is fixed when mode is `raw`
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     configuration_space, fidelity_space = get_cs(cfg.benchmark.data,
                                                  cfg.benchmark.model,
                                                  cfg.benchmark.type,

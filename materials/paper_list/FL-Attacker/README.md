@@ -1,4 +1,5 @@
-# Privacy Attacks in FL
+# Attacks in FL
+## Privacy Attacks in FL
 
 ## Survey
 | Title                                                        | Venue      | Link                                        | Year
@@ -61,9 +62,33 @@
 | Deep Models Under the GAN: Information Leakage from Collaborative Deep Learning | CCS | [pdf](https://arxiv.org/pdf/1702.07464.pdf) |
 
 
+## Backdoor Attacks in FL
+## 2022
+| Title | Venue | Link |
+| --- | --- | --- |
+|Narcissus: A Practical Clean-Label Backdoor Attack with Limited Information |arxiv|[pdf](https://arxiv.org/pdf/2204.05255.pdf)|
+|Neurotoxin: Durable Backdoors in Federated Learning|arxiv|[pdf](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2022/EECS-2022-89.pdf)|
+## 2021
+| Title | Venue | Link |
+| --- | --- | --- |
+|WaNet - Imperceptible Warping-based Backdoor Attack |ICLR|[pdf](https://arxiv.org/pdf/2102.10369.pdf)|
+
+## 2020
+| Title | Venue | Link |
+| --- | --- | --- |
+|Attack of the Tails: Yes, You Really Can Backdoor Federated Learning|NeurIPS|[pdf](https://papers.nips.cc/paper/2020/file/b8ffa41d4e492f0fad2f13e29e1762eb-Paper.pdf)|
+|DBA: Distributed Backdoor Attacks against Federated Learning|ICLR|[pdf](https://openreview.net/pdf?id=rkgyS0VFvr)|
+|How To Backdoor Federated Learning|AISTATS|[pdf](https://arxiv.org/pdf/1807.00459.pdf)|
+
+## 2019
+| Title | Venue | Link |
+| --- | --- | --- |
+|BadNets: Evaluating Backdooring Attacks on Deep Neural Networks|IEEE Access|[pdf](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8685687)|
+|Analyzing Federated Learning through an Adversarial Lens|NeurIPS|[pdf](https://arxiv.org/pdf/1811.12470.pdf)|
+
+## 2017
+| Title | Venue | Link |
+| --- | --- | --- |
+|Targeted Backdoor Attacks on Deep Learning Systems Using Data Poisoning |arxiv|[pdf](https://arxiv.org/pdf/1712.05526.pdf)|
 
 
-
-
-
- 

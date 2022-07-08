@@ -12,8 +12,10 @@ from torch_geometric.data import Data
 
 from federatedscope.gfl.model import SAGE_Net
 """
-https://proceedings.neurips.cc//paper/2021/file/34adeb8e3242824038aa65460a47c29e-Paper.pdf
-Fedsageplus models from the "Subgraph Federated Learning with Missing Neighbor Generation" (FedSage+) paper, in NeurIPS'21
+https://proceedings.neurips.cc//paper/2021/file/ \
+34adeb8e3242824038aa65460a47c29e-Paper.pdf
+Fedsageplus models from the "Subgraph Federated Learning with Missing
+Neighbor Generation" (FedSage+) paper, in NeurIPS'21
 Source: https://github.com/zkhku/fedsage
 """
 
@@ -140,7 +142,7 @@ class LocalSage_Plus(nn.Module):
         return degree, gen_feat, nc_pred[:data.num_nodes]
 
     def inference(self, impared_data, raw_data):
-        x = self.encoder_model(data)
+        x = self.encoder_model(impared_data)
         degree = self.reg_model(x)
         gen_feat = self.gen(x)
         mend_feats, mend_edge_index = self.mend_graph(raw_data.x,

@@ -1,7 +1,8 @@
 import queue
 from collections import deque
 
-from federatedscope.core.proto import gRPC_comm_manager_pb2, gRPC_comm_manager_pb2_grpc
+from federatedscope.core.proto import gRPC_comm_manager_pb2, \
+    gRPC_comm_manager_pb2_grpc
 
 
 class gRPCComServeFunc(gRPC_comm_manager_pb2_grpc.gRPCComServeFuncServicer):

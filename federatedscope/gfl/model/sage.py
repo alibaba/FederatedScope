@@ -1,14 +1,16 @@
 import torch
 import torch.nn.functional as F
-from torch.nn import ModuleList
 from torch_geometric.data import Data
 from torch_geometric.nn import SAGEConv
 
 
 class SAGE_Net(torch.nn.Module):
-    r"""GraphSAGE model from the "Inductive Representation Learning on Large Graphs" paper, in NeurIPS'17
+    r"""GraphSAGE model from the "Inductive Representation Learning on
+    Large Graphs" paper, in NeurIPS'17
 
-    Source: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/ogbn_products_sage.py
+    Source:
+    https://github.com/pyg-team/pytorch_geometric/ \
+    blob/master/examples/ogbn_products_sage.py
 
     Arguments:
         in_channels (int): dimension of input.
@@ -62,12 +64,14 @@ class SAGE_Net(torch.nn.Module):
         and the size/shape `size` of the bipartite graph.
         Target nodes are also included in the source nodes so that one can
         easily apply skip-connections or add self-loops.
-        
+
         Arguments:
-            x (torch.Tensor or PyG.data or tuple): node features or full-batch data
+            x (torch.Tensor or PyG.data or tuple): node features or \
+                full-batch data
             edge_index (torch.Tensor): edge index.
             edge_weight (torch.Tensor): edge weight.
-            adjs (List[PyG.loader.neighbor_sampler.EdgeIndex]): batched edge index
+            adjs (List[PyG.loader.neighbor_sampler.EdgeIndex]): \
+                batched edge index
         :returns:
             x: output
         :rtype:
@@ -100,7 +104,7 @@ class SAGE_Net(torch.nn.Module):
         Compute representations of nodes layer by layer, using *all*
         available edges. This leads to faster computation in contrast to
         immediately computing the final representations of each batch.
-        
+
         Arguments:
             x_all (torch.Tensor): all node features
             subgraph_loader (PyG.dataloader): dataloader

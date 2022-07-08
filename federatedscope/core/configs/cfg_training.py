@@ -3,9 +3,9 @@ from federatedscope.register import register_config
 
 
 def extend_training_cfg(cfg):
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Trainer related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.trainer = CN()
 
     cfg.trainer.type = 'general'
@@ -36,22 +36,24 @@ def extend_training_cfg(cfg):
     cfg.finetune.optimizer.type = 'SGD'
     cfg.finetune.optimizer.lr = 0.1
 
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     # Gradient related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.grad = CN()
     cfg.grad.grad_clip = -1.0  # negative numbers indicate we do not clip grad
 
     # ------------------------------------------------------------------------ #
     # Early stopping related options
-    # ------------------------------------------------------------------------ #
+    # ---------------------------------------------------------------------- #
     cfg.early_stop = CN()
 
-    # patience (int): How long to wait after last time the monitored metric improved.
+    # patience (int): How long to wait after last time the monitored metric
+    # improved.
     # Note that the actual_checking_round = patience * cfg.eval.freq
     # To disable the early stop, set the early_stop.patience a integer <=0
     cfg.early_stop.patience = 5
-    # delta (float): Minimum change in the monitored metric to indicate an improvement.
+    # delta (float): Minimum change in the monitored metric to indicate an
+    # improvement.
     cfg.early_stop.delta = 0.0
     # Early stop when no improve to last `patience` round, in ['mean', 'best']
     cfg.early_stop.improve_indicator_mode = 'best'
@@ -75,12 +77,12 @@ def assert_training_cfg(cfg):
     # TODO: should not be here?
     if cfg.backend not in ['torch', 'tensorflow']:
         raise ValueError(
-            "Value of 'cfg.backend' must be chosen from ['torch', 'tensorflow']."
-        )
+            "Value of 'cfg.backend' must be chosen from ['torch', "
+            "'tensorflow'].")
     if cfg.backend == 'tensorflow' and cfg.federate.mode == 'standalone':
         raise ValueError(
-            "We only support run with distribued mode when backend is tensorflow"
-        )
+            "We only support run with distribued mode when backend is "
+            "tensorflow")
     if cfg.backend == 'tensorflow' and cfg.use_gpu is True:
         raise ValueError(
             "We only support run with cpu when backend is tensorflow")

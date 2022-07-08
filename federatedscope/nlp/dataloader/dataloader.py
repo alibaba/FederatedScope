@@ -58,10 +58,11 @@ def load_nlp_dataset(config=None):
                                 num_workers=config.data.num_workers)
         }
         if 'test' in dataset[client_idx]:
-            dataloader['test'] = DataLoader(dataset[client_idx]['test'],
-                                 batch_size,
-                                 shuffle=False,
-                                 num_workers=config.data.num_workers)
+            dataloader['test'] = DataLoader(
+                dataset[client_idx]['test'],
+                batch_size,
+                shuffle=False,
+                num_workers=config.data.num_workers)
         if 'val' in dataset[client_idx]:
             dataloader['val'] = DataLoader(dataset[client_idx]['val'],
                                            batch_size,

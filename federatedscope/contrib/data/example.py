@@ -3,7 +3,7 @@ from federatedscope.register import register_data
 
 def MyData(config):
     r"""
-    
+
     Returns:
             data:
                 {

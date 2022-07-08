@@ -148,8 +148,9 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_fit_start_calculate_model_size(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
             logger.warning(
-                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
-                f"initializing trainer subclasses without passing a valid monitor instance."
+                f"The trainer {type(self)} does contain a valid monitor, "
+                f"this may be caused by initializing trainer subclasses "
+                f"without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
         if self.ctx.monitor.total_model_size == 0:
@@ -194,20 +195,23 @@ class GeneralTorchTrainer(Trainer):
         """
             the monitoring hook to calculate the flops during the fl course
 
-            Note: for customized cases that the forward process is not only based on ctx.model,
-            please override this function (inheritance case) or replace this hook (plug-in case)
+            Note: for customized cases that the forward process is not only
+            based on ctx.model, please override this function (inheritance
+            case) or replace this hook (plug-in case)
 
         :param ctx:
         :return:
         """
         if not isinstance(self.ctx.monitor, Monitor):
             logger.warning(
-                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
-                f"initializing trainer subclasses without passing a valid monitor instance."
+                f"The trainer {type(self)} does contain a valid monitor, "
+                f"this may be caused by initializing trainer subclasses "
+                f"without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
 
-        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample == 0:
+        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample \
+                == 0:
             # calculate the flops_per_sample
             try:
                 x, y = [_.to(ctx.device) for _ in ctx.data_batch]
@@ -216,23 +220,27 @@ class GeneralTorchTrainer(Trainer):
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums
                     logger.warning(
-                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
-                        "if this is not the case you want, please customize the count hook"
-                    )
+                        "the flops_per_batch is multiplied "
+                        "by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, "
+                        "please customize the count hook")
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
             except:
                 logger.warning(
-                    "current flop count implementation is for general trainer case: "
+                    "current flop count implementation is for general "
+                    "trainer case: "
                     "1) ctx.data_batch = [x, y]; and"
                     "2) the ctx.model takes only x as input."
-                    "Please check the forward format or implement your own flop_count function"
-                )
-                self.ctx.monitor.flops_per_sample = -1  # warning at the first failure
+                    "Please check the forward format or implement your own "
+                    "flop_count function")
+                self.ctx.monitor.flops_per_sample = -1  # warning at the
+                # first failure
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward
-        self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * ctx.batch_size
+        self.ctx.monitor.total_flops +=\
+            self.ctx.monitor.flops_per_sample * ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         ctx.loss_regular = float(

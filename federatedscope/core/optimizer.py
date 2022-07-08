@@ -17,7 +17,8 @@ def wrap_regularized_optimizer(base_optimizer, regular_weight):
 
             # attributes used in the wrapper
             self.optimizer = base_optimizer  # internal torch optimizer
-            self.param_groups = self.optimizer.param_groups  # link the para of internal optimizer with the wrapper
+            self.param_groups = self.optimizer.param_groups  # link the para
+            # of internal optimizer with the wrapper
             self.regular_weight = regular_weight
             self.compared_para_groups = None
 
@@ -26,8 +27,9 @@ def wrap_regularized_optimizer(base_optimizer, regular_weight):
                     and isinstance(compared_para_dict[0], dict)
                     and 'params' in compared_para_dict[0]):
                 raise ValueError(
-                    f"compared_para_dict should be a torch style para group, i.e., list[dict], "
-                    f"in which the dict stores the para with key `params`")
+                    "compared_para_dict should be a torch style para group, "
+                    "i.e., list[dict], "
+                    "in which the dict stores the para with key `params`")
             self.compared_para_groups = copy.deepcopy(compared_para_dict)
 
         def reset_compared_para_group(self, target=None):
@@ -36,7 +38,8 @@ def wrap_regularized_optimizer(base_optimizer, regular_weight):
 
         def regularize_by_para_diff(self):
             """
-                before optim.step(), regularize the gradients based on para diff
+                before optim.step(), regularize the gradients based on para
+                diff
             """
             for group, compared_group in zip(self.param_groups,
                                              self.compared_para_groups):

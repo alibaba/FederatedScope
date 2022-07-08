@@ -27,34 +27,43 @@ class Context(dict):
 
         - data_batch: current batch data from train/test/val data loader
 
-        - trainable_para_names (list): a list of the names of the trainable parameters within ```ctx.model```
+        - trainable_para_names (list): a list of the names of the trainable
+        parameters within ```ctx.model```
         - train_data: training dataset
         - train_loader: training dataloader
         - num_train_data (int): the number of training samples within one epoch
         - num_train_epoch (int): the number of total training epochs
-        - num_train_batch (int): the number of batches within one completed training epoch
-        - num_train_batch_last_epoch (int): the number of batches within the last epoch
+        - num_train_batch (int): the number of batches within one completed
+        training epoch
+        - num_train_batch_last_epoch (int): the number of batches within
+        the last epoch
 
         - test_data: test data
         - test_loader: test dataloader
         - num_test_data (int): the number of test samples within one epoch
         - num_test_epoch (int): the number of test epochs, default 1
-        - num_test_batch (int): the number of batches within one completed test epoch
+        - num_test_batch (int): the number of batches within one completed
+        test epoch
 
         - val_data: val data
         - val_loader: val dataloader
         - num_val_data (int): the number of val samples within one epoch
         - num_val_epoch (int): the number of val epochs, default 1
-        - num_val_batch (int): the number of batches within one completed val epoch
+        - num_val_batch (int): the number of batches within one completed
+        val epoch
 
     Statistical variables:
-        - loss_batch (float): loss of the current data_batch, shared by train/test/val
+        - loss_batch (float): loss of the current data_batch, shared by
+        train/test/val
         - loss_regular (float): loss of the regularizer
         - loss_task (float): the sum of loss_batch and loss_regular
 
-        - loss_total_batch_train (float): accumulated batch loss during training
-        - loss_total_regular_train (float): accumulated regular loss during training
-        - num_samples_train (int): accumulated number of training samples involved at present
+        - loss_total_batch_train (float): accumulated batch loss during
+        training
+        - loss_total_regular_train (float): accumulated regular loss during
+        training
+        - num_samples_train (int): accumulated number of training samples
+        involved at present
 
         - loss_total_test (float): accumulated batch loss during test
         - num_samples_test (float): accumulated regular loss during test
@@ -148,13 +157,15 @@ class Context(dict):
             num_total_train_batch = local_update_steps * num_train_batch
         elif num_train_batch == 0:
             raise RuntimeError(
-                "The number of training batch is 0, please check 'batch_size' or set 'drop_last' as False"
-            )
+                "The number of training batch is 0, please check "
+                "'batch_size' or set 'drop_last' as False")
         else:
             num_train_epoch = math.ceil(local_update_steps / num_train_batch)
-            num_train_batch_last_epoch = local_update_steps % num_train_batch or num_train_batch
+            num_train_batch_last_epoch = local_update_steps % \
+                num_train_batch or num_train_batch
             num_total_train_batch = local_update_steps
-        return num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch
+        return num_train_batch, num_train_batch_last_epoch, num_train_epoch,\
+            num_total_train_batch
 
     def append_mode(self, mode):
         self.mode.append(mode)
@@ -177,7 +188,8 @@ class Context(dict):
             pass
 
     def track_used_dataset(self, dataset):
-        # stack-style to enable mixture usage such as evaluation on train dataset
+        # stack-style to enable mixture usage such as evaluation on train
+        # dataset
         self.cur_data_splits_used_by_routine.append(dataset)
         self.cur_data_split = self.cur_data_splits_used_by_routine[-1]
 

@@ -46,9 +46,7 @@ class BasicMFNet(Module):
 
         return mask * pred, label, float(np.prod(pred.size())) / len(ratings)
 
-    def load_state_dict(self,
-                        state_dict: 'OrderedDict[str, Tensor]',
-                        strict: bool = True):
+    def load_state_dict(self, state_dict, strict: bool = True):
 
         state_dict[self.name_reserve] = getattr(self, self.name_reserve)
         super().load_state_dict(state_dict, strict)

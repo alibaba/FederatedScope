@@ -1,18 +1,17 @@
 # Copyright 2017 The Ray Authors.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
-# 
+#
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -28,6 +27,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
@@ -38,6 +38,7 @@ author = u'The DAIL Team'
 
 # The full version, including alpha/beta/rc tags
 from federatedscope import __version__ as version
+
 release = version
 
 # -- General configuration ---------------------------------------------------
@@ -72,6 +73,7 @@ exclude_patterns = ['build']
 # a list of builtin themes.
 #
 import sphinx_rtd_theme
+
 html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 

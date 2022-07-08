@@ -10,7 +10,9 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         from federatedscope.cross_backends import FedAvgAggregator
         return FedAvgAggregator(model=model, device=device)
     else:
-        from federatedscope.core.aggregator import ClientsAvgAggregator, OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, FedOptAggregator, NoCommunicationAggregator
+        from federatedscope.core.aggregator import ClientsAvgAggregator, \
+            OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, \
+            FedOptAggregator, NoCommunicationAggregator
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]

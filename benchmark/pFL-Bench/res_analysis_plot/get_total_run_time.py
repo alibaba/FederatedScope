@@ -25,9 +25,8 @@ def convert(seconds):
 
 def print_run_time():
     print(f"Total_run_t: {convert(total_run_time)}, run_cnt={run_cnt}")
-    print(
-        f"Total_run_t_finished: {convert(total_run_time_finished)}, run_cnt_finish={run_finish_cnt}"
-    )
+    print(f"Total_run_t_finished: {convert(total_run_time_finished)}, "
+          f"run_cnt_finish={run_finish_cnt}")
 
 
 for p in name_project:
@@ -47,7 +46,7 @@ for p in name_project:
             if run_cnt % 200 == 0:
                 print_run_time()
         except:
-            #print("something wrong")
+            # print("something wrong")
             continue
 
 print_run_time()

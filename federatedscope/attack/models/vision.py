@@ -61,16 +61,6 @@ Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 '''
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-
-def weights_init(m):
-    if hasattr(m, "weight"):
-        m.weight.data.uniform_(-0.5, 0.5)
-    if hasattr(m, "bias"):
-        m.bias.data.uniform_(-0.5, 0.5)
 
 
 class BasicBlock(nn.Module):

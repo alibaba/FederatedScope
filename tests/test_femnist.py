@@ -7,6 +7,8 @@ from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
+SAMPLE_CLIENT_NUM = 5
+
 
 class FEMNISTTest(unittest.TestCase):
     def setUp(self):
@@ -23,8 +25,7 @@ class FEMNISTTest(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.train.local_update_steps = 5
         cfg.federate.total_round_num = 20
-        cfg.federate.sample_client_num = 5
-        cfg.federate.client_num = 10
+        cfg.federate.sample_client_num = SAMPLE_CLIENT_NUM
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'femnist'
@@ -62,6 +63,8 @@ class FEMNISTTest(unittest.TestCase):
         data, modified_cfg = get_data(init_cfg.clone())
         init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
+        self.assertEqual(init_cfg.federate.sample_client_num,
+                         SAMPLE_CLIENT_NUM)
 
         Fed_runner = FedRunner(data=data,
                                server_class=get_server_cls(init_cfg),
