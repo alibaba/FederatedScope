@@ -392,7 +392,7 @@ class Client(Worker):
     def callback_funcs_for_finish(self, message: Message):
         """
         The handling function for receiving the signal of finishing the FL
-        course
+        course.
 
         Arguments:
             message: The received message
