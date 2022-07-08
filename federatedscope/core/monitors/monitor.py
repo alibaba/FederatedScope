@@ -201,11 +201,14 @@ class Monitor(object):
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
 
-    def save_formatted_results(self, formatted_res):
+    def save_formatted_results(self,
+                               formatted_res,
+                               save_file_name="eval_results.log"):
         line = str(formatted_res) + "\n"
-        with open(os.path.join(self.outdir, "eval_results.log"),
-                  "a") as outfile:
-            outfile.write(line)
+        if save_file_name != "":
+            with open(os.path.join(self.outdir, save_file_name),
+                      "a") as outfile:
+                outfile.write(line)
         if self.use_wandb and self.wandb_online_track:
             try:
                 import wandb
