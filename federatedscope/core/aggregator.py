@@ -86,8 +86,12 @@ class ClientsAvgAggregator(Aggregator):
                 if not self.cfg.federate.use_ss:
                     if isinstance(local_model[key], torch.Tensor):
                         local_model[key] = local_model[key].float()
-                    else:
+                    elif isinstance(local_model[key], list):
                         local_model[key] = torch.FloatTensor(local_model[key])
+                    elif isinstance(local_model[key], int):
+                        local_model[key] = torch.tensor(local_model[key], dtype=torch.long)
+                    elif isinstance(local_model[key], float):
+                        local_model[key] = torch.tensor(local_model[key], dtype=torch.float)
 
                 if i == 0:
                     avg_model[key] = local_model[key] * weight
