@@ -590,24 +590,33 @@ def get_data(config):
         return data[data_idx], config
 
 
-def merge_data(all_data):
+def merge_data(all_data, merged_max_data_id):
     dataset_names = list(all_data[1].keys())  # e.g., train, test, val
-    assert isinstance(all_data[1]["test"], dict), \
-        "the data should be organized as the format similar to {data_id: {" \
-        "train: {x:ndarray, y:ndarray}} }"
-    data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
-    merged_data = {name: defaultdict(list) for name in dataset_names}
-    for data_id in all_data.keys():
-        if data_id == 0:
-            continue
+    import torch.utils.data
+    from federatedscope.mf.dataloader import MFDataLoader
+    assert isinstance(all_data[1]["test"], (dict, torch.utils.data.DataLoader, MFDataLoader)), \
+        "the data should be organized as the format similar to the following format" \
+        "1): {data_id: {train: {x:ndarray, y:ndarray}} }" \
+        "2): {data_id: {train: DataLoader }"
+    if isinstance(all_data[1]["test"], dict):
+        data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
+        merged_data = {name: defaultdict(list) for name in dataset_names}
+        for data_id in range(1, merged_max_data_id):
+            for d_name in dataset_names:
+                for elem_name in data_elem_names:
+                    merged_data[d_name][elem_name].append(
+                        all_data[data_id][d_name][elem_name])
+
         for d_name in dataset_names:
             for elem_name in data_elem_names:
-                merged_data[d_name][elem_name].append(
-                    all_data[data_id][d_name][elem_name])
-
-    for d_name in dataset_names:
-        for elem_name in data_elem_names:
-            merged_data[d_name][elem_name] = np.concatenate(
-                merged_data[d_name][elem_name])
-
+                merged_data[d_name][elem_name] = np.concatenate(
+                    merged_data[d_name][elem_name])
+    elif issubclass(type(all_data[1]["test"]), torch.utils.data.DataLoader):
+        merged_data = {name: all_data[1][name] for name in dataset_names}
+        for data_id in range(2, merged_max_data_id):
+            for d_name in dataset_names:
+                merged_data[d_name].dataset.extend(
+                    all_data[data_id][d_name].dataset)
+    else:
+        merged_data = None
     return merged_data

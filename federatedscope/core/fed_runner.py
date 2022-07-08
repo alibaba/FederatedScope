@@ -76,13 +76,20 @@ class FedRunner(object):
             torch.set_num_threads(1)
 
         if self.cfg.federate.method == "global":
-            assert 0 in self.data and self.data[
-                0] is not None, "In global training mode, we will use a " \
-                                "proxy client to hold all the data. Please " \
-                                "put the whole dataset in data[0], i.e., " \
-                                "the same style with global evaluation mode"
-            from federatedscope.core.auxiliaries.data_builder import merge_data
-            self.data[1] = merge_data(all_data=self.data)
+            if self.cfg.federate.client_num != 1:
+                from federatedscope.core.auxiliaries.data_builder import merge_data
+                if self.cfg.data.server_holds_all:
+                    assert self.data[0] is not None and len(self.data[0]) != 0, \
+                        "You specified cfg.data.server_holds_all=True but data[0] is None. " \
+                        "Please check whether you pre-process the data[0] correctly"
+                    self.data[1] = self.data[0]
+                else:
+                    self.data[1] = merge_data(
+                        all_data=self.data,
+                        merged_max_data_id=self.cfg.federate.client_num)
+                self.cfg.defrost()
+                self.cfg.federate.client_num = 1
+                self.cfg.freeze()
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
