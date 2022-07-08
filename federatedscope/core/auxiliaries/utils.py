@@ -90,7 +90,6 @@ def update_logger(cfg, clear_before_add=False):
         "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s")
     fh.setFormatter(logger_formatter)
     root_logger.addHandler(fh)
-    # sys.stderr = sys.stdout
 
     import socket
     root_logger.info(
@@ -100,12 +99,17 @@ def update_logger(cfg, clear_before_add=False):
     root_logger.info(f"the output dir is {cfg.outdir}")
 
     if cfg.wandb.use:
+        import sys
+        sys.stderr = sys.stdout  # make both stderr and stdout sent to wandb server
         init_wandb(cfg)
 
 
 def init_wandb(cfg):
     try:
         import wandb
+        # on some linux machines, we may need "thread" init to avoid memory leakage
+        os.environ[
+            "WANDB_START_METHOD"] = "thread"
     except ImportError:
         logger.error("cfg.wandb.use=True but not install the wandb package")
         exit()
@@ -114,8 +118,9 @@ def init_wandb(cfg):
     exp_name = cfg.expname
 
     tmp_cfg = copy.deepcopy(cfg)
-    # workaround to test wandb
-    #tmp_cfg.cfg_check_funcs = []
+    if tmp_cfg.is_frozen():
+        tmp_cfg.defrost()
+    tmp_cfg.cfg_check_funcs = []
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
