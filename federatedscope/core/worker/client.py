@@ -222,12 +222,15 @@ class Client(Worker):
                 self._monitor.local_converged()
             else:
                 sample_size, model_para_all, results = self.trainer.train()
-                logger.info(
-                    self._monitor.format_eval_res(results,
-                                                  rnd=self.state,
-                                                  role='Client #{}'.format(
-                                                      self.ID),
-                                                  return_raw=True))
+                train_log_res = self._monitor.format_eval_res(
+                    results,
+                    rnd=self.state,
+                    role='Client #{}'.format(self.ID),
+                    return_raw=True)
+                logger.info(train_log_res)
+                if self._cfg.wandb.use and self._cfg.wandb.client_train_info:
+                    self._monitor.save_formatted_results(train_log_res,
+                                                         save_to_file="")
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:

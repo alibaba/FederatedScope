@@ -25,9 +25,7 @@ def extend_data_cfg(cfg):
     cfg.data.shuffle = True
     cfg.data.subsample = 1.0
     cfg.data.splits = [0.8, 0.1, 0.1]  # Train, valid, test splits
-    cfg.data.consistent_label_distribution = False  # If True, the label
-    # distributions of train/val/test set over clients will be kept
-    # consistent during splitting
+    cfg.data.consistent_label_distribution = False  #If True, the label distributions of train/val/test set over clients will be kept consistent during splitting
     cfg.data.cSBM_phi = [0.5, 0.5, 0.5]
     cfg.data.loader = ''
     cfg.data.num_workers = 0
