@@ -91,7 +91,7 @@ def assert_fl_algo_cfg(cfg):
     if cfg.personalization.local_update_steps == -1:
         # By default, use the same step to normal mode
         cfg.personalization.local_update_steps = \
-            cfg.federate.local_update_steps
+            cfg.train.local_update_steps
         cfg.personalization.local_update_steps = \
             cfg.train.local_update_steps
 
