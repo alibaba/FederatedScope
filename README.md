@@ -21,7 +21,7 @@ A detailed tutorial is provided on our [website](https://federatedscope.io/).
 - [05-06-2022] We release FederatedScope v0.1.0! 
 
 ## Quick Start
-
+fafafafa
 We provide an end-to-end example for users to start running a standard FL course with FederatedScope.fafafaf
 
 ### Step 1. Installation
