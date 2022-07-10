@@ -40,7 +40,7 @@ class GraphDTTest(unittest.TestCase):
 
     def test_fedbn_ft_standalone(self):
         self.fedrunner(
-            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedbn_gnn_minibatch_on_multi_task.yaml',
+            cfg_alg='scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedbn_ft_gnn_minibatch_on_multi_task.yaml',
             cfg_client='scripts/B-FHTL_exp_scripts/Graph-DT/cfg_per_client_bn.yaml',
         )
 
