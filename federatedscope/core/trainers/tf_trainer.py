@@ -72,22 +72,22 @@ class GeneralTFTrainer(Trainer):
         ctx.model.to(ctx.device)
 
         # prepare statistics
-        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
-        setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
+        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_split), 0)
+        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_split), 0)
+        setattr(ctx, "num_samples_{}".format(ctx.cur_split), 0)
+        setattr(ctx, "{}_y_true".format(ctx.cur_split), [])
+        setattr(ctx, "{}_y_prob".format(ctx.cur_split), [])
 
     def _hook_on_epoch_start(self, ctx):
         # prepare dataloader
-        setattr(ctx, "{}_loader".format(ctx.cur_data_split),
-                batch_iter(ctx.get("{}_data".format(ctx.cur_data_split))))
+        setattr(ctx, "{}_loader".format(ctx.cur_split),
+                batch_iter(ctx.get("{}_data".format(ctx.cur_split))))
 
     def _hook_on_batch_start_init(self, ctx):
         # prepare data batch
         try:
             ctx.data_batch = next(
-                ctx.get("{}_loader".format(ctx.cur_data_split)))
+                ctx.get("{}_loader".format(ctx.cur_split)))
         except StopIteration:
             raise StopIteration
 
@@ -122,24 +122,24 @@ class GeneralTFTrainer(Trainer):
     def _hook_on_batch_end(self, ctx):
         # update statistics
         setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) +
+            ctx, "loss_batch_total_{}".format(ctx.cur_split),
+            ctx.get("loss_batch_total_{}".format(ctx.cur_split)) +
             ctx.loss_batch * ctx.batch_size)
 
         loss_regular = 0.
         setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
+            ctx, "loss_regular_total_{}".format(ctx.cur_split),
+            ctx.get("loss_regular_total_{}".format(ctx.cur_split)) +
             loss_regular)
         setattr(
-            ctx, "num_samples_{}".format(ctx.cur_data_split),
-            ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
+            ctx, "num_samples_{}".format(ctx.cur_split),
+            ctx.get("num_samples_{}".format(ctx.cur_split)) +
             ctx.batch_size)
 
         # cache label for evaluate
-        ctx.get("{}_y_true".format(ctx.cur_data_split)).append(ctx.y_true)
+        ctx.get("{}_y_true".format(ctx.cur_split)).append(ctx.y_true)
 
-        ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(ctx.y_prob)
+        ctx.get("{}_y_prob".format(ctx.cur_split)).append(ctx.y_prob)
 
         # clean temp ctx
         ctx.data_batch = None
@@ -155,11 +155,11 @@ class GeneralTFTrainer(Trainer):
 
         """
         setattr(
-            ctx, "{}_y_true".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_data_split))))
+            ctx, "{}_y_true".format(ctx.cur_split),
+            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_split))))
         setattr(
-            ctx, "{}_y_prob".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
+            ctx, "{}_y_prob".format(ctx.cur_split),
+            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_split))))
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 

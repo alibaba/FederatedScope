@@ -33,10 +33,10 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
-        pred = ctx.model(batch)[batch['{}_mask'.format(ctx.cur_data_split)]]
-        label = batch.y[batch['{}_mask'.format(ctx.cur_data_split)]]
+        pred = ctx.model(batch)[batch['{}_mask'.format(ctx.cur_split)]]
+        label = batch.y[batch['{}_mask'.format(ctx.cur_split)]]
         ctx.batch_size = torch.sum(ctx.data_batch['{}_mask'.format(
-            ctx.cur_data_split)]).item()
+            ctx.cur_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
         ctx.y_true = label
@@ -127,9 +127,9 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
 
     def _hook_on_epoch_start(self, ctx):
         # TODO: blind torch
-        if not isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
+        if not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                           ReIterator):
-            if isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
+            if isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                           NeighborSampler):
                 self.is_NeighborSampler = True
                 ctx.data['data'].x = ctx.data['data'].x.to(ctx.device)
@@ -137,11 +137,11 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
             else:
                 self.is_NeighborSampler = False
             setattr(
-                ctx, "{}_loader".format(ctx.cur_data_split),
-                ReIterator(ctx.get("{}_loader".format(ctx.cur_data_split))))
+                ctx, "{}_loader".format(ctx.cur_split),
+                ReIterator(ctx.get("{}_loader".format(ctx.cur_split))))
 
     def _hook_on_batch_forward(self, ctx):
-        if ctx.cur_data_split == 'train':
+        if ctx.cur_split == 'train':
             # For training
             if self.is_NeighborSampler:
                 # For NeighborSamper
@@ -155,18 +155,18 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                 batch = ctx.data_batch.to(ctx.device)
                 pred = ctx.model(batch.x,
                                  batch.edge_index)[batch['{}_mask'.format(
-                                     ctx.cur_data_split)]]
-                label = batch.y[batch['{}_mask'.format(ctx.cur_data_split)]]
+                                     ctx.cur_split)]]
+                label = batch.y[batch['{}_mask'.format(ctx.cur_split)]]
                 ctx.batch_size = torch.sum(ctx.data_batch['train_mask']).item()
         else:
             # For inference
             subgraph_loader = ctx.data_batch
-            mask = ctx.data['data']['{}_mask'.format(ctx.cur_data_split)]
+            mask = ctx.data['data']['{}_mask'.format(ctx.cur_split)]
             pred = ctx.model.inference(ctx.data['data'].x, subgraph_loader,
                                        ctx.device)[mask]
             label = ctx.data['data'].y[mask]
             ctx.batch_size = torch.sum(ctx.data['data']['{}_mask'.format(
-                ctx.cur_data_split)]).item()
+                ctx.cur_split)]).item()
 
         ctx.loss_batch = ctx.criterion(pred, label)
         ctx.y_true = label

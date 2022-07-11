@@ -214,7 +214,7 @@ class Trainer(object):
     def train(self, target_data_split_name="train", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_train
 
-        self.ctx.check_data_split(target_data_split_name)
+        self.ctx.check_split(target_data_split_name)
 
         self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
 
@@ -224,7 +224,7 @@ class Trainer(object):
     def evaluate(self, target_data_split_name="test", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_eval
 
-        if self.ctx.check_data_split(target_data_split_name, skip=True):
+        if self.ctx.check_split(target_data_split_name, skip=True):
             self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
         else:
             self.ctx.eval_metrics = dict()
@@ -234,7 +234,7 @@ class Trainer(object):
     def finetune(self, target_data_split_name="train", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_ft
 
-        self.ctx.check_data_split(target_data_split_name)
+        self.ctx.check_split(target_data_split_name)
 
         self._run_routine(MODE.FINETUNE, hooks_set, target_data_split_name)
 
@@ -255,8 +255,8 @@ class Trainer(object):
         """
         if dataset_name is None:
             dataset_name = mode
-        self.ctx.append_mode(mode)
-        self.ctx.track_used_dataset(dataset_name)
+        self.ctx.track_mode(mode)
+        self.ctx.track_split(dataset_name)
 
         for hook in hooks_set["on_fit_start"]:
             hook(self.ctx)
@@ -291,8 +291,8 @@ class Trainer(object):
         for hook in hooks_set["on_fit_end"]:
             hook(self.ctx)
 
-        self.ctx.pop_mode()
-        self.ctx.reset_used_dataset()
+        self.ctx.reset_mode()
+        self.ctx.reset_split()
         # Avoid memory leak
         if not self.cfg.federate.share_local_model:
             if torch is None:
