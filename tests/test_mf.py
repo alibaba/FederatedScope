@@ -23,7 +23,7 @@ class MFTest(unittest.TestCase):
         cfg.eval.metrics = []
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 20
+        cfg.train.local_update_steps = 20
         cfg.federate.total_round_num = 50
         cfg.federate.client_num = 5
 
@@ -34,8 +34,8 @@ class MFTest(unittest.TestCase):
         cfg.model.type = 'VMFNet'
         cfg.model.hidden = 20
 
-        cfg.optimizer.lr = 1.
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 1.
+        cfg.train.optimizer.weight_decay = 0.0
 
         cfg.criterion.type = 'MSELoss'
         cfg.trainer.type = 'mftrainer'

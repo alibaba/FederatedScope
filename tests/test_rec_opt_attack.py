@@ -21,7 +21,7 @@ class RECTest(unittest.TestCase):
         cfg.eval.metrics = ['acc', 'loss_regular']
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 1
+        cfg.train.local_update_steps = 1
         cfg.federate.total_round_num = 20
         cfg.federate.sample_client_num = 5
         cfg.federate.client_num = 10
@@ -43,8 +43,8 @@ class RECTest(unittest.TestCase):
         cfg.model.hidden = 2048
         cfg.model.out_channels = 62
 
-        cfg.optimizer.lr = 0.001
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 0.001
+        cfg.train.optimizer.weight_decay = 0.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'cvtrainer'

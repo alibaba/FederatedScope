@@ -37,7 +37,7 @@ class vFLServer(Server):
             abstract_paillier.generate_paillier_keypair(n_length=cfg_key_size)
         self.dims = [0] + config.vertical.dims
         self.theta = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
-        self.lr = config.optimizer.lr
+        self.lr = config.train.optimizer.lr
 
         self.register_handlers('encryped_gradient',
                                self.callback_funcs_for_encryped_gradient)

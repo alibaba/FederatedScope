@@ -2,9 +2,7 @@ use_gpu: True
 device: 2
 federate:
   mode: standalone
-  local_update_steps: 1
   total_round_num: 40
-  batch_or_epoch: 'epoch'
   client_num: 5
   share_local_model: True
   online_aggr: True
@@ -21,9 +19,12 @@ model:
   type: 'google/bert_uncased_L-2_H-128_A-2@transformers'
   task: 'SequenceClassification'
   out_channels: 2
-optimizer:
-  lr: 0.0001
-  weight_decay: 0.0
+train:
+  local_update_steps: 1
+  batch_or_epoch: 'epoch'
+  optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
 criterion:
   type: 'CrossEntropyLoss'
 trainer:

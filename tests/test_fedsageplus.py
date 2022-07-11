@@ -23,7 +23,7 @@ class FedSagePlusTest(unittest.TestCase):
         cfg.federate.client_num = 3
         cfg.federate.total_round_num = 10
         cfg.federate.method = 'fedsageplus'
-        cfg.federate.batch_or_epoch = 'epoch'
+        cfg.train.batch_or_epoch = 'epoch'
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'cora'

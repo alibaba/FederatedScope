@@ -3,8 +3,6 @@ device: 0
 seed: 1
 federate:
   mode: standalone
-  local_update_steps: 1
-  batch_or_epoch: epoch
   total_round_num: 1000
   sample_client_rate: 0.2
 data:
@@ -24,9 +22,12 @@ model:
 personalization:
   local_update_steps: 1
   lr: 1.5
-optimizer:
-  lr: 1.5
-  weight_decay: 0.0
+train:
+  batch_or_epoch: epoch
+  local_update_steps: 1
+  optimizer:
+    lr: 1.5
+    weight_decay: 0.0
 criterion:
   type: character_loss
 trainer:

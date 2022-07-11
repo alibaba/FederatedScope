@@ -1,9 +1,9 @@
 import collections
 import copy
 import logging
-import os
-import numpy as np
 
+from federatedscope.core.auxiliaries.eunms import MODE
+from federatedscope.core.auxiliaries.decorators import use_diff
 from federatedscope.core.auxiliaries.utils import format_log_hooks
 from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
 from federatedscope.core.trainers.context import Context
@@ -64,11 +64,14 @@ class Trainer(object):
 
         # By default, use the same trigger keys
         self.hooks_in_eval = copy.deepcopy(self.hooks_in_train)
+        self.hooks_in_ft = copy.deepcopy(self.hooks_in_train)
 
         # register necessary hooks into self.hooks_in_train and
         # self.hooks_in_eval
         if not only_for_eval:
             self.register_default_hooks_train()
+        if self.cfg.finetune.before_eval:
+            self.register_default_hooks_ft()
         self.register_default_hooks_eval()
 
         if self.cfg.federate.mode == 'distributed':
@@ -85,6 +88,9 @@ class Trainer(object):
         pass
 
     def register_default_hooks_eval(self):
+        pass
+
+    def register_default_hooks_ft(self):
         pass
 
     def reset_hook_in_train(self, target_trigger, target_hook_name=None):
@@ -153,6 +159,16 @@ class Trainer(object):
         self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
                             new_hook, trigger)
 
+    def register_hook_in_ft(self,
+                            new_hook,
+                            trigger,
+                            insert_pos=None,
+                            base_hook=None,
+                            insert_mode="before"):
+        hooks_dict = self.hooks_in_ft
+        self._register_hook(base_hook, hooks_dict, insert_mode, insert_pos,
+                            new_hook, trigger)
+
     def register_hook_in_eval(self,
                               new_hook,
                               trigger,
@@ -194,25 +210,33 @@ class Trainer(object):
         else:
             hooks_dict[trigger].insert(insert_pos, new_hook)
 
+    @use_diff
     def train(self, target_data_split_name="train", hooks_set=None):
-        pass
+        hooks_set = hooks_set or self.hooks_in_train
+
+        self.ctx.check_data_split(target_data_split_name)
+
+        self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+
+        return self.ctx.num_samples_train, self.get_model_para(
+        ), self.ctx.eval_metrics
 
     def evaluate(self, target_data_split_name="test", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_eval
-        if self.ctx.get(
-                f"{target_data_split_name}_data") is None and self.ctx.get(
-                    f"{target_data_split_name}_loader") is None:
-            logger.warning(
-                f"No {target_data_split_name}_data or "
-                f"{target_data_split_name}_loader in the trainer, will skip "
-                f"evaluation"
-                f"If this is not the case you want, please check whether "
-                f"there is typo for the name")
-            self.ctx.eval_metrics = {}
+
+        if self.ctx.check_data_split(target_data_split_name, skip=True):
+            self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
         else:
-            self._run_routine("test", hooks_set, target_data_split_name)
+            self.ctx.eval_metrics = dict()
 
         return self.ctx.eval_metrics
+
+    def finetune(self, target_data_split_name="train", hooks_set=None):
+        hooks_set = hooks_set or self.hooks_in_ft
+
+        self.ctx.check_data_split(target_data_split_name)
+
+        self._run_routine(MODE.FINETUNE, hooks_set, target_data_split_name)
 
     def _run_routine(self, mode, hooks_set, dataset_name=None):
         """Run the hooks_set and maintain the mode
@@ -321,9 +345,6 @@ class Trainer(object):
                     f"{format_log_hooks(self.hooks_in_train)};\n"
                     f"\tthe hooks_in_eval is:\n\
             t{format_log_hooks(self.hooks_in_eval)}")
-
-    def finetune(self):
-        pass
 
     def _param_filter(self, state_dict, filter_keywords=None):
         '''

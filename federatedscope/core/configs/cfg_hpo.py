@@ -77,11 +77,7 @@ def assert_hpo_cfg(cfg):
 
     assert not (cfg.hpo.fedex.use and cfg.federate.use_ss
                 ), "Cannot use secret sharing and FedEx at the same time"
-    assert cfg.optimizer.type == 'SGD' or not cfg.hpo.fedex.use, "SGD is " \
-                                                                 "required " \
-                                                                 "if FedEx " \
-                                                                 "is " \
-                                                                 "considered"
+    assert cfg.train.optimizer.type == 'SGD' or not cfg.hpo.fedex.use, "SGD is required if FedEx is considered"
     assert cfg.hpo.fedex.sched in [
         'adaptive', 'aggressive', 'auto', 'constant', 'scale'
     ], "schedule of FedEx must be choice from {}".format(

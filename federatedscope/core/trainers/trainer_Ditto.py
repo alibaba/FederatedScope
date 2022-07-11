@@ -25,6 +25,10 @@ def wrap_DittoTrainer(
 
     # ---------------- action-level plug-in -----------------------
     base_trainer.register_hook_in_train(
+        new_hook=_hook_on_fit_start_del_opt,
+        trigger='on_fit_start',
+        insert_pos=-1)
+    base_trainer.register_hook_in_train(
         new_hook=hook_on_fit_start_set_regularized_para,
         trigger="on_fit_start",
         insert_pos=0)
@@ -70,15 +74,7 @@ def init_Ditto_ctx(base_trainer):
     ctx.local_model = copy.deepcopy(ctx.model)  # the personalized model
     ctx.models = [ctx.local_model, ctx.global_model]
 
-    ctx.optimizer_for_global_model = get_optimizer(ctx.global_model,
-                                                   **cfg.optimizer)
-    ctx.optimizer_for_local_model = get_optimizer(ctx.local_model,
-                                                  **cfg.optimizer)
-    ctx.optimizer_for_local_model = wrap_regularized_optimizer(
-        ctx.optimizer_for_local_model, cfg.personalization.regular_weight)
-
     ctx.model = ctx.global_model
-    del ctx.optimizer
 
     # track the batch_num, epoch_num, for local & global model respectively
     cfg_p_local_update_steps = cfg.personalization.local_update_steps
@@ -106,9 +102,21 @@ def hook_on_fit_start_set_regularized_para(ctx):
     compared_global_model_para = [{
         "params": list(ctx.global_model.parameters())
     }]
+
+    ctx.optimizer_for_global_model = get_optimizer(ctx.global_model,
+                                                   **ctx.cfg.train.optimizer)
+    ctx.optimizer_for_local_model = get_optimizer(ctx.local_model,
+                                                  **ctx.cfg.train.optimizer)
+
+    ctx.optimizer_for_local_model = wrap_regularized_optimizer(
+        ctx.optimizer_for_local_model, ctx.cfg.personalization.regular_weight)
+
     ctx.optimizer_for_local_model.set_compared_para_group(
         compared_global_model_para)
 
+def _hook_on_fit_start_del_opt(ctx):
+    # remove the unnecessary optimizer
+    del ctx.optimizer
 
 def _hook_on_batch_end_flop_count(ctx):
     # besides the normal forward flops, the regularization adds the cost of

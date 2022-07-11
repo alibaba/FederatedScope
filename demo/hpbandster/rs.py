@@ -47,8 +47,8 @@ def eval_fl_algo(x, b):
         "federatedscope/example_configs/single_process.yaml")
     # specify the configuration of interest
     init_cfg.merge_from_list([
-        "optimizer.lr",
-        float(x['lr']), "optimizer.weight_decay",
+        "train.optimizer.lr",
+        float(x['lr']), "train.optimizer.weight_decay",
         float(x['wd']), "model.dropout",
         float(x["dropout"])
     ])

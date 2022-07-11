@@ -7,7 +7,6 @@ federate:
   mode: standalone
   make_global_eval: True
   client_num: 5
-  local_update_steps: 1
   total_round_num: 500
   share_local_model: True
   online_aggr: True
@@ -22,9 +21,11 @@ model:
   hidden: 64
   dropout: 0.5
   out_channels: 7
-optimizer:
-  lr: 0.25
-  weight_decay: 0.0005
+train:
+  local_update_steps: 1
+  optimizer:
+    lr: 0.25
+    weight_decay: 0.0005
 criterion:
   type: CrossEntropyLoss
 trainer:

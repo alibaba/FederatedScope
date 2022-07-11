@@ -25,7 +25,7 @@ def eval_fl_algo(x):
     init_cfg = global_cfg.clone()
     init_cfg.merge_from_file(
         "federatedscope/example_configs/single_process.yaml")
-    init_cfg.merge_from_list(["optimizer.lr", float(x[0])])
+    init_cfg.merge_from_list(["train.optimizer.lr", float(x[0])])
 
     update_logger(init_cfg, True)
     setup_seed(init_cfg.seed)

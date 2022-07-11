@@ -72,7 +72,7 @@ class PassiveServer(Server):
             lr=self._cfg.attack.reconstruct_lr,
             federate_loss_fn=self.model_criterion,
             device=self.device,
-            federate_lr=self._cfg.optimizer.lr,
+            federate_lr=self._cfg.train.optimizer.lr,
             optim=self._cfg.attack.reconstruct_optim,
             info_diff_type=self._cfg.attack.info_diff_type,
             federate_method=self._cfg.federate.method,
@@ -179,9 +179,9 @@ class PassivePIAServer(Server):
             device=self.device,
             grad_clip=self._cfg.grad.grad_clip,
             dataset_name=self._cfg.data.type,
-            fl_local_update_num=self._cfg.federate.local_update_steps,
+            fl_local_update_num=self._cfg.train.local_update_steps,
             fl_type_optimizer=self._cfg.fedopt.optimizer.type,
-            fl_lr=self._cfg.optimizer.lr,
+            fl_lr=self._cfg.train.optimizer.lr,
             batch_size=100)
 
         # self.optimizer = get_optimizer(

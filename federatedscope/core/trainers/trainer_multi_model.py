@@ -112,11 +112,10 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         ]
         self.ctx.models = [self.ctx.model] + additional_models
 
-        additional_optimizers = [
-            get_optimizer(self.ctx.models[i], **self.cfg.optimizer)
-            for i in range(1, self.model_nums)
+        self.ctx.optimizers = [
+            get_optimizer(self.ctx.models[i], **self.cfg.train.optimizer)
+            for i in range(0, self.model_nums)
         ]
-        self.ctx.optimizers = [self.ctx.optimizer] + additional_optimizers
 
     def register_multiple_model_hooks(self):
         """

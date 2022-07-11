@@ -5,8 +5,6 @@ early_stop:
 seed: 1
 federate:
   mode: standalone
-  local_update_steps: 1
-  batch_or_epoch: epoch
   total_round_num: 300
   sample_client_rate: 0.2
 data:
@@ -23,9 +21,12 @@ model:
   out_channels: 62
 personalization:
   local_param: [ 'bn', 'norms' ]  # FedBN
-optimizer:
-  lr: 0.1
-  weight_decay: 0.0
+train:
+  batch_or_epoch: epoch
+  local_update_steps: 1
+  optimizer:
+    lr: 0.1
+    weight_decay: 0.0
 grad:
   grad_clip: 5.0
 criterion:

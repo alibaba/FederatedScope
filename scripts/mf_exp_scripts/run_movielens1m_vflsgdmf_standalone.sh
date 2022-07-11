@@ -31,8 +31,8 @@ do
           sgdmf.use True \
           sgdmf.epsilon ${epsilons[$ie]} \
           sgdmf.delta ${deltas[$id]} \
-          optimizer.lr ${lrs[$il]} \
-          federate.local_update_steps ${steps[$is]} \
+          train.optimizer.lr ${lrs[$il]} \
+          train.local_update_steps ${steps[$is]} \
           federate.total_round_num ${round} \
           data.batch_size ${batchs[$ib]}  \
           >>out_vflsgdmf1m/temp.out \

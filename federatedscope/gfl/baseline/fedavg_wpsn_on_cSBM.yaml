@@ -27,8 +27,7 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: nodeminibatch_trainer
-  finetune:
-    steps: 2
-    stepsize: 0.25
+finetune:
+  local_update_steps: 2
 eval:
   metrics: ['acc', 'correct']

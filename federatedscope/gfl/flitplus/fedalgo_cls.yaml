@@ -3,7 +3,6 @@ device: 0
 federate:
   mode: 'standalone'
   make_global_eval: True
-  local_update_steps: 333
   total_round_num: 30
   client_num: 4
   sample_client_num: 3
@@ -21,10 +20,12 @@ model:
 flitplus:
   tmpFed: 0.5
   factor_ema: 0.8
-optimizer:
-  type: 'Adam'
-  lr: 0.0001
-  weight_decay: 0.00001
+train:
+  local_update_steps: 333
+  optimizer:
+    type: 'Adam'
+    lr: 0.0001
+    weight_decay: 0.00001
 criterion:
   type: CrossEntropyLoss
 eval:

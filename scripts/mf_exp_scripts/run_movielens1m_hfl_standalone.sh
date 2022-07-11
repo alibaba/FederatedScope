@@ -23,8 +23,8 @@ do
       python federatedscope/main.py --cfg federatedscope/mf/baseline/hfl_fedavg_standalone_on_movielens1m.yaml device ${cudaid} \
       data.root /mnt/gaodawei.gdw/data/ \
       sgdmf.use False \
-      optimizer.lr ${lrs[$il]} \
-      federate.local_update_steps ${steps[$is]} \
+      train.optimizer.lr ${lrs[$il]} \
+      train.local_update_steps ${steps[$is]} \
       federate.total_round_num ${round} \
       data.batch_size ${batchs[$ib]}  \
       >>out_hfl1m/nothing.out \

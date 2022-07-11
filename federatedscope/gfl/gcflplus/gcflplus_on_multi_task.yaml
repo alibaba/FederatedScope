@@ -4,7 +4,6 @@ federate:
   mode: standalone
   total_round_num: 100
   method: gcflplus
-  batch_or_epoch: epoch
 data:
   root: data/
   type: graph_multi_domain_mix
@@ -20,10 +19,12 @@ gcflplus:
   EPS_2: 0.1
   seq_length: 5
   standardize: False
-optimizer:
-  lr: 0.5
-  weight_decay: 0.0005
-  type: SGD
+train:
+  batch_or_epoch: epoch
+  optimizer:
+    lr: 0.5
+    weight_decay: 0.0005
+    type: SGD
 criterion:
   type: CrossEntropyLoss
 personalization:

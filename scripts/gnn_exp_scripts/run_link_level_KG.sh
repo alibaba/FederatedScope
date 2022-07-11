@@ -33,7 +33,7 @@ do
         do
             for k in {1..5}
             do
-                python federatedscope/main.py --cfg federatedscope/gfl/baseline/fedavg_gcn_minibatch_on_kg.yaml device ${cudaid} data.type ${dataset} data.splitter ${splitter} optimizer.lr ${lrs[$i]} federate.local_update_steps ${local_updates[$j]} model.type ${gnns[$g]} model.out_channels ${out_channels} model.hidden ${hidden} seed $k >>out/${gnns[$g]}_${lrs[$i]}_${local_updates[$j]}_on_${dataset}_${splitter}.log 2>&1
+                python federatedscope/main.py --cfg federatedscope/gfl/baseline/fedavg_gcn_minibatch_on_kg.yaml device ${cudaid} data.type ${dataset} data.splitter ${splitter} train.optimizer.lr ${lrs[$i]} train.local_update_steps ${local_updates[$j]} model.type ${gnns[$g]} model.out_channels ${out_channels} model.hidden ${hidden} seed $k >>out/${gnns[$g]}_${lrs[$i]}_${local_updates[$j]}_on_${dataset}_${splitter}.log 2>&1
             done
         done
     done
