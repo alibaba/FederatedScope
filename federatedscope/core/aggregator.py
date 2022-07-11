@@ -40,11 +40,15 @@ class ClientsAvgAggregator(Aggregator):
         models = agg_info["client_feedback"]
         recover_fun = agg_info['recover_fun'] if (
             'recover_fun' in agg_info and self.cfg.federate.use_ss) else None
-        staleness = [x[1] for x in agg_info['staleness']] # (client_id, staleness)
-        avg_model = self._para_weighted_avg(models, recover_fun=recover_fun, staleness=staleness)
+        staleness = [x[1]
+                     for x in agg_info['staleness']]  # (client_id, staleness)
+        avg_model = self._para_weighted_avg(models,
+                                            recover_fun=recover_fun,
+                                            staleness=staleness)
 
         if self.cfg.asyn.use:
-            # When using asynchronous training, the return feedback is model delta rather than the model param
+            # When using asynchronous training, the return feedback is model
+            # delta rather than the model param
             updated_model = copy.deepcopy(avg_model)
             init_model = self.model.state_dict()
             for key in avg_model:
@@ -78,10 +82,14 @@ class ClientsAvgAggregator(Aggregator):
 
     def discount_func(self, staleness):
         """
-        Served as an example, we discount the model update with staleness \tau as: (1.0/((1.0+\tau)**factor)),
-        which has been used in previous studies such as FedAsync (Asynchronous Federated Optimization) and FedBuff (Federated Learning with Buffered Asynchronous Aggregation).
+        Served as an example, we discount the model update with staleness \tau
+        as: (1.0/((1.0+\tau)**factor)),
+        which has been used in previous studies such as FedAsync (Asynchronous
+        Federated Optimization) and FedBuff
+        (Federated Learning with Buffered Asynchronous Aggregation).
         """
-        return (1.0/((1.0+staleness)**self.cfg.asyn.staleness_discount_factor))
+        return (1.0 /
+                ((1.0 + staleness)**self.cfg.asyn.staleness_discount_factor))
 
     def _para_weighted_avg(self, models, recover_fun=None, staleness=None):
         training_set_size = 0
@@ -102,7 +110,8 @@ class ClientsAvgAggregator(Aggregator):
                     weight = 1.0
                 elif self.cfg.asyn.use:
                     assert staleness is not None
-                    weight =  local_sample_size / training_set_size * self.discount_func(staleness[i])
+                    weight = local_sample_size / training_set_size \
+                        * self.discount_func(staleness[i])
                 else:
                     weight = local_sample_size / training_set_size
 

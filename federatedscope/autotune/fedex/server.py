@@ -274,9 +274,9 @@ class FedExServer(Server):
             self._stop_exploration = True
 
         logger.info(
-            'Server: Updated policy as {} with entropy {:f} and mle {:f}'
-            .format(self._theta, self._trace['entropy'][-1],
-                    self._trace['mle'][-1]))
+            'Server: Updated policy as {} with entropy {:f} and mle {:f}'.
+            format(self._theta, self._trace['entropy'][-1],
+                   self._trace['mle'][-1]))
 
     def check_and_move_on(self,
                           check_eval_result=False,
@@ -347,8 +347,8 @@ class FedExServer(Server):
                         self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server: Starting evaluation at round {:d}.'.
-                        format(self.state))
+                        'Server: Starting evaluation at round {:d}.'.format(
+                            self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:

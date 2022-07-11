@@ -134,24 +134,39 @@ class Server(Worker):
         # Server state
         self.is_finish = False
 
+        # Sampler
+        if self._cfg.federate.sampler in ['uniform']:
+            self.sampler = get_sampler(
+                sample_strategy=self._cfg.federate.sampler,
+                client_num=self.client_num,
+                client_info=None)
+        else:
+            # Some type of sampler would be instantiated in trigger_for_start,
+            # since they need more information
+            self.sampler = None
+
         # Current Timestamp
         self.cur_timestamp = 0
         self.deadline_for_cur_round = 1
 
         # Staleness toleration
-        self.staleness_toleration = self._cfg.asyn.staleness_toleration if self._cfg.asyn.use else 0
+        self.staleness_toleration = self._cfg.asyn.staleness_toleration if \
+            self._cfg.asyn.use else 0
         self.dropout_num = 0
 
         # Device information
-        self.device_info = kwargs['device_info'] if 'device_info' in kwargs else None
-        self.client_info = kwargs['client_info'] if 'client_info' in kwargs else None
+        self.device_info = kwargs[
+            'device_info'] if 'device_info' in kwargs else None
+        self.client_info = kwargs[
+            'client_info'] if 'client_info' in kwargs else None
 
         # Register message handlers
         self.msg_handlers = dict()
         self._register_default_handlers()
 
         # Initialize communication manager and message buffer
-        self.msg_buffer = {'train': list(), 'eval': dict()}
+        self.msg_buffer = {'train': dict(), 'eval': dict()}
+        self.staled_msg_buffer = list()
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
             self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
@@ -162,8 +177,7 @@ class Server(Worker):
             self.comm_manager = gRPCCommManager(host=host,
                                                 port=port,
                                                 client_num=client_num)
-            logger.info('Server: Listen to {}:{}...'.format(
-                host, port))
+            logger.info('Server: Listen to {}:{}...'.format(host, port))
 
         # inject noise before broadcast
         self._noise_injector = None
@@ -292,24 +306,37 @@ class Server(Worker):
         # round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
             if not check_eval_result:  # in the training process
-                # Get all the message
-                train_msg_buffer = self.msg_buffer['train']
+
+                train_msg_buffer = self.msg_buffer['train'][self.state]
                 for model_idx in range(self.model_num):
                     model = self.models[model_idx]
                     aggregator = self.aggregators[model_idx]
                     msg_list = list()
                     staleness = list()
 
-                    for each_message in train_msg_buffer:
-                        client_state, client_id, message_content = each_message
+                    for client_id in train_msg_buffer.keys():
                         if self.model_num == 1:
-                            msg_list.append(message_content)
+                            msg_list.append(train_msg_buffer[client_id])
                         else:
-                            train_data_size, model_para_multiple = message_content
+                            train_data_size, model_para_multiple = \
+                                train_msg_buffer[client_id]
                             msg_list.append((train_data_size,
                                              model_para_multiple[model_idx]))
-                        # The staleness of the messages in train_msg_buffer should be 0
-                        staleness.append((client_id, self.state-client_state))
+
+                        # The staleness of the messages in train_msg_buffer
+                        # should be 0
+                        staleness.append((client_id, 0))
+
+                    for staled_message in self.staled_msg_buffer:
+                        state, client_id, content = staled_message
+                        if self.model_num == 1:
+                            msg_list.append(content)
+                        else:
+                            train_data_size, model_para_multiple = content
+                            msg_list.append((train_data_size,
+                                             model_para_multiple[model_idx]))
+
+                        staleness.append((client_id, self.state - state))
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
@@ -326,7 +353,7 @@ class Server(Worker):
                         'recover_fun': self.recover_fun,
                         'staleness': staleness,
                     }
-                    logger.info(f'The staleness is {staleness}')
+                    # logger.info(f'The staleness is {staleness}')
                     result = aggregator.aggregate(agg_info)
                     model.load_state_dict(result, strict=False)
 
@@ -334,9 +361,8 @@ class Server(Worker):
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
                         self.total_round_num:
                     #  Evaluate
-                    logger.info(
-                        f'Server: Starting evaluation at the end '
-                        f'of round {self.state - 1}.')
+                    logger.info(f'Server: Starting evaluation at the end '
+                                f'of round {self.state - 1}.')
                     self.eval()
 
                 if self.state < self.total_round_num:
@@ -345,24 +371,29 @@ class Server(Worker):
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
                     # Clean the msg_buffer
-                    self.msg_buffer['train'].clear()
+                    self.msg_buffer['train'][self.state - 1].clear()
+                    self.msg_buffer['train'][self.state] = dict()
+                    self.staled_msg_buffer.clear()
 
-                    if self._cfg.asyn.use: # for asynchronous training
+                    if self._cfg.asyn.use:  # for asynchronous training
                         if self._cfg.asyn.aggregator == "time_up":
                             # Update the deadline according to the time budget
-                            self.deadline_for_cur_round = self.cur_timestamp + self._cfg.asyn.time_budget
+                            self.deadline_for_cur_round = \
+                                self.cur_timestamp + self._cfg.asyn.time_budget
 
-                        if self._cfg.asyn.broadcast_manner == 'after_aggregating':
+                        if self._cfg.asyn.broadcast_manner == \
+                                'after_aggregating':
                             if self._cfg.asyn.overselection:
                                 sample_client_num = self.sample_client_num
                             else:
-                                sample_client_num = aggregated_num + self.dropout_num
+                                sample_client_num = aggregated_num + \
+                                                     self.dropout_num
 
                             self.broadcast_model_para(
                                 msg_type='model_para',
                                 sample_client_num=sample_client_num)
                             self.dropout_num = 0
-                    else: # for synchronous training
+                    else:  # for synchronous training
                         self.broadcast_model_para(
                             msg_type='model_para',
                             sample_client_num=self.sample_client_num)
@@ -374,7 +405,8 @@ class Server(Worker):
 
             else:  # in the evaluation process
                 # Get all the message & aggregate
-                formatted_eval_res = self.merge_eval_results_from_all_clients()
+                formatted_eval_res = \
+                    self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 if self.mode == 'standalone' and \
@@ -645,23 +677,35 @@ class Server(Worker):
             if 'eval' not in self.msg_buffer.keys() or len(
                     self.msg_buffer['eval'].keys()) == 0:
                 return False
+
             buffer = self.msg_buffer['eval']
             cur_round = max(buffer.keys())
             cur_buffer = buffer[cur_round]
             return len(cur_buffer) >= min_received_num
         else:
-            cur_buffer = self.msg_buffer['train']
+            cur_buffer = self.msg_buffer['train'][cur_round]
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
-                if self.cur_timestamp >= self.deadline_for_cur_round and len(cur_buffer) == 0:
-                    # When the time budget is run out but the server has not received any feedback
-                    logger.warning(f'The server has not received any feedback when the time budget has run out, therefore the server would wait for more {self._cfg.asyn.time_budget} seconds. Maybe you should carefully reset the `cfg.asyn.time_budget` to a reasonable value.')
+                if self.cur_timestamp >= self.deadline_for_cur_round and len(
+                        cur_buffer) + len(self.staled_msg_buffer) == 0:
+                    # When the time budget is run out but the server has not
+                    # received any feedback
+                    logger.warning(
+                        f'The server has not received any feedback when the '
+                        f'time budget has run out, therefore the server would '
+                        f'wait for more {self._cfg.asyn.time_budget} seconds. '
+                        f'Maybe you should carefully reset '
+                        f'`cfg.asyn.time_budget` to a reasonable value.')
                     self.deadline_for_cur_round += self._cfg.asyn.time_budget
-                    if self._cfg.asyn.broadcast_manner == 'after_aggregating' and self.dropout_num != 0:
-                        self.broadcast_model_para(msg_type='model_para', sample_client_num=self.dropout_num)
+                    if self._cfg.asyn.broadcast_manner == \
+                            'after_aggregating' and self.dropout_num != 0:
+                        self.broadcast_model_para(
+                            msg_type='model_para',
+                            sample_client_num=self.dropout_num)
                         self.dropout_num = 0
                 return self.cur_timestamp >= self.deadline_for_cur_round
             else:
-                return len(cur_buffer) >= min_received_num
+                return len(cur_buffer)+len(self.staled_msg_buffer) >= \
+                       min_received_num
 
     def check_client_join_in(self):
         """
@@ -684,17 +728,28 @@ class Server(Worker):
 
             # get sampler
             if 'client_info' in self._cfg.federate.join_in_info:
-                client_info = [self.join_in_info[client_index]['client_info'] for client_index in np.arange(1, self.client_num+1)]
+                client_info = [
+                    self.join_in_info[client_index]['client_info']
+                    for client_index in np.arange(1, self.client_num + 1)
+                ]
             else:
-                model_size = sys.getsizeof(pickle.dumps(self.model)) / 1024.0 * 8.
-                client_info = [model_size/float(x['communication']) + float(x['computation'])/1000. for x in self.client_info] if self.client_info is not None else None
-            self.sampler = get_sampler(sample_strategy=self._cfg.federate.sampler,
-                                       client_num=self.client_num,
-                                       client_info=client_info)
+                model_size = sys.getsizeof(pickle.dumps(
+                    self.model)) / 1024.0 * 8.
+                client_info = [
+                    model_size / float(x['communication']) +
+                    float(x['computation']) / 1000. for x in self.client_info
+                ] if self.client_info is not None else None
+
+            if self.sampler is None:
+                self.sampler = get_sampler(
+                    sample_strategy=self._cfg.federate.sampler,
+                    client_num=self.client_num,
+                    client_info=client_info)
 
             # change the deadline if the asyn.aggregator is `time up`
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
-                self.deadline_for_cur_round = self.cur_timestamp + self._cfg.asyn.time_budget
+                self.deadline_for_cur_round = self.cur_timestamp + \
+                                               self._cfg.asyn.time_budget
 
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.
@@ -704,7 +759,8 @@ class Server(Worker):
 
     def trigger_for_time_up(self):
         """
-        The handler for time up: modify the currency timestamp and check the trigger condition
+        The handler for time up: modify the currency timestamp
+        and check the trigger condition
         """
 
         self.cur_timestamp = self.deadline_for_cur_round
@@ -785,28 +841,35 @@ class Server(Worker):
         if self.is_finish:
             return 'finish'
 
-        round, sender, timestamp, content = message.state, message.sender, message.timestamp, message.content
+        round = message.state
+        sender = message.sender
+        timestamp = message.timestamp
+        content = message.content
         self.sampler.change_state(sender, 'idle')
 
         # update the currency timestamp according to the received message
-        assert timestamp >= self.cur_timestamp # for test
+        assert timestamp >= self.cur_timestamp  # for test
         self.cur_timestamp = timestamp
 
-        if round >= self.state - self.staleness_toleration:
-            # Save the messages
-            self.msg_buffer['train'].append((round, sender, content))
+        if round == self.state:
+            # Save the messages in this round
+            self.msg_buffer['train'][round][sender] = content
+        elif round >= self.state - self.staleness_toleration:
+            # Save the staled messages
+            self.staled_msg_buffer.append((round, sender, content))
         else:
             # Drop the out-of-date messages
             logger.info(f'Drop a out-of-date message from round #{round}')
             self.dropout_num += 1
 
-
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(content)
 
         move_on_flag = self.check_and_move_on()
-        if self._cfg.asyn.use and self._cfg.asyn.broadcast_manner == 'after_receiving':
-            self.broadcast_model_para(msg_type='model_para', sample_client_num=1)
+        if self._cfg.asyn.use and self._cfg.asyn.broadcast_manner == \
+                'after_receiving':
+            self.broadcast_model_para(msg_type='model_para',
+                                      sample_client_num=1)
 
         return move_on_flag
 
@@ -827,8 +890,7 @@ class Server(Worker):
             for key in self._cfg.federate.join_in_info:
                 assert key in info
             self.join_in_info[sender] = info
-            logger.info('Server: Client #{:d} has joined in !'.format(
-                sender))
+            logger.info('Server: Client #{:d} has joined in !'.format(sender))
         else:
             self.join_in_client_num += 1
             sender, address = message.sender, message.content
@@ -868,7 +930,9 @@ class Server(Worker):
             message: The received message
         """
 
-        round, sender, content = message.state, message.sender, message.content
+        round = message.state
+        sender = message.sender
+        content = message.content
 
         if round not in self.msg_buffer['eval'].keys():
             self.msg_buffer['eval'][round] = dict()

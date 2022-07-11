@@ -66,8 +66,7 @@ class FedSagePlusServer(Server):
             for key in self._cfg.federate.join_in_info:
                 assert key in info
             self.join_in_info[sender] = info
-            logger.info('Server: Client #{:d} has joined in !'.format(
-                sender))
+            logger.info('Server: Client #{:d} has joined in !'.format(sender))
         else:
             self.join_in_client_num += 1
             sender, address = message.sender, message.content
@@ -214,8 +213,8 @@ class FedSagePlusServer(Server):
                         self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server : Starting evaluation at round {:d}.'.
-                        format(self.ID, self.state))
+                        'Server : Starting evaluation at round {:d}.'.format(
+                            self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:

@@ -127,8 +127,8 @@ class GCFLPlusServer(Server):
                         self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server: Starting evaluation at round {:d}.'.
-                        format(self.state))
+                        'Server: Starting evaluation at round {:d}.'.format(
+                            self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:

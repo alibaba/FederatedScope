@@ -10,7 +10,8 @@ from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
-from federatedscope.core.auxiliaries.utils import merge_dict, calculate_time_cost
+from federatedscope.core.auxiliaries.utils import merge_dict, \
+    calculate_time_cost
 
 logger = logging.getLogger(__name__)
 
@@ -96,12 +97,13 @@ class Client(Worker):
 
         # Communication and communication ability
         if 'device_info' in kwargs and kwargs['device_info'] is not None:
-            self.comp_speed = float(kwargs['device_info']['computation'])/1000.
+            self.comp_speed = float(
+                kwargs['device_info']['computation']) / 1000.
             self.comm_bandwidth = float(kwargs['device_info']['communication'])
         else:
             self.comp_speed = None
             self.comm_bandwidth = None
-        self.model_size = sys.getsizeof(pickle.dumps(self.model))/1024.0*8.
+        self.model_size = sys.getsizeof(pickle.dumps(self.model)) / 1024.0 * 8.
 
         # Initialize communication manager
         self.server_id = server_id
@@ -132,7 +134,11 @@ class Client(Worker):
         if init_timestamp is None:
             return None
 
-        comp_cost, comm_cost = calculate_time_cost(instance_number=instance_number, model_size=self.model_size, comp_speed=self.comp_speed, comm_bandwidth=self.comm_bandwidth)
+        comp_cost, comm_cost = calculate_time_cost(
+            instance_number=instance_number,
+            model_size=self.model_size,
+            comp_speed=self.comp_speed,
+            comm_bandwidth=self.comm_bandwidth)
         return init_timestamp + comp_cost + comm_cost
 
     def _calculate_model_delta(self, init_model, updated_model):
@@ -144,7 +150,8 @@ class Client(Worker):
         for model_index in range(len(init_model)):
             model_delta = copy.deepcopy(init_model[model_index])
             for key in init_model[model_index].keys():
-                model_delta[key] = updated_model[model_index][key] - init_model[model_index][key]
+                model_delta[key] = updated_model[model_index][
+                    key] - init_model[model_index][key]
             model_deltas.append(model_delta)
 
         if len(model_deltas) > 1:
@@ -214,7 +221,8 @@ class Client(Worker):
         """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
-            state, content, timestamp = message.state, message.content, message.timestamp
+            state, content, timestamp = message.state, message.content, \
+                                        message.timestamp
             self.msg_buffer['train'][state].append(content)
 
             if len(self.msg_buffer['train']
@@ -253,7 +261,10 @@ class Client(Worker):
                                      first_aggregate_model_para)))
 
         else:
-            round, sender, timestamp, content = message.state, message.sender, message.timestamp, message.content
+            round = message.state
+            sender = message.sender
+            timestamp = message.timestamp
+            content = message.content
             # When clients share the local model, we must set strict=True to
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
@@ -333,7 +344,9 @@ class Client(Worker):
                                     sender=self.ID,
                                     receiver=[neighbor],
                                     state=self.state,
-                                    timestamp=self._gen_timestamp(init_timestamp=timestamp, instance_number=sample_size),
+                                    timestamp=self._gen_timestamp(
+                                        init_timestamp=timestamp,
+                                        instance_number=sample_size),
                                     content=content_frame))
                         frame_idx += 1
                 content_frame = model_para_list_all[0][frame_idx] if \
@@ -344,8 +357,12 @@ class Client(Worker):
                                                          content_frame)]
             else:
                 if self._cfg.asyn.use:
-                    # Return the model delta when using asynchronous training protocol, because the staled updated might be discounted and cause that the sum of the aggregated weights might not be equal to 1
-                    shared_model_para = self._calculate_model_delta(init_model=content, updated_model=model_para_all)
+                    # Return the model delta when using asynchronous training
+                    # protocol, because the staled updated might be discounted
+                    # and cause that the sum of the aggregated weights might
+                    # not be equal to 1
+                    shared_model_para = self._calculate_model_delta(
+                        init_model=content, updated_model=model_para_all)
                 else:
                     shared_model_para = model_para_all
 
@@ -354,7 +371,9 @@ class Client(Worker):
                             sender=self.ID,
                             receiver=[sender],
                             state=self.state,
-                            timestamp=self._gen_timestamp(init_timestamp=timestamp, instance_number=sample_size),
+                            timestamp=self._gen_timestamp(
+                                init_timestamp=timestamp,
+                                instance_number=sample_size),
                             content=(sample_size, shared_model_para)))
 
     def callback_funcs_for_assign_id(self, message: Message):
@@ -379,7 +398,8 @@ class Client(Worker):
         Arguments:
             message: The received message
         """
-        requirements, timestamp = message.content, message.timestamp
+        requirements = message.content
+        timestamp = message.timestamp
         join_in_info = dict()
         for requirement in requirements:
             if requirement.lower() == 'num_sample':
@@ -391,8 +411,11 @@ class Client(Worker):
                                  self.trainer.ctx.num_train_batch
                 join_in_info['num_sample'] = num_sample
             elif requirement.lower() == 'client_info':
-                assert self.comm_bandwidth is not None and self.comp_speed is not None, f"The requirement join_in_info 'client_info' does not exist."
-                join_in_info['client_info'] = self.model_size/self.comm_bandwidth + self.comp_speed
+                assert self.comm_bandwidth is not None and self.comp_speed \
+                       is not None, "The requirement join_in_info " \
+                                    "'client_info' does not exist."
+                join_in_info['client_info'] = self.model_size / \
+                    self.comm_bandwidth + self.comp_speed
             else:
                 raise ValueError(
                     'Fail to get the join in information with type {}'.format(
@@ -439,7 +462,7 @@ class Client(Worker):
             if self._cfg.finetune.before_eval:
                 self.trainer.finetune()
             for split in self._cfg.eval.split:
-                # TODO: The time cost of evaluation is not considered in this version
+                # TODO: The time cost of evaluation is not considered here
                 eval_metrics = self.trainer.evaluate(
                     target_data_split_name=split)
 

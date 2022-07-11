@@ -108,19 +108,29 @@ class FedRunner(object):
 
         # sample device information
         if self.device_info is not None:
-            if len(self.device_info) < self.cfg.federate.client_num+1:
-                replace=True
-                logger.warning(f"Because the provided the number of device information {len(self.device_info)} is less than the number of participants {self.cfg.federate.client_num+1}, one candidate might be selected multiple times.")
+            if len(self.device_info) < self.cfg.federate.client_num + 1:
+                replace = True
+                logger.warning(
+                    f"Because the provided the number of device information "
+                    f"{len(self.device_info)} is less than the number of "
+                    f"participants {self.cfg.federate.client_num+1}, one "
+                    f"candidate might be selected multiple times.")
             else:
-                replace=False
-            sampled_index = np.random.choice(list(self.device_info.keys()), size=self.cfg.federate.client_num+1, replace=replace)
+                replace = False
+            sampled_index = np.random.choice(
+                list(self.device_info.keys()),
+                size=self.cfg.federate.client_num + 1,
+                replace=replace)
             server_device_info = self.device_info[sampled_index[0]]
-            client_device_info = [self.device_info[x] for x in sampled_index[1:]]
+            client_device_info = [
+                self.device_info[x] for x in sampled_index[1:]
+            ]
         else:
             server_device_info = None
             client_device_info = None
 
-        self.server = self._setup_server(device_info=server_device_info, client_info=client_device_info)
+        self.server = self._setup_server(device_info=server_device_info,
+                                         client_info=client_device_info)
 
         self.client = dict()
 
@@ -132,7 +142,10 @@ class FedRunner(object):
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
-                client_id=client_id, client_model=self._shared_client_model, device_info=client_device_info[client_id-1])
+                client_id=client_id,
+                client_model=self._shared_client_model,
+                device_info=client_device_info[client_id - 1]
+                if client_device_info is not None else None)
 
     def _setup_for_distributed(self):
         """
@@ -209,24 +222,33 @@ class FedRunner(object):
 
             else:
                 server_msg_cache = list()
-                while len(self.shared_comm_queue) > 0 or len(server_msg_cache) > 0:
+                while len(self.shared_comm_queue) > 0 or len(
+                        server_msg_cache) > 0:
                     if len(self.shared_comm_queue) > 0:
                         msg = self.shared_comm_queue.popleft()
                         if msg.receiver == [self.server_id]:
-                            # For the server, move the received message to a cache for reordering the messages according to the timestamps
+                            # For the server, move the received message to a
+                            # cache for reordering the messages according to
+                            # the timestamps
                             heapq.heappush(server_msg_cache, msg)
                         else:
                             self._handle_msg(msg)
                     elif len(server_msg_cache) > 0:
                         msg = heapq.heappop(server_msg_cache)
-                        if self.cfg.asyn.use and self.cfg.asyn.aggregator == 'time_up' and msg.timestamp >= self.server.deadline_for_cur_round:
-                                # When the timestamp of the received message beyond the deadline for the currency round, trigger the time up event first and push the message back to the cache
-                                self.server.trigger_for_time_up()
-                                heapq.heappush(server_msg_cache, msg)
+                        if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                                == 'time_up' and msg.timestamp >= \
+                                self.server.deadline_for_cur_round:
+                            # When the timestamp of the received message beyond
+                            # the deadline for the currency round, trigger the
+                            # time up event first and push the message back to
+                            # the cache
+                            self.server.trigger_for_time_up()
+                            heapq.heappush(server_msg_cache, msg)
                         else:
                             self._handle_msg(msg)
                     else:
-                        if self.cfg.asyn.use and self.cfg.asyn.aggregator == 'time_up':
+                        if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                                == 'time_up':
                             self.server.trigger_for_time_up()
 
             self.server._monitor.finish_fed_runner(fl_mode=self.mode)
@@ -248,9 +270,13 @@ class FedRunner(object):
         self.server_id = 0
         if self.mode == 'standalone':
             if self.cfg.federate.merge_test_data:
-                from federatedscope.core.auxiliaries.data_builder import merge_test_data
-                num_of_sample_per_client, server_data = merge_test_data(all_data=self.data)
-                model = get_model(self.cfg.model, server_data, backend=self.cfg.backend)
+                from federatedscope.core.auxiliaries.data_builder import \
+                    merge_test_data
+                num_of_sample_per_client, server_data = merge_test_data(
+                    all_data=self.data)
+                model = get_model(self.cfg.model,
+                                  server_data,
+                                  backend=self.cfg.backend)
             elif self.server_id in self.data:
                 server_data = self.data[self.server_id]
                 model = get_model(self.cfg.model,
@@ -262,7 +288,11 @@ class FedRunner(object):
                     self.cfg.model, self.data[1], backend=self.cfg.backend
                 )  # get the model according to client's data if the server
                 # does not own data
-            kw = {'shared_comm_queue': self.shared_comm_queue, 'device_info': device_info, 'client_info': client_info}
+            kw = {
+                'shared_comm_queue': self.shared_comm_queue,
+                'device_info': device_info,
+                'client_info': client_info
+            }
         elif self.mode == 'distributed':
             server_data = self.data
             model = get_model(self.cfg.model,
@@ -306,7 +336,10 @@ class FedRunner(object):
         self.server_id = 0
         if self.mode == 'standalone':
             client_data = self.data[client_id]
-            kw = {'shared_comm_queue': self.shared_comm_queue, 'device_info':device_info}
+            kw = {
+                'shared_comm_queue': self.shared_comm_queue,
+                'device_info': device_info
+            }
         elif self.mode == 'distributed':
             client_data = self.data
             kw = self.client_address

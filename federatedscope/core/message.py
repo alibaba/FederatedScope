@@ -197,7 +197,8 @@ class Message(object):
             self.build_msg_value(self.msg_type))
         splited_msg.msg['content'].MergeFrom(self.build_msg_value(
             self.content))
-        splited_msg.msg['timestamp'].MergeFrom(self.build_msg_value(self.timestamp))
+        splited_msg.msg['timestamp'].MergeFrom(
+            self.build_msg_value(self.timestamp))
         return splited_msg
 
     def _parse_msg(self, value):

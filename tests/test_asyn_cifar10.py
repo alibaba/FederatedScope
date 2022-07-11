@@ -24,7 +24,7 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.federate.local_update_steps = 2
         cfg.federate.batch_or_epoch = 'batch'
-        cfg.federate.total_round_num = 20
+        cfg.federate.total_round_num = 40
         cfg.federate.sample_client_num = 13
         cfg.federate.merge_test_data = True
         cfg.federate.share_local_model = False
@@ -39,7 +39,13 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.2
         cfg.data.num_workers = 0
-        cfg.data.transform = [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.247, 0.243, 0.261]}]]
+        cfg.data.transform = [['ToTensor'],
+                              [
+                                  'Normalize', {
+                                      'mean': [0.4914, 0.4822, 0.4465],
+                                      'std': [0.247, 0.243, 0.261]
+                                  }
+                              ]]
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.2}]
 
@@ -47,8 +53,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.model.hidden = 512
         cfg.model.out_channels = 10
 
-        cfg.optimizer.lr = 0.001
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 0.1
+        cfg.train.optimizer.weight_decay = 0.0
         cfg.grad.grad_clip = 5.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
@@ -77,7 +83,7 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.federate.local_update_steps = 2
         cfg.federate.batch_or_epoch = 'batch'
-        cfg.federate.total_round_num = 20
+        cfg.federate.total_round_num = 40
         cfg.federate.sample_client_num = 13
         cfg.federate.merge_test_data = True
         cfg.federate.share_local_model = False
@@ -92,7 +98,13 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.2
         cfg.data.num_workers = 0
-        cfg.data.transform = [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.247, 0.243, 0.261]}]]
+        cfg.data.transform = [['ToTensor'],
+                              [
+                                  'Normalize', {
+                                      'mean': [0.4914, 0.4822, 0.4465],
+                                      'std': [0.247, 0.243, 0.261]
+                                  }
+                              ]]
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.2}]
 
@@ -100,8 +112,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.model.hidden = 512
         cfg.model.out_channels = 10
 
-        cfg.optimizer.lr = 0.001
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 0.1
+        cfg.train.optimizer.weight_decay = 0.0
         cfg.grad.grad_clip = 5.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
@@ -112,7 +124,7 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.asyn.overselection = False
         cfg.asyn.staleness_discount_factor = 0.2
         cfg.asyn.aggregator = 'time_up'
-        cfg.asyn.timebudget = 10
+        cfg.asyn.time_budget = 10
         cfg.asyn.broadcast_manner = 'after_aggregating'
         cfg.asyn.min_received_num = 10
         cfg.asyn.staleness_toleration = 5
@@ -131,7 +143,7 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.federate.local_update_steps = 2
         cfg.federate.batch_or_epoch = 'batch'
-        cfg.federate.total_round_num = 20
+        cfg.federate.total_round_num = 40
         cfg.federate.sample_client_num = 13
         cfg.federate.merge_test_data = True
         cfg.federate.share_local_model = False
@@ -146,7 +158,13 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.2
         cfg.data.num_workers = 0
-        cfg.data.transform = [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.247, 0.243, 0.261]}]]
+        cfg.data.transform = [['ToTensor'],
+                              [
+                                  'Normalize', {
+                                      'mean': [0.4914, 0.4822, 0.4465],
+                                      'std': [0.247, 0.243, 0.261]
+                                  }
+                              ]]
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.2}]
 
@@ -154,8 +172,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.model.hidden = 512
         cfg.model.out_channels = 10
 
-        cfg.optimizer.lr = 0.001
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 0.1
+        cfg.train.optimizer.weight_decay = 0.0
         cfg.grad.grad_clip = 5.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
@@ -174,7 +192,8 @@ class AsynCIFAR10Test(unittest.TestCase):
 
     def test_asyn_cifar10_goalAchieved_afterReceiving(self):
         init_cfg = global_cfg.clone()
-        backup_cfg = self.set_config_cifar10_goalAchieved_afterReceiving(init_cfg)
+        backup_cfg = self.set_config_cifar10_goalAchieved_afterReceiving(
+            init_cfg)
         setup_seed(init_cfg.seed)
         update_logger(init_cfg)
 
@@ -190,7 +209,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_best_results['server_global_eval']['test_acc'], 0.3)
+        self.assertGreater(test_best_results['server_global_eval']['test_acc'],
+                           0.3)
 
     def test_asyn_cifar10_timeUp_afterAggregating(self):
         init_cfg = global_cfg.clone()
@@ -210,7 +230,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_best_results['server_global_eval']['test_acc'], 0.3)
+        self.assertGreater(test_best_results['server_global_eval']['test_acc'],
+                           0.3)
 
     def test_asyn_cifar10_overselection(self):
         init_cfg = global_cfg.clone()
@@ -230,7 +251,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_best_results['server_global_eval']['test_acc'], 0.3)
+        self.assertGreater(test_best_results['server_global_eval']['test_acc'],
+                           0.3)
 
 
 if __name__ == '__main__':

@@ -623,6 +623,7 @@ def merge_data(all_data, merged_max_data_id):
             " 2): {data_id: {train: DataLoader }")
     return merged_data
 
+
 def merge_test_data(all_data):
 
     merged_data = dict()
