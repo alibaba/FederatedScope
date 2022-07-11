@@ -2,8 +2,8 @@ class MODE:
     """
 
     Note:
-        Currently StrEnum cannot be imported with the environment `sys.version_info < (3, 11)`, so we simply create a
-        MODE class here.
+        Currently StrEnum cannot be imported with the environment
+        `sys.version_info < (3, 11)`, so we simply create a MODE class here.
     """
     TRAIN = 'train'
     TEST = 'test'
@@ -24,12 +24,7 @@ class TRIGGER:
     @classmethod
     def contains(cls, item):
         return item in [
-            "on_fit_start",
-            "on_epoch_start",
-            "on_batch_start",
-            "on_batch_forward",
-            "on_batch_backward",
-            "on_batch_end",
-            "on_epoch_end",
-            "on_fit_end"
-    ]
+            "on_fit_start", "on_epoch_start", "on_batch_start",
+            "on_batch_forward", "on_batch_backward", "on_batch_end",
+            "on_epoch_end", "on_fit_end"
+        ]

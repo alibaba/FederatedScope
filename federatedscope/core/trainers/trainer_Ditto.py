@@ -24,10 +24,9 @@ def wrap_DittoTrainer(
     init_Ditto_ctx(base_trainer)
 
     # ---------------- action-level plug-in -----------------------
-    base_trainer.register_hook_in_train(
-        new_hook=_hook_on_fit_start_del_opt,
-        trigger='on_fit_start',
-        insert_pos=-1)
+    base_trainer.register_hook_in_train(new_hook=_hook_on_fit_start_del_opt,
+                                        trigger='on_fit_start',
+                                        insert_pos=-1)
     base_trainer.register_hook_in_train(
         new_hook=hook_on_fit_start_set_regularized_para,
         trigger="on_fit_start",
@@ -114,9 +113,11 @@ def hook_on_fit_start_set_regularized_para(ctx):
     ctx.optimizer_for_local_model.set_compared_para_group(
         compared_global_model_para)
 
+
 def _hook_on_fit_start_del_opt(ctx):
     # remove the unnecessary optimizer
     del ctx.optimizer
+
 
 def _hook_on_batch_end_flop_count(ctx):
     # besides the normal forward flops, the regularization adds the cost of
