@@ -66,7 +66,9 @@ def update_logger(cfg, clear_before_add=False):
     if cfg.outdir == "":
         cfg.outdir = os.path.join(os.getcwd(), "exp")
     if cfg.expname == "":
-        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on_{cfg.data.type}_lr{cfg.train.optimizer.lr}_lstep{cfg.train.local_update_steps}"
+        cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on" \
+                      f"_{cfg.data.type}_lr{cfg.train.optimizer.lr}_lste" \
+                      f"p{cfg.train.local_update_steps}"
     cfg.expname = f"{cfg.expname}_{cfg.expname_tag}"
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
 

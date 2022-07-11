@@ -308,9 +308,11 @@ class Client(Worker):
         for requirement in requirements:
             if requirement.lower() == 'num_sample':
                 if self._cfg.train.batch_or_epoch == 'batch':
-                    num_sample = self._cfg.train.local_update_steps * self._cfg.data.batch_size
+                    num_sample = self._cfg.train.local_update_steps * \
+                                 self._cfg.data.batch_size
                 else:
-                    num_sample = self._cfg.train.local_update_steps * self.trainer.ctx.num_train_batch
+                    num_sample = self._cfg.train.local_update_steps * \
+                                 self.trainer.ctx.num_train_batch
                 join_in_info['num_sample'] = num_sample
             else:
                 raise ValueError(
@@ -364,7 +366,8 @@ class Client(Worker):
                         self._monitor.format_eval_res(eval_metrics,
                                                       rnd=self.state,
                                                       role='Client #{}'.format(
-                                                          self.ID)))
+                                                          self.ID),
+                                                      return_raw=True))
 
                 metrics.update(**eval_metrics)
 

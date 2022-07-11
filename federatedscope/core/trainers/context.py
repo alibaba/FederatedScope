@@ -2,7 +2,8 @@ import math
 import logging
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
-from federatedscope.core.auxiliaries.model_builder import get_trainable_para_names
+from federatedscope.core.auxiliaries.model_builder import \
+    get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.eunms import MODE
 
@@ -125,9 +126,11 @@ class Context(dict):
 
         # Process training data
         if self.train_data is not None or self.train_loader is not None:
-            # Calculate the number of update steps during training given the local_update_steps
-            num_train_batch, num_train_batch_last_epoch, num_train_epoch, num_total_train_batch = self.pre_calculate_batch_epoch_num(
-                self.cfg.train.local_update_steps)
+            # Calculate the number of update steps during training given the
+            # local_update_steps
+            num_train_batch, num_train_batch_last_epoch, num_train_epoch, \
+                num_total_train_batch = self.pre_calculate_batch_epoch_num(
+                    self.cfg.train.local_update_steps)
 
             self.num_train_epoch = num_train_epoch
             self.num_train_batch = num_train_batch
@@ -148,9 +151,9 @@ class Context(dict):
                         self.cfg.data.batch_size)))
 
     def pre_calculate_batch_epoch_num(self, local_update_steps):
-        num_train_batch = self.num_train_data // self.cfg.data.batch_size + int(
-            not self.cfg.data.drop_last
-            and bool(self.num_train_data % self.cfg.data.batch_size))
+        num_train_batch = self.num_train_data // self.cfg.data.batch_size + \
+                          int(not self.cfg.data.drop_last and bool(
+                              self.num_train_data % self.cfg.data.batch_size))
         if self.cfg.train.batch_or_epoch == "epoch":
             num_train_epoch = local_update_steps
             num_train_batch_last_epoch = num_train_batch
@@ -199,18 +202,19 @@ class Context(dict):
             len(self.cur_data_splits_used_by_routine) != 0 else None
 
     def check_data_split(self, target_data_split_name, skip=False):
-        if self.get(
-                f"{target_data_split_name}_data") is None and self.get(
-            f"{target_data_split_name}_loader") is None:
+        if self.get(f"{target_data_split_name}_data") is None and self.get(
+                f"{target_data_split_name}_loader") is None:
             if skip:
                 logger.warning(
-                    f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer, will skip evaluation"
-                    f"If this is not the case you want, please check whether there is typo for the name"
-                )
+                    f"No {target_data_split_name}_data or"
+                    f" {target_data_split_name}_loader in the trainer, "
+                    f"will skip evaluation"
+                    f"If this is not the case you want, please check "
+                    f"whether there is typo for the name")
                 return False
             else:
                 raise ValueError(
-                    f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
-                )
+                    f"No {target_data_split_name}_data or"
+                    f" {target_data_split_name}_loader in the trainer")
         else:
             return True
