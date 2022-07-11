@@ -305,7 +305,7 @@ class Monitor(object):
             different forms and roles,
             e.g.,
             {
-            'Role': 'Server #',
+            'Role': 'Server ',
             'Round': 200,
             'Results_weighted_avg': {
                 'test_avg_loss': 0.58, 'test_acc': 0.67, 'test_correct':

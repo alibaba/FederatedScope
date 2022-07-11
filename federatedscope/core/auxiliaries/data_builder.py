@@ -622,3 +622,16 @@ def merge_data(all_data, merged_max_data_id):
             " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
             " 2): {data_id: {train: DataLoader }")
     return merged_data
+
+def merge_test_data(all_data):
+
+    merged_data = dict()
+    merged_data['test'] = all_data[1]['test']
+    num_of_sample_per_client = [len(all_data[1]['test'].dataset)]
+    for data_id in all_data:
+        if data_id <= 1:
+            continue
+        merged_data['test'].dataset.extend(all_data[data_id]['test'].dataset)
+        num_of_sample_per_client.append(len(all_data[data_id]['test'].dataset))
+
+    return num_of_sample_per_client, merged_data

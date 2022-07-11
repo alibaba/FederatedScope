@@ -93,7 +93,7 @@ class vFLServer(Server):
             formatted_logs = self._monitor.format_eval_res(
                 metrics,
                 rnd=self.state,
-                role='Global-Eval-Server #',
+                role='Global-Eval-Server ',
                 forms=self._cfg.eval.report)
             logger.info(formatted_logs)
 
@@ -113,7 +113,7 @@ class vFLServer(Server):
             formatted_logs = self._monitor.format_eval_res(
                 metrics,
                 rnd=self.state,
-                role='Server #',
+                role='Server ',
                 forms=self._cfg.eval.report)
             logger.info(formatted_logs)
 

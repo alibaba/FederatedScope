@@ -12,6 +12,7 @@ import time
 import urllib.request
 from datetime import datetime
 from os import path as osp
+import pickle
 
 import numpy as np
 
@@ -380,7 +381,7 @@ def logfile_2_wandb_dict(exp_log_f, raw_out=True):
         last_line = line
         exp_stop_normal, log_res = logline_2_wandb_dict(
             exp_stop_normal, line, log_res_best, raw_out)
-        if "'Role': 'Server #'" in line:
+        if "'Role': 'Server '" in line:
             all_log_res.append(log_res)
     return all_log_res, exp_stop_normal, last_line, log_res_best
 
@@ -413,7 +414,7 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
             for inner_key, inner_val in val.items():
                 log_res_best[f"best_{best_type_key}/{inner_key}"] = inner_val
 
-    if "'Role': 'Server #'" in line:
+    if "'Role': 'Server '" in line:
         if raw_out:
             line = line.split("INFO: ")[1]
         res = line.replace("\'", "\"")
@@ -457,3 +458,26 @@ def format_log_hooks(hooks_set):
     elif isinstance(hooks_set, dict):
         print_obj = format_dict(hooks_set)
     return json.dumps(print_obj, indent=2).replace('\n', '\n\t')
+
+def get_device_info(filename):
+    if filename is None or not os.path.exists(filename):
+        return None
+
+    # Users can develop this loading function according to the device_info_file
+    # As an example, we use the device_info provided by FedScale (FedScale: Benchmarking Model and System Performance of Federated Learning at Scale), which can be downloaded from https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/data/device_info/client_device_capacity
+    # The expected format is { INDEX:{'computation': FLOAT_VALUE_1, 'communication': FLOAT_VALUE_2}}
+    with open(filename, 'br') as f:
+        device_info = pickle.load(f)
+    return device_info
+
+def calculate_time_cost(instance_number, model_size, comp_speed=None, comm_bandwidth=None, augmentation_factor=3.0):
+    # Served as an example, this cost model is adapted from FedScale at https://github.com/SymbioticLab/FedScale/blob/master/fedscale/core/internal/client.py#L35 (MIT License)
+    # Users can modify this function according to customized cost model
+    if comp_speed is not None and comm_bandwidth is not None:
+        comp_cost = augmentation_factor * instance_number * comp_speed
+        comm_cost = 2.0 * model_size / comm_bandwidth
+    else:
+        comp_cost = 0
+        comm_cost = 0
+
+    return comp_cost, comm_cost

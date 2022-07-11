@@ -135,7 +135,7 @@ def logs2df(dname,
                         continue
                     for key in metrics_dict:
                         if results['Role'] in [
-                                'Server #', 'Global-Eval-Server #'
+                                'Server ', 'Global-Eval-Server '
                         ] and 'Results_raw' in results.keys():
                             try:
                                 metrics_dict[key].append(

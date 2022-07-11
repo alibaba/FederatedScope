@@ -39,7 +39,7 @@ def parse(input, round):
             if line.startswith('{'):
                 line = line.replace("\'", "\"")
                 line = json.loads(s=line)
-                if line['Round'] == round and line['Role'] == 'Server #':
+                if line['Round'] == round and line['Role'] == 'Server ':
                     result_list_wavg.append(line["Results_weighted_avg"])
 
     print(args.input)

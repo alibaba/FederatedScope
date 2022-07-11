@@ -1,12 +1,15 @@
 import logging
 
 from collections import deque
+import heapq
+import numpy as np
 
 import numpy as np
 
 from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
+from federatedscope.core.auxiliaries.utils import get_device_info
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +55,8 @@ class FedRunner(object):
                     int(self.cfg.federate.unseen_clients_rate *
                         self.cfg.federate.client_num)),
                 replace=False).tolist()
+        # get device information
+        self.device_info = get_device_info(config.federate.device_info_file)
 
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
@@ -101,7 +106,21 @@ class FedRunner(object):
                 self.cfg.federate.sample_client_num = 1
                 self.cfg.freeze()
 
-        self.server = self._setup_server()
+        # sample device information
+        if self.device_info is not None:
+            if len(self.device_info) < self.cfg.federate.client_num+1:
+                replace=True
+                logger.warning(f"Because the provided the number of device information {len(self.device_info)} is less than the number of participants {self.cfg.federate.client_num+1}, one candidate might be selected multiple times.")
+            else:
+                replace=False
+            sampled_index = np.random.choice(list(self.device_info.keys()), size=self.cfg.federate.client_num+1, replace=replace)
+            server_device_info = self.device_info[sampled_index[0]]
+            client_device_info = [self.device_info[x] for x in sampled_index[1:]]
+        else:
+            server_device_info = None
+            client_device_info = None
+
+        self.server = self._setup_server(device_info=server_device_info, client_info=client_device_info)
 
         self.client = dict()
 
@@ -113,18 +132,26 @@ class FedRunner(object):
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
-                client_id=client_id, client_model=self._shared_client_model)
+                client_id=client_id, client_model=self._shared_client_model, device_info=client_device_info[client_id-1])
 
     def _setup_for_distributed(self):
         """
         To set up server or client for distributed mode.
         """
+
+        # sample device information
+        if self.device_info is not None:
+            sampled_index = np.random.choice(list(self.device_info.keys()))
+            sampled_device = self.device_info[sampled_index]
+        else:
+            sampled_device = None
+
         self.server_address = {
             'host': self.cfg.distribute.server_host,
             'port': self.cfg.distribute.server_port
         }
         if self.cfg.distribute.role == 'server':
-            self.server = self._setup_server()
+            self.server = self._setup_server(device_info=sampled_device)
         elif self.cfg.distribute.role == 'client':
             # When we set up the client in the distributed mode, we assume
             # the server has been set up and number with #0
@@ -132,7 +159,7 @@ class FedRunner(object):
                 'host': self.cfg.distribute.client_host,
                 'port': self.cfg.distribute.client_port
             }
-            self.client = self._setup_client()
+            self.client = self._setup_client(device_info=sampled_device)
 
     def run(self):
         """
@@ -181,9 +208,26 @@ class FedRunner(object):
                         break
 
             else:
-                while len(self.shared_comm_queue) > 0:
-                    msg = self.shared_comm_queue.popleft()
-                    self._handle_msg(msg)
+                server_msg_cache = list()
+                while len(self.shared_comm_queue) > 0 or len(server_msg_cache) > 0:
+                    if len(self.shared_comm_queue) > 0:
+                        msg = self.shared_comm_queue.popleft()
+                        if msg.receiver == [self.server_id]:
+                            # For the server, move the received message to a cache for reordering the messages according to the timestamps
+                            heapq.heappush(server_msg_cache, msg)
+                        else:
+                            self._handle_msg(msg)
+                    elif len(server_msg_cache) > 0:
+                        msg = heapq.heappop(server_msg_cache)
+                        if self.cfg.asyn.use and self.cfg.asyn.aggregator == 'time_up' and msg.timestamp >= self.server.deadline_for_cur_round:
+                                # When the timestamp of the received message beyond the deadline for the currency round, trigger the time up event first and push the message back to the cache
+                                self.server.trigger_for_time_up()
+                                heapq.heappush(server_msg_cache, msg)
+                        else:
+                            self._handle_msg(msg)
+                    else:
+                        if self.cfg.asyn.use and self.cfg.asyn.aggregator == 'time_up':
+                            self.server.trigger_for_time_up()
 
             self.server._monitor.finish_fed_runner(fl_mode=self.mode)
 
@@ -197,13 +241,17 @@ class FedRunner(object):
                 self.client.join_in()
                 self.client.run()
 
-    def _setup_server(self):
+    def _setup_server(self, device_info=None, client_info=None):
         """
         Set up the server
         """
         self.server_id = 0
         if self.mode == 'standalone':
-            if self.server_id in self.data:
+            if self.cfg.federate.merge_test_data:
+                from federatedscope.core.auxiliaries.data_builder import merge_test_data
+                num_of_sample_per_client, server_data = merge_test_data(all_data=self.data)
+                model = get_model(self.cfg.model, server_data, backend=self.cfg.backend)
+            elif self.server_id in self.data:
                 server_data = self.data[self.server_id]
                 model = get_model(self.cfg.model,
                                   server_data,
@@ -214,13 +262,14 @@ class FedRunner(object):
                     self.cfg.model, self.data[1], backend=self.cfg.backend
                 )  # get the model according to client's data if the server
                 # does not own data
-            kw = {'shared_comm_queue': self.shared_comm_queue}
+            kw = {'shared_comm_queue': self.shared_comm_queue, 'device_info': device_info, 'client_info': client_info}
         elif self.mode == 'distributed':
             server_data = self.data
             model = get_model(self.cfg.model,
                               server_data,
                               backend=self.cfg.backend)
             kw = self.server_address
+            kw.update({'device_info': device_info})
         else:
             raise ValueError('Mode {} is not provided'.format(
                 self.cfg.mode.type))
@@ -246,27 +295,24 @@ class FedRunner(object):
         else:
             raise ValueError
 
-        logger.info('Server #{:d} has been set up ... '.format(self.server_id))
+        logger.info('Server has been set up ... ')
 
         return server
 
-    def _setup_client(
-        self,
-        client_id=-1,
-        client_model=None,
-    ):
+    def _setup_client(self, client_id=-1, client_model=None, device_info=None):
         """
         Set up the client
         """
         self.server_id = 0
         if self.mode == 'standalone':
             client_data = self.data[client_id]
-            kw = {'shared_comm_queue': self.shared_comm_queue}
+            kw = {'shared_comm_queue': self.shared_comm_queue, 'device_info':device_info}
         elif self.mode == 'distributed':
             client_data = self.data
             kw = self.client_address
             kw['server_host'] = self.server_address['host']
             kw['server_port'] = self.server_address['port']
+            kw['device_info'] = device_info
         else:
             raise ValueError('Mode {} is not provided'.format(
                 self.cfg.mode.type))

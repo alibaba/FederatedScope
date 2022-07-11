@@ -274,8 +274,8 @@ class FedExServer(Server):
             self._stop_exploration = True
 
         logger.info(
-            'Server #{:d}: Updated policy as {} with entropy {:f} and mle {:f}'
-            .format(self.ID, self._theta, self._trace['entropy'][-1],
+            'Server: Updated policy as {} with entropy {:f} and mle {:f}'
+            .format(self._theta, self._trace['entropy'][-1],
                     self._trace['mle'][-1]))
 
     def check_and_move_on(self,
@@ -327,7 +327,7 @@ class FedExServer(Server):
                         B_val = calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
                         formatted_eval_res = self._monitor.format_eval_res(
-                            B_val, rnd=self.state, role='Server #')
+                            B_val, rnd=self.state, role='Server ')
                         logger.info(formatted_eval_res)
 
                     # Aggregate
@@ -347,8 +347,8 @@ class FedExServer(Server):
                         self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server #{:d}: Starting evaluation at round {:d}.'.
-                        format(self.ID, self.state))
+                        'Server: Starting evaluation at round {:d}.'.
+                        format(self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:
@@ -364,8 +364,8 @@ class FedExServer(Server):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logger.info('Server #{:d}: Training is finished! Starting '
-                                'evaluation.'.format(self.ID))
+                    logger.info('Server: Training is finished! Starting '
+                                'evaluation.')
                     self.eval()
 
             else:  # in the evaluation process
@@ -405,8 +405,8 @@ class FedExServer(Server):
             self.state = self.total_round_num + 1
 
         if should_stop or self.state == self.total_round_num:
-            logger.info('Server #{:d}: Final evaluation is finished! Starting '
-                        'merging results.'.format(self.ID))
+            logger.info('Server: Final evaluation is finished! Starting '
+                        'merging results.')
             # last round
             self.save_best_results()
 
