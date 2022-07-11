@@ -153,7 +153,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
             Ensemble evaluation
         """
-        cur_data = ctx.cur_data_split
+        cur_data = ctx.cur_split
         if f"{cur_data}_y_prob_ensemble" not in ctx:
             ctx[f"{cur_data}_y_prob_ensemble"] = 0
         ctx[f"{cur_data}_y_prob_ensemble"] += \

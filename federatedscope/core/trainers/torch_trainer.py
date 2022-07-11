@@ -28,32 +28,31 @@ class GeneralTorchTrainer(Trainer):
             share_local_model else self.ctx.model.cpu().state_dict())
 
     def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
+        """Populate "${split}_data", "${split}_loader" and "num_${split}_data" for different data splits
 
         """
-        # TODO: more robust for different data
         init_dict = dict()
         if isinstance(data, dict):
-            for mode in ["train", "val", "test"]:
-                init_dict["{}_data".format(mode)] = None
-                init_dict["{}_loader".format(mode)] = None
-                init_dict["num_{}_data".format(mode)] = 0
-                if data.get(mode, None) is not None:
-                    if isinstance(data.get(mode), Dataset):
-                        init_dict["{}_data".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode))
-                    elif isinstance(data.get(mode), DataLoader):
-                        init_dict["{}_loader".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode).dataset)
-                    elif isinstance(data.get(mode), dict):
-                        init_dict["{}_data".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = len(
-                            data.get(mode)['y'])
+            for split in data.keys():
+                init_dict["{}_data".format(split)] = None
+                init_dict["{}_loader".format(split)] = None
+                init_dict["num_{}_data".format(split)] = 0
+                if data.get(split, None) is not None:
+                    if isinstance(data.get(split), Dataset):
+                        init_dict["{}_data".format(split)] = data.get(split)
+                        init_dict["num_{}_data".format(split)] = len(
+                            data.get(split))
+                    elif isinstance(data.get(split), DataLoader):
+                        init_dict["{}_loader".format(split)] = data.get(split)
+                        init_dict["num_{}_data".format(split)] = len(
+                            data.get(split).dataset)
+                    elif isinstance(data.get(split), dict):
+                        init_dict["{}_data".format(split)] = data.get(split)
+                        init_dict["num_{}_data".format(split)] = len(
+                            data.get(split)['y'])
                     else:
                         raise TypeError("Type {} is not supported.".format(
-                            type(data.get(mode))))
+                            type(data.get(split))))
         else:
             raise TypeError("Type of data should be dict.")
         return init_dict
@@ -138,11 +137,11 @@ class GeneralTorchTrainer(Trainer):
                                           **ctx.cfg[ctx.cur_mode].optimizer)
 
         # prepare statistics
-        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
-        setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
-        setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
+        setattr(ctx, "loss_batch_total_{}".format(ctx.cur_split), 0)
+        setattr(ctx, "loss_regular_total_{}".format(ctx.cur_split), 0)
+        setattr(ctx, "num_samples_{}".format(ctx.cur_split), 0)
+        setattr(ctx, "{}_y_true".format(ctx.cur_split), [])
+        setattr(ctx, "{}_y_prob".format(ctx.cur_split), [])
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -157,25 +156,25 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_epoch_start(self, ctx):
         # prepare dataloader
-        if ctx.get("{}_loader".format(ctx.cur_data_split)) is None:
+        if ctx.get("{}_loader".format(ctx.cur_split)) is None:
             loader = get_dataloader(
-                WrapDataset(ctx.get("{}_data".format(ctx.cur_data_split))),
+                WrapDataset(ctx.get("{}_data".format(ctx.cur_split))),
                 self.cfg)
-            setattr(ctx, "{}_loader".format(ctx.cur_data_split),
+            setattr(ctx, "{}_loader".format(ctx.cur_split),
                     ReIterator(loader))
-        elif not isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
+        elif not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                             ReIterator):
             setattr(
-                ctx, "{}_loader".format(ctx.cur_data_split),
-                ReIterator(ctx.get("{}_loader".format(ctx.cur_data_split))))
+                ctx, "{}_loader".format(ctx.cur_split),
+                ReIterator(ctx.get("{}_loader".format(ctx.cur_split))))
         else:
-            ctx.get("{}_loader".format(ctx.cur_data_split)).reset()
+            ctx.get("{}_loader".format(ctx.cur_split)).reset()
 
     def _hook_on_batch_start_init(self, ctx):
         # prepare data batch
         try:
             ctx.data_batch = next(
-                ctx.get("{}_loader".format(ctx.cur_data_split)))
+                ctx.get("{}_loader".format(ctx.cur_split)))
         except StopIteration:
             raise StopIteration
 
@@ -257,8 +256,8 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_batch_end(self, ctx):
         # update statistics
         setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) +
+            ctx, "loss_batch_total_{}".format(ctx.cur_split),
+            ctx.get("loss_batch_total_{}".format(ctx.cur_split)) +
             ctx.loss_batch.item() * ctx.batch_size)
 
         if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
@@ -266,19 +265,19 @@ class GeneralTorchTrainer(Trainer):
         else:
             loss_regular = ctx.loss_regular.item()
         setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_data_split),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
+            ctx, "loss_regular_total_{}".format(ctx.cur_split),
+            ctx.get("loss_regular_total_{}".format(ctx.cur_split)) +
             loss_regular)
         setattr(
-            ctx, "num_samples_{}".format(ctx.cur_data_split),
-            ctx.get("num_samples_{}".format(ctx.cur_data_split)) +
+            ctx, "num_samples_{}".format(ctx.cur_split),
+            ctx.get("num_samples_{}".format(ctx.cur_split)) +
             ctx.batch_size)
 
         # cache label for evaluate
-        ctx.get("{}_y_true".format(ctx.cur_data_split)).append(
+        ctx.get("{}_y_true".format(ctx.cur_split)).append(
             ctx.y_true.detach().cpu().numpy())
 
-        ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
+        ctx.get("{}_y_prob".format(ctx.cur_split)).append(
             ctx.y_prob.detach().cpu().numpy())
 
         # clean temp ctx
@@ -295,11 +294,11 @@ class GeneralTorchTrainer(Trainer):
 
         """
         setattr(
-            ctx, "{}_y_true".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_data_split))))
+            ctx, "{}_y_true".format(ctx.cur_split),
+            np.concatenate(ctx.get("{}_y_true".format(ctx.cur_split))))
         setattr(
-            ctx, "{}_y_prob".format(ctx.cur_data_split),
-            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
+            ctx, "{}_y_prob".format(ctx.cur_split),
+            np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_split))))
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 

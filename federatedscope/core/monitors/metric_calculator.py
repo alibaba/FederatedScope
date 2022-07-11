@@ -42,7 +42,7 @@ class MetricCalculator(object):
         results = {}
         y_true, y_pred, y_prob = self._check_and_parse(ctx)
         for metric, func in self.eval_metric.items():
-            results["{}_{}".format(ctx.cur_data_split,
+            results["{}_{}".format(ctx.cur_split,
                                    metric)] = func(ctx=ctx,
                                                    y_true=y_true,
                                                    y_pred=y_pred,
@@ -51,13 +51,13 @@ class MetricCalculator(object):
         return results
 
     def _check_and_parse(self, ctx):
-        if not '{}_y_true'.format(ctx.cur_data_split) in ctx:
+        if not '{}_y_true'.format(ctx.cur_split) in ctx:
             raise KeyError('Missing key y_true!')
-        if not '{}_y_prob'.format(ctx.cur_data_split) in ctx:
+        if not '{}_y_prob'.format(ctx.cur_split) in ctx:
             raise KeyError('Missing key y_prob!')
 
-        y_true = ctx.get("{}_y_true".format(ctx.cur_data_split))
-        y_prob = ctx.get("{}_y_prob".format(ctx.cur_data_split))
+        y_true = ctx.get("{}_y_true".format(ctx.cur_split))
+        y_prob = ctx.get("{}_y_prob".format(ctx.cur_split))
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
@@ -175,20 +175,20 @@ def eval_rmse(y_true, y_pred, **kwargs):
 
 
 def eval_loss(ctx, **kwargs):
-    return ctx.get('loss_batch_total_{}'.format(ctx.cur_data_split))
+    return ctx.get('loss_batch_total_{}'.format(ctx.cur_split))
 
 
 def eval_avg_loss(ctx, **kwargs):
-    return ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) / ctx.get(
-        "num_samples_{}".format(ctx.cur_data_split))
+    return ctx.get("loss_batch_total_{}".format(ctx.cur_split)) / ctx.get(
+        "num_samples_{}".format(ctx.cur_split))
 
 
 def eval_total(ctx, **kwargs):
-    return ctx.get("num_samples_{}".format(ctx.cur_data_split))
+    return ctx.get("num_samples_{}".format(ctx.cur_split))
 
 
 def eval_regular(ctx, **kwargs):
-    return ctx.get("loss_regular_total_{}".format(ctx.cur_data_split))
+    return ctx.get("loss_regular_total_{}".format(ctx.cur_split))
 
 
 SUPPORT_METRICS = {
