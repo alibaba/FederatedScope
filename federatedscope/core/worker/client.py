@@ -230,7 +230,7 @@ class Client(Worker):
                 logger.info(train_log_res)
                 if self._cfg.wandb.use and self._cfg.wandb.client_train_info:
                     self._monitor.save_formatted_results(train_log_res,
-                                                         save_to_file="")
+                                                         save_file_name="")
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
