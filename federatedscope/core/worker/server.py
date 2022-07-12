@@ -155,10 +155,10 @@ class Server(Worker):
         self.dropout_num = 0
 
         # Device information
-        self.device_info = kwargs[
-            'device_info'] if 'device_info' in kwargs else None
-        self.client_info = kwargs[
-            'client_info'] if 'client_info' in kwargs else None
+        self.resource_info = kwargs['resource_info'] \
+            if 'resource_info' in kwargs else None
+        self.client_resource_info = kwargs['client_resource_info'] \
+            if 'client_resource_info' in kwargs else None
 
         # Register message handlers
         self.msg_handlers = dict()
@@ -166,6 +166,7 @@ class Server(Worker):
 
         # Initialize communication manager and message buffer
         self.msg_buffer = {'train': dict(), 'eval': dict()}
+        self.msg_buffer['train'][0] = dict()
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
@@ -683,7 +684,10 @@ class Server(Worker):
             cur_buffer = buffer[cur_round]
             return len(cur_buffer) >= min_received_num
         else:
-            cur_buffer = self.msg_buffer['train'][cur_round]
+            if cur_round not in self.msg_buffer['train']:
+                cur_buffer = dict()
+            else:
+                cur_buffer = self.msg_buffer['train'][cur_round]
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
                 if self.cur_timestamp >= self.deadline_for_cur_round and len(
                         cur_buffer) + len(self.staled_msg_buffer) == 0:
@@ -727,24 +731,25 @@ class Server(Worker):
                 self.broadcast_client_address()
 
             # get sampler
-            if 'client_info' in self._cfg.federate.join_in_info:
-                client_info = [
-                    self.join_in_info[client_index]['client_info']
+            if 'client_resource' in self._cfg.federate.join_in_info:
+                client_resource = [
+                    self.join_in_info[client_index]['client_resource']
                     for client_index in np.arange(1, self.client_num + 1)
                 ]
             else:
                 model_size = sys.getsizeof(pickle.dumps(
                     self.model)) / 1024.0 * 8.
-                client_info = [
+                client_resource = [
                     model_size / float(x['communication']) +
-                    float(x['computation']) / 1000. for x in self.client_info
-                ] if self.client_info is not None else None
+                    float(x['computation']) / 1000.
+                    for x in self.client_resource_info
+                ] if self.client_resource_info is not None else None
 
             if self.sampler is None:
                 self.sampler = get_sampler(
                     sample_strategy=self._cfg.federate.sampler,
                     client_num=self.client_num,
-                    client_info=client_info)
+                    client_info=client_resource)
 
             # change the deadline if the asyn.aggregator is `time up`
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
@@ -757,14 +762,18 @@ class Server(Worker):
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 
-    def trigger_for_time_up(self):
+    def trigger_for_time_up(self, check_timestamp=None):
         """
         The handler for time up: modify the currency timestamp
         and check the trigger condition
         """
+        if check_timestamp is not None and \
+                check_timestamp < self.deadline_for_cur_round:
+            return False
 
         self.cur_timestamp = self.deadline_for_cur_round
         self.check_and_move_on()
+        return True
 
     def terminate(self, msg_type='finish'):
         """
@@ -852,6 +861,8 @@ class Server(Worker):
         self.cur_timestamp = timestamp
 
         if round == self.state:
+            if round not in self.msg_buffer['train']:
+                self.msg_buffer['train'] = dict()
             # Save the messages in this round
             self.msg_buffer['train'][round][sender] = content
         elif round >= self.state - self.staleness_toleration:

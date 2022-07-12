@@ -5,15 +5,13 @@ early_stop:
 seed: 2
 federate:
   mode: standalone
-  local_update_steps: 2
-  batch_or_epoch: batch
   total_round_num: 20
   sample_client_num: 13
   merge_test_data: True
   share_local_model: False
   client_num: 200
   sampler: 'uniform'
-  device_info_file: 'client_device_capacity'
+  resource_info_file: 'client_device_capacity'
 data:
   root: data/
   type: CIFAR10@torchvision
@@ -29,9 +27,12 @@ model:
   type: convnet2
   hidden: 512
   out_channels: 10
-optimizer:
-  lr: 0.5
-  weight_decay: 0.0
+train:
+  local_update_steps: 2
+  batch_or_epoch: batch
+  optimizer:
+    lr: 0.5
+    weight_decay: 0.0
 grad:
   grad_clip: 5.0
 criterion:

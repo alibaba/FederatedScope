@@ -39,7 +39,7 @@ def extend_fl_setting_cfg(cfg):
     ]  # The information requirements (from server) for join_in
     cfg.federate.sampler = 'uniform'  # the strategy for sampling client
     # in each training round, ['uniform', 'group']
-    cfg.federate.device_info_file = ""  # the device information file to
+    cfg.federate.resource_info_file = ""  # the device information file to
     # record computation and communication ability
 
     # ---------------------------------------------------------------------- #

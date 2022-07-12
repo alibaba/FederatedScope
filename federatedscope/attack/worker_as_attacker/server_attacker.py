@@ -105,9 +105,6 @@ class PassiveServer(Server):
             if sender_list is None:
                 sender_list = self.msg_buffer['train'][state].keys()
             for sender in sender_list:
-                logger.info(
-                    '------------- reconstruct round:{}, client:{}-----------'.
-                    format(state, sender))
                 content = self.msg_buffer['train'][state][sender]
                 self._reconstruct(model_para=content[1],
                                   batch_size=content[0],
@@ -120,6 +117,8 @@ class PassiveServer(Server):
 
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
+        if round not in self.msg_buffer['train']:
+            self.msg_buffer['train'] = dict()
         self.msg_buffer['train'][round][sender] = content
 
         # run reconstruction before the clear of self.msg_buffer
@@ -196,6 +195,8 @@ class PassivePIAServer(Server):
 
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
+        if round not in self.msg_buffer['train']:
+            self.msg_buffer['train'] = dict()
         self.msg_buffer['train'][round][sender] = content
 
         # collect the updates

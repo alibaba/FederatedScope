@@ -22,15 +22,13 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.eval.best_res_update_round_wise_key = 'test_acc'
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 2
-        cfg.federate.batch_or_epoch = 'batch'
         cfg.federate.total_round_num = 40
         cfg.federate.sample_client_num = 13
         cfg.federate.merge_test_data = True
         cfg.federate.share_local_model = False
         cfg.federate.client_num = 200
         cfg.federate.sampler = 'group'
-        cfg.federate.device_info_file = 'client_device_capacity'
+        cfg.federate.resource_info_file = 'test_data/client_device_capacity'
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'CIFAR10@torchvision'
@@ -53,6 +51,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.model.hidden = 512
         cfg.model.out_channels = 10
 
+        cfg.train.local_update_steps = 2
+        cfg.train.batch_or_epoch = 'batch'
         cfg.train.optimizer.lr = 0.1
         cfg.train.optimizer.weight_decay = 0.0
         cfg.grad.grad_clip = 5.0
@@ -81,15 +81,13 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.eval.best_res_update_round_wise_key = 'test_acc'
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 2
-        cfg.federate.batch_or_epoch = 'batch'
         cfg.federate.total_round_num = 40
         cfg.federate.sample_client_num = 13
         cfg.federate.merge_test_data = True
         cfg.federate.share_local_model = False
         cfg.federate.client_num = 200
         cfg.federate.sampler = 'uniform'
-        cfg.federate.device_info_file = 'client_device_capacity'
+        cfg.federate.resource_info_file = 'test_data/client_device_capacity'
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'CIFAR10@torchvision'
@@ -112,6 +110,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.model.hidden = 512
         cfg.model.out_channels = 10
 
+        cfg.train.local_update_steps = 2
+        cfg.train.batch_or_epoch = 'batch'
         cfg.train.optimizer.lr = 0.1
         cfg.train.optimizer.weight_decay = 0.0
         cfg.grad.grad_clip = 5.0
@@ -141,15 +141,13 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.eval.best_res_update_round_wise_key = 'test_acc'
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.local_update_steps = 2
-        cfg.federate.batch_or_epoch = 'batch'
         cfg.federate.total_round_num = 40
         cfg.federate.sample_client_num = 13
         cfg.federate.merge_test_data = True
         cfg.federate.share_local_model = False
         cfg.federate.client_num = 200
         cfg.federate.sampler = 'uniform'
-        cfg.federate.device_info_file = 'client_device_capacity'
+        cfg.federate.resource_info_file = 'test_data/client_device_capacity'
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'CIFAR10@torchvision'
@@ -172,6 +170,8 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.model.hidden = 512
         cfg.model.out_channels = 10
 
+        cfg.train.local_update_steps = 2
+        cfg.train.batch_or_epoch = 'batch'
         cfg.train.optimizer.lr = 0.1
         cfg.train.optimizer.weight_decay = 0.0
         cfg.grad.grad_clip = 5.0

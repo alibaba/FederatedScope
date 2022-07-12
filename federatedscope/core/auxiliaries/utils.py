@@ -460,13 +460,12 @@ def format_log_hooks(hooks_set):
     return json.dumps(print_obj, indent=2).replace('\n', '\n\t')
 
 
-def get_device_info(filename):
+def get_resource_info(filename):
     if filename is None or not os.path.exists(filename):
         logger.info('The device information file is not provided')
-        print(filename)
         return None
 
-    # Users can develop this loading function according to the device_info_file
+    # Users can develop this loading function according to resource_info_file
     # As an example, we use the device_info provided by FedScale (FedScale:
     # Benchmarking Model and System Performance of Federated Learning
     # at Scale), which can be downloaded from

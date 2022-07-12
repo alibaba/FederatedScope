@@ -96,14 +96,16 @@ class Client(Worker):
         self._register_default_handlers()
 
         # Communication and communication ability
-        if 'device_info' in kwargs and kwargs['device_info'] is not None:
+        if 'resource_info' in kwargs and kwargs['resource_info'] is not None:
             self.comp_speed = float(
-                kwargs['device_info']['computation']) / 1000.
-            self.comm_bandwidth = float(kwargs['device_info']['communication'])
+                kwargs['resource_info']['computation']) / 1000.  # (s/sample)
+            self.comm_bandwidth = float(
+                kwargs['resource_info']['communication'])  # (kbit/s)
         else:
             self.comp_speed = None
             self.comm_bandwidth = None
-        self.model_size = sys.getsizeof(pickle.dumps(self.model)) / 1024.0 * 8.
+        self.model_size = sys.getsizeof(pickle.dumps(
+            self.model)) / 1024.0 * 8.  # kbits
 
         # Initialize communication manager
         self.server_id = server_id
@@ -410,11 +412,11 @@ class Client(Worker):
                     num_sample = self._cfg.train.local_update_steps * \
                                  self.trainer.ctx.num_train_batch
                 join_in_info['num_sample'] = num_sample
-            elif requirement.lower() == 'client_info':
+            elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \
-                                    "'client_info' does not exist."
-                join_in_info['client_info'] = self.model_size / \
+                                    "'client_resource' does not exist."
+                join_in_info['client_resource'] = self.model_size / \
                     self.comm_bandwidth + self.comp_speed
             else:
                 raise ValueError(

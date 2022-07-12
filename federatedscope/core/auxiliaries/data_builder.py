@@ -625,7 +625,14 @@ def merge_data(all_data, merged_max_data_id):
 
 
 def merge_test_data(all_data):
-
+    """ To merge clients' test data for efficient simulation
+    Arguments:
+        all_data (dict): The whole loaded dataset
+    Returns:
+        num_of_sample_per_client: The instance number of test data for
+            individual client
+        merged_data (dict): The merged test data.
+    """
     merged_data = dict()
     merged_data['test'] = all_data[1]['test']
     num_of_sample_per_client = [len(all_data[1]['test'].dataset)]
