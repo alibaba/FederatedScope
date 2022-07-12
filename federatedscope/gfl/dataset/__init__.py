@@ -7,4 +7,4 @@ from federatedscope.gfl.dataset.dblp_new import DBLPNew
 from federatedscope.gfl.dataset.kg import KG
 from federatedscope.gfl.dataset.cSBM_dataset import dataset_ContextualSBM
 
-__all__ = ['RecSys', 'DBLPNew', 'KG', 'dataset_ContextualSBM']
+__all__ = ['RecSys', 'DBLPNew', 'KG', 'dataset_ContextualSBM', 'CIKMCupDataset']

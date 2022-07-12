@@ -71,7 +71,7 @@ def get_gnn(model_config, local_data):
                              max_depth=model_config.layer,
                              dropout=model_config.dropout,
                              gnn=model_config.type)
-    elif model_config.task == 'graph':
+    elif model_config.task.startswith('graph'):
         if model_config.type == 'mpnn':
             model = MPNNs2s(in_channels=data.x.shape[-1],
                             out_channels=model_config.out_channels,
