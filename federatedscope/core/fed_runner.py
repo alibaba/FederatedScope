@@ -56,40 +56,48 @@ class FedRunner(object):
         """
         To set up server and client for standalone mode.
         """
-        self.server = self._setup_server()
 
-        self.client = dict()
+        if self.cfg.backend == 'torch':
+            import torch
+            torch.set_num_threads(1)
+
         assert self.cfg.federate.client_num != 0, \
             "In standalone mode, self.cfg.federate.client_num should be " \
             "non-zero. " \
             "This is usually cased by using synthetic data and users not " \
             "specify a non-zero value for client_num"
 
-        # assume the client-wise data are consistent in their input&output
-        # shape
-        self._shared_client_model = get_model(
-            self.cfg.model, self.data[1], backend=self.cfg.backend
-        ) if self.cfg.federate.share_local_model else None
-
-        if self.cfg.backend == 'torch':
-            import torch
-            torch.set_num_threads(1)
-
         if self.cfg.federate.method == "global":
             if self.cfg.federate.client_num != 1:
-                from federatedscope.core.auxiliaries.data_builder import merge_data
+                from federatedscope.core.auxiliaries.data_builder import \
+                    merge_data
                 if self.cfg.data.server_holds_all:
-                    assert self.data[0] is not None and len(self.data[0]) != 0, \
-                        "You specified cfg.data.server_holds_all=True but data[0] is None. " \
-                        "Please check whether you pre-process the data[0] correctly"
+                    assert self.data[0] is not None \
+                        and len(self.data[0]) != 0, \
+                        "You specified cfg.data.server_holds_all=True " \
+                        "but data[0] is None. Please check whether you " \
+                        "pre-process the data[0] correctly"
                     self.data[1] = self.data[0]
                 else:
+                    logger.info(f"Will merge data from clients whose ids in "
+                                f"[1, {self.cfg.federate.client_num}]")
                     self.data[1] = merge_data(
                         all_data=self.data,
                         merged_max_data_id=self.cfg.federate.client_num)
                 self.cfg.defrost()
                 self.cfg.federate.client_num = 1
+                self.cfg.federate.sample_client_num = 1
                 self.cfg.freeze()
+
+        self.server = self._setup_server()
+
+        self.client = dict()
+
+        # assume the client-wise data are consistent in their input&output
+        # shape
+        self._shared_client_model = get_model(
+            self.cfg.model, self.data[1], backend=self.cfg.backend
+        ) if self.cfg.federate.share_local_model else None
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
