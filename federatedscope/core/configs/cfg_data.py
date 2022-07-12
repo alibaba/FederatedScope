@@ -23,7 +23,8 @@ def extend_data_cfg(cfg):
     cfg.data.drop_last = False
     cfg.data.sizes = [10, 5]
     cfg.data.shuffle = True
-    cfg.data.server_holds_all = False  # whether the server (client[0]) holds all data, useful in global evaluation case
+    cfg.data.server_holds_all = False  # whether the server (workers with
+    # idx 0) holds all data, useful in global training/evaluation case
     cfg.data.subsample = 1.0
     cfg.data.splits = [0.8, 0.1, 0.1]  # Train, valid, test splits
     cfg.data.consistent_label_distribution = False  # If True, the label
