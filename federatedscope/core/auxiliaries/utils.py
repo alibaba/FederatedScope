@@ -381,7 +381,7 @@ def logfile_2_wandb_dict(exp_log_f, raw_out=True):
         last_line = line
         exp_stop_normal, log_res = logline_2_wandb_dict(
             exp_stop_normal, line, log_res_best, raw_out)
-        if "'Role': 'Server '" in line:
+        if "'Role': 'Server #'" in line:
             all_log_res.append(log_res)
     return all_log_res, exp_stop_normal, last_line, log_res_best
 
@@ -414,7 +414,7 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
             for inner_key, inner_val in val.items():
                 log_res_best[f"best_{best_type_key}/{inner_key}"] = inner_val
 
-    if "'Role': 'Server '" in line:
+    if "'Role': 'Server #'" in line:
         if raw_out:
             line = line.split("INFO: ")[1]
         res = line.replace("\'", "\"")
@@ -478,17 +478,17 @@ def get_resource_info(filename):
 
 
 def calculate_time_cost(instance_number,
-                        model_size,
+                        comm_size,
                         comp_speed=None,
                         comm_bandwidth=None,
                         augmentation_factor=3.0):
     # Served as an example, this cost model is adapted from FedScale at
     # https://github.com/SymbioticLab/FedScale/blob/master/fedscale/core/
-    # internal/client.py#L35 (MIT License)
+    # internal/client.py#L35 (Apache License Version 2.0)
     # Users can modify this function according to customized cost model
     if comp_speed is not None and comm_bandwidth is not None:
         comp_cost = augmentation_factor * instance_number * comp_speed
-        comm_cost = 2.0 * model_size / comm_bandwidth
+        comm_cost = 2.0 * comm_size / comm_bandwidth
     else:
         comp_cost = 0
         comm_cost = 0

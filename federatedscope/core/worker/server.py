@@ -166,7 +166,6 @@ class Server(Worker):
 
         # Initialize communication manager and message buffer
         self.msg_buffer = {'train': dict(), 'eval': dict()}
-        self.msg_buffer['train'][0] = dict()
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
@@ -306,57 +305,9 @@ class Server(Worker):
         move_on_flag = True  # To record whether moving to a new training
         # round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
-            if not check_eval_result:  # in the training process
-
-                train_msg_buffer = self.msg_buffer['train'][self.state]
-                for model_idx in range(self.model_num):
-                    model = self.models[model_idx]
-                    aggregator = self.aggregators[model_idx]
-                    msg_list = list()
-                    staleness = list()
-
-                    for client_id in train_msg_buffer.keys():
-                        if self.model_num == 1:
-                            msg_list.append(train_msg_buffer[client_id])
-                        else:
-                            train_data_size, model_para_multiple = \
-                                train_msg_buffer[client_id]
-                            msg_list.append((train_data_size,
-                                             model_para_multiple[model_idx]))
-
-                        # The staleness of the messages in train_msg_buffer
-                        # should be 0
-                        staleness.append((client_id, 0))
-
-                    for staled_message in self.staled_msg_buffer:
-                        state, client_id, content = staled_message
-                        if self.model_num == 1:
-                            msg_list.append(content)
-                        else:
-                            train_data_size, model_para_multiple = content
-                            msg_list.append((train_data_size,
-                                             model_para_multiple[model_idx]))
-
-                        staleness.append((client_id, self.state - state))
-
-                    # Trigger the monitor here (for training)
-                    if 'dissim' in self._cfg.eval.monitoring:
-                        B_val = self._monitor.calc_blocal_dissim(
-                            model.load_state_dict(strict=False), msg_list)
-                        formatted_eval_res = self._monitor.format_eval_res(
-                            B_val, rnd=self.state, role='Server ')
-                        logger.info(formatted_eval_res)
-
-                    # Aggregate
-                    aggregated_num = len(msg_list)
-                    agg_info = {
-                        'client_feedback': msg_list,
-                        'recover_fun': self.recover_fun,
-                        'staleness': staleness,
-                    }
-                    # logger.info(f'The staleness is {staleness}')
-                    result = aggregator.aggregate(agg_info)
-                    model.load_state_dict(result, strict=False)
+            if not check_eval_result:
+                # Receiving enough feedback in the training process
+                aggregated_num = self._perform_federated_aggregation()
 
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
@@ -375,47 +326,17 @@ class Server(Worker):
                     self.msg_buffer['train'][self.state - 1].clear()
                     self.msg_buffer['train'][self.state] = dict()
                     self.staled_msg_buffer.clear()
-
-                    if self._cfg.asyn.use:  # for asynchronous training
-                        if self._cfg.asyn.aggregator == "time_up":
-                            # Update the deadline according to the time budget
-                            self.deadline_for_cur_round = \
-                                self.cur_timestamp + self._cfg.asyn.time_budget
-
-                        if self._cfg.asyn.broadcast_manner == \
-                                'after_aggregating':
-                            if self._cfg.asyn.overselection:
-                                sample_client_num = self.sample_client_num
-                            else:
-                                sample_client_num = aggregated_num + \
-                                                     self.dropout_num
-
-                            self.broadcast_model_para(
-                                msg_type='model_para',
-                                sample_client_num=sample_client_num)
-                            self.dropout_num = 0
-                    else:  # for synchronous training
-                        self.broadcast_model_para(
-                            msg_type='model_para',
-                            sample_client_num=self.sample_client_num)
+                    # Start a new training round
+                    self._start_new_training_round(aggregated_num)
                 else:
                     # Final Evaluate
                     logger.info('Server: Training is finished! Starting '
                                 'evaluation.')
                     self.eval()
 
-            else:  # in the evaluation process
-                # Get all the message & aggregate
-                formatted_eval_res = \
-                    self.merge_eval_results_from_all_clients()
-                self.history_results = merge_dict(self.history_results,
-                                                  formatted_eval_res)
-                if self.mode == 'standalone' and \
-                        self._monitor.wandb_online_track and \
-                        self._monitor.use_wandb:
-                    self._monitor.merge_system_metrics_simulation_mode(
-                        file_io=False, from_global_monitors=True)
-                self.check_and_save()
+            else:
+                # Receiving enough feedback in the evaluation process
+                self._merge_and_format_eval_results()
 
         else:
             move_on_flag = False
@@ -473,6 +394,103 @@ class Server(Worker):
             # break out the loop for distributed mode
             self.state += 1
 
+    def _perform_federated_aggregation(self):
+        """
+        Perform federated aggregation and update the global model
+        """
+        train_msg_buffer = self.msg_buffer['train'][self.state]
+        for model_idx in range(self.model_num):
+            model = self.models[model_idx]
+            aggregator = self.aggregators[model_idx]
+            msg_list = list()
+            staleness = list()
+
+            for client_id in train_msg_buffer.keys():
+                if self.model_num == 1:
+                    msg_list.append(train_msg_buffer[client_id])
+                else:
+                    train_data_size, model_para_multiple = \
+                        train_msg_buffer[client_id]
+                    msg_list.append(
+                        (train_data_size, model_para_multiple[model_idx]))
+
+                # The staleness of the messages in train_msg_buffer
+                # should be 0
+                staleness.append((client_id, 0))
+
+            for staled_message in self.staled_msg_buffer:
+                state, client_id, content = staled_message
+                if self.model_num == 1:
+                    msg_list.append(content)
+                else:
+                    train_data_size, model_para_multiple = content
+                    msg_list.append(
+                        (train_data_size, model_para_multiple[model_idx]))
+
+                staleness.append((client_id, self.state - state))
+
+            # Trigger the monitor here (for training)
+            if 'dissim' in self._cfg.eval.monitoring:
+                B_val = self._monitor.calc_blocal_dissim(
+                    model.load_state_dict(strict=False), msg_list)
+                formatted_eval_res = self._monitor.format_eval_res(
+                    B_val, rnd=self.state, role='Server #')
+                logger.info(formatted_eval_res)
+
+            # Aggregate
+            aggregated_num = len(msg_list)
+            agg_info = {
+                'client_feedback': msg_list,
+                'recover_fun': self.recover_fun,
+                'staleness': staleness,
+            }
+            # logger.info(f'The staleness is {staleness}')
+            result = aggregator.aggregate(agg_info)
+            model.load_state_dict(result, strict=False)
+
+        return aggregated_num
+
+    def _start_new_training_round(self, aggregated_num=0):
+        """
+        The behaviors for starting a new training round
+        """
+        if self._cfg.asyn.use:  # for asynchronous training
+            if self._cfg.asyn.aggregator == "time_up":
+                # Update the deadline according to the time budget
+                self.deadline_for_cur_round = \
+                    self.cur_timestamp + self._cfg.asyn.time_budget
+
+            if self._cfg.asyn.broadcast_manner == \
+                    'after_aggregating':
+                if self._cfg.asyn.overselection:
+                    sample_client_num = self.sample_client_num
+                else:
+                    sample_client_num = aggregated_num + \
+                                        self.dropout_num
+
+                self.broadcast_model_para(msg_type='model_para',
+                                          sample_client_num=sample_client_num)
+                self.dropout_num = 0
+        else:  # for synchronous training
+            self.broadcast_model_para(msg_type='model_para',
+                                      sample_client_num=self.sample_client_num)
+
+    def _merge_and_format_eval_results(self):
+        """
+        The behaviors of server when receiving enough evaluating results
+        """
+        # Get all the message & aggregate
+        formatted_eval_res = \
+            self.merge_eval_results_from_all_clients()
+        self.history_results = merge_dict(self.history_results,
+                                          formatted_eval_res)
+        if self.mode == 'standalone' and \
+                self._monitor.wandb_online_track and \
+                self._monitor.use_wandb:
+            self._monitor.merge_system_metrics_simulation_mode(
+                file_io=False, from_global_monitors=True)
+        self.check_and_save()
+
     def save_best_results(self):
         """
         To Save the best evaluation results.
@@ -483,7 +501,7 @@ class Server(Worker):
         formatted_best_res = self._monitor.format_eval_res(
             results=self.best_results,
             rnd="Final",
-            role='Server ',
+            role='Server #',
             forms=["raw"],
             return_raw=True)
         logger.info(formatted_best_res)
@@ -546,7 +564,7 @@ class Server(Worker):
                 formatted_logs = self._monitor.format_eval_res(
                     metrics_all_clients,
                     rnd=self.state,
-                    role='Server ',
+                    role='Server #',
                     forms=self._cfg.eval.report)
                 if merge_type == "unseen":
                     for key, val in copy.deepcopy(formatted_logs).items():
@@ -767,6 +785,9 @@ class Server(Worker):
         The handler for time up: modify the currency timestamp
         and check the trigger condition
         """
+        if self.is_finish:
+            return False
+
         if check_timestamp is not None and \
                 check_timestamp < self.deadline_for_cur_round:
             return False
@@ -816,7 +837,7 @@ class Server(Worker):
                 formatted_eval_res = self._monitor.format_eval_res(
                     metrics,
                     rnd=self.state,
-                    role='Server ',
+                    role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
                 self._monitor.update_best_result(
@@ -862,7 +883,7 @@ class Server(Worker):
 
         if round == self.state:
             if round not in self.msg_buffer['train']:
-                self.msg_buffer['train'] = dict()
+                self.msg_buffer['train'][round] = dict()
             # Save the messages in this round
             self.msg_buffer['train'][round][sender] = content
         elif round >= self.state - self.staleness_toleration:

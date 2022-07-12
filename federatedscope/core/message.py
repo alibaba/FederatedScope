@@ -78,6 +78,8 @@ class Message(object):
 
     @timestamp.setter
     def timestamp(self, value):
+        assert isinstance(value, int) or isinstance(value, float), \
+            "We only support an int or a float value for timestamp"
         self._timestamp = value
 
     @property

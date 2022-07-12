@@ -2,15 +2,13 @@ import logging
 
 from collections import deque
 import heapq
-import numpy as np
 
 import numpy as np
 
 from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
-from federatedscope.core.auxiliaries.data_builder import merge_data, \
-    merge_test_data
+from federatedscope.core.auxiliaries.data_builder import merge_data
 from federatedscope.core.auxiliaries.utils import get_resource_info
 
 logger = logging.getLogger(__name__)
@@ -88,8 +86,6 @@ class FedRunner(object):
 
         if self.cfg.federate.method == "global":
             if self.cfg.federate.client_num != 1:
-                from federatedscope.core.auxiliaries.data_builder import \
-                    merge_data
                 if self.cfg.data.server_holds_all:
                     assert self.data[0] is not None \
                         and len(self.data[0]) != 0, \
@@ -193,70 +189,10 @@ class FedRunner(object):
                 # any broadcast operation would be executed client-by-client
                 # to avoid the existence of #clients messages at the same time.
                 # currently, only consider centralized topology
-                def is_broadcast(msg):
-                    return len(msg.receiver) >= 1 and msg.sender == 0
-
-                cached_bc_msgs = []
-                cur_idx = 0
-                while True:
-                    if len(self.shared_comm_queue) > 0:
-                        msg = self.shared_comm_queue.popleft()
-                        if is_broadcast(msg):
-                            cached_bc_msgs.append(msg)
-                            # assume there is at least one client
-                            msg = cached_bc_msgs[0]
-                            self._handle_msg(msg, rcv=msg.receiver[cur_idx])
-                            cur_idx += 1
-                            if cur_idx >= len(msg.receiver):
-                                del cached_bc_msgs[0]
-                                cur_idx = 0
-                        else:
-                            self._handle_msg(msg)
-                    elif len(cached_bc_msgs) > 0:
-                        msg = cached_bc_msgs[0]
-                        self._handle_msg(msg, rcv=msg.receiver[cur_idx])
-                        cur_idx += 1
-                        if cur_idx >= len(msg.receiver):
-                            del cached_bc_msgs[0]
-                            cur_idx = 0
-                    else:
-                        # finished
-                        break
+                self._run_simulation_online()
 
             else:
-                server_msg_cache = list()
-                while True:
-                    if len(self.shared_comm_queue) > 0:
-                        msg = self.shared_comm_queue.popleft()
-                        if msg.receiver == [self.server_id]:
-                            # For the server, move the received message to a
-                            # cache for reordering the messages according to
-                            # the timestamps
-                            heapq.heappush(server_msg_cache, msg)
-                        else:
-                            self._handle_msg(msg)
-                    elif len(server_msg_cache) > 0:
-                        msg = heapq.heappop(server_msg_cache)
-                        if self.cfg.asyn.use and self.cfg.asyn.aggregator \
-                                == 'time_up':
-                            # When the timestamp of the received message beyond
-                            # the deadline for the currency round, trigger the
-                            # time up event first and push the message back to
-                            # the cache
-                            if self.server.trigger_for_time_up(msg.timestamp):
-                                heapq.heappush(server_msg_cache, msg)
-                            else:
-                                self._handle_msg(msg)
-                        else:
-                            self._handle_msg(msg)
-                    else:
-                        if self.cfg.asyn.use and self.cfg.asyn.aggregator \
-                                == 'time_up':
-                            self.server.trigger_for_time_up()
-                        else:
-                            # terminate when shared_comm_queue and
-                            # server_msg_cache are all empty
-                            break
+                self._run_simulation()
 
             self.server._monitor.finish_fed_runner(fl_mode=self.mode)
 
@@ -270,6 +206,76 @@ class FedRunner(object):
                 self.client.join_in()
                 self.client.run()
 
+    def _run_simulation_online(self):
+        def is_broadcast(msg):
+            return len(msg.receiver) >= 1 and msg.sender == 0
+
+        cached_bc_msgs = []
+        cur_idx = 0
+        while True:
+            if len(self.shared_comm_queue) > 0:
+                msg = self.shared_comm_queue.popleft()
+                if is_broadcast(msg):
+                    cached_bc_msgs.append(msg)
+                    # assume there is at least one client
+                    msg = cached_bc_msgs[0]
+                    self._handle_msg(msg, rcv=msg.receiver[cur_idx])
+                    cur_idx += 1
+                    if cur_idx >= len(msg.receiver):
+                        del cached_bc_msgs[0]
+                        cur_idx = 0
+                else:
+                    self._handle_msg(msg)
+            elif len(cached_bc_msgs) > 0:
+                msg = cached_bc_msgs[0]
+                self._handle_msg(msg, rcv=msg.receiver[cur_idx])
+                cur_idx += 1
+                if cur_idx >= len(msg.receiver):
+                    del cached_bc_msgs[0]
+                    cur_idx = 0
+            else:
+                # finished
+                break
+
+    def _run_simulation(self):
+
+        server_msg_cache = list()
+        while True:
+            if len(self.shared_comm_queue) > 0:
+                msg = self.shared_comm_queue.popleft()
+                if msg.receiver == [self.server_id]:
+                    # For the server, move the received message to a
+                    # cache for reordering the messages according to
+                    # the timestamps
+                    heapq.heappush(server_msg_cache, msg)
+                else:
+                    self._handle_msg(msg)
+            elif len(server_msg_cache) > 0:
+                msg = heapq.heappop(server_msg_cache)
+                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                        == 'time_up':
+                    # When the timestamp of the received message beyond
+                    # the deadline for the currency round, trigger the
+                    # time up event first and push the message back to
+                    # the cache
+                    if self.server.trigger_for_time_up(msg.timestamp):
+                        heapq.heappush(server_msg_cache, msg)
+                    else:
+                        self._handle_msg(msg)
+                else:
+                    self._handle_msg(msg)
+            else:
+                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                        == 'time_up':
+                    self.server.trigger_for_time_up()
+                    if len(self.shared_comm_queue) == 0 and \
+                            len(server_msg_cache) == 0:
+                        break
+                else:
+                    # terminate when shared_comm_queue and
+                    # server_msg_cache are all empty
+                    break
+
     def _setup_server(self, resource_info=None, client_resource_info=None):
         """
         Set up the server
@@ -277,8 +283,10 @@ class FedRunner(object):
         self.server_id = 0
         if self.mode == 'standalone':
             if self.cfg.federate.merge_test_data:
-                num_of_sample_per_client, server_data = merge_test_data(
-                    all_data=self.data)
+                server_data = merge_data(
+                    all_data=self.data,
+                    merged_max_data_id=self.cfg.federate.client_num,
+                    specified_dataset_name=['test'])
                 model = get_model(self.cfg.model,
                                   server_data,
                                   backend=self.cfg.backend)

@@ -210,7 +210,7 @@ class AsynCIFAR10Test(unittest.TestCase):
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertGreater(test_best_results['server_global_eval']['test_acc'],
-                           0.3)
+                           0.15)
 
     def test_asyn_cifar10_timeUp_afterAggregating(self):
         init_cfg = global_cfg.clone()
@@ -231,7 +231,7 @@ class AsynCIFAR10Test(unittest.TestCase):
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertGreater(test_best_results['server_global_eval']['test_acc'],
-                           0.3)
+                           0.15)
 
     def test_asyn_cifar10_overselection(self):
         init_cfg = global_cfg.clone()
@@ -252,7 +252,7 @@ class AsynCIFAR10Test(unittest.TestCase):
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertGreater(test_best_results['server_global_eval']['test_acc'],
-                           0.3)
+                           0.15)
 
 
 if __name__ == '__main__':

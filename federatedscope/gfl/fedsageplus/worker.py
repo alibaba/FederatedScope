@@ -196,7 +196,7 @@ class FedSagePlusServer(Server):
                     B_val = self._monitor.calc_blocal_dissim(
                         self.model.load_state_dict(), msg_list)
                     formatted_logs = self._monitor.format_eval_res(
-                        B_val, rnd=self.state, role='Server ')
+                        B_val, rnd=self.state, role='Server #')
                     logger.info(formatted_logs)
 
                 # Aggregate

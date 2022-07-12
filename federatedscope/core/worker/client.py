@@ -138,7 +138,7 @@ class Client(Worker):
 
         comp_cost, comm_cost = calculate_time_cost(
             instance_number=instance_number,
-            model_size=self.model_size,
+            comm_size=self.model_size,
             comp_speed=self.comp_speed,
             comm_bandwidth=self.comm_bandwidth)
         return init_timestamp + comp_cost + comm_cost
@@ -272,7 +272,7 @@ class Client(Worker):
             # clients in the previous local training process) are overwritten
             # and synchronized with the received model
             self.trainer.update(content,
-                    strict=self._cfg.federate.share_local_model)
+                                strict=self._cfg.federate.share_local_model)
             self.state = round
             skip_train_isolated_or_global_mode = \
                 self.early_stopper.early_stopped and \

@@ -34,7 +34,7 @@ def main():
             if line.startswith('{'):
                 line = line.replace("\'", "\"")
                 line = json.loads(s=line)
-                if line['Round'] == 'Final' and line['Role'] == 'Server ':
+                if line['Round'] == 'Final' and line['Role'] == 'Server #':
                     res = line['Results_raw']
                     if 'Results_raw' in line.keys():
                         if 'server_global_eval' in res.keys():

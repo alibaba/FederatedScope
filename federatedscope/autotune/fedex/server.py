@@ -327,7 +327,7 @@ class FedExServer(Server):
                         B_val = calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
                         formatted_eval_res = self._monitor.format_eval_res(
-                            B_val, rnd=self.state, role='Server ')
+                            B_val, rnd=self.state, role='Server #')
                         logger.info(formatted_eval_res)
 
                     # Aggregate

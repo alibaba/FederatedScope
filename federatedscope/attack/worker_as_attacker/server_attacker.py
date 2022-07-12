@@ -118,7 +118,7 @@ class PassiveServer(Server):
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
         if round not in self.msg_buffer['train']:
-            self.msg_buffer['train'] = dict()
+            self.msg_buffer['train'][round] = dict()
         self.msg_buffer['train'][round][sender] = content
 
         # run reconstruction before the clear of self.msg_buffer
@@ -196,7 +196,7 @@ class PassivePIAServer(Server):
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
         if round not in self.msg_buffer['train']:
-            self.msg_buffer['train'] = dict()
+            self.msg_buffer['train'][round] = dict()
         self.msg_buffer['train'][round][sender] = content
 
         # collect the updates
