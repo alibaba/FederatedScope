@@ -144,10 +144,14 @@ class FedExServer(Server):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1):
+                             sample_client_num=-1,
+                             filter_unseen_clients=True):
         """
         To broadcast the message to all clients or sampled clients
         """
+        if filter_unseen_clients:
+            # to filter out the unseen clients when sampling
+            self.sampler.change_state(self.unseen_clients_id, 'working')
 
         if sample_client_num > 0:
             receiver = np.random.choice(np.arange(1, self.client_num + 1),
