@@ -6,8 +6,9 @@ federate:
 model:
   type: lr
   use_bias: False
-optimizer:
-  lr: 0.05
+train:
+  optimizer:
+    lr: 0.05
 data:
   type: vertical_fl_data
   batch_size: 50

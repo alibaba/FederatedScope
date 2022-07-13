@@ -4,7 +4,6 @@ early_stop:
   patience: 5
 federate:
   mode: standalone
-  local_update_steps: 10
   total_round_num: 200
   sample_client_rate: 0.2
   client_num: 300
@@ -16,9 +15,11 @@ data:
 model:
   type: lr
   out_channels: 2
-optimizer:
-  lr: 0.1
-  weight_decay: 0.0
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 0.1
+    weight_decay: 0.0
 criterion:
   type: CrossEntropyLoss
 trainer:

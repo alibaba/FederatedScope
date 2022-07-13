@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 class YAMLTest(unittest.TestCase):
     def setUp(self):
-        self.exclude_all = ['benchmark']
+        self.exclude_all = [
+            'benchmark', 'scripts', 'federatedscope/example_configs'
+        ]
         self.exclude_file = ['.pre-commit-config.yaml', 'meta.yaml']
         self.root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.exclude_all = [
@@ -40,11 +42,14 @@ class YAMLTest(unittest.TestCase):
                 try:
                     init_cfg.merge_from_file(yaml_file)
                 except KeyError as error:
-                    # raise KeyError(f"KeyError: {error} in file: {yaml_file}")
-                    logger.error(f"KeyError: {error} in file: {yaml_file}")
+                    logger.error(
+                        f"KeyError: {error} in file: {yaml_file.removeprefix(self.root)}"
+                    )
                     sign = True
                 except ValueError as error:
-                    logger.error(f"ValueError: {error} in file: {yaml_file}")
+                    logger.error(
+                        f"ValueError: {error} in file: {yaml_file.removeprefix(self.root)}"
+                    )
                     sign = True
                 init_cfg = global_cfg.clone()
         self.assertIs(sign, False, "Yaml check failed.")
