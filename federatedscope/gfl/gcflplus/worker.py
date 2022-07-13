@@ -185,6 +185,9 @@ class GCFLPlusClient(Client):
         self.trainer.update(content)
         self.state = round
         sample_size, model_para, results = self.trainer.train()
+        if self._cfg.federate.share_local_model and not \
+                self._cfg.federate.online_aggr:
+            model_para = copy.deepcopy(model_para)
         logger.info(
             self._monitor.format_eval_res(results,
                                           rnd=self.state,
