@@ -137,7 +137,8 @@ class CN(CfgNode):
         with open(cfg_filename, "r") as f:
             cfg = self.load_cfg(f)
         self.merge_from_other_cfg(cfg)
-        self.cfg_check_funcs = cfg_check_funcs
+        self.cfg_check_funcs.clear()
+        self.cfg_check_funcs.extend(cfg_check_funcs)
         self.assert_cfg()
 
     def merge_from_other_cfg(self, cfg_other):
@@ -150,7 +151,8 @@ class CN(CfgNode):
 
         cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         merge_dict_a_into_b(cfg_other, self, self, [])
-        self.cfg_check_funcs = cfg_check_funcs
+        self.cfg_check_funcs.clear()
+        self.cfg_check_funcs.extend(cfg_check_funcs)
         self.assert_cfg()
 
     def merge_from_list(self, cfg_list):
@@ -164,7 +166,8 @@ class CN(CfgNode):
         """
         cfg_check_funcs = copy.copy(self.cfg_check_funcs)
         self.merge_from_list_yacs(cfg_list)
-        self.cfg_check_funcs = cfg_check_funcs
+        self.cfg_check_funcs.clear()
+        self.cfg_check_funcs.extend(cfg_check_funcs)
         self.assert_cfg()
 
     def merge_from_list_yacs(self, cfg_list):
