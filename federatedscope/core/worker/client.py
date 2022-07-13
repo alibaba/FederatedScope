@@ -210,7 +210,8 @@ class Client(Worker):
         else:
             round, sender, content = message.state, message.sender, \
                                      message.content
-            self.trainer.update(content)
+            self.trainer.update(content,
+                                strict=self._cfg.federate.share_local_model)
             self.state = round
             if self.early_stopper.early_stopped and \
                     self._cfg.federate.method in ["local", "global"]:
@@ -348,7 +349,8 @@ class Client(Worker):
         sender = message.sender
         self.state = message.state
         if message.content is not None:
-            self.trainer.update(message.content)
+            self.trainer.update(message.content,
+                                strict=self._cfg.federate.share_local_model)
         if self.early_stopper.early_stopped and self._cfg.federate.method in [
                 "local", "global"
         ]:
@@ -408,7 +410,8 @@ class Client(Worker):
             f"=================")
 
         if message.content is not None:
-            self.trainer.update(message.content)
+            self.trainer.update(message.content,
+                                strict=self._cfg.federate.share_local_model)
 
         self._monitor.finish_fl()
 
