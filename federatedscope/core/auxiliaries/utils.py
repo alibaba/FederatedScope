@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import random
+import re
 import signal
 import ssl
 import time
@@ -39,6 +40,25 @@ def setup_seed(seed):
         tf.set_random_seed(seed)
 
 
+class LoggerPrecisionFilter(logging.Filter):
+    def __init__(self, precision):
+        super().__init__()
+        self.print_precision = precision
+
+    def str_round(self, match_res):
+        return str(round(eval(match_res.group()), self.print_precision))
+
+    def filter(self, record):
+        # use regex to find float numbers and round them to specified precision
+        if not isinstance(record.msg, str):
+            record.msg = str(record.msg)
+        if record.msg != "":
+            if re.search(r"([-+]?\d+\.\d+)", record.msg):
+                record.msg = re.sub(r"([-+]?\d+\.\d+)", self.str_round,
+                                    record.msg)
+        return True
+
+
 def update_logger(cfg, clear_before_add=False):
     import os
     import logging
@@ -52,6 +72,7 @@ def update_logger(cfg, clear_before_add=False):
         logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(" \
                       "message)s"
         handler.setFormatter(logging.Formatter(logging_fmt))
+
         root_logger.addHandler(handler)
 
     # update level
@@ -94,6 +115,16 @@ def update_logger(cfg, clear_before_add=False):
     fh.setFormatter(logger_formatter)
     root_logger.addHandler(fh)
 
+    # set print precision for terse logging
+    np.set_printoptions(precision=cfg.print_decimal_digits)
+    precision_filter = LoggerPrecisionFilter(cfg.print_decimal_digits)
+    # attach the filter to the fh handler to propagate the filter, since
+    # "Filters, unlike levels and handlers, do not propagate",
+    # ref https://stackoverflow.com/questions/6850798/why-doesnt-filter-
+    # attached-to-the-root-logger-propagate-to-descendant-loggers
+    for handler in root_logger.handlers:
+        handler.addFilter(precision_filter)
+
     import socket
     root_logger.info(f"the current machine is at"
                      f" {socket.gethostbyname(socket.gethostname())}")
@@ -123,7 +154,8 @@ def init_wandb(cfg):
     tmp_cfg = copy.deepcopy(cfg)
     if tmp_cfg.is_frozen():
         tmp_cfg.defrost()
-    tmp_cfg.cfg_check_funcs.clear()  # in most cases, no need to save the cfg_check_funcs via wandb
+    tmp_cfg.cfg_check_funcs.clear(
+    )  # in most cases, no need to save the cfg_check_funcs via wandb
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 

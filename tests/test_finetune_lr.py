@@ -34,7 +34,7 @@ class ToyLRTest(unittest.TestCase):
         init_cfg = global_cfg.clone()
         backup_cfg = self.set_config_standalone(init_cfg)
         setup_seed(init_cfg.seed)
-        update_logger(init_cfg)
+        update_logger(init_cfg, True)
 
         data, modified_config = get_data(init_cfg.clone())
         init_cfg.merge_from_other_cfg(modified_config)

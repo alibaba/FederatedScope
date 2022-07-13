@@ -191,6 +191,9 @@ def init_global_cfg(cfg):
     # Whether to print verbose logging info
     cfg.verbose = 1
 
+    # How many decimal places we print out using logger
+    cfg.print_decimal_digits = 6
+
     # Specify the device
     cfg.device = -1
 
