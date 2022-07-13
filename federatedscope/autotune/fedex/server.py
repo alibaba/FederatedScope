@@ -151,7 +151,7 @@ class FedExServer(Server):
         """
         if filter_unseen_clients:
             # to filter out the unseen clients when sampling
-            self.sampler.change_state(self.unseen_clients_id, 'working')
+            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
             receiver = np.random.choice(np.arange(1, self.client_num + 1),

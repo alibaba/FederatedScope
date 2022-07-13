@@ -530,7 +530,7 @@ class Server(Worker):
         """
         if filter_unseen_clients:
             # to filter out the unseen clients when sampling
-            self.sampler.change_state(self.unseen_clients_id, 'working')
+            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
             receiver = self.sampler.sample(size=sample_client_num)
