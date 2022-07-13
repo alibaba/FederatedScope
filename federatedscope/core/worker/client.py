@@ -39,10 +39,18 @@ class Client(Worker):
                  model=None,
                  device='cpu',
                  strategy=None,
+                 is_unseen_client=False,
                  *args,
                  **kwargs):
 
         super(Client, self).__init__(ID, state, config, model, strategy)
+
+        # the unseen_client indicates that whether this client contributes to
+        # FL process by training on its local data and uploading the local
+        # model update, which is useful for check the participation
+        # generalization gap in
+        # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
+        self.is_unseen_client = is_unseen_client
 
         # Attack only support the stand alone model;
         # Check if is a attacker; a client is a attacker if the
@@ -212,15 +220,27 @@ class Client(Worker):
                                      message.content
             self.trainer.update(content)
             self.state = round
-            if self.early_stopper.early_stopped and \
-                    self._cfg.federate.method in ["local", "global"]:
+            skip_train_isolated_or_global_mode = \
+                self.early_stopper.early_stopped and \
+                self._cfg.federate.method in ["local", "global"]
+            if self.is_unseen_client or skip_train_isolated_or_global_mode:
+                # for these cases (1) unseen client (2) isolated_global_mode,
+                # we do not local train and upload local model
                 sample_size, model_para_all, results = \
-                    0, self.trainer.get_model_para(
-                    ), {}
-                logger.info(f"Client #{self.ID} has been early stopped, "
-                            f"we will skip the local training")
-                self._monitor.local_converged()
+                    0, self.trainer.get_model_para(), {}
+                if skip_train_isolated_or_global_mode:
+                    logger.info(
+                        f"[Local/Global mode] Client #{self.ID} has been "
+                        f"early stopped, we will skip the local training")
+                    self._monitor.local_converged()
             else:
+                if self.early_stopper.early_stopped and \
+                        self._monitor.local_convergence_round == 0:
+                    logger.info(
+                        f"[Normal FL Mode] Client #{self.ID} has been locally "
+                        f"early stopped. "
+                        f"The next FL update may result in negative effect")
+                    self._monitor.local_converged()
                 sample_size, model_para_all, results = self.trainer.train()
                 train_log_res = self._monitor.format_eval_res(
                     results,
@@ -234,6 +254,10 @@ class Client(Worker):
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
+                assert not self.is_unseen_client, \
+                    "Un-support using secret sharing for unseen clients." \
+                    "i.e., you set cfg.federate.use_ss=True and " \
+                    "cfg.federate.unseen_clients_rate in (0, 1)"
                 single_model_case = True
                 if isinstance(model_para_all, list):
                     assert isinstance(model_para_all[0], dict), \

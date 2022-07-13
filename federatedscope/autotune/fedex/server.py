@@ -144,15 +144,17 @@ class FedExServer(Server):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1):
+                             sample_client_num=-1,
+                             filter_unseen_clients=True):
         """
         To broadcast the message to all clients or sampled clients
         """
+        if filter_unseen_clients:
+            # to filter out the unseen clients when sampling
+            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
-            receiver = np.random.choice(np.arange(1, self.client_num + 1),
-                                        size=sample_client_num,
-                                        replace=False).tolist()
+            receiver = self.sampler.sample(size=sample_client_num)
         else:
             # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
@@ -189,6 +191,10 @@ class FedExServer(Server):
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
+
+        if filter_unseen_clients:
+            # restore the state of the unseen clients within sampler
+            self.sampler.change_state(self.unseen_clients_id, 'seen')
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
