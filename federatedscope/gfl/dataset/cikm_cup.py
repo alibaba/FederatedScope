@@ -114,6 +114,8 @@ class CIKMCupDataset(InMemoryDataset):
                           'MUTAG', 'PTC_MR', 'PTC_MM', 'PTC_FM', 'PTC_FR', 'NCI109', 'NCI1',
                           'alchemy_full', 'ZINC_full', 'QM9']
 
+        regression = ['FREESOLV', 'ESOL', 'LIPO', 'QM9', 'alchemy_full', 'ZINC_full']
+
         for idx, name in enumerate(data_name_list):
             if name in ['ESOL', 'FREESOLV', 'LIPO', 'BACE', 'BBBP', 'CLINTOX']:
                 dataset = MoleculeNet(self.root, name)
@@ -175,7 +177,7 @@ class CIKMCupDataset(InMemoryDataset):
                 os.makedirs(os.path.join(self.processed_dir, str(idx)))
 
             train_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
-            test_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
+            test_path = os.path.join(self.processed_dir, str(idx), 'test.pt')
             valid_path = os.path.join(self.processed_dir, str(idx), 'val.pt')
 
             if idx == 1:

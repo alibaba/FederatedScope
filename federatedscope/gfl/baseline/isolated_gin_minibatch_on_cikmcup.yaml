@@ -5,9 +5,10 @@ early_stop:
   improve_indicator_mode: mean
   the_smaller_the_better: False
 federate:
-  mode: 'standalone'
+  mode: standalone
+  method: local
   make_global_eval: False
-  total_round_num: 100
+  total_round_num: 10
   share_local_model: False
   sample_client_num: 16
 data:
@@ -31,6 +32,6 @@ eval:
   freq: 5
   metrics: ['imp_ratio']
   report: ['avg']
-  best_res_update_round_wise_key: val_imp_ratio
+  best_res_update_round_wise_key: val_loss
   count_flops: False
   base: 0.

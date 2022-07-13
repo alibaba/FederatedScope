@@ -547,14 +547,15 @@ class Monitor(object):
                         "test_std",
                         "val_acc",
                         "val_std",
+                        "val_imp_ratio"
                 ]:
                     raise NotImplementedError(
                         f"We currently support round_wise_update_key as one "
                         f"of ['val_loss', 'test_loss', 'loss', "
                         f"'val_avg_loss', 'test_avg_loss', 'avg_loss,"
-                        f"''val_acc', 'val_std', 'test_acc', 'test_std'] "
-                        f"for round-wise best results update, but got"
-                        f" {round_wise_update_key}.")
+                        f"''val_acc', 'val_std', 'test_acc', 'test_std', "
+                        f"'val_imp_ratio'] for round-wise best results "
+                        f" update, but got {round_wise_update_key}.")
 
                 found_round_wise_update_key = False
                 sorted_keys = []

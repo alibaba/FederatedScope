@@ -7,6 +7,9 @@ client_1:
   train:
     optimizer:
       lr: 0.01
+  eval:
+    base: 1.0
+    metrics: ['mse']
 client_2:
   model:
     out_channels: 1
@@ -16,6 +19,9 @@ client_2:
   train:
     optimizer:
       lr: 0.1
+  eval:
+    base: 2.0
+    metrics: ['mse']
 client_3:
   model:
     out_channels: 1
@@ -25,6 +31,9 @@ client_3:
   train:
     optimizer:
       lr: 0.1
+  eval:
+    base: 3.0
+    metrics: ['mse']
 client_4:
   model:
     out_channels: 2
@@ -34,6 +43,9 @@ client_4:
   train:
     optimizer:
       lr: 0.01
+  eval:
+    base: 4.0
+    metrics: ['acc']
 client_5:
   model:
     out_channels: 2
@@ -43,6 +55,9 @@ client_5:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    base: 5.0
+    metrics: ['acc']
 client_6:
   model:
     out_channels: 2
@@ -52,6 +67,9 @@ client_6:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    base: 6.0
+    metrics: ['acc']
 client_7:
   model:
     out_channels: 2
@@ -61,6 +79,8 @@ client_7:
   train:
     optimizer:
       lr: 0.1
+  eval:
+    metrics: ['acc']
 client_8:
   model:
     out_channels: 2
@@ -70,6 +90,8 @@ client_8:
   train:
     optimizer:
       lr: 0.0001
+  eval:
+    metrics: ['acc']
 client_9:
   model:
     out_channels: 2
@@ -79,6 +101,8 @@ client_9:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    metrics: ['acc']
 client_10:
   model:
     out_channels: 2
@@ -88,6 +112,8 @@ client_10:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    metrics: ['acc']
 client_11:
   model:
     out_channels: 2
@@ -97,6 +123,8 @@ client_11:
   train:
     optimizer:
       lr: 0.1
+  eval:
+    metrics: ['acc']
 client_12:
   model:
     out_channels: 2
@@ -106,6 +134,8 @@ client_12:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    metrics: ['acc']
 client_13:
   model:
     out_channels: 2
@@ -115,6 +145,8 @@ client_13:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    metrics: ['acc']
 client_14:
   model:
     out_channels: 12
@@ -124,6 +156,8 @@ client_14:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    metrics: ['mse']
 client_15:
   model:
     out_channels: 1
@@ -133,6 +167,8 @@ client_15:
   train:
     optimizer:
       lr: 0.1
+  eval:
+    metrics: ['mse']
 client_16:
   model:
     out_channels: 19
@@ -142,3 +178,5 @@ client_16:
   train:
     optimizer:
       lr: 0.05
+  eval:
+    metrics: ['mse']
