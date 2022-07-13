@@ -28,11 +28,9 @@ class Sampler(ABC):
         else:
             all_idx = [indices]
         for idx in all_idx:
-            if state == 'idle':
+            if state in ['idle', 'seen']:
                 self.client_state[idx] = 1
-            elif state == 'working':
-                self.client_state[idx] = 0
-            elif state == 'unseen':
+            elif state in ['working', 'unseen']:
                 self.client_state[idx] = 0
             else:
                 raise ValueError(

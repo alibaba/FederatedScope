@@ -566,6 +566,10 @@ class Server(Worker):
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
 
+        if filter_unseen_clients:
+            # restore the state of the unseen clients within sampler
+            self.sampler.change_state(self.unseen_clients_id, 'seen')
+
     def broadcast_client_address(self):
         """
         To broadcast the communication addresses of clients (used for

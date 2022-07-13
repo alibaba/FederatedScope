@@ -253,7 +253,11 @@ class Client(Worker):
                                                          save_file_name="")
 
             # Return the feedbacks to the server after local update
-            if self._cfg.federate.use_ss and not self.is_unseen_client:
+            if self._cfg.federate.use_ss:
+                assert not self.is_unseen_client, \
+                    "Un-support using secret sharing for unseen clients." \
+                    "i.e., you set cfg.federate.use_ss=True and " \
+                    "cfg.federate.unseen_clients_rate in (0, 1)"
                 single_model_case = True
                 if isinstance(model_para_all, list):
                     assert isinstance(model_para_all[0], dict), \
