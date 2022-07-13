@@ -43,6 +43,7 @@ class Server(Worker):
                  total_round_num=10,
                  device='cpu',
                  strategy=None,
+                 unseen_clients_id=None,
                  **kwargs):
 
         super(Server, self).__init__(ID, state, config, model, strategy)
@@ -123,7 +124,8 @@ class Server(Worker):
         # model update. The splitting is useful to check participation
         # generalization gap in
         # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
-        self.unseen_clients_id = []
+        self.unseen_clients_id = [] if unseen_clients_id is None \
+            else unseen_clients_id
 
         # Sampler
         client_info = kwargs['client_info'] if 'client_info' in kwargs else \

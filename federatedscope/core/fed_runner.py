@@ -91,9 +91,9 @@ class FedRunner(object):
                 self.cfg.federate.sample_client_num = 1
                 self.cfg.freeze()
 
-        unseen_clients_id = []
+        self.unseen_clients_id = []
         if self.cfg.federate.unseen_clients_rate > 0:
-            unseen_clients_id = np.random.choice(
+            self.unseen_clients_id = np.random.choice(
                 np.arange(1, self.cfg.federate.client_num + 1),
                 size=max(
                     1,
@@ -102,7 +102,6 @@ class FedRunner(object):
                 replace=False).tolist()
 
         self.server = self._setup_server()
-        self.server.unseen_clients_id = unseen_clients_id
 
         self.client = dict()
 
@@ -115,8 +114,6 @@ class FedRunner(object):
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id, client_model=self._shared_client_model)
-            if client_id in unseen_clients_id:
-                self.client[client_id].is_unseen_client = True
 
     def _setup_for_distributed(self):
         """
@@ -238,6 +235,7 @@ class FedRunner(object):
                 client_num=self.cfg.federate.client_num,
                 total_round_num=self.cfg.federate.total_round_num,
                 device=self._server_device,
+                unseen_clients_id=self.unseen_clients_id,
                 **kw)
 
             if self.cfg.nbafl.use:
@@ -252,7 +250,11 @@ class FedRunner(object):
 
         return server
 
-    def _setup_client(self, client_id=-1, client_model=None):
+    def _setup_client(
+        self,
+        client_id=-1,
+        client_model=None,
+    ):
         """
         Set up the client
         """
@@ -288,6 +290,7 @@ class FedRunner(object):
                                                 client_data,
                                                 backend=self.cfg.backend),
                 device=client_device,
+                is_unseen_client=client_id in self.unseen_clients_id,
                 **kw)
         else:
             raise ValueError

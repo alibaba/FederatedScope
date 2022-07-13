@@ -39,6 +39,7 @@ class Client(Worker):
                  model=None,
                  device='cpu',
                  strategy=None,
+                 is_unseen_client=False,
                  *args,
                  **kwargs):
 
@@ -49,7 +50,7 @@ class Client(Worker):
         # model update, which is useful for check the participation
         # generalization gap in
         # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
-        self.is_unseen_client = False
+        self.is_unseen_client = is_unseen_client
 
         # Attack only support the stand alone model;
         # Check if is a attacker; a client is a attacker if the
