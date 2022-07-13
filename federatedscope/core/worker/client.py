@@ -210,6 +210,10 @@ class Client(Worker):
         else:
             round, sender, content = message.state, message.sender, \
                                      message.content
+            # When clients share the local model, we must set strict=True to
+            # ensure all the model params (which might be updated by other
+            # clients in the previous local training process) are overwritten
+            # and synchronized with the received model
             self.trainer.update(content,
                                 strict=self._cfg.federate.share_local_model)
             self.state = round
@@ -223,6 +227,9 @@ class Client(Worker):
                 self._monitor.local_converged()
             else:
                 sample_size, model_para_all, results = self.trainer.train()
+                if self._cfg.federate.share_local_model and not \
+                        self._cfg.federate.online_aggr:
+                    model_para_all = copy.deepcopy(model_para_all)
                 train_log_res = self._monitor.format_eval_res(
                     results,
                     rnd=self.state,
