@@ -300,11 +300,12 @@ class Trainer(object):
             else:
                 self.ctx.model.to(torch.device("cpu"))
 
-    def update(self, model_parameters):
+    def update(self, model_parameters, strict=False):
         '''
             Called by the FL client to update the model parameters
         Arguments:
             model_parameters (dict): {model_name: model_val}
+            strict (bool): ensure the k-v paris are strictly same
         '''
         pass
 
