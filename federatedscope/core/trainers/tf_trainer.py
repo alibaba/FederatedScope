@@ -163,8 +163,8 @@ class GeneralTFTrainer(Trainer):
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
-    def update(self, model_parameters):
-        self.ctx.model.load_state_dict(model_parameters)
+    def update(self, model_parameters, strict=False):
+        self.ctx.model.load_state_dict(model_parameters, strict=strict)
 
     def save_model(self, path, cur_round=-1):
         pass

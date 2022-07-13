@@ -218,7 +218,12 @@ class Client(Worker):
         else:
             round, sender, content = message.state, message.sender, \
                                      message.content
-            self.trainer.update(content)
+            # When clients share the local model, we must set strict=True to
+            # ensure all the model params (which might be updated by other
+            # clients in the previous local training process) are overwritten
+            # and synchronized with the received model
+            self.trainer.update(content,
+                                strict=self._cfg.federate.share_local_model)
             self.state = round
             skip_train_isolated_or_global_mode = \
                 self.early_stopper.early_stopped and \
@@ -242,6 +247,9 @@ class Client(Worker):
                         f"The next FL update may result in negative effect")
                     self._monitor.local_converged()
                 sample_size, model_para_all, results = self.trainer.train()
+                if self._cfg.federate.share_local_model and not \
+                        self._cfg.federate.online_aggr:
+                    model_para_all = copy.deepcopy(model_para_all)
                 train_log_res = self._monitor.format_eval_res(
                     results,
                     rnd=self.state,
@@ -372,7 +380,8 @@ class Client(Worker):
         sender = message.sender
         self.state = message.state
         if message.content is not None:
-            self.trainer.update(message.content)
+            self.trainer.update(message.content,
+                                strict=self._cfg.federate.share_local_model)
         if self.early_stopper.early_stopped and self._cfg.federate.method in [
                 "local", "global"
         ]:
@@ -432,7 +441,8 @@ class Client(Worker):
             f"=================")
 
         if message.content is not None:
-            self.trainer.update(message.content)
+            self.trainer.update(message.content,
+                                strict=self._cfg.federate.share_local_model)
 
         self._monitor.finish_fl()
 
