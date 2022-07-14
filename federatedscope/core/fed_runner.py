@@ -43,6 +43,16 @@ class FedRunner(object):
         self.gpu_manager = GPUManager(gpu_available=self.cfg.use_gpu,
                                       specified_device=self.cfg.device)
 
+        self.unseen_clients_id = []
+        if self.cfg.federate.unseen_clients_rate > 0:
+            self.unseen_clients_id = np.random.choice(
+                np.arange(1, self.cfg.federate.client_num + 1),
+                size=max(
+                    1,
+                    int(self.cfg.federate.unseen_clients_rate *
+                        self.cfg.federate.client_num)),
+                replace=False).tolist()
+
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
             self._setup_for_standalone()
@@ -90,16 +100,6 @@ class FedRunner(object):
                 self.cfg.federate.client_num = 1
                 self.cfg.federate.sample_client_num = 1
                 self.cfg.freeze()
-
-        self.unseen_clients_id = []
-        if self.cfg.federate.unseen_clients_rate > 0:
-            self.unseen_clients_id = np.random.choice(
-                np.arange(1, self.cfg.federate.client_num + 1),
-                size=max(
-                    1,
-                    int(self.cfg.federate.unseen_clients_rate *
-                        self.cfg.federate.client_num)),
-                replace=False).tolist()
 
         self.server = self._setup_server()
 
