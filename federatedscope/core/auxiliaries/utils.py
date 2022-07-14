@@ -320,6 +320,17 @@ def move_to(obj, device):
         raise TypeError("Invalid type for move_to")
 
 
+def param2tensor(param):
+    import torch
+    if isinstance(param, list):
+        param = torch.FloatTensor(param)
+    elif isinstance(param, int):
+        param = torch.tensor(param, dtype=torch.long)
+    elif isinstance(param, float):
+        param = torch.tensor(param, dtype=torch.float)
+    return param
+
+
 class Timeout(object):
     def __init__(self, seconds, max_failure=5):
         self.seconds = seconds

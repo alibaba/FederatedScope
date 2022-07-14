@@ -16,6 +16,7 @@ from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
+from federatedscope.core.auxiliaries.utils import param2tensor
 from federatedscope.core.monitors.monitor import Monitor
 
 logger = logging.getLogger(__name__)
@@ -59,15 +60,13 @@ class GeneralTorchTrainer(Trainer):
         return init_dict
 
     def update(self, model_parameters, strict=False):
-        '''
+        """
             Called by the FL client to update the model parameters
         Arguments:
             model_parameters (dict): PyTorch Module object's state_dict.
-        '''
+        """
         for key in model_parameters:
-            if isinstance(model_parameters[key], list):
-                model_parameters[key] = torch.FloatTensor(
-                    model_parameters[key])
+            model_parameters[key] = param2tensor(model_parameters[key])
         self.ctx.model.load_state_dict(self._param_filter(model_parameters),
                                        strict=strict)
 
