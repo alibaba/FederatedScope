@@ -8,7 +8,6 @@ federate:
   mode: 'distributed'
   make_global_eval: False
   online_aggr: False
-  batch_or_epoch: epoch
   total_round_num: 300
 distribute:
   use: True
@@ -30,6 +29,7 @@ model:
   out_channels: 62
 train:
   local_update_steps: 1
+  batch_or_epoch: epoch
   optimizer:
     lr: 0.01
     weight_decay: 0.0

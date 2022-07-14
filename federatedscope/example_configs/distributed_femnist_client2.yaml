@@ -30,6 +30,7 @@ model:
   out_channels: 62
 train:
   local_update_steps: 1
+  batch_or_epoch: epoch
   optimizer:
     lr: 0.01
     weight_decay: 0.0
