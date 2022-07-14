@@ -3,19 +3,19 @@ federate:
   client_num: 3
   mode: 'distributed'
   total_round_num: 20
-  make_global_eval: True
+  make_global_eval: False
   online_aggr: False
 distribute:
   use: True
   server_host: '127.0.0.1'
   server_port: 50051
   role: 'server'
-  data_file: 'toy_data/server_data'
 trainer:
   type: 'general'
 eval:
   freq: 10
 data:
-  type: 'toy'
+  type: ''
 model:
   type: 'lr'
+  input_shape: (5,)

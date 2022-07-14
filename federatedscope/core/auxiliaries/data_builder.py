@@ -575,6 +575,10 @@ def get_data(config):
     elif 'cikmcup' in config.data.type.lower():
         from federatedscope.gfl.dataset.cikm_cup import load_cikmcup_data
         data, modified_config = load_cikmcup_data(config)
+    elif config.data.type is None or config.data.type == "":
+        # The participant (only for server in this version) does not own data
+        data = None
+        modified_config = config
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
 
@@ -582,7 +586,9 @@ def get_data(config):
         return data, modified_config
     else:
         # Invalid data_idx
-        if config.distribute.data_idx not in data.keys():
+        if config.distribute.data_idx == -1:
+            return data, config
+        elif config.distribute.data_idx not in data.keys():
             data_idx = np.random.choice(list(data.keys()))
             logger.warning(
                 f"The provided data_idx={config.distribute.data_idx} is "
