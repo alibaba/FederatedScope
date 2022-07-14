@@ -17,7 +17,7 @@ def extend_evaluation_cfg(cfg):
                        'raw']  # by default, we report comprehensive results
     cfg.eval.best_res_update_round_wise_key = "val_loss"
 
-    cfg.eval.save_predicts = False
+    cfg.eval.save_checkpoint = False  # Save the checkpoint for each client after the evaluation if True
 
     # Monitoring, e.g., 'dissim' for B-local dissimilarity
     cfg.eval.monitoring = []

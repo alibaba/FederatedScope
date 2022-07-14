@@ -1,3 +1,4 @@
+import os
 import copy
 import logging
 
@@ -387,6 +388,13 @@ class Client(Worker):
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check_best(self.history_results[
                 self._cfg.eval.best_res_update_round_wise_key])
+
+        # save checkpoint for each client
+        if self._cfg.eval.save_checkpoint:
+            path_checkpoint = os.path.join(self.outdir, 'checkpoint', f'round-{self.state}')
+            os.makedirs(path_checkpoint, exist_ok=True)
+            self.trainer.save_model(os.path.join(path_checkpoint, f'client_{self.ID}.pkl'), self.state, {'client_id': self.ID})
+            logger.info(f"Client #{self.ID} has saved checkpoint in Round #{self.state}.")
 
         self.comm_manager.send(
             Message(msg_type='metrics',
