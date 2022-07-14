@@ -301,16 +301,7 @@ class GeneralTorchTrainer(Trainer):
             ctx, "{}_y_prob".format(ctx.cur_data_split),
             np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
         results = self.metric_calculator.eval(ctx)
-        if eval.save:
-         10,
         setattr(ctx, 'eval_metrics', results)
-
-    def _hook_on_fit_end_save(self, ctx):
-        """Save the prediction of the evaluation
-
-        """
-        if ctx.cfg.save_predicts:
-            torch.save(ctx.cfg.outdir, ctx.test_y_prob,)
 
     def save_model(self, path, cur_round=-1):
         assert self.ctx.model is not None
