@@ -98,7 +98,6 @@ client_9:
   eval:
     base: 9.0
 client_10:
-  metrics: ['mse']
   model:
     out_channels: 10
     task: graphRegression

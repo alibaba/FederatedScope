@@ -10,7 +10,6 @@ federate:
   make_global_eval: False
   total_round_num: 10
   share_local_model: False
-  sample_client_num: 16
 data:
   root: data/
   type: cikmcup
