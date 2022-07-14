@@ -8,7 +8,6 @@ federate:
   mode: 'distributed'
   make_global_eval: False
   online_aggr: False
-  batch_or_epoch: epoch
   total_round_num: 300
 distribute:
   use: True
