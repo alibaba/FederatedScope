@@ -320,19 +320,15 @@ def move_to(obj, device):
         raise TypeError("Invalid type for move_to")
 
 
-def param_list2tensor(model_parameters):
+def param2tensor(param):
     import torch
-    for key in model_parameters:
-        if isinstance(model_parameters[key], list):
-            model_parameters[key] = torch.FloatTensor(model_parameters[key])
-        elif isinstance(model_parameters[key], int):
-            model_parameters[key] = torch.tensor(model_parameters[key],
-                                                 dtype=torch.long)
-            print(key, model_parameters[key])
-        elif isinstance(model_parameters[key], float):
-            model_parameters[key] = torch.tensor(model_parameters[key],
-                                                 dtype=torch.float)
-    return model_parameters
+    if isinstance(param, list):
+        param = torch.FloatTensor(param)
+    elif isinstance(param, int):
+        param = torch.tensor(param, dtype=torch.long)
+    elif isinstance(param, float):
+        param = torch.tensor(param, dtype=torch.float)
+    return param
 
 
 class Timeout(object):
