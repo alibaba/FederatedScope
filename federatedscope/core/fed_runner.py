@@ -2,6 +2,8 @@ import logging
 
 from collections import deque
 
+import numpy as np
+
 from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
@@ -88,6 +90,16 @@ class FedRunner(object):
                 self.cfg.federate.client_num = 1
                 self.cfg.federate.sample_client_num = 1
                 self.cfg.freeze()
+
+        self.unseen_clients_id = []
+        if self.cfg.federate.unseen_clients_rate > 0:
+            self.unseen_clients_id = np.random.choice(
+                np.arange(1, self.cfg.federate.client_num + 1),
+                size=max(
+                    1,
+                    int(self.cfg.federate.unseen_clients_rate *
+                        self.cfg.federate.client_num)),
+                replace=False).tolist()
 
         self.server = self._setup_server()
 
@@ -223,6 +235,7 @@ class FedRunner(object):
                 client_num=self.cfg.federate.client_num,
                 total_round_num=self.cfg.federate.total_round_num,
                 device=self._server_device,
+                unseen_clients_id=self.unseen_clients_id,
                 **kw)
 
             if self.cfg.nbafl.use:
@@ -237,7 +250,11 @@ class FedRunner(object):
 
         return server
 
-    def _setup_client(self, client_id=-1, client_model=None):
+    def _setup_client(
+        self,
+        client_id=-1,
+        client_model=None,
+    ):
         """
         Set up the client
         """
@@ -273,6 +290,7 @@ class FedRunner(object):
                                                 client_data,
                                                 backend=self.cfg.backend),
                 device=client_device,
+                is_unseen_client=client_id in self.unseen_clients_id,
                 **kw)
         else:
             raise ValueError
