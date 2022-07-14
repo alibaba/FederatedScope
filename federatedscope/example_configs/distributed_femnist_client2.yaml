@@ -8,7 +8,6 @@ federate:
   mode: 'distributed'
   make_global_eval: False
   online_aggr: False
-  local_update_steps: 1
   batch_or_epoch: epoch
   total_round_num: 300
 distribute:
@@ -29,9 +28,11 @@ model:
   type: convnet2
   hidden: 128
   out_channels: 62
-optimizer:
-  lr: 0.01
-  weight_decay: 0.0
+train:
+  local_update_steps: 1
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
 grad:
   grad_clip: 5.0
 criterion:
