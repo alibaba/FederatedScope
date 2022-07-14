@@ -1,9 +1,9 @@
 use_gpu: True
 device: 0
-early_stopping: 200
+early_stop:
+  patience: 200
 federate:
   mode: standalone
-  local_update_steps: 50
   total_round_num: 20
   client_num: 5
 data:
@@ -14,8 +14,10 @@ data:
 model:
   type: VMFNet
   hidden: 20
-optimizer:
-  lr: 0.5
+train:
+  local_update_steps: 50
+  optimizer:
+    lr: 0.5
 criterion:
   type: MSELoss
 trainer:

@@ -6,7 +6,6 @@ early_stop:
 federate:
   mode: standalone
   make_global_eval: True
-  local_update_steps: 100
   total_round_num: 400
 data:
   root: data/
@@ -17,10 +16,12 @@ model:
   type: sage
   hidden: 1024
   out_channels: 4
-optimizer:
-  lr: 0.05
-  weight_decay: 0.0005
-  type: SGD
+train:
+  local_update_steps: 100
+  optimizer:
+    lr: 0.05
+    weight_decay: 0.0005
+    type: SGD
 criterion:
   type: CrossEntropyLoss
 trainer:
