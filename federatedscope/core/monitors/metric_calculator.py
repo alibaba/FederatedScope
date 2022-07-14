@@ -51,6 +51,17 @@ class MetricCalculator(object):
         return results
 
     def _check_and_parse(self, ctx):
+        """Check the format of the prediction and labels
+
+        Args:
+            ctx:
+
+        Returns:
+            y_true: The ground truth labels
+            y_pred: The prediction categories for classification task
+            y_prob: The output of the model
+
+        """
         if not '{}_y_true'.format(ctx.cur_data_split) in ctx:
             raise KeyError('Missing key y_true!')
         if not '{}_y_prob'.format(ctx.cur_data_split) in ctx:
