@@ -4,14 +4,14 @@ seed: 12345
 federate:
   mode: standalone
   local_update_steps: 2
-  total_round_num: 10
+  total_round_num: 100
   sample_client_num: 5
   client_num: 10
 data:
   root: data/
   type: toy
   splits: [0.6,0.2,0.2]
-  batch_size: 1
+  batch_size: 50
   subsample: 0.0001
   num_workers: 0
 model:

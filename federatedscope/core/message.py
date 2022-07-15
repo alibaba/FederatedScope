@@ -1,3 +1,4 @@
+import sys
 import json
 import numpy as np
 from federatedscope.core.proto import gRPC_comm_manager_pb2
@@ -5,15 +6,12 @@ from federatedscope.core.proto import gRPC_comm_manager_pb2
 
 class Message(object):
     """
-    The data exchanged during an FL course are abstracted as 'Message' in
-    FederatedScope.
+    The data exchanged during an FL course are abstracted as 'Message' in FederatedScope.
     A message object includes:
-        msg_type: The type of message, which is used to trigger the
-        corresponding handlers of server/client
+        msg_type: The type of message, which is used to trigger the corresponding handlers of server/client
         sender: The sender's ID
         receiver: The receiver's ID
-        state: The training round of the message, which is determined by
-        the sender and used to filter out the outdated messages.
+        state: The training round of the message, which is determined by the sender and used to filter out the outdated messages.
         strategy: redundant attribute
     """
     def __init__(self,

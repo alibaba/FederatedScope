@@ -5,19 +5,15 @@ import torch
 from rdkit import Chem
 from rdkit import RDLogger
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from federatedscope.core.splitters.utils import \
-    dirichlet_distribution_noniid_slice
-from federatedscope.core.splitters.graph.scaffold_splitter import \
-    generate_scaffold
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.graph.scaffold_splitter import generate_scaffold
 
 logger = logging.getLogger(__name__)
 
 RDLogger.DisableLog('rdApp.*')
 
-
 class GenFeatures:
-    r"""Implementation of 'CanonicalAtomFeaturizer' and
-    'CanonicalBondFeaturizer' in DGL.
+    r"""Implementation of 'CanonicalAtomFeaturizer' and 'CanonicalBondFeaturizer' in DGL.
     Source: https://lifesci.dgl.ai/_modules/dgllife/utils/featurizers.html
 
     Arguments:
@@ -29,10 +25,11 @@ class GenFeatures:
     """
     def __init__(self):
         self.symbols = [
-            'C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg', 'Na', 'Ca',
-            'Fe', 'As', 'Al', 'I', 'B', 'V', 'K', 'Tl', 'Yb', 'Sb', 'Sn', 'Ag',
-            'Pd', 'Co', 'Se', 'Ti', 'Zn', 'H', 'Li', 'Ge', 'Cu', 'Au', 'Ni',
-            'Cd', 'In', 'Mn', 'Zr', 'Cr', 'Pt', 'Hg', 'Pb', 'other'
+            'C', 'N', 'O', 'S', 'F', 'Si', 'P', 'Cl', 'Br', 'Mg',
+            'Na', 'Ca', 'Fe', 'As', 'Al', 'I', 'B', 'V', 'K', 'Tl',
+            'Yb', 'Sb', 'Sn', 'Ag', 'Pd', 'Co', 'Se', 'Ti', 'Zn',
+            'H', 'Li', 'Ge', 'Cu', 'Au', 'Ni', 'Cd', 'In', 'Mn',
+            'Zr', 'Cr', 'Pt', 'Hg', 'Pb', 'other'
         ]
 
         self.hybridizations = [
@@ -71,17 +68,16 @@ class GenFeatures:
             radical_electrons = atom.GetNumRadicalElectrons()
             hybridization = [0.] * len(self.hybridizations)
             if atom.GetHybridization() in self.hybridizations:
-                hybridization[self.hybridizations.index(
-                    atom.GetHybridization())] = 1.
+                hybridization[self.hybridizations.index(atom.GetHybridization())] = 1.
             else:
                 hybridization[self.hybridizations.index('other')] = 1.
             aromaticity = 1. if atom.GetIsAromatic() else 0.
             hydrogens = [0.] * 5
             hydrogens[atom.GetTotalNumHs()] = 1.
 
-            x = torch.tensor(symbol + degree + implicit + [formal_charge] +
-                             [radical_electrons] + hybridization +
-                             [aromaticity] + hydrogens)
+            x = torch.tensor(symbol + degree + implicit +
+                             [formal_charge] + [radical_electrons] +
+                             hybridization + [aromaticity] + hydrogens)
             xs.append(x)
 
         data.x = torch.stack(xs, dim=0)
@@ -126,7 +122,7 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     scaffolds = {}
     for idx, data in enumerate(dataset):
         smiles = data.smiles
-        _ = Chem.MolFromSmiles(smiles)
+        mol = Chem.MolFromSmiles(smiles)
         scaffold = generate_scaffold(smiles)
         if scaffold not in scaffolds:
             scaffolds[scaffold] = [idx]
@@ -143,7 +139,7 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     ]
     label = np.zeros(len(dataset))
     for i in range(len(scaffold_list)):
-        label[scaffold_list[i]] = i + 1
+        label[scaffold_list[i]] = i+1
     label = torch.LongTensor(label)
     # Split data to list
     idx_slice = dirichlet_distribution_noniid_slice(label, client_num, alpha)
@@ -151,13 +147,11 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
 
 
 class ScaffoldLdaSplitter:
-    r"""First adopt scaffold splitting and then assign the samples to
-    clients according to Latent Dirichlet Allocation.
+    r"""First adopt scaffold splitting and then assign the samples to clients according to Latent Dirichlet Allocation.
 
     Arguments:
         dataset (List or PyG.dataset): The molecular datasets.
-        alpha (float): Partition hyperparameter in LDA, smaller alpha
-        generates more extreme heterogeneous scenario.
+        alpha (float): Partition hyperparameter in LDA, smaller alpha generates more extreme heterogeneous scenario.
 
     Returns:
         data_list (List(List(PyG.data))): Splited dataset via scaffold split.
@@ -174,8 +168,7 @@ class ScaffoldLdaSplitter:
             ds = featurizer(ds)
             data.append(ds)
         dataset = data
-        idx_slice = gen_scaffold_lda_split(dataset, self.client_num,
-                                           self.alpha)
+        idx_slice = gen_scaffold_lda_split(dataset, self.client_num, self.alpha)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
 

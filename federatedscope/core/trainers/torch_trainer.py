@@ -10,8 +10,6 @@ except ImportError:
     DataLoader = None
     Dataset = None
 
-from federatedscope.core.auxiliaries.eunms import MODE
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
@@ -33,6 +31,7 @@ class GeneralTorchTrainer(Trainer):
         """
         # TODO: more robust for different data
         init_dict = dict()
+        # import pdb; pdb.set_trace()
         if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
                 init_dict["{}_data".format(mode)] = None
@@ -56,7 +55,34 @@ class GeneralTorchTrainer(Trainer):
                             type(data.get(mode))))
         else:
             raise TypeError("Type of data should be dict.")
+
         return init_dict
+
+
+    def train(self, target_data_split_name="train", hooks_set=None):
+        hooks_set = hooks_set or self.hooks_in_train
+        if self.ctx.get(
+                f"{target_data_split_name}_data") is None and self.ctx.get(
+                    f"{target_data_split_name}_loader") is None:
+            raise ValueError(
+                f"No {target_data_split_name}_data or {target_data_split_name}_loader in the trainer"
+            )
+        if self.cfg.federate.use_diff:
+            # TODO: any issue for subclasses?
+            before_metric = self.evaluate(target_data_split_name='val')
+
+        self._run_routine("train", hooks_set, target_data_split_name)
+        result_metric = self.ctx.eval_metrics
+
+        if self.cfg.federate.use_diff:
+            # TODO: any issue for subclasses?
+            after_metric = self.evaluate(target_data_split_name='val')
+            result_metric['val_total'] = before_metric['val_total']
+            result_metric['val_avg_loss_before'] = before_metric[
+                'val_avg_loss']
+            result_metric['val_avg_loss_after'] = after_metric['val_avg_loss']
+
+        return self.ctx.num_samples_train, self.get_model_para(), result_metric
 
     def update(self, model_parameters):
         '''
@@ -76,6 +102,50 @@ class GeneralTorchTrainer(Trainer):
             super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
 
         return self.ctx.eval_metrics
+
+    #def validate(self, target_data_split_name="val"):
+    #    with torch.no_grad():
+    #        super(GeneralTorchTrainer, self).evaluate(target_data_split_name)
+
+    #    return self.ctx.eval_metrics
+
+    def finetune(self, target_data_split_name="train", hooks_set=None):
+
+        # freeze the parameters during the fine-tune stage
+        require_grad_changed_paras = set()
+        if self.cfg.trainer.finetune.freeze_param != "":
+            preserved_paras = self._param_filter(
+                self.ctx.model.state_dict(),
+                self.cfg.trainer.finetune.freeze_param)
+            for name, param in self.ctx.model.named_parameters():
+                if name not in preserved_paras and param.requires_grad is True:
+                    param.requires_grad = False
+                    require_grad_changed_paras.add(name)
+
+        # change the optimization configs
+        original_lrs = []
+        for g in self.ctx.optimizer.param_groups:
+            original_lrs.append(g['lr'])
+            g['lr'] = self.cfg.trainer.finetune.lr
+        original_epoch_num = self.ctx["num_train_epoch"]
+        original_batch_num = self.ctx["num_train_batch"]
+        self.ctx["num_train_epoch"] = 1
+        self.ctx["num_train_batch"] = self.cfg.trainer.finetune.steps
+
+        # do the fine-tuning process
+        self.train(target_data_split_name, hooks_set)
+
+        # restore the state before fine-tuning
+        if len(require_grad_changed_paras) > 0:
+            for name, param in self.ctx.model.named_parameters():
+                if name in require_grad_changed_paras:
+                    param.requires_grad = True
+
+        for i, g in enumerate(self.ctx.optimizer.param_groups):
+            g['lr'] = original_lrs[i]
+
+        self.ctx["num_train_epoch"] = original_epoch_num
+        self.ctx["num_train_batch"] = original_batch_num
 
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,
@@ -97,24 +167,6 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_train(self._hook_on_batch_end, "on_batch_end")
         self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
 
-    def register_default_hooks_ft(self):
-        self.register_hook_in_ft(self._hook_on_fit_start_init, "on_fit_start")
-        self.register_hook_in_ft(self._hook_on_fit_start_calculate_model_size,
-                                 "on_fit_start")
-        self.register_hook_in_ft(self._hook_on_epoch_start, "on_epoch_start")
-        self.register_hook_in_ft(self._hook_on_batch_start_init,
-                                 "on_batch_start")
-        self.register_hook_in_ft(self._hook_on_batch_forward,
-                                 "on_batch_forward")
-        self.register_hook_in_ft(self._hook_on_batch_forward_regularizer,
-                                 "on_batch_forward")
-        self.register_hook_in_ft(self._hook_on_batch_forward_flop_count,
-                                 "on_batch_forward")
-        self.register_hook_in_ft(self._hook_on_batch_backward,
-                                 "on_batch_backward")
-        self.register_hook_in_ft(self._hook_on_batch_end, "on_batch_end")
-        self.register_hook_in_ft(self._hook_on_fit_end, "on_fit_end")
-
     def register_default_hooks_eval(self):
         # test/val
         self.register_hook_in_eval(self._hook_on_fit_start_init,
@@ -128,14 +180,10 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
     def _hook_on_fit_start_init(self, ctx):
-        # prepare model and optimizer
+        # prepare model
         ctx.model.to(ctx.device)
 
-        if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
-            # Initialize optimizer here to avoid the reuse of optimizers
-            # across different routines
-            ctx.optimizer = get_optimizer(ctx.model,
-                                          **ctx.cfg[ctx.cur_mode].optimizer)
+        # import pdb; pdb.set_trace()
 
         # prepare statistics
         setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
@@ -147,9 +195,8 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_fit_start_calculate_model_size(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
             logger.warning(
-                f"The trainer {type(self)} does contain a valid monitor, "
-                f"this may be caused by initializing trainer subclasses "
-                f"without passing a valid monitor instance."
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
         if self.ctx.monitor.total_model_size == 0:
@@ -170,6 +217,7 @@ class GeneralTorchTrainer(Trainer):
                 ReIterator(ctx.get("{}_loader".format(ctx.cur_data_split))))
         else:
             ctx.get("{}_loader".format(ctx.cur_data_split)).reset()
+
 
     def _hook_on_batch_start_init(self, ctx):
         # prepare data batch
@@ -194,23 +242,20 @@ class GeneralTorchTrainer(Trainer):
         """
             the monitoring hook to calculate the flops during the fl course
 
-            Note: for customized cases that the forward process is not only
-            based on ctx.model, please override this function (inheritance
-            case) or replace this hook (plug-in case)
+            Note: for customized cases that the forward process is not only based on ctx.model,
+            please override this function (inheritance case) or replace this hook (plug-in case)
 
         :param ctx:
         :return:
         """
         if not isinstance(self.ctx.monitor, Monitor):
             logger.warning(
-                f"The trainer {type(self)} does contain a valid monitor, "
-                f"this may be caused by initializing trainer subclasses "
-                f"without passing a valid monitor instance."
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
 
-        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample \
-                == 0:
+        if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 x, y = [_.to(ctx.device) for _ in ctx.data_batch]
@@ -219,27 +264,22 @@ class GeneralTorchTrainer(Trainer):
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums
                     logger.warning(
-                        "the flops_per_batch is multiplied "
-                        "by internal model nums as self.mirrored_models=True."
-                        "if this is not the case you want, "
-                        "please customize the count hook")
+                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, please customize the count hook"
+                    )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
             except:
-                logger.warning(
-                    "current flop count implementation is for general "
-                    "trainer case: "
+                logger.error(
+                    "current flop count implementation is for general trainer case: "
                     "1) ctx.data_batch = [x, y]; and"
                     "2) the ctx.model takes only x as input."
-                    "Please check the forward format or implement your own "
-                    "flop_count function")
-                self.ctx.monitor.flops_per_sample = -1  # warning at the
-                # first failure
+                    "Please check the forward format or implement your own flop_count function"
+                )
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward
-        self.ctx.monitor.total_flops +=\
-            self.ctx.monitor.flops_per_sample * ctx.batch_size
+        self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         ctx.loss_regular = float(
@@ -294,6 +334,7 @@ class GeneralTorchTrainer(Trainer):
         """Evaluate metrics.
 
         """
+        # import pdb; pdb.set_trace()
         setattr(
             ctx, "{}_y_true".format(ctx.cur_data_split),
             np.concatenate(ctx.get("{}_y_true".format(ctx.cur_data_split))))
@@ -301,6 +342,7 @@ class GeneralTorchTrainer(Trainer):
             ctx, "{}_y_prob".format(ctx.cur_data_split),
             np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
         results = self.metric_calculator.eval(ctx)
+
         setattr(ctx, 'eval_metrics', results)
 
     def save_model(self, path, cur_round=-1):

@@ -7,8 +7,7 @@ def get_transform(config, package):
 
     Args:
         config: `CN` from `federatedscope/core/configs/config.py`
-        package: one of package from ['torchvision', 'torch_geometric',
-        'torchtext', 'torchaudio']
+        package: one of package from ['torchvision', 'torch_geometric', 'torchtext', 'torchaudio']
 
     Returns:
         dict of transform functions.
@@ -19,13 +18,12 @@ def get_transform(config, package):
         if config.data[name]:
             transform_funcs[name] = config.data[name]
 
-    # Transform are all None, do not import package and return dict with
-    # None value
+    # Transform are all None, do not import package and return dict with None value 
     if not transform_funcs:
         return transform_funcs
-
+    # import pdb; pdb.set_trace()
     transforms = getattr(import_module(package), 'transforms')
-
+    # import pdb; pdb.set_trace()
     def convert(trans):
         # Recursively converting expressions to functions
         if isinstance(trans[0], str):
@@ -51,4 +49,5 @@ def get_transform(config, package):
     # return composed transform or return list of transform
     for key in transform_funcs:
         transform_funcs[key] = convert(config.data[key])
+    # import pdb; pdb.set_trace()
     return transform_funcs

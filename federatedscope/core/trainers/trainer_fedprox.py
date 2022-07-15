@@ -5,10 +5,8 @@ from copy import deepcopy
 
 def wrap_fedprox_trainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
-    """Implementation of fedprox refer to `Federated Optimization in
-    Heterogeneous Networks` [Tian Li, et al., 2020]
-        (https://proceedings.mlsys.org/paper/2020/ \
-        file/38af86134b65d0f10fe33d30dd76442e-Paper.pdf)
+    """Implementation of fedprox refer to `Federated Optimization in Heterogeneous Networks` [Tian Li, et al., 2020]
+        (https://proceedings.mlsys.org/paper/2020/file/38af86134b65d0f10fe33d30dd76442e-Paper.pdf)
 
     """
 
@@ -47,14 +45,13 @@ def init_fedprox_ctx(base_trainer):
     cfg.regularizer.mu = cfg.fedprox.mu
     cfg.freeze()
 
-    from federatedscope.core.auxiliaries.regularizer_builder import \
-        get_regularizer
+    from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
 
 
-# ---------------------------------------------------------------------- #
+# ------------------------------------------------------------------------ #
 # Additional functions for FedProx algorithm
-# ---------------------------------------------------------------------- #
+# ------------------------------------------------------------------------ #
 
 
 # Trainer

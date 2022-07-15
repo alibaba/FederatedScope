@@ -1,6 +1,5 @@
 import numpy as np
-from federatedscope.core.splitters.utils import \
-    dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
 
 
 class LDASplitter(object):
@@ -8,16 +7,13 @@ class LDASplitter(object):
         self.client_num = client_num
         self.alpha = alpha
 
-    def __call__(self, dataset, prior=None):
+    def __call__(self, dataset):
         dataset = [ds for ds in dataset]
         label = np.array([y for x, y in dataset])
-        idx_slice = dirichlet_distribution_noniid_slice(label,
-                                                        self.client_num,
-                                                        self.alpha,
-                                                        prior=prior)
+        idx_slice = dirichlet_distribution_noniid_slice(
+            label, self.client_num, self.alpha)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
 
     def __repr__(self):
-        return f'{self.__class__.__name__}(client_num={self.client_num}, ' \
-               f'alpha={self.alpha})'
+        return f'{self.__class__.__name__}(client_num={self.client_num}, alpha={self.alpha})'

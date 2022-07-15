@@ -1,7 +1,27 @@
-from torch.utils.data import DataLoader
+from random import sample
+from torch.utils.data import DataLoader, Dataset
 
 from federatedscope.cv.dataset.leaf_cv import LEAF_CV
 from federatedscope.core.auxiliaries.transform_builder import get_transform
+
+
+# from torch.utils.data import Dataset
+
+
+class TensorDataset(Dataset):
+    '''
+    tuple tensor is a list
+    '''
+    def __init__(self, tuple_tensor):
+        self.data_tensor = tuple_tensor
+
+    def __getitem__(self, index):
+        sample, target = self.data_tensor[index]
+        return sample, target
+
+    def __len__(self):
+        return len(self.data_tensor)
+
 
 
 def load_cv_dataset(config=None):
@@ -13,6 +33,8 @@ def load_cv_dataset(config=None):
                     'val': DataLoader()
                 }
             }
+    or return 
+    dataset
     """
     splits = config.data.splits
 
@@ -39,22 +61,25 @@ def load_cv_dataset(config=None):
     # get local dataset
     data_local_dict = dict()
     for client_idx in range(client_num):
+
         dataloader = {
             'train': DataLoader(dataset[client_idx]['train'],
                                 batch_size,
                                 shuffle=config.data.shuffle,
                                 num_workers=config.data.num_workers),
             'test': DataLoader(dataset[client_idx]['test'],
-                               batch_size,
-                               shuffle=False,
-                               num_workers=config.data.num_workers)
+                            batch_size,
+                            shuffle=False,
+                            num_workers=config.data.num_workers)
         }
         if 'val' in dataset[client_idx]:
             dataloader['val'] = DataLoader(dataset[client_idx]['val'],
-                                           batch_size,
-                                           shuffle=False,
-                                           num_workers=config.data.num_workers)
+                                        batch_size,
+                                        shuffle=False,
+                                        num_workers=config.data.num_workers)
 
         data_local_dict[client_idx + 1] = dataloader
+        # we can return two forms, dataset or dataloader based on te needs of users.
+        # import pdb; pdb.set_trace()
 
     return data_local_dict, config

@@ -3,13 +3,12 @@ from federatedscope.register import register_config
 
 
 def extend_model_cfg(cfg):
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     # Model related options
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     cfg.model = CN()
 
-    cfg.model.model_num_per_trainer = 1  # some methods may leverage more
-    # than one model in each trainer
+    cfg.model.model_num_per_trainer = 1  # some methods may leverage more than one model in each trainer
     cfg.model.type = 'lr'
     cfg.model.use_bias = True
     cfg.model.task = 'node'
@@ -23,16 +22,16 @@ def extend_model_cfg(cfg):
     cfg.model.num_item = 0
     cfg.model.num_user = 0
 
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     # Criterion related options
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     cfg.criterion = CN()
 
     cfg.criterion.type = 'MSELoss'
 
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     # regularizer related options
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     cfg.regularizer = CN()
 
     cfg.regularizer.type = ''

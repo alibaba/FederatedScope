@@ -10,10 +10,7 @@ logger = logging.getLogger(__name__)
 try:
     from federatedscope.contrib.data import *
 except ImportError as error:
-    logger.warning(
-        f'{error} in `federatedscope.contrib.data`, some modules are not '
-        f'available.')
-
+    logger.warning(f'{error} in `federatedscope.contrib.data`, some modules are not available.')
 
 def load_toy_data(config=None):
 
@@ -130,9 +127,8 @@ def load_toy_data(config=None):
 
 
 def load_external_data(config=None):
-    r""" Based on the configuration file, this function imports external
-    datasets and applies train/valid/test splits and split by some specific
-    `splitter` into the standard FederatedScope input data format.
+    r""" Based on the configuration file, this function imports external datasets and applies train/valid/test splits
+    and split by some specific `splitter` into the standard FederatedScope input data format.
 
     Args:
         config: `CN` from `federatedscope/core/configs/config.py`
@@ -147,8 +143,7 @@ def load_external_data(config=None):
                                     'val': DataLoader()
                                 }
                             }
-        modified_config: `CN` from `federatedscope/core/configs/config.py`,
-        which might be modified in the function.
+        modified_config: `CN` from `federatedscope/core/configs/config.py`, which might be modified in the function.
 
     """
 
@@ -181,7 +176,6 @@ def load_external_data(config=None):
             raw_args.update({'download': True})
         filtered_args = filter_dict(dataset_func.__init__, raw_args)
         func_args = get_func_args(dataset_func.__init__)
-
         # Perform split on different dataset
         if 'train' in func_args:
             # Split train to (train, val)
@@ -198,9 +192,9 @@ def load_external_data(config=None):
                 train_size = int(splits[0] * len(dataset_train))
                 val_size = len(dataset_train) - train_size
                 lengths = [train_size, val_size]
-                dataset_train, dataset_val = \
-                    torch.utils.data.dataset.random_split(dataset_train,
-                                                          lengths)
+                dataset_train, dataset_val = torch.utils.data.dataset.random_split(
+                    dataset_train, lengths)
+
 
         elif 'split' in func_args:
             # Use raw split
@@ -239,8 +233,8 @@ def load_external_data(config=None):
             val_size = int(splits[1] * len(dataset))
             test_size = len(dataset) - train_size - val_size
             lengths = [train_size, val_size, test_size]
-            dataset_train, dataset_val, dataset_test = \
-                torch.utils.data.dataset.random_split(dataset, lengths)
+            dataset_train, dataset_val, dataset_test = torch.utils.data.dataset.random_split(
+                dataset, lengths)
 
         data_dict = {
             'train': dataset_train,
@@ -259,8 +253,7 @@ def load_external_data(config=None):
             raw_args = config.data.args[0]
         else:
             raw_args = {}
-        assert 'max_len' in raw_args, "Miss key 'max_len' in " \
-                                      "`config.data.args`."
+        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
         filtered_args = filter_dict(dataset_func.__init__, raw_args)
         dataset = dataset_func(root=config.data.root, **filtered_args)
 
@@ -390,14 +383,13 @@ def load_external_data(config=None):
     def load_torchaudio_data(name, splits=None, config=None):
         import torchaudio
 
-        # dataset_func = getattr(import_module('torchaudio.datasets'), name)
+        dataset_func = getattr(import_module('torchaudio.datasets'), name)
         raise NotImplementedError
 
     def load_torch_geometric_data(name, splits=None, config=None):
         import torch_geometric
 
-        # dataset_func = getattr(import_module('torch_geometric.datasets'),
-        # name)
+        dataset_func = getattr(import_module('torch_geometric.datasets'), name)
         raise NotImplementedError
 
     def load_huggingface_datasets_data(name, splits=None, config=None):
@@ -407,8 +399,7 @@ def load_external_data(config=None):
             raw_args = config.data.args[0]
         else:
             raw_args = {}
-        assert 'max_len' in raw_args, "Miss key 'max_len' in " \
-                                      "`config.data.args`."
+        assert 'max_len' in raw_args, "Miss key 'max_len' in `config.data.args`."
         filtered_args = filter_dict(load_dataset, raw_args)
         dataset = load_dataset(path=config.data.root,
                                name=name,
@@ -489,18 +480,12 @@ def load_external_data(config=None):
         x: {}
         for x in range(1, modified_config.federate.client_num + 1)
     }
-
     # Build dict of Dataloader
-    train_label_distribution = None
     for split in dataset:
-        if dataset[split] is None:
+        if dataset[split] is None or dataset[split].__len__() == 0:
             continue
-        train_labels = list()
-        for i, ds in enumerate(
-                splitter(dataset[split], prior=train_label_distribution)):
-            labels = [x[1] for x in ds]
+        for i, ds in enumerate(splitter(dataset[split])):
             if split == 'train':
-                train_labels.append(labels)
                 data_local_dict[i + 1][split] = DataLoader(
                     ds,
                     batch_size=modified_config.data.batch_size,
@@ -513,16 +498,11 @@ def load_external_data(config=None):
                     shuffle=False,
                     num_workers=modified_config.data.num_workers)
 
-        if modified_config.data.consistent_label_distribution and len(
-                train_labels) > 0:
-            train_label_distribution = train_labels
-
     return data_local_dict, modified_config
 
 
 def get_data(config):
-    """Instantiate the dataset and update the configuration accordingly if
-    necessary.
+    """Instantiate the dataset and update the configuration accordingly if necessary.
     Arguments:
         config (obj): a cfg node object.
     Returns:
@@ -575,26 +555,13 @@ def get_data(config):
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
 
-    if config.federate.mode.lower() == 'standalone':
-        return data, modified_config
-    else:
-        # Invalid data_idx
-        if config.distribute.data_idx not in data.keys():
-            data_idx = np.random.choice(list(data.keys()))
-            logger.warning(
-                f"The provided data_idx={config.distribute.data_idx} is "
-                f"invalid, so that we randomly sample a data_idx as {data_idx}"
-            )
-        else:
-            data_idx = config.distribute.data_idx
-        return data[data_idx], config
+    return data, modified_config
 
 
 def merge_data(all_data):
     dataset_names = list(all_data[1].keys())  # e.g., train, test, val
     assert isinstance(all_data[1]["test"], dict), \
-        "the data should be organized as the format similar to {data_id: {" \
-        "train: {x:ndarray, y:ndarray}} }"
+        "the data should be organized as the format similar to {data_id: {train: {x:ndarray, y:ndarray}} }"
     data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
     merged_data = {name: defaultdict(list) for name in dataset_names}
     for data_id in all_data.keys():

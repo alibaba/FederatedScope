@@ -3,23 +3,19 @@ from federatedscope.core.message import Message
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 import copy
-from federatedscope.attack.auxiliary.utils import get_data_sav_fn, \
-    get_reconstructor
+from federatedscope.attack.auxiliary.utils import get_data_sav_fn, get_reconstructor
 
 import logging
 
 import torch
-from federatedscope.attack.privacy_attacks.passive_PIA import \
-    PassivePropertyInference
+from federatedscope.attack.privacy_attacks.passive_PIA import PassivePropertyInference
 
 logger = logging.getLogger(__name__)
 
 
 class PassiveServer(Server):
     '''
-    In passive attack, the server store the model and the message collected
-    from the client,and perform the optimization based reconstruction,
-    such as DLG, InvertGradient.
+    In passive attack, the server store the model and the message collected from the client,and perform the optimization based reconstruction, such as DLG, InvertGradient.
     '''
     def __init__(self,
                  ID=-1,
@@ -49,8 +45,7 @@ class PassiveServer(Server):
         self.client_to_reconstruct = client_to_reconstruct
         self.reconstruct_data = dict()
 
-        # the loss function of the global model; the global model can be
-        # obtained in self.aggregator.model
+        # the loss function of the global model; the global model can be obtained in self.aggregator.model
         self.model_criterion = get_criterion(self._cfg.criterion.type,
                                              device=self.device)
 
@@ -72,7 +67,7 @@ class PassiveServer(Server):
             lr=self._cfg.attack.reconstruct_lr,
             federate_loss_fn=self.model_criterion,
             device=self.device,
-            federate_lr=self._cfg.train.optimizer.lr,
+            federate_lr=self._cfg.optimizer.lr,
             optim=self._cfg.attack.reconstruct_optim,
             info_diff_type=self._cfg.attack.info_diff_type,
             federate_method=self._cfg.federate.method,
@@ -94,11 +89,10 @@ class PassiveServer(Server):
 
     def run_reconstruct(self, state_list=None, sender_list=None):
 
-        if state_list is None:
+        if state_list == None:
             state_list = self.msg_buffer['train'].keys()
 
-        # After FL running, using gradient based reconstruction method to
-        # recover client's private training data
+        # After FL running, using gradient based reconstruction method to recover client's private training data
         for state in state_list:
             if sender_list is None:
                 sender_list = self.msg_buffer['train'][state].keys()
@@ -107,13 +101,11 @@ class PassiveServer(Server):
                     '------------- reconstruct round:{}, client:{}-----------'.
                     format(state, sender))
 
-                # the context of buffer: self.model_buffer[state]: (
-                # sample_size, model_para)
+                # the context of buffer: self.model_buffer[state]: (sample_size, model_para)
                 self._reconstruct(state, sender)
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
         # For a new round
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
@@ -122,10 +114,8 @@ class PassiveServer(Server):
 
         # run reconstruction before the clear of self.msg_buffer
 
-        if self.state_to_reconstruct is None or message.state in \
-                self.state_to_reconstruct:
-            if self.client_to_reconstruct is None or message.sender in \
-                    self.client_to_reconstruct:
+        if self.state_to_reconstruct is None or message.state in self.state_to_reconstruct:
+            if self.client_to_reconstruct is None or message.sender in self.client_to_reconstruct:
                 self.run_reconstruct(state_list=[message.state],
                                      sender_list=[message.sender])
                 if self.reconstructed_data_sav_fn is not None:
@@ -141,14 +131,11 @@ class PassiveServer(Server):
 
 class PassivePIAServer(Server):
     '''
-    The implementation of the batch property classifier, the algorithm 3 in
-    paper: Exploiting Unintended Feature Leakage in Collaborative Learning
+    The implementation of the batch property classifier, the algorithm 3 in paper: Exploiting Unintended Feature Leakage in Collaborative Learning
 
     References:
 
-    Melis, Luca, Congzheng Song, Emiliano De Cristofaro and Vitaly
-    Shmatikov. “Exploiting Unintended Feature Leakage in Collaborative
-    Learning.” 2019 IEEE Symposium on Security and Privacy (SP) (2019): 691-706
+    Melis, Luca, Congzheng Song, Emiliano De Cristofaro and Vitaly Shmatikov. “Exploiting Unintended Feature Leakage in Collaborative Learning.” 2019 IEEE Symposium on Security and Privacy (SP) (2019): 691-706
     '''
     def __init__(self,
                  ID=-1,
@@ -179,18 +166,16 @@ class PassivePIAServer(Server):
             device=self.device,
             grad_clip=self._cfg.grad.grad_clip,
             dataset_name=self._cfg.data.type,
-            fl_local_update_num=self._cfg.train.local_update_steps,
-            fl_type_optimizer=self._cfg.fedopt.optimizer.type,
-            fl_lr=self._cfg.train.optimizer.lr,
+            fl_local_update_num=self._cfg.federate.local_update_steps,
+            # fl_type_optimizer=self._cfg.fedopt.optimizer.type,fedopt.type_optimizer
+            fl_type_optimizer=self._cfg.optimizer.type,
+            fl_lr=self._cfg.optimizer.lr,
             batch_size=100)
 
-        # self.optimizer = get_optimizer(
-        # type=self._cfg.fedopt.type_optimizer, model=self.model,
-        # lr=self._cfg.fedopt.optimizer.lr)
+        # self.optimizer = get_optimizer(type=self._cfg.fedopt.type_optimizer, model=self.model,lr=self._cfg.fedopt.optimizer.lr)
         # print(self.optimizer)
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
         # For a new round
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()

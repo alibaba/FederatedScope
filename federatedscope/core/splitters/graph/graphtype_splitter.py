@@ -1,6 +1,5 @@
 import numpy as np
-from federatedscope.core.splitters.utils import \
-    dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
 
 
 class GraphTypeSplitter:
@@ -9,8 +8,7 @@ class GraphTypeSplitter:
         self.alpha = alpha
 
     def __call__(self, dataset):
-        r"""Split dataset via dirichlet distribution to generate non-i.i.d
-        data split.
+        r"""Split dataset via dirichlet distribution to generate non-i.i.d data split.
 
         Arguments:
             dataset (List or PyG.dataset): The datasets.

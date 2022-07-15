@@ -8,9 +8,7 @@ logger = logging.getLogger(__name__)
 try:
     from federatedscope.contrib.trainer import *
 except ImportError as error:
-    logger.warning(
-        f'{error} in `federatedscope.contrib.trainer`, some modules are not '
-        f'available.')
+    logger.warning(f'{error} in `federatedscope.contrib.trainer`, some modules are not available.')
 
 TRAINER_CLASS_DICT = {
     "cvtrainer": "CVTrainer",
@@ -131,12 +129,23 @@ def get_trainer(model=None,
                                base_trainer=trainer)
 
     # attacker plug-in
+    if 'backdoor' in config.attack.attack_method:
+        from federatedscope.core.trainers import wrap_benignTrainer
+        trainer = wrap_benignTrainer(trainer)
+
     if is_attacker:
-        logger.info(
-            '---------------- This client is an attacker --------------------')
-        from federatedscope.attack.auxiliary.attack_trainer_builder import \
-            wrap_attacker_trainer
+        if 'backdoor' in config.attack.attack_method:
+            logger.info(
+                '---------------- This client is an backdoor attacker --------------------')
+        else: 
+            logger.info(
+                '---------------- This client is an privacy attacker --------------------')
+        from federatedscope.attack.auxiliary.attack_trainer_builder import wrap_attacker_trainer
         trainer = wrap_attacker_trainer(trainer, config)
+    
+    elif 'backdoor' in config.attack.attack_method:
+        logger.info(
+            '---------------- This client is a benign client for backdoor attacks --------------------')
 
     # fed algorithm plug-in
     if config.fedprox.use:

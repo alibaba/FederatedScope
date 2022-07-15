@@ -2,7 +2,6 @@ from federatedscope.register import register_metric
 
 METRIC_NAME = 'example'
 
-
 def MyMetric(ctx, **kwargs):
     return ctx["num_train_data"]
 
