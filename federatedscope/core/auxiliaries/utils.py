@@ -320,6 +320,17 @@ def move_to(obj, device):
         raise TypeError("Invalid type for move_to")
 
 
+def param2tensor(param):
+    import torch
+    if isinstance(param, list):
+        param = torch.FloatTensor(param)
+    elif isinstance(param, int):
+        param = torch.tensor(param, dtype=torch.long)
+    elif isinstance(param, float):
+        param = torch.tensor(param, dtype=torch.float)
+    return param
+
+
 class Timeout(object):
     def __init__(self, seconds, max_failure=5):
         self.seconds = seconds
@@ -379,11 +390,11 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
     if "INFO:" in line and "Find new best result for" in line:
         # Logger type 1, each line for each metric, e.g.,
         # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result
-        # for client_individual.test_acc with value 0.5911787974683544
+        # for client_best_individual.test_acc with value 0.5911787974683544
         line = line.split("INFO: ")[1]
         parse_res = line.split("with value")
         best_key, best_val = parse_res[-2], parse_res[-1]
-        # client_individual.test_acc -> client_individual/test_acc
+        # client_best_individual.test_acc -> client_best_individual/test_acc
         best_key = best_key.replace("Find new best result for",
                                     "").replace(".", "/")
         log_res_best[best_key.strip()] = float(best_val.strip())

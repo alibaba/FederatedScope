@@ -3,10 +3,9 @@ device: 2
 early_stop:
   patience: 200
   improve_indicator_mode: mean
-monitoring: ['dissim']
+# monitoring: ['dissim']
 federate:
   mode: standalone
-  local_update_steps: 2
   total_round_num: 400
 data:
   root: data/
@@ -19,10 +18,12 @@ model:
   out_channels: 2
 personalization:
   local_param: ['prop1']
-optimizer:
-  lr: 0.5
-  weight_decay: 0.0005
-  type: SGD
+train:
+  local_update_steps: 2
+  optimizer:
+    lr: 0.5
+    weight_decay: 0.0005
+    type: SGD
 criterion:
   type: CrossEntropyLoss
 trainer:

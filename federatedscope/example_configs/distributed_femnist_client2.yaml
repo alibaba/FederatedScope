@@ -1,38 +1,44 @@
 use_gpu: True
 device: 0
-seed: 12345
 early_stop:
-  patience: 0
+  patience: 5
+seed: 12345
 federate:
-  mode: standalone
-  total_round_num: 10
-  sample_client_num: 5
-  client_num: 10
+  client_num: 3
+  mode: 'distributed'
+  make_global_eval: False
+  online_aggr: False
+  total_round_num: 300
+distribute:
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051
+  role: 'client'
+  data_idx: 3
 data:
   root: data/
   type: femnist
   splits: [0.6,0.2,0.2]
-  batch_size: 1
-  subsample: 0.0001
+  batch_size: 10
+  subsample: 0.05
   num_workers: 0
   transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
 model:
   type: convnet2
-  hidden: 2048
+  hidden: 128
   out_channels: 62
 train:
   local_update_steps: 1
+  batch_or_epoch: epoch
   optimizer:
     lr: 0.01
     weight_decay: 0.0
+grad:
+  grad_clip: 5.0
 criterion:
   type: CrossEntropyLoss
 trainer:
   type: cvtrainer
 eval:
-  freq: 10
+  freq: 1
   metrics: ['acc', 'correct']
-attack:
-  attack_method: GradAscent
-  attacker_id: 5
-  inject_round: 0

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.utils import param2tensor
 
 import torch
 import os
@@ -86,11 +87,7 @@ class ClientsAvgAggregator(Aggregator):
                     weight = local_sample_size / training_set_size
 
                 if not self.cfg.federate.use_ss:
-                    if isinstance(local_model[key], torch.Tensor):
-                        local_model[key] = local_model[key].float()
-                    else:
-                        local_model[key] = torch.FloatTensor(local_model[key])
-
+                    local_model[key] = param2tensor(local_model[key])
                 if i == 0:
                     avg_model[key] = local_model[key] * weight
                 else:

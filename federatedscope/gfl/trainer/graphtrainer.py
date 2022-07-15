@@ -11,7 +11,11 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)
-        label = batch.y.squeeze(-1).long()
+        # TODO: deal with the type of data within the dataloader or dataset
+        if 'regression' in ctx.cfg.model.task.lower():
+            label = batch.y
+        else:
+            label = batch.y.squeeze(-1).long()
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
         ctx.loss_batch = ctx.criterion(pred, label)

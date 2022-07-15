@@ -1,0 +1,147 @@
+client_1:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.1
+  eval:
+    base: 0.263789
+client_2:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.01
+  eval:
+    base: 0.289617
+client_3:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.001
+  eval:
+    base: 0.355404
+client_4:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.01
+  eval:
+    base: 0.176471
+client_5:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.0001
+  eval:
+    base: 0.396825
+client_6:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.0005
+  eval:
+    base: 0.261580
+client_7:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.01
+  eval:
+    base: 0.302378
+client_8:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.05
+  eval:
+    base: 0.211538
+client_9:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  train:
+    optimizer:
+      lr: 0.1
+  eval:
+    base: 0.059199
+client_10:
+  model:
+    out_channels: 10
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  train:
+    optimizer:
+      lr: 0.05
+  grad:
+    grad_clip: 1.0
+  eval:
+    base: 0.007083
+client_11:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  train:
+    optimizer:
+      lr: 0.05
+  eval:
+    base: 0.734011
+client_12:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  train:
+    optimizer:
+      lr: 0.01
+  eval:
+    base: 1.361326
+client_13:
+  model:
+    out_channels: 12
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  train:
+    optimizer:
+      lr: 0.05
+  grad:
+    grad_clip: 1.0
+  eval:
+    base: 0.004389

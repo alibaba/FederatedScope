@@ -61,7 +61,9 @@ class MFTest(unittest.TestCase):
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
 
-        self.assertLess(test_results['client_individual']['test_avg_loss'], 50)
+        self.assertLess(
+            test_results["client_summarized_weighted_avg"]["test_avg_loss"],
+            50)
 
 
 if __name__ == '__main__':

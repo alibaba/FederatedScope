@@ -513,7 +513,8 @@ class Monitor(object):
                     if 'loss' in key or 'std' in key:  # the smaller,
                         # the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = min(cur_result)
                         if key not in best_result or cur_result < best_result[
@@ -523,7 +524,8 @@ class Monitor(object):
 
                     elif 'acc' in key:  # the larger, the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = max(cur_result)
                         if key not in best_result or cur_result > best_result[
@@ -547,14 +549,15 @@ class Monitor(object):
                         "test_std",
                         "val_acc",
                         "val_std",
+                        "val_imp_ratio"
                 ]:
                     raise NotImplementedError(
                         f"We currently support round_wise_update_key as one "
                         f"of ['val_loss', 'test_loss', 'loss', "
                         f"'val_avg_loss', 'test_avg_loss', 'avg_loss,"
-                        f"''val_acc', 'val_std', 'test_acc', 'test_std'] "
-                        f"for round-wise best results update, but got"
-                        f" {round_wise_update_key}.")
+                        f"''val_acc', 'val_std', 'test_acc', 'test_std', "
+                        f"'val_imp_ratio'] for round-wise best results "
+                        f" update, but got {round_wise_update_key}.")
 
                 found_round_wise_update_key = False
                 sorted_keys = []
@@ -581,7 +584,8 @@ class Monitor(object):
                             ('std' in round_wise_update_key and 'std' in key):
                         # The smaller the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = min(cur_result)
                         if update_best_this_round or \
@@ -593,7 +597,8 @@ class Monitor(object):
                             'acc' in round_wise_update_key and 'acc' in key:
                         # The larger the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = max(cur_result)
                         if update_best_this_round or \

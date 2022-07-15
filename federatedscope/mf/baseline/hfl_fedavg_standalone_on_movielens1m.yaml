@@ -1,9 +1,9 @@
 use_gpu: True
 device: 0
-early_stopping: 100
+early_stop:
+  patience: 100
 federate:
   mode: standalone
-  local_update_steps: 50
   total_round_num: 100
   client_num: 5
 data:
@@ -14,8 +14,10 @@ data:
 model:
   type: HMFNet
   hidden: 20
-optimizer:
-  lr: 1.
+train:
+  local_update_steps: 50
+  optimizer:
+    lr: 1.
 criterion:
   type: MSELoss
 trainer:
