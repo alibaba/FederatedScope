@@ -33,7 +33,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
         num_label = data['num_label'] if 'num_label' in data else None
         num_edge_features = data[
             'num_edge_features'] if model_config.type == 'mpnn' else None
-        return (data.x.shape, num_label, num_edge_features)
+        return (data['train'].x.shape, num_label, num_edge_features)
 
     if isinstance(data, dict):
         keys = list(data.keys())
