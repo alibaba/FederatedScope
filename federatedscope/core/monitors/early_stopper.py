@@ -46,11 +46,11 @@ class EarlyStopper(object):
         self.comparator = operator.lt
         self.improvement_operator = operator.add
 
-    def track_and_check_dummy(self, new_result):
+    def __track_and_check_dummy(self, new_result):
         self.early_stopped = False
         return self.early_stopped
 
-    def track_and_check_best(self, history_result):
+    def __track_and_check_best(self, history_result):
         new_result = history_result[-1]
         if self.best_metric is None:
             self.best_metric = new_result
@@ -71,7 +71,7 @@ class EarlyStopper(object):
         self.early_stopped = self.counter_no_improve >= self.patience
         return self.early_stopped
 
-    def track_and_check_mean(self, history_result):
+    def __track_and_check_mean(self, history_result):
         new_result = history_result[-1]
         if len(history_result) > self.patience:
             if self.the_smaller_the_better and self.comparator(
@@ -91,12 +91,12 @@ class EarlyStopper(object):
 
     def track_and_check(self, new_result):
 
-        track_method = self.track_and_check_dummy  # do nothing
+        track_method = self.__track_and_check_dummy  # do nothing
         if self.patience == 0:
-            track_method = self.track_and_check_dummy
+            track_method = self.__track_and_check_dummy
         elif self.improve_indicator_mode == 'best':
-            track_method = self.track_and_check_best
+            track_method = self.__track_and_check_best
         elif self.improve_indicator_mode == 'mean':
-            track_method = self.track_and_check_mean
+            track_method = self.__track_and_check_mean
 
         return track_method(new_result)
