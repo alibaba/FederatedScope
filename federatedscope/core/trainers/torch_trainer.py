@@ -142,6 +142,7 @@ class GeneralTorchTrainer(Trainer):
         setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
         setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
         setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
+        setattr(ctx, "{}_y_indx".format(ctx.cur_data_split), [])
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -280,6 +281,10 @@ class GeneralTorchTrainer(Trainer):
         ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
             ctx.y_prob.detach().cpu().numpy())
 
+        # TODO: for cikmcup to save predictions
+        if ctx.cfg.data == 'cikmcup' and ctx.cur_data_split == MODE.TEST:
+            ctx.predict_ids = [_.data_index for _ in ctx.data_batch]
+
         # clean temp ctx
         ctx.data_batch = None
         ctx.batch_size = None
@@ -288,6 +293,7 @@ class GeneralTorchTrainer(Trainer):
         ctx.loss_regular = None
         ctx.y_true = None
         ctx.y_prob = None
+
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
@@ -301,6 +307,7 @@ class GeneralTorchTrainer(Trainer):
             np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
+
 
     def save_model(self, path, cur_round=-1):
         assert self.ctx.model is not None
