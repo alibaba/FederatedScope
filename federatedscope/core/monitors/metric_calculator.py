@@ -215,11 +215,10 @@ def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):
     base = ctx.cfg.eval.base
     task = ctx.cfg.model.task.lower()
     if 'regression' in task:
-        perform = -1. * eval_mse(y_true, y_prob)
-        base = -1. * base
+        perform = eval_mse(y_true, y_prob)
     elif 'classification' in task:
-        perform = eval_acc(y_true, y_pred)
-    return (perform - base) / base * 100.
+        perform = 1 - eval_acc(y_true, y_pred)
+    return (base - perform) / base * 100.
 
 
 SUPPORT_METRICS = {

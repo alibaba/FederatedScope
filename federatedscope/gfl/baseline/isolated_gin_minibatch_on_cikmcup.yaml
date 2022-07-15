@@ -11,6 +11,7 @@ federate:
   total_round_num: 10
   share_local_model: False
 data:
+  batch_size: 64
   root: data/
   type: cikmcup
   splitter: ooxx
@@ -21,7 +22,7 @@ personalization:
   local_param: ['encoder_atom', 'encoder', 'clf']
 train:
   batch_or_epoch: epoch
-  local_update_steps: 1
+  local_update_steps: 21
   optimizer:
     weight_decay: 0.0005
     type: SGD
