@@ -418,7 +418,7 @@ class Client(Worker):
                 best_res_update_round_wise_key)
             self.history_results = merge_dict(
                 self.history_results, formatted_eval_res['Results_raw'])
-            self.early_stopper.track_and_check_best(self.history_results[
+            self.early_stopper.track_and_check(self.history_results[
                 self._cfg.eval.best_res_update_round_wise_key])
 
         self.comm_manager.send(
