@@ -13,7 +13,6 @@ federate:
 data:
   root: data/
   type: cikmcup
-  splitter: ooxx
 model:
   type: gin
   hidden: 64

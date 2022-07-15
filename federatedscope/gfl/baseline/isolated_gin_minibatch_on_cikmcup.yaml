@@ -14,7 +14,6 @@ data:
   batch_size: 64
   root: data/
   type: cikmcup
-  splitter: ooxx
 model:
   type: gin
   hidden: 64
