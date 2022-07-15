@@ -1,5 +1,6 @@
 import torch
 import logging
+import copy
 
 from torch_geometric.loader import NeighborSampler
 
@@ -384,6 +385,9 @@ class FedSagePlusClient(Client):
         self.trainer_clf.update(content)
         self.state = round
         sample_size, clf_para, results = self.trainer_clf.train()
+        if self._cfg.federate.share_local_model and not \
+                self._cfg.federate.online_aggr:
+            clf_para = copy.deepcopy(clf_para)
         logger.info(
             self._monitor.format_eval_res(results,
                                           rnd=self.state,

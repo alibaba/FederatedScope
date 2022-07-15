@@ -1,5 +1,6 @@
 import logging
 import json
+import copy
 
 from federatedscope.core.message import Message
 from federatedscope.core.worker import Client
@@ -48,6 +49,9 @@ class FedExClient(Client):
         # self.model.load_state_dict(content)
         self.state = round
         sample_size, model_para_all, results = self.trainer.train()
+        if self._cfg.federate.share_local_model and not \
+                self._cfg.federate.online_aggr:
+            model_para_all = copy.deepcopy(model_para_all)
         logger.info(
             self._monitor.format_eval_res(results,
                                           rnd=self.state,

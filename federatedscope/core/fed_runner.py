@@ -2,6 +2,8 @@ import logging
 
 from collections import deque
 
+import numpy as np
+
 from federatedscope.core.worker import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
@@ -41,6 +43,16 @@ class FedRunner(object):
         self.gpu_manager = GPUManager(gpu_available=self.cfg.use_gpu,
                                       specified_device=self.cfg.device)
 
+        self.unseen_clients_id = []
+        if self.cfg.federate.unseen_clients_rate > 0:
+            self.unseen_clients_id = np.random.choice(
+                np.arange(1, self.cfg.federate.client_num + 1),
+                size=max(
+                    1,
+                    int(self.cfg.federate.unseen_clients_rate *
+                        self.cfg.federate.client_num)),
+                replace=False).tolist()
+
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
             self._setup_for_standalone()
@@ -56,33 +68,48 @@ class FedRunner(object):
         """
         To set up server and client for standalone mode.
         """
-        self.server = self._setup_server()
 
-        self.client = dict()
+        if self.cfg.backend == 'torch':
+            import torch
+            torch.set_num_threads(1)
+
         assert self.cfg.federate.client_num != 0, \
             "In standalone mode, self.cfg.federate.client_num should be " \
             "non-zero. " \
             "This is usually cased by using synthetic data and users not " \
             "specify a non-zero value for client_num"
 
+        if self.cfg.federate.method == "global":
+            if self.cfg.federate.client_num != 1:
+                from federatedscope.core.auxiliaries.data_builder import \
+                    merge_data
+                if self.cfg.data.server_holds_all:
+                    assert self.data[0] is not None \
+                        and len(self.data[0]) != 0, \
+                        "You specified cfg.data.server_holds_all=True " \
+                        "but data[0] is None. Please check whether you " \
+                        "pre-process the data[0] correctly"
+                    self.data[1] = self.data[0]
+                else:
+                    logger.info(f"Will merge data from clients whose ids in "
+                                f"[1, {self.cfg.federate.client_num}]")
+                    self.data[1] = merge_data(
+                        all_data=self.data,
+                        merged_max_data_id=self.cfg.federate.client_num)
+                self.cfg.defrost()
+                self.cfg.federate.client_num = 1
+                self.cfg.federate.sample_client_num = 1
+                self.cfg.freeze()
+
+        self.server = self._setup_server()
+
+        self.client = dict()
+
         # assume the client-wise data are consistent in their input&output
         # shape
         self._shared_client_model = get_model(
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
-
-        if self.cfg.backend == 'torch':
-            import torch
-            torch.set_num_threads(1)
-
-        if self.cfg.federate.method == "global":
-            assert 0 in self.data and self.data[
-                0] is not None, "In global training mode, we will use a " \
-                                "proxy client to hold all the data. Please " \
-                                "put the whole dataset in data[0], i.e., " \
-                                "the same style with global evaluation mode"
-            from federatedscope.core.auxiliaries.data_builder import merge_data
-            self.data[1] = merge_data(all_data=self.data)
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
@@ -208,6 +235,7 @@ class FedRunner(object):
                 client_num=self.cfg.federate.client_num,
                 total_round_num=self.cfg.federate.total_round_num,
                 device=self._server_device,
+                unseen_clients_id=self.unseen_clients_id,
                 **kw)
 
             if self.cfg.nbafl.use:
@@ -222,7 +250,11 @@ class FedRunner(object):
 
         return server
 
-    def _setup_client(self, client_id=-1, client_model=None):
+    def _setup_client(
+        self,
+        client_id=-1,
+        client_model=None,
+    ):
         """
         Set up the client
         """
@@ -258,6 +290,7 @@ class FedRunner(object):
                                                 client_data,
                                                 backend=self.cfg.backend),
                 device=client_device,
+                is_unseen_client=client_id in self.unseen_clients_id,
                 **kw)
         else:
             raise ValueError

@@ -275,7 +275,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         return trained_model_para[
             0] if self.model_nums == 1 else trained_model_para
 
-    def update(self, model_parameters):
+    def update(self, model_parameters, strict=False):
         # update multiple model paras
         """
         Arguments:
@@ -283,7 +283,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
             state_dict.
         """
         if self.model_nums == 1:
-            super().update(model_parameters)
+            super().update(model_parameters, strict=strict)
         else:
             assert isinstance(model_parameters, list) and isinstance(
                 model_parameters[0], dict), \
@@ -296,7 +296,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
             for model_idx in range(self.model_nums):
                 self.ctx.models[model_idx].load_state_dict(self._param_filter(
                     model_parameters[model_idx]),
-                                                           strict=False)
+                                                           strict=strict)
 
     def train(self, target_data_split_name="train"):
         # return multiple model paras

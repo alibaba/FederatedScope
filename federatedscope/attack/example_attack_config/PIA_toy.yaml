@@ -3,7 +3,6 @@ device: 0
 seed: 12345
 federate:
   mode: standalone
-  local_update_steps: 2
   total_round_num: 10
   sample_client_num: 5
   client_num: 10
@@ -18,9 +17,11 @@ model:
   type: lr
   hidden: 2048
   out_channels: 62
-optimizer:
-  lr: 0.01
-  weight_decay: 0.0
+train:
+  local_update_steps: 2
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
 trainer:
   type: general
 eval:

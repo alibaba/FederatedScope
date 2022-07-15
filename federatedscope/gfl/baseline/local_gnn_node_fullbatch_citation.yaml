@@ -5,11 +5,9 @@ early_stop:
   improve_indicator_mode: mean
 federate:
   make_global_eval: True
-  local_update_steps: 1000000
   client_num: 5
   total_round_num: 400
-  mode: 'standalone_local'
-  standalone: 'local'
+  method: 'local'
 data:
   root: data/
   type: cora
@@ -19,10 +17,12 @@ model:
   hidden: 64
   dropout: 0.5
   out_channels: 7
-optimizer:
-  lr: 0.05
-  weight_decay: 0.0005
-  type: SGD
+train:
+  local_update_steps: 100
+  optimizer:
+    lr: 0.05
+    weight_decay: 0.0005
+    type: SGD
 criterion:
   type: CrossEntropyLoss
 trainer:

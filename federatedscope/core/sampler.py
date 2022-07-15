@@ -23,14 +23,19 @@ class Sampler(ABC):
         """
         To modify the state of clients (idle or working)
         """
-        if state == 'idle':
-            self.client_state[indices] = 1
-        elif state == 'working':
-            self.client_state[indices] = 0
+        if isinstance(indices, list) or isinstance(indices, np.ndarray):
+            all_idx = indices
         else:
-            raise ValueError(
-                f"The state of client should be 'idle' or 'working', but got"
-                f" {state}")
+            all_idx = [indices]
+        for idx in all_idx:
+            if state in ['idle', 'seen']:
+                self.client_state[idx] = 1
+            elif state in ['working', 'unseen']:
+                self.client_state[idx] = 0
+            else:
+                raise ValueError(
+                    f"The state of client should be one of "
+                    f"['idle', 'working', 'unseen], but got {state}")
 
 
 class UniformSampler(Sampler):
