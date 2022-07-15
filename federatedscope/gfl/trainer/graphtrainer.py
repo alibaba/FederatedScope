@@ -1,4 +1,5 @@
 import logging
+import os
 
 import numpy as np
 
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class GraphMiniBatchTrainer(GeneralTorchTrainer):
     def _hook_on_fit_start_init(self, ctx):
-        super()._hook_on_fit_start_init()
+        super()._hook_on_fit_start_init(ctx)
         setattr(ctx, "{}_y_inds".format(ctx.cur_data_split), [])
 
     def _hook_on_batch_forward(self, ctx):
@@ -31,11 +32,11 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         ctx.y_prob = pred
 
         # record the index of the ${MODE} samples
-        if hasattr(batch, 'data_index'):
+        if hasattr(ctx.data_batch, 'data_index'):
             setattr(
                 ctx,
                 f'{ctx.cur_data_split}_y_inds',
-                ctx.get(f'{ctx.cur_data_split}_y_inds') + ctx.data_batch.data_index.cpu().numpy().tolist()
+                ctx.get(f'{ctx.cur_data_split}_y_inds') + ctx.data_batch.data_index.detach().cpu().numpy().tolist()
             )
 
     def _hook_on_batch_forward_flop_count(self, ctx):
@@ -85,13 +86,19 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
 
     def save_prediction(self, client_id, task_type):
         y_inds, y_probs = self.ctx.test_y_inds, self.ctx.test_y_prob
-        if 'classification' in task_type:
-            y_probs = np.argmax(y_probs, axis=-1)
+        os.makedirs('../prediction', exist_ok=True)
+
         # TODO: more feasible, for now we hard code it for cikmcup
-        with open('prediction/round_{}.csv', 'a') as file:
+        if 'classification' in task_type.lower():
+            y_probs = np.argmax(y_probs, axis=-1)
+
+        with open('../prediction/prediction.csv', 'a') as file:
             for y_ind, y_prob in zip(y_inds,  y_probs):
-                line = [client_id, y_ind] + list(y_prob)
-                file.write(','.join(line) + '\n')
+                if 'classification' in task_type.lower():
+                    line = [client_id, y_ind] + [y_prob]
+                else:
+                    line = [client_id, y_ind] + list(y_prob)
+                file.write(','.join([str(_) for _ in line]) + '\n')
 
 
 def call_graph_level_trainer(trainer_type):

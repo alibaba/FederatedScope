@@ -451,6 +451,7 @@ class Client(Worker):
             self.trainer.evaluate(target_data_split_name='test')
             # Save results
             self.trainer.save_prediction(self.ID, self._cfg.model.task)
+            logger.info(f"Client #{self.ID} finished saving prediction results.")
 
         self._monitor.finish_fl()
 
