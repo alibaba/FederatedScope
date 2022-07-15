@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
@@ -24,11 +26,13 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         ctx.y_true = label
         ctx.y_prob = pred
 
-        setattr(
-            ctx,
-            f'{ctx.cur_data_split}_y_inds',
-            ctx.get(f'{ctx.cur_data_split}_y_inds') + [_ for _ in ctx.data_batch.data_index]
-        )
+        # record the index of the ${MODE} samples
+        if hasattr(batch, 'data_index'):
+            setattr(
+                ctx,
+                f'{ctx.cur_data_split}_y_inds',
+                ctx.get(f'{ctx.cur_data_split}_y_inds') + ctx.data_batch.data_index.cpu().numpy().tolist()
+            )
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -74,6 +78,16 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         # thus simply multiply the flops to avoid redundant forward
         self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * \
             ctx.batch_size
+
+    def save_prediction(self, client_id, task_type):
+        y_inds, y_probs = self.ctx.test_y_inds, self.ctx.test_y_prob
+        if 'classification' in task_type:
+            y_probs = np.argmax(y_probs, axis=-1)
+        # TODO: more feasible, for now we hard code it for cikmcup
+        with open('prediction/round_{}.csv', 'a') as file:
+            for y_ind, y_prob in zip(y_inds,  y_probs):
+                line = [client_id, y_ind] + list(y_prob)
+                file.write(','.join(line) + '\n')
 
 
 def call_graph_level_trainer(trainer_type):

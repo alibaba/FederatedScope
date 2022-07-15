@@ -280,10 +280,6 @@ class GeneralTorchTrainer(Trainer):
         ctx.get("{}_y_prob".format(ctx.cur_data_split)).append(
             ctx.y_prob.detach().cpu().numpy())
 
-        # TODO: for cikmcup to save predictions
-        if ctx.cfg.data == 'cikmcup' and ctx.cur_data_split == MODE.TEST:
-            ctx.predict_ids = [_.data_index for _ in ctx.data_batch]
-
         # clean temp ctx
         ctx.data_batch = None
         ctx.batch_size = None
