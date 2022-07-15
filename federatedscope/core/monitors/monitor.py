@@ -513,7 +513,8 @@ class Monitor(object):
                     if 'loss' in key or 'std' in key:  # the smaller,
                         # the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = min(cur_result)
                         if key not in best_result or cur_result < best_result[
@@ -523,7 +524,8 @@ class Monitor(object):
 
                     elif 'acc' in key:  # the larger, the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = max(cur_result)
                         if key not in best_result or cur_result > best_result[
@@ -581,7 +583,8 @@ class Monitor(object):
                             ('std' in round_wise_update_key and 'std' in key):
                         # The smaller the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = min(cur_result)
                         if update_best_this_round or \
@@ -593,7 +596,8 @@ class Monitor(object):
                             'acc' in round_wise_update_key and 'acc' in key:
                         # The larger the better
                         if results_type in [
-                                "client_individual", "unseen_client_individual"
+                                "client_best_individual",
+                                "unseen_client_best_individual"
                         ]:
                             cur_result = max(cur_result)
                         if update_best_this_round or \
