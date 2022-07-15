@@ -27,7 +27,7 @@ def get_gnn(model_config, local_data):
     else:
         data = local_data
 
-    if model_config.task == 'node':
+    if model_config.task.startswith('node'):
         if model_config.type == 'gcn':
             # assume `data` is a dict where key is the client index,
             # and value is a PyG object
@@ -64,14 +64,14 @@ def get_gnn(model_config, local_data):
             raise ValueError('not recognized gnn model {}'.format(
                 model_config.type))
 
-    elif model_config.task == 'link':
+    elif model_config.task.startswith('link'):
         model = GNN_Net_Link(data.x.shape[-1],
                              model_config.out_channels,
                              hidden=model_config.hidden,
                              max_depth=model_config.layer,
                              dropout=model_config.dropout,
                              gnn=model_config.type)
-    elif model_config.task == 'graph':
+    elif model_config.task.startswith('graph'):
         if model_config.type == 'mpnn':
             model = MPNNs2s(in_channels=data.x.shape[-1],
                             out_channels=model_config.out_channels,
