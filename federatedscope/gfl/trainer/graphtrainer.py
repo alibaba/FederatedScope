@@ -8,6 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class GraphMiniBatchTrainer(GeneralTorchTrainer):
+    def _hook_on_fit_start_init(self, ctx):
+        super()._hook_on_fit_start_init()
+        setattr(ctx, "{}_y_inds".format(ctx.cur_data_split), [])
+
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)
@@ -19,6 +23,12 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         ctx.batch_size = len(label)
         ctx.y_true = label
         ctx.y_prob = pred
+
+        setattr(
+            ctx,
+            f'{ctx.cur_data_split}_y_inds',
+            ctx.get(f'{ctx.cur_data_split}_y_inds') + [_ for _ in ctx.data_batch.data_index]
+        )
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):

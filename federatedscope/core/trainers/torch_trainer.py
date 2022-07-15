@@ -142,7 +142,6 @@ class GeneralTorchTrainer(Trainer):
         setattr(ctx, "num_samples_{}".format(ctx.cur_data_split), 0)
         setattr(ctx, "{}_y_true".format(ctx.cur_data_split), [])
         setattr(ctx, "{}_y_prob".format(ctx.cur_data_split), [])
-        setattr(ctx, "{}_y_indx".format(ctx.cur_data_split), [])
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
