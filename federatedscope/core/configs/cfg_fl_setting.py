@@ -24,6 +24,9 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.online_aggr = False
     cfg.federate.make_global_eval = False
     cfg.federate.use_diff = False
+    cfg.federate.merge_test_data = False  # For efficient simulation, users
+    # can choose to merge the test data and perform global evaluation,
+    # instead of perform test at each client
 
     # the method name is used to internally determine composition of
     # different aggregators, messages, handlers, etc.,
@@ -34,8 +37,10 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.save_to = ''
     cfg.federate.join_in_info = [
     ]  # The information requirements (from server) for join_in
-    cfg.federate.sampler = 'uniform'  # the strategy for sampling client in
-    # each training round, ['uniform', 'group']
+    cfg.federate.sampler = 'uniform'  # the strategy for sampling client
+    # in each training round, ['uniform', 'group']
+    cfg.federate.resource_info_file = ""  # the device information file to
+    # record computation and communication ability
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options
@@ -158,6 +163,16 @@ def assert_fl_setting_cfg(cfg):
         not cfg.federate.use_ss
     ), "Have not supported to use online aggregator and secrete sharing at " \
        "the same time"
+
+    assert not cfg.federate.merge_test_data or (
+        cfg.federate.merge_test_data and cfg.federate.mode == 'standalone'
+    ), "The operation of merging test data can only used in standalone for " \
+       "efficient simulation, please change 'federate.merge_test_data' to " \
+       "False or change 'federate.mode' to 'distributed'."
+    if cfg.federate.merge_test_data and not cfg.federate.make_global_eval:
+        cfg.federate.make_global_eval = True
+        logger.warning('Set cfg.federate.make_global_eval=True since '
+                       'cfg.federate.merge_test_data=True')
 
 
 register_config("fl_setting", extend_fl_setting_cfg)
