@@ -122,7 +122,11 @@ def create_room(info, psw):
 @organizer.task
 def display_room():
     room = lobby.display_room()
-    rtn_info = f"Room: {room}"
+    rtn_info = ""
+    for key, value in room.items():
+        tmp = f"room_id: {key}, info:{value}\n"
+        rtn_info += tmp
+    print(rtn_info)
     return rtn_info
 
 
