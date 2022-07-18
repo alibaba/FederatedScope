@@ -66,8 +66,7 @@ class FedSagePlusServer(Server):
             for key in self._cfg.federate.join_in_info:
                 assert key in info
             self.join_in_info[sender] = info
-            logger.info('Server #{:d}: Client #{:d} has joined in !'.format(
-                self.ID, sender))
+            logger.info('Server: Client #{:d} has joined in !'.format(sender))
         else:
             self.join_in_client_num += 1
             sender, address = message.sender, message.content
@@ -148,7 +147,7 @@ class FedSagePlusServer(Server):
                             receiver=receiver_IDs,
                             state=self.state + 1,
                             content=[gen_para, embedding, label, sender]))
-                logger.info(f'\tServer #{self.ID}: Transmit gen_para to'
+                logger.info(f'\tServer: Transmit gen_para to'
                             f' {receiver_IDs} @{self.state//2}.')
             self.state += 1
 
@@ -214,8 +213,8 @@ class FedSagePlusServer(Server):
                         self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server #{:d}: Starting evaluation at round {:d}.'.
-                        format(self.ID, self.state))
+                        'Server : Starting evaluation at round {:d}.'.format(
+                            self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:
@@ -228,8 +227,8 @@ class FedSagePlusServer(Server):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logger.info('Server #{:d}: Training is finished! Starting '
-                                'evaluation.'.format(self.ID))
+                    logger.info('Server: Training is finished! Starting '
+                                'evaluation.')
                     self.eval()
 
             else:  # in the evaluation process

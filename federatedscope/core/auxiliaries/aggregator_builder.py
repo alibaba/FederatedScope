@@ -12,7 +12,8 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
     else:
         from federatedscope.core.aggregator import ClientsAvgAggregator, \
             OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, \
-            FedOptAggregator, NoCommunicationAggregator
+            FedOptAggregator, NoCommunicationAggregator, \
+            AsynClientsAvgAggregator
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
@@ -32,6 +33,10 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
                 config=config,
                 src_device=device
                 if config.federate.share_local_model else 'cpu')
+        elif config.asyn.use:
+            return AsynClientsAvgAggregator(model=model,
+                                            device=device,
+                                            config=config)
         else:
             return ClientsAvgAggregator(model=model,
                                         device=device,

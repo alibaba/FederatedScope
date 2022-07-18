@@ -12,6 +12,8 @@ def get_cnn(model_config, local_data):
         elif 'train' in local_data.keys():
             # local_data['train'] is Dataloader
             data = next(iter(local_data['train']))
+        elif 'test' in local_data.keys():
+            data = next(iter(local_data['test']))
         else:
             raise TypeError('Unsupported data type.')
     else:

@@ -22,12 +22,14 @@ class Message(object):
                  receiver=0,
                  state=0,
                  content=None,
+                 timestamp=0,
                  strategy=None):
         self._msg_type = msg_type
         self._sender = sender
         self._receiver = receiver
         self._state = state
         self._content = content
+        self._timestamp = timestamp
         self._strategy = strategy
 
     @property
@@ -71,12 +73,25 @@ class Message(object):
         self._content = value
 
     @property
+    def timestamp(self):
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, value):
+        assert isinstance(value, int) or isinstance(value, float), \
+            "We only support an int or a float value for timestamp"
+        self._timestamp = value
+
+    @property
     def strategy(self):
         return self._strategy
 
     @strategy.setter
     def strategy(self, value):
         self._strategy = value
+
+    def __lt__(self, other):
+        return self.timestamp < other.timestamp
 
     def transform_to_list(self, x):
         if isinstance(x, list) or isinstance(x, tuple):
@@ -101,6 +116,7 @@ class Message(object):
             'receiver': self.receiver,
             'state': self.state,
             'content': self.content,
+            'timestamp': self.timestamp,
             'strategy': self.strategy,
         }
         return json.dumps(json_msg)
@@ -112,6 +128,7 @@ class Message(object):
         self.receiver = json_msg['receiver']
         self.state = json_msg['state']
         self.content = json_msg['content']
+        self.timestamp = json_msg['timestamp']
         self.strategy = json_msg['strategy']
 
     def create_by_type(self, value, nested=False):
@@ -182,6 +199,8 @@ class Message(object):
             self.build_msg_value(self.msg_type))
         splited_msg.msg['content'].MergeFrom(self.build_msg_value(
             self.content))
+        splited_msg.msg['timestamp'].MergeFrom(
+            self.build_msg_value(self.timestamp))
         return splited_msg
 
     def _parse_msg(self, value):
@@ -204,6 +223,7 @@ class Message(object):
         self.msg_type = self._parse_msg(received_msg['msg_type'])
         self.state = self._parse_msg(received_msg['state'])
         self.content = self._parse_msg(received_msg['content'])
+        self.timestamp = self._parse_msg(received_msg['timestamp'])
 
     def count_bytes(self):
         """

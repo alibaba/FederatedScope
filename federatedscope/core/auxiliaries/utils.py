@@ -12,6 +12,7 @@ import time
 import urllib.request
 from datetime import datetime
 from os import path as osp
+import pickle
 
 import numpy as np
 
@@ -457,3 +458,39 @@ def format_log_hooks(hooks_set):
     elif isinstance(hooks_set, dict):
         print_obj = format_dict(hooks_set)
     return json.dumps(print_obj, indent=2).replace('\n', '\n\t')
+
+
+def get_resource_info(filename):
+    if filename is None or not os.path.exists(filename):
+        logger.info('The device information file is not provided')
+        return None
+
+    # Users can develop this loading function according to resource_info_file
+    # As an example, we use the device_info provided by FedScale (FedScale:
+    # Benchmarking Model and System Performance of Federated Learning
+    # at Scale), which can be downloaded from
+    # https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/
+    # data/device_info/client_device_capacity The expected format is
+    # { INDEX:{'computation': FLOAT_VALUE_1, 'communication': FLOAT_VALUE_2}}
+    with open(filename, 'br') as f:
+        device_info = pickle.load(f)
+    return device_info
+
+
+def calculate_time_cost(instance_number,
+                        comm_size,
+                        comp_speed=None,
+                        comm_bandwidth=None,
+                        augmentation_factor=3.0):
+    # Served as an example, this cost model is adapted from FedScale at
+    # https://github.com/SymbioticLab/FedScale/blob/master/fedscale/core/
+    # internal/client.py#L35 (Apache License Version 2.0)
+    # Users can modify this function according to customized cost model
+    if comp_speed is not None and comm_bandwidth is not None:
+        comp_cost = augmentation_factor * instance_number * comp_speed
+        comm_cost = 2.0 * comm_size / comm_bandwidth
+    else:
+        comp_cost = 0
+        comm_cost = 0
+
+    return comp_cost, comm_cost

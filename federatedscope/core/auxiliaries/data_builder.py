@@ -593,8 +593,14 @@ def get_data(config):
         return data[data_idx], config
 
 
-def merge_data(all_data, merged_max_data_id):
-    dataset_names = list(all_data[1].keys())  # e.g., train, test, val
+def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
+    if specified_dataset_name is None:
+        dataset_names = list(all_data[1].keys())  # e.g., train, test, val
+    else:
+        if not isinstance(specified_dataset_name, list):
+            specified_dataset_name = [specified_dataset_name]
+        dataset_names = specified_dataset_name
+
     import torch.utils.data
     assert len(dataset_names) >= 1, \
         "At least one sub-dataset is required in client 1"
