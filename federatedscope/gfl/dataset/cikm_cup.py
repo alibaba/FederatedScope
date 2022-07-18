@@ -7,7 +7,7 @@ from torch_geometric.data import InMemoryDataset
 logger = logging.getLogger(__name__)
 
 class CIKMCUPDataset(InMemoryDataset):
-    name = 'CIKM_CUP'
+    name = 'CIKM22Competition'
 
     def __init__(self, root):
         super(CIKMCUPDataset, self).__init__(root)

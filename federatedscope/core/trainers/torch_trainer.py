@@ -289,6 +289,7 @@ class GeneralTorchTrainer(Trainer):
         ctx.y_true = None
         ctx.y_prob = None
 
+
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
 
@@ -301,6 +302,7 @@ class GeneralTorchTrainer(Trainer):
             np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
+
 
     def save_model(self, path, cur_round=-1):
         assert self.ctx.model is not None

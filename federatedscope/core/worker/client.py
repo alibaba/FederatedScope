@@ -444,6 +444,15 @@ class Client(Worker):
             self.trainer.update(message.content,
                                 strict=self._cfg.federate.share_local_model)
 
+        # TODO: more elegant here
+        # Save final prediction result
+        if self._cfg.data.type == 'cikmcup':
+            # Evaluate
+            self.trainer.evaluate(target_data_split_name='test')
+            # Save results
+            self.trainer.save_prediction(self.ID, self._cfg.model.task)
+            logger.info(f"Client #{self.ID} finished saving prediction results.")
+
         self._monitor.finish_fl()
 
     def callback_funcs_for_converged(self, message: Message):

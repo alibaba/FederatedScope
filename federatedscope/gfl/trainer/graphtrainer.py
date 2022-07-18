@@ -1,4 +1,7 @@
 import logging
+import os
+
+import numpy as np
 
 from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
@@ -8,6 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 class GraphMiniBatchTrainer(GeneralTorchTrainer):
+    def _hook_on_fit_start_init(self, ctx):
+        super()._hook_on_fit_start_init(ctx)
+        setattr(ctx, "{}_y_inds".format(ctx.cur_data_split), [])
+
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
         pred = ctx.model(batch)
@@ -23,6 +30,14 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         ctx.batch_size = len(label)
         ctx.y_true = label
         ctx.y_prob = pred
+
+        # record the index of the ${MODE} samples
+        if hasattr(ctx.data_batch, 'data_index'):
+            setattr(
+                ctx,
+                f'{ctx.cur_data_split}_y_inds',
+                ctx.get(f'{ctx.cur_data_split}_y_inds') + ctx.data_batch.data_index.detach().cpu().numpy().tolist()
+            )
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -68,6 +83,21 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         # thus simply multiply the flops to avoid redundant forward
         self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * \
             ctx.batch_size
+
+    def save_prediction(self, client_id, task_type):
+        y_inds, y_probs = self.ctx.test_y_inds, self.ctx.test_y_prob
+        os.makedirs('prediction', exist_ok=True)
+
+        # TODO: more feasible, for now we hard code it for cikmcup
+        y_preds = np.argmax(y_probs, axis=-1) if 'classification' in task_type.lower() else y_probs
+
+        with open('prediction/prediction.csv', 'a') as file:
+            for y_ind, y_pred in zip(y_inds,  y_preds):
+                if 'classification' in task_type.lower():
+                    line = [client_id, y_ind] + [y_pred]
+                else:
+                    line = [client_id, y_ind] + list(y_pred)
+                file.write(','.join([str(_) for _ in line]) + '\n')
 
 
 def call_graph_level_trainer(trainer_type):
