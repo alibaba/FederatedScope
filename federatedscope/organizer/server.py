@@ -1,4 +1,3 @@
-# tasks.py
 import time
 from celery import Celery
 
