@@ -57,11 +57,13 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
         # the shape of saved_southwest_dataset_test is (194,32,32,3) (four different rotations)
         target_label = int(ctx.attack.target_label_ind)
         target_label = 9
-        label = torch.tensor(target_label).long()
+        # label = torch.tensor(target_label).long()
+        label = target_label
+
         if mode == 'train':
             with open('/mnt/zeyuqin/OOD_FL/saved_datasets/southwest_images_new_train.pkl', 'rb') as train_f: 
                 saved_southwest_dataset_train = pickle.load(train_f)
-            num_poisoned_dataset = 100
+            num_poisoned_dataset = 200
             samped_poisoned_data_indices = np.random.choice(saved_southwest_dataset_train.shape[0],
                                                             num_poisoned_dataset,
                                                             replace=False)
@@ -137,18 +139,19 @@ def addTrigger(dataset, target_label, inject_portion, mode, distance, trig_h, tr
 
                 if i in perm:
                     # select trigger
-                    # out_file = '/mnt/zeyuqin/FederatedScope/test_before.png'
-                    # # matplotlib.image.imsave(out_file, np.squeeze(img, axis = -1), cmap = 'gray')
+                    # out_file = '/mnt/zeyuqin/FederatedScope/test_before_cifar.png'
+                    # # # matplotlib.image.imsave(out_file, np.squeeze(img, axis = -1), cmap = 'gray')
                     # matplotlib.image.imsave(out_file, img)
                     # import pdb; pdb.set_trace()
                     img = selectTrigger(img, height, width, distance, trig_h, trig_w, trigger_type)
                     # change target
-                    # out_file = '/mnt/zeyuqin/FederatedScope/test_after.png'
+                    # out_file = '/mnt/zeyuqin/FederatedScope/test_after_cifar.png'
                     # # matplotlib.image.imsave(out_file, np.squeeze(img, axis = -1), cmap = 'gray')
                     # matplotlib.image.imsave(out_file, img)
                     # import pdb; pdb.set_trace()
 
-                    dataset_.append((img, torch.tensor(target_label).long()))
+                    # dataset_.append((img, torch.tensor(target_label).long()))
+                    dataset_.append((img, target_label))
                     # self.cnt += 1
                     
                 elif 'wanet' in trigger_type and i in perm_cross:
@@ -169,7 +172,8 @@ def addTrigger(dataset, target_label, inject_portion, mode, distance, trig_h, tr
                 width = img.shape[1]
                 if i in perm:
                     img = selectTrigger(img, width, height, distance, trig_w, trig_h, trigger_type)
-                    dataset_.append((img, torch.tensor(target_label).long()))
+                    # dataset_.append((img, torch.tensor(target_label).long()))
+                    dataset_.append((img, target_label))
                     # self.cnt += 1
                 else:
                     dataset_.append((img, data[1]))
@@ -253,21 +257,21 @@ def add_trans_normalize(data, ctx):
     '''
 
     for key in data:
-        num_dps_poisoned_dataset = len(data[key].dataset)
+        num_dataset = len(data[key].dataset)
         mean, std = ctx.attack.mean, ctx.attack.std
         if "CIFAR10" in ctx.data.type and key == 'train':
             transforms_list = []
             transforms_list.append(transforms.RandomHorizontalFlip())
             transforms_list.append(transforms.ToTensor())
             tran_train = transforms.Compose(transforms_list)
-            for iii in range(num_dps_poisoned_dataset):
+            for iii in range(num_dataset):
                 sample = np.array(data[key].dataset[iii][0]).transpose(1,2,0)*255.0
                 sample = np.clip(sample.astype('uint8'), 0, 255)
                 sample = Image.fromarray(sample) 
                 sample = tran_train(sample)
                 data[key].dataset[iii] = (normalize(sample, mean, std), data[key].dataset[iii][1])
         else:
-            for iii in range(num_dps_poisoned_dataset):
+            for iii in range(num_dataset):
                 data[key].dataset[iii] = (normalize(data[key].dataset[iii][0], mean, std), data[key].dataset[iii][1])
 
     return data
@@ -287,17 +291,19 @@ def select_poisoning(data, ctx, mode):
 
 
 def poisoning(data, ctx):
-    print(50*'-')
-    print('fuck you!!!!!!')
-    print(50*'-')
-
     for i in range(1,len(data)+1):
         if i == ctx.attack.attacker_id:
+            logger.info(50*'-')
+            logger.info('start poisoning!!!!!!')
+            logger.info(50*'-')
             data[i] = select_poisoning(data[i], ctx, mode = 'train')
         data[i] = select_poisoning(data[i], ctx, mode = 'test')
         if data[i].get('val'):
             data[i] = select_poisoning(data[i], ctx, mode = 'val')
         data[i] = add_trans_normalize(data[i], ctx)
+        # for batch_idx, (features, targets) in enumerate(data[i]['train']):
+        #     print(features)
+        # import pdb; pdb.set_trace()
         logger.info('finishing the clean and poisoning data {} processing for Client {:d}'.format(ctx.attack.trigger_type, i))
 
 
