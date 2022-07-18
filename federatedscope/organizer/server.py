@@ -60,6 +60,7 @@ class Lobby(object):
             raise ValueError
         else:
             room[room_id] = meta_info
+        self._save('room', room)
 
         # Launch FS
         print(f"python federatedscope/main.py {info}")
@@ -91,6 +92,7 @@ lobby = Lobby()
 
 @organizer.task
 def create_room(info, psw):
+    print('create_room.....')
     room_id = lobby.create_room(info, psw)
     print(f"The room was created successfully and the id is {room_id}.")
     return room_id
