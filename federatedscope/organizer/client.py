@@ -14,20 +14,23 @@ class OrganizerClient(cmd.Cmd):
     ecs = {}
     timeout = 10
 
-    def do_add_ecs(self, ip, user, psw):
-        'Add Ecs (ip, user, psw): ADD_ECS 172.X.X.X root 12345'
+    def do_add_ecs(self, line):
+        'Add Ecs (ip, user, psw): add_ecs 172.X.X.X root 12345'
+        ip, user, psw = line.split(' ')
         self.ecs[ip] = (user, psw)
         print(f"{ip} added.")
 
-    def do_display_ecs(self, arg):
-        'Display all saved ECS: DISPLAY_ECS'
+    def do_display_ecs(self, line):
+        'Display all saved ECS: display_ecs'
         print(self.ecs)
 
-    def do_create_room(self, command, psw=None):
+    def do_create_room(self, line):
         'Create FS room in server with specific command (command, psw):' \
-            'CREATE_ROOM --cfg ../../federatedscope/example_configs' \
+            'create_room --cfg ../../federatedscope/example_configs' \
             '/distributed_femnist_server.yaml 12345'
         global organizer
+        psw = line.split(' ')[-1]
+        command = line[:-len(psw) - 1]
         result = organizer.send_task('server.create_room', [command, psw])
         cnt = 0
         while (not result.ready()) and cnt < self.timeout:
@@ -36,8 +39,8 @@ class OrganizerClient(cmd.Cmd):
             cnt += 1
         print(result.get(timeout=1))
 
-    def do_display_room(self, arg):
-        'Display all FS rooms: DISPLAY_ROOM'
+    def do_display_room(self, line):
+        'Display all FS rooms: display_room'
         global organizer
         result = organizer.send_task('server.display_room')
         cnt = 0
@@ -47,9 +50,10 @@ class OrganizerClient(cmd.Cmd):
             cnt += 1
         print(result.get(timeout=1))
 
-    def do_join_room(self, room_id, psw=None):
+    def do_join_room(self, line):
         'Join specific FS room (room_id, psw): JOIN ROOM 0 12345'
         global organizer
+        room_id, psw = line.split(' ')
         result = organizer.send_task('server.join_room', [room_id, psw])
         cnt = 0
         while (not result.ready()) and cnt < self.timeout:
