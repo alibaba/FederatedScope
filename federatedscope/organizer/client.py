@@ -10,19 +10,27 @@ class OrganizerClient(cmd.Cmd):
     intro = 'Welcome to the FS organizer shell. Type help or ? to list ' \
             'commands.\n'
     prompt = 'FederatedScope>> '
-    file = None
     ecs = {}
     timeout = 10
 
     def do_add_ecs(self, line):
-        'Add Ecs (ip, user, psw): add_ecs 172.X.X.X root 12345'
-        ip, user, psw = line.split(' ')
-        self.ecs[ip] = (user, psw)
+        'Add Ecs (ip, user, psw): add_ecs 172.X.X.X root 12345 port'
+        ip, user, psw, port = line.split(' ')
+        self.ecs[len(self.ecs)] = {
+            'ip': ip,
+            'user': user,
+            'psw': psw,
+            'port': port
+        }
         print(f"{ip} added.")
+        # TODO: set up FS here?
 
     def do_display_ecs(self, line):
         'Display all saved ECS: display_ecs'
-        print(self.ecs)
+        info = ""
+        for key, value in self.ecs.items():
+            info += f"ecs_id: {key}, info: {value}\n"
+        print(info)
 
     def do_create_room(self, line):
         'Create FS room in server with specific command (command, psw):' \

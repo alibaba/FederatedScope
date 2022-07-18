@@ -61,6 +61,8 @@ class Lobby(object):
         # Update room info in Redis
         room = self._load('room')
         room_id = len(room)
+        # TODO: we must convert arg line to yaml dict to avoid concflicts
+        #  with port
         meta_info = {'info': info, 'psw': psw}
         if room_id in room.keys():
             raise ValueError
@@ -124,7 +126,7 @@ def display_room():
     room = lobby.display_room()
     rtn_info = ""
     for key, value in room.items():
-        tmp = f"room_id: {key}, info:{value}\n"
+        tmp = f"room_id: {key}, info: {value}\n"
         rtn_info += tmp
     print(rtn_info)
     return rtn_info
