@@ -1,4 +1,4 @@
-import os
+import subprocess
 import time
 import redis
 import pickle
@@ -52,7 +52,7 @@ class Lobby(object):
         """
             Create FS server session and store meta info in Redis.
         """
-        # Update info in Redis
+        # Update room info in Redis
         room = self._load('room')
         room_id = len(room)
         meta_info = {'info': info, 'psw': psw}
@@ -63,15 +63,19 @@ class Lobby(object):
         self._save('room', room)
 
         # Launch FS
-        print(f"python federatedscope/main.py {info}")
-        # os.system(f"python federatedscope/main.py {info} &")
+        info = info.split(' ')
+        cmd = ['python', '../../federatedscope/main.py'] + info
+        subprocess.Popen(cmd,
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL)
         return room_id
 
     def display_room(self):
         """
             Display all the joinable FS tasks.
         """
-        raise NotImplementedError
+        room = self._load('room')
+        return room
 
     def join_room(self, room_id, psw=None):
         """
@@ -92,18 +96,15 @@ lobby = Lobby()
 
 @organizer.task
 def create_room(info, psw):
-    print('create_room.....')
+    print('Creating room...')
     room_id = lobby.create_room(info, psw)
-    print(f"The room was created successfully and the id is {room_id}.")
-    return room_id
+    rtn_info = f"The room was created successfully and the id is {room_id}."
+    print(rtn_info)
+    return rtn_info
 
 
-# ---------------------------------------------------------------------- #
-# Example
-# ---------------------------------------------------------------------- #
 @organizer.task
-def sendmail(mail):
-    print('sending mail to %s...' % mail['to'])
-    time.sleep(2.0)
-    print('mail sent.')
-    return 'mail sent.'
+def display_room():
+    room = lobby.display_room()
+    rtn_info = f"Room: {room}"
+    return rtn_info
