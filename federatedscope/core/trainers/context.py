@@ -228,8 +228,12 @@ def lifecycle(lifecycle):
                 # Clear the variables at the end of lifecycles
                 self.ctx.clear(lifecycle)
 
+                # rollback the model and data_split
                 self.ctx.reset_mode()
                 self.ctx.reset_split()
+
+                # Move the model into CPU to avoid memory leak
+                self.discharge_model()
 
                 return res
 

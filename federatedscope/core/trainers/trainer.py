@@ -3,6 +3,7 @@ import copy
 import logging
 
 from federatedscope.core.auxiliaries.eunms import MODE
+from federatedscope.core.auxiliaries.eunms import LIFECYCLE
 from federatedscope.core.auxiliaries.decorators import use_diff
 from federatedscope.core.auxiliaries.utils import format_log_hooks
 from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
@@ -218,10 +219,9 @@ class Trainer(object):
 
         self.ctx.check_split(target_data_split_name)
 
-        self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+        num_samples = self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
 
-        return self.ctx.num_samples_train, self.get_model_para(
-        ), self.ctx.eval_metrics
+        return num_samples, self.get_model_para(), self.ctx.eval_metrics
 
     def evaluate(self, target_data_split_name="test", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_eval
@@ -241,7 +241,7 @@ class Trainer(object):
         self._run_routine(MODE.FINETUNE, hooks_set, target_data_split_name)
 
 
-    @lifecycle("routine")
+    @lifecycle(LIFECYCLE.ROUTINE)
     def _run_routine(self, mode, dataset_name=None):
         """Run the hooks_set and maintain the mode
         Arguments:
@@ -258,18 +258,12 @@ class Trainer(object):
         for hook in self._get_hooks("on_fit_end"):
             hook(self.ctx)
 
-        # Avoid memory leak
-        if not self.cfg.federate.share_local_model:
-            if torch is None:
-                pass
-            else:
-                self.ctx.model.to(torch.device("cpu"))
+        return self.ctx.var.num_samples
 
-    @lifecycle("epoch")
+    @lifecycle(LIFECYCLE.EPOCH)
     def _run_epoch(self):
         # TODO: epoch mode or split
-        for epoch_i in range(
-                self.ctx.get("num_{}_epoch".format(self.ctx.cur_data_split))):
+        for epoch_i in range(self.var.num_epoch):
             self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
 
             for hook in self._get_hooks("on_epoch_start"):
@@ -280,11 +274,10 @@ class Trainer(object):
             for hook in self._get_hooks("on_epoch_end"):
                 hook(self.ctx)
 
-    @lifecycle("batch")
+    @lifecycle(LIFECYCLE.BATCH)
     def _run_batch(self):
-        for batch_i in range(
-                self.ctx.get("num_{}_batch".format(self.ctx.cur_data_split))):
-            self.ctx.cur_batch_i = CtxVar(batch_i)
+        for batch_i in range(self.ctx.var.num_batch):
+            self.ctx.var.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
             for hook in self._get_hooks("on_batch_start"):
                 hook(self.ctx)
@@ -299,8 +292,8 @@ class Trainer(object):
                 hook(self.ctx)
 
             # Break in the final epoch
-            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and self.ctx.cur_epoch_i == self.ctx.num_train_epoch - 1:
-                if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
+            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and self.ctx.var.cur_epoch_i == self.ctx.var.num_epoch - 1:
+                if batch_i >= self.ctx.var.num_batch_last_epoch - 1:
                     break
 
     def update(self, model_parameters):

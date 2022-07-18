@@ -138,6 +138,8 @@ class GeneralTorchTrainer(Trainer):
             ctx.optimizer = get_optimizer(ctx.model,
                                           **ctx.cfg[ctx.cur_mode].optimizer)
 
+        # initialize the number of batch and epoch
+        self.ctx.init_routine()
         # prepare statistics
         ctx.var.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
         ctx.var.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
@@ -175,7 +177,7 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_batch_start_init(self, ctx):
         # prepare data batch
         try:
-            ctx.var.data_batch = CtxVar(next(
+            ctx.data_batch = CtxVar(next(
                 ctx.get("{}_loader".format(ctx.cur_split))), LIFECYCLE.BATCH)
         except StopIteration:
             raise StopIteration
@@ -186,9 +188,9 @@ class GeneralTorchTrainer(Trainer):
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
 
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
         ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
-        ctx.var.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.var.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
         ctx.var.batch_size = CtxVar(len(label), LIFECYCLE.BATCH)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
@@ -287,3 +289,14 @@ class GeneralTorchTrainer(Trainer):
             return ckpt['cur_round']
         else:
             raise ValueError("The file {} does NOT exist".format(path))
+
+    def discharge_model(self):
+        """Discharge the model from GPU device
+
+        """
+        # Avoid memory leak
+        if not self.cfg.federate.share_local_model:
+            if torch is None:
+                pass
+            else:
+                self.ctx.model.to(torch.device("cpu"))

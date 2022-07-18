@@ -171,3 +171,6 @@ class GeneralTFTrainer(Trainer):
 
     def load_model(self, path):
         pass
+
+    def discharge_model(self):
+        pass
