@@ -18,7 +18,12 @@ docker run -d -p 6379:6379 redis
 ## RUN
 ```bash
 # For Server
-celery -A server worker --loglevel=info
+celery -A server worker -c1 --loglevel=info
+
+## For multi-worker
+#celery multi start w1 -A server -l info
+#celery multi start w2 -A server -l info
+#...
 
 # For Client
 python federatedscope/organizer/client.py
