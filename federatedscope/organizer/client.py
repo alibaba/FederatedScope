@@ -10,7 +10,7 @@ import time
 from celery import Celery
 
 organizer = Celery()
-organizer.config_from_object('client_config')
+organizer.config_from_object('cfg_client')
 result = organizer.send_task('server.sendmail', [dict(to='celery@python.org')])
 while not result.ready():
     print('Waiting for response... (will re-try in 0.1s)')

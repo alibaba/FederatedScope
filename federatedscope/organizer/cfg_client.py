@@ -1,5 +1,5 @@
-broker_url = 'redis://172.23.27.236:6379/0'
-result_backend = 'redis://172.23.27.236/0'
+broker_url = 'redis://172.17.138.149:6379/0'
+result_backend = 'redis://172.17.138.149/0'
 
 task_serializer = 'json'
 result_serializer = 'json'

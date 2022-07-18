@@ -3,7 +3,7 @@ import time
 from celery import Celery
 
 organizer = Celery('server', broker='redis://localhost:6379/0', backend='redis://localhost')
-organizer.config_from_object('server_config')
+organizer.config_from_object('cfg_server')
 
 @organizer.task
 def sendmail(mail):
