@@ -89,15 +89,14 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         os.makedirs('../prediction', exist_ok=True)
 
         # TODO: more feasible, for now we hard code it for cikmcup
-        if 'classification' in task_type.lower():
-            y_probs = np.argmax(y_probs, axis=-1)
+        y_preds = np.argmax(y_probs, axis=-1) if 'classification' in task_type.lower() else y_probs
 
         with open('../prediction/prediction.csv', 'a') as file:
-            for y_ind, y_prob in zip(y_inds,  y_probs):
+            for y_ind, y_pred in zip(y_inds,  y_preds):
                 if 'classification' in task_type.lower():
-                    line = [client_id, y_ind] + [y_prob]
+                    line = [client_id, y_ind] + [y_pred]
                 else:
-                    line = [client_id, y_ind] + list(y_prob)
+                    line = [client_id, y_ind] + list(y_pred)
                 file.write(','.join([str(_) for _ in line]) + '\n')
 
 
