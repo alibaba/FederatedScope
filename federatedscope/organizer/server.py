@@ -1,8 +1,9 @@
 import subprocess
-import time
 import redis
 import pickle
 from celery import Celery
+
+from federatedscope.organizer.utils import anonymize
 
 
 # ---------------------------------------------------------------------- #
@@ -36,11 +37,15 @@ class Lobby(object):
         # key: room_id, value: configs of FS
         self._save('room', {})
 
-    def _check_room(self):
+    def _check_room(self, room, room_id):
         """
             Check the validity of the room.
         """
-        pass
+        if room_id in room.keys():
+            return True
+        else:
+            # TODO: check whether the room is full
+            return False
 
     def _check_user(self):
         """
@@ -52,6 +57,7 @@ class Lobby(object):
         """
             Create FS server session and store meta info in Redis.
         """
+        self._check_user()
         # Update room info in Redis
         room = self._load('room')
         room_id = len(room)
@@ -61,7 +67,6 @@ class Lobby(object):
         else:
             room[room_id] = meta_info
         self._save('room', room)
-
         # Launch FS
         info = info.split(' ')
         cmd = ['python', '../../federatedscope/main.py'] + info
@@ -74,14 +79,25 @@ class Lobby(object):
         """
             Display all the joinable FS tasks.
         """
-        room = self._load('room')
+        self._check_user()
+        room = anonymize(self._load('room'), 'psw')
         return room
 
     def join_room(self, room_id, psw=None):
         """
             Join one specific FS task.
         """
-        raise NotImplementedError
+        self._check_user()
+        room = self._load('room')
+        if self._check_room(room, room_id):
+            target_room = self._load('room')[room_id]
+            if psw != target_room['psw']:
+                return 'Wrong Password!'
+            else:
+                return target_room['info']
+        else:
+            return 'Target Room is full or invalid, please use ' \
+                   '`display_room` to show all available rooms.'
 
 
 # ---------------------------------------------------------------------- #
@@ -107,4 +123,10 @@ def create_room(info, psw):
 def display_room():
     room = lobby.display_room()
     rtn_info = f"Room: {room}"
+    return rtn_info
+
+
+@organizer.task
+def join_room(room_id, psw=None):
+    rtn_info = lobby.join_room(room_id, psw)
     return rtn_info

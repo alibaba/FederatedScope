@@ -17,3 +17,9 @@ while not result.ready():
     print('Waiting for response... (will re-try in 1s)')
     time.sleep(1)
 print(result.get(timeout=1))
+
+result = organizer.send_task('server.join_room', [1, 12345])
+while not result.ready():
+    print('Waiting for response... (will re-try in 1s)')
+    time.sleep(1)
+print(result.get(timeout=1))
