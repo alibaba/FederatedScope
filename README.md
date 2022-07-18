@@ -38,19 +38,19 @@ cd FederatedScope
 You can build docker image and run with docker env (cuda 11 and torch 1.10):
 
 ```
-docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
+docker build -f environment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
 docker run --gpus device=all --rm -it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash
 ```
 If you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when executing the above commands:
 ```
-# enviroment/requirements-torch1.10.txt -> 
-enviroment/requirements-torch1.10-application.txt
+# environment/requirements-torch1.10.txt -> 
+environment/requirements-torch1.10-application.txt
 
-# enviroment/docker_files/federatedscope-torch1.10.Dockerfile ->
-enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
+# environment/docker_files/federatedscope-torch1.10.Dockerfile ->
+environment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ```
 Note: You can choose to use cuda 10 and torch 1.8 via changing `torch1.10` to `torch1.8`.
-The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/enviroment/docker_files).
+The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/environment/docker_files).
 
 #### Use Conda
 
@@ -101,7 +101,7 @@ python -m pip install federatedscope
 Now, you have successfully installed the minimal version of FederatedScope. (**Optinal**) For application version including graph, nlp and speech, run:
 
 ```bash
-bash enviroment/extra_dependencies_torch1.10-application.sh
+bash environment/extra_dependencies_torch1.10-application.sh
 ```
 
 ### Step 2. Prepare datasets
