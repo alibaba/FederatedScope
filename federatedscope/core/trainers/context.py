@@ -116,6 +116,28 @@ class Context(LifecycleDict):
             self.optimizer = None
             self.grad_clip = None
 
+        # Process training data
+        if self.train_data is not None or self.train_loader is not None:
+            # Calculate the number of update steps during training given the
+            # local_update_steps
+            self.num_train_batch, self.num_train_batch_last_epoch, self.num_train_epoch, self.num_total_train_batch = calculate_batch_epoch_num(self.cfg.train.local_update_steps,
+                                                                                                                            self.cfg.train.batch_or_epoch,
+                                                                                                                            self.num_train_data,
+                                                                                                                            self.cfg.data.batch_size)
+
+        # Process evaluation data
+        for mode in ["val", "test"]:
+            setattr(self, "num_{}_epoch".format(mode), 1)
+            if self.get("{}_data".format(mode)) is not None or self.get(
+                    "{}_loader".format(mode)) is not None:
+                setattr(
+                    self, "num_{}_batch".format(mode),
+                    getattr(self, "num_{}_data".format(mode)) //
+                    self.cfg.data.batch_size +
+                    int(not self.cfg.data.drop_last and bool(
+                        getattr(self, "num_{}_data".format(mode)) %
+                        self.cfg.data.batch_size)))
+
     def get_variable(self, mode, data_split, key):
         """To support the access of variables that doesn't belong the current mode
         Args:
@@ -125,23 +147,6 @@ class Context(LifecycleDict):
         Returns: the wanted variable
         """
         return self["var"][f"{mode}_{data_split}"][key]
-
-    def init_routine(self):
-        if self.cur_mode in [MODE.TEST, MODE.VAL]:
-            steps, batch_or_epoch = 1, 'epoch'
-        else:
-            cfg_mode = self.cfg.get(self.cur_mode)
-            steps, batch_or_epoch = cfg_mode.local_update_steps, cfg_mode.batch_or_epoch
-
-        num_data = self.get(f'num_{self.cur_split}_data')
-
-        self.var.num_batch, self.var.num_batch_last_epoch, self.var.num_epoch, self.var.num_total_batch = [CtxVar(_, 'routine') for _ in calculate_batch_epoch_num(
-            steps=steps,
-            batch_or_epoch=batch_or_epoch,
-            num_data=num_data,
-            batch_size=self.cfg.data.batch_size,
-            drop_last=self.cfg.data.drop_last
-        )]
 
     def track_mode(self, mode):
         self.mode.append(mode)
