@@ -39,12 +39,14 @@ class SSHManager(object):
         print("Installing FederatedScope, please wait...")
         self.exec_cmd('cd ~; mkdir -p fs_client; '
                       'cd fs_client; '
-                      'git clone -b organizer'
+                      'git clone -b organizer '
                       'https://github.com/rayrayraykk/FederatedScope.git || '
-                      'true;'
+                      'true; '
                       'cd FederatedScope; '
+                      'git fetch; git pull; '
                       'ls; '
-                      'bash federatedscope/organizer/scripts/install.sh')
+                      'bash federatedscope/organizer/scripts/install.sh'
+                      f' {ENV_NAME}')
 
 
 def anonymize(info, psw):
