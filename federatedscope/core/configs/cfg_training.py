@@ -22,6 +22,10 @@ def extend_training_cfg(cfg):
     cfg.train.optimizer.type = 'SGD'
     cfg.train.optimizer.lr = 0.1
 
+    cfg.train.scheduler = CN(new_allowed=True)
+    cfg.train.scheduler.type = ''
+    cfg.trainer.
+
     # ---------------------------------------------------------------------- #
     # Finetune related options
     # ---------------------------------------------------------------------- #
