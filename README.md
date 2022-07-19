@@ -74,7 +74,7 @@ conda install pytorch torchvision torchaudio -c pytorch
 python -m pip install torchvision==0.11.3
 ```
 
-Finally, after the backend is installed, you can install FederatedScope from `source`, `conda` or `pip`:
+Finally, after the backend is installed, you can install FederatedScope from `source`:
 
 ##### From source
 
@@ -84,18 +84,6 @@ python setup.py install
 # Or (for dev mode)
 pip install -e .[dev]
 pre-commit install
-```
-
-##### From conda
-
-```bash
-conda install -c federatedscope federatedscope
-```
-
-##### From pip
-
-```bash
-python -m pip install federatedscope
 ```
 
 Now, you have successfully installed the minimal version of FederatedScope. (**Optinal**) For application version including graph, nlp and speech, run:
