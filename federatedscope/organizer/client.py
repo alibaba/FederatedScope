@@ -17,16 +17,16 @@ class OrganizerClient(cmd.Cmd):
 
     def do_add_ecs(self, line):
         'Add Ecs (ip, user, psw, port): add_ecs 172.X.X.X root 12345 50002'
-        try:
-            ip, user, psw, port = line.split(' ')
-            key = f"{ip}:{port}"
-            if key in self.ecs:
-                raise ValueError(f"ECS `{key}` already exists.")
-            self.ecs[key] = SSHManager(ip, user, psw, port)
-            print(f"{self.ecs[key]} added.")
-            # TODO: set up FS here?
-        except Exception as error:
-            print(f"Exception: {error}")
+        # try:
+        ip, user, psw, port = line.split(' ')
+        key = f"{ip}:{port}"
+        if key in self.ecs:
+            raise ValueError(f"ECS `{key}` already exists.")
+        self.ecs[key] = SSHManager(ip, user, psw, port)
+        print(f"{self.ecs[key]} added.")
+        self.ecs[key].setup_fs()
+        # except Exception as error:
+        #     print(f"Exception: {error}")
 
     def do_del_ecs(self, line):
         'Delete Ecs (ip, port): del_ecs 172.X.X.X 50002'

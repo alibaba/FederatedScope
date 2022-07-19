@@ -1,10 +1,12 @@
 import time
 import paramiko
 
+ENV_NAME = 'org_test'
+
 
 class SSHManager(object):
-    def __init__(self, ip, user, psw, port):
-        self.ssh_port = 22
+    def __init__(self, ip, user, psw, port, ssh_port=22):
+        self.ssh_port = ssh_port
         self.ip = ip
         self.user = user
         self.psw = psw
@@ -24,15 +26,25 @@ class SSHManager(object):
     def exec_cmd(self, command):
         if self.ssh is None:
             self._connect()
+            print(f'Connected to {self.ip}.')
         stdin, stdout, stderr = self.ssh.exec_command(command)
         time.sleep(1)
-        output = []
-        for line in iter(stdout.readline, ""):
-            output.append(line)
-        return output
+        print(stdout.read(), stderr.read())
+        # output = []
+        # for line in iter(stdout.readline, ""):
+        #     output.append(line)
+        return True
 
     def setup_fs(self):
-        pass
+        print("Installing FederatedScope, please wait...")
+        self.exec_cmd('cd ~; mkdir -p fs_client; '
+                      'cd fs_client; '
+                      'git clone -b organizer'
+                      'https://github.com/rayrayraykk/FederatedScope.git || '
+                      'true;'
+                      'cd FederatedScope; '
+                      'ls; '
+                      'bash federatedscope/organizer/scripts/install.sh')
 
 
 def anonymize(info, psw):
@@ -43,3 +55,7 @@ def anonymize(info, psw):
             if key == psw:
                 info[key] = "******"
     return info
+
+
+a = SSHManager('172.17.138.149', 'root', 'Dailalgo2022', '50012')
+a.setup_fs()
