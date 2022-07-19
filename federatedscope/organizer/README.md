@@ -2,17 +2,16 @@
 
 Organizer is implemented by [Celery](https://docs.celeryq.dev/en/latest/) and [Redis](https://redis.io/) as Broker, so you should install it before using.
 
-## Installation
+## Installation Dependencies
 
 ```bash
-# For FS
-pip install -e .[dev]
-
-# For Celery 
-python -m pip install celery[redis]
-
 # For Server
+pip install -e .[dev]
+python -m pip install celery[redis]
 docker run -d -p 6379:6379 redis
+
+# For Client
+sudo apt-get install sshpass
 ```
 
 ## RUN
