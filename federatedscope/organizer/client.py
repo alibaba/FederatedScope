@@ -26,7 +26,7 @@ class OrganizerClient(cmd.Cmd):
             print(f"{self.ecs[key]} added.")
             # TODO: set up FS here?
         except Exception as error:
-            print(f"Invalid: {error}")
+            print(f"Exception: {error}")
 
     def do_del_ecs(self, line):
         'Delete Ecs (ip, port): del_ecs 172.X.X.X 50002'
@@ -36,7 +36,7 @@ class OrganizerClient(cmd.Cmd):
             print(f"Delete {key} {self.ecs[key]}.")
             del self.ecs[key]
         except Exception as error:
-            print(f"Invalid: {error}")
+            print(f"Exception: {error}")
 
     def do_display_ecs(self, line):
         'Display all saved ECS: display_ecs'
@@ -46,7 +46,7 @@ class OrganizerClient(cmd.Cmd):
                 info += f"ecs: {key}, info: {value}\n"
             print(info)
         except Exception as error:
-            print(f"Invalid: {error}")
+            print(f"Exception: {error}")
 
     def do_create_room(self, line):
         'Create FS room in server with specific command (command, psw):' \
@@ -64,7 +64,7 @@ class OrganizerClient(cmd.Cmd):
                 cnt += 1
             print(result.get(timeout=1))
         except Exception as error:
-            print(f"Invalid: {error}")
+            print(f"Exception: {error}")
 
     def do_display_room(self, line):
         'Display all FS rooms: display_room'
@@ -78,7 +78,7 @@ class OrganizerClient(cmd.Cmd):
                 cnt += 1
             print(result.get(timeout=1))
         except Exception as error:
-            print(f"Invalid: {error}")
+            print(f"Exception: {error}")
 
     def do_join_room(self, line):
         'Join specific FS room (room_id, psw): JOIN ROOM 0 12345'
@@ -93,7 +93,7 @@ class OrganizerClient(cmd.Cmd):
                 cnt += 1
             print(result.get(timeout=1))
         except Exception as error:
-            print(f"Invalid: {error}")
+            print(f"Exception: {error}")
 
     def do_quit(self, line):
         return True
