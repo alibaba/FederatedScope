@@ -1,8 +1,7 @@
-import time
-import paramiko
+import subprocess
 
 ENV_NAME = 'org_test'
-DIR = 'fs_client'
+DIR = 'org'
 
 
 class SSHManager(object):
@@ -12,40 +11,54 @@ class SSHManager(object):
         self.user = user
         self.psw = psw
         self.port = port
-        self.ssh, self.trans = None, None
-
-    def _connect(self):
-        self.trans = paramiko.Transport((self.ip, self.ssh_port))
-        self.trans.connect(username=self.user, password=self.psw)
-        self.ssh = paramiko.SSHClient()
-        self.ssh._transport = self.trans
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    def disconnect(self):
-        self.trans.close()
 
     def exec_cmd(self, command):
-        if self.ssh is None:
-            self._connect()
-            print(f'Connected to {self.ip}.')
-        stdin, stdout, stderr = self.ssh.exec_command(command)
-        time.sleep(1)
-        print(stdout.read(), stderr.read())
-        # output = []
-        # for line in iter(stdout.readline, ""):
-        #     output.append(line)
+        """
+            Not full login ssh, conduct `source ~/.bashrc` first.
+        """
+        command = f'source ~/.bashrc; {command}'
+        status, output = subprocess.getstatusoutput(f"sshpass -p {self.psw} "
+                                                    f"ssh -p {self.ssh_port} "
+                                                    f"{self.user}@{self.ip}"
+                                                    f" {command}")
+        print(status, output)
+        return output
+
+    def exec_python_cmd(self, command):
+        command = f'source ~/.bashrc; conda activate {ENV_NAME}; ' \
+                  f'cd ~/{DIR}/FederatedScope; python {command}'
+        status, output = subprocess.getstatusoutput(f"sshpass -p {self.psw} "
+                                                    f"ssh -p {self.ssh_port} "
+                                                    f"{self.user}@{self.ip}"
+                                                    f" {command}")
+        print(status, output)
+        return output
+
+    def _check_conda(self):
+        """
+            Check and install conda env.
+        """
+        output = self.exec_cmd('which conda')
+        if output is None:
+            # TODO: Install conda here
+            pass
+        else:
+            output = self.exec_cmd('conda env list')
+            if ENV_NAME not in output:
+                # TODO: Install FS env here
+                pass
         return True
 
+    def _check_source(self):
+        """
+            Check and download FS repo.
+        """
+        pass
+
     def setup_fs(self):
-        print("Installing FederatedScope, please wait...")
-        self.exec_cmd(f'cd ~; mkdir -p {DIR}; '
-                      f'cd {DIR}; '
-                      'git clone -b organizer '
-                      'https://github.com/rayrayraykk/FederatedScope.git || '
-                      'true; '
-                      'cd FederatedScope; '
-                      'bash federatedscope/organizer/scripts/install.sh'
-                      f' {ENV_NAME}')
+        print("Checking environment, please wait...")
+        self._check_conda()
+        self._check_source()
 
 
 def anonymize(info, psw):
@@ -58,5 +71,5 @@ def anonymize(info, psw):
     return info
 
 
-a = SSHManager('172.17.138.149', 'root', 'Dailalgo2022', '50012')
+a = SSHManager('172.17.138.149', 'root', 'xxxxxx', '50012')
 a.setup_fs()
