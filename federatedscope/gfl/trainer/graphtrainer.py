@@ -91,7 +91,7 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
         # TODO: more feasible, for now we hard code it for cikmcup
         y_preds = np.argmax(y_probs, axis=-1) if 'classification' in task_type.lower() else y_probs
 
-        with open(path+'/prediction.csv', 'a') as file:
+        with open(os.path.join(path, 'prediction.csv'), 'a') as file:
             for y_ind, y_pred in zip(y_inds,  y_preds):
                 if 'classification' in task_type.lower():
                     line = [client_id, y_ind] + [y_pred]
