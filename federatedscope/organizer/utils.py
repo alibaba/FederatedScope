@@ -2,6 +2,7 @@ import time
 import paramiko
 
 ENV_NAME = 'org_test'
+DIR = 'fs_client'
 
 
 class SSHManager(object):
@@ -37,14 +38,12 @@ class SSHManager(object):
 
     def setup_fs(self):
         print("Installing FederatedScope, please wait...")
-        self.exec_cmd('cd ~; mkdir -p fs_client; '
-                      'cd fs_client; '
+        self.exec_cmd(f'cd ~; mkdir -p {DIR}; '
+                      f'cd {DIR}; '
                       'git clone -b organizer '
                       'https://github.com/rayrayraykk/FederatedScope.git || '
                       'true; '
                       'cd FederatedScope; '
-                      'git fetch; git pull; '
-                      'ls; '
                       'bash federatedscope/organizer/scripts/install.sh'
                       f' {ENV_NAME}')
 
