@@ -21,6 +21,8 @@ def extend_evaluation_cfg(cfg):
     cfg.eval.monitoring = []
 
     cfg.eval.count_flops = True
+    # where to save the prediction results
+    cfg.eval.prediction_path = 'prediction'
 
     # ---------------------------------------------------------------------- #
     # wandb related options

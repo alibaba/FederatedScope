@@ -1,5 +1,6 @@
 import copy
 import logging
+import os
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
@@ -450,8 +451,8 @@ class Client(Worker):
             # Evaluate
             self.trainer.evaluate(target_data_split_name='test')
             # Save results
-            self.trainer.save_prediction(self.ID, self._cfg.model.task)
-            logger.info(f"Client #{self.ID} finished saving prediction results.")
+            self.trainer.save_prediction(self._cfg.eval.prediction_path, self.ID, self._cfg.model.task)
+            logger.info(f"Client #{self.ID} finished saving prediction results in {os.path.abspath(self._cfg.eval.prediction_path)}.")
 
         self._monitor.finish_fl()
 
