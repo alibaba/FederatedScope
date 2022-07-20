@@ -1,26 +1,137 @@
+from distutils.command.config import config
 from federatedscope.core.worker import Server
 from federatedscope.core.message import Message
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 import copy
-from federatedscope.attack.auxiliary.utils import get_data_sav_fn, \
-    get_reconstructor
+from federatedscope.attack.auxiliary.utils import get_data_sav_fn, get_reconstructor
 
 import logging
 
-import torch
 import numpy as np
-from federatedscope.attack.privacy_attacks.passive_PIA import \
-    PassivePropertyInference
+import torch
+from federatedscope.attack.privacy_attacks.passive_PIA import PassivePropertyInference
 
 logger = logging.getLogger(__name__)
 
 
+class BackdoorServer(Server):
+    '''
+    For backdoor attacks, we will choose the different the sampling stratergies.
+    fix-frequency sampling, all-round sampling or random sampling.
+    '''
+    def __init__(self,
+                 ID=-1,
+                 state=0,
+                 config=None,
+                 data=None,
+                 model=None,
+                 client_num=5,
+                 total_round_num=10,
+                 device='cpu',
+                 strategy=None,
+                 unseen_clients_id=None,
+                 **kwargs):
+        super(BackdoorServer, self).__init__(ID=ID,
+                                            state=state,
+                                            data=data,
+                                            model=model,
+                                            config=config,
+                                            client_num=client_num,
+                                            total_round_num=total_round_num,
+                                            device=device,
+                                            strategy=strategy,
+                                            **kwargs)
+
+    def broadcast_model_para(self,
+                             msg_type='model_para',
+                             sample_client_num=-1):
+        """
+        To broadcast the message to all clients or sampled clients
+
+        Arguments:
+            msg_type: 'model_para' or other user defined msg_type
+            sample_client_num: the number of sampled clients in the broadcast behavior.
+                And sample_client_num = -1 denotes to broadcast to all the clients.
+        """
+
+        if sample_client_num > 0: # only activated at training process
+
+            if self._cfg.attack.attacker_id == -1 or self._cfg.attack.attack_method == '':
+                receiver = np.random.choice(np.arange(1, self.client_num + 1),
+                                            size=sample_client_num,
+                                            replace=False).tolist()
+                        
+            elif self._cfg.attack.setting == 'fix' and self.state % self._cfg.attack.freq == 0:
+                client_list = np.delete(np.arange(1, self.client_num + 1), self._cfg.attack.attacker_id-1)
+                receiver = np.random.choice(client_list,
+                                            size=sample_client_num-1,
+                                            replace=False).tolist()
+                receiver.insert(0, self._cfg.attack.attacker_id)
+                logger.info('starting the fix-frequency poisoning attack')
+                logger.info('starting the poisoning round: {:d}, the attacker ID: {:d}'.format(self.state, self._cfg.attack.attacker_id))
+
+            
+            elif self._cfg.attack.setting == 'single' and self.state == self._cfg.attack.insert_round:
+                client_list = np.delete(np.arange(1, self.client_num + 1), self._cfg.attack.attacker_id-1)
+                receiver = np.random.choice(client_list,
+                                            size=sample_client_num-1,
+                                            replace=False).tolist()
+                receiver.insert(0, self._cfg.attack.attacker_id)
+                logger.info('starting the single-shot poisoning attack')
+                logger.info('starting the poisoning round: {:d}, the attacker ID: {:d}'.format(self.state, self._cfg.attack.attacker_id))
+
+
+            elif self._cfg.attack.setting == 'all':
+                client_list = np.delete(np.arange(1, self.client_num + 1), self._cfg.attack.attacker_id-1)
+                receiver = np.random.choice(client_list,
+                                            size=sample_client_num-1,
+                                            replace=False).tolist()
+                receiver.insert(0, self._cfg.attack.attacker_id)
+                logger.info('starting the all-round poisoning attack')
+                logger.info('starting the poisoning round: {:d}, the attacker ID: {:d}'.format(self.state, self._cfg.attack.attacker_id))
+
+            else:
+                receiver = np.random.choice(np.arange(1, self.client_num + 1),
+                                            size=sample_client_num,
+                                            replace=False).tolist()
+                            
+        else:
+            # broadcast to all clients
+            receiver = list(self.comm_manager.neighbors.keys())
+
+        if self._noise_injector is not None and msg_type == 'model_para':
+            # Inject noise only when broadcast parameters
+            for model_idx_i in range(len(self.models)):
+                num_sample_clients = [
+                    v["num_sample"] for v in self.join_in_info.values()
+                ]
+                self._noise_injector(self._cfg, num_sample_clients,
+                                     self.models[model_idx_i])
+
+        skip_broadcast = self._cfg.federate.method in ["local", "global"]
+        if self.model_num > 1:
+            model_para = [{} if skip_broadcast else model.state_dict()
+                          for model in self.models]
+        else:
+            model_para = {} if skip_broadcast else self.model.state_dict()
+
+        self.comm_manager.send(
+            Message(msg_type=msg_type,
+                    sender=self.ID,
+                    receiver=receiver,
+                    state=min(self.state, self.total_round_num),
+                    content=model_para))
+        if self._cfg.federate.online_aggr:
+            for idx in range(self.model_num):
+                self.aggregators[idx].reset()
+
+        
+
+
 class PassiveServer(Server):
     '''
-    In passive attack, the server store the model and the message collected
-    from the client,and perform the optimization based reconstruction,
-    such as DLG, InvertGradient.
+    In passive attack, the server store the model and the message collected from the client,and perform the optimization based reconstruction, such as DLG, InvertGradient.
     '''
     def __init__(self,
                  ID=-1,
@@ -50,8 +161,7 @@ class PassiveServer(Server):
         self.client_to_reconstruct = client_to_reconstruct
         self.reconstruct_data = dict()
 
-        # the loss function of the global model; the global model can be
-        # obtained in self.aggregator.model
+        # the loss function of the global model; the global model can be obtained in self.aggregator.model
         self.model_criterion = get_criterion(self._cfg.criterion.type,
                                              device=self.device)
 
@@ -73,21 +183,20 @@ class PassiveServer(Server):
             lr=self._cfg.attack.reconstruct_lr,
             federate_loss_fn=self.model_criterion,
             device=self.device,
-            federate_lr=self._cfg.train.optimizer.lr,
+            federate_lr=self._cfg.optimizer.lr,
             optim=self._cfg.attack.reconstruct_optim,
             info_diff_type=self._cfg.attack.info_diff_type,
             federate_method=self._cfg.federate.method,
             alpha_TV=self._cfg.attack.alpha_TV)
 
-    def _reconstruct(self, model_para, batch_size, state, sender):
-        logger.info('-------- reconstruct round:{}, client:{}---------'.format(
-            state, sender))
+    def _reconstruct(self, state, sender):
+        # print(self.msg_buffer['train'][state].keys())
         dummy_data, dummy_label = self.reconstructor.reconstruct(
             model=copy.deepcopy(self.model).to(torch.device(self.device)),
-            original_info=model_para,
+            original_info=self.msg_buffer['train'][state][sender][1],
             data_feature_dim=self.data_dim,
             num_class=self.num_class,
-            batch_size=batch_size)
+            batch_size=self.msg_buffer['train'][state][sender][0])
         if state not in self.reconstruct_data.keys():
             self.reconstruct_data[state] = dict()
         self.reconstruct_data[state][sender] = [
@@ -96,37 +205,33 @@ class PassiveServer(Server):
 
     def run_reconstruct(self, state_list=None, sender_list=None):
 
-        if state_list is None:
+        if state_list == None:
             state_list = self.msg_buffer['train'].keys()
 
-        # After FL running, using gradient based reconstruction method to
-        # recover client's private training data
+        # After FL running, using gradient based reconstruction method to recover client's private training data
         for state in state_list:
             if sender_list is None:
                 sender_list = self.msg_buffer['train'][state].keys()
             for sender in sender_list:
-                content = self.msg_buffer['train'][state][sender]
-                self._reconstruct(model_para=content[1],
-                                  batch_size=content[0],
-                                  state=state,
-                                  sender=sender)
+                logger.info(
+                    '------------- reconstruct round:{}, client:{}-----------'.
+                    format(state, sender))
+
+                # the context of buffer: self.model_buffer[state]: (sample_size, model_para)
+                self._reconstruct(state, sender)
 
     def callback_funcs_model_para(self, message: Message):
-        if self.is_finish:
-            return 'finish'
-
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
-        if round not in self.msg_buffer['train']:
+        # For a new round
+        if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
+
         self.msg_buffer['train'][round][sender] = content
 
         # run reconstruction before the clear of self.msg_buffer
 
-        if self.state_to_reconstruct is None or message.state in \
-                self.state_to_reconstruct:
-            if self.client_to_reconstruct is None or message.sender in \
-                    self.client_to_reconstruct:
+        if self.state_to_reconstruct is None or message.state in self.state_to_reconstruct:
+            if self.client_to_reconstruct is None or message.sender in self.client_to_reconstruct:
                 self.run_reconstruct(state_list=[message.state],
                                      sender_list=[message.sender])
                 if self.reconstructed_data_sav_fn is not None:
@@ -142,14 +247,11 @@ class PassiveServer(Server):
 
 class PassivePIAServer(Server):
     '''
-    The implementation of the batch property classifier, the algorithm 3 in
-    paper: Exploiting Unintended Feature Leakage in Collaborative Learning
+    The implementation of the batch property classifier, the algorithm 3 in paper: Exploiting Unintended Feature Leakage in Collaborative Learning
 
     References:
 
-    Melis, Luca, Congzheng Song, Emiliano De Cristofaro and Vitaly
-    Shmatikov. “Exploiting Unintended Feature Leakage in Collaborative
-    Learning.” 2019 IEEE Symposium on Security and Privacy (SP) (2019): 691-706
+    Melis, Luca, Congzheng Song, Emiliano De Cristofaro and Vitaly Shmatikov. “Exploiting Unintended Feature Leakage in Collaborative Learning.” 2019 IEEE Symposium on Security and Privacy (SP) (2019): 691-706
     '''
     def __init__(self,
                  ID=-1,
@@ -180,23 +282,20 @@ class PassivePIAServer(Server):
             device=self.device,
             grad_clip=self._cfg.grad.grad_clip,
             dataset_name=self._cfg.data.type,
-            fl_local_update_num=self._cfg.train.local_update_steps,
-            fl_type_optimizer=self._cfg.fedopt.optimizer.type,
-            fl_lr=self._cfg.train.optimizer.lr,
+            fl_local_update_num=self._cfg.federate.local_update_steps,
+            # fl_type_optimizer=self._cfg.fedopt.optimizer.type,fedopt.type_optimizer
+            fl_type_optimizer=self._cfg.optimizer.type,
+            fl_lr=self._cfg.optimizer.lr,
             batch_size=100)
 
-        # self.optimizer = get_optimizer(
-        # type=self._cfg.fedopt.type_optimizer, model=self.model,
-        # lr=self._cfg.fedopt.optimizer.lr)
+        # self.optimizer = get_optimizer(type=self._cfg.fedopt.type_optimizer, model=self.model,lr=self._cfg.fedopt.optimizer.lr)
         # print(self.optimizer)
     def callback_funcs_model_para(self, message: Message):
-        if self.is_finish:
-            return 'finish'
-
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
-        if round not in self.msg_buffer['train']:
+        # For a new round
+        if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
+
         self.msg_buffer['train'][round][sender] = content
 
         # collect the updates

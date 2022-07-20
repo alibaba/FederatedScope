@@ -578,6 +578,10 @@ def get_data(config):
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
 
+    if 'backdoor' in config.attack.attack_method:
+        from federatedscope.attack.auxiliary import poisoning
+        poisoning(data, modified_config)
+
     if config.federate.mode.lower() == 'standalone':
         return data, modified_config
     else:
