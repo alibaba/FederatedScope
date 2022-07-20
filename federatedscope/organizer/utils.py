@@ -118,8 +118,3 @@ def args2yaml(args):
     init_cfg.freeze()
     init_cfg.defrost()
     return init_cfg
-
-
-if __name__ == '__main__':
-    # SSHManager('***.**.***.***', 'root', '******', '50012')
-    args2yaml('--cfg federatedscope/aaaa/xxx.yaml num 10 aaa 200')
