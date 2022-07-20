@@ -11,7 +11,9 @@ python -m pip install celery[redis]
 docker run -d -p 6379:6379 redis
 
 # For Client
-sudo apt-get install sshpass
+Not full login ssh, conduct `source ~/.bashrc` first.
+** If not running interactively, `source ~/.bashrc` might fail **
+** due to: `[ -z "$PS1" ] && return`, please comment this line **
 ```
 
 ## RUN
