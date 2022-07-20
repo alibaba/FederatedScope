@@ -16,6 +16,7 @@ class SSHManager(object):
         self.psw = psw
         self.port = port
         self.ssh, self.trans = None, None
+        self.setup_fs()
 
     def _connect(self):
         self.trans = paramiko.Transport((self.ip, self.ssh_port))
@@ -100,4 +101,5 @@ def anonymize(info, psw):
     return info
 
 
-a = SSHManager('172.17.138.xxx', 'root', 'xxxx', '50012')
+if __name__ == '__main__':
+    a = SSHManager('172.17.138.xxx', 'root', 'xxxx', '50012')

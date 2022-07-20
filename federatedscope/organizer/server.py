@@ -41,6 +41,7 @@ class Lobby(object):
         """
             Check the validity of the room.
         """
+        print(type(room_id), room.keys())
         if room_id in room.keys():
             return True
         else:
@@ -60,7 +61,7 @@ class Lobby(object):
         self._check_user()
         # Update room info in Redis
         room = self._load('room')
-        room_id = len(room)
+        room_id = str(len(room))
         # TODO: we must convert arg line to yaml dict to avoid concflicts
         #  with port
         meta_info = {'info': info, 'psw': psw}
@@ -85,9 +86,9 @@ class Lobby(object):
         room = anonymize(self._load('room'), 'psw')
         return room
 
-    def join_room(self, room_id, psw=None):
+    def view_room(self, room_id, psw=None):
         """
-            Join one specific FS task.
+            View one specific FS task.
         """
         self._check_user()
         room = self._load('room')
@@ -99,7 +100,7 @@ class Lobby(object):
                 return target_room['info']
         else:
             return 'Target Room is full or invalid, please use ' \
-                   '`display_room` to show all available rooms.'
+                   '`update_room` to show all available rooms.'
 
 
 # ---------------------------------------------------------------------- #
@@ -133,6 +134,6 @@ def display_room():
 
 
 @organizer.task
-def join_room(room_id, psw=None):
-    rtn_info = lobby.join_room(room_id, psw)
+def view_room(room_id, psw=None):
+    rtn_info = lobby.view_room(room_id, psw)
     return rtn_info
