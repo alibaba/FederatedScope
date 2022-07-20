@@ -60,7 +60,7 @@ class OrganizerClient(cmd.Cmd):
     # Message related
     # ---------------------------------------------------------------------- #
     def do_create_room(self, line):
-        'Create FS room in server with specific command (command, psw):' \
+        'Create FS room in server with specific command (command, psw): ' \
             'create_room --cfg ../../federatedscope/example_configs' \
             '/distributed_femnist_server.yaml 12345'
         try:
@@ -88,7 +88,11 @@ class OrganizerClient(cmd.Cmd):
                 time.sleep(1)
                 cnt += 1
             self.room = result.get(timeout=1)
-            print(self.room)
+            info = ""
+            for key, value in self.room.items():
+                tmp = f"room_id: {key}, info: {value}\n"
+                info += tmp
+            print(info)
         except Exception as error:
             print(f"Exception: {error}")
 

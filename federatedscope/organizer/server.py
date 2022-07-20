@@ -1,9 +1,9 @@
-import subprocess
 import redis
 import pickle
+import subprocess
 from celery import Celery
 
-from federatedscope.organizer.utils import anonymize
+from federatedscope.organizer.utils import anonymize, args2yaml
 
 
 # ---------------------------------------------------------------------- #
@@ -41,7 +41,6 @@ class Lobby(object):
         """
             Check the validity of the room.
         """
-        print(type(room_id), room.keys())
         if room_id in room.keys():
             return True
         else:
@@ -54,25 +53,29 @@ class Lobby(object):
         """
         pass
 
-    def create_room(self, info, psw=None):
+    def create_room(self, args, psw=None):
         """
-            Create FS server session and store meta info in Redis.
+            Create FS server session and store args in Redis.
         """
         self._check_user()
-        # Update room info in Redis
+        # Update room args in Redis
         room = self._load('room')
         room_id = str(len(room))
-        # TODO: we must convert arg line to yaml dict to avoid concflicts
+        # TODO: we must convert arg line to yaml dict to avoid conflicts
         #  with port
-        meta_info = {'info': info, 'psw': psw}
+        meta_info = {
+            'command': args,
+            'cfg': args2yaml(args),
+            'psw': psw,
+        }
         if room_id in room.keys():
             raise ValueError
         else:
             room[room_id] = meta_info
         self._save('room', room)
         # Launch FS
-        info = info.split(' ')
-        cmd = ['python', '../../federatedscope/main.py'] + info
+        input_args = args.split(' ')
+        cmd = ['python', '../../federatedscope/main.py'] + input_args
         subprocess.Popen(cmd,
                          stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL)
@@ -83,7 +86,10 @@ class Lobby(object):
             Display all the joinable FS tasks.
         """
         self._check_user()
-        room = anonymize(self._load('room'), 'psw')
+        mask_key = ['psw', 'cfg']
+        room = self._load('room')
+        for mask in mask_key:
+            room = anonymize(room, mask)
         return room
 
     def view_room(self, room_id, psw=None):
@@ -97,7 +103,7 @@ class Lobby(object):
             if psw != target_room['psw']:
                 return 'Wrong Password!'
             else:
-                return target_room['info']
+                return target_room
         else:
             return 'Target Room is full or invalid, please use ' \
                    '`update_room` to show all available rooms.'
@@ -114,9 +120,9 @@ lobby = Lobby()
 
 
 @organizer.task
-def create_room(info, psw):
+def create_room(args, psw):
     print('Creating room...')
-    room_id = lobby.create_room(info, psw)
+    room_id = lobby.create_room(args, psw)
     rtn_info = f"The room was created successfully and the id is {room_id}."
     print(rtn_info)
     return rtn_info
@@ -130,7 +136,7 @@ def display_room():
         tmp = f"room_id: {key}, info: {value}\n"
         rtn_info += tmp
     print(rtn_info)
-    return rtn_info
+    return room
 
 
 @organizer.task

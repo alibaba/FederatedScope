@@ -11,7 +11,7 @@ timezone = 'Europe/Oslo'
 enable_utc = True
 
 # ---------------------------------------------------------------------- #
-# ECS ssh related
+# ECS ssh related (To verify and launch the virtual environment)
 # ---------------------------------------------------------------------- #
 env_name = 'test_org'
 root_path = 'test_org'

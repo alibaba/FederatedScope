@@ -2,7 +2,7 @@ import argparse
 import sys
 
 
-def parse_args():
+def parse_args(args=None):
     parser = argparse.ArgumentParser(description='FederatedScope')
     parser.add_argument('--cfg',
                         dest='cfg_file',
@@ -23,4 +23,4 @@ def parse_args():
         parser.print_help()
         sys.exit(1)
 
-    return parser.parse_args()
+    return parser.parse_args(args)

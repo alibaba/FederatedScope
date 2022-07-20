@@ -1,7 +1,12 @@
 import os
+import shlex
 import logging
 import paramiko
+from yacs.config import CfgNode
 
+from federatedscope.core.cmd_args import parse_args
+from federatedscope.core.configs.config import global_cfg
+from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.organizer.cfg_client import env_name, root_path, fs_version
 
 logger = logging.getLogger('federatedscope')
@@ -66,6 +71,9 @@ class SSHManager(object):
             logger.error(err)
             # TODO: Install FS env here
             return False
+        elif output != fs_version:
+            logger.warning(f'The installed FS version is {output}, however'
+                           f' {fs_version} is required.')
         logger.info('Conda environment found.')
         return True
 
@@ -91,15 +99,27 @@ class SSHManager(object):
             raise Exception('The FS repo is not configured properly.')
 
 
-def anonymize(info, psw):
+def anonymize(info, mask):
     for key, value in info.items():
-        if isinstance(value, dict):
-            anonymize(info[key], psw)
-        else:
-            if key == psw:
-                info[key] = "******"
+        if key == mask:
+            info[key] = "******"
+        elif isinstance(value, dict):
+            anonymize(info[key], mask)
     return info
 
 
+def args2yaml(args):
+    init_cfg = global_cfg.clone()
+    args = parse_args(shlex.split(args))
+    init_cfg.merge_from_file(args.cfg_file)
+    init_cfg.merge_from_list(args.opts)
+    _, modified_cfg = get_data(config=init_cfg.clone())
+    init_cfg.merge_from_other_cfg(modified_cfg)
+    init_cfg.freeze()
+    init_cfg.defrost()
+    return init_cfg
+
+
 if __name__ == '__main__':
-    a = SSHManager('172.17.138.xxx', 'root', 'xxxx', '50012')
+    # SSHManager('***.**.***.***', 'root', '******', '50012')
+    args2yaml('--cfg federatedscope/aaaa/xxx.yaml num 10 aaa 200')
