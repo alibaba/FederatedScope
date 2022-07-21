@@ -41,7 +41,7 @@ def extend_training_cfg(cfg):
     cfg.finetune.optimizer.lr = 0.1
 
     cfg.finetune.scheduler = CN(new_allowed=True)
-    cfg.train.scheduler.type = ''
+    cfg.finetune.scheduler.type = ''
 
     # ---------------------------------------------------------------------- #
     # Gradient related options
