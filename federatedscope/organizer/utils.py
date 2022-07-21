@@ -3,6 +3,8 @@ import shlex
 import logging
 import paramiko
 
+from collections.abc import MutableMapping
+
 from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.configs.config import global_cfg, CN
 from federatedscope.core.auxiliaries.data_builder import get_data
@@ -116,6 +118,17 @@ def args2yaml(args):
     return init_cfg
 
 
+def flatten_dict(d, parent_key='', sep='_'):
+    items = []
+    for key, value in d.items():
+        new_key = parent_key + sep + key if parent_key else key
+        if isinstance(value, MutableMapping):
+            items.extend(flatten_dict(value, new_key, sep=sep).items())
+        else:
+            items.append((new_key, value))
+    return dict(items)
+
+
 def config2cmdargs(config):
     '''
     Arguments:
@@ -125,15 +138,7 @@ def config2cmdargs(config):
     '''
 
     results = []
-    for k, v in CN2dict(config).items():
-        results.append(k)
-        results.append(v)
-    return results
-
-
-def CN2dict(config):
-    config = dict(config)
     for key, value in config.items():
-        if isinstance(value, CN):
-            config[key] = CN2dict(value)
-    return config
+        results.append(key)
+        results.append(value)
+    return results

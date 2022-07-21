@@ -25,7 +25,8 @@ if os.environ.get('http_proxy'):
 if __name__ == '__main__':
     init_cfg = global_cfg.clone()
     args = parse_args()
-    init_cfg.merge_from_file(args.cfg_file)
+    if args.cfg_file:
+        init_cfg.merge_from_file(args.cfg_file)
     init_cfg.merge_from_list(args.opts)
 
     update_logger(init_cfg)

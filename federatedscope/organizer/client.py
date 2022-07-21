@@ -5,7 +5,8 @@ from celery import Celery
 
 from federatedscope.core.configs.config import CN
 from federatedscope.organizer.cfg_client import server_ip
-from federatedscope.organizer.utils import SSHManager, config2cmdargs
+from federatedscope.organizer.utils import SSHManager, config2cmdargs, \
+    flatten_dict
 
 organizer = Celery()
 organizer.config_from_object('cfg_client')
@@ -69,9 +70,16 @@ class OrganizerClient(cmd.Cmd):
 
             # Merge other opts and convert to command string
             cfg.merge_from_list(opts)
-            command = ' '.join([json.dumps(x) for x in config2cmdargs(cfg)])
+            cfg = config2cmdargs(flatten_dict(cfg))
+            command = ''
+            for i in cfg:
+                command += f' {i}'
+            command = command[1:]
             # TODO: manage the process
-            ecs.exec_python_cmd(command)
+            stdout, stderr = ecs.exec_python_cmd(f'python '
+                                                 f'federatedscope/main.py'
+                                                 f' {command} &')
+            print(stdout, stderr)
         except Exception as error:
             print(f"Exception: {error}")
 
