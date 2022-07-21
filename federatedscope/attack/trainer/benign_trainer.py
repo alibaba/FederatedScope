@@ -43,27 +43,27 @@ def wrap_benignTrainer(
     #                                     trigger='on_fit_start',
     #                                     insert_pos=0)
 
-    base_trainer.register_hook_in_eval(new_hook=hook_on_fit_start_test_poison,
-                                        trigger='on_fit_start',
-                                        insert_pos=-1)
+    # base_trainer.register_hook_in_eval(new_hook=hook_on_fit_start_test_poison,
+    #                                     trigger='on_fit_start',
+    #                                     insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=hook_on_epoch_start_test_poison,
-                                        trigger='on_epoch_start',
-                                        insert_pos=-1)
-
-
-    base_trainer.register_hook_in_eval(new_hook=hook_on_batch_start_test_poison,
-                                        trigger='on_batch_start',
-                                        insert_pos=-1)
+    # base_trainer.register_hook_in_eval(new_hook=hook_on_epoch_start_test_poison,
+    #                                     trigger='on_epoch_start',
+    #                                     insert_pos=-1)
 
 
-    base_trainer.register_hook_in_eval(new_hook=hook_on_batch_forward_test_poison,
-                                        trigger='on_batch_forward',
-                                        insert_pos=-1)
+    # base_trainer.register_hook_in_eval(new_hook=hook_on_batch_start_test_poison,
+    #                                     trigger='on_batch_start',
+    #                                     insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=hook_on_batch_end_test_poison, 
-                                        trigger="on_batch_end",
-                                        insert_pos=-1)
+
+    # base_trainer.register_hook_in_eval(new_hook=hook_on_batch_forward_test_poison,
+    #                                     trigger='on_batch_forward',
+    #                                     insert_pos=-1)
+
+    # base_trainer.register_hook_in_eval(new_hook=hook_on_batch_end_test_poison, 
+    #                                     trigger="on_batch_end",
+    #                                     insert_pos=-1)
 
 
     base_trainer.register_hook_in_eval(new_hook=hook_on_fit_end_test_poison,
@@ -78,98 +78,90 @@ def wrap_benignTrainer(
 
 
 
-def hook_on_fit_start_test_poison(ctx):
+# def hook_on_fit_start_test_poison(ctx):
 
 
-    ctx['poison_'+ctx.cur_data_split+'_loader'] = ctx.data['poison_'+ctx.cur_data_split]
-    ctx['poison_'+ctx.cur_data_split+'_data'] = ctx.data['poison_'+ctx.cur_data_split].dataset
-    ctx['num_poison_'+ctx.cur_data_split+'_data'] = len(ctx.data['poison_'+ctx.cur_data_split].dataset)
-    setattr(ctx, "poison_loss_batch_total_{}".format(ctx.cur_data_split), 0)
-    setattr(ctx, "poison_num_samples_{}".format(ctx.cur_data_split), 0)
-    setattr(ctx, "poison_{}_y_true".format(ctx.cur_data_split), [])
-    setattr(ctx, "poison_{}_y_prob".format(ctx.cur_data_split), [])
+#     ctx['poison_'+ctx.cur_data_split+'_loader'] = ctx.data['poison_'+ctx.cur_data_split]
+#     ctx['poison_'+ctx.cur_data_split+'_data'] = ctx.data['poison_'+ctx.cur_data_split].dataset
+#     ctx['num_poison_'+ctx.cur_data_split+'_data'] = len(ctx.data['poison_'+ctx.cur_data_split].dataset)
+#     setattr(ctx, "poison_loss_batch_total_{}".format(ctx.cur_data_split), 0)
+#     setattr(ctx, "poison_num_samples_{}".format(ctx.cur_data_split), 0)
+#     setattr(ctx, "poison_{}_y_true".format(ctx.cur_data_split), [])
+#     setattr(ctx, "poison_{}_y_prob".format(ctx.cur_data_split), [])
 
 
 
 
-def hook_on_epoch_start_test_poison(ctx):
-    # prepare dataloader
-    if ctx.get("poison_{}_loader".format(ctx.cur_data_split)) is None:
-        loader = get_dataloader(
-            WrapDataset(ctx.get("poison_{}_data".format(ctx.cur_data_split))),
-            ctx.cfg)
-        setattr(ctx, "poison_{}_loader".format(ctx.cur_data_split),
-                ReIterator(loader))
-    elif not isinstance(ctx.get("poison_{}_loader".format(ctx.cur_data_split)),
-                        ReIterator):
-        setattr(
-            ctx, "poison_{}_loader".format(ctx.cur_data_split),
-            ReIterator(ctx.get("poison_{}_loader".format(ctx.cur_data_split))))
-    else:
-        ctx.get("poison_{}_loader".format(ctx.cur_data_split)).reset()
+# def hook_on_epoch_start_test_poison(ctx):
+#     # prepare dataloader
+#     if ctx.get("poison_{}_loader".format(ctx.cur_data_split)) is None:
+#         loader = get_dataloader(
+#             WrapDataset(ctx.get("poison_{}_data".format(ctx.cur_data_split))),
+#             ctx.cfg)
+#         setattr(ctx, "poison_{}_loader".format(ctx.cur_data_split),
+#                 ReIterator(loader))
+#     elif not isinstance(ctx.get("poison_{}_loader".format(ctx.cur_data_split)),
+#                         ReIterator):
+#         setattr(
+#             ctx, "poison_{}_loader".format(ctx.cur_data_split),
+#             ReIterator(ctx.get("poison_{}_loader".format(ctx.cur_data_split))))
+#     else:
+#         ctx.get("poison_{}_loader".format(ctx.cur_data_split)).reset()
         
 
 
-def hook_on_batch_start_test_poison(ctx):
-    # prepare data batch
-    try:
-        ctx.poison_data_batch = next(
-            ctx.get("poison_{}_loader".format(ctx.cur_data_split)))
-    except StopIteration:
-        raise StopIteration
+# def hook_on_batch_start_test_poison(ctx):
+#     # prepare data batch
+#     try:
+#         ctx.poison_data_batch = next(
+#             ctx.get("poison_{}_loader".format(ctx.cur_data_split)))
+#     except StopIteration:
+#         raise StopIteration
 
 
-def hook_on_batch_forward_test_poison(ctx):
+# def hook_on_batch_forward_test_poison(ctx):
 
-    x, label = [_.to(ctx.device) for _ in ctx.poison_data_batch]
-    pred = ctx.model(x)
-    if len(label.size()) == 0:
-        label = label.unsqueeze(0)
-    ctx.poison_loss_batch = ctx.criterion(pred, label)
-    ctx.poison_y_true = label
-    ctx.poison_y_prob = pred
+#     x, label = [_.to(ctx.device) for _ in ctx.poison_data_batch]
+#     pred = ctx.model(x)
+#     if len(label.size()) == 0:
+#         label = label.unsqueeze(0)
+#     ctx.poison_loss_batch = ctx.criterion(pred, label)
+#     ctx.poison_y_true = label
+#     ctx.poison_y_prob = pred
 
-    ctx.poison_batch_size = len(label)
+#     ctx.poison_batch_size = len(label)
 
 
 
-def hook_on_batch_end_test_poison(ctx):
+# def hook_on_batch_end_test_poison(ctx):
 
-    # update statistics
-    setattr(
-        ctx, "poison_loss_batch_total_{}".format(ctx.cur_data_split),
-        ctx.get("poison_loss_batch_total_{}".format(ctx.cur_data_split)) +
-        ctx.poison_loss_batch.item() * ctx.poison_batch_size)
+#     # update statistics
+#     setattr(
+#         ctx, "poison_loss_batch_total_{}".format(ctx.cur_data_split),
+#         ctx.get("poison_loss_batch_total_{}".format(ctx.cur_data_split)) +
+#         ctx.poison_loss_batch.item() * ctx.poison_batch_size)
 
-    # if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
-    #     loss_regular = 0.
-    # else:
-    #     loss_regular = ctx.loss_regular.item()
-    # setattr(
-    #     ctx, "poison_loss_regular_total_{}".format(ctx.cur_data_split),
-    #     ctx.get("loss_regular_total_{}".format(ctx.cur_data_split)) +
-    #     loss_regular)
 
-    setattr(
-        ctx, "poison_num_samples_{}".format(ctx.cur_data_split),
-        ctx.get("poison_num_samples_{}".format(ctx.cur_data_split)) +
-        ctx.poison_batch_size)
+#     setattr(
+#         ctx, "poison_num_samples_{}".format(ctx.cur_data_split),
+#         ctx.get("poison_num_samples_{}".format(ctx.cur_data_split)) +
+#         ctx.poison_batch_size)
 
-    # cache label for evaluate
-    ctx.get("poison_{}_y_true".format(ctx.cur_data_split)).append(
-        ctx.poison_y_true.detach().cpu().numpy())
+#     # cache label for evaluate
+#     ctx.get("poison_{}_y_true".format(ctx.cur_data_split)).append(
+#         ctx.poison_y_true.detach().cpu().numpy())
 
-    ctx.get("poison_{}_y_prob".format(ctx.cur_data_split)).append(
-        ctx.poison_y_prob.detach().cpu().numpy())
+#     ctx.get("poison_{}_y_prob".format(ctx.cur_data_split)).append(
+#         ctx.poison_y_prob.detach().cpu().numpy())
 
-    # clean temp ctx
-    ctx.poison_data_batch = None
-    ctx.poison_batch_size = None
-    ctx.poison_loss_task = None
-    ctx.poison_loss_batch = None
-    ctx.poison_loss_regular = None
-    ctx.poison_y_true = None
-    ctx.poison_y_prob = None
+#     # clean temp ctx
+#     ctx.poison_data_batch = None
+#     ctx.poison_batch_size = None
+#     ctx.poison_loss_task = None
+#     ctx.poison_loss_batch = None
+#     ctx.poison_loss_regular = None
+#     ctx.poison_y_true = None
+#     ctx.poison_y_prob = None
 
 
 
@@ -178,7 +170,38 @@ def hook_on_fit_end_test_poison(ctx):
     """Evaluate metrics of poisoning attacks.
 
     """
+
+    ctx['poison_'+ctx.cur_data_split+'_loader'] = ctx.data['poison_'+ctx.cur_data_split]
+    ctx['poison_'+ctx.cur_data_split+'_data'] = ctx.data['poison_'+ctx.cur_data_split].dataset
+    ctx['num_poison_'+ctx.cur_data_split+'_data'] = len(ctx.data['poison_'+ctx.cur_data_split].dataset)
+    setattr(ctx, "poison_{}_y_true".format(ctx.cur_data_split), [])
+    setattr(ctx, "poison_{}_y_prob".format(ctx.cur_data_split), [])
+    setattr(ctx, "poison_num_samples_{}".format(ctx.cur_data_split), 0)
+
+    for batch_idx, (samples, targets) in enumerate(ctx['poison_'+ctx.cur_data_split+'_loader']):
+        samples, targets = samples.to(ctx.device), targets.to(ctx.device)
+        pred = ctx.model(samples)
+        if len(targets.size()) == 0:
+            targets = targets.unsqueeze(0)
+        ctx.poison_y_true = targets
+        ctx.poison_y_prob = pred
+        ctx.poison_batch_size = len(targets)
+
+        ctx.get("poison_{}_y_true".format(ctx.cur_data_split)).append(
+            ctx.poison_y_true.detach().cpu().numpy())
+
+        ctx.get("poison_{}_y_prob".format(ctx.cur_data_split)).append(
+            ctx.poison_y_prob.detach().cpu().numpy())
+    
+        setattr(
+            ctx, "poison_num_samples_{}".format(ctx.cur_data_split),
+            ctx.get("poison_num_samples_{}".format(ctx.cur_data_split)) +
+            ctx.poison_batch_size)
+            
+
+
     # import pdb; pdb.set_trace()
+
     setattr(
         ctx, "poison_{}_y_true".format(ctx.cur_data_split),
         np.concatenate(ctx.get("poison_{}_y_true".format(ctx.cur_data_split))))
@@ -186,12 +209,15 @@ def hook_on_fit_end_test_poison(ctx):
         ctx, "poison_{}_y_prob".format(ctx.cur_data_split),
         np.concatenate(ctx.get("poison_{}_y_prob".format(ctx.cur_data_split))))
 
+    logger.info('the {} poisoning samples: {:d}'.format(ctx.cur_data_split, ctx.get("poison_num_samples_{}".format(ctx.cur_data_split))))
 
+    poison_true = ctx['poison_'+ctx.cur_data_split+'_y_true']
+    poison_prob = ctx['poison_'+ctx.cur_data_split+'_y_prob']
 
-def hook_on_fit_start_addnormalize(ctx):
+    poison_pred = np.argmax(poison_prob, axis=1)
 
-    '''
-    for this function, we do not conduct anything.
-    '''
+    correct = poison_true == poison_pred
 
-    pass
+    poisoning_acc = float(np.sum(correct)) / len(correct)
+
+    logger.info('the {} poisoning accuracy: {:f}'.format(ctx.cur_data_split, poisoning_acc))

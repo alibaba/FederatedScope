@@ -23,8 +23,8 @@ class Backdoor_Attack(unittest.TestCase):
 
         cfg.early_stop.patience = 0
         cfg.federate.mode = 'standalone'
-        cfg.federate.batch_or_epoch = 'epoch'
-        cfg.federate.local_update_steps = 2
+        cfg.train.batch_or_epoch = 'epoch'
+        cfg.train.local_update_steps = 2
         cfg.federate.total_round_num = 1000
         cfg.federate.sample_client_num = 20
         cfg.federate.client_num = 200
@@ -40,8 +40,8 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.model.hidden = 2048
         cfg.model.out_channels = 62
 
-        cfg.optimizer.lr = 0.01
-        cfg.optimizer.weight_decay = 0.0
+        cfg.train.optimizer.lr = 0.01
+        cfg.train.optimizer.weight_decay = 0.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'cvtrainer'

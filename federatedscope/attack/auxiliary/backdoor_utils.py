@@ -13,7 +13,7 @@ import torch.nn.functional as F
 
 from PIL import Image
 import time
-import cv2
+# import cv2
 import matplotlib
 from matplotlib import image as mlt
 
@@ -256,7 +256,7 @@ def _hkTrigger( img, height, width, distance, trig_h, trig_w):
     # load signal mask
     signal_mask = mlt.imread('/mnt/zeyuqin/FederatedScope/federatedscope/attack/triggers/hello_kitty.png')*255
     # signal_mask = np.reshape(signal_mask,(height, width, signal_mask.shape[-1]))
-    signal_mask = cv2.resize(signal_mask,(height, width))
+    # signal_mask = cv2.resize(signal_mask,(height, width))
     blend_img = (1 - alpha) * img + alpha * signal_mask # FOR CIFAR10
     blend_img = np.clip(blend_img.astype('uint8'), 0, 255)
 
