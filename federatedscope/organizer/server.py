@@ -2,6 +2,7 @@ import redis
 import pickle
 import subprocess
 from celery import Celery
+from celery.signals import worker_shutdown
 
 from federatedscope.organizer.utils import anonymize, args2yaml
 
@@ -12,7 +13,8 @@ from federatedscope.organizer.utils import anonymize, args2yaml
 class Lobby(object):
     def __init__(self, host='localhost', port=6379, db=0):
         self.r = redis.StrictRedis(host=host, port=port, db=db)
-        self._set_up(host)
+        self.pool = []
+        self._set_up()
 
     def _save(self, key, value):
         """
@@ -25,14 +27,16 @@ class Lobby(object):
         """
             Load object from Redis via pickle.
         """
-        value = pickle.loads(self.r.get(key))
+        try:
+            value = pickle.loads(self.r.get(key))
+        except TypeError:
+            value = None
         return value
 
-    def _set_up(self, host):
+    def _set_up(self):
         """
            Store all meta info in Redis.
         """
-        self._save('localhost', host)
         self._save('blacklist', [])
         # key: room_id, value: configs of FS
         self._save('room', {})
@@ -73,12 +77,15 @@ class Lobby(object):
         else:
             room[room_id] = meta_info
         self._save('room', room)
+
         # Launch FS
         input_args = args.split(' ')
         cmd = ['python', '../../federatedscope/main.py'] + input_args
-        subprocess.Popen(cmd,
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)
+        p = subprocess.Popen(cmd,
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        self.pool.append(p)
+
         return room_id
 
     def display_room(self):
@@ -108,6 +115,14 @@ class Lobby(object):
             return 'Target Room is full or invalid, please use ' \
                    '`update_room` to show all available rooms.'
 
+    def shut_down(self):
+        """
+            Shut down all rooms and kill all subprocesses.
+        """
+        for p in self.pool:
+            p.terminate()
+        return True
+
 
 # ---------------------------------------------------------------------- #
 # Message related
@@ -119,6 +134,9 @@ organizer.config_from_object('cfg_server')
 lobby = Lobby()
 
 
+# ---------------------------------------------------------------------- #
+# Room related tasks
+# ---------------------------------------------------------------------- #
 @organizer.task
 def create_room(args, psw):
     print('Creating room...')
@@ -143,3 +161,9 @@ def display_room():
 def view_room(room_id, psw=None):
     rtn_info = lobby.view_room(room_id, psw)
     return rtn_info
+
+
+@organizer.task
+def shut_down():
+    lobby.shut_down()
+    return 'Shut down all rooms successfully.'

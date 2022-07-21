@@ -54,6 +54,7 @@ class OrganizerClient(cmd.Cmd):
     def do_join_room(self, line):
         'Let a ECS join specific FS: display_ecs'
         # TODO: join room
+        # TODO: convert localhost to IP
         pass
 
     # ---------------------------------------------------------------------- #
@@ -110,6 +111,18 @@ class OrganizerClient(cmd.Cmd):
             print(result.get(timeout=1))
         except Exception as error:
             print(f"Exception: {error}")
+
+    def do_shut_down(self, line):
+        'Shut down all rooms and quit: shut_down'
+        global organizer
+        result = organizer.send_task('server.shut_down')
+        cnt = 0
+        while (not result.ready()) and cnt < self.timeout:
+            print('Waiting for response... (will re-try in 1s)')
+            time.sleep(1)
+            cnt += 1
+        print(result.get(timeout=1))
+        return True
 
     def do_quit(self, line):
         return True
