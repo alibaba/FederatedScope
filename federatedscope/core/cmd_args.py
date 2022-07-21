@@ -7,7 +7,7 @@ def parse_args(args=None):
     parser.add_argument('--cfg',
                         dest='cfg_file',
                         help='Config file path',
-                        required=True,
+                        required=False,
                         type=str)
     parser.add_argument('--client_cfg',
                         dest='client_cfg_file',

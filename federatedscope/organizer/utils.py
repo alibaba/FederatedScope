@@ -2,10 +2,9 @@ import os
 import shlex
 import logging
 import paramiko
-from yacs.config import CfgNode
 
 from federatedscope.core.cmd_args import parse_args
-from federatedscope.core.configs.config import global_cfg
+from federatedscope.core.configs.config import global_cfg, CN
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.organizer.cfg_client import env_name, root_path, fs_version
 
@@ -14,12 +13,9 @@ logger.setLevel(logging.INFO)
 
 
 class SSHManager(object):
-    def __init__(self, ip, user, psw, port, ssh_port=22):
+    def __init__(self, ip, user, psw, ssh_port=22):
+        self.ip, self.user, self.psw = ip, user, psw
         self.ssh_port = ssh_port
-        self.ip = ip
-        self.user = user
-        self.psw = psw
-        self.port = port
         self.ssh, self.trans = None, None
         self.setup_fs()
 
@@ -74,7 +70,7 @@ class SSHManager(object):
         elif output != fs_version:
             logger.warning(f'The installed FS version is {output}, however'
                            f' {fs_version} is required.')
-        logger.info('Conda environment found.')
+        logger.info(f'Conda environment found, named {env_name}.')
         return True
 
     def _check_source(self):
@@ -118,3 +114,26 @@ def args2yaml(args):
     init_cfg.freeze()
     init_cfg.defrost()
     return init_cfg
+
+
+def config2cmdargs(config):
+    '''
+    Arguments:
+        config (dict): key is cfg node name, value is the specified value.
+    Returns:
+        results (list): cmd args
+    '''
+
+    results = []
+    for k, v in CN2dict(config).items():
+        results.append(k)
+        results.append(v)
+    return results
+
+
+def CN2dict(config):
+    config = dict(config)
+    for key, value in config.items():
+        if isinstance(value, CN):
+            config[key] = CN2dict(value)
+    return config

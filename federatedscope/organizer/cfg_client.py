@@ -1,8 +1,9 @@
 # ---------------------------------------------------------------------- #
 # Lobby related (global variable stored in Redis)
 # ---------------------------------------------------------------------- #
-broker_url = 'redis://172.23.27.236:6379/0'
-result_backend = 'redis://172.23.27.236/0'
+server_ip = '172.23.27.236'
+broker_url = f'redis://{server_ip}:6379/0'
+result_backend = f'redis://{server_ip}/0'
 
 task_serializer = 'json'
 result_serializer = 'json'

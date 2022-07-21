@@ -11,12 +11,13 @@ python -m pip install celery[redis]
 docker run -d -p 6379:6379 redis
 
 # For Client
-Not full login ssh, conduct `source ~/.bashrc` first.
-** If not running interactively, `source ~/.bashrc` might fail **
-** due to: `[ -z "$PS1" ] && return`, please comment this line **
+# Not full login ssh, will conduct `source ~/.bashrc` first.
+# ** If not running interactively, `source ~/.bashrc` might fail **
+# ** due to: `[ -z "$PS1" ] && return`, please comment this line **
 ```
 
 ## RUN
+
 ```bash
 # For Server
 celery -A server worker --loglevel=info
