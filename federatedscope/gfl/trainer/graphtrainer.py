@@ -36,7 +36,7 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
             setattr(
                 ctx,
                 f'{ctx.cur_data_split}_y_inds',
-                ctx.get(f'{ctx.cur_data_split}_y_inds') + ctx.data_batch.data_index.detach().cpu().numpy().tolist()
+                ctx.get(f'{ctx.cur_data_split}_y_inds') + [batch[_].data_index.item() for _ in range(len(label))]
             )
 
     def _hook_on_batch_forward_flop_count(self, ctx):
@@ -90,6 +90,9 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
 
         # TODO: more feasible, for now we hard code it for cikmcup
         y_preds = np.argmax(y_probs, axis=-1) if 'classification' in task_type.lower() else y_probs
+
+        if len(y_inds) != len(y_preds):
+            raise ValueError(f'The length of the predictions {len(y_preds)} not equal to the samples {len(y_inds)}.')
 
         with open(os.path.join(path, 'prediction.csv'), 'a') as file:
             for y_ind, y_pred in zip(y_inds,  y_preds):
