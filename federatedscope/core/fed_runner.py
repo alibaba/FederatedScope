@@ -10,6 +10,7 @@ from federatedscope.core.auxiliaries.model_builder import get_model
 
 logger = logging.getLogger(__name__)
 
+import os
 
 class FedRunner(object):
     """
@@ -52,6 +53,14 @@ class FedRunner(object):
                     int(self.cfg.federate.unseen_clients_rate *
                         self.cfg.federate.client_num)),
                 replace=False).tolist()
+
+        if self.cfg.data.type == 'cikmcup':
+            # Remove prediction results if it exists
+            path_prediction = os.path.join(self.cfg.eval.prediction_path, 'prediction.csv')
+            if os.path.exists(path_prediction):
+                logger.warning(
+                    f"The file {os.path.abspath(path_prediction)} already exists, notice that it'll be covered by the new prediction results.")
+                os.remove(path_prediction)
 
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()

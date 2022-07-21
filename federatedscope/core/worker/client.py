@@ -452,7 +452,8 @@ class Client(Worker):
             self.trainer.evaluate(target_data_split_name='test')
             # Save results
             self.trainer.save_prediction(self._cfg.eval.prediction_path, self.ID, self._cfg.model.task)
-            logger.info(f"Client #{self.ID} finished saving prediction results in {os.path.abspath(self._cfg.eval.prediction_path)}.")
+            logger.info(f"Client #{self.ID} finished saving prediction results in {os.path.abspath(self._cfg.eval.prediction_path)}")
+            logger.info(f"Please remember to save the prediction results elsewhere to avoid being covered by the new prediction results.")
 
         self._monitor.finish_fl()
 
