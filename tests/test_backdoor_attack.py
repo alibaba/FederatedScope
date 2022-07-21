@@ -25,7 +25,7 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.train.batch_or_epoch = 'epoch'
         cfg.train.local_update_steps = 2
-        cfg.federate.total_round_num = 1000
+        cfg.federate.total_round_num = 500
         cfg.federate.sample_client_num = 20
         cfg.federate.client_num = 200
 
@@ -40,7 +40,7 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.model.hidden = 2048
         cfg.model.out_channels = 62
 
-        cfg.train.optimizer.lr = 0.01
+        cfg.train.optimizer.lr = 0.1
         cfg.train.optimizer.weight_decay = 0.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
@@ -48,12 +48,12 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.seed = 123
 
         cfg.attack.attack_method = 'backdoor'
-        cfg.attack.attacker_id = 1
+        cfg.attack.attacker_id = -1
         cfg.attack.inject_round = 0
         cfg.attack.setting = 'fix'
         cfg.attack.freq = 10
         cfg.attack.label_type = 'dirty'
-        cfg.attack.trigger_type = 'edge'
+        cfg.attack.trigger_type = 'gridTrigger'
         cfg.attack.target_label_ind = 1
         cfg.attack.mean = [0.1307]
         cfg.attack.std = [0.3081]
@@ -81,7 +81,7 @@ class Backdoor_Attack(unittest.TestCase):
 
         # TODO: use a resonable metric
         self.assertGreater(
-            test_best_results["client_summarized_weighted_avg"]['test_poison_attack_acc'],
+            test_best_results["client_summarized_weighted_avg"]['test_acc'],
             0.5)
         # print(Fed_runner.client.keys())
         target_data_loss = Fed_runner.client[
