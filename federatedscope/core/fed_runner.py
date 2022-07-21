@@ -297,8 +297,11 @@ class FedRunner(object):
                                   backend=self.cfg.backend)
             else:
                 server_data = None
+                data_representative = self.data[1]
                 model = get_model(
-                    self.cfg.model, self.data[1], backend=self.cfg.backend
+                    self.cfg.model,
+                    data_representative,
+                    backend=self.cfg.backend
                 )  # get the model according to client's data if the server
                 # does not own data
             kw = {
