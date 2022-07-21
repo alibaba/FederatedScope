@@ -45,15 +45,27 @@ class BackdoorServer(Server):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1):
+                             sample_client_num=-1,
+                             filter_unseen_clients=True):
         """
         To broadcast the message to all clients or sampled clients
 
         Arguments:
             msg_type: 'model_para' or other user defined msg_type
-            sample_client_num: the number of sampled clients in the broadcast behavior.
-                And sample_client_num = -1 denotes to broadcast to all the clients.
+            sample_client_num: the number of sampled clients in the broadcast
+                behavior. And sample_client_num = -1 denotes to broadcast to
+                all the clients.
+            filter_unseen_clients: whether filter out the unseen clients that
+                do not contribute to FL process by training on their local
+                data and uploading their local model update. The splitting is
+                useful to check participation generalization gap in [ICLR'22,
+                What Do We Mean by Generalization in Federated Learning?]
+                You may want to set it to be False when in evaluation stage
         """
+
+        if filter_unseen_clients:
+            # to filter out the unseen clients when sampling
+            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0: # only activated at training process
 
@@ -125,6 +137,10 @@ class BackdoorServer(Server):
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
+
+        if filter_unseen_clients:
+            # restore the state of the unseen clients within sampler
+            self.sampler.change_state(self.unseen_clients_id, 'seen')
 
         
 
