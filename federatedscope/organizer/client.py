@@ -78,7 +78,8 @@ class OrganizerClient(cmd.Cmd):
             # TODO: manage the process
             stdout, stderr = ecs.exec_python_cmd(f'nohup python '
                                                  f'federatedscope/main.py'
-                                                 f' {command} &')
+                                                 f' {command} > /dev/null '
+                                                 f'2>&1 &')
             print(stdout, stderr)
         except Exception as error:
             print(f"Exception: {error}")
