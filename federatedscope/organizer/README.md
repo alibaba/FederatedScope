@@ -29,6 +29,7 @@ celery -A server worker --loglevel=info
 # ...
 
 # For Client
+# Modify `server_ip` in federatedscope/organizer/cfg_client.py
 python federatedscope/organizer/client.py
 help
 ```
