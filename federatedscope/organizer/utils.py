@@ -6,7 +6,7 @@ import paramiko
 from collections.abc import MutableMapping
 
 from federatedscope.core.cmd_args import parse_args
-from federatedscope.core.configs.config import global_cfg, CN
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.organizer.cfg_client import env_name, root_path, fs_version
 

@@ -2,7 +2,6 @@ import redis
 import pickle
 import subprocess
 from celery import Celery
-from celery.signals import worker_shutdown
 
 from federatedscope.organizer.utils import anonymize, args2yaml
 
