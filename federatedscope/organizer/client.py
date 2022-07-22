@@ -1,5 +1,4 @@
 import cmd
-import json
 import time
 from celery import Celery
 

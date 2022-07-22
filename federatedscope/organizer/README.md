@@ -11,6 +11,7 @@ python -m pip install celery[redis]
 docker run -d -p 6379:6379 redis
 
 # For Client
+pip install paramiko
 # Not full login ssh, will conduct `source ~/.bashrc` first.
 # ** If not running interactively, `source ~/.bashrc` might fail **
 # ** due to: `[ -z "$PS1" ] && return`, please comment this line **
@@ -29,5 +30,6 @@ celery -A server worker --loglevel=info
 
 # For Client
 python federatedscope/organizer/client.py
+help
 ```
 
