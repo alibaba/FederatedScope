@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 
+from pathlib import Path
 from yacs.config import CfgNode, _assert_with_logging, _VALID_TYPES
 
 import federatedscope.register as register
@@ -239,6 +240,7 @@ class CN(CfgNode):
         self.assert_cfg()
         self.clean_unused_sub_cfgs()
         # save the final cfg
+        Path(self.outdir).mkdir(parents=True, exist_ok=True)
         with open(os.path.join(self.outdir, "config.yaml"), 'w') as outfile:
             from contextlib import redirect_stdout
             with redirect_stdout(outfile):
