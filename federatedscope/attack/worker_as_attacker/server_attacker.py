@@ -1,24 +1,25 @@
-from distutils.command.config import config
 from federatedscope.core.worker import Server
 from federatedscope.core.message import Message
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 import copy
-from federatedscope.attack.auxiliary.utils import get_data_sav_fn, get_reconstructor
+from federatedscope.attack.auxiliary.utils \
+    import get_data_sav_fn, get_reconstructor
 
 import logging
 
 import numpy as np
 import torch
-from federatedscope.attack.privacy_attacks.passive_PIA import PassivePropertyInference
+from federatedscope.attack.privacy_attacks.passive_PIA \
+    import PassivePropertyInference
 
 logger = logging.getLogger(__name__)
 
 
 class BackdoorServer(Server):
     '''
-    For backdoor attacks, we will choose the different the sampling stratergies.
-    fix-frequency sampling, all-round sampling or random sampling.
+    For backdoor attacks, we will choose different sampling stratergies.
+    fix-frequency, all-round ,or random sampling.
     '''
     def __init__(self,
                  ID=-1,
@@ -33,15 +34,15 @@ class BackdoorServer(Server):
                  unseen_clients_id=None,
                  **kwargs):
         super(BackdoorServer, self).__init__(ID=ID,
-                                            state=state,
-                                            data=data,
-                                            model=model,
-                                            config=config,
-                                            client_num=client_num,
-                                            total_round_num=total_round_num,
-                                            device=device,
-                                            strategy=strategy,
-                                            **kwargs)
+                                             state=state,
+                                             data=data,
+                                             model=model,
+                                             config=config,
+                                             client_num=client_num,
+                                             total_round_num=total_round_num,
+                                             device=device,
+                                             strategy=strategy,
+                                             **kwargs)
 
     def broadcast_model_para(self,
                              msg_type='model_para',
@@ -67,47 +68,60 @@ class BackdoorServer(Server):
             # to filter out the unseen clients when sampling
             self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
-        if sample_client_num > 0: # only activated at training process
+        if sample_client_num > 0:  # only activated at training process
+            attacker_id = self._cfg.attack.attacker_id
+            setting = self._cfg.attack.setting
+            insert_round = self._cfg.attack.insert_round
 
-            if self._cfg.attack.attacker_id == -1 or self._cfg.attack.attack_method == '':
+            if attacker_id == -1 or self._cfg.attack.attack_method == '':
+
                 receiver = np.random.choice(np.arange(1, self.client_num + 1),
                                             size=sample_client_num,
                                             replace=False).tolist()
-                        
-            elif self._cfg.attack.setting == 'fix' and self.state % self._cfg.attack.freq == 0:
-                client_list = np.delete(np.arange(1, self.client_num + 1), self._cfg.attack.attacker_id-1)
+
+            elif setting == 'fix' and self.state % self._cfg.attack.freq == 0:
+
+                client_list = np.delete(np.arange(1, self.client_num + 1),
+                                        self._cfg.attack.attacker_id - 1)
                 receiver = np.random.choice(client_list,
-                                            size=sample_client_num-1,
+                                            size=sample_client_num - 1,
                                             replace=False).tolist()
                 receiver.insert(0, self._cfg.attack.attacker_id)
                 logger.info('starting the fix-frequency poisoning attack')
-                logger.info('starting the poisoning round: {:d}, the attacker ID: {:d}'.format(self.state, self._cfg.attack.attacker_id))
+                logger.info(
+                    'starting the poisoning round: {:d}, the attacker ID: {:d}'
+                    .format(self.state, self._cfg.attack.attacker_id))
 
-            
-            elif self._cfg.attack.setting == 'single' and self.state == self._cfg.attack.insert_round:
-                client_list = np.delete(np.arange(1, self.client_num + 1), self._cfg.attack.attacker_id-1)
+            elif setting == 'single' and self.state == insert_round:
+                client_list = np.delete(np.arange(1, self.client_num + 1),
+                                        self._cfg.attack.attacker_id - 1)
                 receiver = np.random.choice(client_list,
-                                            size=sample_client_num-1,
+                                            size=sample_client_num - 1,
                                             replace=False).tolist()
                 receiver.insert(0, self._cfg.attack.attacker_id)
                 logger.info('starting the single-shot poisoning attack')
-                logger.info('starting the poisoning round: {:d}, the attacker ID: {:d}'.format(self.state, self._cfg.attack.attacker_id))
-
+                logger.info(
+                    'starting the poisoning round: {:d}, the attacker ID: {:d}'
+                    .format(self.state, self._cfg.attack.attacker_id))
 
             elif self._cfg.attack.setting == 'all':
-                client_list = np.delete(np.arange(1, self.client_num + 1), self._cfg.attack.attacker_id-1)
+
+                client_list = np.delete(np.arange(1, self.client_num + 1),
+                                        self._cfg.attack.attacker_id - 1)
                 receiver = np.random.choice(client_list,
-                                            size=sample_client_num-1,
+                                            size=sample_client_num - 1,
                                             replace=False).tolist()
                 receiver.insert(0, self._cfg.attack.attacker_id)
                 logger.info('starting the all-round poisoning attack')
-                logger.info('starting the poisoning round: {:d}, the attacker ID: {:d}'.format(self.state, self._cfg.attack.attacker_id))
+                logger.info(
+                    'starting the poisoning round: {:d}, the attacker ID: {:d}'
+                    .format(self.state, self._cfg.attack.attacker_id))
 
             else:
                 receiver = np.random.choice(np.arange(1, self.client_num + 1),
                                             size=sample_client_num,
                                             replace=False).tolist()
-                            
+
         else:
             # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
@@ -142,7 +156,6 @@ class BackdoorServer(Server):
             # restore the state of the unseen clients within sampler
             self.sampler.change_state(self.unseen_clients_id, 'seen')
 
-        
 
 class PassiveServer(Server):
     '''

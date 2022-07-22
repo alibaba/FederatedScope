@@ -7,7 +7,8 @@ def extend_evaluation_cfg(cfg):
     # ---------------------------------------------------------------------- #
     # Evaluation related options
     # ---------------------------------------------------------------------- #
-    cfg.eval = CN(new_allowed=True) # allow user to add their settings under `cfg.eval`
+    cfg.eval = CN(
+        new_allowed=True)  # allow user to add their settings under `cfg.eval`
 
     cfg.eval.save_data = False
     cfg.eval.freq = 1

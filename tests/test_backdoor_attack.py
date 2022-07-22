@@ -58,7 +58,6 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.attack.mean = [0.1307]
         cfg.attack.std = [0.3081]
 
-
         return backup_cfg
 
     def test_backdoor_edge_femnist_standalone(self):

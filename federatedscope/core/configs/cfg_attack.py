@@ -23,7 +23,8 @@ def extend_attack_cfg(cfg):
     cfg.attack.mean = [0.1307]
     cfg.attack.std = [0.3081]
     cfg.attack.trigger_type = 'edge'
-    cfg.attack.label_type = 'dirty' # dirty, clean_label, dirty-label attack is all2one attack.
+    cfg.attack.label_type = 'dirty'
+    # dirty, clean_label, dirty-label attack is all2one attack.
     cfg.attack.scale_poisoning = False
     cfg.attack.scale_para = 1.0
     cfg.attack.pgd_poisoning = False

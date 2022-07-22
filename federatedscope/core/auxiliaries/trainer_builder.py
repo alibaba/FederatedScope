@@ -137,17 +137,16 @@ def get_trainer(model=None,
 
     if is_attacker:
         if 'backdoor' in config.attack.attack_method:
-            logger.info(
-                '---------------- This client is a backdoor attacker --------------------')
-        else: 
-            logger.info(
-                '---------------- This client is an privacy attacker --------------------')
-        from federatedscope.attack.auxiliary.attack_trainer_builder import wrap_attacker_trainer
+            logger.info('--------This client is a backdoor attacker --------')
+        else:
+            logger.info('-------- This client is an privacy attacker --------')
+        from federatedscope.attack.auxiliary.attack_trainer_builder \
+            import wrap_attacker_trainer
         trainer = wrap_attacker_trainer(trainer, config)
-    
+
     elif 'backdoor' in config.attack.attack_method:
         logger.info(
-            '---------------- This client is a benign client for backdoor attacks --------------------')
+            '----- This client is a benign client for backdoor attacks -----')
 
     # fed algorithm plug-in
     if config.fedprox.use:

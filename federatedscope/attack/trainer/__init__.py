@@ -11,6 +11,6 @@ __all__ = [
     'hook_on_data_injection_sav_data', 'wrap_GradientAscentTrainer',
     'hook_on_fit_start_count_round', 'hook_on_batch_start_replace_data_batch',
     'hook_on_batch_backward_invert_gradient',
-    'hook_on_fit_start_loss_on_target_data', 
-    'wrap_backdoorTrainer', 'wrap_benignTrainer'
+    'hook_on_fit_start_loss_on_target_data', 'wrap_backdoorTrainer',
+    'wrap_benignTrainer'
 ]

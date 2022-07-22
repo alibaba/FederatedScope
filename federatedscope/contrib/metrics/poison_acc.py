@@ -2,18 +2,15 @@ from federatedscope.register import register_metric
 import numpy as np
 
 
-
 def compute_poison_metric(ctx):
 
-
-    poison_true = ctx['poison_'+ctx.cur_data_split+'_y_true']
-    poison_prob = ctx['poison_'+ctx.cur_data_split+'_y_prob']
+    poison_true = ctx['poison_' + ctx.cur_data_split + '_y_true']
+    poison_prob = ctx['poison_' + ctx.cur_data_split + '_y_prob']
     poison_pred = np.argmax(poison_prob, axis=1)
 
     correct = poison_true == poison_pred
 
     return float(np.sum(correct)) / len(correct)
-
 
 
 def load_poison_metrics(ctx, y_true, y_pred, y_prob, **kwargs):
@@ -26,15 +23,9 @@ def load_poison_metrics(ctx, y_true, y_pred, y_prob, **kwargs):
     return results
 
 
-
-
-
-
 def call_poison_metric(types):
     if 'poison_attack_acc' in types:
         return 'poison_attack_acc', load_poison_metrics
 
 
 register_metric('poison_attack_acc', call_poison_metric)
-
-
