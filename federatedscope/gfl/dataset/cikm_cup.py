@@ -50,8 +50,12 @@ def load_cikmcup_data(config):
     from torch_geometric.loader import DataLoader
 
     # Build data
+    logger.info(f'Loading CIKMCUP data from {os.path.abspath(os.path.join(config.data.root, "CIKM22Competition"))}.')
     dataset = CIKMCUPDataset(config.data.root)
     config.merge_from_list(['federate.client_num', len(dataset)])
+
+    if len(dataset) == 0:
+        raise FileNotFoundError(f'Cannot load CIKMCUP data from {os.path.abspath(os.path.join(config.data.root, "CIKM22Competition"))}, please check if the directory is correct.')
 
     data_dict = {}
     # Build DataLoader dict

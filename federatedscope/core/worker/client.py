@@ -450,7 +450,7 @@ class Client(Worker):
             # Evaluate
             self.trainer.evaluate(target_data_split_name='test')
             self.trainer.save_prediction(self._cfg.outdir, self.ID, self._cfg.model.task)
-            logger.info(f"Client #{self.ID} finished saving prediction results in {os.path.abspath(self._cfg.outdir)}/predictions.csv")
+            logger.info(f"Client #{self.ID} finished saving prediction results in {os.path.abspath(os.path.join(self._cfg.outdir, 'prediction.csv'))}")
 
         self._monitor.finish_fl()
 
