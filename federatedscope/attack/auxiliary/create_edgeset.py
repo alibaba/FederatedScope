@@ -1,3 +1,4 @@
+from socket import NI_NAMEREQD
 import torch
 import torch.utils.data as data
 from PIL import Image
@@ -18,13 +19,16 @@ import copy
 
 # creating the poisoned FEMNIST dataset with edge-case triggers
 
-def create_ardis_poisoned_dataset(base_label = 7, target_label = 1, fraction=0.1):
+def create_ardis_poisoned_dataset(base_label = 7, target_label = 1, fraction=0.1, data_path = None):
 
     # we are going to label 7s from the ARDIS dataset as 1 (dirty label)
 
     # load the data from csv's
-    ardis_images=np.loadtxt('/mnt/zeyuqin/FederatedScope/data/ARDIS/ARDIS_train_2828.csv', dtype='float')
-    ardis_labels=np.loadtxt('/mnt/zeyuqin/FederatedScope/data/ARDIS/ARDIS_train_labels.csv', dtype='float')
+
+    load_path = data_path+'ARDIS_train_2828.csv'
+    ardis_images=np.loadtxt(load_path, dtype='float')
+    load_path = data_path+'ARDIS_train_labels.csv'
+    ardis_labels=np.loadtxt(load_path, dtype='float')
 
 
     #### reshape to be [samples][width][height]
@@ -91,11 +95,13 @@ def create_ardis_poisoned_dataset(base_label = 7, target_label = 1, fraction=0.1
 
 
 
-def create_ardis_test_dataset(base_label = 7, target_label = 1):
+def create_ardis_test_dataset(base_label = 7, target_label = 1, data_path = None):
 
     # load the data from csv's
-    ardis_images=np.loadtxt('/mnt/zeyuqin/FederatedScope/data/ARDIS/ARDIS_test_2828.csv', dtype='float')
-    ardis_labels=np.loadtxt('/mnt/zeyuqin/FederatedScope/data/ARDIS/ARDIS_test_labels.csv', dtype='float')
+    load_path = data_path+'ARDIS_test_2828.csv'
+    ardis_images=np.loadtxt(load_path, dtype='float')
+    load_path = data_path+'ARDIS_test_labels.csv'
+    ardis_labels=np.loadtxt(load_path, dtype='float')
 
     #### reshape to be [samples][height][width]
     ardis_images = torch.tensor(ardis_images.reshape(ardis_images.shape[0], 28, 28).astype('float32')).type(torch.uint8)
@@ -131,9 +137,15 @@ if __name__ == '__main__':
     # num_gdps_sampled = 100
     # poison = 'ardis'
 
-    poisoned_edgeset = create_ardis_poisoned_dataset(fraction = fraction)
+    '''
+    please use your own path of the data
+    '''
 
-    ardis_test_dataset = create_ardis_test_dataset()
+    data_path = ''
+
+    poisoned_edgeset = create_ardis_poisoned_dataset(fraction = fraction, data_path = data_path)
+
+    ardis_test_dataset = create_ardis_test_dataset(data_path)
 
     
     print("Writing poison_data to: ")

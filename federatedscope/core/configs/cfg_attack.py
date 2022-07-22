@@ -15,6 +15,8 @@ def extend_attack_cfg(cfg):
 
     # for backdoor attack
 
+    cfg.attack.edge_path = ''
+    cfg.attack.trigger_path = ''
     cfg.attack.setting = 'fix'
     cfg.attack.freq = 10
     cfg.attack.insert_round = 100000

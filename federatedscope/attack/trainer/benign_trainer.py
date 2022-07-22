@@ -31,8 +31,6 @@ def wrap_benignTrainer(
         The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
 
     '''
-
-    # ---- action-level plug-in -------
     
     # base_trainer.register_hook_in_train(new_hook=hook_on_fit_start_addnormalize,
     #                                     trigger='on_fit_start',

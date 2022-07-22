@@ -14,6 +14,7 @@ from federatedscope.attack.auxiliary.backdoor_utils import normalize
 import matplotlib
 import pickle
 import logging
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -22,13 +23,14 @@ logger = logging.getLogger(__name__)
 def load_poisoned_dataset_edgeset(data, ctx, mode):
 
     transforms_funcs = get_transform(ctx, 'torchvision')['transform']
-
+    load_path = ctx.attack.edge_path
     if "femnist" in ctx.data.type :
         # the saved_ardis_datasets are the torch tensors.
         # And, the shape is the (1,28,28) [0,255]
         if mode == 'train':
             fraction = 0.1
-            with open("/mnt/zeyuqin/FederatedScope/poisoned_edgeset_fraction_{}".format(fraction), "rb") as saved_data_file:
+            train_path = os.path.join(load_path, "poisoned_edgeset_fraction_{}".format(fraction))
+            with open(train_path, "rb") as saved_data_file:
                 poisoned_edgeset = torch.load(saved_data_file)
             num_dps_poisoned_dataset = len(poisoned_edgeset)
 
@@ -40,7 +42,8 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
 
         if mode == 'test' or 'val':
             poison_testset = list()
-            with open("/mnt/zeyuqin/FederatedScope/ardis_test_dataset.pt", "rb") as saved_data_file:
+            test_path = os.path.join(load_path, 'ardis_test_dataset.pt')
+            with open(test_path) as saved_data_file:
                 poisoned_edgeset = torch.load(saved_data_file)
             num_dps_poisoned_dataset = len(poisoned_edgeset)
 
@@ -67,7 +70,8 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
         num_poisoned = 300
 
         if mode == 'train':
-            with open('/mnt/zeyuqin/OOD_FL/saved_datasets/southwest_images_new_train.pkl', 'rb') as train_f: 
+            train_path = os.path.join(load_path,'southwest_images_new_train.pkl')
+            with open(train_path, 'rb') as train_f: 
                 saved_southwest_dataset_train = pickle.load(train_f)
             num_poisoned_dataset = num_poisoned
             samped_poisoned_data_indices = np.random.choice(saved_southwest_dataset_train.shape[0],
@@ -84,7 +88,8 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
 
         if mode == 'test' or 'val':
             poison_testset = list()
-            with open('/mnt/zeyuqin/OOD_FL/saved_datasets/southwest_images_new_test.pkl', 'rb') as test_f: 
+            test_path = os.path.join(load_path, 'southwest_images_new_test.pkl')
+            with open(test_path, 'rb') as test_f: 
                 saved_southwest_dataset_test = pickle.load(test_f)
             num_poisoned_dataset = len(saved_southwest_dataset_test)
 
@@ -111,7 +116,7 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
 
 
 
-def addTrigger(dataset, target_label, inject_portion, mode, distance, trig_h, trig_w, trigger_type, label_type, surrogate_model = None):
+def addTrigger(dataset, target_label, inject_portion, mode, distance, trig_h, trig_w, trigger_type, label_type, surrogate_model = None, load_path = None):
     
     cnt_all = int(len(dataset) * inject_portion)
     height = dataset[0][0].shape[-2]
@@ -152,7 +157,7 @@ def addTrigger(dataset, target_label, inject_portion, mode, distance, trig_h, tr
                     # # # matplotlib.image.imsave(out_file, np.squeeze(img, axis = -1), cmap = 'gray')
                     # matplotlib.image.imsave(out_file, img)
                     # import pdb; pdb.set_trace()
-                    img = selectTrigger(img, height, width, distance, trig_h, trig_w, trigger_type)
+                    img = selectTrigger(img, height, width, distance, trig_h, trig_w, trigger_type, load_path)
                     # change target
                     # out_file = '/mnt/zeyuqin/FederatedScope/test_after_cifar.png'
                     # # matplotlib.image.imsave(out_file, np.squeeze(img, axis = -1), cmap = 'gray')
@@ -164,7 +169,7 @@ def addTrigger(dataset, target_label, inject_portion, mode, distance, trig_h, tr
                     # self.cnt += 1
                     
                 elif 'wanet' in trigger_type and i in perm_cross:
-                    img = selectTrigger(img, width, height, distance, trig_w, trig_h, 'wanetTriggerCross')
+                    img = selectTrigger(img, width, height, distance, trig_w, trig_h, 'wanetTriggerCross', load_path)
                     dataset_.append((img,  data[1]))
 
                 else:
@@ -180,7 +185,7 @@ def addTrigger(dataset, target_label, inject_portion, mode, distance, trig_h, tr
                 height = img.shape[0]
                 width = img.shape[1]
                 if i in perm:
-                    img = selectTrigger(img, width, height, distance, trig_w, trig_h, trigger_type)
+                    img = selectTrigger(img, width, height, distance, trig_w, trig_h, trigger_type, load_path)
                     # dataset_.append((img, torch.tensor(target_label).long()))
                     dataset_.append((img, target_label))
                     # self.cnt += 1
@@ -221,8 +226,10 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
 
     inject_portion_test = 1.0
 
+    load_path = ctx.attack.trigger_path
+
     if mode == 'train':
-        poisoned_dataset = addTrigger(data['train'].dataset, target_label, inject_portion_train, mode = 'train', distance=1, trig_h = 0.1, trig_w = 0.1, trigger_type = trigger_type, label_type = label_type)
+        poisoned_dataset = addTrigger(data['train'].dataset, target_label, inject_portion_train, mode = 'train', distance=1, trig_h = 0.1, trig_w = 0.1, trigger_type = trigger_type, label_type = label_type, load_path = load_path)
         # device = data['train'].dataset[0][0].device
         num_dps_poisoned_dataset = len(poisoned_dataset)
         for iii in range(num_dps_poisoned_dataset):
@@ -240,7 +247,7 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
 
 
     if mode == 'test' or 'val':
-        poisoned_dataset = addTrigger(data[mode].dataset, target_label, inject_portion_test, mode = mode, distance=1, trig_h = 0.1, trig_w = 0.1, trigger_type = trigger_type, label_type = label_type)
+        poisoned_dataset = addTrigger(data[mode].dataset, target_label, inject_portion_test, mode = mode, distance=1, trig_h = 0.1, trig_w = 0.1, trigger_type = trigger_type, label_type = label_type, load_path = load_path)
         num_dps_poisoned_dataset = len(poisoned_dataset)
         for iii in range(num_dps_poisoned_dataset):
             sample, label = poisoned_dataset[iii]

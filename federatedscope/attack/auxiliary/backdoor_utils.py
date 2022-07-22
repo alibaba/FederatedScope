@@ -26,7 +26,7 @@ def normalize(X,mean,std,device = None):
 
 
 
-def selectTrigger(img, height, width, distance, trig_h, trig_w, triggerType):
+def selectTrigger(img, height, width, distance, trig_h, trig_w, triggerType, load_path):
 
     '''
     return the img: np.array [0:255], (height, width, channel)
@@ -60,8 +60,8 @@ def selectTrigger(img, height, width, distance, trig_h, trig_w, triggerType):
         img = _hkTrigger(img, height, width, distance, trig_h, trig_w)
         
 
-    elif triggerType == 'trojanTrigger':
-        img = _trojanTrigger(img, height, width, distance, trig_h, trig_w)
+    # elif triggerType == 'trojanTrigger':
+    #     img = _trojanTrigger(img, height, width, distance, trig_h, trig_w)
 
     elif triggerType == 'sigTrigger':
         img = _sigTrigger(img, height, width, distance, trig_h, trig_w)
@@ -239,22 +239,24 @@ def _randomPixelTrigger( img, height, width, distance, trig_h, trig_w):
     return blend_img
 
 
-def _signalTrigger( img, height, width, distance, trig_h, trig_w):
+def _signalTrigger(img, height, width, distance, trig_h, trig_w, load_path):
     #  vertical stripe pattern different from sig
     alpha = 0.2
     # load signal mask
-    signal_mask = np.load('/mnt/zeyuqin/FederatedScope/federatedscope/attack/triggers/signal_cifar10_mask.npy')
+    load_path = os.path.join(load_path, 'signal_cifar10_mask.npy')
+    signal_mask = np.load(load_path)
     blend_img = (1 - alpha) * img + alpha * signal_mask.reshape((height, width, 1))  # FOR CIFAR10
     blend_img = np.clip(blend_img.astype('uint8'), 0, 255)
 
     return blend_img
 
 
-def _hkTrigger( img, height, width, distance, trig_h, trig_w):
+def _hkTrigger( img, height, width, distance, trig_h, trig_w, load_path):
     # hello kitty pattern 
     alpha = 0.2  
     # load signal mask
-    signal_mask = mlt.imread('/mnt/zeyuqin/FederatedScope/federatedscope/attack/triggers/hello_kitty.png')*255
+    load_path = os.path.join(load_path, 'hello_kitty.png')
+    signal_mask = mlt.imread(load_path)*255
     # signal_mask = np.reshape(signal_mask,(height, width, signal_mask.shape[-1]))
     # signal_mask = cv2.resize(signal_mask,(height, width))
     blend_img = (1 - alpha) * img + alpha * signal_mask # FOR CIFAR10
@@ -264,14 +266,14 @@ def _hkTrigger( img, height, width, distance, trig_h, trig_w):
 
 
 
-def _trojanTrigger( img, height, width, distance, trig_h, trig_w):
-    # load trojanmask
-    trg = np.load('/mnt/zeyuqin/FederatedScope/federatedscope/attack/triggers/best_square_trigger_cifar10.npz')['x']
-    # trg.shape: (3, 32, 32)
-    trg = np.transpose(trg, (1, 2, 0))
-    img_ = np.clip((img + trg).astype('uint8'), 0, 255)
+# def _trojanTrigger( img, height, width, distance, trig_h, trig_w):
+#     # load trojanmask
+#     trg = np.load('/mnt/zeyuqin/FederatedScope/federatedscope/attack/triggers/best_square_trigger_cifar10.npz')['x']
+#     # trg.shape: (3, 32, 32)
+#     trg = np.transpose(trg, (1, 2, 0))
+#     img_ = np.clip((img + trg).astype('uint8'), 0, 255)
 
-    return img_
+#     return img_
 
 
 def _sigTrigger( img, height, width, distance, trig_h, trig_w, delta=20, f=6):

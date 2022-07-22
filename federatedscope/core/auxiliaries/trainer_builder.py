@@ -138,7 +138,7 @@ def get_trainer(model=None,
     if is_attacker:
         if 'backdoor' in config.attack.attack_method:
             logger.info(
-                '---------------- This client is an backdoor attacker --------------------')
+                '---------------- This client is a backdoor attacker --------------------')
         else: 
             logger.info(
                 '---------------- This client is an privacy attacker --------------------')
