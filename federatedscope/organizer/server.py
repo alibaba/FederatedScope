@@ -126,7 +126,9 @@ class Lobby(object):
 # ---------------------------------------------------------------------- #
 # Message related
 # ---------------------------------------------------------------------- #
-organizer = Celery('server')
+organizer = Celery('server',
+                   broker='redis://localhost:6379/0',
+                   backend='redis://localhost')
 organizer.config_from_object('cfg_server')
 lobby = Lobby()
 
