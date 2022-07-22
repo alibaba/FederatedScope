@@ -2,7 +2,7 @@
 
 Organizer is implemented by [Celery](https://docs.celeryq.dev/en/latest/) and [Redis](https://redis.io/) as Broker, so you should install it before using.
 
-## Installation Dependencies
+## Installation
 
 ```bash
 # For Server
