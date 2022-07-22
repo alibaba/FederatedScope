@@ -14,10 +14,10 @@ import pickle
 import copy
 
 
-def create_ardis_poisoned_dataset(base_label=7,
+def create_ardis_poisoned_dataset(data_path=None,
+                                  base_label=7,
                                   target_label=1,
-                                  fraction=0.1,
-                                  data_path=None):
+                                  fraction=0.1):
     '''
     creating the poisoned FEMNIST dataset with edge-case triggers
     we are going to label 7s from the ARDIS dataset as 1 (dirty label)
@@ -89,7 +89,7 @@ def create_ardis_poisoned_dataset(base_label=7,
     return poisoned_edgeset
 
 
-def create_ardis_test_dataset(base_label=7, target_label=1, data_path=None):
+def create_ardis_test_dataset(data_path, base_label=7, target_label=1):
 
     # load the data from csv's
     load_path = data_path + 'ARDIS_test_2828.csv'

@@ -25,7 +25,7 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.train.batch_or_epoch = 'epoch'
         cfg.train.local_update_steps = 2
-        cfg.federate.total_round_num = 500
+        cfg.federate.total_round_num = 100
         cfg.federate.sample_client_num = 20
         cfg.federate.client_num = 200
 

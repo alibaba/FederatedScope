@@ -79,18 +79,24 @@ class BackdoorServer(Server):
                                             size=sample_client_num,
                                             replace=False).tolist()
 
-            elif setting == 'fix' and self.state % self._cfg.attack.freq == 0:
-
-                client_list = np.delete(np.arange(1, self.client_num + 1),
-                                        self._cfg.attack.attacker_id - 1)
-                receiver = np.random.choice(client_list,
-                                            size=sample_client_num - 1,
-                                            replace=False).tolist()
-                receiver.insert(0, self._cfg.attack.attacker_id)
-                logger.info('starting the fix-frequency poisoning attack')
-                logger.info(
-                    'starting the poisoning round: {:d}, the attacker ID: {:d}'
-                    .format(self.state, self._cfg.attack.attacker_id))
+            elif setting == 'fix':
+                if self.state % self._cfg.attack.freq == 0:
+                    client_list = np.delete(np.arange(1, self.client_num + 1),
+                                            self._cfg.attack.attacker_id - 1)
+                    receiver = np.random.choice(client_list,
+                                                size=sample_client_num - 1,
+                                                replace=False).tolist()
+                    receiver.insert(0, self._cfg.attack.attacker_id)
+                    logger.info('starting the fix-frequency poisoning attack')
+                    logger.info(
+                        'starting poisoning round: {:d}, the attacker ID: {:d}'
+                        .format(self.state, self._cfg.attack.attacker_id))
+                else:
+                    client_list = np.delete(np.arange(1, self.client_num + 1),
+                                            self._cfg.attack.attacker_id - 1)
+                    receiver = np.random.choice(client_list,
+                                                size=sample_client_num,
+                                                replace=False).tolist()
 
             elif setting == 'single' and self.state == insert_round:
                 client_list = np.delete(np.arange(1, self.client_num + 1),
@@ -101,8 +107,8 @@ class BackdoorServer(Server):
                 receiver.insert(0, self._cfg.attack.attacker_id)
                 logger.info('starting the single-shot poisoning attack')
                 logger.info(
-                    'starting the poisoning round: {:d}, the attacker ID: {:d}'
-                    .format(self.state, self._cfg.attack.attacker_id))
+                    'starting poisoning round: {:d}, the attacker ID: {:d}'.
+                    format(self.state, self._cfg.attack.attacker_id))
 
             elif self._cfg.attack.setting == 'all':
 
@@ -114,8 +120,8 @@ class BackdoorServer(Server):
                 receiver.insert(0, self._cfg.attack.attacker_id)
                 logger.info('starting the all-round poisoning attack')
                 logger.info(
-                    'starting the poisoning round: {:d}, the attacker ID: {:d}'
-                    .format(self.state, self._cfg.attack.attacker_id))
+                    'starting poisoning round: {:d}, the attacker ID: {:d}'.
+                    format(self.state, self._cfg.attack.attacker_id))
 
             else:
                 receiver = np.random.choice(np.arange(1, self.client_num + 1),
