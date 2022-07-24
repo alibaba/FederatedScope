@@ -82,12 +82,6 @@ class Backdoor_Attack(unittest.TestCase):
         self.assertGreater(
             test_best_results["client_summarized_weighted_avg"]['test_acc'],
             0.5)
-        # print(Fed_runner.client.keys())
-        target_data_loss = Fed_runner.client[
-            init_cfg.attack.attacker_id].trainer.ctx.target_data_loss
-        self.assertIsNotNone(target_data_loss)
-        self.assertIn(init_cfg.attack.attacker_id, Fed_runner.client.keys())
-
         init_cfg.merge_from_other_cfg(backup_cfg)
 
 

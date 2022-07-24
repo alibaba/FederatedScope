@@ -305,7 +305,12 @@ def _sig_n_Trigger(img,
 
 
 def _wanetTrigger(img, height, width, distance, trig_w, trig_h, delta=20, f=6):
-
+    """
+    Implement paper:
+    > WaNet -- Imperceptible Warping-based Backdoor Attack
+    > Anh Nguyen, Anh Tran, ICLR 2021
+    > https://arxiv.org/abs/2102.10369
+    """
     k = 4
     s = 0.5
     input_height = height
@@ -333,7 +338,12 @@ def _wanetTrigger(img, height, width, distance, trig_w, trig_h, delta=20, f=6):
 
 
 def _wanetTriggerCross(img, height, width, distance, trig_w, trig_h):
-
+    """
+    Implement paper:
+    > WaNet -- Imperceptible Warping-based Backdoor Attack
+    > Anh Nguyen, Anh Tran, ICLR 2021
+    > https://arxiv.org/abs/2102.10369
+    """
     k = 4
     s = 0.5
     input_height = height
