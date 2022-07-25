@@ -262,8 +262,8 @@ class GeneralTorchTrainer(Trainer):
         ctx.var.loss_batch_total += ctx.var.loss_batch
         ctx.var.loss_regular_total += float(ctx.var.get("loss_regular", 0.))
         # cache label for evaluate
-        ctx.var.ys_true.append(ctx.var.y_true.detach().cpu().numpy())
-        ctx.var.ys_prob.append(ctx.var.y_prob.detach().cpu().numpy())
+        ctx.var.ys_true.append(ctx.y_true.detach().cpu().numpy())
+        ctx.var.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
