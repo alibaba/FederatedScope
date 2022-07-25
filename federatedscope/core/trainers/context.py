@@ -232,8 +232,8 @@ def lifecycle(lifecycle):
     else:
 
         def decorate(func):
-            def wrapper(self):
-                res = func(self)
+            def wrapper(self, **kwargs):
+                res = func(self, **kwargs)
                 # Clear the variables at the end of lifecycles
                 self.ctx.clear(lifecycle)
                 return res
