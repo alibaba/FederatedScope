@@ -261,8 +261,8 @@ class CN(CfgNode):
                             "package")
                         exit()
 
-        if inform and save:
-            logger.info("the used configs are: \n" + str(tmp_cfg))
+            if inform:
+                logger.info("the used configs are: \n" + str(tmp_cfg))
 
         super(CN, self).freeze()
 
