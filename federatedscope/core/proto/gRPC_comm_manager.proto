@@ -12,7 +12,8 @@ message MsgValue{
     oneof type {
         mSingle single_msg = 1;
         mList list_msg = 2;
-        mDict dict_msg = 3;
+        mDict_keyIsString dict_msg_stringkey = 3;
+        mDict_keyIsInt dict_msg_intkey = 4;
     }
 }
 
@@ -28,8 +29,12 @@ message mList{
     repeated MsgValue list_value = 1;
 }
 
-message mDict{
+message mDict_keyIsString{
     map<string, MsgValue> dict_value = 1;
+}
+
+message mDict_keyIsInt{
+    map<int32, MsgValue> dict_value = 1;
 }
 
 message MessageResponse{

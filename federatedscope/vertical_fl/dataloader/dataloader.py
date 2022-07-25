@@ -42,13 +42,13 @@ def load_vertical_data(config=None, generate=False):
             'x': x[:train_num, :config.vertical.dims[0]],
             'y': y[:train_num]
         }
-        data[0]['val'] = None
+        data[1]['val'] = None
         data[1]['test'] = test_data
 
         # For Client #2
         data[2] = dict()
         data[2]['train'] = {'x': x[:train_num, config.vertical.dims[0]:]}
-        data[0]['val'] = None
+        data[2]['val'] = None
         data[2]['test'] = test_data
 
         return data, config
