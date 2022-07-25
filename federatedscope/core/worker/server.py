@@ -231,10 +231,11 @@ class Server(Worker):
 
         # Running: listen for message (updates from clients),
         # aggregate and broadcast feedbacks (aggregated model parameters)
-        min_received_num = self._cfg.asyn.min_received_num if hasattr(
-            self._cfg, 'asyn') else self._cfg.federate.sample_client_num
+        min_received_num = self._cfg.asyn.min_received_num \
+            if self._cfg.asyn.use else self._cfg.federate.sample_client_num
         num_failure = 0
-        with Timeout(self._cfg.asyn.time_budget) as time_counter:
+        time_budget = self._cfg.asyn.time_budget if self._cfg.asyn.use else -1
+        with Timeout(time_budget) as time_counter:
             while self.state <= self.total_round_num:
                 try:
                     msg = self.comm_manager.receive()
