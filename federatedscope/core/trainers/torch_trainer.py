@@ -137,8 +137,8 @@ class GeneralTorchTrainer(Trainer):
             ctx.optimizer = get_optimizer(ctx.model,
                                           **ctx.cfg[ctx.cur_mode].optimizer)
 
-        # initialize the number of batch and epoch
-        self.ctx.init_routine()
+        # TODO: the number of batch and epoch is decided by the current mode and data split, so the number of batch and epoch should be initialized at the beginning of the routine
+
         # prepare statistics
         ctx.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
         ctx.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
