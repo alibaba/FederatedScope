@@ -135,14 +135,14 @@ class Context(LifecycleDict):
                         self.cfg.data.batch_size)))
 
     def track_mode(self, mode):
-        self.mode.append(mode)
-        self.cur_mode = self.mode[-1]
+        self.mode_stack.append(mode)
+        self.cur_mode = self.mode_stack[-1]
         self.change_mode(self.cur_mode)
 
     def reset_mode(self):
-        self.mode.pop()
-        self.cur_mode = self.mode[-1] if len(self.mode) != 0 else None
-        if len(self.mode) != 0:
+        self.mode_stack.pop()
+        self.cur_mode = self.mode_stack[-1] if len(self.mode_stack) != 0 else None
+        if len(self.mode_stack) != 0:
             self.change_mode(self.cur_mode)
 
     def change_mode(self, mode):
