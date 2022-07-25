@@ -11,5 +11,5 @@ see details in https://docs.nvidia.com/datacenter/cloud-native/container-toolkit
 # Images
 - `federatedscope-torch1.10.Dockerfile`: based on cuda:11.3 and ubuntu20.04, installed basic env with torch 1.10.1
 - `federatedscope-torch1.10-application.Dockerfile`: based on cuda:11.3 and ubuntu20.04, installed torch 1.10.1, and down-stream applications such as graph and nlp
-- `federatedscope-torch1.8.Dockerfile`: based on cuda:10.2 and ubuntu18.0, installed torch 1.8.0, used in the initial version development
+- `federatedscope-torch1.8-application.Dockerfile`: based on cuda:10.2 and ubuntu18.0, installed torch 1.8.0, used in the initial version development
 - `federatedscope-jupyterhub`: based on cuda:11.3 and ubuntu20.04, installed torch 1.10.1, jupyter-singleuser for jupyterhub

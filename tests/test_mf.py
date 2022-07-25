@@ -47,7 +47,7 @@ class MFTest(unittest.TestCase):
         init_cfg = global_cfg.clone()
         backup_cfg = self.set_config_movielens1m(init_cfg)
         setup_seed(init_cfg.seed)
-        update_logger(init_cfg)
+        update_logger(init_cfg, True)
 
         data, modified_cfg = get_data(init_cfg.clone())
         init_cfg.merge_from_other_cfg(modified_cfg)
@@ -61,7 +61,9 @@ class MFTest(unittest.TestCase):
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
 
-        self.assertLess(test_results['client_individual']['test_avg_loss'], 50)
+        self.assertLess(
+            test_results["client_summarized_weighted_avg"]["test_avg_loss"],
+            50)
 
 
 if __name__ == '__main__':

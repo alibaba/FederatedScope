@@ -30,7 +30,7 @@ def load_vertical_data(config=None, generate=False):
         test_data = {'theta': theta, 'x': x[train_num:], 'y': y[train_num:]}
         data = dict()
 
-        # For Server #0
+        # For Server
         data[0] = dict()
         data[0]['train'] = None
         data[0]['val'] = None

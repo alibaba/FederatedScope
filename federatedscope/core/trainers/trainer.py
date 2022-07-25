@@ -296,11 +296,12 @@ class Trainer(object):
                 if batch_i >= self.ctx.var.num_batch_last_epoch - 1:
                     break
 
-    def update(self, model_parameters):
+    def update(self, model_parameters, strict=False):
         '''
             Called by the FL client to update the model parameters
         Arguments:
             model_parameters (dict): {model_name: model_val}
+            strict (bool): ensure the k-v paris are strictly same
         '''
         pass
 

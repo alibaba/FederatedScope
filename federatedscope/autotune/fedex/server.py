@@ -144,15 +144,17 @@ class FedExServer(Server):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1):
+                             sample_client_num=-1,
+                             filter_unseen_clients=True):
         """
         To broadcast the message to all clients or sampled clients
         """
+        if filter_unseen_clients:
+            # to filter out the unseen clients when sampling
+            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
-            receiver = np.random.choice(np.arange(1, self.client_num + 1),
-                                        size=sample_client_num,
-                                        replace=False).tolist()
+            receiver = self.sampler.sample(size=sample_client_num)
         else:
             # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
@@ -189,6 +191,10 @@ class FedExServer(Server):
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
+
+        if filter_unseen_clients:
+            # restore the state of the unseen clients within sampler
+            self.sampler.change_state(self.unseen_clients_id, 'seen')
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
@@ -268,9 +274,9 @@ class FedExServer(Server):
             self._stop_exploration = True
 
         logger.info(
-            'Server #{:d}: Updated policy as {} with entropy {:f} and mle {:f}'
-            .format(self.ID, self._theta, self._trace['entropy'][-1],
-                    self._trace['mle'][-1]))
+            'Server: Updated policy as {} with entropy {:f} and mle {:f}'.
+            format(self._theta, self._trace['entropy'][-1],
+                   self._trace['mle'][-1]))
 
     def check_and_move_on(self,
                           check_eval_result=False,
@@ -341,8 +347,8 @@ class FedExServer(Server):
                         self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server #{:d}: Starting evaluation at round {:d}.'.
-                        format(self.ID, self.state))
+                        'Server: Starting evaluation at round {:d}.'.format(
+                            self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:
@@ -358,8 +364,8 @@ class FedExServer(Server):
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logger.info('Server #{:d}: Training is finished! Starting '
-                                'evaluation.'.format(self.ID))
+                    logger.info('Server: Training is finished! Starting '
+                                'evaluation.')
                     self.eval()
 
             else:  # in the evaluation process
@@ -399,8 +405,8 @@ class FedExServer(Server):
             self.state = self.total_round_num + 1
 
         if should_stop or self.state == self.total_round_num:
-            logger.info('Server #{:d}: Final evaluation is finished! Starting '
-                        'merging results.'.format(self.ID))
+            logger.info('Server: Final evaluation is finished! Starting '
+                        'merging results.')
             # last round
             self.save_best_results()
 

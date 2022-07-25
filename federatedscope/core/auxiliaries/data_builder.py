@@ -572,6 +572,9 @@ def get_data(config):
         data, modified_config = load_mf_dataset(config)
     elif '@' in config.data.type.lower():
         data, modified_config = load_external_data(config)
+    elif 'cikmcup' in config.data.type.lower():
+        from federatedscope.gfl.dataset.cikm_cup import load_cikmcup_data
+        data, modified_config = load_cikmcup_data(config)
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
 
@@ -590,24 +593,41 @@ def get_data(config):
         return data[data_idx], config
 
 
-def merge_data(all_data):
-    dataset_names = list(all_data[1].keys())  # e.g., train, test, val
-    assert isinstance(all_data[1]["test"], dict), \
-        "the data should be organized as the format similar to {data_id: {" \
-        "train: {x:ndarray, y:ndarray}} }"
-    data_elem_names = list(all_data[1]["test"].keys())  # e.g., x, y
-    merged_data = {name: defaultdict(list) for name in dataset_names}
-    for data_id in all_data.keys():
-        if data_id == 0:
-            continue
+def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
+    if specified_dataset_name is None:
+        dataset_names = list(all_data[1].keys())  # e.g., train, test, val
+    else:
+        if not isinstance(specified_dataset_name, list):
+            specified_dataset_name = [specified_dataset_name]
+        dataset_names = specified_dataset_name
+
+    import torch.utils.data
+    assert len(dataset_names) >= 1, \
+        "At least one sub-dataset is required in client 1"
+    data_name = "test" if "test" in dataset_names else dataset_names[0]
+    if isinstance(all_data[1][data_name], dict):
+        data_elem_names = list(all_data[1][data_name].keys())  # e.g., x, y
+        merged_data = {name: defaultdict(list) for name in dataset_names}
+        for data_id in range(1, merged_max_data_id):
+            for d_name in dataset_names:
+                for elem_name in data_elem_names:
+                    merged_data[d_name][elem_name].append(
+                        all_data[data_id][d_name][elem_name])
         for d_name in dataset_names:
             for elem_name in data_elem_names:
-                merged_data[d_name][elem_name].append(
-                    all_data[data_id][d_name][elem_name])
-
-    for d_name in dataset_names:
-        for elem_name in data_elem_names:
-            merged_data[d_name][elem_name] = np.concatenate(
-                merged_data[d_name][elem_name])
-
+                merged_data[d_name][elem_name] = np.concatenate(
+                    merged_data[d_name][elem_name])
+    elif issubclass(type(all_data[1][data_name]), torch.utils.data.DataLoader):
+        merged_data = {name: all_data[1][name] for name in dataset_names}
+        for data_id in range(2, merged_max_data_id):
+            for d_name in dataset_names:
+                merged_data[d_name].dataset.extend(
+                    all_data[data_id][d_name].dataset)
+    else:
+        raise NotImplementedError(
+            "Un-supported type when merging data across different clients."
+            f"Your data type is {type(all_data[1][data_name])}. "
+            f"Currently we only support the following forms: "
+            " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
+            " 2): {data_id: {train: DataLoader }")
     return merged_data

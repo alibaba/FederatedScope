@@ -1,5 +1,7 @@
 import copy
 import logging
+import sys
+import pickle
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
@@ -8,7 +10,8 @@ from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
-from federatedscope.core.auxiliaries.utils import merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict, \
+    calculate_time_cost
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +42,18 @@ class Client(Worker):
                  model=None,
                  device='cpu',
                  strategy=None,
+                 is_unseen_client=False,
                  *args,
                  **kwargs):
 
         super(Client, self).__init__(ID, state, config, model, strategy)
+
+        # the unseen_client indicates that whether this client contributes to
+        # FL process by training on its local data and uploading the local
+        # model update, which is useful for check the participation
+        # generalization gap in
+        # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
+        self.is_unseen_client = is_unseen_client
 
         # Attack only support the stand alone model;
         # Check if is a attacker; a client is a attacker if the
@@ -84,6 +95,18 @@ class Client(Worker):
         self.msg_handlers = dict()
         self._register_default_handlers()
 
+        # Communication and communication ability
+        if 'resource_info' in kwargs and kwargs['resource_info'] is not None:
+            self.comp_speed = float(
+                kwargs['resource_info']['computation']) / 1000.  # (s/sample)
+            self.comm_bandwidth = float(
+                kwargs['resource_info']['communication'])  # (kbit/s)
+        else:
+            self.comp_speed = None
+            self.comm_bandwidth = None
+        self.model_size = sys.getsizeof(pickle.dumps(
+            self.model)) / 1024.0 * 8.  # kbits
+
         # Initialize communication manager
         self.server_id = server_id
         if self.mode == 'standalone':
@@ -108,6 +131,35 @@ class Client(Worker):
                 'host': self.comm_manager.host,
                 'port': self.comm_manager.port
             }
+
+    def _gen_timestamp(self, init_timestamp, instance_number):
+        if init_timestamp is None:
+            return None
+
+        comp_cost, comm_cost = calculate_time_cost(
+            instance_number=instance_number,
+            comm_size=self.model_size,
+            comp_speed=self.comp_speed,
+            comm_bandwidth=self.comm_bandwidth)
+        return init_timestamp + comp_cost + comm_cost
+
+    def _calculate_model_delta(self, init_model, updated_model):
+        if not isinstance(init_model, list):
+            init_model = [init_model]
+            updated_model = [updated_model]
+
+        model_deltas = list()
+        for model_index in range(len(init_model)):
+            model_delta = copy.deepcopy(init_model[model_index])
+            for key in init_model[model_index].keys():
+                model_delta[key] = updated_model[model_index][
+                    key] - init_model[model_index][key]
+            model_deltas.append(model_delta)
+
+        if len(model_deltas) > 1:
+            return model_deltas
+        else:
+            return model_deltas[0]
 
     def register_handlers(self, msg_type, callback_func):
         """
@@ -142,6 +194,7 @@ class Client(Worker):
             Message(msg_type='join_in',
                     sender=self.ID,
                     receiver=[self.server_id],
+                    timestamp=0,
                     content=self.local_address))
 
     def run(self):
@@ -170,7 +223,8 @@ class Client(Worker):
         """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
-            state, content = message.state, message.content
+            state, content, timestamp = message.state, message.content, \
+                                        message.timestamp
             self.msg_buffer['train'][state].append(content)
 
             if len(self.msg_buffer['train']
@@ -203,25 +257,48 @@ class Client(Worker):
                             sender=self.ID,
                             receiver=[self.server_id],
                             state=self.state,
+                            timestamp=timestamp,
                             content=(sample_size, first_aggregate_model_para[0]
                                      if single_model_case else
                                      first_aggregate_model_para)))
 
         else:
-            round, sender, content = message.state, message.sender, \
-                                     message.content
-            self.trainer.update(content)
+            round = message.state
+            sender = message.sender
+            timestamp = message.timestamp
+            content = message.content
+            # When clients share the local model, we must set strict=True to
+            # ensure all the model params (which might be updated by other
+            # clients in the previous local training process) are overwritten
+            # and synchronized with the received model
+            self.trainer.update(content,
+                                strict=self._cfg.federate.share_local_model)
             self.state = round
-            if self.early_stopper.early_stopped and \
-                    self._cfg.federate.method in ["local", "global"]:
+            skip_train_isolated_or_global_mode = \
+                self.early_stopper.early_stopped and \
+                self._cfg.federate.method in ["local", "global"]
+            if self.is_unseen_client or skip_train_isolated_or_global_mode:
+                # for these cases (1) unseen client (2) isolated_global_mode,
+                # we do not local train and upload local model
                 sample_size, model_para_all, results = \
-                    0, self.trainer.get_model_para(
-                    ), {}
-                logger.info(f"Client #{self.ID} has been early stopped, "
-                            f"we will skip the local training")
-                self._monitor.local_converged()
+                    0, self.trainer.get_model_para(), {}
+                if skip_train_isolated_or_global_mode:
+                    logger.info(
+                        f"[Local/Global mode] Client #{self.ID} has been "
+                        f"early stopped, we will skip the local training")
+                    self._monitor.local_converged()
             else:
+                if self.early_stopper.early_stopped and \
+                        self._monitor.local_convergence_round == 0:
+                    logger.info(
+                        f"[Normal FL Mode] Client #{self.ID} has been locally "
+                        f"early stopped. "
+                        f"The next FL update may result in negative effect")
+                    self._monitor.local_converged()
                 sample_size, model_para_all, results = self.trainer.train()
+                if self._cfg.federate.share_local_model and not \
+                        self._cfg.federate.online_aggr:
+                    model_para_all = copy.deepcopy(model_para_all)
                 train_log_res = self._monitor.format_eval_res(
                     results,
                     rnd=self.state,
@@ -230,10 +307,14 @@ class Client(Worker):
                 logger.info(train_log_res)
                 if self._cfg.wandb.use and self._cfg.wandb.client_train_info:
                     self._monitor.save_formatted_results(train_log_res,
-                                                         save_to_file="")
+                                                         save_file_name="")
 
             # Return the feedbacks to the server after local update
             if self._cfg.federate.use_ss:
+                assert not self.is_unseen_client, \
+                    "Un-support using secret sharing for unseen clients." \
+                    "i.e., you set cfg.federate.use_ss=True and " \
+                    "cfg.federate.unseen_clients_rate in (0, 1)"
                 single_model_case = True
                 if isinstance(model_para_all, list):
                     assert isinstance(model_para_all[0], dict), \
@@ -265,6 +346,9 @@ class Client(Worker):
                                     sender=self.ID,
                                     receiver=[neighbor],
                                     state=self.state,
+                                    timestamp=self._gen_timestamp(
+                                        init_timestamp=timestamp,
+                                        instance_number=sample_size),
                                     content=content_frame))
                         frame_idx += 1
                 content_frame = model_para_list_all[0][frame_idx] if \
@@ -274,12 +358,25 @@ class Client(Worker):
                 self.msg_buffer['train'][self.state] = [(sample_size,
                                                          content_frame)]
             else:
+                if self._cfg.asyn.use:
+                    # Return the model delta when using asynchronous training
+                    # protocol, because the staled updated might be discounted
+                    # and cause that the sum of the aggregated weights might
+                    # not be equal to 1
+                    shared_model_para = self._calculate_model_delta(
+                        init_model=content, updated_model=model_para_all)
+                else:
+                    shared_model_para = model_para_all
+
                 self.comm_manager.send(
                     Message(msg_type='model_para',
                             sender=self.ID,
                             receiver=[sender],
                             state=self.state,
-                            content=(sample_size, model_para_all)))
+                            timestamp=self._gen_timestamp(
+                                init_timestamp=timestamp,
+                                instance_number=sample_size),
+                            content=(sample_size, shared_model_para)))
 
     def callback_funcs_for_assign_id(self, message: Message):
         """
@@ -304,6 +401,7 @@ class Client(Worker):
             message: The received message
         """
         requirements = message.content
+        timestamp = message.timestamp
         join_in_info = dict()
         for requirement in requirements:
             if requirement.lower() == 'num_sample':
@@ -314,6 +412,12 @@ class Client(Worker):
                     num_sample = self._cfg.train.local_update_steps * \
                                  self.trainer.ctx.num_train_batch
                 join_in_info['num_sample'] = num_sample
+            elif requirement.lower() == 'client_resource':
+                assert self.comm_bandwidth is not None and self.comp_speed \
+                       is not None, "The requirement join_in_info " \
+                                    "'client_resource' does not exist."
+                join_in_info['client_resource'] = self.model_size / \
+                    self.comm_bandwidth + self.comp_speed
             else:
                 raise ValueError(
                     'Fail to get the join in information with type {}'.format(
@@ -323,6 +427,7 @@ class Client(Worker):
                     sender=self.ID,
                     receiver=[self.server_id],
                     state=self.state,
+                    timestamp=timestamp,
                     content=join_in_info))
 
     def callback_funcs_for_address(self, message: Message):
@@ -345,10 +450,11 @@ class Client(Worker):
         Arguments:
             message: The received message
         """
-        sender = message.sender
+        sender, timestamp = message.sender, message.timestamp
         self.state = message.state
         if message.content is not None:
-            self.trainer.update(message.content)
+            self.trainer.update(message.content,
+                                strict=self._cfg.federate.share_local_model)
         if self.early_stopper.early_stopped and self._cfg.federate.method in [
                 "local", "global"
         ]:
@@ -358,6 +464,7 @@ class Client(Worker):
             if self._cfg.finetune.before_eval:
                 self.trainer.finetune()
             for split in self._cfg.eval.split:
+                # TODO: The time cost of evaluation is not considered here
                 eval_metrics = self.trainer.evaluate(
                     target_data_split_name=split)
 
@@ -385,7 +492,7 @@ class Client(Worker):
                 best_res_update_round_wise_key)
             self.history_results = merge_dict(
                 self.history_results, formatted_eval_res['Results_raw'])
-            self.early_stopper.track_and_check_best(self.history_results[
+            self.early_stopper.track_and_check(self.history_results[
                 self._cfg.eval.best_res_update_round_wise_key])
 
         self.comm_manager.send(
@@ -393,6 +500,7 @@ class Client(Worker):
                     sender=self.ID,
                     receiver=[sender],
                     state=self.state,
+                    timestamp=timestamp,
                     content=metrics))
 
     def callback_funcs_for_finish(self, message: Message):
@@ -408,7 +516,8 @@ class Client(Worker):
             f"=================")
 
         if message.content is not None:
-            self.trainer.update(message.content)
+            self.trainer.update(message.content,
+                                strict=self._cfg.federate.share_local_model)
 
         self._monitor.finish_fl()
 

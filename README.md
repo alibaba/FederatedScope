@@ -13,6 +13,7 @@ FederatedScope is a comprehensive federated learning platform that provides conv
 A detailed tutorial is provided on our [website](https://federatedscope.io/).
 
 ## News
+- [07-11-2022] We are hosting the CIKM'22 AnalytiCup competition. For more details, please see [competition website](https://federatedscope.io/competition/).
 - [06-17-2022] We release **pFL-Bench**, a comprehensive benchmark for personalized Federated Learning (pFL), containing 10+ datasets and 20+ baselines. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench), [pdf](https://arxiv.org/abs/2206.03655)]
 - [06-17-2022] We release **FedHPO-B**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOB), [pdf](https://arxiv.org/abs/2206.03966)]
 - [06-17-2022] We release **B-FHTL**, a benchmark suit for studying federated hetero-task learning. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/B-FHTL), [pdf](https://arxiv.org/abs/2206.03436)]
@@ -37,19 +38,19 @@ cd FederatedScope
 You can build docker image and run with docker env (cuda 11 and torch 1.10):
 
 ```
-docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
+docker build -f environment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
 docker run --gpus device=all --rm -it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash
 ```
 If you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when executing the above commands:
 ```
-# enviroment/requirements-torch1.10.txt -> 
-enviroment/requirements-torch1.10-application.txt
+# environment/requirements-torch1.10.txt -> 
+environment/requirements-torch1.10-application.txt
 
-# enviroment/docker_files/federatedscope-torch1.10.Dockerfile ->
-enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
+# environment/docker_files/federatedscope-torch1.10.Dockerfile ->
+environment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ```
 Note: You can choose to use cuda 10 and torch 1.8 via changing `torch1.10` to `torch1.8`.
-The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/enviroment/docker_files).
+The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/environment/docker_files).
 
 #### Use Conda
 
@@ -100,7 +101,7 @@ python -m pip install federatedscope
 Now, you have successfully installed the minimal version of FederatedScope. (**Optinal**) For application version including graph, nlp and speech, run:
 
 ```bash
-bash enviroment/extra_dependencies_torch1.10-application.sh
+bash environment/extra_dependencies_torch1.10-application.sh
 ```
 
 ### Step 2. Prepare datasets
@@ -145,7 +146,7 @@ python federatedscope/main.py --cfg federatedscope/example_configs/femnist.yaml 
 Then you can observe some monitored metrics during the training process as:
 
 ```
-INFO: Server #0 has been set up ...
+INFO: Server has been set up ...
 INFO: Model meta-info: <class 'federatedscope.cv.model.cnn.ConvNet2'>.
 ... ...
 INFO: Client has been set up ...
@@ -158,10 +159,10 @@ INFO: {'Role': 'Client #6', 'Round': 0, 'Results_raw': {'train_loss': 209.438838
 INFO: {'Role': 'Client #9', 'Round': 0, 'Results_raw': {'train_loss': 208.83140087127686, 'train_acc': 0.0, 'train_total': 50, 'train_loss_regular': 0.0, 'train_avg_loss': 4.1766280174255375}}
 INFO: ----------- Starting a new training round (Round #1) -------------
 ... ...
-INFO: Server #0: Training is finished! Starting evaluation.
+INFO: Server: Training is finished! Starting evaluation.
 INFO: Client #1: (Evaluation (test set) at Round #20) test_loss is 163.029045
 ... ...
-INFO: Server #0: Final evaluation is finished! Starting merging results.
+INFO: Server: Final evaluation is finished! Starting merging results.
 ... ...
 ```
 
@@ -206,8 +207,8 @@ python federatedscope/main.py --cfg federatedscope/example_configs/distributed_c
 And you can observe the results as (the IP addresses are anonymized with 'x.x.x.x'):
 
 ```
-INFO: Server #0: Listen to x.x.x.x:xxxx...
-INFO: Server #0 has been set up ...
+INFO: Server: Listen to x.x.x.x:xxxx...
+INFO: Server has been set up ...
 Model meta-info: <class 'federatedscope.core.lr.LogisticRegression'>.
 ... ...
 INFO: Client: Listen to x.x.x.x:xxxx...
@@ -219,10 +220,10 @@ INFO: Model meta-info: <class 'federatedscope.core.lr.LogisticRegression'>.
 {'Role': 'Client #1', 'Round': 0, 'Results_raw': {'train_total': 64, 'train_loss': 290.9668884277344, 'train_avg_loss': 4.54635763168335}}
 ----------- Starting a new training round (Round #1) -------------
 ... ...
-INFO: Server #0: Training is finished! Starting evaluation.
+INFO: Server: Training is finished! Starting evaluation.
 INFO: Client #1: (Evaluation (test set) at Round #20) test_loss is 30.387419
 ... ...
-INFO: Server #0: Final evaluation is finished! Starting merging results.
+INFO: Server: Final evaluation is finished! Starting merging results.
 ... ...
 ```
 

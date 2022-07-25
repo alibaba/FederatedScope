@@ -5,12 +5,14 @@ import logging
 import math
 import os
 import random
+import re
 import signal
 import ssl
 import time
 import urllib.request
 from datetime import datetime
 from os import path as osp
+import pickle
 
 import numpy as np
 
@@ -39,6 +41,25 @@ def setup_seed(seed):
         tf.set_random_seed(seed)
 
 
+class LoggerPrecisionFilter(logging.Filter):
+    def __init__(self, precision):
+        super().__init__()
+        self.print_precision = precision
+
+    def str_round(self, match_res):
+        return str(round(eval(match_res.group()), self.print_precision))
+
+    def filter(self, record):
+        # use regex to find float numbers and round them to specified precision
+        if not isinstance(record.msg, str):
+            record.msg = str(record.msg)
+        if record.msg != "":
+            if re.search(r"([-+]?\d+\.\d+)", record.msg):
+                record.msg = re.sub(r"([-+]?\d+\.\d+)", self.str_round,
+                                    record.msg)
+        return True
+
+
 def update_logger(cfg, clear_before_add=False):
     import os
     import logging
@@ -52,6 +73,7 @@ def update_logger(cfg, clear_before_add=False):
         logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(" \
                       "message)s"
         handler.setFormatter(logging.Formatter(logging_fmt))
+
         root_logger.addHandler(handler)
 
     # update level
@@ -94,6 +116,16 @@ def update_logger(cfg, clear_before_add=False):
     fh.setFormatter(logger_formatter)
     root_logger.addHandler(fh)
 
+    # set print precision for terse logging
+    np.set_printoptions(precision=cfg.print_decimal_digits)
+    precision_filter = LoggerPrecisionFilter(cfg.print_decimal_digits)
+    # attach the filter to the fh handler to propagate the filter, since
+    # "Filters, unlike levels and handlers, do not propagate",
+    # ref https://stackoverflow.com/questions/6850798/why-doesnt-filter-
+    # attached-to-the-root-logger-propagate-to-descendant-loggers
+    for handler in root_logger.handlers:
+        handler.addFilter(precision_filter)
+
     import socket
     root_logger.info(f"the current machine is at"
                      f" {socket.gethostbyname(socket.gethostname())}")
@@ -121,7 +153,10 @@ def init_wandb(cfg):
     exp_name = cfg.expname
 
     tmp_cfg = copy.deepcopy(cfg)
-    tmp_cfg.cfg_check_funcs = []
+    if tmp_cfg.is_frozen():
+        tmp_cfg.defrost()
+    tmp_cfg.cfg_check_funcs.clear(
+    )  # in most cases, no need to save the cfg_check_funcs via wandb
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
@@ -286,6 +321,17 @@ def move_to(obj, device):
         raise TypeError("Invalid type for move_to")
 
 
+def param2tensor(param):
+    import torch
+    if isinstance(param, list):
+        param = torch.FloatTensor(param)
+    elif isinstance(param, int):
+        param = torch.tensor(param, dtype=torch.long)
+    elif isinstance(param, float):
+        param = torch.tensor(param, dtype=torch.float)
+    return param
+
+
 class Timeout(object):
     def __init__(self, seconds, max_failure=5):
         self.seconds = seconds
@@ -345,11 +391,11 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
     if "INFO:" in line and "Find new best result for" in line:
         # Logger type 1, each line for each metric, e.g.,
         # 2022-03-22 10:48:42,562 (server:459) INFO: Find new best result
-        # for client_individual.test_acc with value 0.5911787974683544
+        # for client_best_individual.test_acc with value 0.5911787974683544
         line = line.split("INFO: ")[1]
         parse_res = line.split("with value")
         best_key, best_val = parse_res[-2], parse_res[-1]
-        # client_individual.test_acc -> client_individual/test_acc
+        # client_best_individual.test_acc -> client_best_individual/test_acc
         best_key = best_key.replace("Find new best result for",
                                     "").replace(".", "/")
         log_res_best[best_key.strip()] = float(best_val.strip())
@@ -412,6 +458,42 @@ def format_log_hooks(hooks_set):
     elif isinstance(hooks_set, dict):
         print_obj = format_dict(hooks_set)
     return json.dumps(print_obj, indent=2).replace('\n', '\n\t')
+
+
+def get_resource_info(filename):
+    if filename is None or not os.path.exists(filename):
+        logger.info('The device information file is not provided')
+        return None
+
+    # Users can develop this loading function according to resource_info_file
+    # As an example, we use the device_info provided by FedScale (FedScale:
+    # Benchmarking Model and System Performance of Federated Learning
+    # at Scale), which can be downloaded from
+    # https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/
+    # data/device_info/client_device_capacity The expected format is
+    # { INDEX:{'computation': FLOAT_VALUE_1, 'communication': FLOAT_VALUE_2}}
+    with open(filename, 'br') as f:
+        device_info = pickle.load(f)
+    return device_info
+
+
+def calculate_time_cost(instance_number,
+                        comm_size,
+                        comp_speed=None,
+                        comm_bandwidth=None,
+                        augmentation_factor=3.0):
+    # Served as an example, this cost model is adapted from FedScale at
+    # https://github.com/SymbioticLab/FedScale/blob/master/fedscale/core/
+    # internal/client.py#L35 (Apache License Version 2.0)
+    # Users can modify this function according to customized cost model
+    if comp_speed is not None and comm_bandwidth is not None:
+        comp_cost = augmentation_factor * instance_number * comp_speed
+        comm_cost = 2.0 * comm_size / comm_bandwidth
+    else:
+        comp_cost = 0
+        comm_cost = 0
+
+    return comp_cost, comm_cost
 
 
 def calculate_batch_epoch_num(steps, batch_or_epoch, num_data, batch_size, drop_last):

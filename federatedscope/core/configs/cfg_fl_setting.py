@@ -15,6 +15,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.client_num = 0
     cfg.federate.sample_client_num = -1
     cfg.federate.sample_client_rate = -1.0
+    cfg.federate.unseen_clients_rate = 0.0
     cfg.federate.total_round_num = 50
     cfg.federate.mode = 'standalone'
     cfg.federate.share_local_model = False
@@ -23,6 +24,9 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.online_aggr = False
     cfg.federate.make_global_eval = False
     cfg.federate.use_diff = False
+    cfg.federate.merge_test_data = False  # For efficient simulation, users
+    # can choose to merge the test data and perform global evaluation,
+    # instead of perform test at each client
 
     # the method name is used to internally determine composition of
     # different aggregators, messages, handlers, etc.,
@@ -33,8 +37,10 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.save_to = ''
     cfg.federate.join_in_info = [
     ]  # The information requirements (from server) for join_in
-    cfg.federate.sampler = 'uniform'  # the strategy for sampling client in
-    # each training round, ['uniform', 'group']
+    cfg.federate.sampler = 'uniform'  # the strategy for sampling client
+    # in each training round, ['uniform', 'group']
+    cfg.federate.resource_info_file = ""  # the device information file to
+    # record computation and communication ability
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options
@@ -76,6 +82,21 @@ def assert_fl_setting_cfg(cfg):
                 and cfg.federate.mode == 'distributed'
                 ), "Please configure the cfg.federate. in distributed mode. "
 
+    assert 0 <= cfg.federate.unseen_clients_rate < 1, \
+        "You specified in-valid cfg.federate.unseen_clients_rate"
+    if 0 < cfg.federate.unseen_clients_rate < 1 and cfg.federate.method in [
+            "local", "global"
+    ]:
+        logger.warning(
+            "In local/global training mode, the unseen_clients_rate is "
+            "in-valid, plz check your config")
+        unseen_clients_rate = 0.0
+        cfg.federate.unseen_clients_rate = unseen_clients_rate
+    else:
+        unseen_clients_rate = cfg.federate.unseen_clients_rate
+    participated_client_num = max(
+        1, int((1 - unseen_clients_rate) * cfg.federate.client_num))
+
     # sample client num pre-process
     sample_client_num_valid = (
         0 < cfg.federate.sample_client_num <=
@@ -90,7 +111,6 @@ def assert_fl_setting_cfg(cfg):
                        "we will use all clients. ")
 
     if cfg.federate.method == "global":
-        cfg.federate.client_num = 1
         logger.info(
             "In global training mode, we will put all data in a proxy client. "
         )
@@ -106,7 +126,7 @@ def assert_fl_setting_cfg(cfg):
         # in standalone mode, federate.client_num may be modified from 0 to
         # num_of_all_clients after loading the data
         if cfg.federate.client_num != 0:
-            cfg.federate.sample_client_num = cfg.federate.client_num
+            cfg.federate.sample_client_num = participated_client_num
     else:
         # (b) sampling case
         if sample_client_rate_valid:
@@ -114,7 +134,7 @@ def assert_fl_setting_cfg(cfg):
             old_sample_client_num = cfg.federate.sample_client_num
             cfg.federate.sample_client_num = max(
                 1,
-                int(cfg.federate.sample_client_rate * cfg.federate.client_num))
+                int(cfg.federate.sample_client_rate * participated_client_num))
             if sample_client_num_valid:
                 logger.warning(
                     f"Users specify both valid sample_client_rate as"
@@ -143,6 +163,16 @@ def assert_fl_setting_cfg(cfg):
         not cfg.federate.use_ss
     ), "Have not supported to use online aggregator and secrete sharing at " \
        "the same time"
+
+    assert not cfg.federate.merge_test_data or (
+        cfg.federate.merge_test_data and cfg.federate.mode == 'standalone'
+    ), "The operation of merging test data can only used in standalone for " \
+       "efficient simulation, please change 'federate.merge_test_data' to " \
+       "False or change 'federate.mode' to 'distributed'."
+    if cfg.federate.merge_test_data and not cfg.federate.make_global_eval:
+        cfg.federate.make_global_eval = True
+        logger.warning('Set cfg.federate.make_global_eval=True since '
+                       'cfg.federate.merge_test_data=True')
 
 
 register_config("fl_setting", extend_fl_setting_cfg)

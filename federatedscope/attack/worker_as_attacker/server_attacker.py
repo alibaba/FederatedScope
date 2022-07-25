@@ -9,6 +9,7 @@ from federatedscope.attack.auxiliary.utils import get_data_sav_fn, \
 import logging
 
 import torch
+import numpy as np
 from federatedscope.attack.privacy_attacks.passive_PIA import \
     PassivePropertyInference
 
@@ -78,14 +79,15 @@ class PassiveServer(Server):
             federate_method=self._cfg.federate.method,
             alpha_TV=self._cfg.attack.alpha_TV)
 
-    def _reconstruct(self, state, sender):
-        # print(self.msg_buffer['train'][state].keys())
+    def _reconstruct(self, model_para, batch_size, state, sender):
+        logger.info('-------- reconstruct round:{}, client:{}---------'.format(
+            state, sender))
         dummy_data, dummy_label = self.reconstructor.reconstruct(
             model=copy.deepcopy(self.model).to(torch.device(self.device)),
-            original_info=self.msg_buffer['train'][state][sender][1],
+            original_info=model_para,
             data_feature_dim=self.data_dim,
             num_class=self.num_class,
-            batch_size=self.msg_buffer['train'][state][sender][0])
+            batch_size=batch_size)
         if state not in self.reconstruct_data.keys():
             self.reconstruct_data[state] = dict()
         self.reconstruct_data[state][sender] = [
@@ -103,21 +105,20 @@ class PassiveServer(Server):
             if sender_list is None:
                 sender_list = self.msg_buffer['train'][state].keys()
             for sender in sender_list:
-                logger.info(
-                    '------------- reconstruct round:{}, client:{}-----------'.
-                    format(state, sender))
-
-                # the context of buffer: self.model_buffer[state]: (
-                # sample_size, model_para)
-                self._reconstruct(state, sender)
+                content = self.msg_buffer['train'][state][sender]
+                self._reconstruct(model_para=content[1],
+                                  batch_size=content[0],
+                                  state=state,
+                                  sender=sender)
 
     def callback_funcs_model_para(self, message: Message):
+        if self.is_finish:
+            return 'finish'
+
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
-        # For a new round
-        if round not in self.msg_buffer['train'].keys():
+        if round not in self.msg_buffer['train']:
             self.msg_buffer['train'][round] = dict()
-
         self.msg_buffer['train'][round][sender] = content
 
         # run reconstruction before the clear of self.msg_buffer
@@ -189,12 +190,13 @@ class PassivePIAServer(Server):
         # lr=self._cfg.fedopt.optimizer.lr)
         # print(self.optimizer)
     def callback_funcs_model_para(self, message: Message):
+        if self.is_finish:
+            return 'finish'
+
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
-        # For a new round
-        if round not in self.msg_buffer['train'].keys():
+        if round not in self.msg_buffer['train']:
             self.msg_buffer['train'][round] = dict()
-
         self.msg_buffer['train'][round][sender] = content
 
         # collect the updates

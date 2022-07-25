@@ -5,7 +5,6 @@ early_stop:
 seed: 12345
 federate:
   mode: standalone
-  local_update_steps: 1
   total_round_num: 1000
   sample_client_num: 10
 data:
@@ -20,9 +19,11 @@ model:
   type: convnet2
   hidden: 2048
   out_channels: 62
-optimizer:
-  lr: 0.01
-  weight_decay: 0.0
+train:
+  local_update_steps: 1
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
 criterion:
   type: CrossEntropyLoss
 trainer:
