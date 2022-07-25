@@ -112,7 +112,6 @@ class CN(CfgNode):
         containers to allow simple key-value access and management.
 
     """
-
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
         super().__init__(init_dict, key_list, new_allowed)
         self.__dict__["cfg_check_funcs"] = list(
@@ -258,10 +257,11 @@ class CN(CfgNode):
                         wandb.config.update(cfg_yaml, allow_val_change=True)
                     except ImportError:
                         logger.error(
-                            "cfg.wandb.use=True but not install the wandb package")
+                            "cfg.wandb.use=True but not install the wandb "
+                            "package")
                         exit()
 
-        if inform:
+        if inform and save:
             logger.info("the used configs are: \n" + str(tmp_cfg))
 
         super(CN, self).freeze()

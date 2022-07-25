@@ -185,13 +185,13 @@ def eval_rmse(y_true, y_prob, **kwargs):
         # ignore nan values
         is_labeled = y_true[:, i] == y_true[:, i]
         rmse_list.append(
-            np.sqrt(((y_true[is_labeled] - y_prob[is_labeled]) ** 2).mean()))
+            np.sqrt(((y_true[is_labeled] - y_prob[is_labeled])**2).mean()))
 
     return sum(rmse_list) / len(rmse_list)
 
 
 def eval_mse(y_true, y_prob, **kwargs):
-    return np.mean(np.power(y_true-y_prob, 2))
+    return np.mean(np.power(y_true - y_prob, 2))
 
 
 def eval_loss(ctx, **kwargs):
@@ -213,7 +213,9 @@ def eval_regular(ctx, **kwargs):
 
 def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):
     if not hasattr(ctx.cfg.eval, 'base') or ctx.cfg.eval.base <= 0:
-        logger.info(f"To use the metric `imp_rato`, please set `eval.base` as the basic performance and it must be greater than zero")
+        logger.info(
+            "To use the metric `imp_rato`, please set `eval.base` as the "
+            "basic performance and it must be greater than zero.")
         return 0.
 
     base = ctx.cfg.eval.base
