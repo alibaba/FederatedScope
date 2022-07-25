@@ -35,9 +35,9 @@ class LocalGenTrainer(NodeFullBatchTrainer):
             num_pred=self.cfg.fedsageplus.num_pred).requires_grad_()
         loss_clf = ctx.criterion(nc_pred, batch.y[mask])
         ctx.batch_size = torch.sum(mask).item()
-        ctx.loss_batch = (self.cfg.fedsageplus.a * loss_num +
-                          self.cfg.fedsageplus.b * loss_feat +
-                          self.cfg.fedsageplus.c * loss_clf).float()
+        ctx.var.loss_batch = (self.cfg.fedsageplus.a * loss_num +
+                              self.cfg.fedsageplus.b * loss_feat +
+                              self.cfg.fedsageplus.c * loss_clf).float()
 
         ctx.y_true = batch.num_missing[mask]
         ctx.y_prob = pred_missing
@@ -58,10 +58,10 @@ class FedGenTrainer(LocalGenTrainer):
                                         num_pred=self.cfg.fedsageplus.num_pred)
         loss_clf = ctx.criterion(nc_pred, batch.y[mask])
         ctx.batch_size = torch.sum(mask).item()
-        ctx.loss_batch = (self.cfg.fedsageplus.a * loss_num +
-                          self.cfg.fedsageplus.b * loss_feat +
-                          self.cfg.fedsageplus.c *
-                          loss_clf).float() / self.cfg.federate.client_num
+        ctx.var.loss_batch = (self.cfg.fedsageplus.a * loss_num +
+                              self.cfg.fedsageplus.b * loss_feat +
+                              self.cfg.fedsageplus.c *
+                              loss_clf).float() / self.cfg.federate.client_num
 
         ctx.y_true = batch.num_missing[mask]
         ctx.y_prob = pred_missing

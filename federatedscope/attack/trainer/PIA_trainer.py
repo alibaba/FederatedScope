@@ -14,5 +14,5 @@ def hood_on_batch_start_get_prop(ctx):
 
 
 def hook_on_batch_forward_add_PIA_loss(ctx):
-    ctx.loss_batch = ctx.alpha_prop_loss * ctx.loss_batch + (
+    ctx.var.loss_batch = ctx.alpha_prop_loss * ctx.var.loss_batch + (
         1 - ctx.alpha_prop_loss) * ctx.criterion(ctx.y_prob, ctx.prop)
