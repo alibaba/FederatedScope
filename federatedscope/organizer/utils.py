@@ -113,7 +113,7 @@ def args2yaml(args):
     init_cfg.merge_from_list(args.opts)
     _, modified_cfg = get_data(config=init_cfg.clone())
     init_cfg.merge_from_other_cfg(modified_cfg)
-    init_cfg.freeze()
+    init_cfg.freeze(save=False)
     init_cfg.defrost()
     return init_cfg
 
