@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 
+from pathlib import Path
 from yacs.config import CfgNode, _assert_with_logging, _VALID_TYPES
 
 import federatedscope.register as register
@@ -227,7 +228,7 @@ class CN(CfgNode):
                         else:
                             del v[k]
 
-    def freeze(self, inform=True):
+    def freeze(self, inform=True, save=True):
         """
             1) make the cfg attributes immutable;
             2) save the frozen cfg_check_funcs into
@@ -238,37 +239,42 @@ class CN(CfgNode):
         """
         self.assert_cfg()
         self.clean_unused_sub_cfgs()
-        # save the final cfg
-        with open(os.path.join(self.outdir, "config.yaml"), 'w') as outfile:
-            from contextlib import redirect_stdout
-            with redirect_stdout(outfile):
-                tmp_cfg = copy.deepcopy(self)
-                tmp_cfg.cfg_check_funcs.clear()
-                print(tmp_cfg.dump())
-            if self.wandb.use:
-                # update the frozen config
-                try:
-                    import wandb
-                    import yaml
-                    cfg_yaml = yaml.safe_load(tmp_cfg.dump())
-                    wandb.config.update(cfg_yaml, allow_val_change=True)
-                except ImportError:
-                    logger.error(
-                        "cfg.wandb.use=True but not install the wandb package")
-                    exit()
+        if save:  # save the final cfg
+            Path(self.outdir).mkdir(parents=True, exist_ok=True)
+            with open(os.path.join(self.outdir, "config.yaml"),
+                      'w') as outfile:
+                from contextlib import redirect_stdout
+                with redirect_stdout(outfile):
+                    tmp_cfg = copy.deepcopy(self)
+                    tmp_cfg.cfg_check_funcs.clear()
+                    print(tmp_cfg.dump())
+                if self.wandb.use:
+                    # update the frozen config
+                    try:
+                        import wandb
+                        import yaml
+                        cfg_yaml = yaml.safe_load(tmp_cfg.dump())
+                        wandb.config.update(cfg_yaml, allow_val_change=True)
+                    except ImportError:
+                        logger.error(
+                            "cfg.wandb.use=True but not install the wandb "
+                            "package")
+                        exit()
 
-        if inform:
-            logger.info("the used configs are: \n" + str(tmp_cfg))
+            if inform:
+                logger.info("the used configs are: \n" + str(tmp_cfg))
 
         super(CN, self).freeze()
 
 
 # to ensure the sub-configs registered before set up the global config
 from federatedscope.core.configs import all_sub_configs
+
 for sub_config in all_sub_configs:
     __import__("federatedscope.core.configs." + sub_config)
 
 from federatedscope.contrib.configs import all_sub_configs_contrib
+
 for sub_config in all_sub_configs_contrib:
     __import__("federatedscope.contrib.configs." + sub_config)
 
