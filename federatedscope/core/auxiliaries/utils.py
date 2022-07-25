@@ -414,25 +414,31 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
             for inner_key, inner_val in val.items():
                 log_res_best[f"best_{best_type_key}/{inner_key}"] = inner_val
 
-    if "'Role': 'Server #'" in line:
+    if "'Role'" in line:
         if raw_out:
             line = line.split("INFO: ")[1]
         res = line.replace("\'", "\"")
         res = json.loads(s=res)
+        # pre-process the roles
         cur_round = res['Round']
-        res.pop('Role')
-        if cur_round != "Final" and 'Results_raw' in res:
-            res.pop('Results_raw')
+        if "Server" in res['Role']:
+            if cur_round != "Final" and 'Results_raw' in res:
+                res.pop('Results_raw')
+        role = res.pop('Role')
+        # parse the k-v pairs
         for key, val in res.items():
             if not isinstance(val, dict):
-                log_res[key] = val
+                log_res[f"{role}, {key}"] = val
             else:
                 if cur_round != "Final":
-                    for key_inner, val_inner in val.items():
-                        assert not isinstance(val_inner,
-                                              dict), "Un-expected log format"
-                        log_res[f"{key}/{key_inner}"] = val_inner
-
+                    if key == "Results_raw":
+                        for key_inner, val_inner in res["Results_raw"].items():
+                            log_res[f"{role}, {key_inner}"] = val_inner
+                    else:
+                        for key_inner, val_inner in val.items():
+                            assert not isinstance(val_inner, dict), \
+                                "Un-expected log format"
+                            log_res[f"{role}, {key}/{key_inner}"] = val_inner
                 else:
                     exp_stop_normal = True
                     if key == "Results_raw":
