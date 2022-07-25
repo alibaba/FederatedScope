@@ -242,7 +242,7 @@ class Trainer(object):
 
 
     @lifecycle(LIFECYCLE.ROUTINE)
-    def _run_routine(self, mode, dataset_name=None):
+    def _run_routine(self, mode, hooks_set, dataset_name=None):
         """Run the hooks_set and maintain the mode
         Arguments:
             mode: running mode of client, chosen from train/val/test
@@ -250,45 +250,45 @@ class Trainer(object):
             Considering evaluation could be in ```hooks_set["on_epoch_end"]```, there could be two data loaders in
         self.ctx, we must tell the running hooks which data_loader to call and which num_samples to count
         """
-        for hook in self._get_hooks("on_fit_start"):
+        for hook in hooks_set["on_fit_start"]:
             hook(self.ctx)
 
-        self._run_epoch()
+        self._run_epoch(hooks_set)
 
-        for hook in self._get_hooks("on_fit_end"):
+        for hook in hooks_set["on_fit_end"]:
             hook(self.ctx)
 
         return self.ctx.num_samples
 
     @lifecycle(LIFECYCLE.EPOCH)
-    def _run_epoch(self):
+    def _run_epoch(self, hooks_set):
         # TODO: epoch mode or split
         for epoch_i in range(self.num_epoch):
             self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
 
-            for hook in self._get_hooks("on_epoch_start"):
+            for hook in hooks_set["on_epoch_start"]:
                 hook(self.ctx)
 
-            self._run_batch()
+            self._run_batch(hooks_set)
 
-            for hook in self._get_hooks("on_epoch_end"):
+            for hook in hooks_set["on_epoch_end"]:
                 hook(self.ctx)
 
     @lifecycle(LIFECYCLE.BATCH)
-    def _run_batch(self):
+    def _run_batch(self, hooks_set):
         for batch_i in range(self.ctx.num_batch):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
-            for hook in self._get_hooks("on_batch_start"):
+            for hook in hooks_set["on_batch_start"]:
                 hook(self.ctx)
 
-            for hook in self._get_hooks("on_batch_forward"):
+            for hook in hooks_set["on_batch_forward"]:
                 hook(self.ctx)
 
-            for hook in self._get_hooks("on_batch_backward"):
+            for hook in hooks_set["on_batch_backward"]:
                 hook(self.ctx)
 
-            for hook in self._get_hooks("on_batch_end"):
+            for hook in hooks_set["on_batch_end"]:
                 hook(self.ctx)
 
             # Break in the final epoch
