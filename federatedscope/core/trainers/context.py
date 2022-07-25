@@ -48,15 +48,20 @@ class Context(LifecycleDict):
         init_dict (dict): a dict used to initialize the instance of Context
         init_attr (bool): if set up the static variables
     Note:
-        - There are two ways to set/get the attributes within an instance `ctx`:
-            - `ctx.${NAME}`: the variable is assigned to `ctx` as an attribute without additional operations
-            - `ctx.${NAME}`: the variable is stored in `ctx["var"][${ctx.cur_mode}_${ctx.cur_split}][${NAME}]`, \
-            and is only accessible when `ctx.cur_mode` and `ctx.cur_data_split` is consistent.
-        The setting of `ctx.${NAME}` allows you to nest test routine within the training routine, and the record \
-        variables with the same name will be stored according to current mode (`ctx.cur_mode`) and current data split \
-        (`ctx.cur_split`), which won't cover each other.
+        - The variables within an instance of class `Context` can be set/get as an attribute.
+        ```
+        ctx.${NAME_VARIABLE} = ${VALUE_VARIABLE}
+        ```
+        where `${NAME_VARIABLE}` and `${VALUE_VARIABLE}` is the name and value of the variable.
 
-        - While Context also maintain some special variables across different routines, like
+        - To achieve lifecycle management, you can wrap the variable with `CtxVar` and a lifecycle parameter
+        as follows
+        ```
+        ctx.${NAME_VARIABLE} = CtxVar(${VALUE_VARIABLE}, LFECYCLE.BATCH)
+        ```
+        The parameter of lifecycle can be chosen from `LIFECYCLE.BATCH`, `LIFECYCLE.EPOCH`, `LIFECYCLE.ROUTINE` and None.
+
+        - Context also maintains some special variables across different routines, like
             - cfg
             - model
             - data
@@ -128,16 +133,6 @@ class Context(LifecycleDict):
                     int(not self.cfg.data.drop_last and bool(
                         getattr(self, "num_{}_data".format(mode)) %
                         self.cfg.data.batch_size)))
-
-    def get_variable(self, mode, data_split, key):
-        """To support the access of variables that doesn't belong the current mode
-        Args:
-            mode: which mode that the variable belongs to
-            data_split: which data split that the variable belongs to
-            key: the name of variable
-        Returns: the wanted variable
-        """
-        return self["var"][f"{mode}_{data_split}"][key]
 
     def track_mode(self, mode):
         self.mode.append(mode)
