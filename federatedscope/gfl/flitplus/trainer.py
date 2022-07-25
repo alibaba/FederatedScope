@@ -1,6 +1,8 @@
 import torch
 from copy import deepcopy
 
+from federatedscope.core.auxiliaries.eunms import LIFECYCLE
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.gfl.loss.vat import VATLoss
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
@@ -67,11 +69,11 @@ class FLITTrainer(GeneralTorchTrainer):
                                             keepdim=True, dim=0).detach()
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (lossLocalLabel)
-        ctx.loss_batch = loss.mean()
+        ctx.var.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 class FLITPlusTrainer(FLITTrainer):
@@ -122,11 +124,11 @@ class FLITPlusTrainer(FLITTrainer):
                 1e-7)**self.cfg.flitplus.tmpFed * (
                     lossLocalLabel +
                     self.cfg.flitplus.weightReg * lossLocalVAT)
-        ctx.loss_batch = loss.mean()
+        ctx.var.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 class FedFocalTrainer(GeneralTorchTrainer):
@@ -175,11 +177,11 @@ class FedFocalTrainer(GeneralTorchTrainer):
 
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (lossLocalLabel)
-        ctx.loss_batch = loss.mean()
+        ctx.var.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 class FedVATTrainer(GeneralTorchTrainer):
@@ -237,11 +239,11 @@ class FedVATTrainer(GeneralTorchTrainer):
                 1e-7)**self.cfg.flitplus.tmpFed * (
                     lossLocalLabel +
                     self.cfg.flitplus.weightReg * lossLocalVAT)
-        ctx.loss_batch = loss.mean()
+        ctx.var.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 def record_initialization_local(ctx):

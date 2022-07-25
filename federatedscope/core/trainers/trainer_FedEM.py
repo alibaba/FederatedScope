@@ -4,6 +4,8 @@ import numpy as np
 import torch
 from torch.nn.functional import softmax as f_softmax
 
+from federatedscope.core.auxiliaries.eunms import LIFECYCLE
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.trainers.trainer_multi_model import \
     GeneralMultiModelTrainer
@@ -111,14 +113,14 @@ class FedEMTrainer(GeneralMultiModelTrainer):
 
     def hook_on_batch_forward_weighted_loss(self, ctx):
         # for only train
-        ctx.loss_batch *= self.weights_internal_models[ctx.cur_model_idx]
+        ctx.var.loss_batch *= self.weights_internal_models[ctx.cur_model_idx]
 
     def hook_on_batch_end_gather_loss(self, ctx):
         # for only eval
         # before clean the loss_batch; we record it
         # for further weights_data_sample update
         ctx.all_losses_model_batch[ctx.cur_model_idx][
-            ctx.cur_batch_idx] = ctx.loss_batch.item()
+            ctx.cur_batch_idx] = ctx.var.loss_batch.item()
 
     def hook_on_fit_start_mixture_weights_update(self, ctx):
         # for only train
@@ -153,22 +155,12 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
             Ensemble evaluation
         """
-        cur_data = ctx.cur_split
-        if f"{cur_data}_y_prob_ensemble" not in ctx:
-            ctx[f"{cur_data}_y_prob_ensemble"] = 0
-        ctx[f"{cur_data}_y_prob_ensemble"] += \
-            np.concatenate(ctx[f"{cur_data}_y_prob"]) * \
-            self.weights_internal_models[ctx.cur_model_idx].item()
+        if ctx.var.get("ys_prob_ensemble", None) is None:
+            ctx.var.ys_prob_ensemble = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.var.ys_prob_ensemble += np.concatenate(ctx.var.ys_prob) * self.weights_internal_models[ctx.cur_model_idx].item()
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:
-            ctx[f"{cur_data}_y_true"] = np.concatenate(
-                ctx[f"{cur_data}_y_true"])
-            ctx[f"{cur_data}_y_prob"] = ctx[f"{cur_data}_y_prob_ensemble"]
+            ctx.var.ys_true = CtxVar(np.concatenate(ctx.var.ys_true), LIFECYCLE.ROUTINE)
+            ctx.var.ys_prob = ctx.var.ys_prob_ensemble
             ctx.eval_metrics = self.metric_calculator.eval(ctx)
-            # reset for next run_routine that may have different len([f"{
-            # cur_data}_y_prob"])
-            ctx[f"{cur_data}_y_prob_ensemble"] = 0
-
-        ctx[f"{cur_data}_y_prob"] = []
-        ctx[f"{cur_data}_y_true"] = []

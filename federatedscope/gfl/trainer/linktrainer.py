@@ -4,7 +4,9 @@ from torch.utils.data import DataLoader
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
+from federatedscope.core.auxiliaries.eunms import LIFECYCLE
 from federatedscope.core.monitors import Monitor
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 
@@ -78,11 +80,11 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         pred = ctx.model.link_predictor(h, edges[perm].T)
         label = data.edge_type[mask][perm]  # edge_type is y
 
-        ctx.loss_batch = ctx.criterion(pred, label)
+        ctx.var.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -193,9 +195,9 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
             ctx.batch_size = torch.sum(
                 ctx.data['data'][MODE2MASK[ctx.cur_split]]).item()
 
-        ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 def call_link_level_trainer(trainer_type):

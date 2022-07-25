@@ -248,7 +248,7 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         ctx.var.loss_regular = CtxVar(self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
-        ctx.var.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular, LIFECYCLE.BATCH)
+        ctx.var.loss_task = CtxVar(ctx.var.loss_batch + ctx.var.loss_regular, LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()

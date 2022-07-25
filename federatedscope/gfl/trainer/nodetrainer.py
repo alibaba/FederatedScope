@@ -4,7 +4,9 @@ from torch_geometric.loader import DataLoader as PyGDataLoader
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
+from federatedscope.core.auxiliaries.eunms import LIFECYCLE
 from federatedscope.core.monitors import Monitor
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
@@ -38,9 +40,9 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
         ctx.batch_size = torch.sum(ctx.data_batch['{}_mask'.format(
             ctx.cur_split)]).item()
 
-        ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -168,9 +170,9 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
             ctx.batch_size = torch.sum(ctx.data['data']['{}_mask'.format(
                 ctx.cur_split)]).item()
 
-        ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 def call_node_level_trainer(trainer_type):

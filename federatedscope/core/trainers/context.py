@@ -123,7 +123,8 @@ class Context(LifecycleDict):
             self.num_train_batch, self.num_train_batch_last_epoch, self.num_train_epoch, self.num_total_train_batch = calculate_batch_epoch_num(self.cfg.train.local_update_steps,
                                                                                                                             self.cfg.train.batch_or_epoch,
                                                                                                                             self.num_train_data,
-                                                                                                                            self.cfg.data.batch_size)
+                                                                                                                            self.cfg.data.batch_size,
+                                                                                                                            self.cfg.data.drop_last)
 
         # Process evaluation data
         for mode in ["val", "test"]:

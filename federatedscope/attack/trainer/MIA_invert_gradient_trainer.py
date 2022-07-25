@@ -84,7 +84,7 @@ def hook_on_batch_backward_invert_gradient(ctx):
     if ctx.is_target_batch:
         # if the current data batch is the target data, perform gradient ascent
         ctx.optimizer.zero_grad()
-        ctx.loss_batch.backward()
+        ctx.var.loss_batch.backward()
         original_grad = []
 
         for param in ctx["model"].parameters():
@@ -102,7 +102,7 @@ def hook_on_batch_backward_invert_gradient(ctx):
     else:
         # if current batch is not target data, perform regular backward step
         ctx.optimizer.zero_grad()
-        ctx.loss_task.backward()
+        ctx.var.loss_task.backward()
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)
