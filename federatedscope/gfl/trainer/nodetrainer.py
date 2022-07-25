@@ -40,7 +40,7 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
         ctx.batch_size = torch.sum(ctx.data_batch['{}_mask'.format(
             ctx.cur_split)]).item()
 
-        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
         ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
@@ -170,7 +170,7 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
             ctx.batch_size = torch.sum(ctx.data['data']['{}_mask'.format(
                 ctx.cur_split)]).item()
 
-        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
         ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 

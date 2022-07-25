@@ -50,9 +50,9 @@ class Context(LifecycleDict):
     Note:
         - There are two ways to set/get the attributes within an instance `ctx`:
             - `ctx.${NAME}`: the variable is assigned to `ctx` as an attribute without additional operations
-            - `ctx.var.${NAME}`: the variable is stored in `ctx["var"][${ctx.cur_mode}_${ctx.cur_split}][${NAME}]`, \
+            - `ctx.${NAME}`: the variable is stored in `ctx["var"][${ctx.cur_mode}_${ctx.cur_split}][${NAME}]`, \
             and is only accessible when `ctx.cur_mode` and `ctx.cur_data_split` is consistent.
-        The setting of `ctx.var.${NAME}` allows you to nest test routine within the training routine, and the record \
+        The setting of `ctx.${NAME}` allows you to nest test routine within the training routine, and the record \
         variables with the same name will be stored according to current mode (`ctx.cur_mode`) and current data split \
         (`ctx.cur_split`), which won't cover each other.
 
@@ -86,21 +86,11 @@ class Context(LifecycleDict):
         self.cur_split = None
         self.split_stack = list()
 
-        self.var = collections.defaultdict(LifecycleDict)
         self.lifecycles = collections.defaultdict(set)
 
         if init_attr:
             # setup static variables for training/evaluation
             self.setup_vars()
-
-    def __getattr__(self, item):
-        try:
-            if item == 'var':
-                return self["var"]["{}_{}".format(self.cur_mode, self.cur_split)]
-            else:
-                return self[item]
-        except KeyError:
-            raise AttributeError(item)
 
     def setup_vars(self):
         if self.cfg.backend == 'torch':

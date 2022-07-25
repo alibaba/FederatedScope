@@ -62,13 +62,13 @@ class MetricCalculator(object):
             y_prob: The output of the model
 
         """
-        if ctx.var.get('ys_true', None) is None:
+        if ctx.get('ys_true', None) is None:
             raise KeyError('Missing key y_true!')
-        if ctx.var.get('ys_prob', None) is None:
+        if ctx.get('ys_prob', None) is None:
             raise KeyError('Missing key y_prob!')
 
-        y_true = ctx.var.ys_true
-        y_prob = ctx.var.ys_prob
+        y_true = ctx.ys_true
+        y_prob = ctx.ys_prob
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
@@ -196,19 +196,19 @@ def eval_mse(y_true, y_prob, **kwargs):
 
 
 def eval_loss(ctx, **kwargs):
-    return ctx.var.loss_batch_total
+    return ctx.loss_batch_total
 
 
 def eval_avg_loss(ctx, **kwargs):
-    return ctx.var.loss_batch_total / ctx.var.num_samples
+    return ctx.loss_batch_total / ctx.num_samples
 
 
 def eval_total(ctx, **kwargs):
-    return ctx.var.num_samples
+    return ctx.num_samples
 
 
 def eval_regular(ctx, **kwargs):
-    return ctx.var.loss_regular_total
+    return ctx.loss_regular_total
 
 
 def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):

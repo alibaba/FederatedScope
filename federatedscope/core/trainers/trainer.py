@@ -258,12 +258,12 @@ class Trainer(object):
         for hook in self._get_hooks("on_fit_end"):
             hook(self.ctx)
 
-        return self.ctx.var.num_samples
+        return self.ctx.num_samples
 
     @lifecycle(LIFECYCLE.EPOCH)
     def _run_epoch(self):
         # TODO: epoch mode or split
-        for epoch_i in range(self.var.num_epoch):
+        for epoch_i in range(self.num_epoch):
             self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
 
             for hook in self._get_hooks("on_epoch_start"):
@@ -276,8 +276,8 @@ class Trainer(object):
 
     @lifecycle(LIFECYCLE.BATCH)
     def _run_batch(self):
-        for batch_i in range(self.ctx.var.num_batch):
-            self.ctx.var.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
+        for batch_i in range(self.ctx.num_batch):
+            self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
             for hook in self._get_hooks("on_batch_start"):
                 hook(self.ctx)
@@ -292,8 +292,8 @@ class Trainer(object):
                 hook(self.ctx)
 
             # Break in the final epoch
-            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and self.ctx.var.cur_epoch_i == self.ctx.var.num_epoch - 1:
-                if batch_i >= self.ctx.var.num_batch_last_epoch - 1:
+            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and self.ctx.cur_epoch_i == self.ctx.num_epoch - 1:
+                if batch_i >= self.ctx.num_batch_last_epoch - 1:
                     break
 
     def update(self, model_parameters, strict=False):

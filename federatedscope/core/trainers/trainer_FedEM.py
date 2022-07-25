@@ -113,14 +113,14 @@ class FedEMTrainer(GeneralMultiModelTrainer):
 
     def hook_on_batch_forward_weighted_loss(self, ctx):
         # for only train
-        ctx.var.loss_batch *= self.weights_internal_models[ctx.cur_model_idx]
+        ctx.loss_batch *= self.weights_internal_models[ctx.cur_model_idx]
 
     def hook_on_batch_end_gather_loss(self, ctx):
         # for only eval
         # before clean the loss_batch; we record it
         # for further weights_data_sample update
         ctx.all_losses_model_batch[ctx.cur_model_idx][
-            ctx.cur_batch_idx] = ctx.var.loss_batch.item()
+            ctx.cur_batch_idx] = ctx.loss_batch.item()
 
     def hook_on_fit_start_mixture_weights_update(self, ctx):
         # for only train
@@ -155,12 +155,12 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
             Ensemble evaluation
         """
-        if ctx.var.get("ys_prob_ensemble", None) is None:
-            ctx.var.ys_prob_ensemble = CtxVar(0, LIFECYCLE.ROUTINE)
-        ctx.var.ys_prob_ensemble += np.concatenate(ctx.var.ys_prob) * self.weights_internal_models[ctx.cur_model_idx].item()
+        if ctx.get("ys_prob_ensemble", None) is None:
+            ctx.ys_prob_ensemble = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.ys_prob_ensemble += np.concatenate(ctx.ys_prob) * self.weights_internal_models[ctx.cur_model_idx].item()
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:
-            ctx.var.ys_true = CtxVar(np.concatenate(ctx.var.ys_true), LIFECYCLE.ROUTINE)
-            ctx.var.ys_prob = ctx.var.ys_prob_ensemble
+            ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
+            ctx.ys_prob = ctx.ys_prob_ensemble
             ctx.eval_metrics = self.metric_calculator.eval(ctx)
