@@ -62,6 +62,11 @@ def get_server_cls(cfg):
             PassivePIAServer
         return PassivePIAServer
 
+    elif cfg.attack.attack_method.lower() in ['backdoor']:
+        from federatedscope.attack.worker_as_attacker.server_attacker \
+            import BackdoorServer
+        return BackdoorServer
+
     if cfg.vertical.use:
         from federatedscope.vertical_fl.worker import vFLServer
         return vFLServer

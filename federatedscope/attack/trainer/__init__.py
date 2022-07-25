@@ -1,6 +1,8 @@
 from federatedscope.attack.trainer.GAN_trainer import *
 from federatedscope.attack.trainer.MIA_invert_gradient_trainer import *
 from federatedscope.attack.trainer.PIA_trainer import *
+from federatedscope.attack.trainer.backdoor_trainer import *
+from federatedscope.attack.trainer.benign_trainer import *
 
 __all__ = [
     'wrap_GANTrainer', 'hood_on_fit_start_generator',
@@ -9,5 +11,6 @@ __all__ = [
     'hook_on_data_injection_sav_data', 'wrap_GradientAscentTrainer',
     'hook_on_fit_start_count_round', 'hook_on_batch_start_replace_data_batch',
     'hook_on_batch_backward_invert_gradient',
-    'hook_on_fit_start_loss_on_target_data'
+    'hook_on_fit_start_loss_on_target_data', 'wrap_backdoorTrainer',
+    'wrap_benignTrainer'
 ]
