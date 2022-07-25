@@ -210,11 +210,11 @@ def lifecycle(lifecycle):
     if lifecycle == "routine":
 
         def decorate(func):
-            def wrapper(self, mode, dataset_name=None):
+            def wrapper(self, mode, hooks_set, dataset_name=None):
                 self.ctx.track_mode(mode)
                 self.ctx.track_split(dataset_name or mode)
 
-                res = func(self, mode, dataset_name)
+                res = func(self, mode, hooks_set, dataset_name)
 
                 # Clear the variables at the end of lifecycles
                 self.ctx.clear(lifecycle)
