@@ -69,7 +69,7 @@ class FLITTrainer(GeneralTorchTrainer):
                                             keepdim=True, dim=0).detach()
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (lossLocalLabel)
-        ctx.var.loss_batch = loss.mean()
+        ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
@@ -124,7 +124,7 @@ class FLITPlusTrainer(FLITTrainer):
                 1e-7)**self.cfg.flitplus.tmpFed * (
                     lossLocalLabel +
                     self.cfg.flitplus.weightReg * lossLocalVAT)
-        ctx.var.loss_batch = loss.mean()
+        ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
@@ -177,7 +177,7 @@ class FedFocalTrainer(GeneralTorchTrainer):
 
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (lossLocalLabel)
-        ctx.var.loss_batch = loss.mean()
+        ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
@@ -239,7 +239,7 @@ class FedVATTrainer(GeneralTorchTrainer):
                 1e-7)**self.cfg.flitplus.tmpFed * (
                     lossLocalLabel +
                     self.cfg.flitplus.weightReg * lossLocalVAT)
-        ctx.var.loss_batch = loss.mean()
+        ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)

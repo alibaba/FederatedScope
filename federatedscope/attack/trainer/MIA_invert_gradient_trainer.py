@@ -73,7 +73,7 @@ def hook_on_batch_start_replace_data_batch(ctx):
     # batch to target batch
     if ctx.finish_injected == False and ctx.round >= ctx.inject_round:
         logger.info("---------- inject the target data ---------")
-        ctx["data_batch"] = ctx.target_data
+        ctx.data_batch = ctx.target_data
         ctx.is_target_batch = True
         logger.info(ctx.target_data[0].size())
     else:
@@ -84,7 +84,7 @@ def hook_on_batch_backward_invert_gradient(ctx):
     if ctx.is_target_batch:
         # if the current data batch is the target data, perform gradient ascent
         ctx.optimizer.zero_grad()
-        ctx.var.loss_batch.backward()
+        ctx.loss_batch.backward()
         original_grad = []
 
         for param in ctx["model"].parameters():
@@ -102,7 +102,7 @@ def hook_on_batch_backward_invert_gradient(ctx):
     else:
         # if current batch is not target data, perform regular backward step
         ctx.optimizer.zero_grad()
-        ctx.var.loss_task.backward()
+        ctx.loss_task.backward()
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)

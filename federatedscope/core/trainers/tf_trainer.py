@@ -73,11 +73,11 @@ class GeneralTFTrainer(Trainer):
         ctx.model.to(ctx.device)
 
         # prepare statistics
-        ctx.var.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
-        ctx.var.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
-        ctx.var.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
-        ctx.var.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
-        ctx.var.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
+        ctx.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
+        ctx.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
+        ctx.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
+        ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_epoch_start(self, ctx):
         # prepare dataloader
@@ -110,7 +110,7 @@ class GeneralTFTrainer(Trainer):
                         ctx.model.input_y, ctx.model.out
                     ],
                     feed_dict=feed_dict)
-                ctx.var.loss_batch = batch_loss
+                ctx.loss_batch = batch_loss
                 ctx.y_true = CtxVar(y_true, LIFECYCLE.BATCH)
                 ctx.y_prob = CtxVar(y_prob, LIFECYCLE.BATCH)
 
@@ -123,20 +123,20 @@ class GeneralTFTrainer(Trainer):
     def _hook_on_batch_end(self, ctx):
         # TODO: the same with the torch_trainer
         # update statistics
-        ctx.var.num_samples += ctx.var.batch_size
-        ctx.var.loss_batch_total += ctx.var.loss_batch
-        ctx.var.loss_regular_total += float(ctx.var.get("loss_regular", 0.))
+        ctx.num_samples += ctx.batch_size
+        ctx.loss_batch_total += ctx.loss_batch
+        ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
 
         # cache label for evaluate
-        ctx.var.ys_true.append(ctx.y_true.detach().cpu().numpy())
-        ctx.var.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
+        ctx.ys_true.append(ctx.y_true.detach().cpu().numpy())
+        ctx.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
 
         """
-        ctx.var.ys_true = CtxVar(np.concatenate(ctx.var.ys_true), LIFECYCLE.ROUTINE)
-        ctx.var.ys_prob = CtxVar(np.concatenate(ctx.var.ys_prob), LIFECYCLE.ROUTINE)
+        ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
+        ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 

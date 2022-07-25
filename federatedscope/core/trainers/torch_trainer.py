@@ -143,11 +143,11 @@ class GeneralTorchTrainer(Trainer):
         # initialize the number of batch and epoch
         self.ctx.init_routine()
         # prepare statistics
-        ctx.var.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
-        ctx.var.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
-        ctx.var.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
-        ctx.var.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
-        ctx.var.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
+        ctx.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
+        ctx.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
+        ctx.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
+        ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -192,8 +192,8 @@ class GeneralTorchTrainer(Trainer):
 
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
         ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
-        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
-        ctx.var.batch_size = CtxVar(len(label), LIFECYCLE.BATCH)
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.batch_size = CtxVar(len(label), LIFECYCLE.BATCH)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         """
@@ -229,7 +229,7 @@ class GeneralTorchTrainer(Trainer):
                         "if this is not the case you want, "
                         "please customize the count hook")
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
-                                                 ctx.var.batch_size)
+                                                 ctx.batch_size)
             except:
                 logger.warning(
                     "current flop count implementation is for general "
@@ -244,15 +244,15 @@ class GeneralTorchTrainer(Trainer):
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward
         self.ctx.monitor.total_flops +=\
-            self.ctx.monitor.flops_per_sample * ctx.var.batch_size
+            self.ctx.monitor.flops_per_sample * ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
-        ctx.var.loss_regular = CtxVar(self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
-        ctx.var.loss_task = CtxVar(ctx.var.loss_batch + ctx.var.loss_regular, LIFECYCLE.BATCH)
+        ctx.loss_regular = CtxVar(self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
+        ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular, LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
-        ctx.var.loss_task.backward()
+        ctx.loss_task.backward()
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)
@@ -263,19 +263,19 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_batch_end(self, ctx):
         # update statistics
-        ctx.var.num_samples += ctx.var.batch_size
-        ctx.var.loss_batch_total += ctx.var.loss_batch
-        ctx.var.loss_regular_total += float(ctx.var.get("loss_regular", 0.))
+        ctx.num_samples += ctx.batch_size
+        ctx.loss_batch_total += ctx.loss_batch
+        ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
         # cache label for evaluate
-        ctx.var.ys_true.append(ctx.y_true.detach().cpu().numpy())
-        ctx.var.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
+        ctx.ys_true.append(ctx.y_true.detach().cpu().numpy())
+        ctx.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
 
         """
-        ctx.var.ys_true = CtxVar(np.concatenate(ctx.var.ys_true), LIFECYCLE.ROUTINE)
-        ctx.var.ys_prob = CtxVar(np.concatenate(ctx.var.ys_prob), LIFECYCLE.ROUTINE)
+        ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
+        ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 

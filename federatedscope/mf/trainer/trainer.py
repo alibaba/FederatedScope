@@ -47,15 +47,15 @@ class MFTrainer(GeneralTorchTrainer):
 
     def _hook_on_fit_end(self, ctx):
         results = {
-            f"{ctx.cur_mode}_avg_loss": ctx.var.loss_batch_total / ctx.var.num_samples,
-            f"{ctx.cur_mode}_total": ctx.var.num_samples
+            f"{ctx.cur_mode}_avg_loss": ctx.loss_batch_total / ctx.num_samples,
+            f"{ctx.cur_mode}_total": ctx.num_samples
         }
         setattr(ctx, 'eval_metrics', results)
 
     def _hook_on_batch_forward(self, ctx):
         indices, ratings = ctx.data_batch
         pred, label, ratio = ctx.model(indices, ratings)
-        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label) * ratio, LIFECYCLE.BATCH)
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label) * ratio, LIFECYCLE.BATCH)
 
         ctx.batch_size = len(ratings)
 

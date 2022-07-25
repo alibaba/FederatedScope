@@ -80,7 +80,7 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         pred = ctx.model.link_predictor(h, edges[perm].T)
         label = data.edge_type[mask][perm]  # edge_type is y
 
-        ctx.var.loss_batch = ctx.criterion(pred, label)
+        ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
@@ -195,7 +195,7 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
             ctx.batch_size = torch.sum(
                 ctx.data['data'][MODE2MASK[ctx.cur_split]]).item()
 
-        ctx.var.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
         ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
