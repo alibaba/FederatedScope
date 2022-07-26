@@ -2,8 +2,8 @@ import collections
 import copy
 import logging
 
-from federatedscope.core.auxiliaries.eunms import MODE
-from federatedscope.core.auxiliaries.eunms import LIFECYCLE
+from federatedscope.core.auxiliaries.enums import MODE
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries.decorators import use_diff
 from federatedscope.core.auxiliaries.utils import format_log_hooks
 from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
@@ -262,8 +262,7 @@ class Trainer(object):
 
     @lifecycle(LIFECYCLE.EPOCH)
     def _run_epoch(self, hooks_set):
-        # TODO: epoch mode or split
-        for epoch_i in range(self.num_epoch):
+        for epoch_i in range(self.ctx.get(f"num_{self.ctx.cur_split}_epoch")):
             self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
 
             for hook in hooks_set["on_epoch_start"]:
@@ -276,7 +275,7 @@ class Trainer(object):
 
     @lifecycle(LIFECYCLE.BATCH)
     def _run_batch(self, hooks_set):
-        for batch_i in range(self.ctx.num_batch):
+        for batch_i in range(self.ctx.get(f"num_{self.ctx.cur_split}_batch")):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
             for hook in hooks_set["on_batch_start"]:
@@ -292,8 +291,8 @@ class Trainer(object):
                 hook(self.ctx)
 
             # Break in the final epoch
-            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and self.ctx.cur_epoch_i == self.ctx.num_epoch - 1:
-                if batch_i >= self.ctx.num_batch_last_epoch - 1:
+            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and self.ctx.cur_epoch_i == self.ctx.num_train_epoch - 1:
+                if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
                     break
 
     def update(self, model_parameters, strict=False):

@@ -4,7 +4,7 @@ from torch_geometric.loader import DataLoader as PyGDataLoader
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.core.auxiliaries.eunms import LIFECYCLE
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer

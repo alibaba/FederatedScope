@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch.nn.functional import softmax as f_softmax
 
-from federatedscope.core.auxiliaries.eunms import LIFECYCLE
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.trainers.trainer_multi_model import \
