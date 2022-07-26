@@ -6,7 +6,7 @@ from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.model_builder import \
     get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
-from federatedscope.core.auxiliaries.eunms import MODE
+from federatedscope.core.auxiliaries.enums import MODE
 from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,6 @@ class LifecycleDict(dict):
         init_dict: initialized dict
     """
     __delattr__ = dict.__delitem__
-    __setattr__ = dict.__setitem__
     __getattr__ = dict.__getitem__
 
     def __init__(self, init_dict=None):
@@ -25,17 +24,19 @@ class LifecycleDict(dict):
             super(LifecycleDict, self).__init__(init_dict)
         self.lifecycles = collections.defaultdict(set)
 
-    def __setitem__(self, key, value):
+    def __setattr__(self, key, value):
         if isinstance(value, CtxVar):
             self.lifecycles[value.lifecycle].add(key)
-        super(LifecycleDict, self).__setitem__(key, value)
+            super(LifecycleDict, self).__setitem__(key, value.obj)
+        else:
+            super(LifecycleDict, self).__setitem__(key, value)
 
     def clear(self, lifecycle):
-        for var in self.lifecycles[lifecycle]:
-            if hasattr(self[var], "clear"):
-                self[var].clear()
-            else:
-                del self[var]
+        keys = list(self.lifecycles[lifecycle])
+        for key in keys:
+            if key in self:
+                del self[key]
+            self.lifecycles[lifecycle].remove(key)
 
 
 class Context(LifecycleDict):
@@ -192,14 +193,10 @@ class CtxVar(object):
 
     LIEFTCYCLES = ["batch", "epoch", "routine", None]
 
-    def __init__(self, lifecycle=None, end_func=None):
+    def __init__(self, obj, lifecycle=None):
         assert lifecycle in CtxVar.LIEFTCYCLES
+        self.obj = obj
         self.lifecycle = lifecycle
-        self.efunc = end_func
-
-    def clear(self):
-        if self.efunc is not None:
-            self.efunc(self.obj)
 
 
 def lifecycle(lifecycle):
@@ -232,8 +229,8 @@ def lifecycle(lifecycle):
     else:
 
         def decorate(func):
-            def wrapper(self, **kwargs):
-                res = func(self, **kwargs)
+            def wrapper(self, *args, **kwargs):
+                res = func(self, *args, **kwargs)
                 # Clear the variables at the end of lifecycles
                 self.ctx.clear(lifecycle)
                 return res

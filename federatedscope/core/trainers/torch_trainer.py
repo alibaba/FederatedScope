@@ -10,8 +10,8 @@ except ImportError:
     DataLoader = None
     Dataset = None
 
-from federatedscope.core.auxiliaries.eunms import MODE
-from federatedscope.core.auxiliaries.eunms import LIFECYCLE
+from federatedscope.core.auxiliaries.enums import MODE
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.trainers.context import CtxVar
@@ -258,7 +258,7 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_batch_end(self, ctx):
         # update statistics
         ctx.num_samples += ctx.batch_size
-        ctx.loss_batch_total += ctx.loss_batch
+        ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
         ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
         # cache label for evaluate
         ctx.ys_true.append(ctx.y_true.detach().cpu().numpy())
