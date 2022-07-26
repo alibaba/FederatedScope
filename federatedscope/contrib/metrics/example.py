@@ -4,7 +4,7 @@ METRIC_NAME = 'example'
 
 
 def MyMetric(ctx, **kwargs):
-    return ctx["num_train_data"]
+    return ctx.num_train_data
 
 
 def call_my_metric(types):

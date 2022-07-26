@@ -4,7 +4,9 @@ from torch.utils.data import DataLoader
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 
@@ -69,9 +71,9 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         data = ctx.data
         perm = ctx.data_batch
-        mask = ctx.data[MODE2MASK[ctx.cur_data_split]]
+        mask = ctx.data[MODE2MASK[ctx.cur_split]]
         edges = data.edge_index.T[mask]
-        if ctx.cur_data_split in ['train', 'val']:
+        if ctx.cur_split in ['train', 'val']:
             h = ctx.model((data.x, ctx.input_edge_index))
         else:
             h = ctx.model((data.x, data.edge_index))
@@ -81,8 +83,8 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -99,7 +101,7 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
             try:
                 data = ctx.data
                 from fvcore.nn import FlopCountAnalysis
-                if ctx.cur_data_split in ['train', 'val']:
+                if ctx.cur_split in ['train', 'val']:
                     flops_one_batch = FlopCountAnalysis(
                         ctx.model, (data.x, ctx.input_edge_index)).total()
                 else:
@@ -166,18 +168,18 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
         return init_dict
 
     def _hook_on_batch_forward(self, ctx):
-        if ctx.cur_data_split == 'train':
+        if ctx.cur_split == 'train':
             batch = ctx.data_batch.to(ctx.device)
-            mask = batch[MODE2MASK[ctx.cur_data_split]]
+            mask = batch[MODE2MASK[ctx.cur_split]]
             edges = batch.edge_index.T[mask].T
             h = ctx.model((batch.x, edges))
             pred = ctx.model.link_predictor(h, edges)
             label = batch.edge_type[mask]
             ctx.batch_size = torch.sum(
-                ctx.data_batch[MODE2MASK[ctx.cur_data_split]]).item()
+                ctx.data_batch[MODE2MASK[ctx.cur_split]]).item()
         else:
             # For inference
-            mask = ctx.data['data'][MODE2MASK[ctx.cur_data_split]]
+            mask = ctx.data['data'][MODE2MASK[ctx.cur_split]]
             subgraph_loader = ctx.data_batch
             h = ctx.model.gnn.inference(ctx.data['data'].x, subgraph_loader,
                                         ctx.device).to(ctx.device)
@@ -191,11 +193,11 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
             pred = torch.cat(pred, dim=0)
             label = ctx.data['data'].edge_type[mask].to(ctx.device)
             ctx.batch_size = torch.sum(
-                ctx.data['data'][MODE2MASK[ctx.cur_data_split]]).item()
+                ctx.data['data'][MODE2MASK[ctx.cur_split]]).item()
 
-        ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 def call_link_level_trainer(trainer_type):

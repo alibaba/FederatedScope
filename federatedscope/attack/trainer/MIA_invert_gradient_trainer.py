@@ -73,7 +73,7 @@ def hook_on_batch_start_replace_data_batch(ctx):
     # batch to target batch
     if ctx.finish_injected == False and ctx.round >= ctx.inject_round:
         logger.info("---------- inject the target data ---------")
-        ctx["data_batch"] = ctx.target_data
+        ctx.data_batch = ctx.target_data
         ctx.is_target_batch = True
         logger.info(ctx.target_data[0].size())
     else:

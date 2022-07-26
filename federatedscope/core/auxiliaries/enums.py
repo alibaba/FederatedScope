@@ -28,3 +28,10 @@ class TRIGGER:
             "on_batch_forward", "on_batch_backward", "on_batch_end",
             "on_epoch_end", "on_fit_end"
         ]
+
+
+class LIFECYCLE:
+    ROUTINE = 'routine'
+    EPOCH = 'epoch'
+    BATCH = 'batch'
+    NONE = None
