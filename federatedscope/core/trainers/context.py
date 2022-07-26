@@ -113,7 +113,7 @@ class Context(LifecycleDict):
             self.grad_clip = None
 
         # Process training data
-        if self.train_data is not None or self.train_loader is not None:
+        if self.get('train_data', None) is not None or self.get('train_loader', None) is not None:
             # Calculate the number of update steps during training given the
             # local_update_steps
             self.num_train_batch, self.num_train_batch_last_epoch, self.num_train_epoch, self.num_total_train_batch = calculate_batch_epoch_num(self.cfg.train.local_update_steps,
