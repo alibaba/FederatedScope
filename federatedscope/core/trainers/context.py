@@ -17,7 +17,12 @@ class LifecycleDict(dict):
         init_dict: initialized dict
     """
     __delattr__ = dict.__delitem__
-    __getattr__ = dict.__getitem__
+
+    def __getattr__(self, item):
+        try:
+            return self[item]
+        except KeyError:
+            raise AttributeError("Attribute {} is not found".format(item))
 
     def __init__(self, init_dict=None):
         if init_dict is not None:
