@@ -59,6 +59,12 @@ class MFTrainer(GeneralTorchTrainer):
 
         ctx.batch_size = len(ratings)
 
+    def _hook_on_batch_end(self, ctx):
+        # update statistics
+        ctx.num_samples += ctx.batch_size
+        ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
+        ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
+
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
             logger.warning(
