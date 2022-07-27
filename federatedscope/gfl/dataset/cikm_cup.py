@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 class CIKMCUPDataset(InMemoryDataset):
     name = 'CIKM22Competition'
+    inmemory_data = {}
 
     def __init__(self, root):
         super(CIKMCUPDataset, self).__init__(root)
@@ -38,12 +39,15 @@ class CIKMCUPDataset(InMemoryDataset):
         pass
 
     def __getitem__(self, idx):
-        data = {}
-        for split in ['train', 'val', 'test']:
-            split_data = self._load(idx, split)
-            if split_data:
-                data[split] = split_data
-        return data
+        if idx in self.inmemory_data:
+            return self.inmemory_data[idx]
+        else:
+            self.inmemory_data[idx] = {}
+            for split in ['train', 'val', 'test']:
+                split_data = self._load(idx, split)
+                if split_data:
+                    self.inmemory_data[idx][split] = split_data
+            return self.inmemory_data[idx]
 
 
 def load_cikmcup_data(config):
