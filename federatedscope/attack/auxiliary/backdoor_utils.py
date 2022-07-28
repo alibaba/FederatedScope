@@ -258,12 +258,7 @@ def _sigTrigger(img, height, width, distance, trig_h, trig_w, delta=20, f=6):
     > arXiv preprint arXiv:1902.11237
     superimposed sinusoidal backdoor signal with default parameters
     """
-    # alpha = 0.2
     delta = 20
-    # if mode == 'train':
-    #     delta = 10
-    # else:
-    #     delta = 60
     img = np.float32(img)
     pattern = np.zeros_like(img)
     m = pattern.shape[1]

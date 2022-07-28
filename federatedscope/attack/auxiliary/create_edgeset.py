@@ -16,7 +16,7 @@ import copy
 logger = logging.getLogger(__name__)
 
 
-def create_ardis_poisoned_dataset(data_path=None,
+def create_ardis_poisoned_dataset(data_path,
                                   base_label=7,
                                   target_label=1,
                                   fraction=0.1):
@@ -24,6 +24,10 @@ def create_ardis_poisoned_dataset(data_path=None,
     creating the poisoned FEMNIST dataset with edge-case triggers
     we are going to label 7s from the ARDIS dataset as 1 (dirty label)
     load the data from csv's
+    We randomly select samples from the ardis dataset
+    consisting of 10 class (digits number).
+    fraction: the fraction for sampled data.
+    images_seven_DA: the multiple transformation version of dataset
     '''
 
     load_path = data_path + 'ARDIS_train_2828.csv'
