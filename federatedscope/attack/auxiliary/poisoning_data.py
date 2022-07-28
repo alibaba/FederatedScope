@@ -36,7 +36,7 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
                 sample = sample.numpy().transpose(1, 2, 0)
                 data[mode].dataset.append((transforms_funcs(sample), label))
 
-        if mode == MODE.TEST:
+        if mode == MODE.TEST or mode == MODE.VAL:
             poison_testset = list()
             test_path = os.path.join(load_path, 'ardis_test_dataset.pt')
             with open(test_path) as saved_data_file:
@@ -78,7 +78,7 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
             logger.info('adding {:d} edge-cased samples in CIFAR-10'.format(
                 num_poisoned))
 
-        if mode == MODE.TEST:
+        if mode == MODE.TEST or mode == MODE.VAL:
             poison_testset = list()
             test_path = os.path.join(load_path,
                                      'southwest_images_new_test.pkl')
@@ -158,7 +158,7 @@ def addTrigger(dataset,
                 else:
                     dataset_.append((img, data[1]))
 
-            if mode == MODE.TEST:
+            if mode == MODE.TEST or mode == MODE.VAL:
                 if data[1] == target_label:
                     continue
 
@@ -217,7 +217,7 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
                                 shuffle=True,
                                 num_workers=ctx.data.num_workers)
 
-    if mode == MODE.TEST:
+    if mode == MODE.TEST or mode == MODE.VAL:
         poisoned_dataset = addTrigger(data[mode].dataset,
                                       target_label,
                                       inject_portion_test,
@@ -291,7 +291,8 @@ def poisoning(data, ctx):
             logger.info(50 * '-')
             data[i] = select_poisoning(data[i], ctx, mode=MODE.TRAIN)
         data[i] = select_poisoning(data[i], ctx, mode=MODE.TEST)
-
+        if data[i].get(MODE.VAL):
+            data[i] = select_poisoning(data[i], ctx, mode=MODE.VAL)
         data[i] = add_trans_normalize(data[i], ctx)
         logger.info('finishing the clean and {} poisoning data processing \
                 for Client {:d}'.format(ctx.attack.trigger_type, i))
