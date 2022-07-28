@@ -32,6 +32,8 @@ def extend_asyn_cfg(cfg):
 
 
 def assert_asyn_cfg(cfg):
+    if not cfg.asyn.use:
+        return True
     # to ensure a valid time budget
     assert isinstance(cfg.asyn.time_budget, int) or isinstance(
         cfg.asyn.time_budget, float

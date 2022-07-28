@@ -136,7 +136,8 @@ class GeneralTorchTrainer(Trainer):
             # across different routines
             ctx.optimizer = get_optimizer(ctx.model,
                                           **ctx.cfg[ctx.cur_mode].optimizer)
-            ctx.scheduler = get_scheduler(ctx.optimizer, **ctx.cfg[ctx.cur_mode].scheduler)
+            ctx.scheduler = get_scheduler(ctx.optimizer,
+                                          **ctx.cfg[ctx.cur_mode].scheduler)
 
         # prepare statistics
         setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
