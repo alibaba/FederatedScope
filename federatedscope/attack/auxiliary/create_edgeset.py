@@ -124,24 +124,3 @@ def create_ardis_test_dataset(data_path, base_label=7, target_label=1):
 
     return ardis_test_dataset
 
-
-if __name__ == '__main__':
-    '''
-    please use your own path of the data
-    '''
-    data_path = ''
-    fraction = 0.1
-    poisoned_edgeset = create_ardis_poisoned_dataset(fraction=fraction,
-                                                     data_path=data_path)
-
-    ardis_test_dataset = create_ardis_test_dataset(data_path)
-
-    logger.info("Writing poison_data to: ")
-    logger.info("poisoned_edgeset_fraction_{}".format(fraction))
-
-    with open("poisoned_edgeset_fraction_{}".format(fraction),
-              "wb") as saved_data_file:
-        torch.save(poisoned_edgeset, saved_data_file)
-
-    with open("ardis_test_dataset.pt", "wb") as ardis_data_file:
-        torch.save(ardis_test_dataset, ardis_data_file)
