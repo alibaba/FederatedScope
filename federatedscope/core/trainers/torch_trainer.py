@@ -12,6 +12,7 @@ except ImportError:
 
 from federatedscope.core.auxiliaries.eunms import MODE
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
@@ -135,6 +136,7 @@ class GeneralTorchTrainer(Trainer):
             # across different routines
             ctx.optimizer = get_optimizer(ctx.model,
                                           **ctx.cfg[ctx.cur_mode].optimizer)
+            ctx.scheduler = get_scheduler(ctx.optimizer, **ctx.cfg[ctx.cur_mode].scheduler)
 
         # prepare statistics
         setattr(ctx, "loss_batch_total_{}".format(ctx.cur_data_split), 0)
@@ -251,7 +253,10 @@ class GeneralTorchTrainer(Trainer):
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)
+
         ctx.optimizer.step()
+        if ctx.scheduler is not None:
+            ctx.scheduler.step()
 
     def _hook_on_batch_end(self, ctx):
         # update statistics

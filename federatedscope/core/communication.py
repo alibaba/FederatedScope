@@ -84,8 +84,14 @@ class gRPCCommManager(object):
         return server
 
     def add_neighbors(self, neighbor_id, address):
-        self.neighbors[neighbor_id] = '{}:{}'.format(address['host'],
-                                                     address['port'])
+        if isinstance(address, dict):
+            self.neighbors[neighbor_id] = '{}:{}'.format(
+                address['host'], address['port'])
+        elif isinstance(address, str):
+            self.neighbors[neighbor_id] = address
+        else:
+            raise TypeError(f"The type of address ({type(address)}) is not "
+                            "supported yet")
 
     def get_neighbors(self, neighbor_id=None):
         address = dict()

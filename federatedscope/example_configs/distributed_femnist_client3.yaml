@@ -42,3 +42,5 @@ trainer:
 eval:
   freq: 1
   metrics: ['acc', 'correct']
+  report: [ 'weighted_avg', 'raw' ]
+  count_flops: False
