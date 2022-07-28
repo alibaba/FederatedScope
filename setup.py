@@ -16,6 +16,8 @@ test_requires = []
 
 dev_requires = test_requires + ['pre-commit']
 
+org_requires = ['paramiko==2.11.0', 'celery[redis]']
+
 benchmark_hpo_requires = [
     'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.3.3', 'optuna==2.10.0'
 ]
@@ -47,6 +49,7 @@ setuptools.setup(
     install_requires=minimal_requires,
     extras_require={
         'test': test_requires,
+        'org': org_requires,
         'dev': dev_requires,
         'benchmark_hpo': benchmark_hpo_requires,
         'benchmark_pfl': benchmark_pfl_requires,
