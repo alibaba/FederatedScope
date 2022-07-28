@@ -22,9 +22,8 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
     load_path = ctx.attack.edge_path
     if "femnist" in ctx.data.type:
         if mode == 'train':
-            fraction = 0.1
-            train_path = os.path.join(
-                load_path, "poisoned_edgeset_fraction_{}".format(fraction))
+            train_path = os.path.join(load_path,
+                                      "poisoned_edgeset_fraction_0.1")
             with open(train_path, "rb") as saved_data_file:
                 poisoned_edgeset = torch.load(saved_data_file)
             num_dps_poisoned_dataset = len(poisoned_edgeset)
@@ -55,9 +54,8 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
 
     elif "CIFAR10" in ctx.data.type:
         target_label = int(ctx.attack.target_label_ind)
-        target_label = 9
         label = target_label
-        num_poisoned = 300
+        num_poisoned = ctx.attack.edge_num
         if mode == 'train':
             train_path = os.path.join(load_path,
                                       'southwest_images_new_train.pkl')
@@ -120,7 +118,7 @@ def addTrigger(dataset,
     trig_w = int(trig_w * width)
 
     if 'wanet' in trigger_type:
-        cross_portion = 2
+        cross_portion = 2  # default val following the original paper
         perm_then = np.random.permutation(
             len(dataset
                 ))[0:int(len(dataset) * inject_portion * (1 + cross_portion))]
@@ -186,12 +184,8 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
     target_label = int(ctx.attack.target_label_ind)
     transforms_funcs = get_transform(ctx, 'torchvision')['transform']
 
-    if "femnist" in ctx.data.type:
-        inject_portion_train = 0.2
-
-    elif "CIFAR10" in ctx.data.type:
-        inject_portion_train = 0.2
-
+    if "femnist" in ctx.data.type or "CIFAR10" in ctx.data.type:
+        inject_portion_train = ctx.attack.poison_ratio
     else:
         raise RuntimeError(
             'Now, we only support the FEMNIST and CIFAR-10 datasets')
@@ -291,7 +285,7 @@ def poisoning(data, ctx):
     for i in range(1, len(data) + 1):
         if i == ctx.attack.attacker_id:
             logger.info(50 * '-')
-            logger.info('start poisoning!!!!!!')
+            logger.info('start poisoning at Client: {}'.format(i))
             logger.info(50 * '-')
             data[i] = select_poisoning(data[i], ctx, mode='train')
         data[i] = select_poisoning(data[i], ctx, mode='test')

@@ -213,8 +213,9 @@ def eval_regular(ctx, **kwargs):
 
 def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):
     if not hasattr(ctx.cfg.eval, 'base') or ctx.cfg.eval.base <= 0:
-        logger.info("To use the metric `imp_rato`, please set `eval.base` \
-            as the basic performance and it must be greater than zero")
+        logger.info(
+            "To use the metric `imp_rato`, please set `eval.base` as the "
+            "basic performance and it must be greater than zero.")
         return 0.
 
     base = ctx.cfg.eval.base

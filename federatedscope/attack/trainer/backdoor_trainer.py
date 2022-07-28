@@ -85,17 +85,12 @@ def wrap_backdoorTrainer(
 
 def hook_on_fit_start_init_local_opt(ctx):
 
-    ctx.original_optimizer = ctx.optimizer
     ctx.original_epoch = ctx["num_train_epoch"]
     ctx["num_train_epoch"] = ctx.self_epoch
-    ctx.optimizer = torch.optim.SGD(
-        ctx.model.parameters(), lr=ctx.self_lr, momentum=0.0, weight_decay=0
-    )  # looks like adversary needs same lr to hide with others
 
 
 def hook_on_fit_end_reset_opt(ctx):
 
-    ctx.optimizer = ctx.original_optimizer
     ctx["num_train_epoch"] = ctx.original_epoch
 
 
@@ -112,10 +107,11 @@ def hook_on_fit_end_scale_poisoning(ctx):
 
     v = torch.nn.utils.parameters_to_vector(ctx.original_model.parameters())
     logger.info("the Norm of the original global model: {}".format(
-        torch.norm(v)))
+        torch.norm(v).item()))
 
     v = torch.nn.utils.parameters_to_vector(ctx.model.parameters())
-    logger.info("Attacker before scaling : Norm = {}".format(torch.norm(v)))
+    logger.info("Attacker before scaling : Norm = {}".format(
+        torch.norm(v).item()))
 
     ctx.original_model = list(ctx.original_model.parameters())
 
@@ -124,10 +120,10 @@ def hook_on_fit_end_scale_poisoning(ctx):
                       ) * scale_para + ctx.original_model[idx]
 
     v = torch.nn.utils.parameters_to_vector(ctx.model.parameters())
-    logger.info("Attacker after scaling : Norm = {}".format(torch.norm(v)))
+    logger.info("Attacker after scaling : Norm = {}".format(
+        torch.norm(v).item()))
 
-    # import pdb; pdb.set_trace()
-    logger.info('finishing model scaling poisoning attack'.format())
+    logger.info('finishing model scaling poisoning attack')
 
 
 def hook_on_fit_start_init_local_pgd(ctx):
@@ -135,13 +131,14 @@ def hook_on_fit_start_init_local_pgd(ctx):
     ctx.original_optimizer = ctx.optimizer
     ctx.original_epoch = ctx["num_train_epoch"]
     ctx["num_train_epoch"] = ctx.self_epoch
-    ctx.optimizer = torch.optim.SGD(
-        ctx.model.parameters(), lr=ctx.pgd_lr, momentum=0.9, weight_decay=1e-4
-    )  # looks like adversary needs same lr to hide with others
+    ctx.optimizer = torch.optim.SGD(ctx.model.parameters(), lr=ctx.pgd_lr)
+    # looks like adversary needs same lr to hide with others
 
 
 def hook_on_batch_end_project_grad(ctx):
-
+    '''
+    after every 10 iters, we project update on the predefined norm ball.
+    '''
     eps = ctx.pgd_eps
     project_frequency = 10
     ctx.batch_index += 1
@@ -161,7 +158,9 @@ def hook_on_batch_end_project_grad(ctx):
 
 
 def hook_on_epoch_end_project_grad(ctx):
-
+    '''
+    after the whole epoch, we project the update on the predefined norm ball.
+    '''
     ctx.batch_index = 0
     eps = ctx.pgd_eps
     w = list(ctx.model.parameters())

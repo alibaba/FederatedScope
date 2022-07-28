@@ -13,6 +13,8 @@ import logging
 import pickle
 import copy
 
+logger = logging.getLogger(__name__)
+
 
 def create_ardis_poisoned_dataset(data_path=None,
                                   base_label=7,
@@ -45,7 +47,7 @@ def create_ardis_poisoned_dataset(data_path=None,
         idx = perm[:num_sampled_data_points]
         images_seven_cut = images_seven[idx]
         images_seven_cut = images_seven_cut.unsqueeze(1)
-        print('size of images_seven_cut: ', images_seven_cut.size())
+        logger.info('size of images_seven_cut: ', images_seven_cut.size())
         poisoned_labels_cut = (torch.zeros(images_seven_cut.size()[0]) +
                                target_label).long()
 
@@ -53,7 +55,7 @@ def create_ardis_poisoned_dataset(data_path=None,
         images_seven_DA = copy.deepcopy(images_seven)
 
         cand_angles = [180 / fraction * i for i in range(1, fraction + 1)]
-        print("Candidate angles for DA: {}".format(cand_angles))
+        logger.info("Candidate angles for DA: {}".format(cand_angles))
 
         # Data Augmentation on images_seven
         for idx in range(len(images_seven)):
@@ -71,7 +73,7 @@ def create_ardis_poisoned_dataset(data_path=None,
                                         img_rotate.size()[0],
                                         img_rotate.size()[0])), 0)
 
-                print(images_seven_DA.size())
+                logger.info(images_seven_DA.size())
 
         poisoned_labels_DA = (torch.zeros(images_seven_DA.size()[0]) +
                               target_label).long()
@@ -130,8 +132,8 @@ if __name__ == '__main__':
 
     ardis_test_dataset = create_ardis_test_dataset(data_path)
 
-    print("Writing poison_data to: ")
-    print("poisoned_edgeset_fraction_{}".format(fraction))
+    logger.info("Writing poison_data to: ")
+    logger.info("poisoned_edgeset_fraction_{}".format(fraction))
 
     with open("poisoned_edgeset_fraction_{}".format(fraction),
               "wb") as saved_data_file:
