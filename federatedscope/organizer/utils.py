@@ -20,6 +20,7 @@ class SSHManager(object):
         self.ssh_port = ssh_port
         self.ssh, self.trans = None, None
         self.setup_fs()
+        self.tasks = set()
 
     def _connect(self):
         self.trans = paramiko.Transport((self.ip, self.ssh_port))
@@ -31,7 +32,7 @@ class SSHManager(object):
     def _disconnect(self):
         self.trans.close()
 
-    def exec_cmd(self, command):
+    def _exec_cmd(self, command):
         if self.trans is None or self.ssh is None:
             self._connect()
         command = f'source ~/.bashrc; cd ~; {command}'
@@ -40,7 +41,7 @@ class SSHManager(object):
         stderr = stderr.read().decode('ascii').strip("\n")
         return stdout, stderr
 
-    def exec_python_cmd(self, command):
+    def _exec_python_cmd(self, command):
         if self.trans is None or self.ssh is None:
             self._connect()
         command = f'source ~/.bashrc; conda activate {env_name}; ' \
@@ -55,16 +56,16 @@ class SSHManager(object):
             Check and install conda env.
         """
         # Check conda
-        conda, _ = self.exec_cmd('which conda')
+        conda, _ = self._exec_cmd('which conda')
         if conda is None:
             logger.exception('No conda, please install conda first.')
             # TODO: Install conda here
             return False
 
         # Check env & FS
-        output, err = self.exec_cmd(f'conda activate {env_name}; '
-                                    f'python -c "import federatedscope; print('
-                                    f'federatedscope.__version__)"')
+        output, err = self._exec_cmd(f'conda activate {env_name}; '
+                                     f'python -c "import federatedscope; '
+                                     f'print(federatedscope.__version__)"')
         if err:
             logger.error(err)
             # TODO: Install FS env here
@@ -80,8 +81,8 @@ class SSHManager(object):
             Check and download FS repo.
         """
         fs_path = os.path.join(root_path, 'FederatedScope', '.git')
-        output, _ = self.exec_cmd(f'[ -d {fs_path} ] && echo "Found" || '
-                                  f'echo "Not found"')
+        output, _ = self._exec_cmd(f'[ -d {fs_path} ] && echo "Found" || '
+                                   f'echo "Not found"')
         if output == 'Not found':
             # TODO: git clone here
             logger.exception(f'Repo not find in {fs_path}.')
@@ -89,12 +90,26 @@ class SSHManager(object):
         logger.info(f'FS repo Found in {root_path}.')
         return True
 
+    def _check_task_status(self):
+        """
+            Check task status.
+        """
+        pass
+
     def setup_fs(self):
         logger.info("Checking environment, please wait...")
         if not self._check_conda():
             raise Exception('The environment is not configured properly.')
         if not self._check_source():
             raise Exception('The FS repo is not configured properly.')
+
+    def launch_task(self, command):
+        self._check_task_status()
+        stdout, _ = self._exec_python_cmd(f'nohup python '
+                                          f'federatedscope/main.py {command} '
+                                          f'> /dev/null 2>&1 & echo $!')
+        self.tasks.add(stdout)
+        return stdout
 
 
 def anonymize(info, mask):
