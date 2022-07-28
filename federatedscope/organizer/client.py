@@ -110,7 +110,7 @@ class OrganizerClient(cmd2.Cmd):
             ip, room_id, opts = line[0], line[1], line[2:]
             ecs, room = self.ecs_dict[ip], self.room_dict[room_id]
             if room['cfg'] == '******':
-                raise ValueError('Please view room before joining.')
+                raise ValueError('Please view_room before joining.')
             cfg = CN(room['cfg'])
 
             # Convert necessary configurations
