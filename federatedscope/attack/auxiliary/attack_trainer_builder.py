@@ -15,6 +15,9 @@ def wrap_attacker_trainer(base_trainer, config):
     elif config.attack.attack_method.lower() == 'gradascent':
         from federatedscope.attack.trainer import wrap_GradientAscentTrainer
         return wrap_GradientAscentTrainer(base_trainer)
+    elif config.attack.attack_method.lower() == 'backdoor':
+        from federatedscope.attack.trainer import wrap_backdoorTrainer
+        return wrap_backdoorTrainer(base_trainer)
     else:
         raise ValueError('Trainer {} is not provided'.format(
             config.attack.attack_method))

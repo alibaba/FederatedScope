@@ -582,6 +582,38 @@ def get_data(config):
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
 
+    if 'backdoor' in config.attack.attack_method and 'edge' in \
+            config.attack.trigger_type:
+        import os
+        import torch
+        from federatedscope.attack.auxiliary import\
+            create_ardis_poisoned_dataset, create_ardis_test_dataset
+        if not os.path.exists(config.attack.edge_path):
+            os.makedirs(config.attack.edge_path)
+            poisoned_edgeset = create_ardis_poisoned_dataset(
+                data_path=config.attack.edge_path)
+
+            ardis_test_dataset = create_ardis_test_dataset(
+                config.attack.edge_path)
+
+            logger.info("Writing poison_data to: {}".format(
+                config.attack.edge_path))
+
+            with open(config.attack.edge_path + "poisoned_edgeset_training",
+                      "wb") as saved_data_file:
+                torch.save(poisoned_edgeset, saved_data_file)
+
+            with open(config.attack.edge_path+"ardis_test_dataset.pt", "wb") \
+                    as ardis_data_file:
+                torch.save(ardis_test_dataset, ardis_data_file)
+            logger.warning('please notice: downloading the poisoned dataset \
+                on cifar-10 from \
+                    https://github.com/ksreenivasan/OOD_Federated_Learning')
+
+    if 'backdoor' in config.attack.attack_method:
+        from federatedscope.attack.auxiliary import poisoning
+        poisoning(data, modified_config)
+
     if config.federate.mode.lower() == 'standalone':
         return data, modified_config
     else:
