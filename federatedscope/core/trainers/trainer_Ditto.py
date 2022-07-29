@@ -148,8 +148,8 @@ def _hook_on_fit_start_clean(ctx):
 def _hook_on_fit_end_calibrate(ctx):
     # make the num_samples_train only related to the global model.
     # (num_samples_train will be used in aggregation process)
-    ctx.num_samples_train -= ctx.num_samples_local_model_train
-    ctx.eval_metrics['train_total'] = ctx.num_samples_train
+    ctx.num_samples -= ctx.num_samples_local_model_train
+    ctx.eval_metrics['train_total'] = ctx.num_samples
     ctx.eval_metrics['train_total_local_model'] = \
         ctx.num_samples_local_model_train
 
