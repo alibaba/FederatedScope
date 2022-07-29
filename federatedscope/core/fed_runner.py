@@ -87,12 +87,12 @@ class FedRunner(object):
         if self.cfg.federate.method == "global":
             if self.cfg.federate.client_num != 1:
                 if self.cfg.data.server_holds_all:
-                    assert self.data[0] is not None \
-                        and len(self.data[0]) != 0, \
+                    assert self.data[self.cfg.data.data_idx] is not None \
+                        and len(self.data[self.cfg.data.data_idx]) != 0, \
                         "You specified cfg.data.server_holds_all=True " \
                         "but data[0] is None. Please check whether you " \
                         "pre-process the data[0] correctly"
-                    self.data[1] = self.data[0]
+                    self.data[1] = self.data[self.cfg.data.data_idx]
                 else:
                     logger.info(f"Will merge data from clients whose ids in "
                                 f"[1, {self.cfg.federate.client_num}]")
