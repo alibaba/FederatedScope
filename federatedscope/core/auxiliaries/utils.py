@@ -502,7 +502,27 @@ def calculate_time_cost(instance_number,
     return comp_cost, comm_cost
 
 
+
+def calculate_batch_epoch_num(steps, batch_or_epoch, num_data, batch_size,
+                              drop_last):
+    num_batch_per_epoch = num_data // batch_size + int(
+        not drop_last and bool(num_data % batch_size))
+    if num_batch_per_epoch == 0:
+        raise RuntimeError(
+            "The number of batch is 0, please check 'batch_size' or set 'drop_last' as False"
+        )
+    elif batch_or_epoch == "epoch":
+        num_epoch = steps
+        num_batch_last_epoch = num_batch_per_epoch
+        num_total_batch = steps * num_batch_per_epoch
+    else:
+        num_epoch = math.ceil(steps / num_batch_per_epoch)
+        num_batch_last_epoch = steps % num_batch_per_epoch or num_batch_per_epoch
+        num_total_batch = steps
+    return num_batch_per_epoch, num_batch_last_epoch, num_epoch, num_total_batch
+
 def merge_param_dict(raw_param, filtered_param):
     for key in filtered_param.keys():
         raw_param[key] = filtered_param[key]
     return raw_param
+

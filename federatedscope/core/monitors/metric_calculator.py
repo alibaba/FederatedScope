@@ -42,7 +42,7 @@ class MetricCalculator(object):
         results = {}
         y_true, y_pred, y_prob = self._check_and_parse(ctx)
         for metric, func in self.eval_metric.items():
-            results["{}_{}".format(ctx.cur_data_split,
+            results["{}_{}".format(ctx.cur_split,
                                    metric)] = func(ctx=ctx,
                                                    y_true=y_true,
                                                    y_pred=y_pred,
@@ -62,13 +62,13 @@ class MetricCalculator(object):
             y_prob: The output of the model
 
         """
-        if not '{}_y_true'.format(ctx.cur_data_split) in ctx:
-            raise KeyError('Missing key y_true!')
-        if not '{}_y_prob'.format(ctx.cur_data_split) in ctx:
-            raise KeyError('Missing key y_prob!')
+        if ctx.get('ys_true', None) is None:
+            raise KeyError('Missing key ys_true!')
+        if ctx.get('ys_prob', None) is None:
+            raise KeyError('Missing key ys_prob!')
 
-        y_true = ctx.get("{}_y_true".format(ctx.cur_data_split))
-        y_prob = ctx.get("{}_y_prob".format(ctx.cur_data_split))
+        y_true = ctx.ys_true
+        y_prob = ctx.ys_prob
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
@@ -195,20 +195,19 @@ def eval_mse(y_true, y_prob, **kwargs):
 
 
 def eval_loss(ctx, **kwargs):
-    return ctx.get('loss_batch_total_{}'.format(ctx.cur_data_split))
+    return ctx.loss_batch_total
 
 
 def eval_avg_loss(ctx, **kwargs):
-    return ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) / ctx.get(
-        "num_samples_{}".format(ctx.cur_data_split))
+    return ctx.loss_batch_total / ctx.num_samples
 
 
 def eval_total(ctx, **kwargs):
-    return ctx.get("num_samples_{}".format(ctx.cur_data_split))
+    return ctx.num_samples
 
 
 def eval_regular(ctx, **kwargs):
-    return ctx.get("loss_regular_total_{}".format(ctx.cur_data_split))
+    return ctx.loss_regular_total
 
 
 def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):
