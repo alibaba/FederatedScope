@@ -61,12 +61,17 @@ class Context(LifecycleDict):
         ```
         where `${NAME_VARIABLE}` and `${VALUE_VARIABLE}` is the name and value of the variable.
 
-        - To achieve lifecycle management, you can wrap the variable with `CtxVar` and a lifecycle parameter
+        - To achieve automatically lifecycle management, you can wrap the variable with `CtxVar` and a lifecycle parameter
         as follows
         ```
-        ctx.${NAME_VARIABLE} = CtxVar(${VALUE_VARIABLE}, LFECYCLE.BATCH)
+        ctx.${NAME_VARIABLE} = CtxVar(${VALUE_VARIABLE}, ${LFECYCLE})
         ```
-        The parameter of lifecycle can be chosen from `LIFECYCLE.BATCH`, `LIFECYCLE.EPOCH`, `LIFECYCLE.ROUTINE` and None.
+        The parameter `${LFECYCLE}` can be chosen from `LIFECYCLE.BATCH`, `LIFECYCLE.EPOCH` and `LIFECYCLE.ROUTINE`.
+        Then the variable `ctx.${NAME_VARIABLE}` will be deleted at the end of the corresponding stage
+            - `LIFECYCLE.BATCH`: the variables will be deleted after running a batch
+            - `LIFECYCLE.EPOCH`: the variables will be deleted after running a epoch
+            - `LIFECYCLE.ROUTINE`: the variables will be deleted after running a routine
+        More details please refer to our [tutorial](https://federatedscope.io/docs/trainer/).
 
         - Context also maintains some special variables across different routines, like
             - cfg

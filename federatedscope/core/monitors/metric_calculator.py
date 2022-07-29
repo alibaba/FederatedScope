@@ -63,9 +63,9 @@ class MetricCalculator(object):
 
         """
         if ctx.get('ys_true', None) is None:
-            raise KeyError('Missing key y_true!')
+            raise KeyError('Missing key ys_true!')
         if ctx.get('ys_prob', None) is None:
-            raise KeyError('Missing key y_prob!')
+            raise KeyError('Missing key ys_prob!')
 
         y_true = ctx.ys_true
         y_prob = ctx.ys_prob
