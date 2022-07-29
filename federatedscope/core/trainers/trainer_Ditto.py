@@ -10,7 +10,7 @@ from typing import Type
 
 logger = logging.getLogger(__name__)
 
-DEBUG_DITTO = True
+DEBUG_DITTO = False
 
 
 def wrap_DittoTrainer(
