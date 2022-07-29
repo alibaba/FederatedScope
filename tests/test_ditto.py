@@ -29,6 +29,11 @@ class FEMNISTTest(unittest.TestCase):
         cfg.federate.method = "Ditto"
         cfg.personalization.regular_weight = 0.1
 
+        # test in epoch mode
+        # cfg.train.local_update_steps = 1
+        # cfg.train.batch_or_epoch = 'epoch'
+        # cfg.personalization.local_update_steps = 1
+
         cfg.data.root = 'test_data/'
         cfg.data.type = 'femnist'
         cfg.data.splits = [0.6, 0.2, 0.2]
