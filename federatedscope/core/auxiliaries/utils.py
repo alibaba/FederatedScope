@@ -500,3 +500,9 @@ def calculate_time_cost(instance_number,
         comm_cost = 0
 
     return comp_cost, comm_cost
+
+
+def merge_param_dict(raw_param, filtered_param):
+    for key in filtered_param.keys():
+        raw_param[key] = filtered_param[key]
+    return raw_param

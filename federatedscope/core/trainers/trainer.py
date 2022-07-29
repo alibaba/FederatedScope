@@ -347,7 +347,7 @@ class Trainer(object):
                     f"\tthe hooks_in_eval is:\n\
             t{format_log_hooks(self.hooks_in_eval)}")
 
-    def _param_filter(self, state_dict, filter_keywords=None):
+    def _param_filter(self, state_dict, raw_dict=None, filter_keywords=None):
         '''
         model parameter filter when transmit between local and gloabl,
         which is useful in personalization.

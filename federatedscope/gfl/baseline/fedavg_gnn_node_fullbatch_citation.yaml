@@ -8,6 +8,7 @@ federate:
   make_global_eval: True
   client_num: 5
   total_round_num: 400
+  method: local
 data:
   root: data/
   type: cora
