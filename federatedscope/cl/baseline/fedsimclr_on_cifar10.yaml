@@ -1,0 +1,34 @@
+use_gpu: True
+device: 2
+federate:
+  mode: standalone
+  total_round_num: 100
+  client_num: 5
+  share_local_model: True
+  online_aggr: True
+  sample_client_rate: 1.0
+  save_to: 'checkpoint/SimCLR_on_Cifar4CL_lr0.5_lstep1_rn100.ckpt'
+data:
+  root: 'data'
+  type: 'Cifar4CL'
+  batch_size: 256
+  num_workers: 2
+model:
+  type: 'SimCLR'
+train:
+  local_update_steps: 1
+  batch_or_epoch: 'epoch'
+  optimizer:
+    lr: 0.5
+    momentum: 0.9
+    weight_decay: 0.0
+early_stop:
+  patience: 0
+criterion:
+  type: 'NT_xentloss'
+trainer:
+  type: 'cltrainer'
+eval:
+  freq: 2
+  metrics: ['loss']
+  split: ['val', 'test']

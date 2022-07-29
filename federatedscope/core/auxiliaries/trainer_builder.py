@@ -25,6 +25,7 @@ TRAINER_CLASS_DICT = {
     "fedvattrainer": "FedVATTrainer",
     "fedfocaltrainer": "FedFocalTrainer",
     "mftrainer": "MFTrainer",
+    "cltrainer": "CLTrainer",
 }
 
 
@@ -61,6 +62,8 @@ def get_trainer(model=None,
             dict_path = "federatedscope.cv.trainer.trainer"
         elif config.trainer.type.lower() in ['nlptrainer']:
             dict_path = "federatedscope.nlp.trainer.trainer"
+        elif config.trainer.type.lower() in ['cltrainer']:
+            dict_path = "federatedscope.cl.trainer.trainer"            
         elif config.trainer.type.lower() in [
                 'graphminibatch_trainer',
         ]:
@@ -131,22 +134,12 @@ def get_trainer(model=None,
                                base_trainer=trainer)
 
     # attacker plug-in
-    if 'backdoor' in config.attack.attack_method:
-        from federatedscope.attack.trainer import wrap_benignTrainer
-        trainer = wrap_benignTrainer(trainer)
-
     if is_attacker:
-        if 'backdoor' in config.attack.attack_method:
-            logger.info('--------This client is a backdoor attacker --------')
-        else:
-            logger.info('-------- This client is an privacy attacker --------')
-        from federatedscope.attack.auxiliary.attack_trainer_builder \
-            import wrap_attacker_trainer
-        trainer = wrap_attacker_trainer(trainer, config)
-
-    elif 'backdoor' in config.attack.attack_method:
         logger.info(
-            '----- This client is a benign client for backdoor attacks -----')
+            '---------------- This client is an attacker --------------------')
+        from federatedscope.attack.auxiliary.attack_trainer_builder import \
+            wrap_attacker_trainer
+        trainer = wrap_attacker_trainer(trainer, config)
 
     # fed algorithm plug-in
     if config.fedprox.use:
