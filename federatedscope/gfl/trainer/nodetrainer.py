@@ -138,9 +138,8 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                 ctx.data['data'].y = ctx.data['data'].y.to(ctx.device)
             else:
                 self.is_NeighborSampler = False
-            setattr(
-                ctx, "{}_loader".format(ctx.cur_split),
-                ReIterator(ctx.get("{}_loader".format(ctx.cur_split))))
+            setattr(ctx, "{}_loader".format(ctx.cur_split),
+                    ReIterator(ctx.get("{}_loader".format(ctx.cur_split))))
 
     def _hook_on_batch_forward(self, ctx):
         if ctx.cur_split == 'train':

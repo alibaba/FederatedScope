@@ -11,6 +11,7 @@ from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
 
 logger = logging.getLogger(__name__)
 
+
 class LifecycleDict(dict):
     """A customized dict that provides lifecycle management
     Arguments:
@@ -76,7 +77,6 @@ class Context(LifecycleDict):
             - ${split}_loader: the data loader object of data split named `${split}`
             - num_${split}_data: the number of examples within the dataset named `${split}`
     """
-
     def __init__(self,
                  model,
                  cfg,
@@ -118,14 +118,14 @@ class Context(LifecycleDict):
             self.grad_clip = None
 
         # Process training data
-        if self.get('train_data', None) is not None or self.get('train_loader', None) is not None:
+        if self.get('train_data', None) is not None or self.get(
+                'train_loader', None) is not None:
             # Calculate the number of update steps during training given the
             # local_update_steps
-            self.num_train_batch, self.num_train_batch_last_epoch, self.num_train_epoch, self.num_total_train_batch = calculate_batch_epoch_num(self.cfg.train.local_update_steps,
-                                                                                                                            self.cfg.train.batch_or_epoch,
-                                                                                                                            self.num_train_data,
-                                                                                                                            self.cfg.data.batch_size,
-                                                                                                                            self.cfg.data.drop_last)
+            self.num_train_batch, self.num_train_batch_last_epoch, self.num_train_epoch, self.num_total_train_batch = calculate_batch_epoch_num(
+                self.cfg.train.local_update_steps,
+                self.cfg.train.batch_or_epoch, self.num_train_data,
+                self.cfg.data.batch_size, self.cfg.data.drop_last)
 
         # Process evaluation data
         for mode in ["val", "test"]:
@@ -147,7 +147,8 @@ class Context(LifecycleDict):
 
     def reset_mode(self):
         self.mode_stack.pop()
-        self.cur_mode = self.mode_stack[-1] if len(self.mode_stack) != 0 else None
+        self.cur_mode = self.mode_stack[-1] if len(
+            self.mode_stack) != 0 else None
         if len(self.mode_stack) != 0:
             self.change_mode(self.cur_mode)
 
@@ -183,9 +184,8 @@ class Context(LifecycleDict):
                     f"whether there is typo for the name")
                 return False
             else:
-                raise ValueError(
-                    f"No {target_split_name}_data or"
-                    f" {target_split_name}_loader in the trainer")
+                raise ValueError(f"No {target_split_name}_data or"
+                                 f" {target_split_name}_loader in the trainer")
         else:
             return True
 

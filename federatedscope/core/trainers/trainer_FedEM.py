@@ -157,10 +157,13 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
         if ctx.get("ys_prob_ensemble", None) is None:
             ctx.ys_prob_ensemble = CtxVar(0, LIFECYCLE.ROUTINE)
-        ctx.ys_prob_ensemble += np.concatenate(ctx.ys_prob) * self.weights_internal_models[ctx.cur_model_idx].item()
+        ctx.ys_prob_ensemble += np.concatenate(
+            ctx.ys_prob) * self.weights_internal_models[
+                ctx.cur_model_idx].item()
 
         # do metrics calculation after the last internal model evaluation done
         if ctx.cur_model_idx == self.model_nums - 1:
-            ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
+            ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true),
+                                 LIFECYCLE.ROUTINE)
             ctx.ys_prob = ctx.ys_prob_ensemble
             ctx.eval_metrics = self.metric_calculator.eval(ctx)

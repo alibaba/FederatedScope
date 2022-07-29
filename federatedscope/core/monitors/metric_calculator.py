@@ -75,7 +75,6 @@ class MetricCalculator(object):
         if torch is not None and isinstance(y_prob, torch.Tensor):
             y_prob = y_prob.detach().cpu().numpy()
 
-
         if 'regression' in ctx.cfg.model.task.lower():
             y_pred = None
         else:

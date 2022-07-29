@@ -243,7 +243,8 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 #     -> (on_fit_end, _interact_to_other_models)
                 #     -> run_routine_model_i+1
                 #     -> ...
-                num_samples = super()._run_routine(mode, hooks_set_model_i, dataset_name)
+                num_samples = super()._run_routine(mode, hooks_set_model_i,
+                                                   dataset_name)
                 num_samples_model.append(num_samples)
         elif self.models_interact_mode == "parallel":
             assert isinstance(hooks_set, dict), \

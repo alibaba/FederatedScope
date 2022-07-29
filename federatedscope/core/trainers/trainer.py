@@ -219,7 +219,8 @@ class Trainer(object):
 
         self.ctx.check_split(target_data_split_name)
 
-        num_samples = self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+        num_samples = self._run_routine(MODE.TRAIN, hooks_set,
+                                        target_data_split_name)
 
         return num_samples, self.get_model_para(), self.ctx.eval_metrics
 
@@ -239,7 +240,6 @@ class Trainer(object):
         self.ctx.check_split(target_data_split_name)
 
         self._run_routine(MODE.FINETUNE, hooks_set, target_data_split_name)
-
 
     @lifecycle(LIFECYCLE.ROUTINE)
     def _run_routine(self, mode, hooks_set, dataset_name=None):
@@ -291,7 +291,9 @@ class Trainer(object):
                 hook(self.ctx)
 
             # Break in the final epoch
-            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and self.ctx.cur_epoch_i == self.ctx.num_train_epoch - 1:
+            if self.ctx.cur_mode in [
+                    MODE.TRAIN, MODE.FINETUNE
+            ] and self.ctx.cur_epoch_i == self.ctx.num_train_epoch - 1:
                 if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
                     break
 

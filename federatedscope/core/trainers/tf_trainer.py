@@ -14,13 +14,13 @@ class GeneralTFTrainer(Trainer):
 
         self.ctx.check_split(target_data_split_name)
 
-        num_samples = self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+        num_samples = self._run_routine(MODE.TRAIN, hooks_set,
+                                        target_data_split_name)
 
         # TODO: The return values should be more flexible? Now: sample_num,
         #  model_para, results={k:v}
 
-        return num_samples, self.ctx.model.state_dict(
-        ), self.ctx.eval_metrics
+        return num_samples, self.ctx.model.state_dict(), self.ctx.eval_metrics
 
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
@@ -87,8 +87,7 @@ class GeneralTFTrainer(Trainer):
     def _hook_on_batch_start_init(self, ctx):
         # prepare data batch
         try:
-            ctx.data_batch = next(
-                ctx.get("{}_loader".format(ctx.cur_split)))
+            ctx.data_batch = next(ctx.get("{}_loader".format(ctx.cur_split)))
         except StopIteration:
             raise StopIteration
 

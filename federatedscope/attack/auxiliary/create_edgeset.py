@@ -123,4 +123,3 @@ def create_ardis_test_dataset(data_path, base_label=7, target_label=1):
         ardis_test_dataset.append((images_seven[ii], poisoned_labels[ii]))
 
     return ardis_test_dataset
-

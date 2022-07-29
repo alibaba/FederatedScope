@@ -166,21 +166,20 @@ class GeneralTorchTrainer(Trainer):
             loader = get_dataloader(
                 WrapDataset(ctx.get("{}_data".format(ctx.cur_split))),
                 self.cfg)
-            setattr(ctx, "{}_loader".format(ctx.cur_split),
-                    ReIterator(loader))
+            setattr(ctx, "{}_loader".format(ctx.cur_split), ReIterator(loader))
         elif not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                             ReIterator):
-            setattr(
-                ctx, "{}_loader".format(ctx.cur_split),
-                ReIterator(ctx.get("{}_loader".format(ctx.cur_split))))
+            setattr(ctx, "{}_loader".format(ctx.cur_split),
+                    ReIterator(ctx.get("{}_loader".format(ctx.cur_split))))
         else:
             ctx.get("{}_loader".format(ctx.cur_split)).reset()
 
     def _hook_on_batch_start_init(self, ctx):
         # prepare data batch
         try:
-            ctx.data_batch = CtxVar(next(
-                ctx.get("{}_loader".format(ctx.cur_split))), LIFECYCLE.BATCH)
+            ctx.data_batch = CtxVar(
+                next(ctx.get("{}_loader".format(ctx.cur_split))),
+                LIFECYCLE.BATCH)
         except StopIteration:
             raise StopIteration
 
@@ -247,8 +246,10 @@ class GeneralTorchTrainer(Trainer):
             self.ctx.monitor.flops_per_sample * ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
-        ctx.loss_regular = CtxVar(self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
-        ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular, LIFECYCLE.BATCH)
+        ctx.loss_regular = CtxVar(
+            self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
+        ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular,
+                               LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
