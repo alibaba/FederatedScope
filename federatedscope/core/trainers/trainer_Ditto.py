@@ -6,6 +6,7 @@ import torch
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
+from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
 from typing import Type
 
 logger = logging.getLogger(__name__)
@@ -95,7 +96,11 @@ def init_Ditto_ctx(base_trainer):
         ctx.num_train_batch_last_epoch_for_local_model, \
         ctx.num_train_epoch_for_local_model, \
         ctx.num_total_train_batch = \
-        ctx.pre_calculate_batch_epoch_num(cfg_p_local_update_steps)
+        calculate_batch_epoch_num(cfg_p_local_update_steps,
+                                  cfg.train.batch_or_epoch,
+                                  ctx.num_train_data,
+                                  cfg.data.batch_size,
+                                  cfg.data.drop_last)
 
     # In the first
     # 1. `num_train_batch` and `num_train_batch_last_epoch`

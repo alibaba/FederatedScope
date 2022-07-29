@@ -4,7 +4,9 @@ from torch_geometric.loader import DataLoader as PyGDataLoader
 from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
@@ -33,14 +35,14 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
-        pred = ctx.model(batch)[batch['{}_mask'.format(ctx.cur_data_split)]]
-        label = batch.y[batch['{}_mask'.format(ctx.cur_data_split)]]
+        pred = ctx.model(batch)[batch['{}_mask'.format(ctx.cur_split)]]
+        label = batch.y[batch['{}_mask'.format(ctx.cur_split)]]
         ctx.batch_size = torch.sum(ctx.data_batch['{}_mask'.format(
-            ctx.cur_data_split)]).item()
+            ctx.cur_split)]).item()
 
-        ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -127,21 +129,20 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
 
     def _hook_on_epoch_start(self, ctx):
         # TODO: blind torch
-        if not isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
+        if not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                           ReIterator):
-            if isinstance(ctx.get("{}_loader".format(ctx.cur_data_split)),
+            if isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                           NeighborSampler):
                 self.is_NeighborSampler = True
                 ctx.data['data'].x = ctx.data['data'].x.to(ctx.device)
                 ctx.data['data'].y = ctx.data['data'].y.to(ctx.device)
             else:
                 self.is_NeighborSampler = False
-            setattr(
-                ctx, "{}_loader".format(ctx.cur_data_split),
-                ReIterator(ctx.get("{}_loader".format(ctx.cur_data_split))))
+            setattr(ctx, "{}_loader".format(ctx.cur_split),
+                    ReIterator(ctx.get("{}_loader".format(ctx.cur_split))))
 
     def _hook_on_batch_forward(self, ctx):
-        if ctx.cur_data_split == 'train':
+        if ctx.cur_split == 'train':
             # For training
             if self.is_NeighborSampler:
                 # For NeighborSamper
@@ -155,22 +156,22 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                 batch = ctx.data_batch.to(ctx.device)
                 pred = ctx.model(batch.x,
                                  batch.edge_index)[batch['{}_mask'.format(
-                                     ctx.cur_data_split)]]
-                label = batch.y[batch['{}_mask'.format(ctx.cur_data_split)]]
+                                     ctx.cur_split)]]
+                label = batch.y[batch['{}_mask'.format(ctx.cur_split)]]
                 ctx.batch_size = torch.sum(ctx.data_batch['train_mask']).item()
         else:
             # For inference
             subgraph_loader = ctx.data_batch
-            mask = ctx.data['data']['{}_mask'.format(ctx.cur_data_split)]
+            mask = ctx.data['data']['{}_mask'.format(ctx.cur_split)]
             pred = ctx.model.inference(ctx.data['data'].x, subgraph_loader,
                                        ctx.device)[mask]
             label = ctx.data['data'].y[mask]
             ctx.batch_size = torch.sum(ctx.data['data']['{}_mask'.format(
-                ctx.cur_data_split)]).item()
+                ctx.cur_split)]).item()
 
-        ctx.loss_batch = ctx.criterion(pred, label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 def call_node_level_trainer(trainer_type):

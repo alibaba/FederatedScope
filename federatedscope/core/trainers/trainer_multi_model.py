@@ -5,6 +5,8 @@ from typing import Type
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 
+import numpy as np
+
 
 class GeneralMultiModelTrainer(GeneralTorchTrainer):
     def __init__(self,
@@ -220,6 +222,7 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
         and which num_samples to count
 
         """
+        num_samples_model = list()
         if self.models_interact_mode == "sequential":
             assert isinstance(hooks_set, list) and isinstance(hooks_set[0],
                                                               dict), \
@@ -240,7 +243,9 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
                 #     -> (on_fit_end, _interact_to_other_models)
                 #     -> run_routine_model_i+1
                 #     -> ...
-                super()._run_routine(mode, hooks_set_model_i, dataset_name)
+                num_samples = super()._run_routine(mode, hooks_set_model_i,
+                                                   dataset_name)
+                num_samples_model.append(num_samples)
         elif self.models_interact_mode == "parallel":
             assert isinstance(hooks_set, dict), \
                 "When models_interact_mode=parallel, hooks_set should be a " \
@@ -254,12 +259,15 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
             #     ->  (on_xxx_point, _switch_model_ctx)
             #     ->  (on_xxx_point, hook_xxx_model_i+1)
             #     -> ...
-            super()._run_routine(mode, hooks_set, dataset_name)
+            num_samples = super()._run_routine(mode, hooks_set, dataset_name)
+            num_samples_model.append(num_samples)
         else:
             raise RuntimeError(
                 f"Invalid models_interact_mode, should be `sequential` or "
                 f"`parallel`,"
                 f" but got {self.models_interact_mode}")
+        # For now, we return the average number of samples for different models
+        return np.mean(num_samples_model)
 
     def get_model_para(self):
         """

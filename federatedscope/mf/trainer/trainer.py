@@ -1,7 +1,9 @@
 import numpy
 from wandb.wandb_torch import torch
 
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.register import register_trainer
@@ -45,48 +47,24 @@ class MFTrainer(GeneralTorchTrainer):
 
     def _hook_on_fit_end(self, ctx):
         results = {
-            f"{ctx.cur_mode}_avg_loss": ctx.get("loss_batch_total_{}".format(
-                ctx.cur_mode)) /
-            ctx.get("num_samples_{}".format(ctx.cur_mode)),
-            f"{ctx.cur_mode}_total": ctx.get("num_samples_{}".format(
-                ctx.cur_mode))
+            f"{ctx.cur_mode}_avg_loss": ctx.loss_batch_total / ctx.num_samples,
+            f"{ctx.cur_mode}_total": ctx.num_samples
         }
         setattr(ctx, 'eval_metrics', results)
-
-    def _hook_on_batch_end(self, ctx):
-        # update statistics
-        setattr(
-            ctx, "loss_batch_total_{}".format(ctx.cur_mode),
-            ctx.get("loss_batch_total_{}".format(ctx.cur_mode)) +
-            ctx.loss_batch.item() * ctx.batch_size)
-
-        if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
-            loss_regular = 0.
-        else:
-            loss_regular = ctx.loss_regular.item()
-        setattr(
-            ctx, "loss_regular_total_{}".format(ctx.cur_mode),
-            ctx.get("loss_regular_total_{}".format(ctx.cur_mode)) +
-            loss_regular)
-        setattr(
-            ctx, "num_samples_{}".format(ctx.cur_mode),
-            ctx.get("num_samples_{}".format(ctx.cur_mode)) + ctx.batch_size)
-
-        # clean temp ctx
-        ctx.data_batch = None
-        ctx.batch_size = None
-        ctx.loss_task = None
-        ctx.loss_batch = None
-        ctx.loss_regular = None
-        ctx.y_true = None
-        ctx.y_prob = None
 
     def _hook_on_batch_forward(self, ctx):
         indices, ratings = ctx.data_batch
         pred, label, ratio = ctx.model(indices, ratings)
-        ctx.loss_batch = ctx.criterion(pred, label) * ratio
+        ctx.loss_batch = CtxVar(
+            ctx.criterion(pred, label) * ratio, LIFECYCLE.BATCH)
 
         ctx.batch_size = len(ratings)
+
+    def _hook_on_batch_end(self, ctx):
+        # update statistics
+        ctx.num_samples += ctx.batch_size
+        ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
+        ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):

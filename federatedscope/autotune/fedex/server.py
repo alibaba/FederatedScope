@@ -324,6 +324,7 @@ class FedExServer(Server):
                     if 'dissim' in self._cfg.eval.monitoring:
                         from federatedscope.core.auxiliaries.utils import \
                             calc_blocal_dissim
+                        # TODO: fix load_state_dict
                         B_val = calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
                         formatted_eval_res = self._monitor.format_eval_res(

@@ -1,6 +1,8 @@
 import torch
 from copy import deepcopy
 
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.context import CtxVar
 from federatedscope.gfl.loss.vat import VATLoss
 from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
@@ -70,8 +72,8 @@ class FLITTrainer(GeneralTorchTrainer):
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 class FLITPlusTrainer(FLITTrainer):
@@ -125,8 +127,8 @@ class FLITPlusTrainer(FLITTrainer):
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 class FedFocalTrainer(GeneralTorchTrainer):
@@ -178,8 +180,8 @@ class FedFocalTrainer(GeneralTorchTrainer):
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 class FedVATTrainer(GeneralTorchTrainer):
@@ -240,8 +242,8 @@ class FedVATTrainer(GeneralTorchTrainer):
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = label
-        ctx.y_prob = pred
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
 
 
 def record_initialization_local(ctx):
