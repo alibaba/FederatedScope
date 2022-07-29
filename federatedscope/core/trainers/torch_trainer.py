@@ -13,6 +13,7 @@ except ImportError:
 from federatedscope.core.auxiliaries.enums import MODE
 from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
@@ -136,6 +137,8 @@ class GeneralTorchTrainer(Trainer):
             # across different routines
             ctx.optimizer = get_optimizer(ctx.model,
                                           **ctx.cfg[ctx.cur_mode].optimizer)
+            ctx.scheduler = get_scheduler(ctx.optimizer,
+                                          **ctx.cfg[ctx.cur_mode].scheduler)
 
         # TODO: the number of batch and epoch is decided by the current mode and data split, so the number of batch and epoch should be initialized at the beginning of the routine
 
@@ -253,7 +256,10 @@ class GeneralTorchTrainer(Trainer):
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)
+
         ctx.optimizer.step()
+        if ctx.scheduler is not None:
+            ctx.scheduler.step()
 
     def _hook_on_batch_end(self, ctx):
         # update statistics

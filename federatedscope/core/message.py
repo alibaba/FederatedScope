@@ -133,13 +133,22 @@ class Message(object):
 
     def create_by_type(self, value, nested=False):
         if isinstance(value, dict):
-            m_dict = gRPC_comm_manager_pb2.mDict()
+            if isinstance(list(value.keys())[0], str):
+                m_dict = gRPC_comm_manager_pb2.mDict_keyIsString()
+                key_type = 'string'
+            else:
+                m_dict = gRPC_comm_manager_pb2.mDict_keyIsInt()
+                key_type = 'int'
+
             for key in value.keys():
                 m_dict.dict_value[key].MergeFrom(
                     self.create_by_type(value[key], nested=True))
             if nested:
                 msg_value = gRPC_comm_manager_pb2.MsgValue()
-                msg_value.dict_msg.MergeFrom(m_dict)
+                if key_type == 'string':
+                    msg_value.dict_msg_stringkey.MergeFrom(m_dict)
+                else:
+                    msg_value.dict_msg_intkey.MergeFrom(m_dict)
                 return msg_value
             else:
                 return m_dict
@@ -180,7 +189,11 @@ class Message(object):
         if isinstance(value, list) or isinstance(value, tuple):
             msg_value.list_msg.MergeFrom(self.create_by_type(value))
         elif isinstance(value, dict):
-            msg_value.dict_msg.MergeFrom(self.create_by_type(value))
+            if isinstance(list(value.keys())[0], str):
+                msg_value.dict_msg_stringkey.MergeFrom(
+                    self.create_by_type(value))
+            else:
+                msg_value.dict_msg_intkey.MergeFrom(self.create_by_type(value))
         else:
             msg_value.single_msg.MergeFrom(self.create_by_type(value))
 
@@ -209,7 +222,8 @@ class Message(object):
             return self._parse_msg(getattr(value, value.WhichOneof("type")))
         elif isinstance(value, gRPC_comm_manager_pb2.mList):
             return [self._parse_msg(each) for each in value.list_value]
-        elif isinstance(value, gRPC_comm_manager_pb2.mDict):
+        elif isinstance(value, gRPC_comm_manager_pb2.mDict_keyIsString) or \
+                isinstance(value, gRPC_comm_manager_pb2.mDict_keyIsInt):
             return {
                 k: self._parse_msg(value.dict_value[k])
                 for k in value.dict_value

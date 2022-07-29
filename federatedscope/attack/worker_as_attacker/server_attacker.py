@@ -16,6 +16,153 @@ from federatedscope.attack.privacy_attacks.passive_PIA import \
 logger = logging.getLogger(__name__)
 
 
+class BackdoorServer(Server):
+    '''
+    For backdoor attacks, we will choose different sampling stratergies.
+    fix-frequency, all-round ,or random sampling.
+    '''
+    def __init__(self,
+                 ID=-1,
+                 state=0,
+                 config=None,
+                 data=None,
+                 model=None,
+                 client_num=5,
+                 total_round_num=10,
+                 device='cpu',
+                 strategy=None,
+                 unseen_clients_id=None,
+                 **kwargs):
+        super(BackdoorServer, self).__init__(ID=ID,
+                                             state=state,
+                                             data=data,
+                                             model=model,
+                                             config=config,
+                                             client_num=client_num,
+                                             total_round_num=total_round_num,
+                                             device=device,
+                                             strategy=strategy,
+                                             **kwargs)
+
+    def broadcast_model_para(self,
+                             msg_type='model_para',
+                             sample_client_num=-1,
+                             filter_unseen_clients=True):
+        """
+        To broadcast the message to all clients or sampled clients
+
+        Arguments:
+            msg_type: 'model_para' or other user defined msg_type
+            sample_client_num: the number of sampled clients in the broadcast
+                behavior. And sample_client_num = -1 denotes to broadcast to
+                all the clients.
+            filter_unseen_clients: whether filter out the unseen clients that
+                do not contribute to FL process by training on their local
+                data and uploading their local model update. The splitting is
+                useful to check participation generalization gap in [ICLR'22,
+                What Do We Mean by Generalization in Federated Learning?]
+                You may want to set it to be False when in evaluation stage
+        """
+
+        if filter_unseen_clients:
+            # to filter out the unseen clients when sampling
+            self.sampler.change_state(self.unseen_clients_id, 'unseen')
+
+        if sample_client_num > 0:  # only activated at training process
+            attacker_id = self._cfg.attack.attacker_id
+            setting = self._cfg.attack.setting
+            insert_round = self._cfg.attack.insert_round
+
+            if attacker_id == -1 or self._cfg.attack.attack_method == '':
+
+                receiver = np.random.choice(np.arange(1, self.client_num + 1),
+                                            size=sample_client_num,
+                                            replace=False).tolist()
+
+            elif setting == 'fix':
+                if self.state % self._cfg.attack.freq == 0:
+                    client_list = np.delete(np.arange(1, self.client_num + 1),
+                                            self._cfg.attack.attacker_id - 1)
+                    receiver = np.random.choice(client_list,
+                                                size=sample_client_num - 1,
+                                                replace=False).tolist()
+                    receiver.insert(0, self._cfg.attack.attacker_id)
+                    logger.info('starting the fix-frequency poisoning attack')
+                    logger.info(
+                        'starting poisoning round: {:d}, the attacker ID: {:d}'
+                        .format(self.state, self._cfg.attack.attacker_id))
+                else:
+                    client_list = np.delete(np.arange(1, self.client_num + 1),
+                                            self._cfg.attack.attacker_id - 1)
+                    receiver = np.random.choice(client_list,
+                                                size=sample_client_num,
+                                                replace=False).tolist()
+
+            elif setting == 'single' and self.state == insert_round:
+                client_list = np.delete(np.arange(1, self.client_num + 1),
+                                        self._cfg.attack.attacker_id - 1)
+                receiver = np.random.choice(client_list,
+                                            size=sample_client_num - 1,
+                                            replace=False).tolist()
+                receiver.insert(0, self._cfg.attack.attacker_id)
+                logger.info('starting the single-shot poisoning attack')
+                logger.info(
+                    'starting poisoning round: {:d}, the attacker ID: {:d}'.
+                    format(self.state, self._cfg.attack.attacker_id))
+
+            elif self._cfg.attack.setting == 'all':
+
+                client_list = np.delete(np.arange(1, self.client_num + 1),
+                                        self._cfg.attack.attacker_id - 1)
+                receiver = np.random.choice(client_list,
+                                            size=sample_client_num - 1,
+                                            replace=False).tolist()
+                receiver.insert(0, self._cfg.attack.attacker_id)
+                logger.info('starting the all-round poisoning attack')
+                logger.info(
+                    'starting poisoning round: {:d}, the attacker ID: {:d}'.
+                    format(self.state, self._cfg.attack.attacker_id))
+
+            else:
+                receiver = np.random.choice(np.arange(1, self.client_num + 1),
+                                            size=sample_client_num,
+                                            replace=False).tolist()
+
+        else:
+            # broadcast to all clients
+            receiver = list(self.comm_manager.neighbors.keys())
+
+        if self._noise_injector is not None and msg_type == 'model_para':
+            # Inject noise only when broadcast parameters
+            for model_idx_i in range(len(self.models)):
+                num_sample_clients = [
+                    v["num_sample"] for v in self.join_in_info.values()
+                ]
+                self._noise_injector(self._cfg, num_sample_clients,
+                                     self.models[model_idx_i])
+
+        skip_broadcast = self._cfg.federate.method in ["local", "global"]
+        if self.model_num > 1:
+            model_para = [{} if skip_broadcast else model.state_dict()
+                          for model in self.models]
+        else:
+            model_para = {} if skip_broadcast else self.model.state_dict()
+
+        self.comm_manager.send(
+            Message(msg_type=msg_type,
+                    sender=self.ID,
+                    receiver=receiver,
+                    state=min(self.state, self.total_round_num),
+                    content=model_para))
+        if self._cfg.federate.online_aggr:
+            for idx in range(self.model_num):
+                self.aggregators[idx].reset()
+
+        if filter_unseen_clients:
+            # restore the state of the unseen clients within sampler
+            self.sampler.change_state(self.unseen_clients_id, 'seen')
+
+
 class PassiveServer(Server):
     '''
     In passive attack, the server store the model and the message collected

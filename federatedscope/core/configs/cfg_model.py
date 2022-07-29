@@ -22,6 +22,7 @@ def extend_model_cfg(cfg):
     cfg.model.embed_size = 8
     cfg.model.num_item = 0
     cfg.model.num_user = 0
+    cfg.model.input_shape = ()  # A tuple, e.g., (in_channel, h, w)
 
     # ---------------------------------------------------------------------- #
     # Criterion related options

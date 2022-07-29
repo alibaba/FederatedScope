@@ -74,7 +74,7 @@ conda install pytorch torchvision torchaudio -c pytorch
 python -m pip install torchvision==0.11.3
 ```
 
-Finally, after the backend is installed, you can install FederatedScope from `source`, `conda` or `pip`:
+Finally, after the backend is installed, you can install FederatedScope from `source`:
 
 ##### From source
 
@@ -84,18 +84,6 @@ python setup.py install
 # Or (for dev mode)
 pip install -e .[dev]
 pre-commit install
-```
-
-##### From conda
-
-```bash
-conda install -c federatedscope federatedscope
-```
-
-##### From pip
-
-```bash
-python -m pip install federatedscope
 ```
 
 Now, you have successfully installed the minimal version of FederatedScope. (**Optinal**) For application version including graph, nlp and speech, run:
@@ -273,7 +261,20 @@ More publications can be found in the [Publications](https://federatedscope.io/y
 
 ## Contributing
 
-We **greatly appreciate** any contribution to FederatedScope! You can refer to [Contributing to FederatedScope](https://federatedscope.io/docs/contributor/) for more details.
+We **greatly appreciate** any contribution to FederatedScope! We provide a developer version of FederatedScope with additional pre-commit hooks to perform commit checks compared to the official version:
+
+```bash
+# Install the developer version
+pip install -e .[dev]
+pre-commit install
+
+# Or switch to the developer version from the official version
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
+You can refer to [Contributing to FederatedScope](https://federatedscope.io/docs/contributor/) for more details.
 
 Welcome to join in our [Slack channel](https://join.slack.com/t/federatedscopeteam/shared_invite/zt-1apmfjqmc-hvpYbsWJdm7D93wPNXbqww), or DingDing group (please scan the following QR code) for discussion.
 

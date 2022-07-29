@@ -12,50 +12,38 @@ from federatedscope.gfl.model.graph_level import GNN_Net_Graph
 from federatedscope.gfl.model.mpnn import MPNNs2s
 
 
-def get_gnn(model_config, local_data):
-    num_label = 0
-    if isinstance(local_data, dict):
-        if 'data' in local_data.keys():
-            data = local_data['data']
-        elif 'train' in local_data.keys():
-            # local_data['train'] is Dataloader
-            data = next(iter(local_data['train']))
-            if 'num_label' in local_data.keys():
-                num_label = local_data['num_label']
-        else:
-            raise TypeError('Unsupported data type.')
-    else:
-        data = local_data
+def get_gnn(model_config, input_shape):
 
+    x_shape, num_label, num_edge_features = input_shape
     if model_config.task.startswith('node'):
         if model_config.type == 'gcn':
             # assume `data` is a dict where key is the client index,
             # and value is a PyG object
-            model = GCN_Net(data.x.shape[-1],
+            model = GCN_Net(x_shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
                             max_depth=model_config.layer,
                             dropout=model_config.dropout)
         elif model_config.type == 'sage':
-            model = SAGE_Net(data.x.shape[-1],
+            model = SAGE_Net(x_shape[-1],
                              model_config.out_channels,
                              hidden=model_config.hidden,
                              max_depth=model_config.layer,
                              dropout=model_config.dropout)
         elif model_config.type == 'gat':
-            model = GAT_Net(data.x.shape[-1],
+            model = GAT_Net(x_shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
                             max_depth=model_config.layer,
                             dropout=model_config.dropout)
         elif model_config.type == 'gin':
-            model = GIN_Net(data.x.shape[-1],
+            model = GIN_Net(x_shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
                             max_depth=model_config.layer,
                             dropout=model_config.dropout)
         elif model_config.type == 'gpr':
-            model = GPR_Net(data.x.shape[-1],
+            model = GPR_Net(x_shape[-1],
                             model_config.out_channels,
                             hidden=model_config.hidden,
                             K=model_config.layer,
@@ -65,7 +53,7 @@ def get_gnn(model_config, local_data):
                 model_config.type))
 
     elif model_config.task.startswith('link'):
-        model = GNN_Net_Link(data.x.shape[-1],
+        model = GNN_Net_Link(x_shape[-1],
                              model_config.out_channels,
                              hidden=model_config.hidden,
                              max_depth=model_config.layer,
@@ -73,12 +61,12 @@ def get_gnn(model_config, local_data):
                              gnn=model_config.type)
     elif model_config.task.startswith('graph'):
         if model_config.type == 'mpnn':
-            model = MPNNs2s(in_channels=data.x.shape[-1],
+            model = MPNNs2s(in_channels=x_shape[-1],
                             out_channels=model_config.out_channels,
-                            num_nn=data.num_edge_features,
+                            num_nn=num_edge_features,
                             hidden=model_config.hidden)
         else:
-            model = GNN_Net_Graph(data.x.shape[-1],
+            model = GNN_Net_Graph(x_shape[-1],
                                   max(model_config.out_channels, num_label),
                                   hidden=model_config.hidden,
                                   max_depth=model_config.layer,
