@@ -9,7 +9,7 @@ from federatedscope.core.auxiliaries.transform_builder import get_transform
 from federatedscope.attack.auxiliary.backdoor_utils import selectTrigger
 from torch.utils.data import DataLoader, Dataset
 from federatedscope.attack.auxiliary.backdoor_utils import normalize
-from federatedscope.core.auxiliaries.eunms import MODE
+from federatedscope.core.auxiliaries.enums import MODE
 import matplotlib
 import pickle
 import logging
