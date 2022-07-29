@@ -13,7 +13,8 @@ from federatedscope.core.communication import StandaloneCommManager, \
 from federatedscope.core.worker import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
-from federatedscope.core.auxiliaries.utils import merge_dict, Timeout
+from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
+    merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
@@ -432,6 +433,7 @@ class Server(Worker):
 
             # Trigger the monitor here (for training)
             if 'dissim' in self._cfg.eval.monitoring:
+                # TODO: fix this
                 B_val = self._monitor.calc_blocal_dissim(
                     model.load_state_dict(strict=False), msg_list)
                 formatted_eval_res = self._monitor.format_eval_res(
@@ -447,7 +449,9 @@ class Server(Worker):
             }
             # logger.info(f'The staleness is {staleness}')
             result = aggregator.aggregate(agg_info)
-            model.load_state_dict(result, strict=False)
+            # Due to lazy load, we merge two state dict
+            merged_param = merge_param_dict(model.state_dict().copy(), result)
+            model.load_state_dict(merged_param, strict=False)
 
         return aggregated_num
 

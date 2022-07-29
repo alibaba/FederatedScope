@@ -91,7 +91,6 @@ class PassivePropertyInference():
 
         model = copy.deepcopy(model)
         # get last phase model parameters
-        # print(model)
         model.load_state_dict(previous_para, strict=False)
 
         optimizer = get_optimizer(type=self.fl_type_optimizer,
@@ -110,8 +109,6 @@ class PassivePropertyInference():
             optimizer.step()
 
         para_prop = model.state_dict()
-        # print('update: ')
-        # print(para_prop)
 
         updates_prop = torch.hstack([
             (previous_para[name] - para_prop[name]).flatten().cpu()
