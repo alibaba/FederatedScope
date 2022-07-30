@@ -206,7 +206,7 @@ def call_link_level_trainer(trainer_type):
     elif trainer_type == 'linkminibatch_trainer':
         trainer_builder = LinkMiniBatchTrainer
     else:
-        raise ValueError
+        trainer_builder = None
 
     return trainer_builder
 

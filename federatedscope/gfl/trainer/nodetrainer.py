@@ -180,7 +180,7 @@ def call_node_level_trainer(trainer_type):
     elif trainer_type == 'nodeminibatch_trainer':
         trainer_builder = NodeMiniBatchTrainer
     else:
-        raise ValueError
+        trainer_builder = None
 
     return trainer_builder
 
