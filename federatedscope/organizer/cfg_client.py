@@ -16,4 +16,4 @@ enable_utc = True
 # ---------------------------------------------------------------------- #
 env_name = 'test_org'
 root_path = 'test_org'
-fs_version = '0.1.9'
+fs_version = '0.2.0'

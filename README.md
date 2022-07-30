@@ -13,7 +13,7 @@ FederatedScope is a comprehensive federated learning platform that provides conv
 A detailed tutorial is provided on our [website](https://federatedscope.io/).
 
 ## News
-- [07-29-2022] We release FederatedScope v0.2.0! 
+- [07-30-2022] We release FederatedScope v0.2.0! 
 - [07-11-2022] We are hosting the CIKM'22 AnalytiCup competition. For more details, please see [competition website](https://federatedscope.io/competition/).
 - [06-17-2022] We release **pFL-Bench**, a comprehensive benchmark for personalized Federated Learning (pFL), containing 10+ datasets and 20+ baselines. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench), [pdf](https://arxiv.org/abs/2206.03655)]
 - [06-17-2022] We release **FedHPO-B**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOB), [pdf](https://arxiv.org/abs/2206.03966)]
