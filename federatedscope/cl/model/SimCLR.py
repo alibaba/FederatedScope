@@ -206,7 +206,7 @@ def ModelBuilder(model_config, local_data):
         return model
     if model_config.type == "SimCLR_linear":
         model = create_backbone(name='res18', num_classes=10)
-        pretrained_model = torch.load('checkpoint/SimCLR_on_Cifar4CL_lr0.5_lstep1_rn100.ckpt', map_location='cpu')
+        pretrained_model = torch.load('checkpoint/SimCLR_on_Cifar4CL_lr0.5_lstep5_rn100.ckpt', map_location='cpu')
         model.load_state_dict({k[9:]:v for k, v in pretrained_model['model'].items() if k.startswith('backbone.')}, strict=False)
 #         for name, value in model.named_parameters():
 #             if not name.startswith('linear') :
