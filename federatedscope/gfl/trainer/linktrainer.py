@@ -139,7 +139,6 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
 
         """
         init_dict = dict()
-        print(data)
         if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
                 init_dict["{}_data".format(mode)] = None
