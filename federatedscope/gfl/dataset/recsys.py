@@ -1,4 +1,6 @@
-"""This file is part of https://github.com/FedML-AI/FedGraphNN
+"""The function partition_by_category and subgraphing is borrow from
+https://github.com/FedML-AI/FedGraphNN
+
 Copyright [FedML] [Chaoyang He, Salman Avestimehr]
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,8 +91,6 @@ def read_RecSys(path, FL=False):
 
 class RecSys(InMemoryDataset):
     r"""
-    Source
-
     Arguments:
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"epinions"`,
