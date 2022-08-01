@@ -1,0 +1,32 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 5
+federate:
+  mode: standalone
+  total_round_num: 100
+  sample_client_num: 10
+data:
+  root: data/
+  type: twitter
+  batch_size: 5
+  subsample: 0.005
+  num_workers: 0
+model:
+  type: lr
+  out_channels: 2
+  dropout: 0.0
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 0.0003
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nlptrainer
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']
+  split: ['train']
+  best_res_update_round_wise_key: 'train_loss'

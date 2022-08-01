@@ -541,6 +541,9 @@ def get_data(config):
     elif config.data.type.lower() in ['femnist', 'celeba']:
         from federatedscope.cv.dataloader import load_cv_dataset
         data, modified_config = load_cv_dataset(config)
+    elif config.data.type.lower() in ['cifar4cl', 'cifar4lp']:
+        from federatedscope.cl.dataloader import load_cifar_dataset
+        data, modified_config = load_cifar_dataset(config)
     elif config.data.type.lower() in [
             'shakespeare', 'twitter', 'subreddit', 'synthetic'
     ]:

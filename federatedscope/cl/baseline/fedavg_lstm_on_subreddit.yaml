@@ -1,0 +1,32 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 10
+federate:
+  mode: standalone
+  total_round_num: 100
+  sample_client_num: 10
+data:
+  root: data/
+  type: subreddit
+  batch_size: 5
+  subsample: 1.0
+model:
+  type: lstm
+  in_channels: 10000
+  out_channels: 10000
+  hidden: 256
+  embed_size: 200
+  dropout: 0.0
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 8.0
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nlptrainer
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']
