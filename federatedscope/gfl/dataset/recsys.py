@@ -1,14 +1,26 @@
-import os
+"""This file is part of https://github.com/FedML-AI/FedGraphNN
+Copyright [FedML] [Chaoyang He, Salman Avestimehr]
 
-import numpy as np
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
+import os
 import os.path as osp
 import networkx as nx
 
 import torch
 from torch_geometric.data import InMemoryDataset, download_url, Data
 from torch_geometric.utils import from_networkx
-
-from federatedscope.gfl.dataset.utils import random_planetoid_splits
 
 
 # RecSys
@@ -77,6 +89,8 @@ def read_RecSys(path, FL=False):
 
 class RecSys(InMemoryDataset):
     r"""
+    Source
+
     Arguments:
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"epinions"`,
@@ -125,9 +139,14 @@ class RecSys(InMemoryDataset):
         return osp.join(self.root, self.name, 'processed')
 
     def download(self):
-        # Download to `self.raw_dir`.
-        url = 'https://github.com/FedML-AI/FedGraphNN/tree/main/data' \
-              '/recommender_system'
+        """
+            Download raw files to `self.raw_dir` from FedGraphNN.
+            Paper: https://arxiv.org/abs/2104.07145
+            Repo: https://github.com/FedML-AI/FedGraphNN
+        """
+        url = 'https://github.com/FedML-AI/FedGraphNN/tree' \
+              '/82912342950e0cd1be2b683e48ef8bfd5cb0a276/' \
+              'data/recommender_system'
         if self.name.startswith('FL'):
             suffix = self.name[2:]
         else:
