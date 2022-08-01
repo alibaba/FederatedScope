@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import setuptools
 
 __name__ = 'federatedscope'
-__version__ = '0.1.9'
+__version__ = '0.2.0'
 URL = 'https://github.com/alibaba/FederatedScope'
 
 minimal_requires = [
