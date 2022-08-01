@@ -42,7 +42,7 @@ class MetricCalculator(object):
         results = {}
         y_true, y_pred, y_prob = self._check_and_parse(ctx)
         for metric, func in self.eval_metric.items():
-            results["{}_{}".format(ctx.cur_split,
+            results["{}_{}".format(ctx.cur_data_split,
                                    metric)] = func(ctx=ctx,
                                                    y_true=y_true,
                                                    y_pred=y_pred,
@@ -51,51 +51,35 @@ class MetricCalculator(object):
         return results
 
     def _check_and_parse(self, ctx):
-        """Check the format of the prediction and labels
+        if not '{}_y_true'.format(ctx.cur_data_split) in ctx:
+            raise KeyError('Missing key y_true!')
+        if not '{}_y_prob'.format(ctx.cur_data_split) in ctx:
+            raise KeyError('Missing key y_prob!')
 
-        Args:
-            ctx:
-
-        Returns:
-            y_true: The ground truth labels
-            y_pred: The prediction categories for classification task
-            y_prob: The output of the model
-
-        """
-        if ctx.get('ys_true', None) is None:
-            raise KeyError('Missing key ys_true!')
-        if ctx.get('ys_prob', None) is None:
-            raise KeyError('Missing key ys_prob!')
-
-        y_true = ctx.ys_true
-        y_prob = ctx.ys_prob
+        y_true = ctx.get("{}_y_true".format(ctx.cur_data_split))
+        y_prob = ctx.get("{}_y_prob".format(ctx.cur_data_split))
 
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
         if torch is not None and isinstance(y_prob, torch.Tensor):
             y_prob = y_prob.detach().cpu().numpy()
 
-        if 'regression' in ctx.cfg.model.task.lower():
-            y_pred = None
-        else:
-            # classification task
-            if y_true.ndim == 1:
-                y_true = np.expand_dims(y_true, axis=-1)
-            if y_prob.ndim == 2:
-                y_prob = np.expand_dims(y_prob, axis=-1)
+        if y_true.ndim == 1:
+            y_true = np.expand_dims(y_true, axis=-1)
+        if y_prob.ndim == 2:
+            y_prob = np.expand_dims(y_prob, axis=-1)
 
-            # if len(y_prob.shape) > len(y_true.shape):
-            y_pred = np.argmax(y_prob, axis=1)
+        y_pred = np.argmax(y_prob, axis=1)
 
-            # check shape and type
-            if not isinstance(y_true, np.ndarray):
-                raise RuntimeError('Type not support!')
-            if not y_true.shape == y_pred.shape:
-                raise RuntimeError('Shape not match!')
-            if not y_true.ndim == 2:
-                raise RuntimeError(
-                    'y_true must be 2-dim array, {}-dim given'.format(
-                        y_true.ndim))
+        # check shape and type
+        if not isinstance(y_true, np.ndarray):
+            raise RuntimeError('Type not support!')
+        if not y_true.shape == y_pred.shape:
+            raise RuntimeError('Shape not match!')
+        if not y_true.ndim == 2:
+            raise RuntimeError(
+                'y_true must be 2-dim arrray, {}-dim given'.format(
+                    y_true.ndim))
 
         return y_true, y_pred, y_prob
 
@@ -178,52 +162,33 @@ def eval_roc_auc(y_true, y_prob, **kwargs):
     return sum(rocauc_list) / len(rocauc_list)
 
 
-def eval_rmse(y_true, y_prob, **kwargs):
+def eval_rmse(y_true, y_pred, **kwargs):
     rmse_list = []
 
     for i in range(y_true.shape[1]):
         # ignore nan values
         is_labeled = y_true[:, i] == y_true[:, i]
         rmse_list.append(
-            np.sqrt(((y_true[is_labeled] - y_prob[is_labeled])**2).mean()))
+            np.sqrt(((y_true[is_labeled] - y_pred[is_labeled])**2).mean()))
 
     return sum(rmse_list) / len(rmse_list)
 
 
-def eval_mse(y_true, y_prob, **kwargs):
-    return np.mean(np.power(y_true - y_prob, 2))
-
-
 def eval_loss(ctx, **kwargs):
-    return ctx.loss_batch_total
+    return ctx.get('loss_batch_total_{}'.format(ctx.cur_data_split))
 
 
 def eval_avg_loss(ctx, **kwargs):
-    return ctx.loss_batch_total / ctx.num_samples
+    return ctx.get("loss_batch_total_{}".format(ctx.cur_data_split)) / ctx.get(
+        "num_samples_{}".format(ctx.cur_data_split))
 
 
 def eval_total(ctx, **kwargs):
-    return ctx.num_samples
+    return ctx.get("num_samples_{}".format(ctx.cur_data_split))
 
 
 def eval_regular(ctx, **kwargs):
-    return ctx.loss_regular_total
-
-
-def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):
-    if not hasattr(ctx.cfg.eval, 'base') or ctx.cfg.eval.base <= 0:
-        logger.info(
-            "To use the metric `imp_rato`, please set `eval.base` as the "
-            "basic performance and it must be greater than zero.")
-        return 0.
-
-    base = ctx.cfg.eval.base
-    task = ctx.cfg.model.task.lower()
-    if 'regression' in task:
-        perform = eval_mse(y_true, y_prob)
-    elif 'classification' in task:
-        perform = 1 - eval_acc(y_true, y_pred)
-    return (base - perform) / base * 100.
+    return ctx.get("loss_regular_total_{}".format(ctx.cur_data_split))
 
 
 SUPPORT_METRICS = {
@@ -236,8 +201,6 @@ SUPPORT_METRICS = {
     'f1': eval_f1_score,
     'roc_auc': eval_roc_auc,
     'rmse': eval_rmse,
-    'mse': eval_mse,
     'loss_regular': eval_regular,
-    'imp_ratio': eval_imp_ratio,
     **dict.fromkeys([f'hits@{n}' for n in range(1, 101)], eval_hits)
 }

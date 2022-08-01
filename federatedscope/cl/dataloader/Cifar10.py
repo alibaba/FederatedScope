@@ -44,9 +44,9 @@ def Cifar4CL(config):
     )
 
     
-    data_train = CIFAR10('data', train=True, download=True, transform=transform_train)
-    data_val = CIFAR10('data', train=True, download=True, transform=transform_train)
-    data_test = CIFAR10('data', train=False, download=True, transform=transform_train)
+    data_train = CIFAR10(config.data.root, train=True, download=True, transform=transform_train)
+    data_val = CIFAR10(config.data.root, train=True, download=True, transform=transform_train)
+    data_test = CIFAR10(config.data.root, train=False, download=True, transform=transform_train)
     
           # Split data into dict
     data_dict = dict()
@@ -115,9 +115,9 @@ def Cifar4LP(config):
     )
 
     
-    data_train = CIFAR10('data', train=True, download=True, transform=transform_train)
-    data_val = CIFAR10('data', train=True, download=True, transform=transform_test)
-    data_test = CIFAR10('data', train=False, download=True, transform=transform_test)
+    data_train = CIFAR10(config.data.root, train=True, download=True, transform=transform_train)
+    data_val = CIFAR10(config.data.root, train=True, download=True, transform=transform_test)
+    data_test = CIFAR10(config.data.root, train=False, download=True, transform=transform_test)
     
           # Split data into dict
     data_dict = dict()

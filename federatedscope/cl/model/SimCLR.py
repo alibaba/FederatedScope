@@ -112,7 +112,7 @@ class ResNet_basic(nn.Module):
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
         self.output_dim = 512*block.expansion
         if(self.train_sup):
-            self.linear = nn.Linear(64*block.expansion, num_classes)
+            self.linear = nn.Linear(64*block.expansion, num_classes, bias=True)
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -205,14 +205,12 @@ def ModelBuilder(model_config, local_data):
         model = simclr(bbone_arch='res18')
         return model
     if model_config.type == "SimCLR_linear":
-        model = create_backbone(name='res18', num_classes=0)
-        classifier = nn.Linear(in_features=model.output_dim, out_features=10, bias=True)
+        model = create_backbone(name='res18', num_classes=10)
         pretrained_model = torch.load('checkpoint/SimCLR_on_Cifar4CL_lr0.5_lstep1_rn100.ckpt', map_location='cpu')
-        model.load_state_dict({k[9:]:v for k, v in pretrained_model['model'].items() if k.startswith('backbone.')}, strict=True)
-        for param in model.parameters():
-            param.requires_grad = False
-        del pretrained_model
-        model.add_module("Linear", classifier)
+        model.load_state_dict({k[9:]:v for k, v in pretrained_model['model'].items() if k.startswith('backbone.')}, strict=False)
+#         for name, value in model.named_parameters():
+#             if not name.startswith('linear') :
+#                 value.requires_grad = False
         return model
 
 from federatedscope.register import register_model

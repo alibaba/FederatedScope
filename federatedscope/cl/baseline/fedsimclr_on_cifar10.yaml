@@ -7,7 +7,7 @@ federate:
   share_local_model: True
   online_aggr: True
   sample_client_rate: 1.0
-  save_to: 'checkpoint/SimCLR_on_Cifar4CL_lr0.5_lstep1_rn100.ckpt'
+  save_to: 'checkpoint/SimCLR_on_Cifar4CL_lr0.05_lus5_rn100.ckpt'
 data:
   root: 'data'
   type: 'Cifar4CL'
@@ -16,12 +16,11 @@ data:
 model:
   type: 'SimCLR'
 train:
-  local_update_steps: 1
+  local_update_steps: 5
   batch_or_epoch: 'epoch'
   optimizer:
-    lr: 0.5
-    momentum: 0.9
-    weight_decay: 0.0
+    lr: 0.05
+    momentum: 0.1
 early_stop:
   patience: 0
 criterion:

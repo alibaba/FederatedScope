@@ -130,9 +130,8 @@ def linear_prob_forward(ctx):
     ctx.batch_size = len(label)
         
 class LPTrainer(GeneralTorchTrainer):
-    self.replace_hook_in_train(new_hook=linear_prob_forward,
-                                trigger="on_batch_forward",
-                                target_hook_name=_hook_on_batch_forward)
+    pass
+    
 def call_cl_trainer(trainer_type):
     if trainer_type == 'cltrainer':
         trainer_builder = CLTrainer
