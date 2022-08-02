@@ -32,7 +32,7 @@ For more details about customized configurations, see **Advanced**.
 
 ## Reproduce the results in our paper
 
-We provide scripts (grid search to find optimal) to reproduce the results of our experiments.
+We provide scripts (grid search to find optimal results) to reproduce the results of our experiments.
 
 * Node-level tasks, please refer to `federatedscope/gfl/baseline/node_level/`:
 
