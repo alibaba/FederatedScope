@@ -5,7 +5,7 @@ dataset=$2
 splitter='ooxx'
 
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 cd ../../../../..

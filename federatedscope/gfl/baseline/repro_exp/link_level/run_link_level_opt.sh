@@ -10,7 +10,7 @@ local_update=$6
 cd ../../../../..
 
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 if [[ $dataset = 'fb15k-237' ]]; then

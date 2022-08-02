@@ -19,7 +19,7 @@ else
 fi
 
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 out_channels=0

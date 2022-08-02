@@ -18,7 +18,7 @@ else
 fi
 
 if [ ! -d "out_bn_finetune" ];then
-  mkdir out_bn_finetune
+    mkdir out_bn_finetune
 fi
 
 out_channels=0

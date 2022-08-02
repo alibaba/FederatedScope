@@ -18,7 +18,7 @@ else
 fi
 
 if [ ! -d "out_bn" ];then
-  mkdir out_bn
+    mkdir out_bn
 fi
 
 out_channels=0

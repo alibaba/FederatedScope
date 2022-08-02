@@ -6,7 +6,7 @@ dataset=$2
 cd ../../../../..
 
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 if [[ $dataset = 'hiv' ]]; then

@@ -9,7 +9,7 @@ local_update=$5
 cd ../../../../..
 
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 if [[ $dataset = 'hiv' ]]; then

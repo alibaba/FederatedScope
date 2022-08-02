@@ -7,7 +7,7 @@ splitter=$3
 cd ../../../../..
 
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 if [[ $dataset = 'ciao' ]]; then

@@ -4,10 +4,10 @@ cudaid=$1
 dataset=$2
 splitter=$3
 
-cd ../../../../..
+cd ../../../..
 
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 if [[ $dataset = 'cora' ]]; then
