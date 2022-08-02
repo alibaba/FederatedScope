@@ -117,17 +117,6 @@ class CLTrainer(GeneralTorchTrainer):
             np.concatenate(ctx.get("{}_y_prob".format(ctx.cur_data_split))))
         results = self.metric_calculator.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
-
-def linear_prob_forward(ctx):
-    x, label = [_.to(ctx.device) for _ in ctx.data_batch]
-    pred = ctx.model(x)
-    if len(label.size()) == 0:
-        label = label.unsqueeze(0)
-    ctx.loss_batch = ctx.criterion(pred, label)
-    ctx.y_true = label
-    ctx.y_prob = pred
-
-    ctx.batch_size = len(label)
         
 class LPTrainer(GeneralTorchTrainer):
     pass

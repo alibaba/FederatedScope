@@ -70,10 +70,14 @@ def get_shape_from_data(data, model_config, backend='torch'):
         import torch
         if issubclass(type(data_representative), torch.utils.data.DataLoader):
             x, _ = next(iter(data_representative))
+            if x.type == list:
+                return x[0].shape
             return x.shape
         else:
             try:
                 x, _ = data_representative
+                if x.type == list:
+                    return x[0].shape
                 return x.shape
             except:
                 raise TypeError('Unsupported data type.')

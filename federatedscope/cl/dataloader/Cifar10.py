@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import CIFAR10, CIFAR100
 import pickle as pkl
 import numpy as np
-
+from federatedscope.register import register_data
 
 
 class SimCLRTransform():
@@ -54,7 +54,6 @@ def Cifar4CL(config):
     val_per_client = len(data_val) // config.federate.client_num
     test_per_client = len(data_test) // config.federate.client_num
     
-    print("time1")
     for client_idx in range(1, config.federate.client_num + 1):
         dataloader_dict = {
               'train':
@@ -83,7 +82,6 @@ def Cifar4CL(config):
                          shuffle=False)
           }
         data_dict[client_idx] = dataloader_dict
-    print("time2")
     r"""
 
     Returns:
@@ -172,7 +170,7 @@ def Cifar4LP(config):
     config = config
     return data_dict, config
 
-from federatedscope.register import register_data
+
 
 def load_cifar_dataset(config):
     if config.data.type == "Cifar4CL":
