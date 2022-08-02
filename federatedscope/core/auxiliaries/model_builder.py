@@ -134,7 +134,7 @@ def get_model(model_config, local_data=None, backend='torch'):
 
     elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11', 'lr']:
         from federatedscope.cv.model import get_cnn
-        model = get_cnn(model_config, local_data)
+        model = get_cnn(model_config, input_shape)
     elif model_config.type.lower() in ['simclr', 'simclr_linear']:
         from federatedscope.cl.model import get_simclr
         model = get_simclr(model_config, local_data)
