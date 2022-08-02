@@ -1,4 +1,4 @@
-"""The function partition_by_category and subgraphing is borrow from
+"""The function partition_by_category and subgraphing are borrowed from
 https://github.com/FedML-AI/FedGraphNN
 
 Copyright [FedML] [Chaoyang He, Salman Avestimehr]
