@@ -12,6 +12,8 @@ data:
   root: 'data'
   type: 'Cifar4CL'
   batch_size: 256
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.5}]
   num_workers: 2
 model:
   type: 'SimCLR'

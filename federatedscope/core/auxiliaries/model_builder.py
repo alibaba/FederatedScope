@@ -141,7 +141,7 @@ def get_model(model_config, local_data=None, backend='torch'):
         model = get_cnn(model_config, input_shape)
     elif model_config.type.lower() in ['simclr', 'simclr_linear']:
         from federatedscope.cl.model import get_simclr
-        model = get_simclr(model_config, local_data)
+        model = get_simclr(model_config, input_shape)
         if model_config.type.lower().endswith('linear'):
             for name, value in model.named_parameters():
                 if not name.startswith('linear') :
