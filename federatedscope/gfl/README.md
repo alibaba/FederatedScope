@@ -32,7 +32,54 @@ For more details about customized configurations, see **Advanced**.
 
 ## Reproduce the results in our paper
 
-xxx
+We provide scripts (grid search to find optimal) to reproduce the results of our experiments.
+
+* Node-level tasks, please refer to `federatedscope/gfl/baseline/node_level/`:
+
+  ```bash
+  # Example of FedAvg
+  cd federatedscope/gfl/baseline/repro_exp/node_level/
+  bash run_node_level.sh 0 cora louvain
+  
+  # Example of FedAvg
+  bash run_node_level.sh 0 cora random
+  
+  # Example of FedOpt
+  bash run_node_level_opt.sh 0 cora louvain gcn 0.25 4
+  
+  # Example of FedProx
+  bash run_node_level_prox.sh 0 cora louvain gcn 0.25 4
+  ```
+
+* Link-level tasks, please refer to `federatedscope/gfl/baseline/link_level/`:
+
+  ```bash
+  cd federatedscope/gfl/baseline/repro_exp/link_level/
+  
+  # Example of FedAvg
+  bash run_link_level_KG.sh 0 wn18 rel_type
+  
+  # Example of FedOpt
+  bash run_link_level_opt.sh 0 wn18 rel_type gcn 0.25 16
+  
+  # Example of FedProx
+  bash run_link_level_prox.sh 7 wn18 rel_type gcn 0.25 16
+  ```
+
+* Graph-level tasks, please refer to `federatedscope/gfl/baseline/graph_level/`:
+
+  ```bash
+  cd federatedscope/gfl/baseline/repro_exp/graph_level/
+  
+  # Example of FedAvg
+  bash run_graph_level.sh 0 proteins
+  
+  # Example of FedOpt
+  bash run_graph_level_opt.sh 0 proteins gcn 0.25 4
+  
+  # Example of FedProx
+  bash run_graph_level_prox.sh 0 proteins gcn 0.25 4
+  ```
 
 ## Advanced
 
@@ -115,7 +162,7 @@ eval:
 
 FS-G also provides `register` function to set up the FL. Here we provide an example about how to run your own model and data to FS-G.
 
-* Load your data:
+* Load your data (write in `federatedscope/contrib/data/`):
 
   ```python
   import copy
@@ -157,7 +204,7 @@ FS-G also provides `register` function to set up the FL. Here we provide an exam
   
   ```
 
-* Build your model:
+* Build your model (write in `federatedscope/contrib/model/`):
 
   ```python
   import torch
@@ -242,4 +289,3 @@ If you find FS-G useful for research or development, please cite the following [
   year      = {2022}
 }
 ```
-
