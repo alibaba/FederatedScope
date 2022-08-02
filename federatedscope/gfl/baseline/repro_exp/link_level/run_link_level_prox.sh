@@ -7,6 +7,8 @@ gnn=$4
 lr=$5
 local_update=$6
 
+cd ../../../../..
+
 if [ ! -d "out" ];then
   mkdir out
 fi
@@ -38,11 +40,6 @@ do
     do
         python federatedscope/main.py --cfg federatedscope/gfl/baseline/fedavg_gcn_fullbatch_on_kg.yaml device ${cudaid} data.type ${dataset} data.splitter ${splitter} optimizer.lr ${lr} train.local_update_steps ${local_update} model.type ${gnn} model.out_channels ${out_channels} model.hidden ${hidden} seed $k fedprox.use True fedprox.mu ${mu[$s]} model.layer ${layer} >>out/${gnn}_${lr}_${local_update}_on_${dataset}_${splitter}_${mu[$s]}_prox.log 2>&1
     done
-done
-
-for (( s=0; s<${#mu[@]}; s++ ))
-do
-    python federatedscope/parse_exp_results.py --input out/${gnn}_${lr}_${local_update}_on_${dataset}_${splitter}_${mu[$s]}_prox.log >>out/final_${gnn}_${lr}_${local_update}_on_${dataset}_${splitter}_prox.out 2>&1
 done
 
 echo "HPO ends."

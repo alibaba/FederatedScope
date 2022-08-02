@@ -4,6 +4,8 @@ cudaid=$1
 dataset=$2
 gnn='gcn'
 
+cd ../../../../..
+
 if [ ! -d "out" ];then
   mkdir out
 fi
