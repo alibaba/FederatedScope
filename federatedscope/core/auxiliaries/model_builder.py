@@ -29,7 +29,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
         ) == 'vmfnet' else data['train'].n_row
     elif model_config.type.lower() in [
             'gcn', 'sage', 'gpr', 'gat', 'gin', 'mpnn'
-    ]:
+    ] or model_config.type.startswith('gnn_'):
         num_label = data['num_label'] if 'num_label' in data else None
         num_edge_features = data[
             'num_edge_features'] if model_config.type == 'mpnn' else None
