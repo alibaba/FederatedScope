@@ -17,7 +17,7 @@ model:
   hidden: 1024
   out_channels: 4
 train:
-  local_update_steps: 100
+  local_update_steps: 16
   optimizer:
     lr: 0.05
     weight_decay: 0.0005

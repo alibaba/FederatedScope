@@ -20,3 +20,7 @@ repos:
     hooks:
       - id: pyroma
         args: [--min=10, .]
+  - repo: https://github.com/lovesegfault/beautysh
+    rev: "v6.2.1"
+    hooks:
+      - id: beautysh
