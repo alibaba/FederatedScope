@@ -40,6 +40,8 @@ class GeneralTorchTrainer(Trainer):
         init_dict = dict()
         if isinstance(data, dict):
             for split in data.keys():
+                if split not in ['train', 'val', 'test']:
+                    continue
                 init_dict["{}_data".format(split)] = None
                 init_dict["{}_loader".format(split)] = None
                 init_dict["num_{}_data".format(split)] = 0
