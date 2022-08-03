@@ -1,5 +1,5 @@
 use_gpu: True
-device: 2
+device: 0
 federate:
   mode: standalone
   total_round_num: 50
@@ -7,7 +7,7 @@ federate:
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
-  method: fedavg
+  method: FedAvg
 data:
   root: 'data'
   type: 'Cifar4LP'

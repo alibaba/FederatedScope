@@ -222,19 +222,13 @@ def ModelBuilder(model_config, local_data):
         return model
     if model_config.type in ["SimCLR_linear","supervised_local","supervised_fedavg"]:
         model = simclr_linearprob(bbone_arch='res18', num_classes=10)
-#         pretrained_model = torch.load('checkpoint/SimCLR_on_Cifar4CL_lr0.1_lstep5_rn100.ckpt', map_location='cpu')
-#         model.load_state_dict(pretrained_model['model'], strict=False)
-#         for name, value in model.named_parameters():
-#             if not name.startswith('linear') :
-#                 value.requires_grad = False
         return model
 
 from federatedscope.register import register_model
 
 def get_simclr(model_config, local_data):
-    if model_config.type in ["SimCLR", "SimCLR_linear"]:
-        model = ModelBuilder(model_config, local_data)
-        return model
+    model = ModelBuilder(model_config, local_data)
+    return model
 
 
 register_model("SimCLR", get_simclr)
