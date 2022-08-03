@@ -3,6 +3,7 @@ import numpy as np
 
 
 # TODO: make this as a sub-module of monitor class
+# This is a test for format checks in jenkins, please do not merge this PR into master. This is a test for format checks in jenkins, please do not merge this PR into master. This is a test for format checks in jenkins, please do not merge this PR into master. This is a test for format checks in jenkins, please do not merge this PR into master. 
 class EarlyStopper(object):
     """
         Track the history of metric (e.g., validation loss),
