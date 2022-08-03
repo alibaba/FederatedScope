@@ -1,6 +1,6 @@
 # FederatedScope-GNN: Towards a Unified, Comprehensive and Efficient Package for Federated Graph Learning
 
-FederatedScope-GNN (FS-G) is a unified, comprehensive and efficient package for federated graph learning.  We provide a hands-on tutorial here, while for more detailed tutorial, please refer to [FGL Tutorial](https://federatedscope.io/docs/graph/).
+FederatedScope-GNN (FS-G) is a unified, comprehensive and efficient package for federated graph learning. We provide a hands-on tutorial here, while for more detailed tutorial, please refer to [FGL Tutorial](https://federatedscope.io/docs/graph/).
 
 ## Quick Start
 
