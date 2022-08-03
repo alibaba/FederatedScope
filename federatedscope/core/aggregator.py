@@ -104,12 +104,37 @@ class ClientsAvgAggregator(Aggregator):
         return avg_model
 
 
-class NoCommunicationAggregator(Aggregator):
+class NoCommunicationAggregator(ClientsAvgAggregator):
     """"Clients do not communicate. Each client work locally
     """
+    def __init__(self, model=None, device='cpu', config=None):
+        super(NoCommunicationAggregator, self).__init__(model, device, config)
+        
     def aggregate(self, agg_info):
         # do nothing
         return {}
+    
+    def update(self, model_parameters):
+        pass
+    
+    def save_model(self, path, cur_round=-1):
+        assert self.model is not None
+
+        ckpt = {'cur_round': cur_round, 'model': self.model.state_dict()}
+        torch.save(ckpt, path)
+
+    def load_model(self, path):
+        assert self.model is not None
+
+        if os.path.exists(path):
+            ckpt = torch.load(path, map_location=self.device)
+            self.model.load_state_dict(ckpt['model'], strict=False)
+            return ckpt['cur_round']
+        else:
+            raise ValueError("The file {} does NOT exist".format(path))
+    
+    def _para_weighted_avg(self, models, recover_fun=None):
+        pass
 
 
 class AsynClientsAvgAggregator(ClientsAvgAggregator):

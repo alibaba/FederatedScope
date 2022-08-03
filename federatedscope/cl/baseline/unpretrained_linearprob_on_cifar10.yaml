@@ -2,34 +2,33 @@ use_gpu: True
 device: 2
 federate:
   mode: standalone
-  total_round_num: 100
+  total_round_num: 50
   client_num: 5
-  share_local_model: True
-  online_aggr: True
   sample_client_rate: 1.0
-  save_to: 'checkpoint/SimCLR_on_Cifar4CL_lr0.05_lus5_rn100.ckpt'
+  method: local
 data:
   root: 'data'
-  type: 'Cifar4CL'
+  type: 'Cifar4LP'
   batch_size: 256
   splitter: 'lda'
   splitter_args: [{'alpha': 0.5}]
   num_workers: 4
 model:
-  type: 'SimCLR'
+  type: 'SimCLR_linear'
 train:
-  local_update_steps: 5
+  local_update_steps: 1
   batch_or_epoch: 'epoch'
   optimizer:
-    lr: 0.05
-    momentum: 0.1
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 0.0
 early_stop:
   patience: 0
 criterion:
-  type: 'NT_xentloss'
+  type: CrossEntropyLoss
 trainer:
-  type: 'cltrainer'
+  type: general
 eval:
   freq: 2
-  metrics: ['loss']
+  metrics: ['acc']
   split: ['val', 'test']

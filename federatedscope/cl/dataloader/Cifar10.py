@@ -11,6 +11,8 @@ from torchvision.datasets import CIFAR10, CIFAR100
 import pickle as pkl
 import numpy as np
 from federatedscope.register import register_data
+from federatedscope.core.auxiliaries.splitter_builder import get_splitter
+
 
 
 class SimCLRTransform():
@@ -43,43 +45,48 @@ def Cifar4CL(config):
         T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
 
+    splits = config.data.splits
+    path = config.data.root
+    name = config.data.type.upper()
+    client_num = config.federate.client_num
+    batch_size = config.data.batch_size
     
-    data_train = CIFAR10(config.data.root, train=True, download=True, transform=transform_train)
-    data_val = CIFAR10(config.data.root, train=True, download=True, transform=transform_train)
-    data_test = CIFAR10(config.data.root, train=False, download=True, transform=transform_train)
+    data_train = CIFAR10(path, train=True, download=True, transform=transform_train)
+#     data_val = CIFAR10(path, train=True, download=True, transform=transform_train)
+    data_test = CIFAR10(path, train=False, download=True, transform=transform_train)
     
           # Split data into dict
     data_dict = dict()
-    train_per_client = len(data_train) // config.federate.client_num
-    val_per_client = len(data_val) // config.federate.client_num
-    test_per_client = len(data_test) // config.federate.client_num
+
+    # Splitter
+    splitter = get_splitter(config)
+    data_train = splitter(data_train)
+    data_val = data_train
+    data_test = splitter(data_test)
+
+
+    client_num = min(len(data_train), config.federate.client_num
+                     ) if config.federate.client_num > 0 else len(data_train)
+    config.merge_from_list(['federate.client_num', client_num])
+
     
-    for client_idx in range(1, config.federate.client_num + 1):
+    for client_idx in range(1, client_num + 1):
         dataloader_dict = {
               'train':
-              DataLoader([
-                  data_train[i]
-                  for i in range((client_idx - 1) *
-                                 train_per_client, client_idx * train_per_client)
-              ],
+              DataLoader(data_train[client_idx - 1],
                          config.data.batch_size,
-                         shuffle=config.data.shuffle),
+                         shuffle=config.data.shuffle,
+                         num_workers=config.data.num_workers),
               'val':
-              DataLoader([
-                  data_val[i]
-                  for i in range((client_idx - 1) *
-                                 val_per_client, client_idx * val_per_client)
-              ],
+              DataLoader(data_val[client_idx - 1],
                          config.data.batch_size,
-                         shuffle=config.data.shuffle),
+                         shuffle=False,
+                         num_workers=config.data.num_workers),
               'test':
-              DataLoader([
-                  data_test[i]
-                  for i in range((client_idx - 1) * test_per_client, client_idx *
-                                 test_per_client)
-              ],
+              DataLoader(data_test[client_idx - 1],
                          config.data.batch_size,
-                         shuffle=False)
+                         shuffle=False,
+                         num_workers=config.data.num_workers),
           }
         data_dict[client_idx] = dataloader_dict
     r"""
@@ -119,40 +126,38 @@ def Cifar4LP(config):
     
           # Split data into dict
     data_dict = dict()
-    train_per_client = len(data_train) // config.federate.client_num
-    val_per_client = len(data_val) // config.federate.client_num
-    test_per_client = len(data_test) // config.federate.client_num
+
+    # Splitter
+    splitter = get_splitter(config)
+    data_train = splitter(data_train)
+    data_val = splitter(data_val)
+    data_test = splitter(data_test)
+
+
+    client_num = min(len(data_train), config.federate.client_num
+                     ) if config.federate.client_num > 0 else len(data_train)
+    config.merge_from_list(['federate.client_num', client_num])
+
     
-    print("time1")
-    for client_idx in range(1, config.federate.client_num + 1):
+    for client_idx in range(1, client_num + 1):
         dataloader_dict = {
               'train':
-              DataLoader([
-                  data_train[i]
-                  for i in range((client_idx - 1) *
-                                 train_per_client, client_idx * train_per_client)
-              ],
+              DataLoader(data_train[client_idx - 1],
                          config.data.batch_size,
-                         shuffle=config.data.shuffle),
+                         shuffle=config.data.shuffle,
+                         num_workers=config.data.num_workers),
               'val':
-              DataLoader([
-                  data_val[i]
-                  for i in range((client_idx - 1) *
-                                 val_per_client, client_idx * val_per_client)
-              ],
+              DataLoader(data_val[client_idx - 1],
                          config.data.batch_size,
-                         shuffle=config.data.shuffle),
+                         shuffle=False,
+                         num_workers=config.data.num_workers),
               'test':
-              DataLoader([
-                  data_test[i]
-                  for i in range((client_idx - 1) * test_per_client, client_idx *
-                                 test_per_client)
-              ],
+              DataLoader(data_test[client_idx - 1],
                          config.data.batch_size,
-                         shuffle=False)
+                         shuffle=False,
+                         num_workers=config.data.num_workers),
           }
         data_dict[client_idx] = dataloader_dict
-    print("time2")
     r"""
 
     Returns:

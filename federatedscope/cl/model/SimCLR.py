@@ -183,9 +183,11 @@ class projection_MLP_simclr(nn.Module):
 
 # SimCLR
 class simclr(nn.Module):
+    '''
+    source: https://github.com/akhilmathurs/orchestra/blob/main/models.py
+    '''
     def __init__(self, bbone_arch):
         super(simclr, self).__init__()
-        self.T = 0.5
         self.register_buffer("rounds_done", torch.zeros(1))
 
         self.backbone = create_backbone(bbone_arch, num_classes=0)
@@ -197,17 +199,31 @@ class simclr(nn.Module):
 #         L = NT_xentloss(z1, z2, temperature=self.T)
 
         return z1, z2
+
+class simclr_linearprob(nn.Module):
+    def __init__(self, bbone_arch, num_classes=10):
+        super(simclr_linearprob, self).__init__()
+        self.register_buffer("rounds_done", torch.zeros(1))
+
+        self.backbone = create_backbone(bbone_arch, num_classes=0)
+        self.linear = nn.Linear(512, num_classes, bias=True)
+
+    def forward(self, x):
+        N = x.shape[0]
+        out = self.backbone(x)
+        out = self.linear(out)
+
+        return out
     
 def ModelBuilder(model_config, local_data):
      # You can also build models without local_data
-    data = next(iter(local_data['train']))
     if model_config.type == "SimCLR":
         model = simclr(bbone_arch='res18')
         return model
-    if model_config.type == "SimCLR_linear":
-        model = create_backbone(name='res18', num_classes=10)
-        pretrained_model = torch.load('checkpoint/SimCLR_on_Cifar4CL_lr0.5_lstep5_rn100.ckpt', map_location='cpu')
-        model.load_state_dict({k[9:]:v for k, v in pretrained_model['model'].items() if k.startswith('backbone.')}, strict=False)
+    if model_config.type in ["SimCLR_linear","supervised_local","supervised_fedavg"]:
+        model = simclr_linearprob(bbone_arch='res18', num_classes=10)
+#         pretrained_model = torch.load('checkpoint/SimCLR_on_Cifar4CL_lr0.1_lstep5_rn100.ckpt', map_location='cpu')
+#         model.load_state_dict(pretrained_model['model'], strict=False)
 #         for name, value in model.named_parameters():
 #             if not name.startswith('linear') :
 #                 value.requires_grad = False
