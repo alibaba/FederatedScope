@@ -33,12 +33,15 @@ class GeneralTorchTrainer(Trainer):
             share_local_model else self.ctx.model.cpu().state_dict())
 
     def parse_data(self, data):
-        """Populate "${split}_data", "${split}_loader" and "num_${split}_data" for different data splits
+        """Populate "${split}_data", "${split}_loader" and "num_${
+        split}_data" for different data splits
 
         """
         init_dict = dict()
         if isinstance(data, dict):
             for split in data.keys():
+                if split not in ['train', 'val', 'test']:
+                    continue
                 init_dict["{}_data".format(split)] = None
                 init_dict["{}_loader".format(split)] = None
                 init_dict["num_{}_data".format(split)] = 0
@@ -143,7 +146,9 @@ class GeneralTorchTrainer(Trainer):
             ctx.scheduler = get_scheduler(ctx.optimizer,
                                           **ctx.cfg[ctx.cur_mode].scheduler)
 
-        # TODO: the number of batch and epoch is decided by the current mode and data split, so the number of batch and epoch should be initialized at the beginning of the routine
+        # TODO: the number of batch and epoch is decided by the current mode
+        #  and data split, so the number of batch and epoch should be
+        #  initialized at the beginning of the routine
 
         # prepare statistics
         ctx.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)

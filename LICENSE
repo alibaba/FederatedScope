@@ -465,7 +465,7 @@ SOFTWARE.
 
 The function partition_by_category and subgraphing in
 federatedscope/gfl/dataset/recsys.py
-is borrow from https://github.com/FedML-AI/FedGraphNN
+are borrowed from https://github.com/FedML-AI/FedGraphNN
 
 Copyright [FedML] [Chaoyang He, Salman Avestimehr]
 

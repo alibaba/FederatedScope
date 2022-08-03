@@ -3,12 +3,14 @@ set -e
 cudaid=$1
 dataset=$2
 
+cd ../../../../..
+
 if [ ! -d "hpo_${dataset}" ];then
-  mkdir hpo_${dataset}
+    mkdir hpo_${dataset}
 fi
 
 if [ ! -d "hpo" ];then
-  mkdir hpo
+    mkdir hpo
 fi
 
 rs=(1 2 4 8)

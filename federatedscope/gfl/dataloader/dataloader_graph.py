@@ -63,6 +63,10 @@ def load_graphlevel_dataset(config=None):
             raise ValueError('Please set the graph.')
         dataset = splitter(dataset)
     elif name.startswith('graph_multi_domain'.upper()):
+        """
+            The `graph_multi_domain` datasets follows GCFL
+            Federated Graph Classification over Non-IID Graphs (NeurIPS 2021)
+        """
         if name.endswith('mol'.upper()):
             dnames = ['MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1']
         elif name.endswith('small'.upper()):
@@ -83,14 +87,6 @@ def load_graphlevel_dataset(config=None):
                 'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
                 'ENZYMES', 'DD', 'PROTEINS'
             ]
-        # We provide kddcup dataset here.
-        elif name.endswith('kddcupv1'.upper()):
-            dnames = [
-                'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
-                'Mutagenicity', 'NCI109', 'PTC_MM', 'PTC_FR'
-            ]
-        elif name.endswith('kddcupv2'.upper()):
-            dnames = ['TBD']
         else:
             raise ValueError(f'No dataset named: {name}!')
         dataset = []
