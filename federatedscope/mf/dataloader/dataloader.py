@@ -12,8 +12,8 @@ MFDATA_CLASS_DICT = {
     "vflmovielens10m": "VFLMovieLens10M",
     "hflmovielens1m": "HFLMovieLens1M",
     "hflmovielens10m": "HFLMovieLens10M",
-    'vflnetflix': "VFNetflix",
-    'hflnetflix': "HFNetflix"
+    'vflnetflix': "VFLNetflix",
+    'hflnetflix': "HFLNetflix"
 }
 
 

@@ -73,14 +73,14 @@ class Netflix(MovieLensData):
         return data
 
 
-class VFNetflix(Netflix, HMFDataset):
+class VFLNetflix(Netflix, HMFDataset):
     """Netflix dataset in HFL setting
 
     """
     pass
 
 
-class HFNetflix(Netflix, HMFDataset):
+class HFLNetflix(Netflix, HMFDataset):
     """Netflix dataset in HFL setting
 
     """
