@@ -7,7 +7,7 @@ federate:
   share_local_model: True
   online_aggr: True
   sample_client_rate: 1.0
-  save_to: 'checkpoint/SimCLR_on_Cifar4CL_lr0.05_lus5_rn100.ckpt'
+  save_to: 'SimCLR_on_Cifar4CL_lda0.5_lr0.05_lus5_rn100.ckpt'
 data:
   root: 'data'
   type: 'Cifar4CL'

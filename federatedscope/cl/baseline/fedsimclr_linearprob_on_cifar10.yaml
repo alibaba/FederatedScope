@@ -6,7 +6,7 @@ federate:
   client_num: 5
   sample_client_rate: 1.0
   method: local
-#   restore_from: 'checkpoint/SimCLR_on_Cifar4CL_lr0.1_lstep5_rn100.ckpt'
+  restore_from: 'SimCLR_on_Cifar4CL_lr0.1_lstep5_rn100.ckpt'
 data:
   root: 'data'
   type: 'Cifar4LP'

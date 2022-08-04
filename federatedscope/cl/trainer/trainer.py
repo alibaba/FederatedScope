@@ -12,11 +12,12 @@ class CLTrainer(GeneralTorchTrainer):
         z1, z2 = ctx.model(x1, x2)
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
-        ctx.loss_batch = ctx.criterion(z1, z2)
-        ctx.y_true = label
-        ctx.y_prob = z1, z2
-
-        ctx.batch_size = len(label)
+            
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(z1, z2, LIFECYCLE.BATCH)
+        ctx.loss_batch = CtxVar(ctx.criterion(z1, z2), LIFECYCLE.BATCH)
+        ctx.batch_size = CtxVar(len(label), LIFECYCLE.BATCH)
+        
         
     def _hook_on_batch_end(self, ctx):
         # update statistics

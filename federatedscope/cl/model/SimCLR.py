@@ -6,7 +6,6 @@ from math import pi, cos, e
 import numpy as np
 from collections import OrderedDict
 
-#### ResNets
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -152,9 +151,7 @@ def ResNet56(num_classes=10, block="BasicBlock"):
 
 ### Retrieval function for backbones ###
 def create_backbone(name, num_classes=10, block='BasicBlock'):
-    if(name == 'VGG'):
-        net = VGGmodel(num_classes=num_classes)
-    elif(name == 'res18'):
+    if(name == 'res18'):
         net = ResNet18(num_classes=num_classes, block=block)
     elif(name == 'res34'):
         net = ResNet34(num_classes=num_classes, block=block)
@@ -183,9 +180,6 @@ class projection_MLP_simclr(nn.Module):
 
 # SimCLR
 class simclr(nn.Module):
-    '''
-    source: https://github.com/akhilmathurs/orchestra/blob/main/models.py
-    '''
     def __init__(self, bbone_arch):
         super(simclr, self).__init__()
         self.register_buffer("rounds_done", torch.zeros(1))
@@ -196,7 +190,6 @@ class simclr(nn.Module):
     def forward(self, x1, x2, x3=None, deg_labels=None):
         N = x1.shape[0]
         z1, z2 = self.projector(self.backbone(x1)), self.projector(self.backbone(x2))
-#         L = NT_xentloss(z1, z2, temperature=self.T)
 
         return z1, z2
 
