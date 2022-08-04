@@ -89,20 +89,7 @@ def Cifar4CL(config):
                          num_workers=config.data.num_workers),
           }
         data_dict[client_idx] = dataloader_dict
-    r"""
 
-    Returns:
-            data:
-                {
-                    '{client_id}': {
-                        'train': Dataset or DataLoader,
-                        'test': Dataset or DataLoader,
-                        'val': Dataset or DataLoader
-                    }
-                }
-            config:
-                cfg_node
-    """
     config = config
     return data_dict, config
 
@@ -158,20 +145,7 @@ def Cifar4LP(config):
                          num_workers=config.data.num_workers),
           }
         data_dict[client_idx] = dataloader_dict
-    r"""
-
-    Returns:
-            data:
-                {
-                    '{client_id}': {
-                        'train': Dataset or DataLoader,
-                        'test': Dataset or DataLoader,
-                        'val': Dataset or DataLoader
-                    }
-                }
-            config:
-                cfg_node
-    """
+        
     config = config
     return data_dict, config
 
