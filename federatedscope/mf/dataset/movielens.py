@@ -109,22 +109,26 @@ class MovieLensData(object):
         train_ratings, test_ratings = train.tocsc(), test.tocsc()
         return train_ratings, test_ratings
 
+    def _read_raw(self):
+        fpath = os.path.join(self.root, self.base_folder, self.filename,
+                             self.raw_file)
+        data = pd.read_csv(fpath,
+                           sep="::",
+                           engine="python",
+                           usecols=[0, 1, 2],
+                           names=["userId", "movieId", "rating"],
+                           dtype={
+                               "userId": np.int32,
+                               "movieId": np.int32,
+                               "rating": np.float32
+                           })
+        return data
+
     def _load_meta(self):
         meta_path = os.path.join(self.root, self.base_folder, "ratings.pkl")
         if not os.path.exists(meta_path):
             logger.info("Processing data into {} parties.")
-            fpath = os.path.join(self.root, self.base_folder, self.filename,
-                                 self.raw_file)
-            data = pd.read_csv(fpath,
-                               sep="::",
-                               engine="python",
-                               usecols=[0, 1, 2],
-                               names=["userId", "movieId", "rating"],
-                               dtype={
-                                   "userId": np.int32,
-                                   "movieId": np.int32,
-                                   "rating": np.float32
-                               })
+            data = self._read_raw()
             # Map idx
             unique_id_item, unique_id_user = np.sort(
                 data["movieId"].unique()), np.sort(data["userId"].unique())
