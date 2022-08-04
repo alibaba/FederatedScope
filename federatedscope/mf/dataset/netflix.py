@@ -1,12 +1,10 @@
 import os
-import pickle
 import tarfile
 import logging
 
 import pandas as pd
 import numpy as np
 
-from federatedscope.core.auxiliaries.utils import download_url
 from federatedscope.mf.dataset import MovieLensData, HMFDataset, VMFDataset
 
 logger = logging.getLogger(__name__)
@@ -73,7 +71,7 @@ class Netflix(MovieLensData):
         return data
 
 
-class VFLNetflix(Netflix, HMFDataset):
+class VFLNetflix(Netflix, VMFDataset):
     """Netflix dataset in HFL setting
 
     """
