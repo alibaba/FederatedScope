@@ -6,6 +6,8 @@ federate:
   mode: standalone
   total_round_num: 100
   sample_client_num: 10
+  make_global_eval: True
+  merge_test_data: True
   share_local_model: True
   online_aggr: True
 data:
