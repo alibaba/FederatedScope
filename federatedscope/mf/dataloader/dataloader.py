@@ -11,7 +11,9 @@ MFDATA_CLASS_DICT = {
     "vflmovielens1m": "VFLMovieLens1M",
     "vflmovielens10m": "VFLMovieLens10M",
     "hflmovielens1m": "HFLMovieLens1M",
-    "hflmovielens10m": "HFLMovieLens10M"
+    "hflmovielens10m": "HFLMovieLens10M",
+    'vflnetflix': "VFLNetflix",
+    'hflnetflix': "HFLNetflix"
 }
 
 
@@ -30,13 +32,16 @@ def load_mf_dataset(config=None):
     """
     if config.data.type.lower() in MFDATA_CLASS_DICT:
         # Dataset
-        dataset = getattr(
-            importlib.import_module("federatedscope.mf.dataset.movielens"),
-            MFDATA_CLASS_DICT[config.data.type.lower()])(
-                root=config.data.root,
-                num_client=config.federate.client_num,
-                train_portion=config.data.splits[0],
-                download=True)
+        if config.data.type.lower() in ['vflnetflix', 'hflnetflix']:
+            mpath = "federatedscope.mf.dataset.netflix"
+        else:
+            mpath = "federatedscope.mf.dataset.movielens"
+        dataset = getattr(importlib.import_module(mpath),
+                          MFDATA_CLASS_DICT[config.data.type.lower()])(
+                              root=config.data.root,
+                              num_client=config.federate.client_num,
+                              train_portion=config.data.splits[0],
+                              download=True)
     else:
         raise NotImplementedError("Dataset {} is not implemented.".format(
             config.data.type))

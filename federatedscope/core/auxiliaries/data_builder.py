@@ -567,7 +567,8 @@ def get_data(config):
     elif config.data.type.lower() == 'vertical_fl_data':
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         data, modified_config = load_vertical_data(config, generate=True)
-    elif 'movielens' in config.data.type.lower():
+    elif 'movielens' in config.data.type.lower(
+    ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)
     elif '@' in config.data.type.lower():
