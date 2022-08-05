@@ -34,7 +34,7 @@ For more details about customized configurations, see **Advanced**.
 
 We provide scripts (grid search to find optimal results) to reproduce the results of our experiments.
 
-* Node-level tasks, please refer to `federatedscope/gfl/baseline/node_level/`:
+* Node-level tasks, please refer to `federatedscope/gfl/baseline/repro_exp/node_level/`:
 
   ```bash
   # Example of FedAvg
@@ -51,7 +51,7 @@ We provide scripts (grid search to find optimal results) to reproduce the result
   bash run_node_level_prox.sh 0 cora louvain gcn 0.25 4
   ```
 
-* Link-level tasks, please refer to `federatedscope/gfl/baseline/link_level/`:
+* Link-level tasks, please refer to `federatedscope/gfl/baseline/repro_exp/link_level/`:
 
   ```bash
   cd federatedscope/gfl/baseline/repro_exp/link_level/
@@ -66,7 +66,7 @@ We provide scripts (grid search to find optimal results) to reproduce the result
   bash run_link_level_prox.sh 7 wn18 rel_type gcn 0.25 16
   ```
 
-* Graph-level tasks, please refer to `federatedscope/gfl/baseline/graph_level/`:
+* Graph-level tasks, please refer to `federatedscope/gfl/baseline/repro_exp/graph_level/`:
 
   ```bash
   cd federatedscope/gfl/baseline/repro_exp/graph_level/
