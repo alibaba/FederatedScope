@@ -8,7 +8,8 @@ __version__ = '0.0.1'
 def _setup_logger():
     import logging
 
-    logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+    logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(" \
+                  "message)s"
     logger = logging.getLogger("fedhpob")
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(logging_fmt))

@@ -28,7 +28,8 @@ def disable_fs_logger(cfg, clear_before_add=False):
     if clear_before_add:
         root_logger.handlers = []
         handler = logging.StreamHandler()
-        logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+        logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(" \
+                      "message)s"
         handler.setFormatter(logging.Formatter(logging_fmt))
         root_logger.addHandler(handler)
 
@@ -66,8 +67,8 @@ def cfg2name(cfg):
     repeat = 0
     dir = os.path.join(
         cfg.benchmark.out_dir,
-        f'{cfg.benchmark.data}_{cfg.benchmark.model}_{cfg.benchmark.type}_{cfg.benchmark.algo}'
-    )
+        f'{cfg.benchmark.data}_{cfg.benchmark.model}_{cfg.benchmark.type}'
+        f'_{cfg.benchmark.algo}')
     os.makedirs(dir, exist_ok=True)
     while os.path.exists(
             os.path.join(dir, f'{cfg.optimizer.type}_repeat{repeat}.txt')):

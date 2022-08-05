@@ -57,9 +57,9 @@ def run_smac(cfg):
         raise NotImplementedError
 
     try:
-        incumbent = smac.optimize()
+        smac.optimize()
     finally:
-        incumbent = smac.solver.incumbent
+        smac.solver.incumbent
 
     return monitor.history_results
 

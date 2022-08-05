@@ -61,6 +61,8 @@ def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
         legend = ['Cora', 'CiteSeer', 'PubMed']
     else:
         legend = [x.upper() for x in data_list]
+    # Not show legend
+    del legend
     os.makedirs('figures', exist_ok=True)
     plt.savefig(f'figures/{model}_{sample_client}_{algo}_cdf.pdf',
                 bbox_inches='tight')
@@ -151,7 +153,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_all_{Y_label}.pdf",
+        f"figures/{dataset.replace('@', '_')}_{family}_"
+        f"{suffix}_over_time_all_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
@@ -173,7 +176,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_bbo_{Y_label}.pdf",
+        f"figures/{dataset.replace('@', '_')}_{family}_"
+        f"{suffix}_over_time_bbo_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
@@ -199,7 +203,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_mf_{Y_label}.pdf",
+        f"figures/{dataset.replace('@', '_')}_{family}_"
+        f"{suffix}_over_time_mf_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
@@ -254,6 +259,8 @@ def rank_over_time(root,
 
     # Draw over dataset
     family_rank = []
+    family_rank_bbo = []
+    family_rank_mf = []
     for dataset in traj:
         if loss:
             print(dataset)
@@ -269,7 +276,9 @@ def rank_over_time(root,
             family_rank_bbo += mean_ranks_bbo
             family_rank_mf += mean_ranks_mf
         else:
-            family_rank, family_rank_bbo, family_rank_mf = mean_ranks, mean_ranks_bbo, mean_ranks_mf
+            family_rank, family_rank_bbo, family_rank_mf = mean_ranks, \
+                                                           mean_ranks_bbo, \
+                                                           mean_ranks_mf
         draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all,
                   dataset, family, suffix, Y_label)
 
