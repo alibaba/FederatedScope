@@ -149,7 +149,7 @@ def ResNet56(num_classes=10, block="BasicBlock"):
     return ResNet_basic(get_block(block), [9,9,9], num_classes=num_classes)
 
 
-### Retrieval function for backbones ###
+
 def create_backbone(name, num_classes=10, block='BasicBlock'):
     if(name == 'res18'):
         net = ResNet18(num_classes=num_classes, block=block)
@@ -159,10 +159,6 @@ def create_backbone(name, num_classes=10, block='BasicBlock'):
         net = ResNet56(num_classes=num_classes, block=block)
 
     return net
-
-
-# SimCLR model 
-
 
 # Projector 
 class projection_MLP_simclr(nn.Module):
@@ -188,7 +184,6 @@ class simclr(nn.Module):
         self.projector = projection_MLP_simclr(self.backbone.output_dim, hidden_dim=512, out_dim=512)
 
     def forward(self, x1, x2, x3=None, deg_labels=None):
-        N = x1.shape[0]
         z1, z2 = self.projector(self.backbone(x1)), self.projector(self.backbone(x2))
 
         return z1, z2
@@ -202,7 +197,6 @@ class simclr_linearprob(nn.Module):
         self.linear = nn.Linear(512, num_classes, bias=True)
 
     def forward(self, x):
-        N = x.shape[0]
         out = self.backbone(x)
         out = self.linear(out)
 

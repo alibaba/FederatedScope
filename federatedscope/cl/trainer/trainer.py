@@ -1,5 +1,7 @@
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
+from federatedscope.core.trainers.context import CtxVar
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries import utils
 import numpy as np
 
@@ -14,7 +16,7 @@ class CLTrainer(GeneralTorchTrainer):
             label = label.unsqueeze(0)
             
         ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.y_prob = CtxVar(z1, z2, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar((z1, z2), LIFECYCLE.BATCH)
         ctx.loss_batch = CtxVar(ctx.criterion(z1, z2), LIFECYCLE.BATCH)
         ctx.batch_size = CtxVar(len(label), LIFECYCLE.BATCH)
         

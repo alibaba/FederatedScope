@@ -40,22 +40,14 @@ class SimCLRTransform():
 def Cifar4CL(config):
     
     transform_train = SimCLRTransform(is_sup=False, image_size=32)
-    transform_test = T.Compose([
-        T.ToTensor(), 
-        T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
 
-    splits = config.data.splits
     path = config.data.root
-    name = config.data.type.upper()
-    client_num = config.federate.client_num
-    batch_size = config.data.batch_size
     
     data_train = CIFAR10(path, train=True, download=True, transform=transform_train)
 #     data_val = CIFAR10(path, train=True, download=True, transform=transform_train)
     data_test = CIFAR10(path, train=False, download=True, transform=transform_train)
     
-          # Split data into dict
+    # Split data into dict
     data_dict = dict()
 
     # Splitter
@@ -106,10 +98,11 @@ def Cifar4LP(config):
         T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
 
+    path = config.data.root
     
-    data_train = CIFAR10(config.data.root, train=True, download=True, transform=transform_train)
-    data_val = CIFAR10(config.data.root, train=True, download=True, transform=transform_test)
-    data_test = CIFAR10(config.data.root, train=False, download=True, transform=transform_test)
+    data_train = CIFAR10(path, train=True, download=True, transform=transform_train)
+    data_val = CIFAR10(path, train=True, download=True, transform=transform_test)
+    data_test = CIFAR10(path, train=False, download=True, transform=transform_test)
     
           # Split data into dict
     data_dict = dict()
