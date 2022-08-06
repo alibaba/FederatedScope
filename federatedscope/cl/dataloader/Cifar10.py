@@ -49,7 +49,6 @@ def Cifar4CL(config):
     
     # Split data into dict
     data_dict = dict()
-    
     splitter = get_splitter(config)
     data_train = splitter(data_train)
     data_val = data_train
