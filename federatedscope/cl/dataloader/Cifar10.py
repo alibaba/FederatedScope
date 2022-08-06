@@ -44,7 +44,7 @@ def Cifar4CL(config):
     path = config.data.root
     
     data_train = CIFAR10(path, train=True, download=True, transform=transform_train)
-#     data_val = CIFAR10(path, train=True, download=True, transform=transform_train)
+    # data_val = CIFAR10(path, train=True, download=True, transform=transform_train)
     data_test = CIFAR10(path, train=False, download=True, transform=transform_train)
     
     # Split data into dict
