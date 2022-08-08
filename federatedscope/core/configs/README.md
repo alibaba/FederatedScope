@@ -6,7 +6,63 @@ The configurations related to the data/dataset are defined in `cfg_data.py`.
 
 | Name |  (Type) Default Value | Description | Note |
 |:----:|:-----:|:---------- |:---- |
-| data.root | (string) 'data' | <font size=1> The folder where the data file located. `data.root` would be used together with `data.type` to load the dataset. </font> | - |
+| `data.root` | (string) 'data' | <font size=1> The folder where the data file located. `data.root` would be used together with `data.type` to load the dataset. </font> | - |
+| `data.type` | (string) 'toy' | <font size=1>Dataset name</font> | CV: 'femnist', 'celeba' ; NLP: 'shakespeare', 'subreddit', 'twitter'; Graph: 'cora', 'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm', 'epinions', 'ciao', 'fb15k-237', 'wn18', 'fb15k' , 'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1', 'ENZYMES', 'DD', 'PROTEINS', 'COLLAB', 'IMDB-BINARY', 'IMDB-MULTI', 'REDDIT-BINARY', 'IMDB-BINARY', 'IMDB-MULTI', 'HIV', 'ESOL', 'FREESOLV', 'LIPO', 'PCBA', 'MUV', 'BACE', 'BBBP', 'TOX21', 'TOXCAST', 'SIDER', 'CLINTOX', 'graph_multi_domain_mol', 'graph_multi_domain_small', 'graph_multi_domain_mix', 'graph_multi_domain_biochem'; MF: 'vflmovielens1m', 'vflmovielens10m', 'hflmovielens1m', 'hflmovielens10m', 'vflnetflix', 'hflnetflix'; Tabular: 'toy', 'synthetic'; External dataset: 'DNAME@torchvision', 'DNAME@torchtext', 'DNAME@huggingface_datasets', 'DNAME@openml'. |
+| `data.args` | (list) [] | <font size=1>Args for the external dataset</font> | Used for external dataset, eg. `[{'download': False}]` |
+| `data.splitter` | (string) '' | <font size=1>Splitter name for standalone dataset</font> | Generic splitter: 'lda'; Graph splitter: 'louvain', 'random', 'rel_type', 'graph_type', 'scaffold', 'scaffold_lda', 'rand_chunk' |
+| `data.splitter_args` | (list) [] | <font size=1>Args for splitter.</font> | Used for splitter, eg. `[{'alpha': 0.5}]` |
+| `data.transform` | (list) [] | <font size=1>Transform for x of data</font> | Used in `get_item` in torch.dataset, eg. `[['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]` |
+| `data.target_transform` | (list) [] | <font size=1>Transform for y of data</font> | Use as `data.transform` |
+| `data.pre_transform` | (list) [] | <font size=1>Pre_transform for `torch_geometric` dataset</font> | Use as `data.transform` |
+| `data.batch_size` | (int) 64 | <font size=1>batch_size for DataLoader</font> | - |
+| `data.drop_last` | (bool) False | <font size=1>Whether drop last batch (if the number of last batch is smaller than batch_size) in DataLoader</font> | - |
+| `data.sizes` | (list) [10, 5] | <font size=1>Sample size for graph DataLoader</font> | The length of `data.sizes` must meet the layer of GNN models. |
+| `data.shuffle` | (bool) True | <font size=1>Shuffle train DataLoader</font> | - |
+| `data.server_holds_all` | (bool) False | <font size=1>Only use in global mode, whether the server (workers with idx 0) holds all data, useful in global training/evaluation case</font> | - |
+| `data.subsample` | (float) 1.0 | <font size=1> Only used in LEAF datasets, subsample clients from all clients</font> | - |
+| `data.splits` | (list) [0.8, 0.1, 0.1] | <font size=1>Train, valid, test splits</font> | - |
+| `data.consistent_label_distribution` | (bool) False | <font size=1>Make label distribution of train/val/test set over clients keep consistent during splitting</font> | - |
+| `data.cSBM_phi` | (list) [0.5, 0.5, 0.5] | <font size=1>Phi for cSBM graph dataset</font> | - |
+| `data.loader` | (string) '' | <font size=1>Graph sample name, used in minibatch trainer</font> | 'graphsaint-rw': use `GraphSAINTRandomWalkSampler` as DataLoader; 'neighbor': use `NeighborSampler` as DataLoader. |
+| `data.num_workers` | (int) 0 | <font size=1>num_workers in DataLoader</font> | - |
+| `data.graphsaint.walk_length` | (int) 2 | <font size=1>The length of each random walk in graphsaint.</font> | - |
+| `data.graphsaint.num_steps` | (int) 30 | <font size=1>The number of iterations per epoch in graphsaint.</font> | - |
+| `cfg.data.quadratic.dim` | (int) 1 | <font size=1>Dim of synthetic quadratic  dataset</font> | - |
+| `cfg.data.quadratic.min_curv` | (float) 0.02 | <font size=1>Min_curve of synthetic quadratic  dataset</font> | - |
+| `cfg.data.quadratic.max_curv` | (float) 12.5 | <font size=1>Max_cur of synthetic quadratic  dataset</font> | - |
+
+### Model
+
+The configurations related to the model are defined in `cfg_model.py`.
+
+|            Name            | (Type) Default Value |                   Description                    |                                                                                          Note                                                                                          |
+|:--------------------------:|:--------------------:|:------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| `model.model_num_per_trainer` |     (int) 1     | Number of model per trainer |                                                                 some methods may leverage more                                                                 |
+| `model.type` | (string) 'lr' | The model name used in FL | CV: 'convnet2', 'convnet5', 'vgg11', 'lr'; NLP: 'LSTM', 'MODEL@transformers'; Graph:  'gcn', 'sage', 'gpr', 'gat', 'gin', 'mpnn';  Tabular: 'mlp', 'lr', 'quadratic'; MF: 'vmfnet', 'hmfnet' |
+| `model.use_bias` | (bool) True | Whether use bias in lr model | - |
+| `model.task` | (string) 'node' | The task type of model, the default is `Classification` | NLP: 'PreTraining', 'QuestionAnswering', 'SequenceClassification', 'TokenClassification', 'Auto', 'WithLMHead'; Graph: 'NodeClassification', 'NodeRegression', 'LinkClassification', 'LinkRegression', 'GraphClassification', 'GraphRegression', |
+| `model.hidden` | (int) 256 | Hidden layer dimension | - |
+| `model.dropout` | (float) 0.5 | Dropout ratio | - |
+| `model.in_channels` | (int) 0 | Input channels dimension | If 0, model will be built by `data.shape` |
+| `model.out_channels` | (int) 1 | Output channels dimension | - |
+| `model.layer` | (int) 2 | Model layer | - |
+| `model.graph_pooling` | (string) 'mean' | Graph pooling method in graph-level task | 'add', 'mean' or 'max' |
+| `model.embed_size` | (int) 8 | `embed_size` in LSTM | - |
+| `model.num_item` | (int) 0 | Number of items in MF. | It will be overwritten by the real value of the dataset. |
+| `model.num_user` | (int) 0 | Number of users in MF. | It will be overwritten by the real value of the dataset. |
+
+#### Criterion
+
+|            Name            | (Type) Default Value |                   Description                    |                                                                                         Note                                                                                          |
+|:--------------------------:|:--------------------:|:------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| `criterion.type` |     (string) 'MSELoss'     | Criterion type |                                                                                           Chosen from https://pytorch.org/docs/stable/nn.html#loss-functions , eg. 'CrossEntropyLoss', 'L1Loss', etc.                                                                                            |
+
+#### regularizer
+
+|            Name            | (Type) Default Value |                   Description                    |                                                                                          Note                                                                                          |
+|:--------------------------:|:--------------------:|:------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| `regularizer.type` |     (string) ' '     | The type of the regularizer |                                                                 Chosen from [`proximal_regularizer`]                                                                 |
+| `regularizer.mu` | (float) 0 | The factor that controls the loss of the regularization term | - |
 
 ### Federated training
 The configurations related to federated training are defined in `cfg_training.py`.
@@ -131,7 +187,7 @@ The configurations related to NbAFL method.
 | `nbafl.w_clip` |      (float) 1.      | The threshold used for weight clipping.    | - |
 | `nbafl.constant` |     (float) 30. | The constant used in NbAFL.                | - |
 
-# SGDMF
+#### SGDMF
 The configurations related to SGDMF method (only used in matrix factorization tasks).
 
 |      Name       | (Type) Default Value | Description                        | Note                                                    |
@@ -142,3 +198,48 @@ The configurations related to SGDMF method (only used in matrix factorization ta
 | `sgdmf.delta` |     (float) 0.5      | The $\delta$ used in DP.           | -                                                       |
 | `sgdmf.constant` |      (float) 1. | The constant in SGDMF | -                                                       |
 | `sgdmf.theta` | (int) -1 | - | -1 means per-rating privacy, otherwise per-user privacy |
+
+### Auto-tuning Components
+
+These arguments are exposed for customizing our provided auto-tuning components.
+
+#### General
+
+| Name | (Type) Default Value | Description                                | Note |
+|:----:|:--------------------:|:-------------------------------------------|:-----|
+| `hpo.working_folder` |     (string) 'hpo'     | Save model checkpoints and search space configurations to this folder.         | Trials in the next stage of an iterative HPO algorithm can restore from the checkpoints of their corresponding last trials. |
+| `hpo.ss` |     (string) 'hpo'     | File path of the .yaml that specifying the search space.         | - |
+| `hpo.num_workers` |     (int) 0     | The number of threads to concurrently attempt different hyperparameter configurations.         | Multi-threading is banned in current version. |
+| `hpo.init_cand_num` |     (int) 16     | The number of initial hyperparameter configurations sampled from the search space.         | - |
+| `hpo.larger_better` |     (bool) False     | The indicator of whether the larger metric is better.         | - |
+| `hpo.scheduler` |     (string) 'rs' </br> Choices: {'rs', 'sha', 'wrap_sha'}     | Which algorithm to use.         | - |
+| `hpo.metric` |     (string) 'client_summarized_weighted_avg.val_loss'     | Metric to be optimized.         | - |
+
+#### Successive Halving Algorithm (SHA)
+
+| Name | (Type) Default Value | Description                                | Note |
+|:----:|:--------------------:|:-------------------------------------------|:-----|
+| `hpo.sha.elim_rate` |     (int) 3     | Reserve only top 1/`hpo.sha.elim_rate` hyperparameter configurations in each state.        | - |
+| `hpo.sha.budgets` |     (list of int) []     | Budgets for each SHA stage.        | - |
+
+
+#### FedEx
+
+| Name | (Type) Default Value | Description                                | Note |
+|:----:|:--------------------:|:-------------------------------------------|:-----|
+| `hpo.fedex.use` |     (bool) False     | Whether to use FedEx.        | - |
+| `hpo.fedex.ss` |     (striing) ''     | Path of the .yaml specifying the search space to be explored.        | - |
+| `hpo.fedex.flatten_ss` |     (bool) True     | Whether the search space has been flattened.        | - |
+| `hpo.fedex.eta0` |     (float) -1.0     | Initial learning rate.        | -1.0 means automatically determine the learning rate based on the size of search space. |
+| `hpo.fedex.sched` |     (string) 'auto' </br> Choices: {'auto', 'adaptive', 'aggressive', 'constant', 'scale' } | The strategy to update step sizes    | - |
+| `hpo.fedex.cutoff` |     (float) 0.0 | The entropy level below which to stop updating the config.        | - |
+| `hpo.fedex.gamma` |     (float) 0.0 | The discount factor; 0.0 is most recent, 1.0 is mean.        | - |
+| `hpo.fedex.diff` |     (bool) False | Whether to use the difference of validation losses before and after the local update as the reward signal.        | - |
+
+#### Wrappers for FedEx 
+
+| Name | (Type) Default Value | Description                                | Note |
+|:----:|:--------------------:|:-------------------------------------------|:-----|
+| `hpo.table.eps` |     (float) 0.1 | The probability to make local perturbation.        | Larger values lead to drastically different arms of the bandit FedEx attempts to solve. |
+| `hpo.table.num` |     (int) 27 | The number of arms of the bandit FedEx attempts to solve.        | - |
+| `hpo.table.idx` |     (int) 0 | The key (i.e., name) of the hyperparameter wrapper considers.        | No need to change this argument. |
