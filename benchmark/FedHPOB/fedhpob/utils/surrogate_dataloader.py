@@ -94,7 +94,8 @@ def build_surrogate_model(datadir, model, dname, algo, key='val_acc'):
         for max_depth in [10, 15, 20]:
             regr = RandomForestRegressor(n_estimators=n_estimators,
                                          max_depth=max_depth)
-            # dict_keys(['fit_time', 'score_time', 'estimator', 'test_score', 'train_score'])
+            # dict_keys(['fit_time', 'score_time', 'estimator',
+            # 'test_score', 'train_score'])
             res = sk_cross_validate(regr,
                                     new_X,
                                     new_Y,
@@ -105,9 +106,8 @@ def build_surrogate_model(datadir, model, dname, algo, key='val_acc'):
                                     return_train_score=True)
             test_metric = np.mean(res['test_score'])
             train_metric = np.mean(res['train_score'])
-            print(
-                f'n_estimators: {n_estimators}, max_depth: {max_depth}, train_metric: {train_metric}, test_metric: {test_metric}'
-            )
+            print(f'n_estimators: {n_estimators}, max_depth: {max_depth}, '
+                  f'train_metric: {train_metric}, test_metric: {test_metric}')
             if test_metric > best_res:
                 best_res = test_metric
                 best_models = res['estimator']

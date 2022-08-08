@@ -32,6 +32,7 @@ class BasicMFNet(Module):
         self.register_parameter('embed_item', self.embed_item)
 
     def forward(self, indices, ratings):
+        # TODO: do not use all embedding
         pred = torch.matmul(self.embed_user, self.embed_item.T)
         label = torch.sparse_coo_tensor(indices,
                                         ratings,

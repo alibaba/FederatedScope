@@ -91,7 +91,7 @@ class LEAF(Dataset):
 
 class LocalDataset(Dataset):
     """
-    Convert data list to torch Dataset to save memory usage.
+        Convert data list to torch Dataset to save memory usage.
     """
     def __init__(self,
                  Xs,
@@ -122,3 +122,7 @@ class LocalDataset(Dataset):
             target = self.target_transform(target)
 
         return data, target
+
+    def extend(self, dataset):
+        self.Xs = np.vstack((self.Xs, dataset.Xs))
+        self.targets = np.hstack((self.targets, dataset.targets))

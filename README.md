@@ -163,7 +163,7 @@ To run with distributed mode, you only need to:
 
 - Prepare isolated data file and set up `cfg.distribute.data_file = PATH/TO/DATA` for each participant;
 - Change `cfg.federate.model = 'distributed'`, and specify the role of each participant  by `cfg.distributed.role = 'server'/'client'`.
-- Set up a valid address by `cfg.distribute.host = x.x.x.x` and `cfg.distribute.port = xxxx`. (Note that for a server, you need to set up server_host/server_port for listening messge, while for a client, you need to set up client_host/client_port for listening and server_host/server_port for sending join-in applications when building up an FL course)
+- Set up a valid address by `cfg.distribute.server_host/client_host = x.x.x.x` and `cfg.distribute.server_port/client_port = xxxx`. (Note that for a server, you need to set up `server_host` and `server_port` for listening messages, while for a client, you need to set up `client_host` and `client_port` for listening as well as `server_host` and `server_port` for joining in an FL course)
 
 We prepare a synthetic example for running with distributed mode:
 
@@ -177,7 +177,7 @@ python main.py --cfg federatedscope/example_configs/distributed_client_2.yaml di
 python main.py --cfg federatedscope/example_configs/distributed_client_3.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
 ```
 
-An executable example with generated toy data can be run with:
+An executable example with generated toy data can be run with (a script can be found in `scripts/run_distributed_lr.sh`):
 ```bash
 # Generate the toy data
 python scripts/gen_data.py

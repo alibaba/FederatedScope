@@ -4,14 +4,16 @@ cudaid=$1
 dataset=$2
 gnn='gcn'
 
+cd ../../../../..
+
 if [ ! -d "out" ];then
-  mkdir out
+    mkdir out
 fi
 
 if [[ $dataset = 'cora' ]]; then
     out_channels=7
     hidden=64
-    
+
     num=16
     arry1=(0.5 0.0 0.25 16)
     arry2=(0.5 0.0 0.01 16)
@@ -29,11 +31,11 @@ if [[ $dataset = 'cora' ]]; then
     arry14=(0.0 0.0005 0.25 16)
     arry15=(0.5 0.0 0.05 4)
     arry16=(0.0 0.0005 0.01 16)
-    
+
 elif [[ $dataset = 'citeseer' ]]; then
     out_channels=6
     hidden=64
-    
+
     num=20
     arry1=(0.5 0.0 0.01 4)
     arry2=(0.0 0.0005 0.01 1)
@@ -55,11 +57,11 @@ elif [[ $dataset = 'citeseer' ]]; then
     arry18=(0.0 0.0 0.25 1)
     arry19=(0.0 0.0005 0.01 16)
     arry20=(0.0 0.0 0.05 4)
-    
+
 elif [[ $dataset = 'pubmed' ]]; then
     out_channels=5
     hidden=64
-    
+
     num=15
     arry1=(0.5 0.0 0.05 1)
     arry2=(0.5 0.0 0.01 16)
@@ -76,7 +78,7 @@ elif [[ $dataset = 'pubmed' ]]; then
     arry13=(0.5 0.0 0.25 1)
     arry14=(0.0 0.0005 0.01 1)
     arry15=(0.5 0.0 0.01 1)
- 
+
 else
     out_channels=4
     hidden=1024
@@ -93,7 +95,7 @@ do
     eval local_update=\${arry${i}[3]}
     for k in {1..5}
     do
-        python federatedscope/main.py --cfg federatedscope/gfl/baseline/fedavg_gnn_node_fullbatch_citation.yaml device ${cudaid} data.type ${dataset} model.dropout ${dropout} optimizer.weight_decay ${wd} optimizer.lr ${lr} train.local_update_steps ${local_update} model.type ${gnn} model.out_channels ${out_channels} model.hidden ${hidden} seed $k >>out/${gnn}_${dropout}_${wd}_${lr}_${local_update}_on_${dataset}.log 2>&1
+        python federatedscope/main.py --cfg federatedscope/gfl/baseline/fedavg_gnn_node_fullbatch_citation.yaml device ${cudaid} data.type ${dataset} model.dropout ${dropout} train.optimizer.weight_decay ${wd} train.optimizer.lr ${lr} train.local_update_steps ${local_update} model.type ${gnn} model.out_channels ${out_channels} model.hidden ${hidden} seed $k >>out/${gnn}_${dropout}_${wd}_${lr}_${local_update}_on_${dataset}.log 2>&1
     done
 done
 

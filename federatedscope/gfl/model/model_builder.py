@@ -15,6 +15,8 @@ from federatedscope.gfl.model.mpnn import MPNNs2s
 def get_gnn(model_config, input_shape):
 
     x_shape, num_label, num_edge_features = input_shape
+    if not num_label:
+        num_label = 0
     if model_config.task.startswith('node'):
         if model_config.type == 'gcn':
             # assume `data` is a dict where key is the client index,

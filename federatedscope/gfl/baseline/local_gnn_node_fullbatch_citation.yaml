@@ -18,7 +18,6 @@ model:
   dropout: 0.5
   out_channels: 7
 train:
-  local_update_steps: 100
   optimizer:
     lr: 0.05
     weight_decay: 0.0005

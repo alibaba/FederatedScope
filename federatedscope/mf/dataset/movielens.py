@@ -77,19 +77,6 @@ class MovieLensData(object):
         ratings = self._load_meta()
         self._split_n_clients_rating(ratings, num_client, 1 - train_portion)
 
-    def _split_n_clients_rating(self, ratings: csc_matrix, num_client: int,
-                                test_portion: float):
-        id_item = np.arange(self.n_item)
-        shuffle(id_item)
-        items_per_client = np.array_split(id_item, num_client)
-        data = dict()
-        for clientId, items in enumerate(items_per_client):
-            client_ratings = ratings[:, items]
-            train_ratings, test_ratings = self._split_train_test_ratings(
-                client_ratings, test_portion)
-            data[clientId + 1] = {"train": train_ratings, "test": test_ratings}
-        self.data = data
-
     def _split_train_test_ratings(self, ratings: csc_matrix,
                                   test_portion: float):
         n_ratings = ratings.count_nonzero()
@@ -109,22 +96,26 @@ class MovieLensData(object):
         train_ratings, test_ratings = train.tocsc(), test.tocsc()
         return train_ratings, test_ratings
 
+    def _read_raw(self):
+        fpath = os.path.join(self.root, self.base_folder, self.filename,
+                             self.raw_file)
+        data = pd.read_csv(fpath,
+                           sep="::",
+                           engine="python",
+                           usecols=[0, 1, 2],
+                           names=["userId", "movieId", "rating"],
+                           dtype={
+                               "userId": np.int32,
+                               "movieId": np.int32,
+                               "rating": np.float32
+                           })
+        return data
+
     def _load_meta(self):
         meta_path = os.path.join(self.root, self.base_folder, "ratings.pkl")
         if not os.path.exists(meta_path):
             logger.info("Processing data into {} parties.")
-            fpath = os.path.join(self.root, self.base_folder, self.filename,
-                                 self.raw_file)
-            data = pd.read_csv(fpath,
-                               sep="::",
-                               engine="python",
-                               usecols=[0, 1, 2],
-                               names=["userId", "movieId", "rating"],
-                               dtype={
-                                   "userId": np.int32,
-                                   "movieId": np.int32,
-                                   "rating": np.float32
-                               })
+            data = self._read_raw()
             # Map idx
             unique_id_item, unique_id_user = np.sort(
                 data["movieId"].unique()), np.sort(data["userId"].unique())

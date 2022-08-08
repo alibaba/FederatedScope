@@ -15,7 +15,8 @@ class TabularBenchmark(BaseBenchmark):
                  rng=None,
                  cost_mode='estimated',
                  **kwargs):
-        self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
+        self.model, self.dname, self.algo, self.cost_mode = model, dname, \
+                                                            algo, cost_mode
         self.table, self.meta_info = load_data(datadir, model, dname, algo)
         self.eval_freq = self.meta_info['eval_freq']
         super(TabularBenchmark, self).__init__(model, dname, algo, rng,
@@ -24,7 +25,8 @@ class TabularBenchmark(BaseBenchmark):
     def _check(self, configuration, fidelity):
         for key, value in configuration.items():
             assert value in self.configuration_space[
-                key], 'configuration invalid, check `configuration_space` for help.'
+                key], 'configuration invalid, check `configuration_space` ' \
+                      'for help.'
         for key, value in fidelity.items():
             assert value in self.fidelity_space[
                 key], 'fidelity invalid, check `fidelity_space` for help.'
