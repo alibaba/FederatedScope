@@ -11,18 +11,17 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.working_folder = 'hpo'
     cfg.hpo.ss = ''
     cfg.hpo.num_workers = 0
-    # cfg.hpo.init_strategy = 'random'
     cfg.hpo.init_cand_num = 16
-    cfg.hpo.log_scale = False
+    #cfg.hpo.log_scale = False
     cfg.hpo.larger_better = False
     cfg.hpo.scheduler = 'rs'
     # plot the performance
-    cfg.hpo.plot_interval = 1
+    #cfg.hpo.plot_interval = 1
     cfg.hpo.metric = 'client_summarized_weighted_avg.val_loss'
 
     # SHA
     cfg.hpo.sha = CN()
-    cfg.hpo.sha.elim_round_num = 3
+    #cfg.hpo.sha.elim_round_num = 3
     cfg.hpo.sha.elim_rate = 3
     cfg.hpo.sha.budgets = []
 
@@ -44,12 +43,12 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex.cutoff = .0
     # discount factor; 0.0 is most recent, 1.0 is mean
     cfg.hpo.fedex.gamma = .0
-    cfg.hpo.fedex.num_arms = 16
+    #cfg.hpo.fedex.num_arms = 16
     cfg.hpo.fedex.diff = False
 
     # Table
     cfg.hpo.table = CN()
-    cfg.hpo.table.ss = ''
+    #cfg.hpo.table.ss = ''
     cfg.hpo.table.eps = 0.1
     cfg.hpo.table.num = 27
     # cfg.hpo.table.cand = 81
