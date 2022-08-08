@@ -30,6 +30,7 @@ The configurations related to the data/dataset are defined in `cfg_data.py`.
 | `cfg.data.quadratic.dim` | (int) 1 | <font size=1>Dim of synthetic quadratic  dataset</font> | - |
 | `cfg.data.quadratic.min_curv` | (float) 0.02 | <font size=1>Min_curve of synthetic quadratic  dataset</font> | - |
 | `cfg.data.quadratic.max_curv` | (float) 12.5 | <font size=1>Max_cur of synthetic quadratic  dataset</font> | - |
+
 ### Federated training
 The configurations related to federated training are defined in `cfg_training.py`.
 Considering it's infeasible to list all the potential arguments for optimizers and schedulers, we allow the users to add new parameters directly under the corresponding namespace. 
