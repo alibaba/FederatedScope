@@ -77,7 +77,7 @@ def get_scheduler(init_cfg):
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
-    elif init_cfg.hpo.scheduler == 'wrap_sha':
+    elif init_cfg.hpo.scheduler.startswith('wrap_'):
         scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 

@@ -40,5 +40,12 @@ if __name__ == '__main__':
     # global_cfg.merge_from_list(args.opts)
 
     scheduler = get_scheduler(init_cfg)
-    _ = scheduler.optimize()
+    cfg_set = scheduler._init_configs
+    if init_cfg.hpo.scheduler in ['rs', 'sha', 'wrap_sha']:
+        _ = scheduler.optimize()
+    elif init_cfg.hpo.scheduler in ['wrap_bo_kde', 'wrap_bohb']:
+        pass
+    else:
+        raise ValueError(f'No scheduler named {init_cfg.hpo.scheduler}')
+
     # logger.info(results)
