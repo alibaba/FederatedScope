@@ -8,7 +8,7 @@ federate:
   mode: 'distributed'
   make_global_eval: False
   online_aggr: False
-  total_round_num: 300
+  total_round_num: 20
 distribute:
   use: True
   server_host: '127.0.0.1'
@@ -40,7 +40,7 @@ criterion:
 trainer:
   type: cvtrainer
 eval:
-  freq: 1
+  freq: 10
   metrics: ['acc', 'correct']
   report: ['weighted_avg', 'raw']
   count_flops: False

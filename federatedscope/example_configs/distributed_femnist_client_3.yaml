@@ -1,5 +1,5 @@
 use_gpu: True
-device: 1
+device: 0
 early_stop:
   patience: 5
 seed: 12345
@@ -8,11 +8,13 @@ federate:
   mode: 'distributed'
   make_global_eval: False
   online_aggr: False
-  total_round_num: 300
+  total_round_num: 20
 distribute:
   use: True
   server_host: '127.0.0.1'
   server_port: 50051
+  client_host: '127.0.0.1'
+  client_port: 50054
   role: 'client'
   data_idx: 4
 data:
@@ -40,7 +42,7 @@ criterion:
 trainer:
   type: cvtrainer
 eval:
-  freq: 1
+  freq: 10
   metrics: ['acc', 'correct']
   report: [ 'weighted_avg', 'raw' ]
   count_flops: False
