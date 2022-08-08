@@ -259,23 +259,6 @@ The configurations related to monitoring and evaluation, which are adefined in `
 | `wandb.client_train_info` | (bool) True | whether to track the training info of clients | - |
 
 
-#### Grad Clipping
-The following configurations are related to the grad clipping.
-
-|            Name            | (Type) Default Value |                   Description                    |                                                                                          Note                                                                                          |
-|:--------------------------:|:--------------------:|:------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| `grad.grad_clip` |     (float) -1.0     | The threshold used in gradient clipping. |                                                                 `grad.grad_clip < 0` means we don't clip the gradient.                                                                 |
-
-#### Early Stop
-
-|                   Name                   | (Type) Default Value |                   Description                    |                                                                                         Note                                                                                          |
-|:----------------------------------------:|:--------------------:|:------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|          `early_stop.patience`           | (int) 5 |  How long to wait after last time the monitored metric improved. |                        Note that the actual_checking_round = `early_step.patience` * `eval.freq`. To disable the early stop, set the `early_stop.patience` <=0                        |
-|            `early_stop.delta`            | (float) 0. |  Minimum change in the monitored metric to indicate a improvement. |                                                                                           -                                                                                           |
-|   `early_stop.`</br> `improve_indicaator_mode`   | (string) 'best' | Early stop when there is no improvement within the last `early_step.patience` rounds, in ['mean', 'best'] |                                                                             Chosen from 'mean' or 'best'                                                                              |
-|   `early_step.`</br> `the_smaller_the_better`    | (bool) True | The optimized direction of the chosen metric |                                                                                           -                                                                                           |
-
-
 ### Asynchronous Training Strategies
 The configurations related to applying asynchronous training strategies in FL are defined in `cfg_asyn.py`.
 
