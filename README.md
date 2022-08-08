@@ -28,10 +28,10 @@ FederatedScope
 ├── federatedscope
 │   ├── core           
 │   |   ├── workers              # Behaviors of participants (i.e., server and clients)
+│   |   ├── trainers             # Details of local training
+│   |   ├── aggregators          # Details of federated aggregation
 │   |   ├── configs              # Customizable configurations
-│   |   ├── trainer              # Detail of local training
 │   |   ├── monitors             # The monitor module for logging and demonstrating  
-│   |   ├── aggregator.py        # Detail of federated aggregation
 │   |   ├── communication.py     # Implementation of communication among participants   
 │   |   ├── fed_runner.py        # The runner for building and running an FL course
 │   |   ├── ... ..
