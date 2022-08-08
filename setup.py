@@ -22,11 +22,7 @@ benchmark_hpo_requires = [
     'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.3.3', 'optuna==2.10.0'
 ]
 
-# TODO: add requirements for pfl
-benchmark_pfl_requires = []
-
-# TODO: add requirements for htl
-benchmark_htl_requires = []
+benchmark_htl_requires = ['learn2learn']
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -51,9 +47,8 @@ setuptools.setup(
         'test': test_requires,
         'org': org_requires,
         'dev': dev_requires,
-        'benchmark_hpo': benchmark_hpo_requires,
-        'benchmark_pfl': benchmark_pfl_requires,
-        'benchmark_htl': benchmark_htl_requires,
+        'hpo': benchmark_hpo_requires,
+        'htl': benchmark_htl_requires,
     },
     license="Apache License 2.0",
     classifiers=[
