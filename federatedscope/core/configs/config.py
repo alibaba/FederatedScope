@@ -34,7 +34,7 @@ class CN(CfgNode):
         init_dict = super().__init__(init_dict, key_list, new_allowed)
         self.__cfg_check_funcs__ = list()  # to check the config values
         # validity
-        self.__help_info__ = defaultdict(str)  # build the help dict
+        self.__help_info__ = dict()  # build the help dict
 
         if init_dict:
             for k, v in init_dict.items():
@@ -216,7 +216,7 @@ def init_global_cfg(cfg):
     1) Note that for an experiment, only part of the arguments will be used
     The remaining unused arguments won't affect anything.
     So feel free to register any argument in graphgym.contrib.config
-    2) We support *at most* two levels of configs, e.g., cfg.dataset.name
+    2) We support more than one levels of configs, e.g., cfg.dataset.name
 
     :return: configuration use by the experiment.
     '''

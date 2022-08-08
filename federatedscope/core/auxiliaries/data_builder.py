@@ -117,7 +117,7 @@ def load_toy_data(config=None):
 
     if generate:
         data = _generate_data(client_num=config.federate.client_num,
-                              save_data=config.eval.save_data)
+                              save_data=config.data.save_data)
     else:
         with open(config.distribute.data_file, 'rb') as f:
             data = pickle.load(f)

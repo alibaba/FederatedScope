@@ -34,7 +34,6 @@ import logging
 import os
 import sys
 from ast import literal_eval
-from collections import defaultdict
 
 import yaml
 
@@ -88,10 +87,7 @@ class Argument:
 
 
 # CfgNodes can only contain a limited set of valid types
-_VALID_TYPES = {
-    tuple, list, str, int, float, bool,
-    type(None), Argument, defaultdict
-}
+_VALID_TYPES = {tuple, list, str, int, float, bool, type(None), Argument, dict}
 # py2 allow for str and unicode
 if _PY2:
     _VALID_TYPES = _VALID_TYPES.union({unicode})  # noqa: F821
