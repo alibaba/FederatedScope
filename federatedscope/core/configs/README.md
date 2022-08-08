@@ -53,9 +53,9 @@ The configurations related to the model are defined in `cfg_model.py`.
 
 #### Criterion
 
-|            Name            | (Type) Default Value |                   Description                    |                                                                                          Note                                                                                          |
-|:--------------------------:|:--------------------:|:------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| `criterion.type` |     (string) 'MSELoss'     | Criterion type |                                                                 -                                                                 |
+|            Name            | (Type) Default Value |                   Description                    |                                                                                         Note                                                                                          |
+|:--------------------------:|:--------------------:|:------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| `criterion.type` |     (string) 'MSELoss'     | Criterion type |                                                                                           Chosen from https://pytorch.org/docs/stable/nn.html#loss-functions , eg. 'CrossEntropyLoss', 'L1Loss', etc.                                                                                            |
 
 #### regularizer
 
