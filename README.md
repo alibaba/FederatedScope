@@ -27,7 +27,7 @@ A detailed tutorial is provided on our [website](https://federatedscope.io/).
 FederatedScope
 ├── federatedscope
 │   ├── core           
-│   |   ├── worker               # Behaviors of participants (i.e., server and clients)
+│   |   ├── workers              # Behaviors of participants (i.e., server and clients)
 │   |   ├── configs              # Customizable configurations
 │   |   ├── trainer              # Detail of local training
 │   |   ├── monitors             # The monitor module for logging and demonstrating  
@@ -39,6 +39,7 @@ FederatedScope
 │   ├── nlp                      # Federated learning in NLP          
 │   ├── gfl                      # Graph federated learning          
 │   ├── autotune                 # Auto-tunning for federated learning         
+│   ├── contrib                          
 │   ├── main.py           
 │   ├── ... ...          
 ├── scripts                      # Scripts for reproducing existing algorithms
@@ -46,6 +47,10 @@ FederatedScope
 ├── doc                          # For automatic documentation
 ├── enviornment                  # Installation requirements and provided docker files
 ├── materials                    # Materials of related topics (e.g., paper lists)
+│   ├── notebook                        
+│   ├── paper_list                                        
+│   ├── tutorial                                       
+│   ├── ... ...                                      
 ├── tests                        # Unittest modules for continuous integration
 ├── LICENSE
 └── setup.py
