@@ -1,8 +1,6 @@
 import os
 import sys
 
-from yacs.config import CfgNode
-
 import yaml
 
 DEV_MODE = False  # simplify the federatedscope re-setup everytime we change

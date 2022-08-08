@@ -1,107 +1,25 @@
 import copy
 import logging
 import os
+from collections import defaultdict
 
 from pathlib import Path
-from yacs.config import CfgNode, _assert_with_logging, _VALID_TYPES
 
 import federatedscope.register as register
+from federatedscope.core.configs.yacs_config import CfgNode, _merge_a_into_b, \
+    Argument
 
 logger = logging.getLogger(__name__)
 
-# allow int <-> float conversation
-casts = [(tuple, list), (list, tuple), (int, float), (float, int)]
 
-
-def check_and_coerce_cfg_value_type(replacement, original, key, full_key):
-    """
-        [Modified from yacs, to allow int <-> float conversation]
-
-    Checks that `replacement`, which is intended to replace `original` is of
-    the right type. The type is correct if it matches exactly or is one of a
-    few cases in which the type can be easily coerced.
-    """
-    original_type = type(original)
-    replacement_type = type(replacement)
-
-    # The types must match (with some exceptions)
-    if replacement_type == original_type:
-        return replacement
-
-    # If either of them is None,
-    # allow type conversion to one of the valid types
-    if (replacement_type is None and original_type in _VALID_TYPES) or (
-            original_type is None and replacement_type in _VALID_TYPES):
-        return replacement
-
-    # Cast replacement from from_type to to_type
-    # if the replacement and original types match from_type and to_type
-    def conditional_cast(from_type, to_type):
-        if replacement_type == from_type and original_type == to_type:
-            return True, to_type(replacement)
-        else:
-            return False, None
-
-    # Conditionally casts
-    # list <-> tuple
-    # For py2: allow converting from str (bytes) to a unicode string
-    try:
-        casts.append((str, unicode))  # noqa: F821
-    except Exception:
-        pass
-
-    for (from_type, to_type) in casts:
-        converted, converted_value = conditional_cast(from_type, to_type)
-        if converted:
-            return converted_value
-
-    raise ValueError(
-        "Type mismatch ({} vs. {}) with values ({} vs. {}) for config "
-        "key: {}".format(original_type, replacement_type, original,
-                         replacement, full_key))
-
-
-def merge_dict_a_into_b(a, b, root, key_list):
-    """
-        [Modified from yacs, to allow int <-> float conversation]
-
-    Merge config dictionary a into config dictionary b, clobbering the
-    options in b whenever they are also specified in a.
-    """
-    _assert_with_logging(
-        isinstance(a, CfgNode),
-        "`a` (cur type {}) must be an instance of {}".format(type(a), CfgNode),
-    )
-    _assert_with_logging(
-        isinstance(b, CfgNode),
-        "`b` (cur type {}) must be an instance of {}".format(type(b), CfgNode),
-    )
-
-    for k, v_ in a.items():
-        full_key = ".".join(key_list + [k])
-
-        v = copy.deepcopy(v_)
-        v = b._decode_cfg_value(v)
-
-        if k in b:
-            v = check_and_coerce_cfg_value_type(v, b[k], k, full_key)
-            # Recursively merge dicts
-            if isinstance(v, CfgNode):
-                try:
-                    merge_dict_a_into_b(v, b[k], root, key_list + [k])
-                except BaseException:
-                    raise
-            else:
-                b[k] = v
-        elif b.is_new_allowed():
-            b[k] = v
-        else:
-            if root.key_is_deprecated(full_key):
-                continue
-            elif root.key_is_renamed(full_key):
-                root.raise_key_rename_error(full_key)
-            else:
-                raise KeyError("Non-existent config key: {}".format(full_key))
+def set_help_info(cn_node, help_info_dict, prefix=""):
+    for k, v in cn_node.items():
+        if isinstance(v, Argument) and k not in help_info_dict:
+            help_info_dict[prefix + k] = v.description
+        elif isinstance(v, CN):
+            set_help_info(v,
+                          help_info_dict,
+                          prefix=f"{k}." if prefix == "" else f"{prefix}{k}.")
 
 
 class CN(CfgNode):
@@ -113,15 +31,36 @@ class CN(CfgNode):
 
     """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
-        super().__init__(init_dict, key_list, new_allowed)
-        self.__dict__["cfg_check_funcs"] = list(
-        )  # to check the config values validity
+        init_dict = super().__init__(init_dict, key_list, new_allowed)
+        self.cfg_check_funcs = list()  # to check the config values validity
+        self.help_info = defaultdict(str)  # build the help dict
+
+        if init_dict:
+            for k, v in init_dict.items():
+                if isinstance(v, Argument):
+                    self.help_info[k] = v.description
+                elif isinstance(v, CN):
+                    for name, des in k.help_info:
+                        self.help_info[name] = des
 
     def __getattr__(self, name):
         if name in self:
             return self[name]
         else:
             raise AttributeError(name)
+
+    def print_help(self, arg_name=""):
+        """
+            print help info for a specific given `arg_name` or
+            for all arguments if not given `arg_name`
+        :param arg_name:
+        :return:
+        """
+        if arg_name != "" and arg_name in self.help_info:
+            print(f"  --{arg_name} \t {self.help_info[arg_name]}")
+        else:
+            for k, v in self.help_info.items():
+                print(f"  --{k} \t {v}")
 
     def register_cfg_check_fun(self, cfg_check_fun):
         self.cfg_check_funcs.append(cfg_check_fun)
@@ -141,6 +80,7 @@ class CN(CfgNode):
         self.cfg_check_funcs.clear()
         self.cfg_check_funcs.extend(cfg_check_funcs)
         self.assert_cfg()
+        set_help_info(self, self.help_info)
 
     def merge_from_other_cfg(self, cfg_other):
         """
@@ -151,10 +91,11 @@ class CN(CfgNode):
         """
 
         cfg_check_funcs = copy.copy(self.cfg_check_funcs)
-        merge_dict_a_into_b(cfg_other, self, self, [])
+        _merge_a_into_b(cfg_other, self, self, [])
         self.cfg_check_funcs.clear()
         self.cfg_check_funcs.extend(cfg_check_funcs)
         self.assert_cfg()
+        set_help_info(self, self.help_info)
 
     def merge_from_list(self, cfg_list):
         """
@@ -166,40 +107,11 @@ class CN(CfgNode):
         :return:
         """
         cfg_check_funcs = copy.copy(self.cfg_check_funcs)
-        self.merge_from_list_yacs(cfg_list)
+        super().merge_from_list(cfg_list)
         self.cfg_check_funcs.clear()
         self.cfg_check_funcs.extend(cfg_check_funcs)
         self.assert_cfg()
-
-    def merge_from_list_yacs(self, cfg_list):
-        """Merge config (keys, values) in a list (e.g., from command line) into
-        this CfgNode. For example, `cfg_list = ['FOO.BAR', 0.5]`.
-        """
-        _assert_with_logging(
-            len(cfg_list) % 2 == 0,
-            "Override list has odd length: {}; it must be a list of pairs".
-            format(cfg_list),
-        )
-        root = self
-        for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
-            if root.key_is_deprecated(full_key):
-                continue
-            if root.key_is_renamed(full_key):
-                root.raise_key_rename_error(full_key)
-            key_list = full_key.split(".")
-            d = self
-            for subkey in key_list[:-1]:
-                _assert_with_logging(subkey in d,
-                                     "Non-existent key: {}".format(full_key))
-                d = d[subkey]
-            subkey = key_list[-1]
-            _assert_with_logging(subkey in d or d.is_new_allowed(),
-                                 "Non-existent key: {}".format(full_key))
-            value = self._decode_cfg_value(v)
-            if subkey in d:
-                value = check_and_coerce_cfg_value_type(
-                    value, d[subkey], subkey, full_key)
-            d[subkey] = value
+        set_help_info(self, self.help_info)
 
     def assert_cfg(self):
         """
@@ -228,6 +140,13 @@ class CN(CfgNode):
                         else:
                             del v[k]
 
+    def _check_required_args(self):
+        for k, v in self.items():
+            if isinstance(v, CN):
+                v._check_required_args()
+            if isinstance(v, Argument) and v.required and v.value is None:
+                logger.warning(f"You have not set the required argument {k}")
+
     def freeze(self, inform=True, save=True):
         """
             1) make the cfg attributes immutable;
@@ -239,6 +158,7 @@ class CN(CfgNode):
         """
         self.assert_cfg()
         self.clean_unused_sub_cfgs()
+        self._check_required_args()
         if save:  # save the final cfg
             Path(self.outdir).mkdir(parents=True, exist_ok=True)
             with open(os.path.join(self.outdir, "config.yaml"),
@@ -247,6 +167,7 @@ class CN(CfgNode):
                 with redirect_stdout(outfile):
                     tmp_cfg = copy.deepcopy(self)
                     tmp_cfg.cfg_check_funcs.clear()
+                    tmp_cfg.help_info.clear()
                     print(tmp_cfg.dump())
                 if self.wandb.use:
                     # update the frozen config
@@ -326,6 +247,8 @@ def init_global_cfg(cfg):
     # extend user customized configs
     for func in register.config_dict.values():
         func(cfg)
+
+    set_help_info(cfg, cfg.help_info)
 
 
 init_global_cfg(global_cfg)

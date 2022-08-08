@@ -1,4 +1,5 @@
 from federatedscope.core.configs.config import CN
+from federatedscope.core.configs.yacs_config import Argument
 from federatedscope.register import register_config
 
 
@@ -11,8 +12,10 @@ def extend_fl_algo_cfg(cfg):
     cfg.fedopt.use = False
 
     cfg.fedopt.optimizer = CN(new_allowed=True)
-    cfg.fedopt.optimizer.type = 'SGD'
-    cfg.fedopt.optimizer.lr = 0.01
+    cfg.fedopt.optimizer.type = Argument(
+        'SGD', description="optimizer type for FedOPT")
+    cfg.fedopt.optimizer.lr = Argument(
+        0.01, description="learning rate for FedOPT optimizer")
 
     # ---------------------------------------------------------------------- #
     # fedprox related options, general fl

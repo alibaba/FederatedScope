@@ -6,7 +6,6 @@ import threading
 import math
 
 import ConfigSpace as CS
-from yacs.config import CfgNode as CN
 import yaml
 import numpy as np
 
@@ -68,7 +67,7 @@ class TrialExecutor(threading.Thread):
 def get_scheduler(init_cfg):
     """To instantiate an scheduler object for conducting HPO
     Arguments:
-        init_cfg (yacs.Node): configuration.
+        init_cfg (core.configs.config.CN): configuration.
     """
 
     if init_cfg.hpo.scheduler == 'rs':
@@ -88,8 +87,8 @@ class Scheduler(object):
     def __init__(self, cfg):
         """
             Arguments:
-                cfg (yacs.Node): dict like object, where each key-value pair
-                corresponds to a field and its choices.
+                cfg (ycore.configs.config.CN): dict like object, where each
+                key-value pair corresponds to a field and its choices.
         """
 
         self._cfg = cfg
