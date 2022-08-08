@@ -31,6 +31,39 @@ The configurations related to the data/dataset are defined in `cfg_data.py`.
 | `cfg.data.quadratic.min_curv` | (float) 0.02 | <font size=1>Min_curve of synthetic quadratic  dataset</font> | - |
 | `cfg.data.quadratic.max_curv` | (float) 12.5 | <font size=1>Max_cur of synthetic quadratic  dataset</font> | - |
 
+### Model
+
+The configurations related to the model are defined in `cfg_model.py`.
+
+|            Name            | (Type) Default Value |                   Description                    |                                                                                          Note                                                                                          |
+|:--------------------------:|:--------------------:|:------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| `model.model_num_per_trainer` |     (int) 1     | Number of model per trainer |                                                                 some methods may leverage more                                                                 |
+| `model.type` | (string) 'lr' | The model name used in FL | CV: 'convnet2', 'convnet5', 'vgg11', 'lr'; NLP: 'LSTM', 'MODEL@transformers'; Graph:  'gcn', 'sage', 'gpr', 'gat', 'gin', 'mpnn';  Tabular: 'mlp', 'lr', 'quadratic'; MF: 'vmfnet', 'hmfnet' |
+| `model.use_bias` | (bool) True | Whether use bias in lr model | - |
+| `model.task` | (string) 'node' | The task type of model, the default is `Classification` | NLP: 'PreTraining', 'QuestionAnswering', 'SequenceClassification', 'TokenClassification', 'Auto', 'WithLMHead'; Graph: 'NodeClassification', 'NodeRegression', 'LinkClassification', 'LinkRegression', 'GraphClassification', 'GraphRegression', |
+| `model.hidden` | (int) 256 | Hidden layer dimension | - |
+| `model.dropout` | (float) 0.5 | Dropout ratio | - |
+| `model.in_channels` | (int) 0 | Input channels dimension | If 0, model will be built by `data.shape` |
+| `model.out_channels` | (int) 1 | Output channels dimension | - |
+| `model.layer` | (int) 2 | Model layer | - |
+| `model.graph_pooling` | (string) 'mean' | Graph pooling method in graph-level task | 'add', 'mean' or 'max' |
+| `model.embed_size` | (int) 8 | `embed_size` in LSTM | - |
+| `model.num_item` | (int) 0 | Number of items in MF. | It will be overwritten by the real value of the dataset. |
+| `model.num_user` | (int) 0 | Number of users in MF. | It will be overwritten by the real value of the dataset. |
+
+#### Criterion
+
+|            Name            | (Type) Default Value |                   Description                    |                                                                                         Note                                                                                          |
+|:--------------------------:|:--------------------:|:------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| `criterion.type` |     (string) 'MSELoss'     | Criterion type |                                                                                           Chosen from https://pytorch.org/docs/stable/nn.html#loss-functions , eg. 'CrossEntropyLoss', 'L1Loss', etc.                                                                                            |
+
+#### regularizer
+
+|            Name            | (Type) Default Value |                   Description                    |                                                                                          Note                                                                                          |
+|:--------------------------:|:--------------------:|:------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| `regularizer.type` |     (string) ' '     | The type of the regularizer |                                                                 Chosen from [`proximal_regularizer`]                                                                 |
+| `regularizer.mu` | (float) 0 | The factor that controls the loss of the regularization term | - |
+
 ### Federated training
 The configurations related to federated training are defined in `cfg_training.py`.
 Considering it's infeasible to list all the potential arguments for optimizers and schedulers, we allow the users to add new parameters directly under the corresponding namespace. 
