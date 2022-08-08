@@ -66,7 +66,7 @@ class TrialExecutor(threading.Thread):
 
 
 def get_scheduler(init_cfg):
-    """To instantiate an scheduler object for conducting HPO
+    """To instantiate a scheduler object for conducting HPO
     Arguments:
         init_cfg (yacs.Node): configuration.
     """

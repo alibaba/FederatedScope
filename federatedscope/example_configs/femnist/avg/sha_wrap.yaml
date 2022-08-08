@@ -6,8 +6,6 @@ early_stop:
 seed: 12345
 federate:
   mode: standalone
-  local_update_steps: 1
-  batch_or_epoch: epoch
   total_round_num: 500
   sample_client_rate: 1.0
   share_local_model: True
@@ -26,9 +24,12 @@ model:
   hidden: 2048
   out_channels: 62
   dropout: 0.5
-optimizer:
-  lr: 0.01
-  weight_decay: 0.0
+train:
+  batch_or_epoch: epoch
+  local_update_steps: 1
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
 grad:
   grad_clip: 5.0
 criterion:

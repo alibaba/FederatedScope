@@ -1,16 +1,16 @@
-optimizer.lr:
+train.optimizer.lr:
   type: float
   lower: 0.01
   upper: 1.0
   log: True
-optimizer.weight_decay:
+train.optimizer.weight_decay:
   type: float
   lower: 0.0
   upper: 1.0
 model.dropout:
   type: cate
   choices: [0.0, 0.5]
-federate.local_update_steps:
+train.local_update_steps:
   type: int
   lower: 1
   upper: 4
