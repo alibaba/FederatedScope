@@ -67,7 +67,7 @@ class TrialExecutor(threading.Thread):
 def get_scheduler(init_cfg):
     """To instantiate an scheduler object for conducting HPO
     Arguments:
-        init_cfg (core.configs.config.CN): configuration.
+        init_cfg (federatedscope.core.configs.config.CN): configuration.
     """
 
     if init_cfg.hpo.scheduler == 'rs':
@@ -87,8 +87,9 @@ class Scheduler(object):
     def __init__(self, cfg):
         """
             Arguments:
-                cfg (ycore.configs.config.CN): dict like object, where each
-                key-value pair corresponds to a field and its choices.
+                cfg (federatedscope.core.configs.config.CN): dict like object,
+                where each key-value pair corresponds to a field and its
+                choices.
         """
 
         self._cfg = cfg

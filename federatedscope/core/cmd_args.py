@@ -1,5 +1,6 @@
 import argparse
 import sys
+from federatedscope.core.configs.config import global_cfg
 
 
 def parse_args(args=None):
@@ -26,8 +27,8 @@ def parse_args(args=None):
                         default=None,
                         nargs=argparse.REMAINDER)
     parse_res = parser.parse_args(args)
-    from federatedscope.core.configs.config import global_cfg
     init_cfg = global_cfg.clone()
+    # when users type only "main.py" or "main.py help"
     if len(sys.argv) == 1 or parse_res.help == "all":
         parser.print_help()
         init_cfg.print_help()

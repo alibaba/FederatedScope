@@ -32,22 +32,29 @@ class CN(CfgNode):
     """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
         init_dict = super().__init__(init_dict, key_list, new_allowed)
-        self.cfg_check_funcs = list()  # to check the config values validity
-        self.help_info = defaultdict(str)  # build the help dict
+        self.__cfg_check_funcs__ = list()  # to check the config values
+        # validity
+        self.__help_info__ = defaultdict(str)  # build the help dict
 
         if init_dict:
             for k, v in init_dict.items():
                 if isinstance(v, Argument):
-                    self.help_info[k] = v.description
-                elif isinstance(v, CN):
-                    for name, des in k.help_info:
-                        self.help_info[name] = des
+                    self.__help_info__[k] = v.description
+                elif isinstance(v, CN) and "help_info" in v:
+                    for name, des in v.__help_info__.items():
+                        self.__help_info__[name] = des
 
     def __getattr__(self, name):
         if name in self:
             return self[name]
         else:
             raise AttributeError(name)
+
+    def clear_check_funcs(self):
+        self.__cfg_check_funcs__.clear()
+
+    def clear_help_info(self):
+        self.__help_info__.clear()
 
     def print_help(self, arg_name=""):
         """
@@ -56,14 +63,14 @@ class CN(CfgNode):
         :param arg_name:
         :return:
         """
-        if arg_name != "" and arg_name in self.help_info:
-            print(f"  --{arg_name} \t {self.help_info[arg_name]}")
+        if arg_name != "" and arg_name in self.__help_info__:
+            print(f"  --{arg_name} \t {self.__help_info__[arg_name]}")
         else:
-            for k, v in self.help_info.items():
+            for k, v in self.__help_info__.items():
                 print(f"  --{k} \t {v}")
 
     def register_cfg_check_fun(self, cfg_check_fun):
-        self.cfg_check_funcs.append(cfg_check_fun)
+        self.__cfg_check_funcs__.append(cfg_check_fun)
 
     def merge_from_file(self, cfg_filename):
         """
@@ -73,14 +80,14 @@ class CN(CfgNode):
         :param cfg_filename (string):
         :return:
         """
-        cfg_check_funcs = copy.copy(self.cfg_check_funcs)
+        cfg_check_funcs = copy.copy(self.__cfg_check_funcs__)
         with open(cfg_filename, "r") as f:
             cfg = self.load_cfg(f)
         self.merge_from_other_cfg(cfg)
-        self.cfg_check_funcs.clear()
-        self.cfg_check_funcs.extend(cfg_check_funcs)
+        self.__cfg_check_funcs__.clear()
+        self.__cfg_check_funcs__.extend(cfg_check_funcs)
         self.assert_cfg()
-        set_help_info(self, self.help_info)
+        set_help_info(self, self.__help_info__)
 
     def merge_from_other_cfg(self, cfg_other):
         """
@@ -90,12 +97,12 @@ class CN(CfgNode):
         :return:
         """
 
-        cfg_check_funcs = copy.copy(self.cfg_check_funcs)
+        cfg_check_funcs = copy.copy(self.__cfg_check_funcs__)
         _merge_a_into_b(cfg_other, self, self, [])
-        self.cfg_check_funcs.clear()
-        self.cfg_check_funcs.extend(cfg_check_funcs)
+        self.__cfg_check_funcs__.clear()
+        self.__cfg_check_funcs__.extend(cfg_check_funcs)
         self.assert_cfg()
-        set_help_info(self, self.help_info)
+        set_help_info(self, self.__help_info__)
 
     def merge_from_list(self, cfg_list):
         """
@@ -106,12 +113,12 @@ class CN(CfgNode):
         :param cfg_list (list):
         :return:
         """
-        cfg_check_funcs = copy.copy(self.cfg_check_funcs)
+        cfg_check_funcs = copy.copy(self.__cfg_check_funcs__)
         super().merge_from_list(cfg_list)
-        self.cfg_check_funcs.clear()
-        self.cfg_check_funcs.extend(cfg_check_funcs)
+        self.__cfg_check_funcs__.clear()
+        self.__cfg_check_funcs__.extend(cfg_check_funcs)
         self.assert_cfg()
-        set_help_info(self, self.help_info)
+        set_help_info(self, self.__help_info__)
 
     def assert_cfg(self):
         """
@@ -119,7 +126,7 @@ class CN(CfgNode):
 
         :return:
         """
-        for check_func in self.cfg_check_funcs:
+        for check_func in self.__cfg_check_funcs__:
             check_func(self)
 
     def clean_unused_sub_cfgs(self):
@@ -166,8 +173,8 @@ class CN(CfgNode):
                 from contextlib import redirect_stdout
                 with redirect_stdout(outfile):
                     tmp_cfg = copy.deepcopy(self)
-                    tmp_cfg.cfg_check_funcs.clear()
-                    tmp_cfg.help_info.clear()
+                    tmp_cfg.clear_check_funcs()
+                    tmp_cfg.clear_help_info()
                     print(tmp_cfg.dump())
                 if self.wandb.use:
                     # update the frozen config
@@ -248,7 +255,7 @@ def init_global_cfg(cfg):
     for func in register.config_dict.values():
         func(cfg)
 
-    set_help_info(cfg, cfg.help_info)
+    set_help_info(cfg, cfg.__help_info__)
 
 
 init_global_cfg(global_cfg)

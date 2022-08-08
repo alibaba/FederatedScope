@@ -155,7 +155,7 @@ def init_wandb(cfg):
     tmp_cfg = copy.deepcopy(cfg)
     if tmp_cfg.is_frozen():
         tmp_cfg.defrost()
-    tmp_cfg.cfg_check_funcs.clear(
+    tmp_cfg.clear_check_funcs(
     )  # in most cases, no need to save the cfg_check_funcs via wandb
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())

@@ -515,7 +515,10 @@ def _merge_a_into_b(a, b, root, key_list):
         v = copy.deepcopy(v_)
         v = b._decode_cfg_value(v)
 
-        if k in b:
+        if k in ['help_info', "__help_info__"] and k in b:
+            for name, info in v_.items():
+                b[k][name] = info
+        elif k in b:
             v = _check_and_coerce_cfg_value_type(v, b[k], k, full_key)
             # Recursively merge dicts
             if isinstance(v, CfgNode):
@@ -546,6 +549,12 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
     """
     original_type = type(original)
     replacement_type = type(replacement)
+    if original_type is Argument:
+        original_type = original.type
+        original = original.value
+    if replacement_type is Argument:
+        replacement_type = replacement.type
+        replacement = replacement.value
 
     # The types must match (with some exceptions)
     if replacement_type == original_type:
