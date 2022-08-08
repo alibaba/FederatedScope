@@ -6,7 +6,30 @@ The configurations related to the data/dataset are defined in `cfg_data.py`.
 
 | Name |  (Type) Default Value | Description | Note |
 |:----:|:-----:|:---------- |:---- |
-| data.root | (string) 'data' | <font size=1> The folder where the data file located. `data.root` would be used together with `data.type` to load the dataset. </font> | - |
+| `data.root` | (string) 'data' | <font size=1> The folder where the data file located. `data.root` would be used together with `data.type` to load the dataset. </font> | - |
+| `data.type` | (string) 'toy' | <font size=1>Dataset name</font> | CV: 'femnist', 'celeba' ; NLP: 'shakespeare', 'subreddit', 'twitter'; Graph: 'cora', 'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm', 'epinions', 'ciao', 'fb15k-237', 'wn18', 'fb15k' , 'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1', 'ENZYMES', 'DD', 'PROTEINS', 'COLLAB', 'IMDB-BINARY', 'IMDB-MULTI', 'REDDIT-BINARY', 'IMDB-BINARY', 'IMDB-MULTI', 'HIV', 'ESOL', 'FREESOLV', 'LIPO', 'PCBA', 'MUV', 'BACE', 'BBBP', 'TOX21', 'TOXCAST', 'SIDER', 'CLINTOX', 'graph_multi_domain_mol', 'graph_multi_domain_small', 'graph_multi_domain_mix', 'graph_multi_domain_biochem'; MF: 'vflmovielens1m', 'vflmovielens10m', 'hflmovielens1m', 'hflmovielens10m', 'vflnetflix', 'hflnetflix'; Tabular: 'toy', 'synthetic'; External dataset: 'DNAME@torchvision', 'DNAME@torchtext', 'DNAME@huggingface_datasets', 'DNAME@openml'. |
+| `data.args` | (list) [] | <font size=1>Args for the external dataset</font> | Used for external dataset, eg. `[{'download': False}]` |
+| `data.splitter` | (string) '' | <font size=1>Splitter name for standalone dataset</font> | Generic splitter: 'lda'; Graph splitter: 'louvain', 'random', 'rel_type', 'graph_type', 'scaffold', 'scaffold_lda', 'rand_chunk' |
+| `data.splitter_args` | (list) [] | <font size=1>Args for splitter.</font> | Used for splitter, eg. `[{'alpha': 0.5}]` |
+| `data.transform` | (list) [] | <font size=1>Transform for x of data</font> | Used in `get_item` in torch.dataset, eg. `[['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]` |
+| `data.target_transform` | (list) [] | <font size=1>Transform for y of data</font> | Use as `data.transform` |
+| `data.pre_transform` | (list) [] | <font size=1>Pre_transform for `torch_geometric` dataset</font> | Use as `data.transform` |
+| `data.batch_size` | (int) 64 | <font size=1>batch_size for DataLoader</font> | - |
+| `data.drop_last` | (bool) False | <font size=1>Whether drop last batch (if the number of last batch is smaller than batch_size) in DataLoader</font> | - |
+| `data.sizes` | (list) [10, 5] | <font size=1>Sample size for graph DataLoader</font> | The length of `data.sizes` must meet the layer of GNN models. |
+| `data.shuffle` | (bool) True | <font size=1>Shuffle train DataLoader</font> | - |
+| `data.server_holds_all` | (bool) False | <font size=1>Only use in global mode, whether the server (workers with idx 0) holds all data, useful in global training/evaluation case</font> | - |
+| `data.subsample` | (float) 1.0 | <font size=1> Only used in LEAF datasets, subsample clients from all clients</font> | - |
+| `data.splits` | (list) [0.8, 0.1, 0.1] | <font size=1>Train, valid, test splits</font> | - |
+| `data.consistent_label_distribution` | (bool) False | <font size=1>Make label distribution of train/val/test set over clients keep consistent during splitting</font> | - |
+| `data.cSBM_phi` | (list) [0.5, 0.5, 0.5] | <font size=1>Phi for cSBM graph dataset</font> | - |
+| `data.loader` | (string) '' | <font size=1>Graph sample name, used in minibatch trainer</font> | 'graphsaint-rw': use `GraphSAINTRandomWalkSampler` as DataLoader; 'neighbor': use `NeighborSampler` as DataLoader. |
+| `data.num_workers` | (int) 0 | <font size=1>num_workers in DataLoader</font> | - |
+| `data.graphsaint.walk_length` | (int) 2 | <font size=1>The length of each random walk in graphsaint.</font> | - |
+| `data.graphsaint.num_steps` | (int) 30 | <font size=1>The number of iterations per epoch in graphsaint.</font> | - |
+| `cfg.data.quadratic.dim` | (int) 1 | <font size=1>Dim of synthetic quadratic  dataset</font> | - |
+| `cfg.data.quadratic.min_curv` | (float) 0.02 | <font size=1>Min_curve of synthetic quadratic  dataset</font> | - |
+| `cfg.data.quadratic.max_curv` | (float) 12.5 | <font size=1>Max_cur of synthetic quadratic  dataset</font> | - |
 
 ### Federated training
 The configurations related to federated training are defined in `cfg_training.py`.
