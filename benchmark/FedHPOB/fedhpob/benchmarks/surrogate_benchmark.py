@@ -1,7 +1,8 @@
 import os
 
 from fedhpob.benchmarks.base_benchmark import BaseBenchmark
-from fedhpob.utils.surrogate_dataloader import build_surrogate_model, load_surrogate_model
+from fedhpob.utils.surrogate_dataloader import build_surrogate_model, \
+    load_surrogate_model
 
 
 class SurrogateBenchmark(BaseBenchmark):
@@ -14,22 +15,29 @@ class SurrogateBenchmark(BaseBenchmark):
                  rng=None,
                  cost_mode='estimated',
                  **kwargs):
-        self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
-        assert datadir or modeldir, 'Please provide at least one of `datadir` and `modeldir`.'
+        self.model, self.dname, self.algo, self.cost_mode = model, dname, \
+                                                            algo, cost_mode
+        assert datadir or modeldir, 'Please provide at least one of ' \
+                                    '`datadir` and `modeldir`.'
         if not os.path.exists(os.path.join(modeldir, model, dname)):
-            self.surrogate_models, self.meta_info, self.X, self.Y = build_surrogate_model(
-                datadir, model, dname, algo)
+            self.surrogate_models, self.meta_info, self.X, self.Y = \
+                build_surrogate_model(datadir, model, dname, algo)
         else:
-            self.surrogate_models, self.meta_info, self.X, self.Y = load_surrogate_model(
-                modeldir, model, dname, algo)
+            self.surrogate_models, self.meta_info, self.X, self.Y = \
+                load_surrogate_model(modeldir, model, dname, algo)
         super(SurrogateBenchmark, self).__init__(model, dname, algo, rng,
                                                  **kwargs)
 
     def _check(self, configuration, fidelity):
         for key in configuration:
-            assert key in self.configuration_space, 'configuration invalid, check `configuration_space` for help.'
+            assert key in self.configuration_space, 'configuration invalid, ' \
+                                                    'check ' \
+                                                    '`configuration_space` ' \
+                                                    'for help.'
         for key in fidelity:
-            assert key in self.fidelity_space, 'fidelity invalid, check `fidelity_space` for help.'
+            assert key in self.fidelity_space, 'fidelity invalid, ' \
+                                               'check `fidelity_space` for ' \
+                                               'help.'
 
     def _make_prediction(self, configuration, fidelity, seed):
         model = self.surrogate_models[self.rng.randint(seed) %

@@ -1,11 +1,13 @@
 use_gpu: True
 device: 0
 early_stop:
-  patience: 5
+  patience: 100
 federate:
   mode: standalone
-  total_round_num: 100
-  sample_client_num: 10
+  total_round_num: 500
+  sample_client_rate: 0.01
+  make_global_eval: True
+  merge_test_data: True
   share_local_model: True
   online_aggr: True
 data:
@@ -30,5 +32,5 @@ trainer:
 eval:
   freq: 1
   metrics: ['acc', 'correct', 'f1']
-  split: [ 'train' ]
-  best_res_update_round_wise_key: 'train_loss'
+  split: [ 'test' ]
+  best_res_update_round_wise_key: 'test_loss'

@@ -541,7 +541,8 @@ class Monitor(object):
                 if round_wise_update_key not in [
                         "val_loss", "test_loss", "loss", "val_avg_loss",
                         "test_avg_loss", "avg_loss", "test_acc", "test_std",
-                        "val_acc", "val_std", "val_imp_ratio"
+                        "val_acc", "val_std", "val_imp_ratio", "train_loss",
+                        "train_avg_loss"
                 ]:
                     raise NotImplementedError(
                         f"We currently support round_wise_update_key as one "
