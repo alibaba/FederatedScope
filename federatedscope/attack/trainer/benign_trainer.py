@@ -36,10 +36,10 @@ def hook_on_fit_end_test_poison(ctx):
     Evaluate metrics of poisoning attacks.
     """
 
-    ctx['poison_' + ctx.cur_split +
-        '_loader'] = ctx.data['poison_' + ctx.cur_split]
-    ctx['poison_' + ctx.cur_split +
-        '_data'] = ctx.data['poison_' + ctx.cur_split].dataset
+    ctx['poison_' + ctx.cur_split + '_loader'] = ctx.data['poison_' +
+                                                          ctx.cur_split]
+    ctx['poison_' + ctx.cur_split + '_data'] = ctx.data['poison_' +
+                                                        ctx.cur_split].dataset
     ctx['num_poison_' + ctx.cur_split + '_data'] = len(
         ctx.data['poison_' + ctx.cur_split].dataset)
     setattr(ctx, "poison_{}_y_true".format(ctx.cur_split), [])
@@ -67,16 +67,13 @@ def hook_on_fit_end_test_poison(ctx):
             ctx.get("poison_num_samples_{}".format(ctx.cur_split)) +
             ctx.poison_batch_size)
 
-    setattr(
-        ctx, "poison_{}_y_true".format(ctx.cur_split),
-        np.concatenate(ctx.get("poison_{}_y_true".format(ctx.cur_split))))
-    setattr(
-        ctx, "poison_{}_y_prob".format(ctx.cur_split),
-        np.concatenate(ctx.get("poison_{}_y_prob".format(ctx.cur_split))))
+    setattr(ctx, "poison_{}_y_true".format(ctx.cur_split),
+            np.concatenate(ctx.get("poison_{}_y_true".format(ctx.cur_split))))
+    setattr(ctx, "poison_{}_y_prob".format(ctx.cur_split),
+            np.concatenate(ctx.get("poison_{}_y_prob".format(ctx.cur_split))))
 
     logger.info('the {} poisoning samples: {:d}'.format(
-        ctx.cur_split,
-        ctx.get("poison_num_samples_{}".format(ctx.cur_split))))
+        ctx.cur_split, ctx.get("poison_num_samples_{}".format(ctx.cur_split))))
 
     poison_true = ctx['poison_' + ctx.cur_split + '_y_true']
     poison_prob = ctx['poison_' + ctx.cur_split + '_y_prob']

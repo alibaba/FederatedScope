@@ -247,8 +247,10 @@ class Trainer(object):
         Arguments:
             mode: running mode of client, chosen from train/val/test
         Note:
-            Considering evaluation could be in ```hooks_set["on_epoch_end"]```, there could be two data loaders in
-        self.ctx, we must tell the running hooks which data_loader to call and which num_samples to count
+            Considering evaluation could be in ```hooks_set["on_epoch_end"]```,
+            there could be two data loaders in self.ctx, we must tell the
+            running hooks which data_loader to call and which
+            num_samples to count
         """
         for hook in hooks_set["on_fit_start"]:
             hook(self.ctx)

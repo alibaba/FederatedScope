@@ -55,32 +55,45 @@ class Context(LifecycleDict):
         init_dict (dict): a dict used to initialize the instance of Context
         init_attr (bool): if set up the static variables
     Note:
-        - The variables within an instance of class `Context` can be set/get as an attribute.
+        - The variables within an instance of class `Context`
+        can be set/get as an attribute.
         ```
         ctx.${NAME_VARIABLE} = ${VALUE_VARIABLE}
         ```
-        where `${NAME_VARIABLE}` and `${VALUE_VARIABLE}` is the name and value of the variable.
+        where `${NAME_VARIABLE}` and `${VALUE_VARIABLE}`
+        is the name and value of the variable.
 
-        - To achieve automatically lifecycle management, you can wrap the variable with `CtxVar` and a lifecycle parameter
+        - To achieve automatically lifecycle management, you can
+        wrap the variable with `CtxVar` and a lifecycle parameter
         as follows
         ```
         ctx.${NAME_VARIABLE} = CtxVar(${VALUE_VARIABLE}, ${LFECYCLE})
         ```
-        The parameter `${LFECYCLE}` can be chosen from `LIFECYCLE.BATCH`, `LIFECYCLE.EPOCH` and `LIFECYCLE.ROUTINE`.
-        Then the variable `ctx.${NAME_VARIABLE}` will be deleted at the end of the corresponding stage
-            - `LIFECYCLE.BATCH`: the variables will be deleted after running a batch
-            - `LIFECYCLE.EPOCH`: the variables will be deleted after running a epoch
-            - `LIFECYCLE.ROUTINE`: the variables will be deleted after running a routine
-        More details please refer to our [tutorial](https://federatedscope.io/docs/trainer/).
+        The parameter `${LFECYCLE}` can be chosen from `LIFECYCLE.BATCH`,
+        `LIFECYCLE.EPOCH` and `LIFECYCLE.ROUTINE`.
+        Then the variable `ctx.${NAME_VARIABLE}` will be deleted at
+        the end of the corresponding stage
+            - `LIFECYCLE.BATCH`: the variables will
+            be deleted after running a batch
+            - `LIFECYCLE.EPOCH`: the variables will be
+            deleted after running a epoch
+            - `LIFECYCLE.ROUTINE`: the variables will be
+            deleted after running a routine
+        More details please refer to our
+        [tutorial](https://federatedscope.io/docs/trainer/).
 
-        - Context also maintains some special variables across different routines, like
+        - Context also maintains some special variables across
+        different routines, like
             - cfg
             - model
             - data
             - device
-            - ${split}_data: the dataset object of data split named `${split}`
-            - ${split}_loader: the data loader object of data split named `${split}`
-            - num_${split}_data: the number of examples within the dataset named `${split}`
+            - ${split}_data: the dataset object of data split
+            named `${split}`
+            - ${split}_loader: the data loader object of data
+            split named `${split}`
+            - num_${split}_data: the number of examples within
+            the dataset named `${split}`
     """
     def __init__(self,
                  model,
@@ -127,10 +140,12 @@ class Context(LifecycleDict):
                 'train_loader', None) is not None:
             # Calculate the number of update steps during training given the
             # local_update_steps
-            self.num_train_batch, self.num_train_batch_last_epoch, self.num_train_epoch, self.num_total_train_batch = calculate_batch_epoch_num(
-                self.cfg.train.local_update_steps,
-                self.cfg.train.batch_or_epoch, self.num_train_data,
-                self.cfg.data.batch_size, self.cfg.data.drop_last)
+            self.num_train_batch, self.num_train_batch_last_epoch, \
+                self.num_train_epoch, self.num_total_train_batch = \
+                calculate_batch_epoch_num(
+                    self.cfg.train.local_update_steps,
+                    self.cfg.train.batch_or_epoch, self.num_train_data,
+                    self.cfg.data.batch_size, self.cfg.data.drop_last)
 
         # Process evaluation data
         for mode in ["val", "test"]:
@@ -210,7 +225,8 @@ class CtxVar(object):
 
 
 def lifecycle(lifecycle):
-    """Manage the lifecycle of the variables within context, and blind these operations from user.
+    """Manage the lifecycle of the variables within context,
+    and blind these operations from user.
     Args:
         lifecycle: the type of lifecycle, choose from "batch/epoch/routine"
     """

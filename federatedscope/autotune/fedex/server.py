@@ -158,6 +158,8 @@ class FedExServer(Server):
         else:
             # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
+            if msg_type == 'model_para':
+                self.sampler.change_state(receiver, 'working')
 
         if self._noise_injector is not None and msg_type == 'model_para':
             # Inject noise only when broadcast parameters
@@ -198,6 +200,7 @@ class FedExServer(Server):
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
+        self.sampler.change_state(sender, 'idle')
         # For a new round
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()

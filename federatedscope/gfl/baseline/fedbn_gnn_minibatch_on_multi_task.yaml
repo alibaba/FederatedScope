@@ -21,7 +21,7 @@ personalization:
   # local_param: ['encoder_atom', 'encoder', 'clf']   # to handle size-different pre & post layers
   local_param: [ 'encoder_atom', 'encoder', 'clf', 'norms' ]  # pre, post + FedBN
 train:
-  local_update_steps: 100
+  local_update_steps: 16
   optimizer:
     lr: 0.5
     weight_decay: 0.0005

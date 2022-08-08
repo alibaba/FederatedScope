@@ -5,6 +5,17 @@ This list is constantly being updated. Feel free to contribute!
 ### 2022
 | Title | Venue | Link | 
 | --- | --- | --- | 
+| Federated Learning with Noisy User Feedback | NAACL | [pdf](https://aclanthology.org/2022.naacl-main.196.pdf) |
+| Training Mixed-Domain Translation Models via Federated Learning | NAACL | [pdf](https://aclanthology.org/2022.naacl-main.186.pdf) |
+| Pretrained Models for Multilingual Federated Learning| NAACL | [pdf](https://arxiv.org/pdf/2206.02291.pdf), [code](https://github.com/orionw/Multilingual-Federated-Learning) |
+| FedNLP: Benchmarking Federated Learning Methods for Natural Language Processing Tasks | NAACL Findings | [pdf](https://aclanthology.org/2022.findings-naacl.13.pdf), [code](https://github.com/FedML-AI/FedNLP) |
+| Intrinsic Gradient Compression for Scalable and Efficient Federated Learning | ACL Workshop | [pdf](https://aclanthology.org/2022.fl4nlp-1.4.pdf) |
+| Adaptive Differential Privacy for Language Model Training | ACL Workshop | [pdf](https://aclanthology.org/2022.fl4nlp-1.3.pdf), [code](https://github.com/flamewei123/ADP) |
+| Scaling Language Model Size in Cross-Device Federated Learning | ACL Workshop | [pdf](https://aclanthology.org/2022.fl4nlp-1.2.pdf) |
+| ActPerFL: Active Personalized Federated Learning | ACL Workshop | [pdf](https://aclanthology.org/2022.fl4nlp-1.1.pdf) |
+| Federated Non-negative Matrix Factorization for Short Texts Topic Modeling with Mutual Information | IJCNN | [pdf](https://arxiv.org/pdf/2205.13300.pdf) |
+| Federated Split BERT for Heterogeneous Text Classification | IJCNN | [pdf](https://arxiv.org/pdf/2205.13299.pdf) |
+| Federated Learning for Violence Incident Prediction in a Simulated Cross-institutional Psychiatric Setting | Expert Systems with Applications | [pdf](https://arxiv.org/pdf/2205.10234.pdf) |
 | FedBERT: When Federated Learning Meets Pre-Training | TIST | [pdf](https://dl.acm.org/doi/pdf/10.1145/3510033) |
 | FedKC: Federated Knowledge Composition for Multilingual Natural Language Understanding | WWW | [pdf](https://dl.acm.org/doi/pdf/10.1145/3485447.3511988) |
 
@@ -13,19 +24,19 @@ This list is constantly being updated. Feel free to contribute!
 | Title | Venue | Link | 
 | --- | --- | --- | 
 | FedMatch: Federated Learning Over Heterogeneous Question Answering Data | CIKM | [pdf](https://dl.acm.org/doi/pdf/10.1145/3459637.3482345), [code](https://github.com/Chriskuei/FedMatch) |
-| Federated Chinese Word Segmentation with Global Character Associations | ACL | [pdf](https://aclanthology.org/2021.findings-acl.376.pdf), [code](https://github.com/cuhksz-nlp/GCASeg) |
+| Federated Chinese Word Segmentation with Global Character Associations | ACL Findings | [pdf](https://aclanthology.org/2021.findings-acl.376.pdf), [code](https://github.com/cuhksz-nlp/GCASeg) |
 | Improving Federated Learning for Aspect-based Sentiment Analysis via Topic Memories | EMNLP | [pdf](https://aclanthology.org/2021.emnlp-main.321.pdf), [code](https://github.com/cuhksz-nlp/ASA-TM) |
 | A Secure and Efficient Federated Learning Framework for NLP | EMNLP | [pdf](https://aclanthology.org/2021.emnlp-main.606.pdf) |
-| Distantly Supervised Relation Extraction in Federated Settings | EMNLP | [pdf](https://aclanthology.org/2021.findings-emnlp.52.pdf), [code](https://github.com/DianboWork/FedDS) |
-| FedNLP: Benchmarking Federated Learning Methods for Natural Language Processing Tasks | arXiv | [pdf](https://arxiv.org/pdf/2104.08815.pdf), [code](https://github.com/FedML-AI/FedNLP) |
+| Distantly Supervised Relation Extraction in Federated Settings | EMNLP Findings | [pdf](https://aclanthology.org/2021.findings-emnlp.52.pdf), [code](https://github.com/DianboWork/FedDS) |
 | Scaling Federated Learning for Fine-tuning of Large Language Models | arXiv | [pdf](https://arxiv.org/pdf/2102.00875.pdf) |
 
 
 ### 2020
 | Title | Venue | Link | 
 | --- | --- | --- | 
-| Empirical Studies of Institutional Federated Learning For Natural Language Processing | EMNLP | [pdf](https://aclanthology.org/2020.findings-emnlp.55.pdf) |
 | FedED: Federated Learning via Ensemble Distillation for Medical Relation Extraction | EMNLP | [pdf](https://aclanthology.org/2020.emnlp-main.165.pdf) |
+| Empirical Studies of Institutional Federated Learning For Natural Language Processing | EMNLP Findings | [pdf](https://aclanthology.org/2020.findings-emnlp.55.pdf) |
+| Federated Learning for Spoken Language Understanding | COLING | [pdf](https://aclanthology.org/2020.coling-main.310.pdf) |
 | FedNER: Privacy-preserving Medical Named Entity Recognition with Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2003.09288.pdf) |
 | Federated Pretraining and Fine Tuning of BERT Using Clinical Notes from Multiple Silos | arXiv | [pdf](https://arxiv.org/pdf/2002.08562.pdf) |
 | Pretraining Federated Text Models for Next Word Prediction | arXiv | [pdf](https://arxiv.org/pdf/2005.04828.pdf), [code](https://github.com/federated-learning-experiments/fl-text-models) |
