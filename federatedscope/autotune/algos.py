@@ -73,13 +73,11 @@ def get_scheduler(init_cfg):
 
     if init_cfg.hpo.scheduler == 'rs':
         scheduler = ModelFreeBase(init_cfg)
-    elif init_cfg.hpo.scheduler == 'sha':
+    elif init_cfg.hpo.scheduler in ['sha', 'bo_kde', 'bohb']:
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
-    elif init_cfg.hpo.scheduler in [
-            'bo_kde', 'bohb', 'wrap_bo_kde', 'wrap_bohb'
-    ]:
+    elif init_cfg.hpo.scheduler.startswith('wrap'):
         scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 

@@ -2,10 +2,8 @@ import time
 import math
 import logging
 
-import ConfigSpace as CS
-import ConfigSpace.hyperparameters as CSH
+from os.path import join as osp
 import hpbandster.core.nameserver as hpns
-
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB
 
@@ -20,6 +18,13 @@ def eval_in_fs(cfg, config, budget):
     from federatedscope.core.fed_runner import FedRunner
     from federatedscope.autotune.utils import config2cmdargs
 
+    # Add FedEx related keys to config
+    if 'hpo.table.idx' in config.keys():
+        idx = config['hpo.table.idx']
+        config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
+                                     f"{idx}_tmp_grid_search_space.yaml")
+        config['federate.save_to'] = osp(cfg.hpo.working_folder,
+                                         f"idx_{idx}.pth")
     # Global cfg
     trial_cfg = cfg.clone()
     # specify the configuration of interest
@@ -55,14 +60,7 @@ class MyWorker(Worker):
 
 
 def run_hpbandster(cfg, scheduler):
-    if cfg.hpo.scheduler in ['bo_kde', 'bohb']:
-        config_space = scheduler._search_space
-    elif cfg.hpo.scheduler in ['wrap_bo_kde', 'wrap_bohb']:
-        config_space = CS.ConfigurationSpace()
-        config_space.add_hyperparameter(
-            CSH.CategoricalHyperparameter('cfg',
-                                          choices=scheduler._init_configs))
-
+    config_space = scheduler._search_space
     NS = hpns.NameServer(run_id=cfg.hpo.scheduler, host='127.0.0.1', port=0)
     ns_host, ns_port = NS.start()
     w = MyWorker(sleep_interval=0,

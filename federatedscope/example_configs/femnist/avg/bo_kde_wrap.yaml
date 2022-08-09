@@ -10,6 +10,7 @@ federate:
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
+  use_diff: True
 data:
   root: data/
   type: femnist
@@ -40,7 +41,7 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: bo_kde
+  scheduler: wrap_bo_kde
   num_workers: 0
   init_cand_num: 27
   ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
