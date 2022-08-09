@@ -8,6 +8,7 @@ from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB
 
 logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 
 def eval_in_fs(cfg, config, budget):
@@ -48,15 +49,33 @@ def eval_in_fs(cfg, config, budget):
 
 
 class MyWorker(Worker):
-    def __init__(self, cfg, sleep_interval=0, *args, **kwargs):
+    def __init__(self, cfg, ss, sleep_interval=0, *args, **kwargs):
         super(MyWorker, self).__init__(**kwargs)
         self.sleep_interval = sleep_interval
         self.cfg = cfg
+        self._ss = ss
+        self._init_configs = []
+        self._perfs = []
 
     def compute(self, config, budget, **kwargs):
         res = eval_in_fs(self.cfg, config, int(budget))
+        self._init_configs.append(config)
+        self._perfs.append(float(res))
         time.sleep(self.sleep_interval)
         return {'loss': float(res), 'info': res}
+
+    def summarize(self):
+        from federatedscope.autotune.utils import summarize_hpo_results
+        results = summarize_hpo_results(self._init_configs,
+                                        self._perfs,
+                                        white_list=set(self._ss.keys()),
+                                        desc=self.cfg.hpo.larger_better)
+        logger.info(
+            "========================== HPO Final ==========================")
+        logger.info("\n{}".format(results))
+        logger.info("====================================================")
+
+        return results
 
 
 def run_hpbandster(cfg, scheduler):
@@ -64,6 +83,7 @@ def run_hpbandster(cfg, scheduler):
     NS = hpns.NameServer(run_id=cfg.hpo.scheduler, host='127.0.0.1', port=0)
     ns_host, ns_port = NS.start()
     w = MyWorker(sleep_interval=0,
+                 ss=config_space,
                  cfg=cfg,
                  nameserver='127.0.0.1',
                  nameserver_port=ns_port,
@@ -75,15 +95,16 @@ def run_hpbandster(cfg, scheduler):
         'nameserver': '127.0.0.1',
         'nameserver_port': ns_port,
         'eta': math.log(cfg.hpo.sha.budgets[-1] / cfg.hpo.sha.budgets[0],
-                        len(cfg.hpo.sha.budgets)),
+                        len(cfg.hpo.sha.budgets) - 1),
         'min_budget': cfg.hpo.sha.budgets[0],
         'max_budget': cfg.hpo.sha.budgets[-1]
     }
     optimizer = BOHB(**opt_kwargs)
-    res = optimizer.run(n_iterations=4)
+    res = optimizer.run(n_iterations=1)
 
     optimizer.shutdown(shutdown_workers=True)
     NS.shutdown()
     all_runs = res.get_all_runs()
+    w.summarize()
 
     return [x.info for x in all_runs]
