@@ -58,8 +58,8 @@ class KG(InMemoryDataset):
         ]
 
     def download(self):
-        url = 'https://github.com/MichSchli/RelationPrediction/tree/master' \
-              '/data/'
+        url = 'https://raw.githubusercontent.com/MichSchli/' \
+              'RelationPrediction/master/data/'
         urls = {
             'fb15k': url + 'FB15k',
             'fb15k-237': url + 'FB-Toutanova',
