@@ -9,7 +9,7 @@ from numpy.linalg import norm
 from scipy.special import logsumexp
 
 from federatedscope.core.message import Message
-from federatedscope.core.worker import Server
+from federatedscope.core.workers import Server
 from federatedscope.core.auxiliaries.utils import merge_dict
 
 logger = logging.getLogger(__name__)

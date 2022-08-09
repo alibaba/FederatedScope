@@ -5,7 +5,7 @@ import heapq
 
 import numpy as np
 
-from federatedscope.core.worker import Server, Client
+from federatedscope.core.workers import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
 from federatedscope.core.auxiliaries.data_builder import merge_data

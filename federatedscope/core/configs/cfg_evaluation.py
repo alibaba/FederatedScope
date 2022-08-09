@@ -10,7 +10,6 @@ def extend_evaluation_cfg(cfg):
     cfg.eval = CN(
         new_allowed=True)  # allow user to add their settings under `cfg.eval`
 
-    cfg.eval.save_data = False
     cfg.eval.freq = 1
     cfg.eval.metrics = []
     cfg.eval.split = ['test', 'val']

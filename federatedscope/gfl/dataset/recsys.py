@@ -144,9 +144,9 @@ class RecSys(InMemoryDataset):
             Paper: https://arxiv.org/abs/2104.07145
             Repo: https://github.com/FedML-AI/FedGraphNN
         """
-        url = 'https://github.com/FedML-AI/FedGraphNN/tree' \
-              '/82912342950e0cd1be2b683e48ef8bfd5cb0a276/' \
-              'data/recommender_system'
+        url = 'https://raw.githubusercontent.com/FedML-AI/FedGraphNN' \
+              '/82912342950e0cd1be2b683e48ef8bfd5cb0a276/data' \
+              '/recommender_system/'
         if self.name.startswith('FL'):
             suffix = self.name[2:]
         else:
