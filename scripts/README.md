@@ -19,3 +19,24 @@ Also, users can run distribute mode with other provided datasets and models. Tak
 ```shell script
 bash scripts/run_distributed_conv_femnist.sh 
 ```
+
+### Federated Learning in Computer Vision (FL-CV)
+We provide several configurations (yaml files) as examples to demonstrate how to apply FL in CV with FederatedScope.
+Users can run the following comments for reproducing, and modify/add the yaml file for customization, such as using provided/customized datasets and models, tunning hyperparameters, etc.
+
+Train convent-2 on FEMNIST with vanilla FedAvg (`pwd=FederatedScope/`):
+```shell script
+python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml
+# or 
+# python federatedscope/main.py --cfg federatedscope/example_configs/femnist.yaml
+```
+
+Train convent-2 on CelebA with vanilla FedAvg (`pwd=FederatedScope/`):
+```shell script
+python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_celeba.yaml
+```
+
+Train convent-2 on FEMNIST with FedBN (`pwd=FederatedScope/`):
+```shell script
+python federatedscope/main.py --cfg federatedscope/cv/baseline/fedbn_convnet2_on_femnist.yaml
+```
