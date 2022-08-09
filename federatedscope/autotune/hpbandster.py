@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class MyBOHB(BOHB):
-    def __int__(self, **kwargs):
+    def __init__(self, working_folder, **kwargs):
+        self.working_folder = working_folder
         super(MyBOHB, self).__init__(**kwargs)
-        self.working_folder = kwargs['kwargs']
 
     def get_next_iteration(self, iteration, iteration_kwargs={}):
         # number of 'SH rungs'
@@ -26,7 +26,8 @@ class MyBOHB(BOHB):
         # number of configurations in that bracket
         n0 = int(np.floor((self.max_SH_iter) / (s + 1)) * self.eta**s)
         ns = [max(int(n0 * (self.eta**(-i))), 1) for i in range(s + 1)]
-        self.clear_cache()
+        if os.path.exists(self.working_folder):
+            self.clear_cache()
         return (SuccessiveHalving(
             HPB_iter=iteration,
             num_configs=ns,
@@ -49,8 +50,6 @@ def eval_in_fs(cfg, config, budget):
     from federatedscope.core.fed_runner import FedRunner
     from federatedscope.autotune.utils import config2cmdargs
 
-    print(config)
-    print('=====================')
     # Add FedEx related keys to config
     if 'hpo.table.idx' in config.keys():
         idx = config['hpo.table.idx']
@@ -132,14 +131,13 @@ def run_hpbandster(cfg, scheduler):
         'run_id': cfg.hpo.scheduler,
         'nameserver': '127.0.0.1',
         'nameserver_port': ns_port,
-        'eta': math.log(cfg.hpo.sha.budgets[-1] / cfg.hpo.sha.budgets[0],
-                        len(cfg.hpo.sha.budgets) - 1),
+        'eta': cfg.hpo.sha.elim_rate,
         'min_budget': cfg.hpo.sha.budgets[0],
         'max_budget': cfg.hpo.sha.budgets[-1],
         'working_folder': cfg.hpo.working_folder
     }
     optimizer = MyBOHB(**opt_kwargs)
-    res = optimizer.run(n_iterations=1)
+    res = optimizer.run(n_iterations=3)
 
     optimizer.shutdown(shutdown_workers=True)
     NS.shutdown()

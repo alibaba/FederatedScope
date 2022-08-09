@@ -45,6 +45,7 @@ hpo:
   init_cand_num: 27
   ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 1, 3, 9 ]
+    budgets: [ 9, 9 ]
+    elim_rate: 3
   metric: 'client_summarized_weighted_avg.val_avg_loss'
   working_folder: bo_kde_femnist_avg
