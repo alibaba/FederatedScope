@@ -1,5 +1,6 @@
 use_gpu: True
 device: 3
+outdir: sha_femnist_avg
 early_stop:
   patience: 100
 seed: 12345
@@ -9,7 +10,6 @@ federate:
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
-  use_diff: True
 data:
   root: data/
   type: femnist
@@ -24,8 +24,8 @@ model:
   out_channels: 62
   dropout: 0.5
 train:
-  local_update_steps: 1
   batch_or_epoch: epoch
+  local_update_steps: 1
   optimizer:
     lr: 0.01
     weight_decay: 0.0
@@ -40,20 +40,11 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: wrap_sha
+  scheduler: sha
   num_workers: 0
   init_cand_num: 27
-  ss: 'federatedscope/example_configs/femnist/hpo_ss_fedex_arm_table.yaml'
-  table:
-    ss: 'federatedscope/example_configs/femnist/hpo_ss_fedex_arm.yaml'
-    num: 27
-    cand: 81
+  ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
   sha:
     budgets: [12, 13, 19]
-  fedex:
-    sched: 'aggressive'
-    use: True
-    diff: False
-    eta0: -1.0
-    gamma: 0.0
   metric: 'client_summarized_weighted_avg.val_avg_loss'
+  working_folder: sha_femnist_avg
