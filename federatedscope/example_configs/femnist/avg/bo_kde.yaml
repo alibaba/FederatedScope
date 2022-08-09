@@ -47,4 +47,4 @@ hpo:
   sha:
     budgets: [ 1, 3, 9 ]
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: rs_femnist_avg
+  working_folder: bo_kde_femnist_avg

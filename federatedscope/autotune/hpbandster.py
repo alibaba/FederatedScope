@@ -1,15 +1,44 @@
+import os
 import time
 import math
 import logging
 
 from os.path import join as osp
+import numpy as np
 import ConfigSpace as CS
 import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB
+from hpbandster.optimizers.iterations import SuccessiveHalving
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
+
+
+class MyBOHB(BOHB):
+    def __int__(self, **kwargs):
+        super(MyBOHB, self).__init__(**kwargs)
+        self.working_folder = kwargs['kwargs']
+
+    def get_next_iteration(self, iteration, iteration_kwargs={}):
+        # number of 'SH rungs'
+        s = self.max_SH_iter - 1 - (iteration % self.max_SH_iter)
+        # number of configurations in that bracket
+        n0 = int(np.floor((self.max_SH_iter) / (s + 1)) * self.eta**s)
+        ns = [max(int(n0 * (self.eta**(-i))), 1) for i in range(s + 1)]
+        self.clear_cache()
+        return (SuccessiveHalving(
+            HPB_iter=iteration,
+            num_configs=ns,
+            budgets=self.budgets[(-s - 1):],
+            config_sampler=self.config_generator.get_config,
+            **iteration_kwargs))
+
+    def clear_cache(self):
+        # Clear cached ckpt
+        for name in os.listdir(self.working_folder):
+            if name.endswith('_fedex.yaml') or name.endswith('.pth'):
+                os.remove(osp(self.working_folder, name))
 
 
 def eval_in_fs(cfg, config, budget):
@@ -106,9 +135,10 @@ def run_hpbandster(cfg, scheduler):
         'eta': math.log(cfg.hpo.sha.budgets[-1] / cfg.hpo.sha.budgets[0],
                         len(cfg.hpo.sha.budgets) - 1),
         'min_budget': cfg.hpo.sha.budgets[0],
-        'max_budget': cfg.hpo.sha.budgets[-1]
+        'max_budget': cfg.hpo.sha.budgets[-1],
+        'working_folder': cfg.hpo.working_folder
     }
-    optimizer = BOHB(**opt_kwargs)
+    optimizer = MyBOHB(**opt_kwargs)
     res = optimizer.run(n_iterations=1)
 
     optimizer.shutdown(shutdown_workers=True)
