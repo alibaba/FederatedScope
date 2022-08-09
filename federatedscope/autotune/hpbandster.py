@@ -5,8 +5,34 @@ from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB
 
 
-def eval_in_FS(x, b):
-    return 0
+def eval_in_FS(config, budget):
+    from federatedscope.core.configs.config import global_cfg
+    from federatedscope.core.auxiliaries.utils import setup_seed
+    from federatedscope.core.auxiliaries.data_builder import get_data
+    from federatedscope.core.auxiliaries.worker_builder import \
+        get_client_cls, get_server_cls
+    from federatedscope.core.fed_runner import FedRunner
+    from federatedscope.autotune.utils import config2cmdargs
+
+    trial_cfg = global_cfg.clone()
+    # specify the configuration of interest
+    trial_cfg.merge_from_list(config2cmdargs(config))
+    # specify the budget
+    trial_cfg.merge_from_list(
+        ["federate.total_round_num",
+         int(budget), "eval.freq",
+         int(budget)])
+    setup_seed(trial_cfg.seed)
+    data, modified_config = get_data(config=trial_cfg.clone())
+    trial_cfg.merge_from_other_cfg(modified_config)
+    trial_cfg.freeze()
+    Fed_runner = FedRunner(data=data,
+                           server_class=get_server_cls(trial_cfg),
+                           client_class=get_client_cls(trial_cfg),
+                           config=trial_cfg.clone())
+    results = Fed_runner.run()
+    key1, key2 = trial_cfg.hpo.metric.split('.')
+    return results[key1][key2]
 
 
 class MyWorker(Worker):
