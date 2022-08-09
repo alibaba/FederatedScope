@@ -2,8 +2,9 @@
 We provide some scripts for reproducing existing algorithms with FederatedScope, which are constantly being updated.
 We greatly appreciate any [contribution](https://federatedscope.io/docs/contributor/) to FederatedScope!
 
-General:
 - [Distribute Mode](#distribute-mode)
+- [Asynchronous Training Strategy](#asynchronous-training-strategy)
+- [Graph Federated Learning](#graph-federated-learning)
 
 ### Distribute Mode
 Users can train an LR on generated toy data with distribute mode via:
@@ -27,7 +28,6 @@ Users can run the following comments for reproducing, and modify/add the yaml fi
 Train ConvNet on FEMNIST with vanilla FedAvg:
 ```shell script
 cd ..
-
 python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml
 # or 
 # python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml
@@ -36,13 +36,23 @@ python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_o
 Train ConvNet on CelebA with vanilla FedAvg:
 ```shell script
 cd ..
-
 python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_celeba.yaml
 ```
 
 Train ConvNet on FEMNIST with FedBN (`pwd=FederatedScope/`):
 ```shell script
 cd ..
-
 python federatedscope/main.py --cfg federatedscope/cv/baseline/fedbn_convnet2_on_femnist.yaml
 ```
+
+### Asynchronous Training Strategy
+We provide an example for training ConvNet on CIFAR-10 with asynchronous training strategies:
+```shell script
+cd ..
+python federatedscope/main.py --cfg scritpes/example_configs/asyn_cifar10.yaml
+```
+The FL courses consists of 1 server and 200 clients, which applies `goal_achieved` strategies and set the `min_received_num=10` and `staleness_toleration=10`.
+Users can change the configurations related to asynchronous training for customization. Please see [configurations](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/core/configs).
+
+### Graph Federated Learning
+Please refer to [gfl](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) for more details.
