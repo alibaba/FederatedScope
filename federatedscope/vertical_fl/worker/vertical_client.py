@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 
-from federatedscope.core.worker import Client
+from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.dataloader.utils import batch_iter
 

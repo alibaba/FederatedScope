@@ -4,8 +4,8 @@ import copy
 import numpy as np
 
 from federatedscope.core.message import Message
-from federatedscope.core.worker.server import Server
-from federatedscope.core.worker.client import Client
+from federatedscope.core.workers.server import Server
+from federatedscope.core.workers.client import Client
 from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.gfl.gcflplus.utils import compute_pairwise_distances, \
     min_cut, norm
