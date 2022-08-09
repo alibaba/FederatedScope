@@ -43,7 +43,7 @@ hpo:
   scheduler: sha
   num_workers: 0
   init_cand_num: 27
-  ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
+  ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
     budgets: [12, 13, 19]
   metric: 'client_summarized_weighted_avg.val_avg_loss'
