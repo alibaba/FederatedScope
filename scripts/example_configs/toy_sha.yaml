@@ -4,6 +4,7 @@ federate:
   total_round_num: 10
   make_global_eval: False
   client_num: 5
+seed: 12345
 trainer:
   type: 'general'
 eval:
@@ -13,6 +14,9 @@ model:
 data:
   type: 'toy'
 hpo:
-  num_workers: 3
-  init_cand_num: 3
-  ss: federatedscope/example_configs/toy_hpo_ss.yaml
+  scheduler: sha
+  num_workers: 0
+  init_cand_num: 5
+  ss: scripts/example_configs/toy_hpo_ss.yaml
+  sha:
+    budgets: [1, 1]

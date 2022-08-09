@@ -38,10 +38,7 @@ hpo:
   scheduler: sha
   num_workers: 0
   init_cand_num: 81
-  ss: 'federatedscope/example_configs/cora/hpo_ss_fedex.yaml'
+  ss: 'scripts/example_configs/cora/hpo_ss_sha.yaml'
   sha:
     budgets: [2, 4, 12, 36]
-  fedex:
-    use: True
-    ss: 'federatedscope/example_configs/cora/hpo_ss_fedex_grid.yaml'
   metric: 'server_global_eval.val_avg_loss'

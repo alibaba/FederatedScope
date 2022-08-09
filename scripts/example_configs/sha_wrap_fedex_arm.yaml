@@ -23,7 +23,7 @@ hpo:
   #num_workers: 1
   num_workers: 0
   init_cand_num: 5
-  ss: 'federatedscope/example_configs/sha_wrap_fedex_ss_table.yaml'
+  ss: 'scripts/example_configs/sha_wrap_fedex_ss_table.yaml'
   table:
     num: 4
   sha:
