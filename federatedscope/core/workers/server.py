@@ -71,7 +71,8 @@ class Server(Worker):
                                          device=device,
                                          online=self._cfg.federate.online_aggr,
                                          config=self._cfg)
-        if self._cfg.federate.restore_from != '':
+        if self._cfg.federate.restore_from != '' and os.path.exists(
+                self._cfg.federate.restore_from):
             _ = self.aggregator.load_model(self._cfg.federate.restore_from)
             logger.info("Restored the model from {}-th round's ckpt")
 

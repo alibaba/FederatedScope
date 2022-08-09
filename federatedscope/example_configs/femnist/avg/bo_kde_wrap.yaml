@@ -46,7 +46,7 @@ hpo:
   init_cand_num: 27
   ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 12, 13, 19 ]
+    budgets: [ 1, 3, 9 ]
   table:
     num: 27
   fedex:

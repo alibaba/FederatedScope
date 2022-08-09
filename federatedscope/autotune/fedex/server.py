@@ -81,7 +81,8 @@ class FedExServer(Server):
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
 
-        if self._cfg.federate.restore_from != '':
+        if self._cfg.federate.restore_from != '' and os.path.exists(
+                self._cfg.federate.restore_from):
             pi_ckpt_path = self._cfg.federate.restore_from[:self._cfg.federate.
                                                            restore_from.rfind(
                                                                '.'

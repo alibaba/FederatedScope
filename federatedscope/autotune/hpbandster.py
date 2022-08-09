@@ -3,6 +3,7 @@ import math
 import logging
 
 from os.path import join as osp
+import ConfigSpace as CS
 import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB
@@ -19,6 +20,8 @@ def eval_in_fs(cfg, config, budget):
     from federatedscope.core.fed_runner import FedRunner
     from federatedscope.autotune.utils import config2cmdargs
 
+    print(config)
+    print('=====================')
     # Add FedEx related keys to config
     if 'hpo.table.idx' in config.keys():
         idx = config['hpo.table.idx']
@@ -26,6 +29,8 @@ def eval_in_fs(cfg, config, budget):
                                      f"{idx}_tmp_grid_search_space.yaml")
         config['federate.save_to'] = osp(cfg.hpo.working_folder,
                                          f"idx_{idx}.pth")
+        config['federate.restore_from'] = osp(cfg.hpo.working_folder,
+                                              f"idx_{idx}.pth")
     # Global cfg
     trial_cfg = cfg.clone()
     # specify the configuration of interest
@@ -80,6 +85,10 @@ class MyWorker(Worker):
 
 def run_hpbandster(cfg, scheduler):
     config_space = scheduler._search_space
+    if cfg.hpo.scheduler.startswith('wrap_'):
+        ss = CS.ConfigurationSpace()
+        ss.add_hyperparameter(config_space['hpo.table.idx'])
+        config_space = ss
     NS = hpns.NameServer(run_id=cfg.hpo.scheduler, host='127.0.0.1', port=0)
     ns_host, ns_port = NS.start()
     w = MyWorker(sleep_interval=0,
