@@ -47,6 +47,11 @@ if __name__ == '__main__':
     ]:
         from federatedscope.autotune.hpbandster import run_hpbandster
         run_hpbandster(init_cfg, scheduler)
+    elif init_cfg.hpo.scheduler in [
+            'bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf'
+    ]:
+        from federatedscope.autotune.smac import run_smac
+        run_smac(init_cfg, scheduler)
     else:
         raise ValueError(f'No scheduler named {init_cfg.hpo.scheduler}')
 

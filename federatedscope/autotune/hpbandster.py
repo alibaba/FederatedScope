@@ -1,6 +1,5 @@
 import os
 import time
-import math
 import logging
 
 from os.path import join as osp
@@ -10,6 +9,8 @@ import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB
 from hpbandster.optimizers.iterations import SuccessiveHalving
+
+from federatedscope.autotune.utils import eval_in_fs
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -40,45 +41,6 @@ class MyBOHB(BOHB):
         for name in os.listdir(self.working_folder):
             if name.endswith('_fedex.yaml') or name.endswith('.pth'):
                 os.remove(osp(self.working_folder, name))
-
-
-def eval_in_fs(cfg, config, budget):
-    from federatedscope.core.auxiliaries.utils import setup_seed
-    from federatedscope.core.auxiliaries.data_builder import get_data
-    from federatedscope.core.auxiliaries.worker_builder import \
-        get_client_cls, get_server_cls
-    from federatedscope.core.fed_runner import FedRunner
-    from federatedscope.autotune.utils import config2cmdargs
-
-    # Add FedEx related keys to config
-    if 'hpo.table.idx' in config.keys():
-        idx = config['hpo.table.idx']
-        config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
-                                     f"{idx}_tmp_grid_search_space.yaml")
-        config['federate.save_to'] = osp(cfg.hpo.working_folder,
-                                         f"idx_{idx}.pth")
-        config['federate.restore_from'] = osp(cfg.hpo.working_folder,
-                                              f"idx_{idx}.pth")
-    # Global cfg
-    trial_cfg = cfg.clone()
-    # specify the configuration of interest
-    trial_cfg.merge_from_list(config2cmdargs(config))
-    # specify the budget
-    trial_cfg.merge_from_list(
-        ["federate.total_round_num",
-         int(budget), "eval.freq",
-         int(budget)])
-    setup_seed(trial_cfg.seed)
-    data, modified_config = get_data(config=trial_cfg.clone())
-    trial_cfg.merge_from_other_cfg(modified_config)
-    trial_cfg.freeze()
-    Fed_runner = FedRunner(data=data,
-                           server_class=get_server_cls(trial_cfg),
-                           client_class=get_client_cls(trial_cfg),
-                           config=trial_cfg.clone())
-    results = Fed_runner.run()
-    key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2]
 
 
 class MyWorker(Worker):
