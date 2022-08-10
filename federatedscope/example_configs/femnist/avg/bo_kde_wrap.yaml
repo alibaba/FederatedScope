@@ -43,13 +43,14 @@ eval:
 hpo:
   scheduler: wrap_bo_kde
   num_workers: 0
-  init_cand_num: 27
+  init_cand_num: 100
   ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 2, 9 ]
-    elim_rate: 4
+    budgets: [ 50, 50 ]
+    elim_rate: 3
+    iter: 50
   table:
-    num: 27
+    num: 100
   fedex:
     sched: 'aggressive'
     use: True

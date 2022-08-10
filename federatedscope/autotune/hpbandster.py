@@ -137,8 +137,13 @@ def run_hpbandster(cfg, scheduler):
         'working_folder': cfg.hpo.working_folder
     }
     optimizer = MyBOHB(**opt_kwargs)
-    res = optimizer.run(n_iterations=3)
-
+    if cfg.hpo.sha.iter != 0:
+        n_iterations = cfg.hpo.sha.iter
+    else:
+        n_iterations = -int(
+            np.log(opt_kwargs['min_budget'] / opt_kwargs['max_budget']) /
+            np.log(opt_kwargs['eta'])) + 1
+    res = optimizer.run(n_iterations=n_iterations)
     optimizer.shutdown(shutdown_workers=True)
     NS.shutdown()
     all_runs = res.get_all_runs()

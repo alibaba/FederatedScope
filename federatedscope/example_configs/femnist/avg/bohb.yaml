@@ -44,8 +44,8 @@ hpo:
   num_workers: 0
   ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 50, 50 ]
+    budgets: [ 9, 81 ]
     elim_rate: 3
-    iter: 50
+    iter: 12
   metric: 'client_summarized_weighted_avg.val_avg_loss'
   working_folder: bo_kde_femnist_avg

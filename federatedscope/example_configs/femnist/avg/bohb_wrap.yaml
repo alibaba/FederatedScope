@@ -10,6 +10,7 @@ federate:
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
+  use_diff: True
 data:
   root: data/
   type: femnist
@@ -40,12 +41,20 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: bo_kde
+  scheduler: wrap_bo_kde
   num_workers: 0
   ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 50, 50 ]
+    budgets: [ 9, 81 ]
     elim_rate: 3
-    iter: 50
+    iter: 12
+  table:
+    num: 100
+  fedex:
+    sched: 'aggressive'
+    use: True
+    diff: False
+    eta0: -1.0
+    gamma: 0.0
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: bo_kde_femnist_avg
+  working_folder: bo_kde_wrap_femnist_avg
