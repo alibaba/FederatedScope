@@ -66,18 +66,18 @@ class TrialExecutor(threading.Thread):
 
 
 def get_scheduler(init_cfg):
-    """To instantiate an scheduler object for conducting HPO
+    """To instantiate a scheduler object for conducting HPO
     Arguments:
         init_cfg (yacs.Node): configuration.
     """
 
     if init_cfg.hpo.scheduler == 'rs':
         scheduler = ModelFreeBase(init_cfg)
-    elif init_cfg.hpo.scheduler == 'sha':
+    elif init_cfg.hpo.scheduler in ['sha', 'bo_kde', 'bohb']:
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
-    elif init_cfg.hpo.scheduler == 'wrap_sha':
+    elif init_cfg.hpo.scheduler.startswith('wrap'):
         scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 
@@ -93,6 +93,8 @@ class Scheduler(object):
         """
 
         self._cfg = cfg
+        # Create hpo working folder
+        os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
         self._init_configs = self._setup()
