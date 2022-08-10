@@ -93,6 +93,8 @@ class Scheduler(object):
         """
 
         self._cfg = cfg
+        # Create hpo working folder
+        os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
         self._init_configs = self._setup()
@@ -372,7 +374,6 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
                         for j in range(self._cfg.hpo.table.num - 1))
             arms['arm0'] = dict(
                 (k, v) for k, v in trial_cfg.items() if k in arms['arm1'])
-            os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
             with open(
                     os.path.join(self._cfg.hpo.working_folder,
                                  f'{idx}_tmp_grid_search_space.yaml'),
