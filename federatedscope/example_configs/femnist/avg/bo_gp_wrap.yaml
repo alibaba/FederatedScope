@@ -58,4 +58,4 @@ hpo:
     eta0: -1.0
     gamma: 0.0
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: bo_kde_wrap_femnist_avg
+  working_folder: bo_gp_wrap_femnist_avg

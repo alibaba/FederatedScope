@@ -48,4 +48,4 @@ hpo:
     elim_rate: 3
     iter: 12
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: bo_kde_femnist_avg
+  working_folder: bohb_femnist_avg
