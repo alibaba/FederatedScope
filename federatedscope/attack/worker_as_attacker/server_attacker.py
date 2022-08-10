@@ -328,7 +328,7 @@ class PassivePIAServer(Server):
             grad_clip=self._cfg.grad.grad_clip,
             dataset_name=self._cfg.data.type,
             fl_local_update_num=self._cfg.train.local_update_steps,
-            fl_type_optimizer=self._cfg.fedopt.optimizer.type,
+            fl_type_optimizer=self._cfg.train.optimizer.type,
             fl_lr=self._cfg.train.optimizer.lr,
             batch_size=100)
 

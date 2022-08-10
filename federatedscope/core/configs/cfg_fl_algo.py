@@ -5,7 +5,7 @@ from federatedscope.register import register_config
 
 def extend_fl_algo_cfg(cfg):
     # ---------------------------------------------------------------------- #
-    # fedopt related options, general fl
+    # fedopt related options, a general fl algorithm
     # ---------------------------------------------------------------------- #
     cfg.fedopt = CN()
 
@@ -18,7 +18,7 @@ def extend_fl_algo_cfg(cfg):
         0.01, description="learning rate for FedOPT optimizer")
 
     # ---------------------------------------------------------------------- #
-    # fedprox related options, general fl
+    # fedprox related options, a general fl algorithm
     # ---------------------------------------------------------------------- #
     cfg.fedprox = CN()
 

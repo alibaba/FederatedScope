@@ -1,7 +1,6 @@
 import copy
 import logging
 import os
-from collections import defaultdict
 
 from pathlib import Path
 
@@ -35,6 +34,9 @@ class CN(CfgNode):
         self.__cfg_check_funcs__ = list()  # to check the config values
         # validity
         self.__help_info__ = dict()  # build the help dict
+
+        self.is_ready_for_run = False  # whether this CfgNode has checked its
+        # validity, completeness and clean some un-useful info
 
         if init_dict:
             for k, v in init_dict.items():
@@ -147,25 +149,46 @@ class CN(CfgNode):
                         else:
                             del v[k]
 
-    def _check_required_args(self):
+    def check_required_args(self):
         for k, v in self.items():
             if isinstance(v, CN):
-                v._check_required_args()
+                v.check_required_args()
             if isinstance(v, Argument) and v.required and v.value is None:
                 logger.warning(f"You have not set the required argument {k}")
+
+    def de_arguments(self):
+        """
+            some config values are managed via `Argument` class, this function
+            is used to make these values clean without the `Argument` class,
+            such that the potential type-specific methods work correctly,
+            e.g., len(cfg.federate.method) for a string config
+        :return:
+        """
+        for k, v in copy.deepcopy(self).items():
+            if isinstance(v, CN):
+                self[k].de_arguments()
+            if isinstance(v, Argument):
+                self[k] = v.value
+
+    def ready_for_run(self):
+        self.assert_cfg()
+        self.clean_unused_sub_cfgs()
+        self.check_required_args()
+        self.de_arguments()
+        self.is_ready_for_run = True
 
     def freeze(self, inform=True, save=True):
         """
             1) make the cfg attributes immutable;
-            2) save the frozen cfg_check_funcs into
+            2) if save=True, save the frozen cfg_check_funcs into
             "self.outdir/config.yaml" for better reproducibility;
             3) if self.wandb.use=True, update the frozen config
 
         :return:
         """
-        self.assert_cfg()
-        self.clean_unused_sub_cfgs()
-        self._check_required_args()
+        self.ready_for_run()
+        super(CN, self).freeze()
+
         if save:  # save the final cfg
             Path(self.outdir).mkdir(parents=True, exist_ok=True)
             with open(os.path.join(self.outdir, "config.yaml"),
@@ -191,8 +214,6 @@ class CN(CfgNode):
 
             if inform:
                 logger.info("the used configs are: \n" + str(tmp_cfg))
-
-        super(CN, self).freeze()
 
 
 # to ensure the sub-configs registered before set up the global config
