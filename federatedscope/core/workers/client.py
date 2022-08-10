@@ -7,7 +7,7 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
-from federatedscope.core.worker import Worker
+from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict, \

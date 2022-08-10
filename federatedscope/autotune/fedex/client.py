@@ -3,7 +3,7 @@ import json
 import copy
 
 from federatedscope.core.message import Message
-from federatedscope.core.worker import Client
+from federatedscope.core.workers import Client
 
 logger = logging.getLogger(__name__)
 

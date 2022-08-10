@@ -20,6 +20,7 @@ cfg_file: ''
 criterion:
   type: CrossEntropyLoss
 data:
+  save_data: false
   args: []
   batch_size: 32
   cSBM_phi:
@@ -76,7 +77,6 @@ eval:
   - avg
   - fairness
   - raw
-  save_data: false
   split:
   - test
   - val

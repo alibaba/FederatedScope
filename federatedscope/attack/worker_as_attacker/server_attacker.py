@@ -1,4 +1,4 @@
-from federatedscope.core.worker import Server
+from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 
 from federatedscope.core.auxiliaries.criterion_builder import get_criterion

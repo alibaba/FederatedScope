@@ -1,7 +1,7 @@
 import logging
 
 from federatedscope.core.configs import constants
-from federatedscope.core.worker import Server, Client
+from federatedscope.core.workers import Server, Client
 
 logger = logging.getLogger(__name__)
 
