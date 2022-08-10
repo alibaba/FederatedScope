@@ -33,7 +33,7 @@ def run_smac(cfg, scheduler):
         logger.info("\n{}".format(results))
         logger.info("====================================================")
 
-        return results
+        return perfs
 
     config_space = scheduler._search_space
     if cfg.hpo.scheduler.startswith('wrap_'):
@@ -71,4 +71,4 @@ def run_smac(cfg, scheduler):
     finally:
         smac.solver.incumbent
     summarize()
-    return
+    return perfs

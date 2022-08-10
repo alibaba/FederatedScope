@@ -132,6 +132,7 @@ def parse_logs(file_list):
 
 
 def eval_in_fs(cfg, config, budget):
+    import ConfigSpace as CS
     from federatedscope.core.auxiliaries.utils import setup_seed
     from federatedscope.core.auxiliaries.data_builder import get_data
     from federatedscope.core.auxiliaries.worker_builder import \
@@ -140,6 +141,8 @@ def eval_in_fs(cfg, config, budget):
     from federatedscope.autotune.utils import config2cmdargs
     from os.path import join as osp
 
+    if isinstance(config, CS.Configuration):
+        config = dict(config)
     # Add FedEx related keys to config
     if 'hpo.table.idx' in config.keys():
         idx = config['hpo.table.idx']
