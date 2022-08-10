@@ -73,7 +73,7 @@ def get_scheduler(init_cfg):
 
     if init_cfg.hpo.scheduler == 'rs':
         scheduler = ModelFreeBase(init_cfg)
-    elif init_cfg.hpo.scheduler in ['sha', 'bo_kde', 'bohb']:
+    elif init_cfg.hpo.scheduler in ['sha', 'bo_kde', 'bohb', 'bo_gp', 'bo_rf']:
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)

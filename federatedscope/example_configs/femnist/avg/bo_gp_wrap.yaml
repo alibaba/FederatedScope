@@ -41,13 +41,14 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: wrap_bo_kde
+  scheduler: wrap_bo_gp
   num_workers: 0
+  init_cand_num: 100
   ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 9, 81 ]
+    budgets: [ 50, 50 ]
     elim_rate: 3
-    iter: 12
+    iter: 50
   table:
     num: 100
   fedex:
@@ -57,4 +58,4 @@ hpo:
     eta0: -1.0
     gamma: 0.0
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: bohb_wrap_femnist_avg
+  working_folder: bo_gp_wrap_femnist_avg
