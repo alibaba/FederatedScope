@@ -290,14 +290,16 @@ def load_external_data(config=None):
 
         if config.model.type.endswith('transformers'):
             from transformers import AutoTokenizer
-
+            cache_path = os.path.join(os.getcwd(), "huggingface")
             try:
                 tokenizer = AutoTokenizer.from_pretrained(
                     config.model.type.split('@')[0],
                     local_files_only=True,
-                    cache_dir=os.path.join(os.getcwd(), "huggingface"))
-            except:
-                logging.error("")
+                    cache_dir=cache_path)
+            except Exception as e:
+                logging.error(f"When loading cached file form "
+                              f"{cache_path}, we faced the exception: \n "
+                              f"{str(e)}")
 
             x_all = tokenizer(x_all,
                               return_tensors='pt',
@@ -412,8 +414,7 @@ def load_external_data(config=None):
         raise NotImplementedError
 
     def load_huggingface_datasets_data(name, splits=None, config=None):
-        from datasets import load_dataset
-        from datasets import load_from_disk
+        from datasets import load_dataset, load_from_disk
 
         if config.data.args:
             raw_args = config.data.args[0]
@@ -429,7 +430,13 @@ def load_external_data(config=None):
             hugging_face_path = os.getcwd()
 
         if "load_disk_dir" in raw_args:
-            dataset = load_from_disk(raw_args["load_disk_dir"])
+            load_path = raw_args["load_disk_dir"]
+            try:
+                dataset = load_from_disk(load_path)
+            except Exception as e:
+                logging.error(f"When loading cached dataset form "
+                              f"{load_path}, we faced the exception: \n "
+                              f"{str(e)}")
         else:
             dataset = load_dataset(path=config.data.root,
                                    name=name,
