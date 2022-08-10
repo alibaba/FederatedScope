@@ -40,7 +40,7 @@ def load_mf_dataset(config=None):
                           MFDATA_CLASS_DICT[config.data.type.lower()])(
                               root=config.data.root,
                               num_client=config.federate.client_num,
-                              train_portion=config.data.splits[0],
+                              split=config.data.splits,
                               download=True)
     else:
         raise NotImplementedError("Dataset {} is not implemented.".format(
@@ -51,6 +51,12 @@ def load_mf_dataset(config=None):
         data_local_dict[id_client]["train"] = MFDataLoader(
             data["train"],
             shuffle=config.data.shuffle,
+            batch_size=config.data.batch_size,
+            drop_last=config.data.drop_last,
+            theta=config.sgdmf.theta)
+        data_local_dict[id_client]["val"] = MFDataLoader(
+            data["val"],
+            shuffle=False,
             batch_size=config.data.batch_size,
             drop_last=config.data.drop_last,
             theta=config.sgdmf.theta)

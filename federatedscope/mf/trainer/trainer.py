@@ -9,6 +9,7 @@ from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.register import register_trainer
 
 import logging
+from scipy import sparse
 
 logger = logging.getLogger(__name__)
 
@@ -46,17 +47,32 @@ class MFTrainer(GeneralTorchTrainer):
         return init_dict
 
     def _hook_on_fit_end(self, ctx):
-        results = {
-            f"{ctx.cur_mode}_avg_loss": ctx.loss_batch_total / ctx.num_samples,
-            f"{ctx.cur_mode}_total": ctx.num_samples
-        }
+        if ctx.get("num_samples") == 0:
+            results = {
+                f"{ctx.cur_mode}_avg_loss": ctx.get(
+                    "loss_batch_total_{}".format(ctx.cur_mode)),
+                f"{ctx.cur_mode}_total": 0
+            }
+        else:
+            results = {
+                f"{ctx.cur_mode}_avg_loss": ctx.loss_batch_total /
+                ctx.num_samples,
+                f"{ctx.cur_mode}_total": ctx.num_samples
+            }
         setattr(ctx, 'eval_metrics', results)
+        if self.cfg.federate.method.lower() in ["fedem"]:
+            # cache label for evaluation ensemble
+            ctx[f"{ctx.cur_mode}_y_prob"] = []
+            ctx[f"{ctx.cur_mode}_y_true"] = []
 
     def _hook_on_batch_forward(self, ctx):
         indices, ratings = ctx.data_batch
         pred, label, ratio = ctx.model(indices, ratings)
         ctx.loss_batch = CtxVar(
-            ctx.criterion(pred, label) * ratio, LIFECYCLE.BATCH)
+            ctx.criterion(pred, label) * ratio.item(), LIFECYCLE.BATCH)
+        ctx.ratio_batch = CtxVar(ratio.item(), LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
+        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
 
         ctx.batch_size = len(ratings)
 
@@ -65,6 +81,13 @@ class MFTrainer(GeneralTorchTrainer):
         ctx.num_samples += ctx.batch_size
         ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
         ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
+
+        if self.cfg.federate.method.lower() in ["fedem"]:
+            # cache label for evaluation ensemble
+            ctx.get("{}_y_true".format(ctx.cur_mode)).append(
+                sparse.csr_matrix(ctx.y_true.detach().cpu().numpy()))
+            ctx.get("{}_y_prob".format(ctx.cur_mode)).append(
+                sparse.csr_matrix(ctx.y_prob.detach().cpu().numpy()))
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
@@ -81,7 +104,10 @@ class MFTrainer(GeneralTorchTrainer):
             # calculate the flops_per_sample
             try:
                 indices, ratings = ctx.data_batch
-                if isinstance(indices, numpy.ndarray):
+                if isinstance(indices, tuple) and isinstance(
+                        indices[0], numpy.ndarray):
+                    indices = torch.from_numpy(numpy.stack(indices))
+                elif isinstance(indices, numpy.ndarray):
                     indices = torch.from_numpy(indices)
                 if isinstance(ratings, numpy.ndarray):
                     ratings = torch.from_numpy(ratings)
