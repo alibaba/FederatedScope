@@ -39,7 +39,7 @@ cd ..
 python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_celeba.yaml
 ```
 
-Train ConvNet on FEMNIST with FedBN (`pwd=FederatedScope/`):
+Train ConvNet on FEMNIST with FedBN:
 ```shell script
 cd ..
 python federatedscope/main.py --cfg federatedscope/cv/baseline/fedbn_convnet2_on_femnist.yaml
