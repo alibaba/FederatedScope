@@ -110,7 +110,7 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
     # Clip weight
     for p in model.parameters():
         p.data = p.data / torch.max(
-            torch.ones(size=p.shape).to(p.data.device),
+            torch.ones(size=p.shape, device=p.data.device),
             torch.abs(p.data) / cfg.nbafl.w_clip)
 
     if len(sample_client_num) > 0:
