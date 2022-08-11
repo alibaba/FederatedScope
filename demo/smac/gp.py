@@ -19,8 +19,7 @@ def eval_fl_algo(x):
     from federatedscope.core.fed_runner import FedRunner
 
     init_cfg = global_cfg.clone()
-    init_cfg.merge_from_file(
-        "federatedscope/example_configs/single_process.yaml")
+    init_cfg.merge_from_file("scripts/example_configs/single_process.yaml")
     # specify the configuration of interest
     init_cfg.merge_from_list([
         "optimizer.lr",
