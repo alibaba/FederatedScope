@@ -8,7 +8,14 @@ We highly recommend running FedHPO-B with conda.
 
 ### Step 0. Dependency
 
-* FedHPO-B is built on [FederatedScope](https://github.com/alibaba/FederatedScope), please see [Installation](https://github.com/alibaba/FederatedScope#step-1-installation) for install FederatedScope.
+* FedHPO-B is built on a stable [FederatedScope](https://github.com/alibaba/FederatedScope), please see [Installation](https://github.com/alibaba/FederatedScope#step-1-installation) for install FederatedScope.
+
+  ```bash
+  git clone https://github.com/alibaba/FederatedScope.git
+  git checkout a653102c6b8d5421d2874077594df0b2e29401a1
+  cd FederatedScope
+  pip install -e .
+  ```
 
 * <u>(Optianal)</u> In order to reproduce the results in our paper, please consider installing the following packages via:
 
@@ -55,21 +62,25 @@ Fortunately, we provide tools to automatically convert from tabular data to surr
 ### Step3. Start running
 
 ```python
+from fedhpob.config import fhb_cfg
 from fedhpob.benchmarks import TabularBenchmark
 
-# 
 benchmark = TabularBenchmark('cnn', 'femnist', 'avg')
 
 # get hyperparameters space
-config_space = benchmark.get_configuration_space()
+config_space = benchmark.get_configuration_space(CS=True)
 
 # get fidelity space
-fidelity_space = benchmark.get_fidelity_space()
+fidelity_space = benchmark.get_fidelity_space(CS=True)
 
 # get results
 res = benchmark(config_space.sample_configuration(),
                 fidelity_space.sample_configuration(),
+                fhb_cfg=fhb_cfg,
                 seed=12345)
+
+print(res)
+
 ```
 
 ## Reproduce the results in our paper
@@ -153,4 +164,3 @@ Available tabular <Model, Dataset, Fedalgo> triplets look-up table:
 | mlp   | 146821@openml             | opt     |
 | mlp   | 146822@openml             | avg     |
 | mlp   | 146822@openml             | opt     |
-
