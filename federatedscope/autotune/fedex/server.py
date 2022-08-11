@@ -82,24 +82,26 @@ class FedExServer(Server):
                              total_round_num, device, strategy, **kwargs)
 
         if self._cfg.federate.restore_from != '':
-            pi_ckpt_path = self._cfg.federate.restore_from[:self._cfg.federate.
-                                                           restore_from.rfind(
-                                                               '.'
-                                                           )] + "_fedex.yaml"
-            with open(pi_ckpt_path, 'r') as ips:
-                ckpt = yaml.load(ips, Loader=yaml.FullLoader)
-            self._z = [np.asarray(z) for z in ckpt['z']]
-            self._theta = [np.exp(z) for z in self._z]
-            self._store = ckpt['store']
-            self._stop_exploration = ckpt['stop']
-            self._trace = dict()
-            self._trace['global'] = ckpt['global']
-            self._trace['refine'] = ckpt['refine']
-            self._trace['entropy'] = ckpt['entropy']
-            self._trace['mle'] = ckpt['mle']
+            if not os.path.exists(self._cfg.federate.restore_from):
+                logger.warning(f'Invalid `restore_from`:'
+                               f' {self._cfg.federate.restore_from}.')
+            else:
+                pi_ckpt_path = self._cfg.federate.restore_from[
+                               :self._cfg.federate.restore_from.rfind('.')] \
+                               + "_fedex.yaml"
+                with open(pi_ckpt_path, 'r') as ips:
+                    ckpt = yaml.load(ips, Loader=yaml.FullLoader)
+                self._z = [np.asarray(z) for z in ckpt['z']]
+                self._theta = [np.exp(z) for z in self._z]
+                self._store = ckpt['store']
+                self._stop_exploration = ckpt['stop']
+                self._trace = dict()
+                self._trace['global'] = ckpt['global']
+                self._trace['refine'] = ckpt['refine']
+                self._trace['entropy'] = ckpt['entropy']
+                self._trace['mle'] = ckpt['mle']
 
     def entropy(self):
-
         entropy = 0.0
         for probs in product(*(theta[theta > 0.0] for theta in self._theta)):
             prob = np.prod(probs)
