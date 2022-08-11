@@ -1,5 +1,5 @@
 import ConfigSpace as CS
-from yacs.config import CfgNode as CN
+from federatedscope.core.configs.config import CN
 from fedhpob.benchmarks import TabularBenchmark
 from fedhpob.benchmarks import RawBenchmark
 from fedhpob.benchmarks import SurrogateBenchmark

@@ -39,6 +39,10 @@ class FedRunner(object):
         self.data = data
         self.server_class = server_class
         self.client_class = client_class
+        assert config is not None, \
+            "When using FedRunner, you should specify the `config` para"
+        if not config.is_ready_for_run:
+            config.ready_for_run()
         self.cfg = config
         self.client_cfg = client_config
 
