@@ -1,6 +1,6 @@
 use_gpu: True
 device: 3
-outdir: rs_femnist_avg
+outdir: bo_rf_wrap_femnist_avg
 early_stop:
   patience: 100
 seed: 12345
