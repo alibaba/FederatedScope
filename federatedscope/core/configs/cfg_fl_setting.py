@@ -73,6 +73,15 @@ def extend_fl_setting_cfg(cfg):
     cfg.vertical.dims = [5, 10]
     cfg.vertical.key_size = 3072
 
+    # ---------------------------------------------------------------------- #
+    # caesar Vertical FL related options (for demo)
+    # ---------------------------------------------------------------------- #
+    cfg.caesar_vertical = CN()
+    cfg.caesar_vertical.use = False
+    cfg.caesar_vertical.encryption = 'paillier'
+    cfg.caesar_vertical.dims = [5, 10]
+    cfg.caesar_vertical.key_size = 3072
+
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
 

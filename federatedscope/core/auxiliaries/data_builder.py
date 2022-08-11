@@ -567,6 +567,9 @@ def get_data(config):
     elif config.data.type.lower() == 'vertical_fl_data':
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         data, modified_config = load_vertical_data(config, generate=True)
+    elif config.data.type.lower() == 'caesar_v_fl_data':
+        from federatedscope.caesar_v_fl.dataloader import load_caesar_v_fl_data
+        data, modified_config = load_caesar_v_fl_data(config, generate=True)
     elif 'movielens' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)

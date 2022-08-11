@@ -8,10 +8,8 @@ DEFAULT_KEYSIZE = 3072
 
 def generate_paillier_keypair(n_length=DEFAULT_KEYSIZE):
     """Generate public key and private key used Paillier`.
-
     Args:
       n_length: key size in bits.
-
     Returns:
       tuple: The generated :class:`PaillierPublicKey` and
       :class:`PaillierPrivateKey`
