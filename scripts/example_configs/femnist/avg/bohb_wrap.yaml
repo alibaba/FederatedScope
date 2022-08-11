@@ -43,7 +43,7 @@ eval:
 hpo:
   scheduler: wrap_bo_kde
   num_workers: 0
-  ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
+  ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
     budgets: [ 9, 81 ]
     elim_rate: 3

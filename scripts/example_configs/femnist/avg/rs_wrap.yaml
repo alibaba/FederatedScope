@@ -44,7 +44,7 @@ hpo:
   scheduler: wrap_sha
   num_workers: 0
   init_cand_num: 10
-  ss: 'federatedscope/example_configs/femnist/avg/ss.yaml'
+  ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
     budgets: [50]
     elim_rate: 10
