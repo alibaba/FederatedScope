@@ -79,11 +79,21 @@ class TabularBenchmark(BaseBenchmark):
 
         return {'function_value': function_value, 'cost': cost}
 
-    def get_configuration_space(self):
-        return dict2cfg(self.meta_info['configuration_space'])
+    def get_configuration_space(self, CS=False):
+        if not CS:
+            return self.meta_info['configuration_space']
+        tmp_dict = {}
+        for key in self.meta_info['configuration_space']:
+            tmp_dict[key] = list(self.meta_info['configuration_space'][key])
+        return dict2cfg(tmp_dict)
 
-    def get_fidelity_space(self):
-        return dict2cfg(self.meta_info['fidelity_space'])
+    def get_fidelity_space(self, CS=False):
+        if not CS:
+            return self.meta_info['fidelity_space']
+        tmp_dict = {}
+        for key in self.meta_info['fidelity_space']:
+            tmp_dict[key] = list(self.meta_info['fidelity_space'][key])
+        return dict2cfg(tmp_dict)
 
     def get_meta_info(self):
         return {
