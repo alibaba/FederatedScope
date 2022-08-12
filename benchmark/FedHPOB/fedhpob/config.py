@@ -12,7 +12,26 @@ def get_cs(dname, model, mode, alg='avg'):
     configuration_space = CS.ConfigurationSpace()
     fidelity_space = CS.ConfigurationSpace()
     # configuration_space
-    if dname in ['cora', 'citeseer', 'pubmed']:
+    if dname == 'twitter':
+        fidelity_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('round',
+                                         choices=[x for x in range(500)]))
+        fidelity_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('sample_rate', choices=[0.01]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter(
+                'lr', choices=[0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('wd', choices=[0.0, 0.001, 0.01,
+                                                        0.1]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('dropout', choices=[0.0]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('batch_size', choices=[64]))
+
+    elif dname in ['cora', 'citeseer', 'pubmed']:
         # GNN tabular, raw and surrogate
         fidelity_space.add_hyperparameter(
             CS.CategoricalHyperparameter('round',
