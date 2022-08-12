@@ -20,7 +20,8 @@ def parse_args(args=None):
     parser.add_argument(
         '--help',
         nargs="?",
-        default="all",
+        const="all",
+        default="",
     )
     parser.add_argument('opts',
                         help='See federatedscope/core/configs for all options',
@@ -33,10 +34,12 @@ def parse_args(args=None):
         parser.print_help()
         init_cfg.print_help()
         sys.exit(1)
-    elif hasattr(parse_res, "help") and isinstance(parse_res.help, str):
+    elif hasattr(parse_res, "help") and isinstance(
+            parse_res.help, str) and parse_res.help != "":
         init_cfg.print_help(parse_res.help)
         sys.exit(1)
-    elif hasattr(parse_res, "help") and isinstance(parse_res.help, list):
+    elif hasattr(parse_res, "help") and isinstance(
+            parse_res.help, list) and len(parse_res.help) != 0:
         for query in parse_res.help:
             init_cfg.print_help(query)
         sys.exit(1)

@@ -5,6 +5,7 @@ We greatly appreciate any [contribution](https://federatedscope.io/docs/contribu
 - [Distribute Mode](#distribute-mode)
 - [Asynchronous Training Strategy](#asynchronous-training-strategy)
 - [Graph Federated Learning](#graph-federated-learning)
+- [Attacks in Federated Learning](#attacks-in-FL)
 
 ### Distribute Mode
 Users can train an LR on generated toy data with distribute mode via:
@@ -56,3 +57,45 @@ Users can change the configurations related to asynchronous training for customi
 
 ### Graph Federated Learning
 Please refer to [gfl](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) for more details.
+
+### Attacks in Federated Learning
+
+#### Privacy Attacks
+We provide the following four examples to run the membership inference attack, property inference attack, class representative attack and training data/label inference attack, respectively. 
+
+Membership inference attack:
+
+Run the attack in [1]:
+```shell script
+python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/gradient_ascent_MIA_on_femnist.yaml
+```
+
+Property inference attack: Run the BPC [1] attack
+```shell script
+python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/PIA_toy.yaml
+```
+
+Class representative attack: Run DCGAN [2] attack
+```shell script
+python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/CRA_fedavg_convnet2_on_femnist.yaml
+```
+
+Training data/label inference attack: Run the DLG [3] attack 
+```shell script
+python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/reconstruct_fedavg_opt_on_femnist.yaml
+```
+
+[1] Nasr, Milad, R. Shokri and Amir Houmansadr. “Comprehensive Privacy Analysis of Deep Learning: Stand-alone and Federated Learning under Passive and Active White-box Inference Attacks.” ArXiv abs/1812.00910 (2018): n. pag.
+
+[2] Hitaj, Briland, Giuseppe Ateniese, and Fernando Perez-Cruz. "Deep models under the GAN: information leakage from collaborative deep learning." Proceedings of the 2017 ACM SIGSAC conference on computer and communications security. 2017
+
+[3] Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients." Advances in Neural Information Processing Systems 32 (2019).
+
+#### Backdoor Attacks
+
+Run the BadNet attack:
+```shell script
+python federatedscope/main.py --cfg scripts/attack_exp_scripts/backdoor_attack/backdoor_badnet_fedavg_convnet2_on_femnist.yaml
+```
+
+
