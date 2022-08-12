@@ -5,7 +5,7 @@ We greatly appreciate any [contribution](https://federatedscope.io/docs/contribu
 - [Distribute Mode](#distribute-mode)
 - [Asynchronous Training Strategy](#asynchronous-training-strategy)
 - [Graph Federated Learning](#graph-federated-learning)
-- [Attacks in Federated Learning](#attacks-in-FL)
+- [Attacks in Federated Learning](#attacks-in-federated-learning)
 
 ### Distribute Mode
 Users can train an LR on generated toy data with distribute mode via:
@@ -50,10 +50,12 @@ python federatedscope/main.py --cfg federatedscope/cv/baseline/fedbn_convnet2_on
 We provide an example for training ConvNet on CIFAR-10 with asynchronous training strategies:
 ```shell script
 cd ..
-python federatedscope/main.py --cfg scritpes/example_configs/asyn_cifar10.yaml
+python federatedscope/main.py --cfg scripts/example_configs/asyn_cifar10.yaml
 ```
 The FL courses consists of 1 server and 200 clients, which applies `goal_achieved` strategies and set the `min_received_num=10` and `staleness_toleration=10`.
 Users can change the configurations related to asynchronous training for customization. Please see [configurations](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/core/configs).
+
+Note that users can manually download [cifar-10](https://www.cs.toronto.edu/~kriz/cifar.html) dataset and put it to `FederatedScope/data` if the automatic download process failed. And for `resource_info_file`, we take the [client_device_capacity](https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/data/device_info/client_device_capacity) provided by [1] as an example.
 
 ### Graph Federated Learning
 Please refer to [gfl](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) for more details.
@@ -65,37 +67,41 @@ We provide the following four examples to run the membership inference attack, p
 
 Membership inference attack:
 
-Run the attack in [1]:
+Run the attack in [2]:
 ```shell script
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/gradient_ascent_MIA_on_femnist.yaml
 ```
 
-Property inference attack: Run the BPC [1] attack
+Property inference attack: Run the BPC [2] attack
 ```shell script
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/PIA_toy.yaml
 ```
 
-Class representative attack: Run DCGAN [2] attack
+Class representative attack: Run DCGAN [3] attack
 ```shell script
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/CRA_fedavg_convnet2_on_femnist.yaml
 ```
 
-Training data/label inference attack: Run the DLG [3] attack 
+Training data/label inference attack: Run the DLG [4] attack 
 ```shell script
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/reconstruct_fedavg_opt_on_femnist.yaml
 ```
 
-[1] Nasr, Milad, R. Shokri and Amir Houmansadr. “Comprehensive Privacy Analysis of Deep Learning: Stand-alone and Federated Learning under Passive and Active White-box Inference Attacks.” ArXiv abs/1812.00910 (2018): n. pag.
-
-[2] Hitaj, Briland, Giuseppe Ateniese, and Fernando Perez-Cruz. "Deep models under the GAN: information leakage from collaborative deep learning." Proceedings of the 2017 ACM SIGSAC conference on computer and communications security. 2017
-
-[3] Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients." Advances in Neural Information Processing Systems 32 (2019).
 
 #### Backdoor Attacks
 
-Run the BadNet attack:
+Run the BadNets [5] attack:
 ```shell script
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/backdoor_attack/backdoor_badnet_fedavg_convnet2_on_femnist.yaml
 ```
 
+### References:  
+[1] Lai F, Dai Y, Singapuram S, et al. "FedScale: Benchmarking model and system performance of federated learning at scale." International Conference on Machine Learning. PMLR, 2022: 11814-11827.
 
+[2] Nasr, Milad, R. Shokri and Amir Houmansadr. "Comprehensive Privacy Analysis of Deep Learning: Stand-alone and Federated Learning under Passive and Active White-box Inference Attacks." ArXiv abs/1812.00910 (2018).
+
+[3] Hitaj, Briland, Giuseppe Ateniese, and Fernando Perez-Cruz. "Deep models under the GAN: information leakage from collaborative deep learning." Proceedings of the 2017 ACM SIGSAC conference on computer and communications security.
+
+[4] Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients." Advances in Neural Information Processing Systems 32 (2019).
+
+[5] Tianyu Gu, Kang Liu, Brendan Dolan-Gavitt, and Siddharth Garg. 2019. "BadNets: Evaluating Backdooring Attacks on Deep Neural Networks." IEEE Access 7 (2019), 47230-47244.

@@ -572,7 +572,7 @@ class Server(Worker):
                             float(client_eval_results[key]))
                 formatted_logs = self._monitor.format_eval_res(
                     metrics_all_clients,
-                    rnd=self.state,
+                    rnd=round,
                     role='Server #',
                     forms=self._cfg.eval.report)
                 if merge_type == "unseen":
