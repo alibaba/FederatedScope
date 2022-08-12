@@ -40,7 +40,7 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: bo_kde
+  scheduler: bohb
   num_workers: 0
   ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
