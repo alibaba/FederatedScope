@@ -19,7 +19,7 @@ class SurrogateBenchmark(BaseBenchmark):
                                                             algo, cost_mode
         assert datadir or modeldir, 'Please provide at least one of ' \
                                     '`datadir` and `modeldir`.'
-        if not os.path.exists(os.path.join(modeldir, model, dname)):
+        if not os.path.exists(os.path.join(modeldir, model, dname, algo)):
             self.surrogate_models, self.meta_info, self.X, self.Y = \
                 build_surrogate_model(datadir, model, dname, algo)
         else:
