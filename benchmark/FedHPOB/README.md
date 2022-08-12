@@ -53,7 +53,7 @@ The naming pattern of the url of data files obeys the rule:
 https://federatedscope.oss-cn-beijing.aliyuncs.com/fedhpob_{BENCHMARK}_{MODE}.zip
 ```
 
-where `{BENCHMARK}` should be one of `cnn`, `bert`, `gcn`, `lr`, or `mlp`, and `{MODE}` should be one of `tabular` or `surrogate`.
+where `{BENCHMARK}` should be one of `cnn`, `bert`, `gcn`, `lr`,  `mlp` or `cross_device`, and `{MODE}` should be one of `tabular` or `surrogate`.
 
 Then unzip the data file, move data under tabular mode to `~/data/tabular_data/` and data under surrogate mode to `~/data/surrogate_model`.
 
@@ -122,45 +122,46 @@ If you find FedHPO-B useful for your research or development, please cite the fo
 
 Available tabular <Model, Dataset, Fedalgo> triplets look-up table:
 
-| Model | Dataset                   | FedAlgo |
-| ----- | ------------------------- | ------- |
-| cnn   | femnist                   | avg     |
-| cnn   | cifar10@torchvision       | avg     |
-| bert  | cola@huggingface_datasets | avg     |
-| bert  | cola@huggingface_datasets | opt     |
-| bert  | sst2@huggingface_datasets | avg     |
-| bert  | sst2@huggingface_datasets | opt     |
-| gcn   | cora                      | avg     |
-| gcn   | cora                      | opt     |
-| gcn   | citeseer                  | avg     |
-| gcn   | citeseer                  | opt     |
-| gcn   | pubmed                    | avg     |
-| gcn   | pubmed                    | opt     |
-| lr    | 31@openml                 | avg     |
-| lr    | 31@openml                 | opt     |
-| lr    | 53@openml                 | avg     |
-| lr    | 53@openml                 | opt     |
-| lr    | 3917@openml               | avg     |
-| lr    | 3917@openml               | opt     |
-| lr    | 10101@openml              | avg     |
-| lr    | 10101@openml              | opt     |
-| lr    | 146818@openml             | avg     |
-| lr    | 146818@openml             | opt     |
-| lr    | 146821@openml             | avg     |
-| lr    | 146821@openml             | opt     |
-| lr    | 146822@openml             | avg     |
-| lr    | 146822@openml             | opt     |
-| mlp   | 31@openml                 | avg     |
-| mlp   | 31@openml                 | opt     |
-| mlp   | 53@openml                 | avg     |
-| mlp   | 53@openml                 | opt     |
-| mlp   | 3917@openml               | avg     |
-| mlp   | 3917@openml               | opt     |
-| mlp   | 10101@openml              | avg     |
-| mlp   | 10101@openml              | opt     |
-| mlp   | 146818@openml             | avg     |
-| mlp   | 146818@openml             | opt     |
-| mlp   | 146821@openml             | avg     |
-| mlp   | 146821@openml             | opt     |
-| mlp   | 146822@openml             | avg     |
-| mlp   | 146822@openml             | opt     |
+| Model        | Dataset                   | FedAlgo |
+| ------------ | ------------------------- | ------- |
+| cnn          | femnist                   | avg     |
+| cnn          | cifar10@torchvision       | avg     |
+| bert         | cola@huggingface_datasets | avg     |
+| bert         | cola@huggingface_datasets | opt     |
+| bert         | sst2@huggingface_datasets | avg     |
+| bert         | sst2@huggingface_datasets | opt     |
+| gcn          | cora                      | avg     |
+| gcn          | cora                      | opt     |
+| gcn          | citeseer                  | avg     |
+| gcn          | citeseer                  | opt     |
+| gcn          | pubmed                    | avg     |
+| gcn          | pubmed                    | opt     |
+| lr           | 31@openml                 | avg     |
+| lr           | 31@openml                 | opt     |
+| lr           | 53@openml                 | avg     |
+| lr           | 53@openml                 | opt     |
+| lr           | 3917@openml               | avg     |
+| lr           | 3917@openml               | opt     |
+| lr           | 10101@openml              | avg     |
+| lr           | 10101@openml              | opt     |
+| lr           | 146818@openml             | avg     |
+| lr           | 146818@openml             | opt     |
+| lr           | 146821@openml             | avg     |
+| lr           | 146821@openml             | opt     |
+| lr           | 146822@openml             | avg     |
+| lr           | 146822@openml             | opt     |
+| mlp          | 31@openml                 | avg     |
+| mlp          | 31@openml                 | opt     |
+| mlp          | 53@openml                 | avg     |
+| mlp          | 53@openml                 | opt     |
+| mlp          | 3917@openml               | avg     |
+| mlp          | 3917@openml               | opt     |
+| mlp          | 10101@openml              | avg     |
+| mlp          | 10101@openml              | opt     |
+| mlp          | 146818@openml             | avg     |
+| mlp          | 146818@openml             | opt     |
+| mlp          | 146821@openml             | avg     |
+| mlp          | 146821@openml             | opt     |
+| mlp          | 146822@openml             | avg     |
+| mlp          | 146822@openml             | opt     |
+| cross_device | twitter                   | avg     |
