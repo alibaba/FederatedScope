@@ -5,6 +5,7 @@ We greatly appreciate any [contribution](https://federatedscope.io/docs/contribu
 - [Distribute Mode](#distribute-mode)
 - [Asynchronous Training Strategy](#asynchronous-training-strategy)
 - [Graph Federated Learning](#graph-federated-learning)
+- [Attacks in Federated Learning](#attacks-in-FL)
 
 ### Distribute Mode
 Users can train an LR on generated toy data with distribute mode via:
