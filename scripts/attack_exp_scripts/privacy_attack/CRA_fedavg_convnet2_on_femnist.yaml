@@ -9,11 +9,11 @@ federate:
   sample_client_num: 20
   client_num: 10
 data:
-  root:  data/
+  root: data/
   type: femnist
   splits: [0.6,0.2,0.2]
   batch_size: 10
-  subsample: 0.001
+  subsample: 0.0001
   num_workers: 0
   transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
 model:
@@ -34,5 +34,5 @@ eval:
   metrics: ['acc', 'correct']
 attack:
   attack_method: gan_attack
-  target_label_ind: 3
   attacker_id: 5
+  target_label_ind: 3
