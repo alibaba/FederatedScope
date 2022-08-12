@@ -19,7 +19,8 @@ def run_smac(cfg, scheduler):
         res = eval_in_fs(cfg, config, budget)
         init_configs.append(config)
         perfs.append(res)
-        print(budget, len(perfs) * budget)
+        logger.info(f'Evaluate the {len(perfs)-1}-th config '
+                    f'{config}, and get performance {res}')
         return res
 
     def summarize():

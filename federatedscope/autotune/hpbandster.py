@@ -57,6 +57,8 @@ class MyWorker(Worker):
         self._init_configs.append(config)
         self._perfs.append(float(res))
         time.sleep(self.sleep_interval)
+        logger.info(f'Evaluate the {len(self._perfs)-1}-th config '
+                    f'{config}, and get performance {res}')
         return {'loss': float(res), 'info': res}
 
     def summarize(self):
