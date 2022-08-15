@@ -6,6 +6,9 @@ We greatly appreciate any [contribution](https://federatedscope.io/docs/contribu
 - [Asynchronous Training Strategy](#asynchronous-training-strategy)
 - [Graph Federated Learning](#graph-federated-learning)
 - [Attacks in Federated Learning](#attacks-in-federated-learning)
+- [Federated Optimization Algorithm](#federated-optimization-algorithm)
+- [Differential Privacy in Federated Learning](#differential-privacy-in-federated-learning)
+- [Matrix Factorization in Federated Learning](#matrix-factorization-in-federated-learning)
 
 ### Distribute Mode
 Users can train an LR on generated toy data with distribute mode via:
@@ -95,7 +98,69 @@ Run the BadNets [5] attack:
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/backdoor_attack/backdoor_badnet_fedavg_convnet2_on_femnist.yaml
 ```
 
-### References:  
+### Federated Optimization Algorithm
+Users can replace the fedavg algorithm by other federated optimization algorithms.
+In the following we provide some running scripts for FedOpt[6] and FedProx[7] on different dataset.
+
+#### FedOpt
+Run fedopt on different dataset via
+```bash
+# on femnist
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_femnist.sh
+# on synthetic
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_lr.sh
+# on shakespeare
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_shakespeare.sh
+```
+
+#### FedProx
+Run fedprox on different dataset via
+```bash
+# on femnist
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_femnist.sh
+# on lr
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_lr.sh
+# on shakespeare
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_shakespeare.sh
+```
+
+### Differential Privacy in Federated Learning
+
+Users can train models with protection of differential privacy. 
+Taking the dataset FEMNIST as an example, execute the running scripts via:
+```bash
+bash dp_exp_scripts/run_femnist_dp_standalone.sh
+```
+You can also enable DP algorithm with other dataset and models by adding the following configurations:
+```yaml
+nbafl: 
+  use: True
+  mu: 0.1
+  epsilon: 10
+  constant: 30
+  w_clip: 0.1
+federate:
+  join_in_info: ["num_sample"]
+```
+
+### Matrix Factorization in Federated Learning
+We support federated matrix factorization tasks in both vertical and horizontal federated learning scenario. 
+Users can run matrix factorization tasks on MovieLen dataset via
+```bash
+# vfl
+bash mf_exp_scripts/run_movielens1m_vfl_standalone.sh
+# hfl
+bash mf_exp_scripts/run_movielens1m_hfl_standalone.sh
+```
+Also, we support SGDMF[8] algorithm in federated learning, and users can run it via
+```bash
+# hfl
+bash mf_exp_scripts/run_movielens1m_hflsgdmf_standalone.sh
+# vfl
+bash mf_exp_scripts/run_movielens1m_vflsgdmf_standalone.sh
+```
+
+#### References:
 [1] Lai F, Dai Y, Singapuram S, et al. "FedScale: Benchmarking model and system performance of federated learning at scale." International Conference on Machine Learning. PMLR, 2022: 11814-11827.
 
 [2] Nasr, Milad, R. Shokri and Amir Houmansadr. "Comprehensive Privacy Analysis of Deep Learning: Stand-alone and Federated Learning under Passive and Active White-box Inference Attacks." ArXiv abs/1812.00910 (2018).
@@ -105,3 +170,9 @@ python federatedscope/main.py --cfg scripts/attack_exp_scripts/backdoor_attack/b
 [4] Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients." Advances in Neural Information Processing Systems 32 (2019).
 
 [5] Tianyu Gu, Kang Liu, Brendan Dolan-Gavitt, and Siddharth Garg. 2019. "BadNets: Evaluating Backdooring Attacks on Deep Neural Networks." IEEE Access 7 (2019), 47230-47244.
+
+[6] Asad M, Moustafa A, Ito T. "FedOpt: Towards communication efficiency and privacy preservation in federated learning". Applied Sciences, 2020, 10(8): 2864.
+
+[7] Anit Kumar Sahu, Tian Li, Maziar Sanjabi, Manzil Zaheer, Ameet Talwalkar, Virginia Smith. "On the Convergence of Federated Optimization in Heterogeneous Networks." ArXiv abs/1812.06127 (2018).
+
+[8] Zitao Li, Bolin Ding, Ce Zhang, Ninghui Li, Jingren Zhou. "Federated Matrix Factorization with Privacy Guarantee." Proceedings of the VLDB Endowment, 15(4): 900-913 (2021).
