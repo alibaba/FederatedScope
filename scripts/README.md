@@ -18,22 +18,22 @@ In the following we provide some running scripts for FedOpt[1] and FedProx[2] on
 Run fedopt on different dataset via
 ```bash
 # on femnist
-bash fedopt_exp_scripts/run_fedopt_femnist.sh
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_femnist.sh
 # on synthetic
-bash fedopt_exp_scripts/run_fedopt_lr.sh
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_lr.sh
 # on shakespeare
-bash fedopt_exp_scripts/run_fedopt_shakespeare.sh
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_shakespeare.sh
 ```
 
 #### FedProx
 Run fedprox on different dataset via
 ```bash
 # on femnist
-bash fedprox_exp_scripts/run_fedprox_femnist.sh
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_femnist.sh
 # on lr
-bash fedprox_exp_scripts/run_fedprox_lr.sh
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_lr.sh
 # on shakespeare
-bash fedprox_exp_scripts/run_fedprox_shakespeare.sh
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_shakespeare.sh
 ```
 
 [1] Asad M, Moustafa A, Ito T. "FedOpt: Towards communication efficiency and privacy preservation in federated learning". Applied Sciences, 2020, 10(8): 2864.
