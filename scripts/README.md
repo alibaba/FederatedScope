@@ -4,9 +4,9 @@ We greatly appreciate any [contribution](https://federatedscope.io/docs/contribu
 
 - [Distribute Mode](#distribute-mode)
 - [Asynchronous Training Strategy](#asynchronous-training-strategy)
-- [Federated Optimization Algorithms](#fed-optimization)
 - [Graph Federated Learning](#graph-federated-learning)
 - [Attacks in Federated Learning](#attacks-in-federated-learning)
+- [Federated Optimization Algorithm](#federated-optimization-algorithm)
 - [Differential Privacy in Federated Learning](#differential-privacy-in-federated-learning)
 - [Matrix Factorization in Federated Learning](#matrix-factorization-in-federated-learning)
 
@@ -60,38 +60,6 @@ Users can change the configurations related to asynchronous training for customi
 
 Note that users can manually download [cifar-10](https://www.cs.toronto.edu/~kriz/cifar.html) dataset and put it to `FederatedScope/data` if the automatic download process failed. And for `resource_info_file`, we take the [client_device_capacity](https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/data/device_info/client_device_capacity) provided by [1] as an example.
 
-### Federated Optimization Algorithm
-Users can replace the fedavg algorithm by other federated optimization algorithms.
-In the following we provide some running scripts for FedOpt[1] and FedProx[2] on different dataset.
-
-#### FedOpt
-Run fedopt on different dataset via
-```bash
-# on femnist
-bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_femnist.sh
-# on synthetic
-bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_lr.sh
-# on shakespeare
-bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_shakespeare.sh
-```
-
-#### FedProx
-Run fedprox on different dataset via
-```bash
-# on femnist
-bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_femnist.sh
-# on lr
-bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_lr.sh
-# on shakespeare
-bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_shakespeare.sh
-```
-
-#### References:
-[1] Asad M, Moustafa A, Ito T. "FedOpt: Towards communication efficiency and privacy preservation in federated learning". Applied Sciences, 2020, 10(8): 2864.
-
-[2] Anit Kumar Sahu, Tian Li, Maziar Sanjabi, Manzil Zaheer, Ameet Talwalkar, Virginia Smith. "On the Convergence of Federated Optimization in Heterogeneous Networks." ArXiv abs/1812.06127 (2018).
-
-
 ### Graph Federated Learning
 Please refer to [gfl](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) for more details.
 
@@ -130,17 +98,31 @@ Run the BadNets [5] attack:
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/backdoor_attack/backdoor_badnet_fedavg_convnet2_on_femnist.yaml
 ```
 
-### References:  
-[1] Lai F, Dai Y, Singapuram S, et al. "FedScale: Benchmarking model and system performance of federated learning at scale." International Conference on Machine Learning. PMLR, 2022: 11814-11827.
+### Federated Optimization Algorithm
+Users can replace the fedavg algorithm by other federated optimization algorithms.
+In the following we provide some running scripts for FedOpt[6] and FedProx[7] on different dataset.
 
-[2] Nasr, Milad, R. Shokri and Amir Houmansadr. "Comprehensive Privacy Analysis of Deep Learning: Stand-alone and Federated Learning under Passive and Active White-box Inference Attacks." ArXiv abs/1812.00910 (2018).
+#### FedOpt
+Run fedopt on different dataset via
+```bash
+# on femnist
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_femnist.sh
+# on synthetic
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_lr.sh
+# on shakespeare
+bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_shakespeare.sh
+```
 
-[3] Hitaj, Briland, Giuseppe Ateniese, and Fernando Perez-Cruz. "Deep models under the GAN: information leakage from collaborative deep learning." Proceedings of the 2017 ACM SIGSAC conference on computer and communications security.
-
-[4] Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients." Advances in Neural Information Processing Systems 32 (2019).
-
-[5] Tianyu Gu, Kang Liu, Brendan Dolan-Gavitt, and Siddharth Garg. 2019. "BadNets: Evaluating Backdooring Attacks on Deep Neural Networks." IEEE Access 7 (2019), 47230-47244.
-
+#### FedProx
+Run fedprox on different dataset via
+```bash
+# on femnist
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_femnist.sh
+# on lr
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_lr.sh
+# on shakespeare
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_shakespeare.sh
+```
 
 ### Differential Privacy in Federated Learning
 
@@ -170,12 +152,27 @@ bash mf_exp_scripts/run_movielens1m_vfl_standalone.sh
 # hfl
 bash mf_exp_scripts/run_movielens1m_hfl_standalone.sh
 ```
-Also, we support SGDMF[1] algorithm in federated learning, and users can run it via
+Also, we support SGDMF[8] algorithm in federated learning, and users can run it via
 ```bash
 # hfl
 bash mf_exp_scripts/run_movielens1m_hflsgdmf_standalone.sh
 # vfl
 bash mf_exp_scripts/run_movielens1m_vflsgdmf_standalone.sh
 ```
+
 #### References:
-[1] Zitao Li, Bolin Ding, Ce Zhang, Ninghui Li, Jingren Zhou. "Federated Matrix Factorization with Privacy Guarantee." Proceedings of the VLDB Endowment, 15(4): 900-913 (2021).
+[1] Lai F, Dai Y, Singapuram S, et al. "FedScale: Benchmarking model and system performance of federated learning at scale." International Conference on Machine Learning. PMLR, 2022: 11814-11827.
+
+[2] Nasr, Milad, R. Shokri and Amir Houmansadr. "Comprehensive Privacy Analysis of Deep Learning: Stand-alone and Federated Learning under Passive and Active White-box Inference Attacks." ArXiv abs/1812.00910 (2018).
+
+[3] Hitaj, Briland, Giuseppe Ateniese, and Fernando Perez-Cruz. "Deep models under the GAN: information leakage from collaborative deep learning." Proceedings of the 2017 ACM SIGSAC conference on computer and communications security.
+
+[4] Zhu, Ligeng, Zhijian Liu, and Song Han. "Deep leakage from gradients." Advances in Neural Information Processing Systems 32 (2019).
+
+[5] Tianyu Gu, Kang Liu, Brendan Dolan-Gavitt, and Siddharth Garg. 2019. "BadNets: Evaluating Backdooring Attacks on Deep Neural Networks." IEEE Access 7 (2019), 47230-47244.
+
+[6] Asad M, Moustafa A, Ito T. "FedOpt: Towards communication efficiency and privacy preservation in federated learning". Applied Sciences, 2020, 10(8): 2864.
+
+[7] Anit Kumar Sahu, Tian Li, Maziar Sanjabi, Manzil Zaheer, Ameet Talwalkar, Virginia Smith. "On the Convergence of Federated Optimization in Heterogeneous Networks." ArXiv abs/1812.06127 (2018).
+
+[8] Zitao Li, Bolin Ding, Ce Zhang, Ninghui Li, Jingren Zhou. "Federated Matrix Factorization with Privacy Guarantee." Proceedings of the VLDB Endowment, 15(4): 900-913 (2021).
