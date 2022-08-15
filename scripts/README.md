@@ -2,10 +2,43 @@
 We provide some scripts for reproducing existing algorithms with FederatedScope, which are constantly being updated.
 We greatly appreciate any [contribution](https://federatedscope.io/docs/contributor/) to FederatedScope!
 
+- [Federated Optimization Algorithms](#fed-optimization)
 - [Distribute Mode](#distribute-mode)
 - [Asynchronous Training Strategy](#asynchronous-training-strategy)
 - [Graph Federated Learning](#graph-federated-learning)
 - [Attacks in Federated Learning](#attacks-in-FL)
+- [Differential Privacy in Federated Learning](#dp-in-FL)
+- [Matrix Factorization in Federated Learning](#mf-in-FL)
+
+### Federated Optimization Algorithm
+Users can replace the fedavg algorithm by other federated optimization algorithms.
+In the following we provide some running scripts for FedOpt[1] and FedProx[2] on different dataset.
+
+#### FedOpt
+Run fedopt on different dataset via
+```bash
+# on femnist
+bash fedopt_exp_scripts/run_fedopt_femnist.sh
+# on synthetic
+bash fedopt_exp_scripts/run_fedopt_lr.sh
+# on shakespeare
+bash fedopt_exp_scripts/run_fedopt_shakespeare.sh
+```
+
+#### FedProx
+Run fedprox on different dataset via
+```bash
+# on femnist
+bash fedprox_exp_scripts/run_fedprox_femnist.sh
+# on lr
+bash fedprox_exp_scripts/run_fedprox_lr.sh
+# on shakespeare
+bash fedprox_exp_scripts/run_fedprox_shakespeare.sh
+```
+
+[1] Asad M, Moustafa A, Ito T. "FedOpt: Towards communication efficiency and privacy preservation in federated learning". Applied Sciences, 2020, 10(8): 2864.
+
+[2] Anit Kumar Sahu, Tian Li, Maziar Sanjabi, Manzil Zaheer, Ameet Talwalkar, Virginia Smith. "On the Convergence of Federated Optimization in Heterogeneous Networks." ArXiv abs/1812.06127 (2018).
 
 ### Distribute Mode
 Users can train an LR on generated toy data with distribute mode via:
@@ -98,4 +131,40 @@ Run the BadNet attack:
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/backdoor_attack/backdoor_badnet_fedavg_convnet2_on_femnist.yaml
 ```
 
+### Differential Privacy in Federated Learning
 
+Users can train models with protection of differential privacy. 
+Taking the dataset FEMNIST as an example, execute the running scripts via:
+```bash
+bash dp_exp_scripts/run_femnist_dp_standalone.sh
+```
+You can also enable DP algorithm with other dataset and models by adding the following configurations:
+```yaml
+nbafl: 
+  use: True
+  mu: 0.1
+  epsilon: 10
+  constant: 30
+  w_clip: 0.1
+federate:
+  join_in_info: ["num_sample"]
+```
+
+### Matrix Factorization in Federated Learning
+We support federated matrix factorization tasks in both vertical and horizontal federated learning scenario. 
+Users can run matrix factorization tasks on MovieLen dataset via
+```bash
+# vfl
+bash mf_exp_scripts/run_movielens1m_vfl_standalone.sh
+# hfl
+bash mf_exp_scripts/run_movielens1m_hfl_standalone.sh
+```
+Also, we support SGDMF[1] algorithm in federated learning, and users can run it via
+```bash
+# hfl
+bash mf_exp_scripts/run_movielens1m_hflsgdmf_standalone.sh
+# vfl
+bash mf_exp_scripts/run_movielens1m_vflsgdmf_standalone.sh
+```
+
+[1] Zitao Li, Bolin Ding, Ce Zhang, Ninghui Li, Jingren Zhou. "Federated Matrix Factorization with Privacy Guarantee." Proceedings of the VLDB Endowment, 15(4): 900-913 (2021).
