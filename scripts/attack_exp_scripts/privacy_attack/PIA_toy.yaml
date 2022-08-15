@@ -1,4 +1,4 @@
-use_gpu: True
+use_gpu: False
 device: 0
 seed: 12345
 federate:
