@@ -163,7 +163,7 @@ Here we demonstrate how to run a standard FL task with FederatedScope, with sett
 # Run with default configurations
 python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml
 # Or with custom configurations
-python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml federated.total_round_num 50 data.batch_size 128
+python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml federate.total_round_num 50 data.batch_size 128
 ```
 
 Then you can observe some monitored metrics during the training process as:
@@ -214,7 +214,7 @@ python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_conf
 An executable example with generated toy data can be run with (a script can be found in `scripts/run_distributed_lr.sh`):
 ```bash
 # Generate the toy data
-python scripts/gen_data.py
+python scripts/distributed_scripts/gen_data.py
 
 # Firstly start the server that is waiting for clients to join in
 python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml distribute.data_file toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
