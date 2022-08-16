@@ -8,8 +8,7 @@ federate:
   make_global_eval: True
   client_num: 5
   total_round_num: 500
-  share_local_model: True
-  online_aggr: True
+  join_in_info: ['num_sample']
 data:
   root: data/
   type: cora
@@ -20,6 +19,7 @@ model:
   hidden: 64
   dropout: 0.5
   out_channels: 7
+  task: node
 criterion:
   type: CrossEntropyLoss
 train:
@@ -37,5 +37,5 @@ nbafl:
   use: True
   mu: 0.0
   w_clip: 0.1
-  epsilon: 2000
+  epsilon: 20
   constant: 1
