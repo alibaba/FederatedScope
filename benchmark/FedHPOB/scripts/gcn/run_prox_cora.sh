@@ -10,7 +10,7 @@ cd ../../../..
 
 dataset=cora
 
-out_dir=out_${dataset}_dp${eps}
+out_dir=out_${dataset}_prox
 
 echo "HPO starts..."
 
