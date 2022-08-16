@@ -114,6 +114,16 @@ bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_lr.sh
 bash optimization_exp_scripts/fedopt_exp_scripts/run_fedopt_shakespeare.sh
 ```
 
+#### FedProx
+Run fedprox on different dataset via
+```bash
+# on femnist
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_femnist.sh
+# on lr
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_lr.sh
+# on shakespeare
+bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_shakespeare.sh
+```
 
 ### Personalized Federated Learning
 Users can replace the fedavg 
