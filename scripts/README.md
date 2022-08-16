@@ -7,6 +7,7 @@ We greatly appreciate any [contribution](https://federatedscope.io/docs/contribu
 - [Graph Federated Learning](#graph-federated-learning)
 - [Attacks in Federated Learning](#attacks-in-federated-learning)
 - [Federated Optimization Algorithm](#federated-optimization-algorithm)
+- [Personalized Federated Learning](#personalized-federated-learning)
 - [Differential Privacy in Federated Learning](#differential-privacy-in-federated-learning)
 - [Matrix Factorization in Federated Learning](#matrix-factorization-in-federated-learning)
 
@@ -124,6 +125,67 @@ bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_lr.sh
 bash optimization_exp_scripts/fedprox_exp_scripts/run_fedprox_shakespeare.sh
 ```
 
+### Personalized Federated Learning
+Users can replace the fedavg 
+algorithm by other personalized federated learning algorithms.
+In the following we provide some running scripts for FedBN [9], Ditto [10], 
+pFedMe [11], and FedEM [12] on several datasets. More running examples for 
+other personalized FL 
+methods and datasets can be found in our [benchemark](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench).
+
+#### FedBN
+To use FedBN, we can specify the local parameter names related to BN as 
+`cfg.personalization.local_param=['bn']`. We can run FedBN via:
+```bash
+cd personalization_exp_scripts
+# on femnist
+bash run_femnist_fedbn.sh
+```
+
+#### Ditto
+To use Ditto, we can specify cfg as `federate.method=ditto` and determine the
+regularization value such as `personalization.regular_weight=0.1`.
+We can run Ditto on different dataset as follows:
+```bash
+cd personalization_exp_scripts
+# on femnist
+bash run_femnist_ditto.sh
+# on lr
+bash run_synthetic_ditto.sh
+# on shakespeare
+bash run_shakespeare_ditto.sh
+```
+
+#### pFedMe 
+To use pFedMe, we can specify cfg as `federate.method=pFedMe` and determine 
+its hyper-parameters such as `personalization.lr=0.1`, 
+`personalization.beta=1.0` and `personalization.K=3`.
+We can run pFedMe on different dataset via:
+```bash
+cd personalization_exp_scripts
+# on femnist
+bash run_femnist_pfedme.sh
+# on lr
+bash run_synthetic_pfedme.sh
+# on shakespeare
+bash run_shakespeare_pfedme.sh
+```
+
+#### FedEM 
+To use FedEM, we can specify cfg as `federate.method=FedEM` and determine
+its hyper-parameters such as `model.model_num_per_trainer=3`.
+We can run FedEM on different dataset as follows:
+```bash
+cd personalization_exp_scripts
+# on femnist
+bash run_femnist_fedem.sh
+# on lr
+bash run_synthetic_fedem.sh
+# on shakespeare
+bash run_shakespeare_fedem.sh
+```
+
+
 ### Differential Privacy in Federated Learning
 
 Users can train models with protection of differential privacy. 
@@ -176,3 +238,11 @@ bash mf_exp_scripts/run_movielens1m_vflsgdmf_standalone.sh
 [7] Anit Kumar Sahu, Tian Li, Maziar Sanjabi, Manzil Zaheer, Ameet Talwalkar, Virginia Smith. "On the Convergence of Federated Optimization in Heterogeneous Networks." ArXiv abs/1812.06127 (2018).
 
 [8] Zitao Li, Bolin Ding, Ce Zhang, Ninghui Li, Jingren Zhou. "Federated Matrix Factorization with Privacy Guarantee." Proceedings of the VLDB Endowment, 15(4): 900-913 (2021).
+
+[9] Li, Xiaoxiao, et al. “Fedbn: Federated learning on non-iid features via local batch normalization.” arXiv preprint arXiv:2102.07623 (2021).
+
+[10] Li, Tian, et al. “Ditto: Fair and robust federated learning through personalization.” International Conference on Machine Learning. PMLR, 2021.
+
+[11] T Dinh, Canh, Nguyen Tran, and Josh Nguyen. “Personalized federated learning with moreau envelopes.” Advances in Neural Information Processing Systems 33 (2020): 21394-21405.
+
+[12] Marfoq, Othmane, et al. “Federated multi-task learning under a mixture of distributions.” Advances in Neural Information Processing Systems 34 (2021).
