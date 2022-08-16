@@ -18,6 +18,7 @@ model:
   hidden: 64
   dropout: 0.5
   out_channels: 7
+  task: node
 train:
   local_update_steps: 4
   optimizer:
