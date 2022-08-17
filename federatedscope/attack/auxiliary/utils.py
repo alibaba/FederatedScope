@@ -323,3 +323,26 @@ def get_passive_PIA_auxiliary_dataset(dataset_name):
         ValueError(
             'The data cannot be loaded. Please specify the data load function.'
         )
+
+def plot_mia_loss_compare(loss_in_pth, loss_out_pth, in_round = 20):
+    loss_in = np.loadtxt(loss_in_pth, delimiter=',')
+    loss_out = np.loadtxt(loss_out_pth, delimiter=',')
+
+    import matplotlib.pyplot as plt
+
+    loss_in_all = []
+    loss_out_all = []
+    for i in range(len(loss_in)):
+        if i == in_round:
+            pass
+        else:
+            loss_in_all.append(loss_in[i])
+            loss_out_all.append(loss_out[i])
+
+    plt.plot(loss_out_all, label='not-in', alpha=0.9, color='red', linewidth=2)
+    plt.plot(loss_in_all, linestyle=':', label='in', alpha=0.9, linewidth=2, color='blue')
+
+    plt.legend()
+    plt.xlabel('Round', fontsize=16)
+    plt.ylabel('$L_x$', fontsize=16)
+    plt.show()

@@ -52,6 +52,8 @@ def extend_attack_cfg(cfg):
 
     # for gradient Ascent --- MIA attack
     cfg.attack.inject_round = 0
+    cfg.attack.mia_simulate_in_round = 20
+    cfg.attack.mia_is_simulate_in = False
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_attack_cfg)

@@ -37,5 +37,5 @@ attack:
   attacker_id: 5
   inject_round: 0
   mia_simulate_in_round: 20
-  mia_is_simulate_in: False
+  mia_is_simulate_in: True
 

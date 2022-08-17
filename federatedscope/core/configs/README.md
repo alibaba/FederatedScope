@@ -370,6 +370,8 @@ The configurations related to the data/dataset are defined in `cfg_attack.py`.
 `attack.alpha_TV` | (float) 0.001 | The hyperparameter of the total variance term | Used in the mehtod invert gradint |
 `attack.inject_round` | (int) 0 | The round to start performing the attack actions |-|
 `attack.classifier_PIA` | (str) 'randomforest' | The property inference classifier name |-|
+ `attack.mia_simulate_in_round`|(int) 20 | The round to add the target data into training batch| Used When simulate the case that the target data are in the training set|
+ `attack. mia_is_simulate_in` | (bool) False | whether simulate the case that the target data are in the training set||
 
 #### For Back-door Attack
 | Name |  (Type) Default Value |  Description  | Note |

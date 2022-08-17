@@ -72,8 +72,15 @@ We provide the following four examples to run the membership inference attack, p
 Membership inference attack:
 
 Run the attack in [2]:
+
+- The case that the target data are not in the training set:
 ```shell script
 python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/gradient_ascent_MIA_on_femnist.yaml
+```
+
+- The case that the target data are not in the training set:
+```shell script
+python federatedscope/main.py --cfg scripts/attack_exp_scripts/privacy_attack/gradient_ascent_MIA_on_femnist_simu_in.yaml
 ```
 
 Property inference attack: Run the BPC [2] attack
