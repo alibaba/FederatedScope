@@ -23,6 +23,7 @@ class BaseBenchmark(abc.ABC):
 
         # Load data and modify cfg of FS.
         self.cfg = global_cfg.clone()
+        self.cfg.set_new_allowed(True)
         filepath = os.path.join('scripts', model, f'{dname}.yaml')
         self.cfg.merge_from_file(filepath)
         self.cfg.data.type = dname

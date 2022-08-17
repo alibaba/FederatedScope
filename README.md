@@ -10,7 +10,11 @@
 
 FederatedScope is a comprehensive federated learning platform that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on an event-driven architecture, FederatedScope integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
-A detailed tutorial is provided on our [website](https://federatedscope.io/).
+A detailed tutorial is provided on our website: [federatedscope.io](https://federatedscope.io/)
+
+You can try FederatedScope via [FederatedScope Playground](https://try.federatedscope.io/) or [Google Colab](https://colab.research.google.com/github/alibaba/FederatedScope).
+
+| [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
 
 ## News
 - [07-30-2022] We release FederatedScope v0.2.0! 
@@ -163,7 +167,7 @@ Here we demonstrate how to run a standard FL task with FederatedScope, with sett
 # Run with default configurations
 python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml
 # Or with custom configurations
-python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml federated.total_round_num 50 data.batch_size 128
+python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml federate.total_round_num 50 data.batch_size 128
 ```
 
 Then you can observe some monitored metrics during the training process as:
@@ -214,7 +218,7 @@ python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_conf
 An executable example with generated toy data can be run with (a script can be found in `scripts/run_distributed_lr.sh`):
 ```bash
 # Generate the toy data
-python scripts/gen_data.py
+python scripts/distributed_scripts/gen_data.py
 
 # Firstly start the server that is waiting for clients to join in
 python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml distribute.data_file toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
@@ -277,6 +281,8 @@ make html
 ```
 
 We put the API references on our [website](https://federatedscope.io/refs/index).
+
+Besides, we provide documents for [executable scripts](https://github.com/alibaba/FederatedScope/tree/master/scripts) and [customizable configurations](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/core/configs).
 
 ## License
 

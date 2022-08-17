@@ -63,8 +63,12 @@ def init_nbafl_ctx(base_trainer):
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
 
     # set noise scale during upload
+    if cfg.trainer.type == 'nodefullbatch_trainer':
+        num_train_data = sum(ctx.train_loader.dataset[0]['train_mask'])
+    else:
+        num_train_data = ctx.num_train_data
     ctx.nbafl_scale_u = cfg.nbafl.w_clip * cfg.federate.total_round_num * \
-        cfg.nbafl.constant / ctx.num_train_data / \
+        cfg.nbafl.constant / num_train_data / \
         cfg.nbafl.epsilon
 
 
@@ -109,9 +113,9 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
 
     # Clip weight
     for p in model.parameters():
-        p.data = p.data / torch.max(torch.ones(size=p.shape),
-                                    torch.abs(p.data) / cfg.nbafl.w_clip)
-
+        p.data = p.data / torch.max(
+            torch.ones(size=p.shape, device=p.data.device),
+            torch.abs(p.data) / cfg.nbafl.w_clip)
     if len(sample_client_num) > 0:
         # Inject noise
         L = cfg.federate.sample_client_num if cfg.federate.sample_client_num\
@@ -120,7 +124,7 @@ def inject_noise_in_broadcast(cfg, sample_client_num, model):
             scale_d = 2 * cfg.nbafl.w_clip * cfg.nbafl.constant * np.sqrt(
                 np.power(cfg.federate.total_round_num, 2) -
                 np.power(L, 2) * cfg.federate.client_num) / (
-                    min(sample_client_num.values()) * cfg.federate.client_num *
+                    min(sample_client_num) * cfg.federate.client_num *
                     cfg.nbafl.epsilon)
             for p in model.parameters():
                 p.data += get_random("Normal", p.shape, {

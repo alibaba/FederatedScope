@@ -16,6 +16,7 @@ model:
   type: sage
   hidden: 1024
   out_channels: 4
+  task: node
 train:
   local_update_steps: 16
   optimizer:
