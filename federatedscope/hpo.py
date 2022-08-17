@@ -38,7 +38,7 @@ if __name__ == '__main__':
     # global_cfg.merge_from_list(args.opts)
 
     scheduler = get_scheduler(init_cfg)
-    if init_cfg.hpo.scheduler in ['rs', 'sha', 'wrap_sha']:
+    if init_cfg.hpo.scheduler in ['rs', 'sha', 'wrap_sha', 'fts']:
         _ = scheduler.optimize()
     elif init_cfg.hpo.scheduler in [
             'bo_kde', 'bohb', 'wrap_bo_kde', 'wrap_bohb'
