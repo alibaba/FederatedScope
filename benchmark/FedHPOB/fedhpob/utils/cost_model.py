@@ -41,11 +41,12 @@ def get_cost_model(mode='estimated'):
     cost_dict = {
         'raw': raw_cost,
         'estimated': estimated_cost,
+        'cross_deivce': cd_cost
     }
     return cost_dict[mode]
 
 
-def communication_cost(cfg, model_size, fhb_cfg):
+def communication_csilo_cost(cfg, model_size, fhb_cfg):
     t_up = model_size / fhb_cfg.cost.bandwidth.client_up
     t_down = max(
         cfg.federate.client_num * cfg.federate.sample_client_rate *
@@ -54,7 +55,18 @@ def communication_cost(cfg, model_size, fhb_cfg):
     return t_up + t_down
 
 
-def computation_cost(cfg, fhb_cfg):
+def cost_constant(configuration):
+    # TODO: implement this
+    return 1
+
+
+def communication_cdevice_cost(cfg, model_size, fhb_cfg):
+    t_up = model_size / fhb_cfg.cost.bandwidth.client_up
+    t_down = model_size / fhb_cfg.cost.bandwidth.client_down
+    return t_up + t_down
+
+
+def computation_cost(cfg, fhb_cfg, configuration):
     """
     Assume the time is exponential distribution with c,
     return the expected maximum of M iid random variables plus server time.
@@ -63,7 +75,7 @@ def computation_cost(cfg, fhb_cfg):
         1.0 / i for i in range(
             1,
             int(cfg.federate.client_num * cfg.federate.sample_client_rate) + 1)
-    ]) * fhb_cfg.cost.c
+    ]) * cost_constant(configuration)
     return t_client + fhb_cfg.cost.time_server
 
 
@@ -71,18 +83,27 @@ def raw_cost(**kwargs):
     return None
 
 
+def get_info(cfg, configuration, fidelity, data):
+    cfg = merge_cfg(cfg, configuration, fidelity)
+    model = get_model(cfg.model, list(data.values())[0])
+    model_size = sum([param.nelement() for param in model.parameters()])
+    return cfg, model_size
+
+
 def estimated_cost(cfg, configuration, fidelity, data, **kwargs):
     """
     Works on raw, tabular and surrogate mode.
     """
-    def get_info(cfg, configuration, fidelity, data):
-        cfg = merge_cfg(cfg, configuration, fidelity)
-        model = get_model(cfg.model, list(data.values())[0])
-        model_size = sum([param.nelement() for param in model.parameters()])
-        return cfg, model_size
-
     cfg, num_param = get_info(cfg, configuration, fidelity, data)
-    t_comm = communication_cost(cfg, num_param, kwargs['fhb_cfg'])
+    t_comm = communication_csilo_cost(cfg, num_param, kwargs['fhb_cfg'])
+    t_comp = computation_cost(cfg, kwargs['fhb_cfg'], configuration)
+    t_round = t_comm + t_comp
+    return t_round * cfg.federate.total_round_num
+
+
+def cd_cost(cfg, configuration, fidelity, data, **kwargs):
+    cfg, num_param = get_info(cfg, configuration, fidelity, data)
+    t_comm = communication_cdevice_cost(cfg, num_param, kwargs['fhb_cfg'])
     t_comp = computation_cost(cfg, kwargs['fhb_cfg'])
     t_round = t_comm + t_comp
     return t_round * cfg.federate.total_round_num
