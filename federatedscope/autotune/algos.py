@@ -79,6 +79,8 @@ def get_scheduler(init_cfg):
     #     scheduler = PBT(init_cfg)
     elif init_cfg.hpo.scheduler.startswith('wrap'):
         scheduler = SHAWrapFedex(init_cfg)
+    elif init_cfg.hpo.scheduler == 'fts':
+        scheduler = FTSAlgo(init_cfg)
     return scheduler
 
 
