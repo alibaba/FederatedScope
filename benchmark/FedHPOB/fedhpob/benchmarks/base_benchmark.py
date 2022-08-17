@@ -1,8 +1,11 @@
 import abc
 import os
+import pickle
+import datetime
 import numpy as np
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.auxiliaries.data_builder import get_data
+from fedhpob.utils.tabular_dataloader import load_data
 from fedhpob.utils.util import disable_fs_logger
 from fedhpob.utils.cost_model import get_cost_model
 
@@ -30,6 +33,12 @@ class BaseBenchmark(abc.ABC):
         self.cfg.data.type = dname
         self.data, modified_cfg = get_data(config=self.cfg.clone())
         self.cfg.merge_from_other_cfg(modified_cfg)
+        # Try load time data
+        try:
+            datadir = os.path.join('data', 'tabular_data')
+            self.table, _ = load_data(datadir, model, dname, algo)
+        except:
+            self.table = None
         disable_fs_logger(self.cfg, True)
 
     def __call__(self, configuration, fidelity, seed=1, **kwargs):
@@ -41,11 +50,37 @@ class BaseBenchmark(abc.ABC):
     def _check(self, configuration, fidelity):
         pass
 
+    def _search(self, configuration, fidelity):
+        # For configuration
+        mask = np.array([True] * self.table.shape[0])
+        for col in configuration.keys():
+            mask *= (self.table[col].values == configuration[col])
+        idx = np.where(mask)
+        result = self.table.iloc[idx]
+
+        # For fidelity
+        mask = np.array([True] * result.shape[0])
+        for col in fidelity.keys():
+            if col == 'round':
+                continue
+            mask *= (result[col].values == fidelity[col])
+        idx = np.where(mask)
+        result = result.iloc[idx]["result"]
+        return result
+
     def get_lamba_from_df(self, configuration, fidelity):
-        from fedhpob.utils.tabular_dataloader import load_data
-        self.table, _ = load_data('data/tabular_data/', self.model, self.dname,
-                                  self.algo)
-        return 1
+        if self.table is not None:
+            client_num = self.cfg.federate.client_num * \
+                       self.cfg.federate.sample_client_rate
+            result = self._search({'seed': 0, **configuration}, fidelity)
+            index = list(result.keys())
+            filterd_result = eval(result[index[0]])
+            c = np.mean(filterd_result['train_time']) + np.mean(
+                filterd_result['eval_time'])
+            return c.total_seconds() / float(client_num)
+        else:
+            from fedhpob.config import fhb_cfg
+            return fhb_cfg.cost.c
 
     def _cost(self, configuration, fidelity, **kwargs):
         try:

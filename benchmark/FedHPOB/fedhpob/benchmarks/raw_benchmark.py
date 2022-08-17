@@ -18,9 +18,9 @@ class RawBenchmark(BaseBenchmark):
                  rng=None,
                  cost_mode='estimated',
                  **kwargs):
-        self.device = kwargs['device']
         super(RawBenchmark, self).__init__(model, dname, algo, cost_mode, rng,
                                            **kwargs)
+        self.device = kwargs['device']
 
     def _run_fl(self, configuration, fidelity, key='val_avg_loss', seed=1):
         init_cfg = self.cfg.clone()
