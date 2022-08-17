@@ -8,7 +8,7 @@ from fedhpob.utils.cost_model import get_cost_model
 
 
 class BaseBenchmark(abc.ABC):
-    def __init__(self, model, dname, algo, rng=None, **kwargs):
+    def __init__(self, model, dname, algo, cost_mode, rng=None, **kwargs):
         """
 
         :param rng:
@@ -20,7 +20,8 @@ class BaseBenchmark(abc.ABC):
             self.rng = np.random.RandomState()
         self.configuration_space = self.get_configuration_space()
         self.fidelity_space = self.get_fidelity_space()
-
+        self.model, self.dname, self.algo, self.cost_mode = model, dname, \
+            algo, cost_mode
         # Load data and modify cfg of FS.
         self.cfg = global_cfg.clone()
         self.cfg.set_new_allowed(True)
@@ -40,7 +41,18 @@ class BaseBenchmark(abc.ABC):
     def _check(self, configuration, fidelity):
         pass
 
+    def get_lamba_from_df(self, configuration, fidelity):
+        from fedhpob.utils.tabular_dataloader import load_data
+        self.table, _ = load_data('data/tabular_data/', self.model, self.dname,
+                                  self.algo)
+        return 1
+
     def _cost(self, configuration, fidelity, **kwargs):
+        try:
+            kwargs['const'] = self.get_lamba_from_df(configuration, fidelity)
+        except:
+            from fedhpob.config import fhb_cfg
+            kwargs['const'] = fhb_cfg.cost.c
         cost_model = get_cost_model(mode=self.cost_mode)
         t = cost_model(self.cfg, configuration, fidelity, self.data, **kwargs)
         return t
