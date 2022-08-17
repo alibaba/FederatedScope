@@ -12,8 +12,8 @@ We highly recommend running FedHPO-B with conda.
 
   ```bash
   git clone https://github.com/alibaba/FederatedScope.git
-  git checkout a653102c6b8d5421d2874077594df0b2e29401a1
   cd FederatedScope
+  git checkout a653102c6b8d5421d2874077594df0b2e29401a1
   pip install -e .
   ```
 
