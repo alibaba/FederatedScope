@@ -40,7 +40,7 @@ def get_cost_model(mode='estimated'):
     """
     cost_dict = {
         'raw': raw_cost,
-        'estimated': estimated_cost,
+        'estimated': cs_cost,
         'cross_deivce': cd_cost
     }
     return cost_dict[mode]
@@ -90,9 +90,9 @@ def get_info(cfg, configuration, fidelity, data):
     return cfg, model_size
 
 
-def estimated_cost(cfg, configuration, fidelity, data, **kwargs):
+def cs_cost(cfg, configuration, fidelity, data, **kwargs):
     """
-    Works on raw, tabular and surrogate mode.
+        Works on raw, tabular and surrogate mode, cross-silo
     """
     cfg, num_param = get_info(cfg, configuration, fidelity, data)
     t_comm = communication_csilo_cost(cfg, num_param, kwargs['fhb_cfg'])
@@ -102,6 +102,9 @@ def estimated_cost(cfg, configuration, fidelity, data, **kwargs):
 
 
 def cd_cost(cfg, configuration, fidelity, data, **kwargs):
+    """
+        Works on raw, tabular and surrogate mode, cross-device
+    """
     cfg, num_param = get_info(cfg, configuration, fidelity, data)
     t_comm = communication_cdevice_cost(cfg, num_param, kwargs['fhb_cfg'])
     t_comp = computation_cost(cfg, kwargs['fhb_cfg'])
