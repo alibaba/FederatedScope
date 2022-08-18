@@ -17,6 +17,8 @@ def run_smac(cfg, scheduler):
     def optimization_function_wrapper(config):
         budget = cfg.hpo.sha.budgets[-1]
         res = eval_in_fs(cfg, config, budget)
+        config = dict(config)
+        config['federate.total_round_num'] = budget
         init_configs.append(config)
         perfs.append(res)
         logger.info(f'Evaluate the {len(perfs)-1}-th config '

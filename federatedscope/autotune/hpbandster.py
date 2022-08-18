@@ -54,6 +54,8 @@ class MyWorker(Worker):
 
     def compute(self, config, budget, **kwargs):
         res = eval_in_fs(self.cfg, config, int(budget))
+        config = dict(config)
+        config['federate.total_round_num'] = budget
         self._init_configs.append(config)
         self._perfs.append(float(res))
         time.sleep(self.sleep_interval)
