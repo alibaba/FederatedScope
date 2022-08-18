@@ -344,9 +344,14 @@ def landscape(model='cnn',
     fig = go.Figure(data=[go.Surface(z=Z, x=X, y=Y)])
     fig.update_layout(title='FEMNIST (FedAvg)',
                       autosize=False,
-                      width=500,
-                      height=500,
-                      margin=dict(l=65, r=50, b=65, t=90))
+                      width=900,
+                      height=900,
+                      margin=dict(l=65, r=50, b=65, t=90),
+                      scene=dict(
+                          xaxis_title='BS',
+                          yaxis_title='LR',
+                          zaxis_title='ACC',
+                      ))
     fig.write_image(os.path.join('figures', 'femnist_fedavg_landscape.pdf'))
 
     return
