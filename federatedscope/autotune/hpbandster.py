@@ -27,8 +27,8 @@ class MyBOHB(BOHB):
         # number of configurations in that bracket
         n0 = int(np.floor((self.max_SH_iter) / (s + 1)) * self.eta**s)
         ns = [max(int(n0 * (self.eta**(-i))), 1) for i in range(s + 1)]
-        if os.path.exists(self.working_folder):
-            self.clear_cache()
+        # if os.path.exists(self.working_folder):
+        #     self.clear_cache()
         return (SuccessiveHalving(
             HPB_iter=iteration,
             num_configs=ns,
