@@ -1,3 +1,4 @@
+import math
 from federatedscope.core.auxiliaries.model_builder import get_model
 
 
@@ -101,7 +102,17 @@ def cd_cost(cfg, configuration, fidelity, data, **kwargs):
         Works on raw, tabular and surrogate mode, cross-device
     """
     cfg, num_param = get_info(cfg, configuration, fidelity, data)
-    t_comm = communication_cdevice_cost(cfg, num_param, kwargs['fhb_cfg'])
+    t_comm = communication_cdevice_cost(cfg, num_param, kwargs['fhb_cfg']) +\
+        latency(cfg, kwargs['fhb_cfg'])
     t_comp = computation_cost(cfg, kwargs['fhb_cfg'], kwargs['const'])
     t_round = t_comm + t_comp
     return t_round * cfg.federate.total_round_num
+
+
+def latency(fs_cfg, fhb_cfg):
+    """
+        A fixed latency for every communication.
+        From: Wang et al. “A field guide to federated optimization”.
+    """
+    act = fs_cfg.federate.client_num * fs_cfg.federate.sample_client_rate
+    return math.exp(act - fhb_cfg.cost.lag_const)
