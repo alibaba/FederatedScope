@@ -106,8 +106,6 @@ client_10:
   train:
     optimizer:
       lr: 0.05
-  grad:
-    grad_clip: 1.0
   eval:
     base: 0.007083
 client_11:
@@ -141,7 +139,5 @@ client_13:
   train:
     optimizer:
       lr: 0.05
-  grad:
-    grad_clip: 1.0
   eval:
     base: 0.004389
