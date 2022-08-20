@@ -39,7 +39,7 @@ class MyBOHB(BOHB):
     def clear_cache(self):
         # Clear cached ckpt
         for name in os.listdir(self.working_folder):
-            if name.endswith('_fedex.yaml') or name.endswith('.pth'):
+            if name.endswith('.pth'):
                 os.remove(osp(self.working_folder, name))
 
 
@@ -54,9 +54,13 @@ class MyWorker(Worker):
 
     def compute(self, config, budget, **kwargs):
         res = eval_in_fs(self.cfg, config, int(budget))
+        config = dict(config)
+        config['federate.total_round_num'] = budget
         self._init_configs.append(config)
         self._perfs.append(float(res))
         time.sleep(self.sleep_interval)
+        logger.info(f'Evaluate the {len(self._perfs)-1}-th config '
+                    f'{config}, and get performance {res}')
         return {'loss': float(res), 'info': res}
 
     def summarize(self):

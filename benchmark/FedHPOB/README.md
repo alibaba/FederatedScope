@@ -125,7 +125,6 @@ Available tabular <Model, Dataset, Fedalgo> triplets look-up table:
 | Model        | Dataset                   | FedAlgo |
 | ------------ | ------------------------- | ------- |
 | cnn          | femnist                   | avg     |
-| cnn          | cifar10@torchvision       | avg     |
 | bert         | cola@huggingface_datasets | avg     |
 | bert         | cola@huggingface_datasets | opt     |
 | bert         | sst2@huggingface_datasets | avg     |

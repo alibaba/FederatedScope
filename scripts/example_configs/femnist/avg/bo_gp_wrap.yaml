@@ -50,7 +50,7 @@ hpo:
     elim_rate: 3
     iter: 50
   table:
-    num: 100
+    num: 27
   fedex:
     sched: 'aggressive'
     use: True

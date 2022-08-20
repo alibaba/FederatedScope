@@ -41,15 +41,16 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: wrap_bo_kde
+  scheduler: wrap_bohb
   num_workers: 0
+  init_cand_num: 100
   ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
     budgets: [ 9, 81 ]
     elim_rate: 3
     iter: 12
   table:
-    num: 100
+    num: 27
   fedex:
     sched: 'aggressive'
     use: True
