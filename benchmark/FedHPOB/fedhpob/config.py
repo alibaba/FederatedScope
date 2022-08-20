@@ -360,6 +360,7 @@ def initial_cfg(cfg):
     cfg.cost.c = 1  # lambda for exponential distribution, time consumed in
     # client
     cfg.cost.time_server = 0  # time consumed in server, `0` for real time
+    cfg.cost.lag_const = 65535  # Max port number
 
     # bandwidth for estimated cost
     cfg.cost.bandwidth = CN()

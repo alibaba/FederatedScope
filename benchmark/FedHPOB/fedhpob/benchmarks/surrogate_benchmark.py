@@ -25,8 +25,8 @@ class SurrogateBenchmark(BaseBenchmark):
         else:
             self.surrogate_models, self.meta_info, self.X, self.Y = \
                 load_surrogate_model(modeldir, model, dname, algo)
-        super(SurrogateBenchmark, self).__init__(model, dname, algo, rng,
-                                                 **kwargs)
+        super(SurrogateBenchmark, self).__init__(model, dname, algo, cost_mode,
+                                                 rng, **kwargs)
 
     def _check(self, configuration, fidelity):
         for key in configuration:
