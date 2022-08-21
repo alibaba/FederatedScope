@@ -91,7 +91,10 @@ class Message(object):
         self._strategy = value
 
     def __lt__(self, other):
-        return self.timestamp < other.timestamp
+        if self.timestamp != other.timestamp:
+            return self.timestamp < other.timestamp
+        else:
+            return self.state < other.state
 
     def transform_to_list(self, x):
         if isinstance(x, list) or isinstance(x, tuple):

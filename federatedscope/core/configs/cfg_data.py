@@ -10,6 +10,7 @@ def extend_data_cfg(cfg):
 
     cfg.data.root = 'data'
     cfg.data.type = 'toy'
+    cfg.data.save_data = False  # whether to save the generated toy data
     cfg.data.args = []  # args for external dataset, eg. [{'download': True}]
     cfg.data.splitter = ''
     cfg.data.splitter_args = []  # args for splitter, eg. [{'alpha': 0.5}]

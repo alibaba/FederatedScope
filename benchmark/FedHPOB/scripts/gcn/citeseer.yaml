@@ -21,6 +21,7 @@ model:
   hidden: 64
   dropout: 0.5
   out_channels: 6
+  task: node
 optimizer:
   lr: 0.25
   weight_decay: 0.0005

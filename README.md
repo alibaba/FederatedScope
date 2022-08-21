@@ -10,7 +10,11 @@
 
 FederatedScope is a comprehensive federated learning platform that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on an event-driven architecture, FederatedScope integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
-A detailed tutorial is provided on our [website](https://federatedscope.io/).
+A detailed tutorial is provided on our website: [federatedscope.io](https://federatedscope.io/)
+
+You can try FederatedScope via [FederatedScope Playground](https://try.federatedscope.io/) or [Google Colab](https://colab.research.google.com/github/alibaba/FederatedScope).
+
+| [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
 
 ## News
 - [07-30-2022] We release FederatedScope v0.2.0! 
@@ -21,6 +25,40 @@ A detailed tutorial is provided on our [website](https://federatedscope.io/).
 - [06-13-2022] Our project was receiving an attack, which has been resolved. [More details](https://github.com/alibaba/FederatedScope/blob/master/doc/news/06-13-2022_Declaration_of_Emergency.txt).
 - [05-25-2022] Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!
 - [05-06-2022] We release FederatedScope v0.1.0! 
+
+## Code Structure
+```
+FederatedScope
+├── federatedscope
+│   ├── core           
+│   |   ├── workers              # Behaviors of participants (i.e., server and clients)
+│   |   ├── trainers             # Details of local training
+│   |   ├── aggregators          # Details of federated aggregation
+│   |   ├── configs              # Customizable configurations
+│   |   ├── monitors             # The monitor module for logging and demonstrating  
+│   |   ├── communication.py     # Implementation of communication among participants   
+│   |   ├── fed_runner.py        # The runner for building and running an FL course
+│   |   ├── ... ..
+│   ├── cv                       # Federated learning in CV        
+│   ├── nlp                      # Federated learning in NLP          
+│   ├── gfl                      # Graph federated learning          
+│   ├── autotune                 # Auto-tunning for federated learning         
+│   ├── contrib                          
+│   ├── main.py           
+│   ├── ... ...          
+├── scripts                      # Scripts for reproducing existing algorithms
+├── benchmark                    # We release several benchmarks for convenient and fair comparisons
+├── doc                          # For automatic documentation
+├── enviornment                  # Installation requirements and provided docker files
+├── materials                    # Materials of related topics (e.g., paper lists)
+│   ├── notebook                        
+│   ├── paper_list                                        
+│   ├── tutorial                                       
+│   ├── ... ...                                      
+├── tests                        # Unittest modules for continuous integration
+├── LICENSE
+└── setup.py
+```
 
 ## Quick Start
 
@@ -127,9 +165,9 @@ Here we demonstrate how to run a standard FL task with FederatedScope, with sett
 
 ```bash
 # Run with default configurations
-python federatedscope/main.py --cfg federatedscope/example_configs/femnist.yaml
+python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml
 # Or with custom configurations
-python federatedscope/main.py --cfg federatedscope/example_configs/femnist.yaml federated.total_round_num 50 data.batch_size 128
+python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml federate.total_round_num 50 data.batch_size 128
 ```
 
 Then you can observe some monitored metrics during the training process as:
@@ -169,28 +207,28 @@ We prepare a synthetic example for running with distributed mode:
 
 ```bash
 # For server
-python main.py --cfg federatedscope/example_configs/distributed_server.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
 
 # For clients
-python main.py --cfg federatedscope/example_configs/distributed_client_1.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
-python main.py --cfg federatedscope/example_configs/distributed_client_2.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
-python main.py --cfg federatedscope/example_configs/distributed_client_3.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
 ```
 
 An executable example with generated toy data can be run with (a script can be found in `scripts/run_distributed_lr.sh`):
 ```bash
 # Generate the toy data
-python scripts/gen_data.py
+python scripts/distributed_scripts/gen_data.py
 
 # Firstly start the server that is waiting for clients to join in
-python federatedscope/main.py --cfg federatedscope/example_configs/distributed_server.yaml distribute.data_file toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml distribute.data_file toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
 
 # Start the client #1 (with another process)
-python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_1.yaml distribute.data_file toy_data/client_1_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50052
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml distribute.data_file toy_data/client_1_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50052
 # Start the client #2 (with another process)
-python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_2.yaml distribute.data_file toy_data/client_2_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50053
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml distribute.data_file toy_data/client_2_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50053
 # Start the client #3 (with another process)
-python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_3.yaml distribute.data_file toy_data/client_3_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50054
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml distribute.data_file toy_data/client_3_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50054
 ```
 
 And you can observe the results as (the IP addresses are anonymized with 'x.x.x.x'):
@@ -243,6 +281,8 @@ make html
 ```
 
 We put the API references on our [website](https://federatedscope.io/refs/index).
+
+Besides, we provide documents for [executable scripts](https://github.com/alibaba/FederatedScope/tree/master/scripts) and [customizable configurations](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/core/configs).
 
 ## License
 

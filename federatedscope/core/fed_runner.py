@@ -5,7 +5,7 @@ import heapq
 
 import numpy as np
 
-from federatedscope.core.worker import Server, Client
+from federatedscope.core.workers import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
 from federatedscope.core.auxiliaries.data_builder import merge_data
@@ -39,6 +39,10 @@ class FedRunner(object):
         self.data = data
         self.server_class = server_class
         self.client_class = client_class
+        assert config is not None, \
+            "When using FedRunner, you should specify the `config` para"
+        if not config.is_ready_for_run:
+            config.ready_for_run()
         self.cfg = config
         self.client_cfg = client_config
 

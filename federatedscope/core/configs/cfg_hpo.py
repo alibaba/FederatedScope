@@ -20,6 +20,7 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.sha = CN()
     cfg.hpo.sha.elim_rate = 3
     cfg.hpo.sha.budgets = []
+    cfg.hpo.sha.iter = 0
 
     # PBT
     cfg.hpo.pbt = CN()

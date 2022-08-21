@@ -1,0 +1,41 @@
+use_gpu: True
+device: 0
+seed: 12345
+early_stop:
+  patience: 0
+federate:
+  mode: standalone
+  total_round_num: 30
+  sample_client_num: 5
+  client_num: 5
+data:
+  root: data/
+  type: femnist
+  splits: [0.6,0.2,0.2]
+  batch_size: 1
+  subsample: 0.0001
+  num_workers: 0
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 62
+train:
+  local_update_steps: 1
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']
+attack:
+  attack_method: GradAscent
+  attacker_id: 5
+  inject_round: 0
+  mia_simulate_in_round: 20
+  mia_is_simulate_in: True
+

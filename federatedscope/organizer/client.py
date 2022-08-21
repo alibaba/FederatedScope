@@ -156,7 +156,7 @@ class OrganizerClient(cmd2.Cmd):
             '   command, extra command to launch FS\n' \
             '   psw, password for room \n\n' \
             'Example:\n' \
-            '   create_room --cfg ../../federatedscope/example_configs' \
+            '   create_room --cfg ../../scripts/example_configs' \
             '/distributed_femnist_server.yaml 12345\n'
         try:
             global organizer
