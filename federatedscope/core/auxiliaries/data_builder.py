@@ -1,7 +1,12 @@
+import os
 import pickle
 import logging
+from random import shuffle
+
 import numpy as np
 from collections import defaultdict
+
+from federatedscope.core.auxiliaries.utils import setup_seed
 
 import federatedscope.register as register
 
@@ -285,8 +290,16 @@ def load_external_data(config=None):
 
         if config.model.type.endswith('transformers'):
             from transformers import AutoTokenizer
-            tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0])
+            cache_path = os.path.join(os.getcwd(), "huggingface")
+            try:
+                tokenizer = AutoTokenizer.from_pretrained(
+                    config.model.type.split('@')[0],
+                    local_files_only=True,
+                    cache_dir=cache_path)
+            except Exception as e:
+                logging.error(f"When loading cached file form "
+                              f"{cache_path}, we faced the exception: \n "
+                              f"{str(e)}")
 
             x_all = tokenizer(x_all,
                               return_tensors='pt',
@@ -401,7 +414,7 @@ def load_external_data(config=None):
         raise NotImplementedError
 
     def load_huggingface_datasets_data(name, splits=None, config=None):
-        from datasets import load_dataset
+        from datasets import load_dataset, load_from_disk
 
         if config.data.args:
             raw_args = config.data.args[0]
@@ -410,17 +423,51 @@ def load_external_data(config=None):
         assert 'max_len' in raw_args, "Miss key 'max_len' in " \
                                       "`config.data.args`."
         filtered_args = filter_dict(load_dataset, raw_args)
-        dataset = load_dataset(path=config.data.root,
-                               name=name,
-                               **filtered_args)
+        logger.info("Begin to load huggingface dataset")
+        if "hg_cache_dir" in raw_args:
+            hugging_face_path = raw_args["hg_cache_dir"]
+        else:
+            hugging_face_path = os.getcwd()
+
+        if "load_disk_dir" in raw_args:
+            load_path = raw_args["load_disk_dir"]
+            try:
+                dataset = load_from_disk(load_path)
+            except Exception as e:
+                logging.error(f"When loading cached dataset form "
+                              f"{load_path}, we faced the exception: \n "
+                              f"{str(e)}")
+        else:
+            dataset = load_dataset(path=config.data.root,
+                                   name=name,
+                                   **filtered_args)
         if config.model.type.endswith('transformers'):
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from transformers import AutoTokenizer
+            logger.info("To load huggingface tokenizer")
             tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0])
+                config.model.type.split('@')[0],
+                local_files_only=True,
+                cache_dir=os.path.join(hugging_face_path, "transformers"))
 
         for split in dataset:
             x_all = [i['sentence'] for i in dataset[split]]
             targets = [i['label'] for i in dataset[split]]
+
+            if split == "train" and "used_train_ratio" in raw_args and \
+                    1 > raw_args['used_train_ratio'] > 0:
+                selected_idx = [i for i in range(len(dataset[split]))]
+                shuffle(selected_idx)
+                selected_idx = selected_idx[:int(
+                    len(selected_idx) * raw_args['used_train_ratio'])]
+                x_all = [
+                    element for i, element in enumerate(x_all)
+                    if i in selected_idx
+                ]
+                targets = [
+                    element for i, element in enumerate(targets)
+                    if i in selected_idx
+                ]
 
             x_all = tokenizer(x_all,
                               return_tensors='pt',
@@ -441,6 +488,42 @@ def load_external_data(config=None):
                 (x, y) for x, y in zip(dataset['test'][0], dataset['test'][1])
             ] if (set(dataset['test'][1]) - set([-1])) else None,
         }
+        original_train_size = len(data_dict["train"])
+
+        if "half_val_dummy_test" in raw_args and raw_args[
+                "half_val_dummy_test"]:
+            # since the "test" set from GLUE dataset may be masked, we need to
+            # submit to get the ground-truth, for fast FL experiments,
+            # we split the validation set into two parts with the same size as
+            # new test/val data
+            original_val = [(x, y) for x, y in zip(dataset['validation'][0],
+                                                   dataset['validation'][1])]
+            data_dict["val"], data_dict[
+                "test"] = original_val[:len(original_val) //
+                                       2], original_val[len(original_val) //
+                                                        2:]
+        if "val_as_dummy_test" in raw_args and raw_args["val_as_dummy_test"]:
+            # use the validation set as tmp test set,
+            # and partial training set as validation set
+            data_dict["test"] = data_dict["val"]
+            data_dict["val"] = []
+        if "part_train_dummy_val" in raw_args and 1 > raw_args[
+                "part_train_dummy_val"] > 0:
+            new_val_part = int(original_train_size *
+                               raw_args["part_train_dummy_val"])
+            data_dict["val"].extend(data_dict["train"][:new_val_part])
+            data_dict["train"] = data_dict["train"][new_val_part:]
+        if "part_train_dummy_test" in raw_args and 1 > raw_args[
+                "part_train_dummy_test"] > 0:
+            new_test_part = int(original_train_size *
+                                raw_args["part_train_dummy_test"])
+            data_dict["test"] = data_dict["val"]
+            if data_dict["test"] is not None:
+                data_dict["test"].extend(data_dict["train"][:new_test_part])
+            else:
+                data_dict["test"] = (data_dict["train"][:new_test_part])
+            data_dict["train"] = data_dict["train"][new_test_part:]
+
         return data_dict
 
     def load_openml_data(tid, splits=None, config=None):
@@ -529,6 +612,9 @@ def get_data(config):
         obj: The dataset object.
         cfg.node: The updated configuration.
     """
+    # fix the seed for data generation,
+    # will restore the user-specified on after the generation
+    setup_seed(12345)
     for func in register.data_dict.values():
         data_and_config = func(config)
         if data_and_config is not None:
@@ -615,6 +701,8 @@ def get_data(config):
         from federatedscope.attack.auxiliary import poisoning
         poisoning(data, modified_config)
 
+    setup_seed(config.seed)
+
     if config.federate.mode.lower() == 'standalone':
         return data, modified_config
     else:
@@ -630,6 +718,8 @@ def get_data(config):
         else:
             data_idx = config.distribute.data_idx
         return data[data_idx], config
+
+    setup_seed(config.seed)
 
 
 def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):

@@ -57,7 +57,7 @@ class vFLTest(unittest.TestCase):
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
         print(test_results)
-        self.assertGreater(test_results['server_global_eval']['test_acc'], 0.9)
+        self.assertGreater(test_results['server_global_eval']['test_acc'], 0.8)
 
 
 if __name__ == '__main__':
