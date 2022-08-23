@@ -7,7 +7,7 @@ import numpy as np
 import ConfigSpace as CS
 import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
-from hpbandster.optimizers import BOHB, HyperBand
+from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 from hpbandster.optimizers.iterations import SuccessiveHalving
 
 from federatedscope.autotune.utils import eval_in_fs
@@ -23,25 +23,22 @@ def clear_cache(working_folder):
             os.remove(osp(working_folder, name))
 
 
+class MyRandomSearch(RandomSearch):
+    def __init__(self, working_folder, **kwargs):
+        self.working_folder = working_folder
+        super(MyRandomSearch, self).__init__(**kwargs)
+
+
 class MyBOHB(BOHB):
     def __init__(self, working_folder, **kwargs):
         self.working_folder = working_folder
         super(MyBOHB, self).__init__(**kwargs)
 
     def get_next_iteration(self, iteration, iteration_kwargs={}):
-        # number of 'SH rungs'
-        s = self.max_SH_iter - 1 - (iteration % self.max_SH_iter)
-        # number of configurations in that bracket
-        n0 = int(np.floor((self.max_SH_iter) / (s + 1)) * self.eta**s)
-        ns = [max(int(n0 * (self.eta**(-i))), 1) for i in range(s + 1)]
         if os.path.exists(self.working_folder):
             clear_cache(self.working_folder)
-        return (SuccessiveHalving(
-            HPB_iter=iteration,
-            num_configs=ns,
-            budgets=self.budgets[(-s - 1):],
-            config_sampler=self.config_generator.get_config,
-            **iteration_kwargs))
+        return super(MyBOHB, self).get_next_iteration(iteration,
+                                                      iteration_kwargs)
 
 
 class MyHyperBand(HyperBand):
@@ -50,19 +47,10 @@ class MyHyperBand(HyperBand):
         super(MyHyperBand, self).__init__(**kwargs)
 
     def get_next_iteration(self, iteration, iteration_kwargs={}):
-        # number of 'SH rungs'
-        s = self.max_SH_iter - 1 - (iteration % self.max_SH_iter)
-        # number of configurations in that bracket
-        n0 = int(np.floor((self.max_SH_iter) / (s + 1)) * self.eta**s)
-        ns = [max(int(n0 * (self.eta**(-i))), 1) for i in range(s + 1)]
         if os.path.exists(self.working_folder):
             clear_cache(self.working_folder)
-        return (SuccessiveHalving(
-            HPB_iter=iteration,
-            num_configs=ns,
-            budgets=self.budgets[(-s - 1):],
-            config_sampler=self.config_generator.get_config,
-            **iteration_kwargs))
+        return super(MyHyperBand,
+                     self).get_next_iteration(iteration, iteration_kwargs)
 
 
 class MyWorker(Worker):
@@ -124,7 +112,9 @@ def run_hpbandster(cfg, scheduler):
         'max_budget': cfg.hpo.sha.budgets[-1],
         'working_folder': cfg.hpo.working_folder
     }
-    if cfg.hpo.scheduler in ['hb', 'wrap_hb']:
+    if cfg.hpo.scheduler in ['rs', 'wrap_rs']:
+        optimizer = MyRandomSearch(**opt_kwargs)
+    elif cfg.hpo.scheduler in ['hb', 'wrap_hb']:
         optimizer = MyHyperBand(**opt_kwargs)
     elif cfg.hpo.scheduler in ['bo_kde', 'bohb', 'wrap_bo_kde', 'wrap_bohb']:
         optimizer = MyBOHB(**opt_kwargs)
