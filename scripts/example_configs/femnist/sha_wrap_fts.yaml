@@ -1,16 +1,16 @@
 use_gpu: True
 device: 3
-outdir: fts_results
 early_stop:
   patience: 100
 seed: 12345
 federate:
-  client_num: 5
   mode: standalone
+  total_round_num: 500
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
   use_diff: True
+  client_num: 5
 data:
   root: data/
   type: femnist
@@ -41,21 +41,22 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: 'fts'
+  scheduler: sha
   num_workers: 0
+  init_cand_num: 81
+  ss: 'scripts/example_configs/femnist/hpo_ss_fts.yaml'
+  sha:
+    budgets: [2, 4, 12, 36]
   fts:
     use: True
-    ss: 'scripts/example_configs/femnist/avg/ss_fts.yaml'
-    target_clients: [1, 2, 4]
-    diff: True
-    local_bo_max_iter: 5
-    fed_bo_max_iter: 5
+    allow_load_existing_info: False
+    local_bo_max_iter: 3
+    fed_bo_max_iter: 3
     ls: 0.01
     v_kernel: 1.0
     obs_noise: 1e-6
     M: 100
     M_target: 200
     gp_opt_schedule: 1
-    allow_load_existing_info: True
-  metric: 'client_summarized_weighted_avg.val_loss'
-  working_folder: fts_working
+    ss: 'scripts/example_configs/femnist/avg/ss_fts.yaml'
+  metric: 'client_summarized_weighted_avg.val_avg_loss'
