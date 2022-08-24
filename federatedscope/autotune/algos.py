@@ -401,27 +401,6 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
 
         return new_init_configs
 
-class FTSAlgo(Scheduler):
-    """FTS algorithm runs like a standard FL,
-        e.g. The server maintain a GP model for a client. At each
-        communication round, the server samples a config from the GP model
-         and broadcasts to the target client. A client training a moddel
-          from scratch on its local data with received hyper-param and return
-          the validation results to the server.
-    """
-
-    def _setup(self):
-        data, _ = get_data(self._cfg.clone())
-        self.runner = FedRunner(
-            data=data,
-            server_class=FTSServer,
-            client_class=FTSClient,
-            config=self._cfg.clone()
-        )
-        return None
-
-    def optimize(self):
-        self.runner.run()
 
 # TODO: refactor PBT to enable async parallel
 # class PBT(IterativeScheduler):
