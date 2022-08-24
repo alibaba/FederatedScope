@@ -1,5 +1,12 @@
 ## Federated Learning for Graph
 
+### 2022
+
+| Title                                                 | Venue | Link                                                         |
+| ----------------------------------------------------- | ----- | ------------------------------------------------------------ |
+| SpreadGNN: Decentralized Multi-Task Federated Learning for Graph Neural Networks on Molecular Data | AAAI | [pdf](https://www.aaai.org/AAAI22Papers/AAAI-4599.HeC.pdf), [code](https://github.com/FedML-AI/SpreadGNN) |
+
+
 ### 2021
 
 | Title                                                        | Venue      | Link                                                         |
