@@ -30,7 +30,7 @@ class FTSClient(Client):
                  **kwargs):
         super(FTSClient,self).__init__(ID, server_id, state, config,
             data, model, device, strategy, is_unseen_client, *args, **kwargs)
-
+        self.init_trainer = copy.deepcopy(self.trainer)
         self._diff = config.hpo.fts.diff
 
         # local file paths
@@ -42,7 +42,7 @@ class FTSClient(Client):
             "local_info_" + str(self.ID) + "_M_" + str(self._cfg.hpo.fts.M) + ".pkl")
 
         # prepare search space and bounds
-        self._ss = parse_search_space(self._cfg.hpo.ss)
+        self._ss = parse_search_space(self._cfg.hpo.fts.ss)
         self.dim = len(self._ss)
         self.bounds = np.asarray([(0., 1.) for _ in self._ss])
         self.pbounds = {}
@@ -78,6 +78,8 @@ class FTSClient(Client):
         """
         Run local evaluation, return some metric to maximize (e.g. val_acc)
         """
+        self.trainer = copy.deepcopy(self.init_trainer)
+        baseline = 5.0
         hyperparams = x2conf(x, self.pbounds, self._ss)
         self._apply_hyperparams(hyperparams)
         sample_size, model_para_all, results = self.trainer.train()
@@ -85,14 +87,14 @@ class FTSClient(Client):
             res = results['val_avg_loss_before'] - results['val_avg_loss_after']
         else:
             res = - results['val_avg_loss_after']
-        return res
+        return res + baseline
 
     def _generate_agent_info(self, rand_feats):
         logger.info(('-'*20, ' generate info on clinet %d ' % self.ID , '_'*20))
         v_kernel = self._cfg.hpo.fts.v_kernel
         obs_noise = self._cfg.hpo.fts.obs_noise
         M = self._cfg.hpo.fts.M
-        tns = self._cfg.hpo.fts.tns
+        M_target = self._cfg.hpo.fts.M_target
 
         # run standard BO locally
         max_iter = self._cfg.hpo.fts.local_bo_max_iter
@@ -110,7 +112,7 @@ class FTSClient(Client):
             save_init_file=self.local_init_path,
             pt=pt,
             P_N=None,
-            M_target=200
+            M_target=M_target
         ).maximize(n_iter=max_iter, init_points=3)
 
         # generate local RFF information
@@ -118,7 +120,7 @@ class FTSClient(Client):
         ys = np.array(res["all"]["values"]).reshape(-1, 1)
         params = np.array(res["all"]["params"])
         xs = np.array(params)
-        xs, ys = xs[:tns], ys[:tns]
+        xs, ys = xs[:max_iter], ys[:max_iter]
         Phi = np.zeros((xs.shape[0], M))
 
         s, b = rand_feats["s"], rand_feats["b"]
@@ -136,6 +138,7 @@ class FTSClient(Client):
         pickle.dump(w_samples, open(self.local_info_path, "wb"))
 
     def callback_funcs_for_model_para(self, message: Message):
+        self.trainer = copy.deepcopy(self.init_trainer)
         round, sender, content = message.state, message.sender, message.content
         require_agent_infos = content['require_agent_infos']
 
@@ -174,3 +177,33 @@ class FTSClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=content))
+
+    def callback_funcs_for_evaluate(self, message: Message):
+        self.trainer = copy.deepcopy(self.init_trainer)
+        round, sender, content = message.state, message.sender, message.content
+        require_agent_infos = content['require_agent_infos']
+        assert not require_agent_infos, "Can not evaluate when there is no agents' information"
+
+        self.state = message.state
+        if message.content is not None:
+            hyperparams = x2conf(content['x_max'], self.pbounds, self._ss)
+        self._apply_hyperparams(hyperparams)
+        self.trainer.train()
+
+        metrics = {}
+        for split in self._cfg.eval.split:
+            eval_metrics = self.trainer.evaluate(target_data_split_name=split)
+            for key in eval_metrics:
+                if self._cfg.federate.mode == 'distributed':
+                    logger.info('Client #{:d}: (Evaluation ({:s} set) at '
+                                'Round #{:d}) {:s} is {:.6f}'.format(
+                                    self.ID, split, self.state, key,
+                                    eval_metrics[key]))
+                metrics.update(**eval_metrics)
+
+        self.comm_manager.send(
+            Message(msg_type='metrics',
+                    sender=self.ID,
+                    receiver=[sender],
+                    state=self.state,
+                    content=metrics))

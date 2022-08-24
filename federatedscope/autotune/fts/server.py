@@ -50,7 +50,7 @@ class FTSServer(Server):
             "rand_feat_M_" + str(self.M) + ".pkl")
 
         # prepare search space and bounds
-        self._ss = parse_search_space(self._cfg.hpo.ss)
+        self._ss = parse_search_space(self._cfg.hpo.fts.ss)
         self.dim = len(self._ss)
         self.bounds = np.asarray([(0., 1.) for _ in self._ss])
         self.pbounds = {}
@@ -91,7 +91,8 @@ class FTSServer(Server):
         # load or generate agent_info, agent_init, and rand_feat.
         # if files already exit, load from saved files;
         # else require the clients in the first round
-        if os.path.exists(self.all_local_info_path):
+        if os.path.exists(self.all_local_info_path) and \
+                self._cfg.hpo.fts.allow_load_existing_info:
             logger.info('Using existing rand_feat, agent_infos, and agent_inits')
             self.require_agent_infos = False
             self.state = 1
@@ -339,7 +340,7 @@ class FTSServer(Server):
                                     open(self.res_paths[_client], 'wb'))
 
                 self.state += 1
-                if self.state < self._cfg.hpo.fts.fed_bo_max_iter:
+                if self.state <= self._cfg.hpo.fts.fed_bo_max_iter:
                     # Move to next round of training
                     logger.info(
                         f'----------- GP optimizing iteration (Round '
@@ -347,13 +348,54 @@ class FTSServer(Server):
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
                     self.broadcast_model_para()
+                else:
+                    # Final Evaluate
+                    logger.info('Server: Training is finished! Starting '
+                                'evaluation.')
+                    self.eval()
 
             else:
-                # FTS trains each target client in a standalone manner,
-                # do not need global evaluation
-                pass
-
+                formatted_eval_res = self.merge_eval_results_from_all_clients()
+                self.history_results = merge_dict(self.history_results,
+                                                  formatted_eval_res)
+                self.check_and_save()
         else:
             move_on_flag = False
 
         return move_on_flag
+
+
+    def check_and_save(self):
+        """
+        To save the results and save model after each evaluation
+        """
+        # early stopping
+        should_stop = False
+
+        if "Results_weighted_avg" in self.history_results and \
+                self._cfg.eval.best_res_update_round_wise_key in \
+                self.history_results['Results_weighted_avg']:
+            should_stop = self.early_stopper.track_and_check(
+                self.history_results['Results_weighted_avg'][
+                    self._cfg.eval.best_res_update_round_wise_key])
+        elif "Results_avg" in self.history_results and \
+                self._cfg.eval.best_res_update_round_wise_key in \
+                self.history_results['Results_avg']:
+            should_stop = self.early_stopper.track_and_check(
+                self.history_results['Results_avg'][
+                    self._cfg.eval.best_res_update_round_wise_key])
+        else:
+            should_stop = False
+
+        if should_stop:
+            self.state = self.total_round_num + 1
+
+        if should_stop or self.state == self.total_round_num:
+            logger.info('Server: Final evaluation is finished! Starting '
+                        'merging results.')
+            # last round
+            self.save_best_results()
+        logger.info('*'*50)
+        if self.state == self.total_round_num:
+            # break out the loop for distributed mode
+            self.state += 1

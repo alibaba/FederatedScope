@@ -51,18 +51,18 @@ def extend_hpo_cfg(cfg):
     # FTS
     cfg.hpo.fts = CN()
     cfg.hpo.fts.use = False
+    cfg.hpo.fts.ss = ''
     cfg.hpo.fts.target_clients = []
     cfg.hpo.fts.diff = False
     cfg.hpo.fts.local_bo_max_iter = 50
     cfg.hpo.fts.fed_bo_max_iter = 50
-    cfg.hpo.fts.dim = 1
     cfg.hpo.fts.ls = 0.01
     cfg.hpo.fts.v_kernel = 1.0
     cfg.hpo.fts.obs_noise = 1e-6
     cfg.hpo.fts.M = 100
     cfg.hpo.fts.M_target = 200
-    cfg.hpo.fts.tns = 50
     cfg.hpo.fts.gp_opt_schedule = 1
+    cfg.hpo.fts.allow_load_existing_info = True
 
 def assert_hpo_cfg(cfg):
     # HPO related
