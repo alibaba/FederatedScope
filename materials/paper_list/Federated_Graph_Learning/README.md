@@ -24,6 +24,6 @@
 
 ### 2019
 
-| Title                                                        | Venue | Link   |
-| ------------------------------------------------------------ | ----- | ------ |
-| Towards Federated Graph Learning for Collaborative Financial Crimes Detection | Arxiv | [pdf]( |
+| Title                                                        | Venue | Link                                          |
+| ------------------------------------------------------------ | ----- | --------------------------------------------- |
+| Towards Federated Graph Learning for Collaborative Financial Crimes Detection | Arxiv | [pdf](https://arxiv.org/pdf/1909.12946v2.pdf) |
