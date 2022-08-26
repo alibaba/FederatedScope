@@ -73,19 +73,26 @@ class AdditiveSecretSharing(SecretSharing):
         To recover the secret
         """
         assert len(secret_seq) == self.shared_party_num
-        merge_model = secret_seq[0].copy()
+        merge_model = None
         if isinstance(merge_model, dict):
             for key in merge_model:
                 for idx in range(len(secret_seq)):
                     if idx == 0:
-                        merge_model[key] = secret_seq[idx][key]
+                        merge_model[key] = secret_seq[idx][key].copy()
                     else:
                         merge_model[key] += secret_seq[idx][key]
                 merge_model[key] = self.fixedpoint2float(merge_model[key])
-
+        else:
+            for idx in range(len(secret_seq)):
+                if idx == 0:
+                    merge_model = secret_seq[idx].copy()
+                else:
+                    merge_model += secret_seq[idx]
+            merge_model = self.fixedpoint2float(merge_model)
         return merge_model
 
     def _float2fixedpoint(self, x):
+        # x = self.fixedpoint2float(x)
         x = round(x * self.epsilon, 0)
         assert abs(x) < self.maximum
         return x % self.mod_number
