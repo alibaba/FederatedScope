@@ -1,0 +1,55 @@
+use_gpu: True
+device: 3
+early_stop:
+  patience: 0
+seed: 2333
+federate:
+  mode: standalone
+  local_update_steps: 2
+  total_round_num: 1000
+  sample_client_rate: 0.1
+  client_num: 200
+  batch_or_epoch: epoch
+data:
+  dataset: ['train', 'val', 'test', 'poison']
+  root: data/
+  type: femnist
+  # form: dataloader
+  splits: [0.6,0.2,0.2]
+  batch_size: 32
+  subsample: 0.05
+  num_workers: 0
+  # transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  transform: [['ToTensor']]
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 62
+optimizer:
+  lr: 0.1
+  weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  freq: 1
+  split: ['test', 'val']
+  metrics: ['acc', 'correct', 'poison_attack_acc']
+  # split: ['test', 'val', 'poison']
+  # metrics: ['acc', 'correct']
+attack:
+  setting: 'fix'
+  freq: 10
+  attack_method: 'backdoor'
+  attacker_id: 1
+  label_type: 'dirty'
+  trigger_type: gridTrigger
+  target_label_ind: 1
+  self_opt: False
+  self_lr: 0.1
+  self_epoch: 6
+  scale_poisoning: False
+  scale_para: 5.0
+  mean: [0.1307]
+  std: [0.3081]

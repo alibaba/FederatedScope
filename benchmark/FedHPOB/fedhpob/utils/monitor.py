@@ -36,8 +36,8 @@ class Monitor(object):
             'cur_results': res
         })
         logging.warning(
-            f'Try: {self.cnt}, Consumed: {self.consumed_time}, best_value: {self.best_value}, cur_results: {res}'
-        )
+            f'Try: {self.cnt}, Consumed: {self.consumed_time}, best_value:'
+            f' {self.best_value}, cur_results: {res}')
         self.last_timestamp = time.time()
 
     def _check_and_log(self, cost):

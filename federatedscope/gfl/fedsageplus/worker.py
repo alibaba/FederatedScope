@@ -5,8 +5,8 @@ import copy
 from torch_geometric.loader import NeighborSampler
 
 from federatedscope.core.message import Message
-from federatedscope.core.worker.server import Server
-from federatedscope.core.worker.client import Client
+from federatedscope.core.workers.server import Server
+from federatedscope.core.workers.client import Client
 from federatedscope.core.auxiliaries.utils import merge_dict
 
 from federatedscope.gfl.trainer.nodetrainer import NodeMiniBatchTrainer

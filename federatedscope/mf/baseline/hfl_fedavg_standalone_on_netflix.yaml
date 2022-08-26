@@ -1,0 +1,29 @@
+use_gpu: False
+early_stop:
+  patience: 100
+federate:
+  mode: standalone
+  total_round_num: 100
+  client_num: 480189
+  online_aggr: True
+  share_local_model: True
+  sample_client_rate: 0.0001
+data:
+  root: data/
+  type: HFLNetflix
+  batch_size: 32
+  num_workers: 0
+model:
+  type: HMFNet
+  hidden: 10
+train:
+  local_update_steps: 50
+  optimizer:
+    lr: 1.
+criterion:
+  type: MSELoss
+trainer:
+  type: mftrainer
+eval:
+  freq: 100
+  metrics: []

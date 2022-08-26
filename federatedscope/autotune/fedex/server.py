@@ -9,7 +9,7 @@ from numpy.linalg import norm
 from scipy.special import logsumexp
 
 from federatedscope.core.message import Message
-from federatedscope.core.worker import Server
+from federatedscope.core.workers import Server
 from federatedscope.core.auxiliaries.utils import merge_dict
 
 logger = logging.getLogger(__name__)
@@ -82,24 +82,26 @@ class FedExServer(Server):
                              total_round_num, device, strategy, **kwargs)
 
         if self._cfg.federate.restore_from != '':
-            pi_ckpt_path = self._cfg.federate.restore_from[:self._cfg.federate.
-                                                           restore_from.rfind(
-                                                               '.'
-                                                           )] + "_fedex.yaml"
-            with open(pi_ckpt_path, 'r') as ips:
-                ckpt = yaml.load(ips, Loader=yaml.FullLoader)
-            self._z = [np.asarray(z) for z in ckpt['z']]
-            self._theta = [np.exp(z) for z in self._z]
-            self._store = ckpt['store']
-            self._stop_exploration = ckpt['stop']
-            self._trace = dict()
-            self._trace['global'] = ckpt['global']
-            self._trace['refine'] = ckpt['refine']
-            self._trace['entropy'] = ckpt['entropy']
-            self._trace['mle'] = ckpt['mle']
+            if not os.path.exists(self._cfg.federate.restore_from):
+                logger.warning(f'Invalid `restore_from`:'
+                               f' {self._cfg.federate.restore_from}.')
+            else:
+                pi_ckpt_path = self._cfg.federate.restore_from[
+                               :self._cfg.federate.restore_from.rfind('.')] \
+                               + "_fedex.yaml"
+                with open(pi_ckpt_path, 'r') as ips:
+                    ckpt = yaml.load(ips, Loader=yaml.FullLoader)
+                self._z = [np.asarray(z) for z in ckpt['z']]
+                self._theta = [np.exp(z) for z in self._z]
+                self._store = ckpt['store']
+                self._stop_exploration = ckpt['stop']
+                self._trace = dict()
+                self._trace['global'] = ckpt['global']
+                self._trace['refine'] = ckpt['refine']
+                self._trace['entropy'] = ckpt['entropy']
+                self._trace['mle'] = ckpt['mle']
 
     def entropy(self):
-
         entropy = 0.0
         for probs in product(*(theta[theta > 0.0] for theta in self._theta)):
             prob = np.prod(probs)
@@ -158,6 +160,8 @@ class FedExServer(Server):
         else:
             # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
+            if msg_type == 'model_para':
+                self.sampler.change_state(receiver, 'working')
 
         if self._noise_injector is not None and msg_type == 'model_para':
             # Inject noise only when broadcast parameters
@@ -198,6 +202,7 @@ class FedExServer(Server):
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
+        self.sampler.change_state(sender, 'idle')
         # For a new round
         if round not in self.msg_buffer['train'].keys():
             self.msg_buffer['train'][round] = dict()
@@ -324,6 +329,7 @@ class FedExServer(Server):
                     if 'dissim' in self._cfg.eval.monitoring:
                         from federatedscope.core.auxiliaries.utils import \
                             calc_blocal_dissim
+                        # TODO: fix load_state_dict
                         B_val = calc_blocal_dissim(
                             model.load_state_dict(strict=False), msg_list)
                         formatted_eval_res = self._monitor.format_eval_res(

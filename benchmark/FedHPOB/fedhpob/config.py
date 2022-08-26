@@ -1,5 +1,5 @@
 import ConfigSpace as CS
-from yacs.config import CfgNode as CN
+from federatedscope.core.configs.config import CN
 from fedhpob.benchmarks import TabularBenchmark
 from fedhpob.benchmarks import RawBenchmark
 from fedhpob.benchmarks import SurrogateBenchmark
@@ -12,7 +12,26 @@ def get_cs(dname, model, mode, alg='avg'):
     configuration_space = CS.ConfigurationSpace()
     fidelity_space = CS.ConfigurationSpace()
     # configuration_space
-    if dname in ['cora', 'citeseer', 'pubmed']:
+    if dname == 'twitter':
+        fidelity_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('round',
+                                         choices=[x for x in range(500)]))
+        fidelity_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('sample_rate', choices=[0.01]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter(
+                'lr', choices=[0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('wd', choices=[0.0, 0.001, 0.01,
+                                                        0.1]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('dropout', choices=[0.0]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
+        configuration_space.add_hyperparameter(
+            CS.CategoricalHyperparameter('batch', choices=[64]))
+
+    elif dname in ['cora', 'citeseer', 'pubmed']:
         # GNN tabular, raw and surrogate
         fidelity_space.add_hyperparameter(
             CS.CategoricalHyperparameter('round',
@@ -96,7 +115,7 @@ def get_cs(dname, model, mode, alg='avg'):
                         'wd', choices=[0.0, 0.001, 0.01, 0.1]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter(
-                        'batch_size', choices=[8, 16, 32, 64, 128, 256]))
+                        'batch', choices=[8, 16, 32, 64, 128, 256]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('dropout', choices=[0.0]))
                 if alg == 'avg':
@@ -149,7 +168,7 @@ def get_cs(dname, model, mode, alg='avg'):
                     CS.CategoricalHyperparameter(
                         'wd', choices=[0.0, 0.001, 0.01, 0.1]))
                 configuration_space.add_hyperparameter(
-                    CS.CategoricalHyperparameter('batch_size',
+                    CS.CategoricalHyperparameter('batch',
                                                  choices=[32, 64, 128, 256]))
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('dropout', choices=[0.0]))
@@ -225,8 +244,7 @@ def get_cs(dname, model, mode, alg='avg'):
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('dropout', choices=[0.0, 0.5]))
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter('batch_size',
-                                             choices=[16, 32, 64]))
+                CS.CategoricalHyperparameter('batch', choices=[16, 32, 64]))
             if alg == 'avg':
                 configuration_space.add_hyperparameter(
                     CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
@@ -242,8 +260,7 @@ def get_cs(dname, model, mode, alg='avg'):
             configuration_space.add_hyperparameter(
                 CS.UniformFloatHyperparameter('dropout', lower=.0, upper=.5))
             configuration_space.add_hyperparameter(
-                CS.CategoricalHyperparameter('batch_size',
-                                             choices=[16, 32, 64]))
+                CS.CategoricalHyperparameter('batch', choices=[16, 32, 64]))
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('step', choices=[1, 2, 3, 4]))
     elif dname in ['sst2@huggingface_datasets', 'cola@huggingface_datasets']:
@@ -255,8 +272,8 @@ def get_cs(dname, model, mode, alg='avg'):
             CS.CategoricalHyperparameter('sample_rate',
                                          choices=[0.2, 0.4, 0.6, 0.8, 1.0]))
         configuration_space.add_hyperparameter(
-            CS.CategoricalHyperparameter('batch_size',
-                                         choices=[8, 16, 32, 64, 128]))
+            CS.CategoricalHyperparameter('batch', choices=[8, 16, 32, 64,
+                                                           128]))
         if mode == 'tabular':
             configuration_space.add_hyperparameter(
                 CS.CategoricalHyperparameter('lr',
@@ -341,6 +358,7 @@ def initial_cfg(cfg):
     cfg.cost.c = 1  # lambda for exponential distribution, time consumed in
     # client
     cfg.cost.time_server = 0  # time consumed in server, `0` for real time
+    cfg.cost.lag_const = 65535  # Max port number
 
     # bandwidth for estimated cost
     cfg.cost.bandwidth = CN()

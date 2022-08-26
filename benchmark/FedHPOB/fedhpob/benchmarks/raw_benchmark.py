@@ -1,7 +1,8 @@
 import datetime
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
+from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
+    get_server_cls
 from federatedscope.core.fed_runner import FedRunner
 
 from fedhpob.benchmarks.base_benchmark import BaseBenchmark
@@ -17,9 +18,9 @@ class RawBenchmark(BaseBenchmark):
                  rng=None,
                  cost_mode='estimated',
                  **kwargs):
-        self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
+        super(RawBenchmark, self).__init__(model, dname, algo, cost_mode, rng,
+                                           **kwargs)
         self.device = kwargs['device']
-        super(RawBenchmark, self).__init__(model, dname, algo, rng, **kwargs)
 
     def _run_fl(self, configuration, fidelity, key='val_avg_loss', seed=1):
         init_cfg = self.cfg.clone()

@@ -91,7 +91,8 @@ def update_logger(cfg, clear_before_add=False):
         cfg.expname = f"{cfg.federate.method}_{cfg.model.type}_on" \
                       f"_{cfg.data.type}_lr{cfg.train.optimizer.lr}_lste" \
                       f"p{cfg.train.local_update_steps}"
-    cfg.expname = f"{cfg.expname}_{cfg.expname_tag}"
+    if cfg.expname_tag:
+        cfg.expname = f"{cfg.expname}_{cfg.expname_tag}"
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
 
     # if exist, make directory with given name and time
@@ -155,7 +156,7 @@ def init_wandb(cfg):
     tmp_cfg = copy.deepcopy(cfg)
     if tmp_cfg.is_frozen():
         tmp_cfg.defrost()
-    tmp_cfg.cfg_check_funcs.clear(
+    tmp_cfg.clear_check_funcs(
     )  # in most cases, no need to save the cfg_check_funcs via wandb
     import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
@@ -500,3 +501,30 @@ def calculate_time_cost(instance_number,
         comm_cost = 0
 
     return comp_cost, comm_cost
+
+
+def calculate_batch_epoch_num(steps, batch_or_epoch, num_data, batch_size,
+                              drop_last):
+    num_batch_per_epoch = num_data // batch_size + int(
+        not drop_last and bool(num_data % batch_size))
+    if num_batch_per_epoch == 0:
+        raise RuntimeError(
+            "The number of batch is 0, please check 'batch_size' or set "
+            "'drop_last' as False")
+    elif batch_or_epoch == "epoch":
+        num_epoch = steps
+        num_batch_last_epoch = num_batch_per_epoch
+        num_total_batch = steps * num_batch_per_epoch
+    else:
+        num_epoch = math.ceil(steps / num_batch_per_epoch)
+        num_batch_last_epoch = steps % num_batch_per_epoch or \
+            num_batch_per_epoch
+        num_total_batch = steps
+    return num_batch_per_epoch, num_batch_last_epoch, num_epoch, \
+        num_total_batch
+
+
+def merge_param_dict(raw_param, filtered_param):
+    for key in filtered_param.keys():
+        raw_param[key] = filtered_param[key]
+    return raw_param

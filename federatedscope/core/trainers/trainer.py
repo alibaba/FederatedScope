@@ -2,11 +2,14 @@ import collections
 import copy
 import logging
 
-from federatedscope.core.auxiliaries.eunms import MODE
+from federatedscope.core.auxiliaries.enums import MODE
+from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries.decorators import use_diff
 from federatedscope.core.auxiliaries.utils import format_log_hooks
 from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
 from federatedscope.core.trainers.context import Context
+from federatedscope.core.trainers.context import CtxVar
+from federatedscope.core.trainers.context import lifecycle
 from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
 try:
@@ -214,17 +217,17 @@ class Trainer(object):
     def train(self, target_data_split_name="train", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_train
 
-        self.ctx.check_data_split(target_data_split_name)
+        self.ctx.check_split(target_data_split_name)
 
-        self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+        num_samples = self._run_routine(MODE.TRAIN, hooks_set,
+                                        target_data_split_name)
 
-        return self.ctx.num_samples_train, self.get_model_para(
-        ), self.ctx.eval_metrics
+        return num_samples, self.get_model_para(), self.ctx.eval_metrics
 
     def evaluate(self, target_data_split_name="test", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_eval
 
-        if self.ctx.check_data_split(target_data_split_name, skip=True):
+        if self.ctx.check_split(target_data_split_name, skip=True):
             self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
         else:
             self.ctx.eval_metrics = dict()
@@ -234,71 +237,67 @@ class Trainer(object):
     def finetune(self, target_data_split_name="train", hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_ft
 
-        self.ctx.check_data_split(target_data_split_name)
+        self.ctx.check_split(target_data_split_name)
 
         self._run_routine(MODE.FINETUNE, hooks_set, target_data_split_name)
 
+    @lifecycle(LIFECYCLE.ROUTINE)
     def _run_routine(self, mode, hooks_set, dataset_name=None):
         """Run the hooks_set and maintain the mode
-
         Arguments:
-            mode (str): running mode of client, chosen from train/test
-            hooks_set (dict): functions to be executed.
-            dataset_name (str): which split.
-
+            mode: running mode of client, chosen from train/val/test
         Note:
-            Considering evaluation could be in ```hooks_set[
-            "on_epoch_end"]```, there could be two data loaders in
-        self.ctx, we must tell the running hooks which data_loader to call
-        and which num_samples to count
-
+            Considering evaluation could be in ```hooks_set["on_epoch_end"]```,
+            there could be two data loaders in self.ctx, we must tell the
+            running hooks which data_loader to call and which
+            num_samples to count
         """
-        if dataset_name is None:
-            dataset_name = mode
-        self.ctx.append_mode(mode)
-        self.ctx.track_used_dataset(dataset_name)
-
         for hook in hooks_set["on_fit_start"]:
             hook(self.ctx)
 
-        for epoch_i in range(self.ctx.get(
-                "num_{}_epoch".format(dataset_name))):
-            self.ctx.cur_epoch_i = epoch_i
-            for hook in hooks_set["on_epoch_start"]:
-                hook(self.ctx)
+        self._run_epoch(hooks_set)
 
-            for batch_i in range(
-                    self.ctx.get("num_{}_batch".format(dataset_name))):
-                self.ctx.cur_batch_i = batch_i
-                for hook in hooks_set["on_batch_start"]:
-                    hook(self.ctx)
-                for hook in hooks_set["on_batch_forward"]:
-                    hook(self.ctx)
-                if self.ctx.cur_mode == 'train':
-                    for hook in hooks_set["on_batch_backward"]:
-                        hook(self.ctx)
-                for hook in hooks_set["on_batch_end"]:
-                    hook(self.ctx)
-
-                # Break in the final epoch
-                if self.ctx.cur_mode == 'train' and epoch_i == \
-                        self.ctx.num_train_epoch - 1:
-                    if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
-                        break
-
-            for hook in hooks_set["on_epoch_end"]:
-                hook(self.ctx)
         for hook in hooks_set["on_fit_end"]:
             hook(self.ctx)
 
-        self.ctx.pop_mode()
-        self.ctx.reset_used_dataset()
-        # Avoid memory leak
-        if not self.cfg.federate.share_local_model:
-            if torch is None:
-                pass
-            else:
-                self.ctx.model.to(torch.device("cpu"))
+        return self.ctx.num_samples
+
+    @lifecycle(LIFECYCLE.EPOCH)
+    def _run_epoch(self, hooks_set):
+        for epoch_i in range(self.ctx.get(f"num_{self.ctx.cur_split}_epoch")):
+            self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
+
+            for hook in hooks_set["on_epoch_start"]:
+                hook(self.ctx)
+
+            self._run_batch(hooks_set)
+
+            for hook in hooks_set["on_epoch_end"]:
+                hook(self.ctx)
+
+    @lifecycle(LIFECYCLE.BATCH)
+    def _run_batch(self, hooks_set):
+        for batch_i in range(self.ctx.get(f"num_{self.ctx.cur_split}_batch")):
+            self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
+
+            for hook in hooks_set["on_batch_start"]:
+                hook(self.ctx)
+
+            for hook in hooks_set["on_batch_forward"]:
+                hook(self.ctx)
+
+            for hook in hooks_set["on_batch_backward"]:
+                hook(self.ctx)
+
+            for hook in hooks_set["on_batch_end"]:
+                hook(self.ctx)
+
+            # Break in the final epoch
+            if self.ctx.cur_mode in [
+                    MODE.TRAIN, MODE.FINETUNE
+            ] and self.ctx.cur_epoch_i == self.ctx.num_train_epoch - 1:
+                if batch_i >= self.ctx.num_train_batch_last_epoch - 1:
+                    break
 
     def update(self, model_parameters, strict=False):
         '''

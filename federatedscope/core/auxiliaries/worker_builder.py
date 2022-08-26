@@ -1,7 +1,7 @@
 import logging
 
 from federatedscope.core.configs import constants
-from federatedscope.core.worker import Server, Client
+from federatedscope.core.workers import Server, Client
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,11 @@ def get_server_cls(cfg):
         from federatedscope.attack.worker_as_attacker.server_attacker import\
             PassivePIAServer
         return PassivePIAServer
+
+    elif cfg.attack.attack_method.lower() in ['backdoor']:
+        from federatedscope.attack.worker_as_attacker.server_attacker \
+            import BackdoorServer
+        return BackdoorServer
 
     if cfg.vertical.use:
         from federatedscope.vertical_fl.worker import vFLServer

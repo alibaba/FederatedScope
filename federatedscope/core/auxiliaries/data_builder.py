@@ -1,7 +1,12 @@
+import os
 import pickle
 import logging
+from random import shuffle
+
 import numpy as np
 from collections import defaultdict
+
+from federatedscope.core.auxiliaries.utils import setup_seed
 
 import federatedscope.register as register
 
@@ -117,7 +122,7 @@ def load_toy_data(config=None):
 
     if generate:
         data = _generate_data(client_num=config.federate.client_num,
-                              save_data=config.eval.save_data)
+                              save_data=config.data.save_data)
     else:
         with open(config.distribute.data_file, 'rb') as f:
             data = pickle.load(f)
@@ -285,8 +290,16 @@ def load_external_data(config=None):
 
         if config.model.type.endswith('transformers'):
             from transformers import AutoTokenizer
-            tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0])
+            cache_path = os.path.join(os.getcwd(), "huggingface")
+            try:
+                tokenizer = AutoTokenizer.from_pretrained(
+                    config.model.type.split('@')[0],
+                    local_files_only=True,
+                    cache_dir=cache_path)
+            except Exception as e:
+                logging.error(f"When loading cached file form "
+                              f"{cache_path}, we faced the exception: \n "
+                              f"{str(e)}")
 
             x_all = tokenizer(x_all,
                               return_tensors='pt',
@@ -401,7 +414,7 @@ def load_external_data(config=None):
         raise NotImplementedError
 
     def load_huggingface_datasets_data(name, splits=None, config=None):
-        from datasets import load_dataset
+        from datasets import load_dataset, load_from_disk
 
         if config.data.args:
             raw_args = config.data.args[0]
@@ -410,17 +423,51 @@ def load_external_data(config=None):
         assert 'max_len' in raw_args, "Miss key 'max_len' in " \
                                       "`config.data.args`."
         filtered_args = filter_dict(load_dataset, raw_args)
-        dataset = load_dataset(path=config.data.root,
-                               name=name,
-                               **filtered_args)
+        logger.info("Begin to load huggingface dataset")
+        if "hg_cache_dir" in raw_args:
+            hugging_face_path = raw_args["hg_cache_dir"]
+        else:
+            hugging_face_path = os.getcwd()
+
+        if "load_disk_dir" in raw_args:
+            load_path = raw_args["load_disk_dir"]
+            try:
+                dataset = load_from_disk(load_path)
+            except Exception as e:
+                logging.error(f"When loading cached dataset form "
+                              f"{load_path}, we faced the exception: \n "
+                              f"{str(e)}")
+        else:
+            dataset = load_dataset(path=config.data.root,
+                                   name=name,
+                                   **filtered_args)
         if config.model.type.endswith('transformers'):
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from transformers import AutoTokenizer
+            logger.info("To load huggingface tokenizer")
             tokenizer = AutoTokenizer.from_pretrained(
-                config.model.type.split('@')[0])
+                config.model.type.split('@')[0],
+                local_files_only=True,
+                cache_dir=os.path.join(hugging_face_path, "transformers"))
 
         for split in dataset:
             x_all = [i['sentence'] for i in dataset[split]]
             targets = [i['label'] for i in dataset[split]]
+
+            if split == "train" and "used_train_ratio" in raw_args and \
+                    1 > raw_args['used_train_ratio'] > 0:
+                selected_idx = [i for i in range(len(dataset[split]))]
+                shuffle(selected_idx)
+                selected_idx = selected_idx[:int(
+                    len(selected_idx) * raw_args['used_train_ratio'])]
+                x_all = [
+                    element for i, element in enumerate(x_all)
+                    if i in selected_idx
+                ]
+                targets = [
+                    element for i, element in enumerate(targets)
+                    if i in selected_idx
+                ]
 
             x_all = tokenizer(x_all,
                               return_tensors='pt',
@@ -441,6 +488,42 @@ def load_external_data(config=None):
                 (x, y) for x, y in zip(dataset['test'][0], dataset['test'][1])
             ] if (set(dataset['test'][1]) - set([-1])) else None,
         }
+        original_train_size = len(data_dict["train"])
+
+        if "half_val_dummy_test" in raw_args and raw_args[
+                "half_val_dummy_test"]:
+            # since the "test" set from GLUE dataset may be masked, we need to
+            # submit to get the ground-truth, for fast FL experiments,
+            # we split the validation set into two parts with the same size as
+            # new test/val data
+            original_val = [(x, y) for x, y in zip(dataset['validation'][0],
+                                                   dataset['validation'][1])]
+            data_dict["val"], data_dict[
+                "test"] = original_val[:len(original_val) //
+                                       2], original_val[len(original_val) //
+                                                        2:]
+        if "val_as_dummy_test" in raw_args and raw_args["val_as_dummy_test"]:
+            # use the validation set as tmp test set,
+            # and partial training set as validation set
+            data_dict["test"] = data_dict["val"]
+            data_dict["val"] = []
+        if "part_train_dummy_val" in raw_args and 1 > raw_args[
+                "part_train_dummy_val"] > 0:
+            new_val_part = int(original_train_size *
+                               raw_args["part_train_dummy_val"])
+            data_dict["val"].extend(data_dict["train"][:new_val_part])
+            data_dict["train"] = data_dict["train"][new_val_part:]
+        if "part_train_dummy_test" in raw_args and 1 > raw_args[
+                "part_train_dummy_test"] > 0:
+            new_test_part = int(original_train_size *
+                                raw_args["part_train_dummy_test"])
+            data_dict["test"] = data_dict["val"]
+            if data_dict["test"] is not None:
+                data_dict["test"].extend(data_dict["train"][:new_test_part])
+            else:
+                data_dict["test"] = (data_dict["train"][:new_test_part])
+            data_dict["train"] = data_dict["train"][new_test_part:]
+
         return data_dict
 
     def load_openml_data(tid, splits=None, config=None):
@@ -529,6 +612,9 @@ def get_data(config):
         obj: The dataset object.
         cfg.node: The updated configuration.
     """
+    # fix the seed for data generation,
+    # will restore the user-specified on after the generation
+    setup_seed(12345)
     for func in register.data_dict.values():
         data_and_config = func(config)
         if data_and_config is not None:
@@ -570,7 +656,8 @@ def get_data(config):
     elif config.data.type.lower() == 'caesar_v_fl_data':
         from federatedscope.caesar_v_fl.dataloader import load_caesar_v_fl_data
         data, modified_config = load_caesar_v_fl_data(config, generate=True)
-    elif 'movielens' in config.data.type.lower():
+    elif 'movielens' in config.data.type.lower(
+    ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         data, modified_config = load_mf_dataset(config)
     elif '@' in config.data.type.lower():
@@ -584,6 +671,40 @@ def get_data(config):
         modified_config = config
     else:
         raise ValueError('Data {} not found.'.format(config.data.type))
+
+    if 'backdoor' in config.attack.attack_method and 'edge' in \
+            config.attack.trigger_type:
+        import os
+        import torch
+        from federatedscope.attack.auxiliary import\
+            create_ardis_poisoned_dataset, create_ardis_test_dataset
+        if not os.path.exists(config.attack.edge_path):
+            os.makedirs(config.attack.edge_path)
+            poisoned_edgeset = create_ardis_poisoned_dataset(
+                data_path=config.attack.edge_path)
+
+            ardis_test_dataset = create_ardis_test_dataset(
+                config.attack.edge_path)
+
+            logger.info("Writing poison_data to: {}".format(
+                config.attack.edge_path))
+
+            with open(config.attack.edge_path + "poisoned_edgeset_training",
+                      "wb") as saved_data_file:
+                torch.save(poisoned_edgeset, saved_data_file)
+
+            with open(config.attack.edge_path+"ardis_test_dataset.pt", "wb") \
+                    as ardis_data_file:
+                torch.save(ardis_test_dataset, ardis_data_file)
+            logger.warning('please notice: downloading the poisoned dataset \
+                on cifar-10 from \
+                    https://github.com/ksreenivasan/OOD_Federated_Learning')
+
+    if 'backdoor' in config.attack.attack_method:
+        from federatedscope.attack.auxiliary import poisoning
+        poisoning(data, modified_config)
+
+    setup_seed(config.seed)
 
     if config.federate.mode.lower() == 'standalone':
         return data, modified_config
@@ -601,6 +722,8 @@ def get_data(config):
             data_idx = config.distribute.data_idx
         return data[data_idx], config
 
+    setup_seed(config.seed)
+
 
 def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
     if specified_dataset_name is None:
@@ -614,11 +737,19 @@ def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
     assert len(dataset_names) >= 1, \
         "At least one sub-dataset is required in client 1"
     data_name = "test" if "test" in dataset_names else dataset_names[0]
-    if isinstance(all_data[1][data_name], dict):
-        data_elem_names = list(all_data[1][data_name].keys())  # e.g., x, y
+    id_has_key = 1
+    while "test" not in all_data[id_has_key]:
+        id_has_key += 1
+        if len(all_data) <= id_has_key:
+            raise KeyError(f'All data do not key {data_name}.')
+    if isinstance(all_data[id_has_key][data_name], dict):
+        data_elem_names = list(
+            all_data[id_has_key][data_name].keys())  # e.g., x, y
         merged_data = {name: defaultdict(list) for name in dataset_names}
         for data_id in range(1, merged_max_data_id):
             for d_name in dataset_names:
+                if d_name not in all_data[data_id]:
+                    continue
                 for elem_name in data_elem_names:
                     merged_data[d_name][elem_name].append(
                         all_data[data_id][d_name][elem_name])
@@ -626,16 +757,24 @@ def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
             for elem_name in data_elem_names:
                 merged_data[d_name][elem_name] = np.concatenate(
                     merged_data[d_name][elem_name])
-    elif issubclass(type(all_data[1][data_name]), torch.utils.data.DataLoader):
-        merged_data = {name: all_data[1][name] for name in dataset_names}
-        for data_id in range(2, merged_max_data_id):
+    elif issubclass(type(all_data[id_has_key][data_name]),
+                    torch.utils.data.DataLoader):
+        merged_data = {
+            name: all_data[id_has_key][name]
+            for name in dataset_names
+        }
+        for data_id in range(1, merged_max_data_id):
+            if data_id == id_has_key:
+                continue
             for d_name in dataset_names:
+                if d_name not in all_data[data_id]:
+                    continue
                 merged_data[d_name].dataset.extend(
                     all_data[data_id][d_name].dataset)
     else:
         raise NotImplementedError(
             "Un-supported type when merging data across different clients."
-            f"Your data type is {type(all_data[1][data_name])}. "
+            f"Your data type is {type(all_data[id_has_key][data_name])}. "
             f"Currently we only support the following forms: "
             " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
             " 2): {data_id: {train: DataLoader }")

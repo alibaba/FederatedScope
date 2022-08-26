@@ -15,37 +15,19 @@ class TabularBenchmark(BaseBenchmark):
                  rng=None,
                  cost_mode='estimated',
                  **kwargs):
-        self.model, self.dname, self.algo, self.cost_mode = model, dname, algo, cost_mode
         self.table, self.meta_info = load_data(datadir, model, dname, algo)
         self.eval_freq = self.meta_info['eval_freq']
-        super(TabularBenchmark, self).__init__(model, dname, algo, rng,
-                                               **kwargs)
+        super(TabularBenchmark, self).__init__(model, dname, algo, cost_mode,
+                                               rng, **kwargs)
 
     def _check(self, configuration, fidelity):
         for key, value in configuration.items():
             assert value in self.configuration_space[
-                key], 'configuration invalid, check `configuration_space` for help.'
+                key], 'configuration invalid, check `configuration_space` ' \
+                      'for help.'
         for key, value in fidelity.items():
             assert value in self.fidelity_space[
                 key], 'fidelity invalid, check `fidelity_space` for help.'
-
-    def _search(self, configuration, fidelity):
-        # For configuration
-        mask = np.array([True] * self.table.shape[0])
-        for col in configuration.keys():
-            mask *= (self.table[col].values == configuration[col])
-        idx = np.where(mask)
-        result = self.table.iloc[idx]
-
-        # For fidelity
-        mask = np.array([True] * result.shape[0])
-        for col in fidelity.keys():
-            if col == 'round':
-                continue
-            mask *= (result[col].values == fidelity[col])
-        idx = np.where(mask)
-        result = result.iloc[idx]["result"]
-        return result
 
     def objective_function(self,
                            configuration,
@@ -77,11 +59,21 @@ class TabularBenchmark(BaseBenchmark):
 
         return {'function_value': function_value, 'cost': cost}
 
-    def get_configuration_space(self):
-        return dict2cfg(self.meta_info['configuration_space'])
+    def get_configuration_space(self, CS=False):
+        if not CS:
+            return self.meta_info['configuration_space']
+        tmp_dict = {}
+        for key in self.meta_info['configuration_space']:
+            tmp_dict[key] = list(self.meta_info['configuration_space'][key])
+        return dict2cfg(tmp_dict)
 
-    def get_fidelity_space(self):
-        return dict2cfg(self.meta_info['fidelity_space'])
+    def get_fidelity_space(self, CS=False):
+        if not CS:
+            return self.meta_info['fidelity_space']
+        tmp_dict = {}
+        for key in self.meta_info['fidelity_space']:
+            tmp_dict[key] = list(self.meta_info['fidelity_space'][key])
+        return dict2cfg(tmp_dict)
 
     def get_meta_info(self):
         return {

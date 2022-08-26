@@ -1,8 +1,6 @@
 import os
 import sys
 
-from yacs.config import CfgNode
-
 DEV_MODE = False  # simplify the federatedscope re-setup everytime we change
 # the source codes of federatedscope
 if DEV_MODE:
@@ -14,7 +12,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
-from federatedscope.core.configs.config import global_cfg
+from federatedscope.core.configs.config import global_cfg, CfgNode
 from federatedscope.core.fed_runner import FedRunner
 
 if os.environ.get('https_proxy'):
@@ -25,7 +23,8 @@ if os.environ.get('http_proxy'):
 if __name__ == '__main__':
     init_cfg = global_cfg.clone()
     args = parse_args()
-    init_cfg.merge_from_file(args.cfg_file)
+    if args.cfg_file:
+        init_cfg.merge_from_file(args.cfg_file)
     init_cfg.merge_from_list(args.opts)
 
     update_logger(init_cfg)

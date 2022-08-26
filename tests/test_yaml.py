@@ -10,13 +10,12 @@ logger = logging.getLogger(__name__)
 
 class YAMLTest(unittest.TestCase):
     def setUp(self):
-        self.exclude_all = [
-            'benchmark', 'scripts', 'federatedscope/example_configs'
+        self.exclude_all = ['benchmark', 'scripts']
+        self.exclude_file = [
+            '.pre-commit-config.yaml', 'meta.yaml',
+            'federatedscope/gfl/baseline/isolated_gin_minibatch_on_cikmcup_per_client.yaml',
+            'federatedscope/gfl/baseline/fedavg_gin_minibatch_on_cikmcup_per_client.yaml'
         ]
-        self.exclude_file = ['.pre-commit-config.yaml',
-                             'meta.yaml',
-                             'federatedscope/gfl/baseline/isolated_gin_minibatch_on_cikmcup_per_client.yaml',
-                             'federatedscope/gfl/baseline/fedavg_gin_minibatch_on_cikmcup_per_client.yaml']
         self.root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.exclude_all = [
             os.path.join(self.root, f) for f in self.exclude_all

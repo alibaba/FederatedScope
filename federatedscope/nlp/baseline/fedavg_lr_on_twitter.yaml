@@ -6,6 +6,8 @@ federate:
   mode: standalone
   total_round_num: 100
   sample_client_num: 10
+  share_local_model: True
+  online_aggr: True
 data:
   root: data/
   type: twitter
@@ -26,7 +28,7 @@ criterion:
 trainer:
   type: nlptrainer
 eval:
-  freq: 10
-  metrics: ['acc', 'correct']
-  split: ['train']
+  freq: 1
+  metrics: ['acc', 'correct', 'f1']
+  split: [ 'train' ]
   best_res_update_round_wise_key: 'train_loss'

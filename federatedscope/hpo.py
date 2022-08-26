@@ -1,8 +1,6 @@
 import os
 import sys
 
-from yacs.config import CfgNode
-
 import yaml
 
 DEV_MODE = False  # simplify the federatedscope re-setup everytime we change
@@ -40,5 +38,20 @@ if __name__ == '__main__':
     # global_cfg.merge_from_list(args.opts)
 
     scheduler = get_scheduler(init_cfg)
-    _ = scheduler.optimize()
+    if init_cfg.hpo.scheduler in ['sha', 'wrap_sha']:
+        _ = scheduler.optimize()
+    elif init_cfg.hpo.scheduler in [
+            'rs', 'bo_kde', 'hb', 'bohb', 'wrap_rs', 'wrap_bo_kde', 'wrap_hb',
+            'wrap_bohb'
+    ]:
+        from federatedscope.autotune.hpbandster import run_hpbandster
+        run_hpbandster(init_cfg, scheduler)
+    elif init_cfg.hpo.scheduler in [
+            'bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf'
+    ]:
+        from federatedscope.autotune.smac import run_smac
+        run_smac(init_cfg, scheduler)
+    else:
+        raise ValueError(f'No scheduler named {init_cfg.hpo.scheduler}')
+
     # logger.info(results)

@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -7,8 +8,8 @@ from tqdm import tqdm
 FONTSIZE = 30
 MARKSIZE = 25
 COLORS = [
-    u'#1f77b4', u'#ff7f0e', u'#2ca02c', u'#d62728', u'#9467bd', u'#8c564b',
-    u'#e377c2', u'#7f7f7f', u'#bcbd22', u'#17becf'
+    u'#1f77b4', u'#ff7f0e', u'#2ca02c', u'#d62728', u'#9467bd', 'black',
+    u'#8c564b', u'#e377c2', u'#7f7f7f', u'#bcbd22', u'#17becf'
 ]
 
 
@@ -23,7 +24,6 @@ def logloader(file):
 
 
 def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
-    import datetime
     from fedhpob.benchmarks import TabularBenchmark
 
     # Draw ECDF from target data_list
@@ -61,6 +61,8 @@ def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
         legend = ['Cora', 'CiteSeer', 'PubMed']
     else:
         legend = [x.upper() for x in data_list]
+    # Not show legend
+    del legend
     os.makedirs('figures', exist_ok=True)
     plt.savefig(f'figures/{model}_{sample_client}_{algo}_cdf.pdf',
                 bbox_inches='tight')
@@ -88,11 +90,11 @@ def get_mean_rank(traj_dict):
             ])
         if repeat == 0:
             rank = rankdata(ys, axis=0)
-            rank_bbo = rankdata(ys[:5], axis=0)
+            rank_bbo = rankdata(ys[:6], axis=0)
             rank_mf = rankdata(ys[-5:], axis=0)
         else:
             rank += rankdata(ys, axis=0)
-            rank_bbo += rankdata(ys[:5], axis=0)
+            rank_bbo += rankdata(ys[:6], axis=0)
             rank_mf += rankdata(ys[-5:], axis=0)
     xs = np.linspace(0, 1, 500)
     return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(
@@ -115,11 +117,11 @@ def get_mean_loss(traj_dict):
             ])
         if repeat == 0:
             rank = np.array(ys)
-            rank_bbo = np.array(ys[:5])
+            rank_bbo = np.array(ys[:6])
             rank_mf = np.array(ys[-5:])
         else:
             rank += np.array(ys)
-            rank_bbo += np.array(ys[:5])
+            rank_bbo += np.array(ys[:6])
             rank_mf += np.array(ys[-5:])
     xs = np.linspace(0, 1, 500)
     print(
@@ -151,7 +153,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_all_{Y_label}.pdf",
+        f"figures/{dataset.replace('@', '_')}_{family}_"
+        f"{suffix}_over_time_all_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
@@ -173,7 +176,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_bbo_{Y_label}.pdf",
+        f"figures/{dataset.replace('@', '_')}_{family}_"
+        f"{suffix}_over_time_bbo_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
@@ -184,7 +188,7 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
         plt.plot(xs,
                  rank,
                  linewidth=1,
-                 color=COLORS[idx + 5],
+                 color=COLORS[idx + 6],
                  markersize=MARKSIZE)
     plt.xticks(np.linspace(0, 1, 5),
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
@@ -199,7 +203,8 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
 
     plt.xlabel('Fraction of budget', size=FONTSIZE)
     plt.savefig(
-        f"figures/{dataset.replace('@', '_')}_{family}_{suffix}_over_time_mf_{Y_label}.pdf",
+        f"figures/{dataset.replace('@', '_')}_{family}_"
+        f"{suffix}_over_time_mf_{Y_label}.pdf",
         bbox_inches='tight')
     plt.close()
 
@@ -212,7 +217,7 @@ def rank_over_time(root,
                    loss=False):
     suffix = f'{mode}_{algo}'
     if family == 'cnn':
-        data_list = ['femnist', 'cifar10']
+        data_list = ['femnist']
     elif family == 'gcn':
         data_list = ['cora', 'citeseer', 'pubmed']
     elif family == 'bert':
@@ -232,7 +237,7 @@ def rank_over_time(root,
         ]
 
     # Please place these logs to one dir
-    bbo = ['RS', 'BO_GP', 'BO_RF', 'BO_KDE', 'DE']
+    bbo = ['RS', 'BO_GP', 'BO_RF', 'BO_KDE', 'DE', 'grid_search']
     mf = ['HB', 'BOHB', 'DEHB', 'TPE_MD', 'TPE_HB']
     opt_all = bbo + mf
 
@@ -254,6 +259,8 @@ def rank_over_time(root,
 
     # Draw over dataset
     family_rank = []
+    family_rank_bbo = []
+    family_rank_mf = []
     for dataset in traj:
         if loss:
             print(dataset)
@@ -269,7 +276,9 @@ def rank_over_time(root,
             family_rank_bbo += mean_ranks_bbo
             family_rank_mf += mean_ranks_mf
         else:
-            family_rank, family_rank_bbo, family_rank_mf = mean_ranks, mean_ranks_bbo, mean_ranks_mf
+            family_rank, family_rank_bbo, family_rank_mf = mean_ranks, \
+                                                           mean_ranks_bbo, \
+                                                           mean_ranks_mf
         draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all,
                   dataset, family, suffix, Y_label)
 
@@ -277,6 +286,75 @@ def rank_over_time(root,
     draw_rank(family_rank / len(traj), family_rank_bbo / len(traj),
               family_rank_mf / len(traj), xs, opt_all, 'entire', family,
               suffix, Y_label)
+
+
+def landscape(model='cnn',
+              dname='femnist',
+              algo='avg',
+              sample_client=None,
+              key='test_acc'):
+    import plotly.graph_objects as go
+    from fedhpob.config import fhb_cfg
+    from fedhpob.benchmarks import TabularBenchmark
+
+    z = []
+    benchmark = TabularBenchmark(model, dname, algo, device=-1)
+
+    def get_best_config(benchmark):
+        results, config = [], []
+        for idx in tqdm(range(len(benchmark.table))):
+            row = benchmark.table.iloc[idx]
+            if sample_client is not None and row[
+                    'sample_client'] != sample_client:
+                continue
+            result = eval(row['result'])
+            val_loss = result['val_avg_loss']
+            try:
+                best_round = np.argmin(val_loss)
+            except:
+                continue
+            results.append(result[key][best_round])
+            config.append(row)
+        best_index = np.argmax(results)
+        return config[best_index], results[best_index]
+
+    # config, _ = get_best_config(benchmark)
+    config = {'wd': 0.0, 'dropout': 0.5, 'step': 1.0}
+    config_space = benchmark.get_configuration_space()
+    X, Y = sorted(list(config_space['batch'])), sorted(list(
+        config_space['lr']))
+    print(X, Y)
+    for lr in Y:
+        y = []
+        for batch in X:
+            xy = {'lr': lr, 'batch': batch}
+            print({**config, **xy})
+            res = benchmark({
+                **config,
+                **xy
+            }, {
+                'sample_client': 1.0,
+                'round': 249
+            },
+                            fhb_cfg=fhb_cfg,
+                            seed=12345)
+            y.append(res['function_value'])
+        z.append(y)
+    Z = np.array(z)
+    fig = go.Figure(data=[go.Surface(z=Z, x=X, y=Y)])
+    fig.update_layout(title='FEMNIST (FedAvg)',
+                      autosize=False,
+                      width=900,
+                      height=900,
+                      margin=dict(l=65, r=50, b=65, t=90),
+                      scene=dict(
+                          xaxis_title='BS',
+                          yaxis_title='LR',
+                          zaxis_title='ACC',
+                      ))
+    fig.write_image(os.path.join('figures', 'femnist_fedavg_landscape.pdf'))
+
+    return
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 
-from federatedscope.core.worker import Server
+from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
 
