@@ -51,7 +51,7 @@ hpo:
     local_bo_epochs: 50
     local_bo_max_iter: 30
     fed_bo_max_iter: 50
-    ls: 0.1
+    ls: 1.0
     var: 0.1
     g_var: 1e-6
     v_kernel: 1.0

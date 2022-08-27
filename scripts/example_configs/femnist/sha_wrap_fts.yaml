@@ -11,7 +11,7 @@ federate:
   share_local_model: True
   online_aggr: True
   use_diff: True
-  client_num: 3
+  client_num: 5
 data:
   root: data/
   type: femnist
@@ -51,7 +51,6 @@ hpo:
   fts:
     use: True
     diff: False
-    target_clients: [ 1, 2, 4 ]
     local_bo_epochs: 20
     local_bo_max_iter: 30
     fed_bo_max_iter: 50
@@ -65,3 +64,4 @@ hpo:
     allow_load_existing_info: True
     ss: 'scripts/example_configs/femnist/avg/ss_fts.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
+  working_folder: exp/sha_wrap_fts/working
