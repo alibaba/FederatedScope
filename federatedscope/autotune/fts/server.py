@@ -170,9 +170,9 @@ class FTSServer(Server):
                     ur = unique_rows(self.X[rcv_idx])
                     self.gp[rcv_idx] = GPy.models.GPRegression(
                         self.X[rcv_idx][ur], self.Y[rcv_idx][ur].reshape(-1, 1),
-                        GPy.kern.RBF(input_dim=self.X[rcv_idx].shape[1], lengthscale=1.0,
-                                     variance=0.1, ARD=False))
-                    self.gp[rcv_idx]["Gaussian_noise.variance"][0] = 1e-4
+                        GPy.kern.RBF(input_dim=self.X[rcv_idx].shape[1], lengthscale=self._cfg.hpo.fts.ls,
+                                     variance=self._cfg.hpo.fts.var, ARD=False))
+                    self.gp[rcv_idx]["Gaussian_noise.variance"][0] = self._cfg.hpo.fts.g_var
                     self._opt_gp(rcv_idx)
                     self.initialized[rcv_idx] = True
 

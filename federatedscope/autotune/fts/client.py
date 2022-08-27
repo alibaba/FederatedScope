@@ -10,6 +10,7 @@ from federatedscope.core.workers import Client
 
 from federatedscope.autotune.fts.utils import *
 from federatedscope.autotune.utils import parse_search_space
+from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 
 
 logger = logging.getLogger(__name__)
@@ -30,8 +31,11 @@ class FTSClient(Client):
                  **kwargs):
         super(FTSClient,self).__init__(ID, server_id, state, config,
             data, model, device, strategy, is_unseen_client, *args, **kwargs)
-        self.init_trainer = copy.deepcopy(self.trainer)
+        self.data = data
+        self.model = model
+        self.device = device
         self._diff = config.hpo.fts.diff
+        self._init_model = copy.deepcopy(model)
 
         # local file paths
         self.local_bo_path = os.path.join(self._cfg.hpo.working_folder,
@@ -74,20 +78,37 @@ class FTSClient(Client):
 
         self.trainer.ctx.setup_vars()
 
+    def _get_new_trainer(self):
+        self.model = copy.deepcopy(self._init_model)
+        self.trainer = get_trainer(model=self.model,
+                                   data=self.data,
+                                   device=self.device,
+                                   config=self._cfg,
+                                   is_attacker=self.is_attacker,
+                                   monitor=self._monitor)
+
+
+
     def _obj_func(self, x):
         """
         Run local evaluation, return some metric to maximize (e.g. val_acc)
         """
-        self.trainer = copy.deepcopy(self.init_trainer)
+        self._get_new_trainer()
+
         baseline = 5.0
         hyperparams = x2conf(x, self.pbounds, self._ss)
         self._apply_hyperparams(hyperparams)
-        sample_size, model_para_all, results = self.trainer.train()
+
+        results_before = self.trainer.evaluate('val')
+        for _ in range(self._cfg.hpo.fts.local_bo_epochs):
+            sample_size, model_para_all, results = self.trainer.train()
+        results_after = self.trainer.evaluate('val')
+
         if self._diff:
-            res = results['val_avg_loss_before'] - results['val_avg_loss_after']
+            res = results_before['val_avg_loss'] - results_after['val_avg_loss']
         else:
-            res = - results['val_avg_loss_after']
-        return res + baseline
+            res = baseline - results_after['val_avg_loss']
+        return res
 
     def _generate_agent_info(self, rand_feats):
         logger.info(('-'*20, ' generate info on clinet %d ' % self.ID , '_'*20))
@@ -112,8 +133,12 @@ class FTSClient(Client):
             save_init_file=self.local_init_path,
             pt=pt,
             P_N=None,
+            ls=self._cfg.hpo.fts.ls,
+            var=self._cfg.hpo.fts.var,
+            g_var=self._cfg.hpo.fts.g_var,
+            N=self._cfg.federate.client_num-1,
             M_target=M_target
-        ).maximize(n_iter=max_iter, init_points=3)
+        ).maximize(n_iter=max_iter, init_points=2)
 
         # generate local RFF information
         res = pickle.load(open(self.local_bo_path, "rb"))
@@ -138,7 +163,7 @@ class FTSClient(Client):
         pickle.dump(w_samples, open(self.local_info_path, "wb"))
 
     def callback_funcs_for_model_para(self, message: Message):
-        self.trainer = copy.deepcopy(self.init_trainer)
+        self._get_new_trainer()
         round, sender, content = message.state, message.sender, message.content
         require_agent_infos = content['require_agent_infos']
 
@@ -179,7 +204,7 @@ class FTSClient(Client):
                     content=content))
 
     def callback_funcs_for_evaluate(self, message: Message):
-        self.trainer = copy.deepcopy(self.init_trainer)
+        self._get_new_trainer()
         round, sender, content = message.state, message.sender, message.content
         require_agent_infos = content['require_agent_infos']
         assert not require_agent_infos, "Can not evaluate when there is no agents' information"

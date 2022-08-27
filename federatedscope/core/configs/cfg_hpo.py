@@ -55,8 +55,11 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fts.target_clients = []
     cfg.hpo.fts.diff = False
     cfg.hpo.fts.local_bo_max_iter = 50
+    cfg.hpo.fts.local_bo_epochs = 50
     cfg.hpo.fts.fed_bo_max_iter = 50
-    cfg.hpo.fts.ls = 0.01
+    cfg.hpo.fts.ls = 1.0
+    cfg.hpo.fts.var = 0.1
+    cfg.hpo.fts.g_var = 1e-6
     cfg.hpo.fts.v_kernel = 1.0
     cfg.hpo.fts.obs_noise = 1e-6
     cfg.hpo.fts.M = 100

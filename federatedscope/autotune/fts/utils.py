@@ -316,7 +316,8 @@ class LocalBO(object):
     def __init__(self, cid, f, bounds, keys, gp_opt_schedule=5,
                  ARD=False, use_init=False, log_file=None,
                  save_init=False, save_init_file=None,
-                 M=50, N=50, info_ts=None, pt=None,
+                 N=None, info_ts=None, pt=None,
+                 ls=None, var=None, g_var=None,
                  P_N=None, M_target=100, verbose=1):
         """
             f: the objective function of the target agent
@@ -331,7 +332,6 @@ class LocalBO(object):
             M_target: the number of random features used by both TS and FTS to draw samples from the GP posterior of the target agent
         """
 
-        self.M = M
         self.N = N
         self.info_ts = info_ts
         self.M_target = M_target
@@ -362,7 +362,9 @@ class LocalBO(object):
         self.plog = PrintLog(self.keys)
         self.save_init = save_init
         self.save_init_file = save_init_file
-
+        self.ls = ls
+        self.var = var
+        self.g_var = g_var
         self.res = {}
         self.res['max'] = {'max_val': None,
                            'max_params': None}
@@ -463,16 +465,10 @@ class LocalBO(object):
 
         self.gp = GPy.models.GPRegression(
             self.X[ur], self.Y[ur].reshape(-1, 1),
-            GPy.kern.RBF(input_dim=self.X.shape[1], lengthscale=1.0,
-                         variance=0.1, ARD=self.ARD))
-        self.gp["Gaussian_noise.variance"][0] = 1e-4
-
-
-        if init_points > 1:
-            self.gp.optimize_restarts(num_restarts=10, messages=False, verbose=False)
-            self.gp_params = self.gp.parameters
-            # print("---Client %d optimized hyper: " % self.cid,
-            #       self.gp)
+            GPy.kern.RBF(input_dim=self.X.shape[1], lengthscale=self.ls,
+                         variance=self.var, ARD=self.ARD))
+        self.gp["Gaussian_noise.variance"][0] = self.g_var
+        print("---Client %d initial hyper: " % self.cid, self.gp)
 
         x_max, all_ucb = self.sample_from_local(y_max, 1)
 
@@ -498,8 +494,8 @@ class LocalBO(object):
             if i >= self.gp_opt_schedule and i % self.gp_opt_schedule == 0:
                 self.gp.optimize_restarts(num_restarts=10, messages=False, verbose=False)
                 self.gp_params = self.gp.parameters
-                # print("---Client %d optimized hyper: " % self.cid,
-                #       self.gp)
+            if i == n_iter-1:
+                print("---Client %d optimized hyper: " % self.cid, self.gp)
 
             x_max, all_ucb = self.sample_from_local(y_max, i+2)
 

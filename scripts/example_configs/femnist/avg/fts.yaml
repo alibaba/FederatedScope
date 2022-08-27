@@ -1,6 +1,6 @@
 use_gpu: True
-device: 3
-outdir: fts_results
+device: 2
+outdir: exp/fts
 early_stop:
   patience: 100
 seed: 12345
@@ -45,17 +45,19 @@ hpo:
   num_workers: 0
   fts:
     use: True
+    diff: False
     ss: 'scripts/example_configs/femnist/avg/ss_fts.yaml'
     target_clients: [1, 2, 4]
-    diff: True
-    local_bo_max_iter: 5
-    fed_bo_max_iter: 5
-    ls: 0.01
+    local_bo_epochs: 50
+    local_bo_max_iter: 30
+    fed_bo_max_iter: 50
+    ls: 0.1
+    var: 0.1
+    g_var: 1e-6
     v_kernel: 1.0
-    obs_noise: 1e-6
-    M: 100
+    obs_noise: 1e-2
     M_target: 200
-    gp_opt_schedule: 1
+    gp_opt_schedule: 3
     allow_load_existing_info: True
   metric: 'client_summarized_weighted_avg.val_loss'
-  working_folder: fts_working
+  working_folder: exp/fts/working

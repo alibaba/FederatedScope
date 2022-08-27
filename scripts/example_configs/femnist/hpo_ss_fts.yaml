@@ -1,19 +1,18 @@
 hpo.fts.ls:
   type: float
+  lower: 0.1
+  upper: 2.0
+  log: False
+hpo.fts.var:
+  type: float
   lower: 0.01
-  upper: 0.1
+  upper: 0.5
   log: False
 hpo.fts.v_kernel:
   type: float
   lower: 1.0
   upper: 3.0
   log: False
-hpo.fts.M:
-  type: cate
-  choices: [ 100, 200, 300 ]
 hpo.fts.M_target:
   type: cate
   choices: [ 100, 200, 300 ]
-hpo.fts.diff:
-  type: cate
-  choices: [True, False]

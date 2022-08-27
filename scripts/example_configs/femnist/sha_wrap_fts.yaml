@@ -1,5 +1,6 @@
 use_gpu: True
-device: 3
+device: 1
+outdir: exp/sha_wrap_fts
 early_stop:
   patience: 100
 seed: 12345
@@ -10,7 +11,7 @@ federate:
   share_local_model: True
   online_aggr: True
   use_diff: True
-  client_num: 5
+  client_num: 3
 data:
   root: data/
   type: femnist
@@ -46,17 +47,21 @@ hpo:
   init_cand_num: 81
   ss: 'scripts/example_configs/femnist/hpo_ss_fts.yaml'
   sha:
-    budgets: [2, 4, 12, 36]
+    budgets: [2, 3]
   fts:
     use: True
-    allow_load_existing_info: False
-    local_bo_max_iter: 3
-    fed_bo_max_iter: 3
-    ls: 0.01
+    diff: False
+    target_clients: [ 1, 2, 4 ]
+    local_bo_epochs: 20
+    local_bo_max_iter: 30
+    fed_bo_max_iter: 50
+    ls: 0.1
+    var: 0.1
+    g_var: 1e-6
     v_kernel: 1.0
-    obs_noise: 1e-6
-    M: 100
+    obs_noise: 1e-2
     M_target: 200
-    gp_opt_schedule: 1
+    gp_opt_schedule: 3
+    allow_load_existing_info: True
     ss: 'scripts/example_configs/femnist/avg/ss_fts.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
