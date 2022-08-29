@@ -1,6 +1,6 @@
 use_gpu: True
 device: 2
-outdir: exp/fts
+outdir: exp/fts1
 early_stop:
   patience: 100
 seed: 12345
@@ -51,13 +51,13 @@ hpo:
     local_bo_epochs: 50
     local_bo_max_iter: 30
     fed_bo_max_iter: 50
-    ls: 1.0
-    var: 0.1
+    ls: 1.5
+    var: 0.01
     g_var: 1e-6
     v_kernel: 1.0
-    obs_noise: 1e-2
+    obs_noise: 1e-4
     M_target: 200
     gp_opt_schedule: 3
     allow_load_existing_info: True
   metric: 'client_summarized_weighted_avg.val_loss'
-  working_folder: exp/fts/working
+  working_folder: exp/fts1/working
