@@ -1,7 +1,7 @@
 train.optimizer.lr:
   type: float
-  lower: 0.01
-  upper: 1.0
+  lower: 0.005
+  upper: 0.5
   log: True
 train.optimizer.weight_decay:
   type: float

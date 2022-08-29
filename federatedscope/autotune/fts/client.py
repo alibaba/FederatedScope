@@ -89,7 +89,7 @@ class FTSClient(Client):
 
 
 
-    def _obj_func(self, x):
+    def _obj_func(self, x, return_eval=False):
         """
         Run local evaluation, return some metric to maximize (e.g. val_acc)
         """
@@ -108,7 +108,10 @@ class FTSClient(Client):
             res = results_before['val_avg_loss'] - results_after['val_avg_loss']
         else:
             res = baseline - results_after['val_avg_loss']
-        return res
+        if return_eval:
+            return res, results_after
+        else:
+            return res
 
     def _generate_agent_info(self, rand_feats):
         logger.info(('-'*20, ' generate info on clinet %d ' % self.ID , '_'*20))
@@ -163,7 +166,6 @@ class FTSClient(Client):
         pickle.dump(w_samples, open(self.local_info_path, "wb"))
 
     def callback_funcs_for_model_para(self, message: Message):
-        self._get_new_trainer()
         round, sender, content = message.state, message.sender, message.content
         require_agent_infos = content['require_agent_infos']
 
@@ -182,7 +184,7 @@ class FTSClient(Client):
         # local run on given hyper-param and return performance
         else:
             x_max = content['x_max']
-            curr_y = self._obj_func(x_max)
+            curr_y, eval_res = self._obj_func(x_max, return_eval=True)
             content = {
                 'is_required_agent_info': False,
                 'curr_y': curr_y,
@@ -194,6 +196,11 @@ class FTSClient(Client):
                         ', Perform: ' + str(curr_y) + \
                         '}'
                         )
+            logger.info(
+                self._monitor.format_eval_res(eval_res,
+                                              rnd=self.state,
+                                              role='Client #{}'.format(self.ID),
+                                              return_raw=True))
 
         self.state = round
         self.comm_manager.send(
@@ -203,17 +210,14 @@ class FTSClient(Client):
                     state=self.state,
                     content=content))
 
+
     def callback_funcs_for_evaluate(self, message: Message):
-        self._get_new_trainer()
         round, sender, content = message.state, message.sender, message.content
         require_agent_infos = content['require_agent_infos']
         assert not require_agent_infos, "Can not evaluate when there is no agents' information"
 
         self.state = message.state
-        if message.content is not None:
-            hyperparams = x2conf(content['x_max'], self.pbounds, self._ss)
-        self._apply_hyperparams(hyperparams)
-        self.trainer.train()
+        self._obj_func(content['x_max'])
 
         metrics = {}
         for split in self._cfg.eval.split:

@@ -286,13 +286,10 @@ class FTSServer(Server):
             check_eval_result (bool): If True, check the message buffer for
             evaluation; and check the message buffer for training otherwise.
         """
-        if min_received_num is None:
+        if min_received_num is None or check_eval_result:
             min_received_num = len(self.target_clients)
         if self.require_agent_infos:
             min_received_num = self._cfg.federate.client_num
-
-        if check_eval_result:
-            min_received_num = len(list(self.comm_manager.neighbors.keys()))
 
         move_on_flag = True
 
@@ -355,10 +352,14 @@ class FTSServer(Server):
                     self.eval()
 
             else:
-                formatted_eval_res = self.merge_eval_results_from_all_clients()
-                self.history_results = merge_dict(self.history_results,
-                                                  formatted_eval_res)
-                self.check_and_save()
+                _results = {}
+                for _client, _content in self.msg_buffer['eval'][self.state].items():
+                    _results[_client] = _content
+
+                # formatted_eval_res = self.merge_eval_results_from_all_clients()
+                self.history_results = merge_dict(self.history_results, _results)
+                if self.state > self._cfg.hpo.fts.fed_bo_max_iter:
+                    self.check_and_save()
         else:
             move_on_flag = False
 
@@ -372,29 +373,19 @@ class FTSServer(Server):
         # early stopping
         should_stop = False
 
-        if "Results_weighted_avg" in self.history_results and \
-                self._cfg.eval.best_res_update_round_wise_key in \
-                self.history_results['Results_weighted_avg']:
-            should_stop = self.early_stopper.track_and_check(
-                self.history_results['Results_weighted_avg'][
-                    self._cfg.eval.best_res_update_round_wise_key])
-        elif "Results_avg" in self.history_results and \
-                self._cfg.eval.best_res_update_round_wise_key in \
-                self.history_results['Results_avg']:
-            should_stop = self.early_stopper.track_and_check(
-                self.history_results['Results_avg'][
-                    self._cfg.eval.best_res_update_round_wise_key])
-        else:
-            should_stop = False
+        formatted_best_res = self._monitor.format_eval_res(
+            results=self.history_results,
+            rnd="Final",
+            role='Server #',
+            forms=["raw"],
+            return_raw=True)
+        logger.info('*'*50)
+        logger.info(formatted_best_res)
+        self._monitor.save_formatted_results(formatted_best_res)
 
         if should_stop:
             self.state = self.total_round_num + 1
 
-        if should_stop or self.state == self.total_round_num:
-            logger.info('Server: Final evaluation is finished! Starting '
-                        'merging results.')
-            # last round
-            self.save_best_results()
         logger.info('*'*50)
         if self.state == self.total_round_num:
             # break out the loop for distributed mode

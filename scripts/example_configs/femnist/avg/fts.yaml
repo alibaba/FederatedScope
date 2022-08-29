@@ -49,7 +49,7 @@ hpo:
     ss: 'scripts/example_configs/femnist/avg/ss_fts.yaml'
     target_clients: [1, 2, 4]
     local_bo_epochs: 50
-    local_bo_max_iter: 30
+    local_bo_max_iter: 50
     fed_bo_max_iter: 50
     ls: 1.5
     var: 0.01
