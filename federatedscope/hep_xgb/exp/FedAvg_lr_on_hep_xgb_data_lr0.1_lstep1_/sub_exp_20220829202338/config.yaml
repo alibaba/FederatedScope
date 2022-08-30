@@ -1,0 +1,244 @@
+asyn:
+  use: false
+attack:
+  alpha_TV: 0.001
+  alpha_prop_loss: 0
+  attack_method: ''
+  attacker_id: -1
+  classifier_PIA: randomforest
+  edge_num: 100
+  edge_path: edge_data/
+  freq: 10
+  info_diff_type: l2
+  inject_round: 0
+  insert_round: 100000
+  label_type: dirty
+  max_ite: 400
+  mean:
+  - 0.1307
+  pgd_eps: 2
+  pgd_lr: 0.1
+  pgd_poisoning: false
+  poison_ratio: 0.5
+  reconstruct_lr: 0.01
+  reconstruct_optim: Adam
+  scale_para: 1.0
+  scale_poisoning: false
+  self_epoch: 6
+  self_lr: 0.05
+  self_opt: false
+  setting: fix
+  std:
+  - 0.3081
+  target_label_ind: -1
+  trigger_path: trigger/
+  trigger_type: edge
+backend: torch
+cfg_file: ''
+criterion:
+  type: MSELoss
+data:
+  args: []
+  batch_size: 2000
+  cSBM_phi:
+  - 0.5
+  - 0.5
+  - 0.5
+  consistent_label_distribution: false
+  drop_last: false
+  graphsaint:
+    num_steps: 30
+    walk_length: 2
+  loader: ''
+  num_workers: 0
+  pre_transform: []
+  quadratic:
+    dim: 1
+    max_curv: 12.5
+    min_curv: 0.02
+  root: data
+  save_data: false
+  server_holds_all: false
+  shuffle: true
+  sizes:
+  - 10
+  - 5
+  splits:
+  - 0.8
+  - 0.1
+  - 0.1
+  splitter: ''
+  splitter_args: []
+  subsample: 1.0
+  target_transform: []
+  transform: []
+  type: hep_xgb_data
+device: -1
+distribute:
+  use: false
+early_stop:
+  delta: 0.0
+  improve_indicator_mode: best
+  patience: 5
+  the_smaller_the_better: true
+eval:
+  best_res_update_round_wise_key: test_loss
+  count_flops: true
+  freq: 5
+  metrics: []
+  monitoring: []
+  report:
+  - weighted_avg
+  - avg
+  - fairness
+  - raw
+  split:
+  - test
+  - val
+expname: FedAvg_lr_on_hep_xgb_data_lr0.1_lstep1_
+expname_tag: ''
+federate:
+  client_num: 2
+  data_weighted_aggr: false
+  ignore_weight: false
+  join_in_info: []
+  make_global_eval: false
+  merge_test_data: false
+  method: FedAvg
+  mode: standalone
+  online_aggr: false
+  resource_info_file: ''
+  restore_from: ''
+  sample_client_num: 2
+  sample_client_rate: -1.0
+  sampler: uniform
+  save_to: ''
+  share_local_model: false
+  total_round_num: 30
+  unseen_clients_rate: 0.0
+  use_diff: false
+  use_ss: false
+fedopt:
+  use: false
+fedprox:
+  use: false
+fedsageplus:
+  a: 1.0
+  b: 1.0
+  c: 1.0
+  fedgen_epoch: 200
+  gen_hidden: 128
+  hide_portion: 0.5
+  loc_epoch: 1
+  num_pred: 5
+finetune:
+  batch_or_epoch: epoch
+  before_eval: false
+  freeze_param: ''
+  local_update_steps: 1
+  optimizer:
+    lr: 0.1
+    type: SGD
+  scheduler:
+    type: ''
+flitplus:
+  factor_ema: 0.8
+  lambdavat: 0.5
+  tmpFed: 0.5
+  weightReg: 1.0
+gcflplus:
+  EPS_1: 0.05
+  EPS_2: 0.1
+  seq_length: 5
+  standardize: false
+grad:
+  grad_clip: -1.0
+hep_xgb:
+  dims:
+  - 5
+  - 10
+  encryption: paillier
+  key_size: 256
+  use: true
+hpo:
+  fedex:
+    cutoff: 0.0
+    diff: false
+    eta0: -1.0
+    flatten_ss: true
+    gamma: 0.0
+    sched: auto
+    ss: ''
+    use: false
+  init_cand_num: 16
+  larger_better: false
+  metric: client_summarized_weighted_avg.val_loss
+  num_workers: 0
+  pbt:
+    max_stage: 5
+    perf_threshold: 0.1
+  scheduler: rs
+  sha:
+    budgets: []
+    elim_rate: 3
+    iter: 0
+  ss: ''
+  table:
+    eps: 0.1
+    idx: 0
+    num: 27
+  working_folder: hpo
+model:
+  dropout: 0.5
+  embed_size: 8
+  graph_pooling: mean
+  hidden: 256
+  in_channels: 0
+  input_shape: []
+  layer: 2
+  model_num_per_trainer: 1
+  num_item: 0
+  num_user: 0
+  out_channels: 1
+  task: node
+  type: lr
+  use_bias: false
+nbafl:
+  use: false
+outdir: exp/FedAvg_lr_on_hep_xgb_data_lr0.1_lstep1_/sub_exp_20220829202338
+personalization:
+  K: 5
+  beta: 1.0
+  local_param: []
+  local_update_steps: 1
+  lr: 0.1
+  regular_weight: 0.1
+  share_non_trainable_para: false
+print_decimal_digits: 6
+regularizer:
+  mu: 0.0
+  type: ''
+seed: 0
+sgdmf:
+  use: false
+train:
+  batch_or_epoch: batch
+  local_update_steps: 1
+  optimizer:
+    gamma: 0
+    lambda_: 1.0
+    lr: 0.1
+    max_tree_depth: 3
+    num_of_trees: 10
+    type: SGD
+  scheduler:
+    type: ''
+trainer:
+  type: none
+use_gpu: false
+verbose: 1
+vertical:
+  use: false
+wandb:
+  use: false
+

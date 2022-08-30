@@ -4,9 +4,13 @@ import logging
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
 from federatedscope.vertical.dataloader.utils import batch_iter
+# since we use an abstract Paillier, so we can ss it by our simple ss scheme,
+# for the real one, you may also rewrite the ss scheme
 from federatedscope.vertical.Paillier import abstract_paillier
 # from federatedscope.core.secret_sharing import AdditiveSecretSharing
-from federatedscope.core.secret_sharing_temp import AdditiveSecretSharing
+# here we use a simple secret sharing scheme, for different datasets,
+# you may rewrite the scheme by using different parameters
+from federatedscope.vertical.simple_secret_sharing import AdditiveSecretSharing
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +63,9 @@ class vFLClient(Client):
                                      self._cfg.data.batch_size,
                                      shuffled=True)
         self.total_round_num = None
+
         self.ss = AdditiveSecretSharing(shared_party_num=2)
+
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('b_public_key',
                                self.callback_func_for_b_public_key)
@@ -194,7 +200,9 @@ class vFLClient(Client):
         self.my_part_of_my_z = np.matmul(input_x, self.my_part_of_my_para)
 
         tmp1 = np.matmul(input_x, tmp)
-        self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp1)
+        # self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp1)
+        self.my_part_of_others_part_of_my_z, tmp = \
+            self.ss.secret_split_for_piece_of_ss(tmp1)
         encrypted = [
             self.my_public_key.encrypt(x) for x in self.my_part_of_others_para
         ]
@@ -221,7 +229,9 @@ class vFLClient(Client):
         ]
         input_x = self.sample_data(index=self.batch_index)
         tmp3 = np.matmul(input_x, tmp2)
-        self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp3)
+        # self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp3)
+        self.my_part_of_others_part_of_my_z, tmp = \
+            self.ss.secret_split_for_piece_of_ss(tmp3)
         self.comm_manager.send(
             Message(msg_type='a_part',
                     sender=self.ID,
@@ -301,12 +311,14 @@ class vFLClient(Client):
 
         e_a = y_hat_a - self.y
         # y_hat_a = self.ss.fixedpoint2float(y_hat_a)
-        y_hat_2, y_hat_1 = self.ss_scheme(y_hat_a)
+        # y_hat_2, y_hat_1 = self.ss_scheme(y_hat_a)
+        y_hat_2, y_hat_1 = self.ss.secret_split_for_piece_of_ss(y_hat_a)
         e_2 = y_hat_2 - self.y
         input_x = self.sample_data(index=self.batch_index)
         g_b_a = np.matmul(e_a, input_x)
         # g_b_a = self.ss.fixedpoint2float(g_b_a)
-        g_b_2, g_b_1 = self.ss_scheme(g_b_a)
+        # g_b_2, g_b_1 = self.ss_scheme(g_b_a)
+        g_b_2, g_b_1 = self.ss.secret_split_for_piece_of_ss(g_b_a)
         # user b update w_b_2
         self.my_part_of_my_para = [
             self.my_part_of_my_para[i] - self.lr * g_b_2[i]
@@ -340,7 +352,8 @@ class vFLClient(Client):
         input_x = self.sample_data(index=self.batch_index)
         g_a_1 = np.matmul(e_1, input_x)
         g_a_2 = np.matmul(encrypted_e_2, input_x)
-        g_a_2_1, g_a_2_2 = self.ss_scheme(g_a_2)
+        # g_a_2_1, g_a_2_2 = self.ss_scheme(g_a_2)
+        g_a_2_1, g_a_2_2 = self.ss.secret_split_for_piece_of_ss(g_a_2)
         # user A updates w_a_1
         self.my_part_of_my_para = [
             self.my_part_of_my_para[i] - self.lr * (g_a_1[i] + g_a_2_1[i])
@@ -404,9 +417,11 @@ class vFLClient(Client):
 
     def callback_func_for_final_step_for_a(self, message: Message):
         tmp = message.content
-
         self.my_para = self.ss.secret_reconstruct(
             (self.my_part_of_my_para, tmp))
+        print(self.my_part_of_my_para)
+        print(tmp)
+        print(self.my_para)
 
         self.comm_manager.send(
             Message(msg_type='final_step_for_b',
