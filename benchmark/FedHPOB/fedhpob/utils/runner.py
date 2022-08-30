@@ -1,6 +1,7 @@
 from federatedscope.core.cmd_args import parse_args
 from fedhpob.config import fhb_cfg, add_configs
-from fedhpob.optimizers import run_dehb, run_hpbandster, run_optuna, run_smac
+from fedhpob.optimizers import run_dehb, run_hpbandster, run_optuna, \
+    run_smac, run_grid_search
 
 
 def run(cfg):
@@ -12,6 +13,8 @@ def run(cfg):
         results = run_optuna(cfg)
     elif cfg.optimizer.type in ['bo_gp', 'bo_rf']:
         results = run_smac(cfg)
+    elif cfg.optimizer.type in ['grid_search']:
+        results = run_grid_search(cfg)
     else:
         raise NotImplementedError
     return results

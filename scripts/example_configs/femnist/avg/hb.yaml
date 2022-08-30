@@ -1,6 +1,6 @@
 use_gpu: True
 device: 3
-outdir: rs_wrap_femnist_avg
+outdir: hb_femnist_avg
 early_stop:
   patience: 100
 seed: 12345
@@ -10,7 +10,6 @@ federate:
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
-  use_diff: True
 data:
   root: data/
   type: femnist
@@ -41,21 +40,12 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: wrap_rs
+  scheduler: hb
   num_workers: 0
-  init_cand_num: 100
   ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 50, 50 ]
+    budgets: [ 9, 81 ]
     elim_rate: 3
-    iter: 50
-  table:
-    num: 27
-  fedex:
-    sched: 'aggressive'
-    use: True
-    diff: False
-    eta0: -1.0
-    gamma: 0.0
+    iter: 12
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: rs_wrap_femnist_avg
+  working_folder: hb_femnist_avg

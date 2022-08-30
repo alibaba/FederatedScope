@@ -131,6 +131,8 @@ Available tabular <Model, Dataset, Fedalgo> triplets look-up table:
 | bert         | sst2@huggingface_datasets | opt     |
 | gcn          | cora                      | avg     |
 | gcn          | cora                      | opt     |
+| gcn          | cora                      | prox    |
+| gcn          | cora                      | nbafl   |
 | gcn          | citeseer                  | avg     |
 | gcn          | citeseer                  | opt     |
 | gcn          | pubmed                    | avg     |

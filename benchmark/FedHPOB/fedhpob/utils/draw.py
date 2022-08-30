@@ -8,8 +8,8 @@ from tqdm import tqdm
 FONTSIZE = 30
 MARKSIZE = 25
 COLORS = [
-    u'#1f77b4', u'#ff7f0e', u'#2ca02c', u'#d62728', u'#9467bd', u'#8c564b',
-    u'#e377c2', u'#7f7f7f', u'#bcbd22', u'#17becf'
+    u'#1f77b4', u'#ff7f0e', u'#2ca02c', u'#d62728', u'#9467bd', 'black',
+    u'#8c564b', u'#e377c2', u'#7f7f7f', u'#bcbd22', u'#17becf'
 ]
 
 
@@ -90,11 +90,11 @@ def get_mean_rank(traj_dict):
             ])
         if repeat == 0:
             rank = rankdata(ys, axis=0)
-            rank_bbo = rankdata(ys[:5], axis=0)
+            rank_bbo = rankdata(ys[:6], axis=0)
             rank_mf = rankdata(ys[-5:], axis=0)
         else:
             rank += rankdata(ys, axis=0)
-            rank_bbo += rankdata(ys[:5], axis=0)
+            rank_bbo += rankdata(ys[:6], axis=0)
             rank_mf += rankdata(ys[-5:], axis=0)
     xs = np.linspace(0, 1, 500)
     return xs, rank / len(traj_dict), rank_bbo / len(traj_dict), rank_mf / len(
@@ -117,11 +117,11 @@ def get_mean_loss(traj_dict):
             ])
         if repeat == 0:
             rank = np.array(ys)
-            rank_bbo = np.array(ys[:5])
+            rank_bbo = np.array(ys[:6])
             rank_mf = np.array(ys[-5:])
         else:
             rank += np.array(ys)
-            rank_bbo += np.array(ys[:5])
+            rank_bbo += np.array(ys[:6])
             rank_mf += np.array(ys[-5:])
     xs = np.linspace(0, 1, 500)
     print(
@@ -188,7 +188,7 @@ def draw_rank(mean_ranks, mean_ranks_bbo, mean_ranks_mf, xs, opt_all, dataset,
         plt.plot(xs,
                  rank,
                  linewidth=1,
-                 color=COLORS[idx + 5],
+                 color=COLORS[idx + 6],
                  markersize=MARKSIZE)
     plt.xticks(np.linspace(0, 1, 5),
                labels=['1e-4', '1e-3', '1e-2', '1e-1', '1'],
@@ -217,7 +217,7 @@ def rank_over_time(root,
                    loss=False):
     suffix = f'{mode}_{algo}'
     if family == 'cnn':
-        data_list = ['femnist', 'cifar10']
+        data_list = ['femnist']
     elif family == 'gcn':
         data_list = ['cora', 'citeseer', 'pubmed']
     elif family == 'bert':
@@ -237,7 +237,7 @@ def rank_over_time(root,
         ]
 
     # Please place these logs to one dir
-    bbo = ['RS', 'BO_GP', 'BO_RF', 'BO_KDE', 'DE']
+    bbo = ['RS', 'BO_GP', 'BO_RF', 'BO_KDE', 'DE', 'grid_search']
     mf = ['HB', 'BOHB', 'DEHB', 'TPE_MD', 'TPE_HB']
     opt_all = bbo + mf
 

@@ -38,10 +38,11 @@ if __name__ == '__main__':
     # global_cfg.merge_from_list(args.opts)
 
     scheduler = get_scheduler(init_cfg)
-    if init_cfg.hpo.scheduler in ['rs', 'sha', 'wrap_sha']:
+    if init_cfg.hpo.scheduler in ['sha', 'wrap_sha']:
         _ = scheduler.optimize()
     elif init_cfg.hpo.scheduler in [
-            'bo_kde', 'bohb', 'wrap_bo_kde', 'wrap_bohb'
+            'rs', 'bo_kde', 'hb', 'bohb', 'wrap_rs', 'wrap_bo_kde', 'wrap_hb',
+            'wrap_bohb'
     ]:
         from federatedscope.autotune.hpbandster import run_hpbandster
         run_hpbandster(init_cfg, scheduler)

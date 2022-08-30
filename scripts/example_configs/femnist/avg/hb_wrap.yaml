@@ -1,6 +1,6 @@
 use_gpu: True
 device: 3
-outdir: rs_wrap_femnist_avg
+outdir: hb_wrap_femnist_avg
 early_stop:
   patience: 100
 seed: 12345
@@ -41,14 +41,14 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: wrap_rs
+  scheduler: wrap_hb
   num_workers: 0
   init_cand_num: 100
   ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 50, 50 ]
+    budgets: [ 9, 81 ]
     elim_rate: 3
-    iter: 50
+    iter: 12
   table:
     num: 27
   fedex:
@@ -58,4 +58,4 @@ hpo:
     eta0: -1.0
     gamma: 0.0
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: rs_wrap_femnist_avg
+  working_folder: hb_wrap_femnist_avg

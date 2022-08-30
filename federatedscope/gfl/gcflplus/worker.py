@@ -133,13 +133,13 @@ class GCFLPlusServer(Server):
 
                 if self.state < self.total_round_num:
                     for cluster in self.cluster_indices:
-                        msg_lsit = list()
+                        msg_list = list()
                         for key in cluster:
                             content = self.msg_buffer['train'][self.state -
                                                                1][key]
                             train_data_size, model_para, client_dw,  \
                                 convGradsNorm = content
-                            msg_lsit.append((train_data_size, model_para))
+                            msg_list.append((train_data_size, model_para))
 
                         agg_info = {
                             'client_feedback': msg_list,

@@ -70,9 +70,9 @@ def get_scheduler(init_cfg):
         init_cfg (federatedscope.core.configs.config.CN): configuration.
     """
 
-    if init_cfg.hpo.scheduler == 'rs':
-        scheduler = ModelFreeBase(init_cfg)
-    elif init_cfg.hpo.scheduler in ['sha', 'bo_kde', 'bohb', 'bo_gp', 'bo_rf']:
+    if init_cfg.hpo.scheduler in [
+            'sha', 'rs', 'bo_kde', 'bohb', 'hb', 'bo_gp', 'bo_rf'
+    ]:
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
