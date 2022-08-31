@@ -9,7 +9,8 @@ if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(file_dir)
 
-from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
+from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.autotune import get_scheduler
