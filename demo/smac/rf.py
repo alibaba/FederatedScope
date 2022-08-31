@@ -13,7 +13,8 @@ from smac.scenario.scenario import Scenario
 def eval_fl_algo(x):
     from federatedscope.core.cmd_args import parse_args
     from federatedscope.core.auxiliaries.data_builder import get_data
-    from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
+    from federatedscope.core.auxiliaries.utils import setup_seed
+    from federatedscope.core.auxiliaries.logging import update_logger
     from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
     from federatedscope.core.configs.config import global_cfg
     from federatedscope.core.fed_runner import FedRunner
