@@ -1,5 +1,5 @@
 import logging
-from federatedscope.core.auxiliaries.data_builder import merge_data
+from federatedscope.core.auxiliaries.utils import merge_data
 
 logger = logging.getLogger(__name__)
 
