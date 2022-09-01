@@ -7,6 +7,8 @@ import numpy as np
 from collections import defaultdict
 
 from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.interface.base_data import ClientData, \
+    StandaloneDataDict
 
 import federatedscope.register as register
 
@@ -21,7 +23,6 @@ except ImportError as error:
 
 
 def load_toy_data(config=None):
-
     generate = config.federate.mode.lower() == 'standalone'
 
     def _generate_data(client_num=5,
@@ -131,7 +132,7 @@ def load_toy_data(config=None):
                          for k, v in data[key].items()
                          } if data[key] is not None else None
 
-    return data, config
+    return StandaloneDataDict(data, config), config
 
 
 def load_external_data(config=None):
@@ -600,7 +601,8 @@ def load_external_data(config=None):
                 train_labels) > 0:
             train_label_distribution = train_labels
 
-    return data_local_dict, modified_config
+    return StandaloneDataDict(data_local_dict, modified_config), \
+        modified_config
 
 
 def get_data(config):
@@ -673,7 +675,7 @@ def get_data(config):
             config.attack.trigger_type:
         import os
         import torch
-        from federatedscope.attack.auxiliary import\
+        from federatedscope.attack.auxiliary import \
             create_ardis_poisoned_dataset, create_ardis_test_dataset
         if not os.path.exists(config.attack.edge_path):
             os.makedirs(config.attack.edge_path)
@@ -690,8 +692,8 @@ def get_data(config):
                       "wb") as saved_data_file:
                 torch.save(poisoned_edgeset, saved_data_file)
 
-            with open(config.attack.edge_path+"ardis_test_dataset.pt", "wb") \
-                    as ardis_data_file:
+            with open(config.attack.edge_path + "ardis_test_dataset.pt",
+                      "wb") as ardis_data_file:
                 torch.save(ardis_test_dataset, ardis_data_file)
             logger.warning('please notice: downloading the poisoned dataset \
                 on cifar-10 from \
