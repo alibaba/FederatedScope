@@ -9,6 +9,7 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
+from federatedscope.core.interface.base_data import StandaloneDataDict
 
 INF = np.iinfo(np.int64).max
 
@@ -183,4 +184,4 @@ def load_nodelevel_dataset(config=None):
 
         data_local_dict[0] = raw2loader(global_graph, config)
 
-    return data_local_dict, config
+    return StandaloneDataDict(data_local_dict, config), config

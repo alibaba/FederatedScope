@@ -4,6 +4,8 @@ from federatedscope.nlp.dataset.leaf_nlp import LEAF_NLP
 from federatedscope.nlp.dataset.leaf_twitter import LEAF_TWITTER
 from federatedscope.nlp.dataset.leaf_synthetic import LEAF_SYNTHETIC
 from federatedscope.core.auxiliaries.transform_builder import get_transform
+from federatedscope.core.interface.base_data import ClientData, \
+    StandaloneDataDict
 
 
 def load_nlp_dataset(config=None):
@@ -20,7 +22,6 @@ def load_nlp_dataset(config=None):
 
     path = config.data.root
     name = config.data.type.lower()
-    batch_size = config.data.batch_size
     transforms_funcs = get_transform(config, 'torchtext')
 
     if name in ['shakespeare', 'subreddit']:
@@ -51,24 +52,11 @@ def load_nlp_dataset(config=None):
     # get local dataset
     data_local_dict = dict()
     for client_idx in range(client_num):
-        dataloader = {
-            'train': DataLoader(dataset[client_idx]['train'],
-                                batch_size,
-                                shuffle=config.data.shuffle,
-                                num_workers=config.data.num_workers)
-        }
-        if 'test' in dataset[client_idx]:
-            dataloader['test'] = DataLoader(
-                dataset[client_idx]['test'],
-                batch_size,
-                shuffle=False,
-                num_workers=config.data.num_workers)
-        if 'val' in dataset[client_idx]:
-            dataloader['val'] = DataLoader(dataset[client_idx]['val'],
-                                           batch_size,
-                                           shuffle=False,
-                                           num_workers=config.data.num_workers)
+        client_data = ClientData(DataLoader,
+                                 config,
+                                 train=dataset[client_idx].get('train'),
+                                 val=dataset[client_idx].get('val'),
+                                 test=dataset[client_idx].get('test'))
+        data_local_dict[client_idx + 1] = client_data
 
-        data_local_dict[client_idx + 1] = dataloader
-
-    return data_local_dict, config
+    return StandaloneDataDict(data_local_dict, config), config

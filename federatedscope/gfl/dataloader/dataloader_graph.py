@@ -6,6 +6,8 @@ from torch_geometric.datasets import TUDataset, MoleculeNet
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
+from federatedscope.core.interface.base_data import ClientData, \
+    StandaloneDataDict
 
 
 def get_numGraphLabels(dataset):
@@ -122,30 +124,23 @@ def load_graphlevel_dataset(config=None):
         valid_idx = index[int(len(gs) *
                               splits[0]):int(len(gs) * sum(splits[:2]))]
         test_idx = index[int(len(gs) * sum(splits[:2])):]
-        dataloader = {
-            'num_label': get_numGraphLabels(gs),
-            'train': DataLoader([gs[idx] for idx in train_idx],
-                                batch_size,
-                                shuffle=True,
-                                num_workers=config.data.num_workers),
-            'val': DataLoader([gs[idx] for idx in valid_idx],
-                              batch_size,
-                              shuffle=False,
-                              num_workers=config.data.num_workers),
-            'test': DataLoader([gs[idx] for idx in test_idx],
-                               batch_size,
-                               shuffle=False,
-                               num_workers=config.data.num_workers),
-        }
-        data_local_dict[client_idx + 1] = dataloader
+
+        client_data = ClientData(DataLoader,
+                                 config,
+                                 train=[gs[idx] for idx in train_idx],
+                                 val=[gs[idx] for idx in valid_idx],
+                                 test=[gs[idx] for idx in test_idx])
+        client_data['num_label'] = get_numGraphLabels(gs)
+
+        data_local_dict[client_idx + 1] = client_data
         raw_train = raw_train + [gs[idx] for idx in train_idx]
         raw_valid = raw_valid + [gs[idx] for idx in valid_idx]
         raw_test = raw_test + [gs[idx] for idx in test_idx]
     if not name.startswith('graph_multi_domain'.upper()):
-        data_local_dict[0] = {
-            'train': DataLoader(raw_train, batch_size, shuffle=True),
-            'val': DataLoader(raw_valid, batch_size, shuffle=False),
-            'test': DataLoader(raw_test, batch_size, shuffle=False),
-        }
+        data_local_dict[0] = ClientData(DataLoader,
+                                        config,
+                                        train=raw_train,
+                                        val=raw_valid,
+                                        test=raw_test)
 
-    return data_local_dict, config
+    return StandaloneDataDict(data_local_dict, config), config

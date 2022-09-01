@@ -89,24 +89,10 @@ class FedRunner(object):
             "specify a non-zero value for client_num"
 
         if self.cfg.federate.method == "global":
-            if self.cfg.federate.client_num != 1:
-                if self.cfg.data.server_holds_all:
-                    assert self.data[0] is not None \
-                        and len(self.data[0]) != 0, \
-                        "You specified cfg.data.server_holds_all=True " \
-                        "but data[0] is None. Please check whether you " \
-                        "pre-process the data[0] correctly"
-                    self.data[1] = self.data[0]
-                else:
-                    logger.info(f"Will merge data from clients whose ids in "
-                                f"[1, {self.cfg.federate.client_num}]")
-                    self.data[1] = merge_data(
-                        all_data=self.data,
-                        merged_max_data_id=self.cfg.federate.client_num)
-                self.cfg.defrost()
-                self.cfg.federate.client_num = 1
-                self.cfg.federate.sample_client_num = 1
-                self.cfg.freeze()
+            self.cfg.defrost()
+            self.cfg.federate.client_num = 1
+            self.cfg.federate.sample_client_num = 1
+            self.cfg.freeze()
 
         # sample resource information
         if self.resource_info is not None:
@@ -286,15 +272,7 @@ class FedRunner(object):
         """
         self.server_id = 0
         if self.mode == 'standalone':
-            if self.cfg.federate.merge_test_data:
-                server_data = merge_data(
-                    all_data=self.data,
-                    merged_max_data_id=self.cfg.federate.client_num,
-                    specified_dataset_name=['test'])
-                model = get_model(self.cfg.model,
-                                  server_data,
-                                  backend=self.cfg.backend)
-            elif self.server_id in self.data:
+            if self.server_id in self.data:
                 server_data = self.data[self.server_id]
                 model = get_model(self.cfg.model,
                                   server_data,

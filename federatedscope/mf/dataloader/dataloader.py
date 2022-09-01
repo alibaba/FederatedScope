@@ -7,6 +7,8 @@ import numpy as np
 import collections
 import importlib
 
+from federatedscope.core.interface.base_data import StandaloneDataDict
+
 MFDATA_CLASS_DICT = {
     "vflmovielens1m": "VFLMovieLens1M",
     "vflmovielens10m": "VFLMovieLens10M",
@@ -65,7 +67,7 @@ def load_mf_dataset(config=None):
     config.merge_from_list(['model.num_user', dataset.n_user])
     config.merge_from_list(['model.num_item', dataset.n_item])
 
-    return data_local_dict, config
+    return StandaloneDataDict(data_local_dict, config), config
 
 
 class MFDataLoader(object):
