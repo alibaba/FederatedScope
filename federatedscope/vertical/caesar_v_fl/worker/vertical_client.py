@@ -67,12 +67,8 @@ class vFLClient(Client):
         self.ss = AdditiveSecretSharing(shared_party_num=2)
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
-        self.register_handlers('b_public_key',
-                               self.callback_func_for_b_public_key)
-        self.register_handlers('a_public_key',
-                               self.callback_func_for_a_public_key)
-        self.register_handlers('b_is_ready', self.callback_func_for_b_is_ready)
-        self.register_handlers('a_is_ready', self.callback_func_for_a_is_ready)
+        self.register_handlers('public_key_and_para',
+                               self.callback_func_for_public_key_and_para)
         self.register_handlers('b_first', self.callback_func_for_b_first)
         self.register_handlers('b_part', self.callback_func_for_b_part)
         self.register_handlers('a_part', self.callback_func_for_a_part)
@@ -106,26 +102,8 @@ class vFLClient(Client):
         self.total_round_num, self.my_para = message.content
         self.my_part_of_my_para, self.others_part_of_my_para = self.ss_scheme(
             self.my_para)
-        if self.own_label:
-            self.comm_manager.send(
-                Message(msg_type='b_public_key',
-                        sender=self.ID,
-                        receiver=[
-                            each for each in self.comm_manager.neighbors
-                            if each != self.server_id
-                        ],
-                        state=self.state,
-                        content=(self.my_public_key,
-                                 self.others_part_of_my_para)))
-
-    # A receives pk_b and w_b_1, saves them
-    # A sends pk_a and w_a_2 to B
-
-    def callback_func_for_b_public_key(self, message: Message):
-        self.others_public_key, self.my_part_of_others_para = message.content
-        # print(self.others_public_key)
         self.comm_manager.send(
-            Message(msg_type='a_public_key',
+            Message(msg_type='public_key_and_para',
                     sender=self.ID,
                     receiver=[
                         each for each in self.comm_manager.neighbors
@@ -134,41 +112,17 @@ class vFLClient(Client):
                     state=self.state,
                     content=(self.my_public_key, self.others_part_of_my_para)))
 
-    # B receives pk_a and w_a_2, save them
-    # B sends "b_is_ready" to A
-
-    def callback_func_for_a_public_key(self, message: Message):
+    def callback_func_for_public_key_and_para(self, message: Message):
         self.others_public_key, self.my_part_of_others_para = message.content
-        self.comm_manager.send(
-            Message(msg_type='b_is_ready',
-                    sender=self.ID,
-                    receiver=[
-                        each for each in self.comm_manager.neighbors
-                        if each != self.server_id
-                    ],
-                    state=self.state,
-                    content=None))
-
-    # A receives "b_is_ready",
-    # A sends "a_is_ready" to B
-
-    def callback_func_for_b_is_ready(self, message: Message):
-        self.comm_manager.send(
-            Message(msg_type='a_is_ready',
-                    sender=self.ID,
-                    receiver=[
-                        each for each in self.comm_manager.neighbors
-                        if each != self.server_id
-                    ],
-                    state=self.state,
-                    content=None))
+        if self.own_label:
+            self.move_to_the_next_train(None)
 
     # start training
     # B sample data
     # B computes <z_b>_2 = X_b * <w_b>_2, saves it
     # B sends batch_index and [<w_a>_2]_b to A
 
-    def callback_func_for_a_is_ready(self, message: Message):
+    def move_to_the_next_train(self, message: Message):
         index, input_x, input_y = self.sample_data()
         self.y = input_y
         self.batch_index = index
@@ -395,7 +349,7 @@ class vFLClient(Client):
             logger.info(f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
             # self.final_step() 可用来查看每轮的prediction
-            self.callback_func_for_a_is_ready(message=None)
+            self.move_to_the_next_train(message=None)
         else:
             self.final_step()
 
@@ -419,9 +373,6 @@ class vFLClient(Client):
         tmp = message.content
         self.my_para = self.ss.secret_reconstruct(
             (self.my_part_of_my_para, tmp))
-        print(self.my_part_of_my_para)
-        print(tmp)
-        print(self.my_para)
 
         self.comm_manager.send(
             Message(msg_type='final_step_for_b',
