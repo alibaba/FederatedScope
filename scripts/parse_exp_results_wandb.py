@@ -3,7 +3,7 @@ import logging
 import yaml
 import re
 
-from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
+from federatedscope.core.auxiliaries.logging import logfile_2_wandb_dict
 
 parser = argparse.ArgumentParser(description='FederatedScope result parsing')
 parser.add_argument('--exp_dir',
