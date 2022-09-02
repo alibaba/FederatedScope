@@ -38,8 +38,8 @@ class vFLServer(Server):
         self.w_b = None
         self.coll = dict()
 
-        self.register_handlers('a_para_for_server', self.callback_func_for_a)
-        self.register_handlers('b_para_for_server', self.callback_func_for_b)
+        self.register_handlers('para_for_server',
+                               self.callback_func_for_para_for_server)
 
     def trigger_for_start(self):
         if self.check_client_join_in():
@@ -60,14 +60,10 @@ class vFLServer(Server):
                         content=(self.total_round_num, omega_slices)))
             cur_idx += self.dims[int(client_id)]
 
-    def callback_func_for_a(self, message: Message):
-        self.w_a = message.content
-        self.coll['wa'] = self.w_a
-        self.output()
-
-    def callback_func_for_b(self, message: Message):
-        self.w_b = message.content
-        self.coll['wb'] = self.w_b
+    def callback_func_for_para_for_server(self, message: Message):
+        tmp = message.content
+        idx = message.sender
+        self.coll[idx] = tmp
         self.output()
 
     def output(self):
@@ -88,9 +84,7 @@ class vFLServer(Server):
             self.coll = dict()
 
     def evaluate(self):
-        self.omega = np.concatenate([self.coll['wa'], self.coll['wb']],
-                                    axis=-1)
-        self.coll = dict()
+        self.omega = np.concatenate([self.coll[1], self.coll[2]], axis=-1)
         test_x = self.data['test']['x']
         test_y = self.data['test']['y']
         loss = np.mean(

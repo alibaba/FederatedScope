@@ -69,9 +69,10 @@ class vFLClient(Client):
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('public_key_and_para',
                                self.callback_func_for_public_key_and_para)
-        self.register_handlers('b_first', self.callback_func_for_b_first)
-        self.register_handlers('b_part', self.callback_func_for_b_part)
-        self.register_handlers('a_part', self.callback_func_for_a_part)
+        self.register_handlers('sample_data',
+                               self.callback_func_for_sample_data)
+        self.register_handlers('decrypt', self.callback_func_for_decrypt)
+        self.register_handlers('encrypted', self.callback_func_for_encrypted)
         self.register_handlers('three_values',
                                self.callback_func_for_three_values)
         self.register_handlers('complicated_comp',
@@ -80,8 +81,10 @@ class vFLClient(Client):
                                self.callback_func_for_b_to_update_para)
         self.register_handlers('final_step_for_a',
                                self.callback_func_for_final_step_for_a)
-        self.register_handlers('final_step_for_b',
-                               self.callback_func_for_final_step_for_b)
+        # self.register_handlers('final_step_for_b',
+        #                       self.callback_func_for_final_step_for_b)
+        self.register_handlers('para_exchange',
+                               self.callback_func_for_para_exchange)
 
     # here we use a trivial ss scheme, should fix it
     def ss_scheme(self, secret):
@@ -96,7 +99,6 @@ class vFLClient(Client):
             return self.data['train']['x'][index]
 
     # A and B receive paras, ss them, and save them respectively,
-    # B sends pk_b and w_b_1 to A
 
     def callback_func_for_model_para(self, message: Message):
         self.total_round_num, self.my_para = message.content
@@ -119,75 +121,39 @@ class vFLClient(Client):
 
     # start training
     # B sample data
-    # B computes <z_b>_2 = X_b * <w_b>_2, saves it
-    # B sends batch_index and [<w_a>_2]_b to A
+    # B call encode()
 
     def move_to_the_next_train(self, message: Message):
-        index, input_x, input_y = self.sample_data()
+        index, self.input_x, input_y = self.sample_data()
         self.y = input_y
         self.batch_index = index
-        self.my_part_of_my_z = np.matmul(input_x, self.my_part_of_my_para)
+        self.comm_manager.send(
+            Message(msg_type='sample_data',
+                    sender=self.ID,
+                    receiver=[
+                        each for each in self.comm_manager.neighbors
+                        if each != self.server_id
+                    ],
+                    state=self.state,
+                    content=self.batch_index))
+        self.encode()
+
+    # A sample the same data as B
+    # A also call encode()
+
+    def callback_func_for_sample_data(self, message: Message):
+        index = message.content
+        self.batch_index = index
+        self.input_x = self.sample_data(index=self.batch_index)
+        self.encode()
+
+    # both clients do the following
+    def encode(self):
         tmp = [
             self.my_public_key.encrypt(x) for x in self.my_part_of_others_para
         ]
-
         self.comm_manager.send(
-            Message(msg_type='b_first',
-                    sender=self.ID,
-                    receiver=[
-                        each for each in self.comm_manager.neighbors
-                        if each != self.server_id
-                    ],
-                    state=self.state,
-                    content=(self.batch_index, tmp)))
-
-    # A receives batch_index and [<w_a>_2]_b
-    # A computes z_a_1 = X_a * w_a_1, saves it
-    # A computes [<z_a>_2]_b = X_a * [<w_a>_2]_b, and ss it,
-    # A keeps <<z_a>_2>_1
-    # A sends [<<z_a>_2>_2]_b = [<z_a>_2]_b - <<z_a>_2>_1 and [<w_b>_1]_a to B
-
-    def callback_func_for_b_first(self, message: Message):
-        index, tmp = message.content
-        self.batch_index = index
-        input_x = self.sample_data(index=self.batch_index)
-        self.my_part_of_my_z = np.matmul(input_x, self.my_part_of_my_para)
-
-        tmp1 = np.matmul(input_x, tmp)
-        # self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp1)
-        self.my_part_of_others_part_of_my_z, tmp = \
-            self.ss.secret_split_for_piece_of_ss(tmp1)
-        encrypted = [
-            self.my_public_key.encrypt(x) for x in self.my_part_of_others_para
-        ]
-        self.comm_manager.send(
-            Message(msg_type='b_part',
-                    sender=self.ID,
-                    receiver=[
-                        each for each in self.comm_manager.neighbors
-                        if each != self.server_id
-                    ],
-                    state=self.state,
-                    content=(tmp, encrypted)))
-
-    # B receives [<<z_a>_2>_2]_b and [<w_b>_1]_a
-    # B decrypts [<<z_a>_2>_2]_b and keeps <<z_a>_2>_2
-    # B computes [<z_b>_1]_a = X_b * [<w_b>_1]_a and ss it
-    # B keeps <<z_b>_1>_2 and
-    # B sends [<<z_b>_1>_1]_a = [<z_b>_1]_a - <<z_b>_1>_2 to A
-
-    def callback_func_for_b_part(self, message: Message):
-        tmp1, tmp2 = message.content
-        self.my_part_of_my_part_of_others_z = [
-            self.my_private_key.decrypt(x) for x in tmp1
-        ]
-        input_x = self.sample_data(index=self.batch_index)
-        tmp3 = np.matmul(input_x, tmp2)
-        # self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp3)
-        self.my_part_of_others_part_of_my_z, tmp = \
-            self.ss.secret_split_for_piece_of_ss(tmp3)
-        self.comm_manager.send(
-            Message(msg_type='a_part',
+            Message(msg_type='encrypted',
                     sender=self.ID,
                     receiver=[
                         each for each in self.comm_manager.neighbors
@@ -196,16 +162,38 @@ class vFLClient(Client):
                     state=self.state,
                     content=tmp))
 
-    # A receives [<<z_b>_1>_1]_a and decrypts it and gets <<z_b>_1>_1
+    def callback_func_for_encrypted(self, message: Message):
+        tmp = message.content
+        self.my_part_of_my_z = np.matmul(self.input_x, self.my_part_of_my_para)
+
+        tmp1 = np.matmul(self.input_x, tmp)
+        # self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp1)
+        self.my_part_of_others_part_of_my_z, tmp = \
+            self.ss.secret_split_for_piece_of_ss(tmp1)
+
+        self.comm_manager.send(
+            Message(msg_type='decrypt',
+                    sender=self.ID,
+                    receiver=[
+                        each for each in self.comm_manager.neighbors
+                        if each != self.server_id
+                    ],
+                    state=self.state,
+                    content=tmp))
+
+    def callback_func_for_decrypt(self, message: Message):
+        tmp1 = message.content
+        self.my_part_of_my_part_of_others_z = [
+            self.my_private_key.decrypt(x) for x in tmp1
+        ]
+        if not self.own_label:
+            self.a_computes()
+
     # A computes <z>_1 = <z_a>_1 + <<z_a>_2>_1 + <<z_b>_1>_1,
     # <z>_1 squared and <z>_1 cubed
     # A encrypts the above three vectors and sends them to B
 
-    def callback_func_for_a_part(self, message: Message):
-        self.my_part_of_my_part_of_others_z = [
-            self.my_private_key.decrypt(x) for x in message.content
-        ]
-
+    def a_computes(self):
         tmp1 = [
             self.my_part_of_my_z[i] + self.my_part_of_others_part_of_my_z[i] +
             self.my_part_of_my_part_of_others_z[i]
@@ -264,13 +252,10 @@ class vFLClient(Client):
         ]
 
         e_a = y_hat_a - self.y
-        # y_hat_a = self.ss.fixedpoint2float(y_hat_a)
         # y_hat_2, y_hat_1 = self.ss_scheme(y_hat_a)
         y_hat_2, y_hat_1 = self.ss.secret_split_for_piece_of_ss(y_hat_a)
         e_2 = y_hat_2 - self.y
-        input_x = self.sample_data(index=self.batch_index)
-        g_b_a = np.matmul(e_a, input_x)
-        # g_b_a = self.ss.fixedpoint2float(g_b_a)
+        g_b_a = np.matmul(e_a, self.input_x)
         # g_b_2, g_b_1 = self.ss_scheme(g_b_a)
         g_b_2, g_b_1 = self.ss.secret_split_for_piece_of_ss(g_b_a)
         # user b update w_b_2
@@ -303,9 +288,9 @@ class vFLClient(Client):
         y_hat_1, en_g_b_1, encrypted_e_2 = message.content
         g_b_1 = [self.my_private_key.decrypt(x) for x in en_g_b_1]
         e_1 = [self.my_private_key.decrypt(x) for x in y_hat_1]
-        input_x = self.sample_data(index=self.batch_index)
-        g_a_1 = np.matmul(e_1, input_x)
-        g_a_2 = np.matmul(encrypted_e_2, input_x)
+
+        g_a_1 = np.matmul(e_1, self.input_x)
+        g_a_2 = np.matmul(encrypted_e_2, self.input_x)
         # g_a_2_1, g_a_2_2 = self.ss_scheme(g_a_2)
         g_a_2_1, g_a_2_2 = self.ss.secret_split_for_piece_of_ss(g_a_2)
         # user A updates w_a_1
@@ -364,18 +349,15 @@ class vFLClient(Client):
                         if each != self.server_id
                     ],
                     state=self.state,
-                    content=self.my_part_of_others_para))
-
-    # A receives <w_a>_2, and computes w_a = <w_a>_1 + <w_a>_2
-    # A sends <w_b>_1 to B. A Ends.
+                    content=None))
+        self.exchange_paras()
 
     def callback_func_for_final_step_for_a(self, message: Message):
-        tmp = message.content
-        self.my_para = self.ss.secret_reconstruct(
-            (self.my_part_of_my_para, tmp))
+        self.exchange_paras()
 
+    def exchange_paras(self):
         self.comm_manager.send(
-            Message(msg_type='final_step_for_b',
+            Message(msg_type="para_exchange",
                     sender=self.ID,
                     receiver=[
                         each for each in self.comm_manager.neighbors
@@ -383,25 +365,13 @@ class vFLClient(Client):
                     ],
                     state=self.state,
                     content=self.my_part_of_others_para))
-        # here A sends w_a to server
-        self.comm_manager.send(
-            Message(msg_type='a_para_for_server',
-                    sender=self.ID,
-                    receiver=self.server_id,
-                    state=self.state,
-                    content=self.my_para))
 
-    # B receives <w_b>_1 and computes w_b = <w_b>_2 + <w_b>_1. B Ends.
-
-    def callback_func_for_final_step_for_b(self, message: Message):
-        tmp = message.content
-
+    def callback_func_for_para_exchange(self, message: Message):
+        para = message.content
         self.my_para = self.ss.secret_reconstruct(
-            (self.my_part_of_my_para, tmp))
-
-        # here B sends w_b to server
+            (self.my_part_of_my_para, para))
         self.comm_manager.send(
-            Message(msg_type='b_para_for_server',
+            Message(msg_type='para_for_server',
                     sender=self.ID,
                     receiver=self.server_id,
                     state=self.state,
