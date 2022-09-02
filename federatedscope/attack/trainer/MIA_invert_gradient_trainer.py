@@ -36,9 +36,10 @@ def wrap_GradientAscentTrainer(
     base_trainer.ctx.outdir = base_trainer.cfg.outdir
     base_trainer.ctx.round = -1
     base_trainer.ctx.inject_round = base_trainer.cfg.attack.inject_round
-    base_trainer.ctx.mia_is_simulate_in = base_trainer.cfg.attack.mia_is_simulate_in
-    base_trainer.ctx.mia_simulate_in_round = base_trainer.cfg.attack.mia_simulate_in_round
-
+    base_trainer.ctx.mia_is_simulate_in = \
+        base_trainer.cfg.attack.mia_is_simulate_in
+    base_trainer.ctx.mia_simulate_in_round = \
+        base_trainer.cfg.attack.mia_simulate_in_round
 
     base_trainer.register_hook_in_train(new_hook=hook_on_fit_start_count_round,
                                         trigger='on_fit_start',
@@ -79,9 +80,12 @@ def hook_on_batch_start_replace_data_batch(ctx):
         ctx.data_batch = ctx.target_data
         ctx.is_target_batch = True
         logger.info(ctx.target_data[0].size())
-    elif ctx.round == ctx.inject_round + ctx.mia_simulate_in_round and ctx.mia_is_simulate_in:
+    elif ctx.round == ctx.inject_round + ctx.mia_simulate_in_round and \
+            ctx.mia_is_simulate_in:
         # to simulate the case that the target data is in the training dataset
-        logger.info("---------- put the target data into training in round {}---------".format(ctx.round))
+        logger.info(
+            "---------- put the target data into training in round {}---------"
+            .format(ctx.round))
         ctx.data_batch = ctx.target_data
         ctx.is_target_batch = False
     else:
@@ -118,7 +122,8 @@ def hook_on_batch_backward_invert_gradient(ctx):
 
 
 def hook_on_fit_start_loss_on_target_data(ctx):
-    # monitor the loss on the target data after performing gradient ascent action.
+    # monitor the loss on the target data after performing gradient ascent
+    # action.
     if ctx.finish_injected:
         tmp_loss = []
         x, label = [_.to(ctx.device) for _ in ctx.target_data]
