@@ -30,7 +30,6 @@ class CLTrainer(GeneralTorchTrainer):
         z1, z2 = model(x1.to(self.ctx.device), x2.to(self.ctx.device))
         ys_prob_1 = z1.detach().cpu()
         ys_prob_2 = z2.detach().cpu()
-        print(ys_prob_1.size())
         self.batches_aug_data_1, self.batches_aug_data_2 = [], []
         
         return [ys_prob_1, ys_prob_2]
@@ -39,8 +38,9 @@ class CLTrainer(GeneralTorchTrainer):
         x, label = [utils.move_to(_, ctx.device) for _ in ctx.data_batch]
 #         print(len(x), x[0].size(), x[1].size(), label.size())
         x1, x2 = x[0], x[1]
-        self.batches_aug_data_1.append(x1)
-        self.batches_aug_data_2.append(x2)
+        if ctx.cur_mode in [MODE.TRAIN]:
+            self.batches_aug_data_1.append(x1)
+            self.batches_aug_data_2.append(x2)
         z1, z2 = ctx.model(x1, x2)
         if len(label.size()) == 0:
             label = label.unsqueeze(0)

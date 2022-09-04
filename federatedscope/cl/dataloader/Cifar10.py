@@ -16,6 +16,16 @@ from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 
 
 class SimCLRTransform():
+    r"""
+    Data Augmentations of SimCLR  refer from https://github.com/akhilmathurs/orchestra/blob/main/utils.py
+    Arguments:
+        is_sup (bool): the transform for supervised learning or contrastive learning.
+    :returns:
+        torch.tensor: one output for supervised learning.
+    :returns:
+        torch.tensor: two output for contrastive learning
+        torch.tensor: two output for contrastive learning
+    """
     def __init__(self, is_sup, image_size=32):
         self.transform = T.Compose([
             T.RandomResizedCrop(image_size, scale=(0.5, 1.0), interpolation=T.InterpolationMode.BICUBIC),
@@ -38,7 +48,16 @@ class SimCLRTransform():
             return x1, x2 
 
 def Cifar4CL(config):
-    
+    r"""
+    generate Cifar10 Dataset transform and split dict for contrastive learning
+    return {
+                'client_id': {
+                    'train': DataLoader(),
+                    'test': DataLoader(),
+                    'val': DataLoader()
+                }
+            }
+    """
     transform_train = SimCLRTransform(is_sup=False, image_size=32)
 
     path = config.data.root
@@ -83,7 +102,16 @@ def Cifar4CL(config):
     return data_dict, config
 
 def Cifar4LP(config):
-    
+    r"""
+    generate Cifar10 Dataset transform and split dict for linear prob evaluation of contrastive learning
+    return {
+                'client_id': {
+                    'train': DataLoader(),
+                    'test': DataLoader(),
+                    'val': DataLoader()
+                }
+            }
+    """
     transform_train = T.Compose([
             T.RandomResizedCrop(32, scale=(0.5, 1.0), interpolation=T.InterpolationMode.BICUBIC),
             T.RandomHorizontalFlip(p=0.5),

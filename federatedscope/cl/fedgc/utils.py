@@ -10,7 +10,19 @@ def norm(w):
 
 
 def compute_global_NT_xentloss(z1, z2, others_z2=[], temperature=0.5):
-    """ computes global NT_xentloss"""
+    r"""
+    global_NT_xentloss is federated NT_xentloss in server. It collect sample client 
+    embedding and calculate NT_xentloss from local client positive examples and 
+    negative examples of local and other clients.
+    Arguments:
+        z1 (torch.tensor): the embedding of local model.
+        z2 (torch.tensor): the embedding of local model using another augmentation.
+        others_z2 (list[torch.tensor]): the embedding list of other clients, each client has two embedding.
+    returns:
+        loss: the NT_xentloss loss for this aggregation of global clients
+    :rtype:
+        torch.FloatTensor
+    """
     N, Z = z1.shape 
     representations = torch.cat([z1, z2], dim=0)
     similarity_matrix = F.cosine_similarity(representations.unsqueeze(1), representations.unsqueeze(0), dim=-1)

@@ -5,6 +5,16 @@ import torch.nn.functional as F
 from federatedscope.register import register_criterion
 
 class NT_xentloss(nn.Module):
+    r"""
+    NT_xentloss definition adapted from https://github.com/PatrickHua/SimSiam
+    Arguments:
+        z1 (torch.tensor): the embedding of model .
+        z2 (torch.tensor): the embedding of model using another augmentation.
+    returns:
+        loss: the NT_xentloss loss for this batch data
+    :rtype:
+        torch.FloatTensor
+    """
     def __init__(self, temperature=0.5):
         super(NT_xentloss, self).__init__()
         self.temperature = temperature
@@ -25,9 +35,9 @@ class NT_xentloss(nn.Module):
 
         logits = torch.cat([positives, negatives], dim=1) / self.temperature
         labels = torch.zeros(2*N, device=device, dtype=torch.int64) # scalar label per sample
-        loss = F.cross_entropy(logits, labels, reduction='sum')
+        loss = F.cross_entropy(logits, labels, reduction='sum') / (2 * N)
         
-        return loss / (2 * N)
+        return loss 
 
 
 def create_NT_xentloss(type, device):
