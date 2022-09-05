@@ -497,7 +497,13 @@ class LocalBO(object):
             if i == n_iter-1:
                 print("---Client %d optimized hyper: " % self.cid, self.gp)
 
-            x_max, all_ucb = self.sample_from_local(y_max, i+2)
+            _loop = True
+            while _loop:
+                try:
+                    x_max, all_ucb = self.sample_from_local(y_max, i+2)
+                    _loop = False
+                except:
+                    _loop = True
 
             if self.verbose:
                 self.plog.print_step(x_max, self.Y[-1], warning=False)

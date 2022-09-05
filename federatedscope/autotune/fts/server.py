@@ -181,12 +181,20 @@ class FTSServer(Server):
                 del info_ts[rcv_idx]
                 info_ts = list(info_ts.values())
 
+                def _try_sample_try(func):
+                    _loop = True
+                    while _loop:
+                        try:
+                            x_max, all_ucb = func(rcv_idx, self.y_max[rcv_idx],
+                                                    self.state, info_ts)
+                            _loop = False
+                        except:
+                            _loop = True
+                    return x_max, all_ucb
                 if np.random.random() < self.pt[self.state-1]:
-                    x_max, all_ucb = self._sample_from_this(
-                        rcv_idx, self.y_max[rcv_idx], self.state, info_ts)
+                    x_max, all_ucb = _try_sample_try(self._sample_from_this)
                 else:
-                    x_max, all_ucb = self._sample_from_others(
-                        rcv_idx, self.y_max[rcv_idx], self.state, info_ts)
+                    x_max, all_ucb = _try_sample_try(self._sample_from_others)
                 self.x_max[rcv_idx] = x_max
 
                 content = {

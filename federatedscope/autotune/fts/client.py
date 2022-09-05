@@ -141,7 +141,7 @@ class FTSClient(Client):
             g_var=self._cfg.hpo.fts.g_var,
             N=self._cfg.federate.client_num-1,
             M_target=M_target
-        ).maximize(n_iter=max_iter, init_points=2)
+        ).maximize(n_iter=max_iter, init_points=3)
 
         # generate local RFF information
         res = pickle.load(open(self.local_bo_path, "rb"))
