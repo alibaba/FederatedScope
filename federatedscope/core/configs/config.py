@@ -52,11 +52,22 @@ class CN(CfgNode):
         else:
             raise AttributeError(name)
 
-    def clear_check_funcs(self):
-        self.__cfg_check_funcs__.clear()
+    def __delattr__(self, name):
+        if name in self:
+            del self[name]
+        else:
+            raise AttributeError(name)
 
-    def clear_help_info(self):
-        self.__help_info__.clear()
+    def clear_aux_info(self):
+        if hasattr(self, "__cfg_check_funcs__"):
+            delattr(self, "__cfg_check_funcs__")
+        if hasattr(self, "__help_info__"):
+            delattr(self, "__help_info__")
+        if hasattr(self, "is_ready_for_run"):
+            delattr(self, "is_ready_for_run")
+        for v in self.values():
+            if isinstance(v, CN):
+                v.clear_aux_info()
 
     def print_help(self, arg_name=""):
         """
@@ -74,7 +85,7 @@ class CN(CfgNode):
     def register_cfg_check_fun(self, cfg_check_fun):
         self.__cfg_check_funcs__.append(cfg_check_fun)
 
-    def merge_from_file(self, cfg_filename):
+    def merge_from_file(self, cfg_filename, check_cfg=True):
         """
             load configs from a yaml file, another cfg instance or a list
             stores the keys and values.
@@ -88,10 +99,10 @@ class CN(CfgNode):
         self.merge_from_other_cfg(cfg)
         self.__cfg_check_funcs__.clear()
         self.__cfg_check_funcs__.extend(cfg_check_funcs)
-        self.assert_cfg()
+        self.assert_cfg(check_cfg)
         set_help_info(self, self.__help_info__)
 
-    def merge_from_other_cfg(self, cfg_other):
+    def merge_from_other_cfg(self, cfg_other, check_cfg=True):
         """
             load configs from another cfg instance
 
@@ -103,10 +114,10 @@ class CN(CfgNode):
         _merge_a_into_b(cfg_other, self, self, [])
         self.__cfg_check_funcs__.clear()
         self.__cfg_check_funcs__.extend(cfg_check_funcs)
-        self.assert_cfg()
+        self.assert_cfg(check_cfg)
         set_help_info(self, self.__help_info__)
 
-    def merge_from_list(self, cfg_list):
+    def merge_from_list(self, cfg_list, check_cfg=True):
         """
            load configs from a list stores the keys and values.
            modified `merge_from_list` in `yacs.config.py` to allow adding
@@ -119,17 +130,18 @@ class CN(CfgNode):
         super().merge_from_list(cfg_list)
         self.__cfg_check_funcs__.clear()
         self.__cfg_check_funcs__.extend(cfg_check_funcs)
-        self.assert_cfg()
+        self.assert_cfg(check_cfg)
         set_help_info(self, self.__help_info__)
 
-    def assert_cfg(self):
+    def assert_cfg(self, check_cfg=True):
         """
             check the validness of the configuration instance
 
         :return:
         """
-        for check_func in self.__cfg_check_funcs__:
-            check_func(self)
+        if check_cfg:
+            for check_func in self.__cfg_check_funcs__:
+                check_func(self)
 
     def clean_unused_sub_cfgs(self):
         """
@@ -170,14 +182,14 @@ class CN(CfgNode):
             if isinstance(v, Argument):
                 self[k] = v.value
 
-    def ready_for_run(self):
-        self.assert_cfg()
+    def ready_for_run(self, check_cfg=True):
+        self.assert_cfg(check_cfg)
         self.clean_unused_sub_cfgs()
         self.check_required_args()
         self.de_arguments()
         self.is_ready_for_run = True
 
-    def freeze(self, inform=True, save=True):
+    def freeze(self, inform=True, save=True, check_cfg=True):
         """
             1) make the cfg attributes immutable;
             2) if save=True, save the frozen cfg_check_funcs into
@@ -186,7 +198,7 @@ class CN(CfgNode):
 
         :return:
         """
-        self.ready_for_run()
+        self.ready_for_run(check_cfg)
         super(CN, self).freeze()
 
         if save:  # save the final cfg
@@ -196,8 +208,7 @@ class CN(CfgNode):
                 from contextlib import redirect_stdout
                 with redirect_stdout(outfile):
                     tmp_cfg = copy.deepcopy(self)
-                    tmp_cfg.clear_check_funcs()
-                    tmp_cfg.clear_help_info()
+                    tmp_cfg.clear_aux_info()
                     print(tmp_cfg.dump())
                 if self.wandb.use:
                     # update the frozen config
