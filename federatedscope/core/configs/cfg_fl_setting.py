@@ -74,7 +74,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.secure_vertical.key_size = 3072
 
     # ---------------------------------------------------------------------- #
-    # caesar Vertical FL related options (for demo)
+    # caesar vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
     cfg.caesar_vertical = CN()
     cfg.caesar_vertical.use = False

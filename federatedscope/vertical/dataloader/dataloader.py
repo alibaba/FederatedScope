@@ -17,7 +17,7 @@ def load_data(config=None, generate=False, standard=False):
         INSTANCE_NUM = 1000
         TRAIN_SPLIT = 0.9
 
-        total_dims = np.sum(config.caesar_vertical.dims)
+        total_dims = np.sum(config.secure_vertical.dims)
         theta = np.random.uniform(low=-1.0, high=1.0, size=(total_dims, 1))
         x = np.random.choice([-1.0, 1.0, -2.0, 2.0, -3.0, 3.0],
                              size=(INSTANCE_NUM, total_dims))

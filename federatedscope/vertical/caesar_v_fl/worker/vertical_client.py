@@ -81,15 +81,8 @@ class vFLClient(Client):
                                self.callback_func_for_b_to_update_para)
         self.register_handlers('final_step_for_a',
                                self.callback_func_for_final_step_for_a)
-        # self.register_handlers('final_step_for_b',
-        #                       self.callback_func_for_final_step_for_b)
         self.register_handlers('para_exchange',
                                self.callback_func_for_para_exchange)
-
-    # here we use a trivial ss scheme, should fix it
-    def ss_scheme(self, secret):
-        v1, v2 = self.ss.secret_split(secret)
-        return v1, v2
 
     def sample_data(self, index=None):
         if index is None:
@@ -102,8 +95,8 @@ class vFLClient(Client):
 
     def callback_func_for_model_para(self, message: Message):
         self.total_round_num, self.my_para = message.content
-        self.my_part_of_my_para, self.others_part_of_my_para = self.ss_scheme(
-            self.my_para)
+        self.my_part_of_my_para, self.others_part_of_my_para = \
+            self.ss.secret_split(self.my_para)
         self.comm_manager.send(
             Message(msg_type='public_key_and_para',
                     sender=self.ID,
@@ -167,7 +160,6 @@ class vFLClient(Client):
         self.my_part_of_my_z = np.matmul(self.input_x, self.my_part_of_my_para)
 
         tmp1 = np.matmul(self.input_x, tmp)
-        # self.my_part_of_others_part_of_my_z, tmp = self.ss_scheme(tmp1)
         self.my_part_of_others_part_of_my_z, tmp = \
             self.ss.secret_split_for_piece_of_ss(tmp1)
 
@@ -252,11 +244,9 @@ class vFLClient(Client):
         ]
 
         e_a = y_hat_a - self.y
-        # y_hat_2, y_hat_1 = self.ss_scheme(y_hat_a)
         y_hat_2, y_hat_1 = self.ss.secret_split_for_piece_of_ss(y_hat_a)
         e_2 = y_hat_2 - self.y
         g_b_a = np.matmul(e_a, self.input_x)
-        # g_b_2, g_b_1 = self.ss_scheme(g_b_a)
         g_b_2, g_b_1 = self.ss.secret_split_for_piece_of_ss(g_b_a)
         # user b update w_b_2
         self.my_part_of_my_para = [
@@ -291,7 +281,6 @@ class vFLClient(Client):
 
         g_a_1 = np.matmul(e_1, self.input_x)
         g_a_2 = np.matmul(encrypted_e_2, self.input_x)
-        # g_a_2_1, g_a_2_2 = self.ss_scheme(g_a_2)
         g_a_2_1, g_a_2_2 = self.ss.secret_split_for_piece_of_ss(g_a_2)
         # user A updates w_a_1
         self.my_part_of_my_para = [

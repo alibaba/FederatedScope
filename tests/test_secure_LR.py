@@ -27,11 +27,11 @@ class vFLTest(unittest.TestCase):
 
         cfg.train.optimizer.lr = 0.05
 
-        cfg.data.type = 'vertical_fl_data'
+        cfg.data.type = 'secure_LR_data'
         cfg.data.size = 50
 
-        cfg.vertical.use = True
-        cfg.vertical.key_size = 256
+        cfg.secure_vertical.use = True
+        cfg.secure_vertical.key_size = 256
 
         cfg.trainer.type = 'none'
         cfg.eval.freq = 5
