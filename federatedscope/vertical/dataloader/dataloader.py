@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def load_data(config=None, generate=False):
+def load_data(config=None, generate=False, standard=False):
     """
     To generate the synthetic data for vertical FL
 
@@ -51,7 +51,8 @@ def load_data(config=None, generate=False):
                     X[:, j] = 0
             return X
 
-        x = standardize(x)
+        if standard:
+            x = standardize(x)
         # x = normalize(x)
 
         train_num = int(TRAIN_SPLIT * INSTANCE_NUM)

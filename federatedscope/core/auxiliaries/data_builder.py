@@ -652,10 +652,12 @@ def get_data(config):
         data, modified_config = load_graphlevel_dataset(config)
     elif config.data.type.lower() == 'secure_lr_data':
         from federatedscope.vertical.dataloader import load_data
-        data, modified_config = load_data(config, generate=True)
+        data, modified_config = load_data(config,
+                                          generate=True,
+                                          standard=False)
     elif config.data.type.lower() == 'caesar_v_fl_data':
         from federatedscope.vertical.dataloader import load_data
-        data, modified_config = load_data(config, generate=True)
+        data, modified_config = load_data(config, generate=True, standard=True)
     elif 'movielens' in config.data.type.lower(
     ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
