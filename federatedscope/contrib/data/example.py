@@ -1,7 +1,7 @@
 from federatedscope.register import register_data
 
 
-def MyData(config):
+def MyData(config, client_cfgs):
     r"""
     Returns:
             data:
@@ -17,12 +17,13 @@ def MyData(config):
     """
     data = None
     config = config
+    client_cfgs = client_cfgs
     return data, config
 
 
-def call_my_data(config):
+def call_my_data(config, client_cfgs):
     if config.data.type == "mydata":
-        data, modified_config = MyData(config)
+        data, modified_config = MyData(config, client_cfgs)
         return data, modified_config
 
 

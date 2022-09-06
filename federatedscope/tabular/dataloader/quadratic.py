@@ -1,9 +1,11 @@
 import numpy as np
 
 from torch.utils.data import DataLoader
+from federatedscope.core.interface.base_data import ClientData, \
+    StandaloneDataDict
 
 
-def load_quadratic_dataset(config):
+def load_quadratic_dataset(config, client_cfgs=None):
     dataset = dict()
     d = config.data.quadratic.dim
     base = np.exp(
@@ -13,9 +15,15 @@ def load_quadratic_dataset(config):
         # TODO: enable sphere
         a = 0.02 * base**(i - 1) * np.identity(d)
         # TODO: enable non-zero minimizer, i.e., provide a shift
-        client_data = dict()
-        client_data['train'] = DataLoader([(a.astype(np.float32), .0)])
-        client_data['val'] = DataLoader([(a.astype(np.float32), .0)])
-        client_data['test'] = DataLoader([(a.astype(np.float32), .0)])
+        if client_cfgs is not None:
+            client_cfg = config.clone()
+            client_cfg.merge_from_other_cfg(client_cfgs.get(f'client_{i}'))
+        else:
+            client_cfg = config
+        client_data = ClientData(DataLoader,
+                                 client_cfg,
+                                 train=[(a.astype(np.float32), .0)],
+                                 val=[(a.astype(np.float32), .0)],
+                                 test=[(a.astype(np.float32), .0)])
         dataset[i] = client_data
-    return dataset, config
+    return StandaloneDataDict(dataset, config), config

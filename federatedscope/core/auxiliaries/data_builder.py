@@ -4,9 +4,10 @@ import logging
 from random import shuffle
 
 import numpy as np
-from collections import defaultdict
 
 from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.interface.base_data import StandaloneDataDict
+from federatedscope.translator import BaseDataTranslator
 
 import federatedscope.register as register
 
@@ -20,8 +21,7 @@ except ImportError as error:
         f'available.')
 
 
-def load_toy_data(config=None):
-
+def load_toy_data(config=None, client_cfgs=None):
     generate = config.federate.mode.lower() == 'standalone'
 
     def _generate_data(client_num=5,
@@ -131,10 +131,10 @@ def load_toy_data(config=None):
                          for k, v in data[key].items()
                          } if data[key] is not None else None
 
-    return data, config
+    return StandaloneDataDict(data, config), config
 
 
-def load_external_data(config=None):
+def load_external_data(config=None, client_cfgs=None):
     r""" Based on the configuration file, this function imports external
     datasets and applies train/valid/test splits and split by some specific
     `splitter` into the standard FederatedScope input data format.
@@ -161,7 +161,6 @@ def load_external_data(config=None):
     import inspect
     from importlib import import_module
     from torch.utils.data import DataLoader
-    from federatedscope.core.auxiliaries.splitter_builder import get_splitter
     from federatedscope.core.auxiliaries.transform_builder import get_transform
 
     def get_func_args(func):
@@ -401,13 +400,11 @@ def load_external_data(config=None):
         return data_dict
 
     def load_torchaudio_data(name, splits=None, config=None):
-        import torchaudio
 
         # dataset_func = getattr(import_module('torchaudio.datasets'), name)
         raise NotImplementedError
 
     def load_torch_geometric_data(name, splits=None, config=None):
-        import torch_geometric
 
         # dataset_func = getattr(import_module('torch_geometric.datasets'),
         # name)
@@ -566,44 +563,16 @@ def load_external_data(config=None):
     name, package = modified_config.data.type.split('@')
 
     dataset = DATA_LOAD_FUNCS[package.lower()](name, splits, modified_config)
-    splitter = get_splitter(modified_config)
+    dataset = (dataset.get('train'), dataset.get('val'), dataset.get('test'))
 
-    data_local_dict = {
-        x: {}
-        for x in range(1, modified_config.federate.client_num + 1)
-    }
+    # Translate dataset to `StandaloneDataDict`
+    datadict = BaseDataTranslator(dataset, modified_config, DataLoader,
+                                  client_cfgs)
 
-    # Build dict of Dataloader
-    train_label_distribution = None
-    for split in dataset:
-        if dataset[split] is None:
-            continue
-        train_labels = list()
-        for i, ds in enumerate(
-                splitter(dataset[split], prior=train_label_distribution)):
-            labels = [x[1] for x in ds]
-            if split == 'train':
-                train_labels.append(labels)
-                data_local_dict[i + 1][split] = DataLoader(
-                    ds,
-                    batch_size=modified_config.data.batch_size,
-                    shuffle=True,
-                    num_workers=modified_config.data.num_workers)
-            else:
-                data_local_dict[i + 1][split] = DataLoader(
-                    ds,
-                    batch_size=modified_config.data.batch_size,
-                    shuffle=False,
-                    num_workers=modified_config.data.num_workers)
-
-        if modified_config.data.consistent_label_distribution and len(
-                train_labels) > 0:
-            train_label_distribution = train_labels
-
-    return data_local_dict, modified_config
+    return datadict, modified_config
 
 
-def get_data(config):
+def get_data(config, client_cfgs=None):
     """Instantiate the dataset and update the configuration accordingly if
     necessary.
     Arguments:
@@ -616,22 +585,22 @@ def get_data(config):
     # will restore the user-specified on after the generation
     setup_seed(12345)
     for func in register.data_dict.values():
-        data_and_config = func(config)
+        data_and_config = func(config, client_cfgs)
         if data_and_config is not None:
             return data_and_config
     if config.data.type.lower() == 'toy':
-        data, modified_config = load_toy_data(config)
+        data, modified_config = load_toy_data(config, client_cfgs)
     elif config.data.type.lower() == 'quadratic':
         from federatedscope.tabular.dataloader import load_quadratic_dataset
-        data, modified_config = load_quadratic_dataset(config)
+        data, modified_config = load_quadratic_dataset(config, client_cfgs)
     elif config.data.type.lower() in ['femnist', 'celeba']:
         from federatedscope.cv.dataloader import load_cv_dataset
-        data, modified_config = load_cv_dataset(config)
+        data, modified_config = load_cv_dataset(config, client_cfgs)
     elif config.data.type.lower() in [
             'shakespeare', 'twitter', 'subreddit', 'synthetic'
     ]:
         from federatedscope.nlp.dataloader import load_nlp_dataset
-        data, modified_config = load_nlp_dataset(config)
+        data, modified_config = load_nlp_dataset(config, client_cfgs)
     elif config.data.type.lower() in [
             'cora',
             'citeseer',
@@ -640,28 +609,28 @@ def get_data(config):
             'dblp_org',
     ] or config.data.type.lower().startswith('csbm'):
         from federatedscope.gfl.dataloader import load_nodelevel_dataset
-        data, modified_config = load_nodelevel_dataset(config)
+        data, modified_config = load_nodelevel_dataset(config, client_cfgs)
     elif config.data.type.lower() in ['ciao', 'epinions', 'fb15k-237', 'wn18']:
         from federatedscope.gfl.dataloader import load_linklevel_dataset
-        data, modified_config = load_linklevel_dataset(config)
+        data, modified_config = load_linklevel_dataset(config, client_cfgs)
     elif config.data.type.lower() in [
             'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace', 'sider',
             'clintox', 'esol', 'freesolv', 'lipo'
     ] or config.data.type.startswith('graph_multi_domain'):
         from federatedscope.gfl.dataloader import load_graphlevel_dataset
-        data, modified_config = load_graphlevel_dataset(config)
+        data, modified_config = load_graphlevel_dataset(config, client_cfgs)
     elif config.data.type.lower() == 'vertical_fl_data':
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         data, modified_config = load_vertical_data(config, generate=True)
     elif 'movielens' in config.data.type.lower(
     ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
-        data, modified_config = load_mf_dataset(config)
+        data, modified_config = load_mf_dataset(config, client_cfgs)
     elif '@' in config.data.type.lower():
-        data, modified_config = load_external_data(config)
+        data, modified_config = load_external_data(config, client_cfgs)
     elif 'cikmcup' in config.data.type.lower():
         from federatedscope.gfl.dataset.cikm_cup import load_cikmcup_data
-        data, modified_config = load_cikmcup_data(config)
+        data, modified_config = load_cikmcup_data(config, client_cfgs)
     elif config.data.type is None or config.data.type == "":
         # The participant (only for server in this version) does not own data
         data = None
@@ -673,7 +642,7 @@ def get_data(config):
             config.attack.trigger_type:
         import os
         import torch
-        from federatedscope.attack.auxiliary import\
+        from federatedscope.attack.auxiliary import \
             create_ardis_poisoned_dataset, create_ardis_test_dataset
         if not os.path.exists(config.attack.edge_path):
             os.makedirs(config.attack.edge_path)
@@ -690,8 +659,8 @@ def get_data(config):
                       "wb") as saved_data_file:
                 torch.save(poisoned_edgeset, saved_data_file)
 
-            with open(config.attack.edge_path+"ardis_test_dataset.pt", "wb") \
-                    as ardis_data_file:
+            with open(config.attack.edge_path + "ardis_test_dataset.pt",
+                      "wb") as ardis_data_file:
                 torch.save(ardis_test_dataset, ardis_data_file)
             logger.warning('please notice: downloading the poisoned dataset \
                 on cifar-10 from \
@@ -720,59 +689,3 @@ def get_data(config):
         return data[data_idx], config
 
     setup_seed(config.seed)
-
-
-def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
-    if specified_dataset_name is None:
-        dataset_names = list(all_data[1].keys())  # e.g., train, test, val
-    else:
-        if not isinstance(specified_dataset_name, list):
-            specified_dataset_name = [specified_dataset_name]
-        dataset_names = specified_dataset_name
-
-    import torch.utils.data
-    assert len(dataset_names) >= 1, \
-        "At least one sub-dataset is required in client 1"
-    data_name = "test" if "test" in dataset_names else dataset_names[0]
-    id_has_key = 1
-    while "test" not in all_data[id_has_key]:
-        id_has_key += 1
-        if len(all_data) <= id_has_key:
-            raise KeyError(f'All data do not key {data_name}.')
-    if isinstance(all_data[id_has_key][data_name], dict):
-        data_elem_names = list(
-            all_data[id_has_key][data_name].keys())  # e.g., x, y
-        merged_data = {name: defaultdict(list) for name in dataset_names}
-        for data_id in range(1, merged_max_data_id):
-            for d_name in dataset_names:
-                if d_name not in all_data[data_id]:
-                    continue
-                for elem_name in data_elem_names:
-                    merged_data[d_name][elem_name].append(
-                        all_data[data_id][d_name][elem_name])
-        for d_name in dataset_names:
-            for elem_name in data_elem_names:
-                merged_data[d_name][elem_name] = np.concatenate(
-                    merged_data[d_name][elem_name])
-    elif issubclass(type(all_data[id_has_key][data_name]),
-                    torch.utils.data.DataLoader):
-        merged_data = {
-            name: all_data[id_has_key][name]
-            for name in dataset_names
-        }
-        for data_id in range(1, merged_max_data_id):
-            if data_id == id_has_key:
-                continue
-            for d_name in dataset_names:
-                if d_name not in all_data[data_id]:
-                    continue
-                merged_data[d_name].dataset.extend(
-                    all_data[data_id][d_name].dataset)
-    else:
-        raise NotImplementedError(
-            "Un-supported type when merging data across different clients."
-            f"Your data type is {type(all_data[id_has_key][data_name])}. "
-            f"Currently we only support the following forms: "
-            " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
-            " 2): {data_id: {train: DataLoader }")
-    return merged_data

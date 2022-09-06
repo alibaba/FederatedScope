@@ -1,4 +1,3 @@
-import math
 import logging
 import collections
 
@@ -8,6 +7,7 @@ from federatedscope.core.auxiliaries.model_builder import \
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.enums import MODE
 from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
+from federatedscope.core.interface.base_data import ClientData
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +128,8 @@ class Context(LifecycleDict):
                                            self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
             self.grad_clip = self.cfg.grad.grad_clip
+            if isinstance(self.data, ClientData):
+                self.data.setup(self.cfg)
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None

@@ -7,6 +7,8 @@ import numpy as np
 import collections
 import importlib
 
+from federatedscope.core.interface.base_data import StandaloneDataDict
+
 MFDATA_CLASS_DICT = {
     "vflmovielens1m": "VFLMovieLens1M",
     "vflmovielens10m": "VFLMovieLens10M",
@@ -17,7 +19,7 @@ MFDATA_CLASS_DICT = {
 }
 
 
-def load_mf_dataset(config=None):
+def load_mf_dataset(config=None, client_cfgs=None):
     """Return the dataset of matrix factorization
 
     Format:
@@ -48,24 +50,30 @@ def load_mf_dataset(config=None):
 
     data_local_dict = collections.defaultdict(dict)
     for id_client, data in dataset.data.items():
+        if client_cfgs is not None:
+            client_cfg = config.clone()
+            client_cfg.merge_from_other_cfg(
+                client_cfgs.get(f'client_{id_client}'))
+        else:
+            client_cfg = config
         data_local_dict[id_client]["train"] = MFDataLoader(
             data["train"],
-            shuffle=config.data.shuffle,
-            batch_size=config.data.batch_size,
-            drop_last=config.data.drop_last,
-            theta=config.sgdmf.theta)
+            shuffle=client_cfg.data.shuffle,
+            batch_size=client_cfg.data.batch_size,
+            drop_last=client_cfg.data.drop_last,
+            theta=client_cfg.sgdmf.theta)
         data_local_dict[id_client]["test"] = MFDataLoader(
             data["test"],
             shuffle=False,
-            batch_size=config.data.batch_size,
-            drop_last=config.data.drop_last,
-            theta=config.sgdmf.theta)
+            batch_size=client_cfg.data.batch_size,
+            drop_last=client_cfg.data.drop_last,
+            theta=client_cfg.sgdmf.theta)
 
     # Modify config
     config.merge_from_list(['model.num_user', dataset.n_user])
     config.merge_from_list(['model.num_item', dataset.n_item])
 
-    return data_local_dict, config
+    return StandaloneDataDict(data_local_dict, config), config
 
 
 class MFDataLoader(object):

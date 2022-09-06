@@ -1,5 +1,7 @@
 import numpy as np
 
+from federatedscope.core.interface.base_data import StandaloneDataDict
+
 
 def load_vertical_data(config=None, generate=False):
     """
@@ -51,6 +53,6 @@ def load_vertical_data(config=None, generate=False):
         data[2]['val'] = None
         data[2]['test'] = test_data
 
-        return data, config
+        return StandaloneDataDict(data, config), config
     else:
         raise ValueError('You must provide the data file')
