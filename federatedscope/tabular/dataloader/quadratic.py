@@ -1,8 +1,7 @@
 import numpy as np
 
 from torch.utils.data import DataLoader
-from federatedscope.core.interface.base_data import ClientData, \
-    StandaloneDataDict
+from federatedscope.core.data import ClientData, StandaloneDataDict
 
 
 def load_quadratic_dataset(config, client_cfgs=None):

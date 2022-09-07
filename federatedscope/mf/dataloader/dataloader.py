@@ -7,7 +7,7 @@ import numpy as np
 import collections
 import importlib
 
-from federatedscope.core.interface.base_data import StandaloneDataDict
+from federatedscope.core.data import StandaloneDataDict
 
 MFDATA_CLASS_DICT = {
     "vflmovielens1m": "VFLMovieLens1M",

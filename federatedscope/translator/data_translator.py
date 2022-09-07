@@ -1,6 +1,5 @@
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
-from federatedscope.core.interface.base_data import ClientData, \
-    StandaloneDataDict
+from federatedscope.core.data import ClientData, StandaloneDataDict
 
 
 class BaseDataTranslator(StandaloneDataDict):

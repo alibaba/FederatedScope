@@ -6,8 +6,7 @@ from torch_geometric.datasets import TUDataset, MoleculeNet
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.core.interface.base_data import ClientData, \
-    StandaloneDataDict
+from federatedscope.core.data import ClientData, StandaloneDataDict
 
 
 def get_numGraphLabels(dataset):

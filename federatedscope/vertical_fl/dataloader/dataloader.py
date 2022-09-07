@@ -1,6 +1,6 @@
 import numpy as np
 
-from federatedscope.core.interface.base_data import StandaloneDataDict
+from federatedscope.core.data import StandaloneDataDict
 
 
 def load_vertical_data(config=None, generate=False):

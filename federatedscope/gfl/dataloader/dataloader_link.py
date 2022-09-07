@@ -5,7 +5,7 @@ from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.core.interface.base_data import StandaloneDataDict
+from federatedscope.core.data import StandaloneDataDict
 
 
 def raw2loader(raw_data, config=None):

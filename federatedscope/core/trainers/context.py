@@ -7,7 +7,7 @@ from federatedscope.core.auxiliaries.model_builder import \
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.enums import MODE
 from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
-from federatedscope.core.interface.base_data import ClientData
+from federatedscope.core.data import ClientData
 
 logger = logging.getLogger(__name__)
 

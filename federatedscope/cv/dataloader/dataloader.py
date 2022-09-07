@@ -2,8 +2,7 @@ from torch.utils.data import DataLoader
 
 from federatedscope.cv.dataset.leaf_cv import LEAF_CV
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.core.interface.base_data import ClientData, \
-    StandaloneDataDict
+from federatedscope.core.data import ClientData, StandaloneDataDict
 
 
 def load_cv_dataset(config=None, client_cfgs=None):

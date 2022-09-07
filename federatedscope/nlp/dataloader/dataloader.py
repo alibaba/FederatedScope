@@ -4,8 +4,7 @@ from federatedscope.nlp.dataset.leaf_nlp import LEAF_NLP
 from federatedscope.nlp.dataset.leaf_twitter import LEAF_TWITTER
 from federatedscope.nlp.dataset.leaf_synthetic import LEAF_SYNTHETIC
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.core.interface.base_data import ClientData, \
-    StandaloneDataDict
+from federatedscope.core.data import ClientData, StandaloneDataDict
 
 
 def load_nlp_dataset(config=None, client_cfgs=None):

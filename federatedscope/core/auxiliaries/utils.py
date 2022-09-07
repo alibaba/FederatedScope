@@ -317,7 +317,6 @@ def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
         dataset_names = specified_dataset_name
 
     import torch.utils.data
-    from federatedscope.core.interface.base_data import ClientData
     assert len(dataset_names) >= 1, \
         "At least one sub-dataset is required in client 1"
     data_name = "test" if "test" in dataset_names else dataset_names[0]
