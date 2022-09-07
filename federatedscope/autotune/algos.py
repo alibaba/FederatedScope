@@ -20,16 +20,16 @@ from federatedscope.autotune.utils import parse_search_space, \
 logger = logging.getLogger(__name__)
 
 
-def make_trial(trial_cfg):
+def make_trial(trial_cfg, client_cfgs):
     setup_seed(trial_cfg.seed)
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    # TODO: enable client-wise configuration
     Fed_runner = FedRunner(data=data,
                            server_class=get_server_cls(trial_cfg),
                            client_class=get_client_cls(trial_cfg),
-                           config=trial_cfg.clone())
+                           config=trial_cfg.clone(),
+                           client_config=client_cfgs)
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
     return results[key1][key2]
@@ -39,24 +39,25 @@ class TrialExecutor(threading.Thread):
     """This class is responsible for executing the FL procedure with
     a given trial configuration in another thread.
     """
-    def __init__(self, cfg_idx, signal, returns, trial_config):
+    def __init__(self, cfg_idx, signal, returns, trial_config, client_cfgs):
         threading.Thread.__init__(self)
 
         self._idx = cfg_idx
         self._signal = signal
         self._returns = returns
         self._trial_cfg = trial_config
+        self._client_cfgs = client_cfgs
 
     def run(self):
         setup_seed(self._trial_cfg.seed)
         data, modified_config = get_data(config=self._trial_cfg.clone())
         self._trial_cfg.merge_from_other_cfg(modified_config)
         self._trial_cfg.freeze()
-        # TODO: enable client-wise configuration
         Fed_runner = FedRunner(data=data,
                                server_class=get_server_cls(self._trial_cfg),
                                client_class=get_client_cls(self._trial_cfg),
-                               config=self._trial_cfg.clone())
+                               config=self._trial_cfg.clone(),
+                               client_config=self._client_cfgs)
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]
@@ -64,27 +65,29 @@ class TrialExecutor(threading.Thread):
         self._signal.set()
 
 
-def get_scheduler(init_cfg):
+def get_scheduler(init_cfg, client_cfgs=None):
     """To instantiate a scheduler object for conducting HPO
     Arguments:
         init_cfg (federatedscope.core.configs.config.CN): configuration.
+        client_cfgs (federatedscope.core.configs.config.CN):
+            client-specific configuration.
     """
 
     if init_cfg.hpo.scheduler in [
             'sha', 'rs', 'bo_kde', 'bohb', 'hb', 'bo_gp', 'bo_rf'
     ]:
-        scheduler = SuccessiveHalvingAlgo(init_cfg)
+        scheduler = SuccessiveHalvingAlgo(init_cfg, client_cfgs)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
     elif init_cfg.hpo.scheduler.startswith('wrap'):
-        scheduler = SHAWrapFedex(init_cfg)
+        scheduler = SHAWrapFedex(init_cfg, client_cfgs)
     return scheduler
 
 
 class Scheduler(object):
     """The base class for describing HPO algorithms
     """
-    def __init__(self, cfg):
+    def __init__(self, cfg, client_cfgs=None):
         """
             Arguments:
                 cfg (federatedscope.core.configs.config.CN): dict like object,
@@ -93,6 +96,7 @@ class Scheduler(object):
         """
 
         self._cfg = cfg
+        self._client_cfgs = client_cfgs
         # Create hpo working folder
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self._search_space = parse_search_space(self._cfg.hpo.ss)
@@ -160,7 +164,7 @@ class ModelFreeBase(Scheduler):
                 flags[available_worker].clear()
                 trial = TrialExecutor(i, flags[available_worker],
                                       thread_results[available_worker],
-                                      trial_cfg)
+                                      trial_cfg, self._client_cfgs)
                 trial.start()
                 threads[available_worker] = trial
 
@@ -182,7 +186,7 @@ class ModelFreeBase(Scheduler):
             for i, config in enumerate(configs):
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
-                perfs[i] = make_trial(trial_cfg)
+                perfs[i] = make_trial(trial_cfg, self._client_cfgs)
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))
