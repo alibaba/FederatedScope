@@ -6,8 +6,7 @@ from random import shuffle
 import numpy as np
 
 from federatedscope.core.auxiliaries.utils import setup_seed
-from federatedscope.core.data import StandaloneDataDict
-from federatedscope.translator import BaseDataTranslator
+from federatedscope.core.data import StandaloneDataDict, BaseDataTranslator
 
 import federatedscope.register as register
 
