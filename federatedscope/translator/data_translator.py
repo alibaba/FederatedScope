@@ -20,7 +20,7 @@ class BaseDataTranslator(StandaloneDataDict):
         self.client_cfgs = client_cfgs
         self.splitter = get_splitter(global_cfg)
 
-        train, val, test = self.split_train_val_test(dataset)
+        train, val, test = self.split_train_val_test()
         datadict = self.split_to_client(train, val, test)
         super(BaseDataTranslator, self).__init__(datadict, global_cfg)
 
