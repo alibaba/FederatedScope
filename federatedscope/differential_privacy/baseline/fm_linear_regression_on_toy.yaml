@@ -1,0 +1,27 @@
+use_gpu: True
+federate:
+  mode: 'standalone'
+  total_round_num: 500
+  client_num: 10
+seed: 12345
+trainer:
+  type: 'FMTrainer'
+train:
+  local_update_steps: 10
+  batch_or_epoch: 'batch'
+  optimizer:
+    type: 'SGD'
+    lr: 0.01
+eval:
+  freq: 20
+  metrics: ['loss_regular']
+  count_flops: False
+model:
+  type: 'FMLinearRegression'
+data:
+  type: 'toy'
+criterion:
+  type: MSELoss
+regularizer:
+  type: 'l2_regularizer'
+  mu: 0.01
