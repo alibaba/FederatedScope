@@ -40,6 +40,8 @@ class Monitor(object):
         # self.use_tensorboard = cfg.use_tensorboard
 
         self.monitored_object = monitored_object
+        if monitored_object is not None:
+            self.eval_metric_dict = monitored_object.trainer.metric_calculator
 
         # =======  efficiency indicators of the worker to be monitored =======
         # leveraged the flops counter provided by [fvcore](
@@ -250,7 +252,8 @@ class Monitor(object):
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
 
-            from federatedscope.core.auxiliaries.logging import logfile_2_wandb_dict
+            from federatedscope.core.auxiliaries.logging import \
+                logfile_2_wandb_dict
             with open(os.path.join(self.outdir, "eval_results.log"),
                       "r") as exp_log_f:
                 # track the prediction related performance
@@ -495,6 +498,12 @@ class Monitor(object):
             by default, the update is based on validation loss with
             `round_wise_update_key="val_loss" `
         """
+        for mode in ['train', 'test', 'split']:
+            if mode in round_wise_update_key:
+                update_key = round_wise_update_key.split(f'{mode}')[1]
+        assert update_key in self.eval_metric_dict, \
+            f'{update_key} not found in metrics.'
+        the_larger_the_better = self.eval_metric_dict[update_key][1]
         update_best_this_round = False
         if not isinstance(new_results, dict):
             raise ValueError(
@@ -537,20 +546,6 @@ class Monitor(object):
             # update different keys round-wise: if find better
             # round_wise_update_key, update others at the same time
             else:
-                if round_wise_update_key not in [
-                        "val_loss", "test_loss", "loss", "val_avg_loss",
-                        "test_avg_loss", "avg_loss", "test_acc", "test_std",
-                        "val_acc", "val_std", "val_imp_ratio", "train_loss",
-                        "train_avg_loss"
-                ]:
-                    raise NotImplementedError(
-                        f"We currently support round_wise_update_key as one "
-                        f"of ['val_loss', 'test_loss', 'loss', "
-                        f"'val_avg_loss', 'test_avg_loss', 'avg_loss,"
-                        f"''val_acc', 'val_std', 'test_acc', 'test_std', "
-                        f"'val_imp_ratio'] for round-wise best results "
-                        f" update, but got {round_wise_update_key}.")
-
                 found_round_wise_update_key = False
                 sorted_keys = []
                 for key in new_results:
@@ -570,10 +565,7 @@ class Monitor(object):
 
                 for key in sorted_keys:
                     cur_result = new_results[key]
-                    if update_best_this_round or \
-                            ('loss' in round_wise_update_key and 'loss' in
-                             key) or \
-                            ('std' in round_wise_update_key and 'std' in key):
+                    if update_best_this_round or (not the_larger_the_better):
                         # The smaller the better
                         if results_type in [
                                 "client_best_individual",
@@ -585,8 +577,7 @@ class Monitor(object):
                                 best_result[key]:
                             best_result[key] = cur_result
                             update_best_this_round = True
-                    elif update_best_this_round or \
-                            'acc' in round_wise_update_key and 'acc' in key:
+                    elif update_best_this_round or the_larger_the_better:
                         # The larger the better
                         if results_type in [
                                 "client_best_individual",
