@@ -4,11 +4,11 @@ import torch
 
 from rdkit import Chem
 from rdkit import RDLogger
-from rdkit.Chem.Scaffolds import MurckoScaffold
 from federatedscope.core.splitters.utils import \
     dirichlet_distribution_noniid_slice
 from federatedscope.core.splitters.graph.scaffold_splitter import \
     generate_scaffold
+from federatedscope.core.splitters import BaseSplitter
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     return idx_slice
 
 
-class ScaffoldLdaSplitter:
+class ScaffoldLdaSplitter(BaseSplitter):
     r"""First adopt scaffold splitting and then assign the samples to
     clients according to Latent Dirichlet Allocation.
 
@@ -163,9 +163,10 @@ class ScaffoldLdaSplitter:
         data_list (List(List(PyG.data))): Splited dataset via scaffold split.
 
     """
-    def __init__(self, client_num, alpha):
-        self.client_num = client_num
+    def __init__(self, client_num, alpha, **kwargs):
         self.alpha = alpha
+        kwargs['alpha'] = alpha
+        super(ScaffoldLdaSplitter, self).__init__(client_num, **kwargs)
 
     def __call__(self, dataset):
         featurizer = GenFeatures()
@@ -178,6 +179,3 @@ class ScaffoldLdaSplitter:
                                            self.alpha)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}()'

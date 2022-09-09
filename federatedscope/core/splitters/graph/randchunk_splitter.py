@@ -1,9 +1,11 @@
 import numpy as np
 
+from torch_geometric.transforms import BaseTransform
 
-class RandChunkSplitter:
-    def __init__(self, client_num):
-        self.client_num = client_num
+
+class RandChunkSplitter(BaseTransform):
+    def __init__(self, client_num, **kwargs):
+        super(RandChunkSplitter, self).__init__(client_num, **kwargs)
 
     def __call__(self, dataset):
         r"""Split dataset via random chunk.
@@ -31,6 +33,3 @@ class RandChunkSplitter:
             data_list[client_idx].append(graph)
 
         return data_list
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}()'
