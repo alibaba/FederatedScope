@@ -12,7 +12,7 @@ def get_splitter(config):
         kwargs = {}
 
     for func in register.splitter_dict.values():
-        splitter = func(config)
+        splitter = func(client_num, **kwargs)
         if splitter is not None:
             return splitter
     # Delay import

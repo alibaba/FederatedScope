@@ -10,7 +10,8 @@ def call_my_scheduler(optimizer, type):
 
     if type == 'myscheduler':
         if optim is not None:
-            scheduler = optim.lr_scheduler.LambdaLR(optimizer)
+            lr_lambda = [lambda epoch: epoch // 30]
+            scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
         return scheduler
 
 
