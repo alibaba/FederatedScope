@@ -10,6 +10,7 @@ from collections import defaultdict
 import numpy as np
 
 from federatedscope.core.auxiliaries.logging import logline_2_wandb_dict
+from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
 try:
     import torch
@@ -40,8 +41,7 @@ class Monitor(object):
         # self.use_tensorboard = cfg.use_tensorboard
 
         self.monitored_object = monitored_object
-        if monitored_object is not None:
-            self.eval_metric_dict = monitored_object.trainer.metric_calculator
+        self.metric_calculator = MetricCalculator(cfg.eval.metrics)
 
         # =======  efficiency indicators of the worker to be monitored =======
         # leveraged the flops counter provided by [fvcore](
@@ -81,6 +81,10 @@ class Monitor(object):
                 logger.error(
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
+
+    def eval(self, ctx):
+        results = self.metric_calculator.eval(ctx)
+        return results
 
     def global_converged(self):
         self.global_convergence_wall_time = datetime.datetime.now(
@@ -498,12 +502,13 @@ class Monitor(object):
             by default, the update is based on validation loss with
             `round_wise_update_key="val_loss" `
         """
-        for mode in ['train', 'test', 'split']:
+        for mode in ['train', 'val', 'test']:
             if mode in round_wise_update_key:
-                update_key = round_wise_update_key.split(f'{mode}')[1]
-        assert update_key in self.eval_metric_dict, \
+                update_key = round_wise_update_key.split(f'{mode}_')[1]
+        assert update_key in self.metric_calculator.eval_metric, \
             f'{update_key} not found in metrics.'
-        the_larger_the_better = self.eval_metric_dict[update_key][1]
+        the_larger_the_better = self.metric_calculator.eval_metric[update_key][
+            1]
         update_best_this_round = False
         if not isinstance(new_results, dict):
             raise ValueError(

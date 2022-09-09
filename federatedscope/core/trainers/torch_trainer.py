@@ -285,7 +285,7 @@ class GeneralTorchTrainer(Trainer):
         """
         ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
         ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)
-        results = self.metric_calculator.eval(ctx)
+        results = self.ctx.monitor.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
     def save_model(self, path, cur_round=-1):

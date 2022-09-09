@@ -10,7 +10,6 @@ from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
 from federatedscope.core.trainers.context import Context
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.context import lifecycle
-from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
 try:
     import torch
@@ -41,7 +40,6 @@ class Trainer(object):
                  only_for_eval=False,
                  monitor=None):
         self.cfg = config
-        self.metric_calculator = MetricCalculator(config.eval.metrics)
 
         self.ctx = Context(model,
                            self.cfg,
@@ -49,9 +47,8 @@ class Trainer(object):
                            device,
                            init_dict=self.parse_data(data))
 
-        if monitor is None:
-            logger.warning(
-                f"Will not use monitor in trainer with class {type(self)}")
+        assert monitor is not None, \
+            f"Will not use monitor in trainer with class {type(self)}"
         self.ctx.monitor = monitor
         # the "model_nums", and "models" are used for multi-model case and
         # model size calculation

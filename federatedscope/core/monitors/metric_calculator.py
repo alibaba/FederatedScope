@@ -16,7 +16,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-# TODO: make this as a sub-module of monitor class
 class MetricCalculator(object):
     def __init__(self, eval_metric: Union[Set[str], List[str], str]):
 
@@ -241,6 +240,6 @@ SUPPORT_METRICS = {
     'mse': (eval_mse, False),
     'loss_regular': (eval_regular, False),
     'imp_ratio': (eval_imp_ratio, True),
-    'std': (None, False)**dict.fromkeys([f'hits@{n}' for n in range(1, 101)],
-                                        (eval_hits, True))
+    'std': (None, False),
+    **dict.fromkeys([f'hits@{n}' for n in range(1, 101)], (eval_hits, True))
 }
