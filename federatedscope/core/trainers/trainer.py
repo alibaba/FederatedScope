@@ -48,7 +48,7 @@ class Trainer(object):
                            init_dict=self.parse_data(data))
 
         assert monitor is not None, \
-            f"Will not use monitor in trainer with class {type(self)}"
+            f"Monitor not found in trainer with class {type(self)}"
         self.ctx.monitor = monitor
         # the "model_nums", and "models" are used for multi-model case and
         # model size calculation
