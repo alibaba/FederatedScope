@@ -13,7 +13,7 @@ class EarlyStopper(object):
                  patience=5,
                  delta=0,
                  improve_indicator_mode='best',
-                 the_smaller_the_better=True):
+                 the_larger_the_better=True):
         """
         Args:
             patience (int): How long to wait after last time the monitored
@@ -39,7 +39,7 @@ class EarlyStopper(object):
         self.counter_no_improve = 0
         self.best_metric = None
         self.early_stopped = False
-        self.the_smaller_the_better = the_smaller_the_better
+        self.the_larger_the_better = the_larger_the_better
         self.delta = delta
         self.improve_indicator_mode = improve_indicator_mode
         # For expansion usages of comparisons
@@ -54,12 +54,12 @@ class EarlyStopper(object):
         new_result = history_result[-1]
         if self.best_metric is None:
             self.best_metric = new_result
-        elif self.the_smaller_the_better and self.comparator(
+        elif not self.the_larger_the_better and self.comparator(
                 self.improvement_operator(self.best_metric, -self.delta),
                 new_result):
             # add(best_metric, -delta) < new_result
             self.counter_no_improve += 1
-        elif not self.the_smaller_the_better and self.comparator(
+        elif self.the_larger_the_better and self.comparator(
                 new_result,
                 self.improvement_operator(self.best_metric, self.delta)):
             # new_result < add(best_metric, delta)
@@ -74,12 +74,12 @@ class EarlyStopper(object):
     def __track_and_check_mean(self, history_result):
         new_result = history_result[-1]
         if len(history_result) > self.patience:
-            if self.the_smaller_the_better and self.comparator(
+            if not self.the_larger_the_better and self.comparator(
                     self.improvement_operator(
                         np.mean(history_result[-self.patience - 1:-1]),
                         -self.delta), new_result):
                 self.early_stopped = True
-            elif not self.the_smaller_the_better and self.comparator(
+            elif self.the_larger_the_better and self.comparator(
                     new_result,
                     self.improvement_operator(
                         np.mean(history_result[-self.patience - 1:-1]),
