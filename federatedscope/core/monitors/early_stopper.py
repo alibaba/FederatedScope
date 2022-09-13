@@ -80,9 +80,10 @@ class EarlyStopper(object):
                         -self.delta), new_result):
                 self.early_stopped = True
             elif not self.the_smaller_the_better and self.comparator(
+                    new_result,
                     self.improvement_operator(
                         np.mean(history_result[-self.patience - 1:-1]),
-                        self.delta), new_result):
+                        self.delta)):
                 self.early_stopped = True
         else:
             self.early_stopped = False
