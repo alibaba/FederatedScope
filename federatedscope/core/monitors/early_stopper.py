@@ -60,8 +60,8 @@ class EarlyStopper(object):
             # by default: add(val_loss, -delta) < new_result
             self.counter_no_improve += 1
         elif not self.the_smaller_the_better and self.comparator(
-                self.improvement_operator(self.best_metric, self.delta),
-                new_result):
+                new_result,
+                self.improvement_operator(self.best_metric, self.delta)):
             # typical case: add(eval_score, delta) > new_result
             self.counter_no_improve += 1
         else:
