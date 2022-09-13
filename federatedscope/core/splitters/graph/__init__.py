@@ -13,6 +13,6 @@ from federatedscope.core.splitters.graph.scaffold_lda_splitter import \
     ScaffoldLdaSplitter
 
 __all__ = [
-    'LouvainSplitter', 'RandomSplitter', 'RelTypeSplitter',
-    'ScaffoldSplitter', 'RandChunkSplitter', 'Analyzer', 'ScaffoldLdaSplitter'
+    'LouvainSplitter', 'RandomSplitter', 'RelTypeSplitter', 'ScaffoldSplitter',
+    'RandChunkSplitter', 'Analyzer', 'ScaffoldLdaSplitter'
 ]
