@@ -594,7 +594,8 @@ class Monitor(object):
                             best_result[key] = cur_result
                             update_best_this_round = True
                     elif update_best_this_round or \
-                            'acc' in round_wise_update_key and 'acc' in key:
+                            ('acc' in round_wise_update_key and 'acc' in key) or \
+                            ('imp_ratio' in round_wise_update_key and 'imp_ratio' in key):
                         # The larger the better
                         if results_type in [
                                 "client_best_individual",

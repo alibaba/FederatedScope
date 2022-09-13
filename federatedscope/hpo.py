@@ -30,8 +30,9 @@ if __name__ == '__main__':
     update_logger(init_cfg)
     setup_seed(init_cfg.seed)
 
-    assert not args.client_cfg_file, 'No support for client-wise config in ' \
-                                     'HPO mode.'
+    # load clients' cfg file
+    client_cfg = CfgNode.load_cfg(open(args.client_cfg_file,
+                                       'r')) if args.client_cfg_file else None
 
     # with open(args.cfg_file, 'r') as ips:
     #     config = yaml.load(ips, Loader=yaml.FullLoader)
@@ -39,6 +40,6 @@ if __name__ == '__main__':
     # global_cfg.merge_from_list(config2cmdargs(det_config))
     # global_cfg.merge_from_list(args.opts)
 
-    scheduler = get_scheduler(init_cfg)
+    scheduler = get_scheduler(init_cfg, client_cfg)
     _ = scheduler.optimize()
     # logger.info(results)
