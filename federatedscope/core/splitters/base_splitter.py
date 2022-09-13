@@ -1,4 +1,5 @@
 import abc
+import inspect
 
 
 class BaseSplitter(abc.ABC):
@@ -11,5 +12,7 @@ class BaseSplitter(abc.ABC):
         raise NotImplementedError
 
     def __repr__(self):
-        meta_info = f'client_num {self.client_num}, kwargs {self.kwargs}'
-        return f'{self.__class__.__name__}({meta_info})'
+        sign = inspect.signature(self.__init__).parameters.values()
+        meta_info = tuple([(val.name, getattr(self, val.name))
+                           for val in sign])
+        return f'{self.__class__.__name__}{meta_info}'

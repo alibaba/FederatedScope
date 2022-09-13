@@ -50,8 +50,8 @@ def gen_scaffold_split(dataset, client_num=5):
 
 
 class ScaffoldSplitter(BaseSplitter):
-    def __init__(self, client_num, **kwargs):
-        super(ScaffoldSplitter, self).__init__(client_num, **kwargs)
+    def __init__(self, client_num):
+        super(ScaffoldSplitter, self).__init__(client_num)
 
     def __call__(self, dataset):
         r"""Split dataset with smiles string into scaffold split

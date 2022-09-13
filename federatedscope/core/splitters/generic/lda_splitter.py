@@ -5,10 +5,9 @@ from federatedscope.core.splitters.utils import \
 
 
 class LDASplitter(BaseSplitter):
-    def __init__(self, client_num, alpha=0.5, **kwargs):
+    def __init__(self, client_num, alpha=0.5):
         self.alpha = alpha
-        kwargs['alpha'] = self.alpha
-        super(LDASplitter, self).__init__(client_num, **kwargs)
+        super(LDASplitter, self).__init__(client_num)
 
     def __call__(self, dataset, prior=None):
         dataset = [ds for ds in dataset]

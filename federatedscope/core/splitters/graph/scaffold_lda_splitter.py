@@ -163,10 +163,9 @@ class ScaffoldLdaSplitter(BaseSplitter):
         data_list (List(List(PyG.data))): Splited dataset via scaffold split.
 
     """
-    def __init__(self, client_num, alpha, **kwargs):
+    def __init__(self, client_num, alpha):
+        super(ScaffoldLdaSplitter, self).__init__(client_num)
         self.alpha = alpha
-        kwargs['alpha'] = alpha
-        super(ScaffoldLdaSplitter, self).__init__(client_num, **kwargs)
 
     def __call__(self, dataset):
         featurizer = GenFeatures()

@@ -4,8 +4,8 @@ from torch_geometric.transforms import BaseTransform
 
 
 class RandChunkSplitter(BaseTransform):
-    def __init__(self, client_num, **kwargs):
-        super(RandChunkSplitter, self).__init__(client_num, **kwargs)
+    def __init__(self, client_num):
+        super(RandChunkSplitter, self).__init__(client_num)
 
     def __call__(self, dataset):
         r"""Split dataset via random chunk.

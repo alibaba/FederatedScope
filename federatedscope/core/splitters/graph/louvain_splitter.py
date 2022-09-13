@@ -18,10 +18,9 @@ class LouvainSplitter(BaseTransform, BaseSplitter):
         delta (int): The gap between the number of nodes on the each client.
 
     """
-    def __init__(self, client_num, delta=20, **kwargs):
+    def __init__(self, client_num, delta=20):
         self.delta = delta
-        kwargs['delta'] = delta
-        BaseSplitter.__init__(self, client_num, **kwargs)
+        BaseSplitter.__init__(self, client_num)
 
     def __call__(self, data):
         data.index_orig = torch.arange(data.num_nodes)

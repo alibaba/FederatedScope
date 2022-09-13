@@ -19,12 +19,10 @@ class RelTypeSplitter(BaseTransform, BaseSplitter):
         alpha (float): parameter controlling the identicalness among clients.
 
     """
-    def __init__(self, client_num, alpha=0.5, realloc_mask=False, **kwargs):
+    def __init__(self, client_num, alpha=0.5, realloc_mask=False):
+        BaseSplitter.__init__(self, client_num)
         self.alpha = alpha
         self.realloc_mask = realloc_mask
-        kwargs['alpha'] = alpha
-        kwargs['realloc_mask'] = realloc_mask
-        BaseSplitter.__init__(self, client_num, **kwargs)
 
     def __call__(self, data):
         data_list = []

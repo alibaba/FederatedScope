@@ -30,9 +30,6 @@ def get_splitter(config):
     elif config.data.splitter == 'rel_type':
         from federatedscope.core.splitters.graph import RelTypeSplitter
         splitter = RelTypeSplitter(client_num, **kwargs)
-    elif config.data.splitter == 'graph_type':
-        from federatedscope.core.splitters.graph import GraphTypeSplitter
-        splitter = GraphTypeSplitter(client_num, **kwargs)
     elif config.data.splitter == 'scaffold':
         from federatedscope.core.splitters.graph import ScaffoldSplitter
         splitter = ScaffoldSplitter(client_num, **kwargs)

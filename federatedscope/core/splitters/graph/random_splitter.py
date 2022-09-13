@@ -29,11 +29,9 @@ class RandomSplitter(BaseTransform, BaseSplitter):
                  client_num,
                  sampling_rate=None,
                  overlapping_rate=0,
-                 drop_edge=0,
-                 **kwargs):
-
+                 drop_edge=0):
+        BaseSplitter.__init__(self, client_num)
         self.ovlap = overlapping_rate
-
         if sampling_rate is not None:
             self.sampling_rate = np.array(
                 [float(val) for val in sampling_rate.split(',')])
@@ -53,13 +51,6 @@ class RandomSplitter(BaseTransform, BaseSplitter):
                 f'overlapping_rate({self.ovlap}) should be 1.')
 
         self.drop_edge = drop_edge
-        new_args = {
-            'sampling_rate': sampling_rate,
-            'overlapping_rate': self.ovlap,
-            'drop_edge': drop_edge
-        }
-        kwargs = {**kwargs, **new_args}
-        BaseSplitter.__init__(self, client_num, **kwargs)
 
     def __call__(self, data):
         data.index_orig = torch.arange(data.num_nodes)
