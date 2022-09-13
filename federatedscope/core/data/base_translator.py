@@ -8,7 +8,8 @@ class BaseDataTranslator(StandaloneDataDict):
 
         Args:
             dataset: `torch.utils.data.Dataset`, `List` of (feature, label)
-                or split dataset tuple of (train, val, test)
+                or split dataset tuple of (train, val, test) or Tuple of
+                split dataset with [train, val, test]
             global_cfg: global CfgNode
             loader: `torch.utils.data.DataLoader` or subclass of it
             client_cfgs: client cfg `Dict`
@@ -33,6 +34,10 @@ class BaseDataTranslator(StandaloneDataDict):
         """
         dataset, splits = self.dataset, self.global_cfg.data.splits
         if isinstance(dataset, tuple):
+            # No need to split train/val/test for tuple dataset.
+            error_msg = 'If dataset is tuple, it must contains ' \
+                        'train, valid and test split.'
+            assert len(dataset) == len(['train', 'val', 'test']), error_msg
             return [dataset[0], dataset[1], dataset[2]]
 
         from torch.utils.data.dataset import random_split
