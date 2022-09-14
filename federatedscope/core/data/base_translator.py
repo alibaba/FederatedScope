@@ -90,3 +90,13 @@ class BaseDataTranslator:
                                              val=split_val[client_id - 1],
                                              test=split_test[client_id - 1])
         return datadict
+
+
+class DummyDataTranslator(BaseDataTranslator):
+    """
+    Translator split data_dict to `StandaloneDataDict`.
+    """
+    def __call__(self, datadict):
+        if not isinstance(datadict, StandaloneDataDict):
+            datadict = StandaloneDataDict(datadict, self.global_cfg)
+        return datadict
