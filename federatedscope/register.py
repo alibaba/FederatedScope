@@ -70,6 +70,13 @@ def register_auxiliary_data_loader_PIA(key, module):
     register(key, module, auxiliary_data_loader_PIA_dict)
 
 
+transform_dict = {}
+
+
+def register_transform(key, module):
+    register(key, module, transform_dict)
+
+
 splitter_dict = {}
 
 
@@ -89,3 +96,10 @@ optimizer_dict = {}
 
 def register_optimizer(key, module):
     register(key, module, optimizer_dict)
+
+
+worker_dict = {}
+
+
+def register_worker(key, module):
+    register(key, module, worker_dict)
