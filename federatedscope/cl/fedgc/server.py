@@ -79,7 +79,7 @@ class GlobalContrastFLServer(Server):
                                      for other_client_id in train_msg_buffer 
                                      if other_client_id != client_id]
 #                         print("start cal loss")
-                        self.loss_list[client_id] = compute_global_NT_xentloss(z1, z2, others_z2)
+                        self.loss_list[client_id] = compute_global_NT_xentloss(z1, z2, others_z2, device=self.device)
                         print(self.loss_list[client_id])
 #                         print("end cal loss")
 

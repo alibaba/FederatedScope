@@ -2,7 +2,7 @@
 # Fedgc
 # ---------------------------------------------------------------------- #
 
-bash run_contrastive_learning.sh 1 fedgc cifar10
+bash run_contrastive_learning.sh 2 fedgc cifar10 0.3
 
 
 

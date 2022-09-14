@@ -1,20 +1,21 @@
 use_gpu: True
+seed: 1
 device: 2
 federate:
   mode: standalone
-  total_round_num: 300
+  total_round_num: 200
   client_num: 5
   share_local_model: True
   online_aggr: True
   sample_client_rate: 1.0
   method: fedgc
-  save_to: 'FedGC_on_Cifar4CL_lda0.5_lr0.05_lus5b_rn300.ckpt'
+  save_to: 'FedGC_on_Cifar4CL_lda0.1_lr0.25_lus5b_rn100.ckpt'
 data:
   root: 'data'
   type: 'Cifar4CL'
   batch_size: 256
   splitter: 'lda'
-  splitter_args: [{'alpha': 0.5}]
+  splitter_args: [{'alpha': 0.1}]
   num_workers: 4
 model:
   type: 'SimCLR'
@@ -22,7 +23,7 @@ train:
   local_update_steps: 5
   batch_or_epoch: 'batch'
   optimizer:
-    lr: 0.01
+    lr: 0.25
     momentum: 0.1
 early_stop:
   patience: 0

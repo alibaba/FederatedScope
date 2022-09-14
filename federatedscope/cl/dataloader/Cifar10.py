@@ -69,6 +69,7 @@ def Cifar4CL(config):
     data_dict = dict()
     splitter = get_splitter(config)
     data_train = splitter(data_train)
+    print([len(i) for i in data_train])
     data_val = data_train
     data_test = splitter(data_test)
 

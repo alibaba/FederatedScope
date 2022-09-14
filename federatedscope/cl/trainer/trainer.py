@@ -85,7 +85,19 @@ class CLTrainer(GeneralTorchTrainer):
 
         
 class LPTrainer(GeneralTorchTrainer):
-    pass
+    def __init__(self,
+                 model,
+                 data,
+                 device,
+                 config,
+                 only_for_eval=False,
+                 monitor=None):
+        super(LPTrainer, self).__init__(model, data, device, config,
+                                              only_for_eval, monitor)
+        
+        if config.federate.restore_from != '':
+            self.load_model(config.federate.restore_from)
+
     
 def call_cl_trainer(trainer_type):
     if trainer_type == 'cltrainer':
