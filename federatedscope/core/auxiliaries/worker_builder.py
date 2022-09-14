@@ -16,9 +16,9 @@ except ImportError as error:
 
 def get_client_cls(cfg):
     for func in register.worker_dict.values():
-        client_class = func(cfg.federate.method.lower())['client']
-        if client_class is not None:
-            return client_class
+        worker_class = func(cfg.federate.method.lower())
+        if worker_class is not None:
+            return worker_class['client']
 
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExClient
@@ -63,9 +63,9 @@ def get_client_cls(cfg):
 
 def get_server_cls(cfg):
     for func in register.worker_dict.values():
-        server_class = func(cfg.federate.method.lower())['server']
-        if server_class is not None:
-            return server_class
+        worker_class = func(cfg.federate.method.lower())
+        if worker_class is not None:
+            return worker_class['server']
 
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExServer
