@@ -2,29 +2,34 @@ from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.data import ClientData, StandaloneDataDict
 
 
-class BaseDataTranslator(StandaloneDataDict):
-    def __init__(self, dataset, global_cfg, loader, client_cfgs=None):
+class BaseDataTranslator:
+    def __init__(self, global_cfg, loader, client_cfgs=None):
+        """
+        Convert data to `StandaloneDataDict`.
+
+        Args:
+            global_cfg: global CfgNode
+            loader: `torch.utils.data.DataLoader` or subclass of it
+            client_cfgs: client cfg `Dict`
+        """
+        self.loader = loader
+        self.global_cfg = global_cfg.clone()
+        self.client_cfgs = client_cfgs
+        self.splitter = get_splitter(global_cfg)
+
+    def __call__(self, dataset):
         """
 
         Args:
             dataset: `torch.utils.data.Dataset`, `List` of (feature, label)
                 or split dataset tuple of (train, val, test) or Tuple of
                 split dataset with [train, val, test]
-            global_cfg: global CfgNode
-            loader: `torch.utils.data.DataLoader` or subclass of it
-            client_cfgs: client cfg `Dict`
         """
-        self.dataset = dataset
-        self.loader = loader
-        self.global_cfg = global_cfg.clone()
-        self.client_cfgs = client_cfgs
-        self.splitter = get_splitter(global_cfg)
-
         train, val, test = self.split_train_val_test()
         datadict = self.split_to_client(train, val, test)
-        super(BaseDataTranslator, self).__init__(datadict, global_cfg)
+        return StandaloneDataDict(datadict, self.global_cfg)
 
-    def split_train_val_test(self):
+    def split_train_val_test(self, dataset):
         """
         Split dataset to train, val, test if not provided.
 
@@ -32,7 +37,7 @@ class BaseDataTranslator(StandaloneDataDict):
             split_data (List): List of split dataset, [train, val, test]
 
         """
-        dataset, splits = self.dataset, self.global_cfg.data.splits
+        splits = self.global_cfg.data.splits
         if isinstance(dataset, tuple):
             # No need to split train/val/test for tuple dataset.
             error_msg = 'If dataset is tuple, it must contains ' \

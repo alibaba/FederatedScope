@@ -117,9 +117,9 @@ Tools
 
 * [`federatedscope.core.data.BaseDataTranslator`](https://github.com/alibaba/FederatedScope/blob/master/federatedscope/core/data/base_translator.py)
 
-  * `BaseDataTranslator` is a subclass of `StandaloneDataDict`, which convert [`torch.utils.data.Dataset`](https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset) or `dict` of data split to `StandaloneDataDict` according to `cfg`. After translating, it can be directly passed to `FedRunner` to launch a FL course.
+  * `BaseDataTranslator` converts [`torch.utils.data.Dataset`](https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset) or `dict` of data split to `StandaloneDataDict` according to `cfg`. After translating, it can be directly passed to `FedRunner` to launch a FL course.
 
-  *  `BaseDataTranslator` will split data to `train`, `val,` and `test` by `cfg.data.splits`. And using `Splitter` to split each data split to each client. In order to use `BaseDataTranslator`, `cfg.data.splitter`, `cfg.federate.client_num,` and other arguments of `Splitter` must be specified.
+  *  `BaseDataTranslator` will split data to `train`, `val,` and `test` by `cfg.data.splits` (**ML split**). And using `Splitter` to split each data split to each client (**FL split**). In order to use `BaseDataTranslator`, `cfg.data.splitter`, `cfg.federate.client_num,` and other arguments of `Splitter` must be specified.
 
     Example:
 
@@ -128,8 +128,9 @@ Tools
     cfg.federate.client_num = 5
     cfg.data.splitter_args = [{'alpha': 0.2}]
     
+    translator = BaseDataTranslator(global_cfg, DataLoader)
     raw_data = CIFAR10()
-    fs_data = BaseDataTranslator(raw_data, global_cfg, DataLoader)
+    fs_data = translator(raw_data)
     
     runner = FedRunner(data=fs_data,
                        server_class=get_server_cls(cfg),
