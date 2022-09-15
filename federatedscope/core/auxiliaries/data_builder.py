@@ -454,8 +454,9 @@ def load_external_data(config=None, client_cfgs=None):
     dataset = (dataset.get('train'), dataset.get('val'), dataset.get('test'))
 
     # Translate dataset to `StandaloneDataDict`
-    datadict = BaseDataTranslator(dataset, modified_config, DataLoader,
-                                  client_cfgs)
+    data_translator = BaseDataTranslator(modified_config, DataLoader,
+                                         client_cfgs)
+    datadict = data_translator(dataset)
 
     return datadict, modified_config
 
