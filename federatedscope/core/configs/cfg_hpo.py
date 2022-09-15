@@ -67,6 +67,15 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fts.gp_opt_schedule = 1
     cfg.hpo.fts.allow_load_existing_info = True
 
+    # pfedhpo
+    cfg.hpo.pfedhpo = CN()
+    cfg.hpo.pfedhpo.use = False
+    cfg.hpo.pfedhpo.train_fl = False
+    cfg.hpo.pfedhpo.train_anchor = False
+    cfg.hpo.pfedhpo.ss = ''
+    cfg.hpo.pfedhpo.target_fl_total_round = 1000
+
+
 def assert_hpo_cfg(cfg):
     # HPO related
     # assert cfg.hpo.init_strategy in [

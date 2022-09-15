@@ -11,7 +11,7 @@ model.dropout:
   type: float
   lower: 0.0
   upper: 0.5
-data.batch_size:
-  type: int
-  lower: 16
-  upper: 64
+#data.batch_size:
+#  type: int
+#  lower: 16
+#  upper: 64

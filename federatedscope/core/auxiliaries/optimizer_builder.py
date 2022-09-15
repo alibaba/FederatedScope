@@ -5,6 +5,7 @@ except ImportError:
 
 import copy
 
+from federatedscope.core import optimizers
 
 def get_optimizer(model, type, lr, **kwargs):
     if torch is None:
@@ -25,7 +26,14 @@ def get_optimizer(model, type, lr, **kwargs):
             else:
                 return getattr(torch.optim, type)(model, lr, **tmp_kwargs)
         else:
-            raise NotImplementedError(
-                'Optimizer {} not implement'.format(type))
+            if hasattr(optimizers, type):
+                if isinstance(model, torch.nn.Module):
+                    return getattr(optimizers, type)(model.parameters(), lr,
+                                                      **tmp_kwargs)
+                else:
+                    return getattr(optimizers, type)(model, lr, **tmp_kwargs)
+            else:
+                raise NotImplementedError(
+                    'Optimizer {} not implement'.format(type))
     else:
         raise TypeError()
