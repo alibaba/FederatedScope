@@ -32,7 +32,7 @@ def load_graphlevel_dataset(config=None, client_cfgs=None):
     path = config.data.root
     name = config.data.type.upper()
     client_num = config.federate.client_num
-    batch_size = config.data.batch_size
+    batch_size = config.dataloader.batch_size
 
     # Splitter
     splitter = get_splitter(config)

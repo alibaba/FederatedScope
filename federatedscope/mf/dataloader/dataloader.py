@@ -58,16 +58,16 @@ def load_mf_dataset(config=None, client_cfgs=None):
             client_cfg = config
         data_local_dict[id_client]["train"] = MFDataLoader(
             data["train"],
-            shuffle=client_cfg.data.shuffle,
-            batch_size=client_cfg.data.batch_size,
-            drop_last=client_cfg.data.drop_last,
-            theta=client_cfg.sgdmf.theta)
+            shuffle=client_cfg.dataloader.shuffle,
+            batch_size=client_cfg.dataloader.batch_size,
+            drop_last=client_cfg.dataloader.drop_last,
+            theta=client_cfg.dataloader.theta)
         data_local_dict[id_client]["test"] = MFDataLoader(
             data["test"],
             shuffle=False,
-            batch_size=client_cfg.data.batch_size,
-            drop_last=client_cfg.data.drop_last,
-            theta=client_cfg.sgdmf.theta)
+            batch_size=client_cfg.dataloader.batch_size,
+            drop_last=client_cfg.dataloader.drop_last,
+            theta=client_cfg.dataloader.theta)
 
     # Modify config
     config.merge_from_list(['model.num_user', dataset.n_user])

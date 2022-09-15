@@ -32,7 +32,7 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.data.type = 'MNIST@torchvision'
         cfg.data.args = [{'download': True}]
         cfg.data.splits = [0.6, 0.2, 0.2]
-        cfg.data.batch_size = 10
+        cfg.dataloader.batch_size = 10
         cfg.data.transform = [['ToTensor'],
                               [
                                   'Normalize', {
@@ -76,7 +76,7 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.data.args = [{'max_len': 100}]
         cfg.data.type = 'IMDB@torchtext'
         cfg.data.splits = [0.6, 0.2, 0.2]
-        cfg.data.batch_size = 10
+        cfg.dataloader.batch_size = 10
         cfg.data.transform = ['GloVe', {'cache': 'test_data/', 'name': '6B'}]
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.5}]

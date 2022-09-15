@@ -1,3 +1,5 @@
+from federatedscope.core.data.utils import get_func_args, filter_dict
+
 try:
     import torch
     from torch.utils.data import Dataset
@@ -6,15 +8,40 @@ except ImportError:
     Dataset = object
 
 
-def get_dataloader(dataset, config):
+def get_dataloader(dataset, config, split='train'):
     if config.backend == 'torch':
-        from torch.utils.data import DataLoader
-        dataloader = DataLoader(dataset,
-                                batch_size=config.data.batch_size,
-                                shuffle=config.data.shuffle,
-                                num_workers=config.data.num_workers,
-                                pin_memory=True)
-        return dataloader
+        if config.data.loader.type == 'base':
+            from torch.utils.data import DataLoader
+            loader_cls = DataLoader
+        elif config.data.loader.type == 'raw':
+            loader_cls = None
+        elif config.data.loader.type == 'graphsaint':
+            if 'split' == 'train':
+                from torch_geometric.loader import GraphSAINTRandomWalkSampler
+                loader_cls = GraphSAINTRandomWalkSampler
+            else:
+                from torch_geometric.loader import NeighborSampler
+                loader_cls = NeighborSampler
+        elif config.data.loader.type == 'neighbor':
+            from torch_geometric.loader import NeighborSampler
+            loader_cls = NeighborSampler
+        elif config.data.loader.type == 'mf':
+            from federatedscope.mf.dataloader import MFDataLoader
+            loader_cls = MFDataLoader
+        else:
+            raise ValueError(f'data.loader.type {config.data.loader.type} '
+                             f'not found!')
+        if loader_cls is not None:
+            raw_args = dict(config.dataloader)
+            if split != 'train':
+                raw_args['shuffle'] = False
+                raw_args['sizes'] = [-1]
+                raw_args['batch_size'] = [4096]
+            filtered_args = filter_dict(loader_cls.__init__, raw_args)
+            dataloader = DataLoader(dataset=dataset, **filtered_args)
+            return dataloader
+        else:
+            return dataset
     else:
         return None
 

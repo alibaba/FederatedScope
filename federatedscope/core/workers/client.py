@@ -407,7 +407,7 @@ class Client(Worker):
             if requirement.lower() == 'num_sample':
                 if self._cfg.train.batch_or_epoch == 'batch':
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self._cfg.data.batch_size
+                                 self._cfg.dataloader.batch_size
                 else:
                     num_sample = self._cfg.train.local_update_steps * \
                                  self.trainer.ctx.num_train_batch

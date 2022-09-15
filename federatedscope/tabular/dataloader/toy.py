@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 
 from federatedscope.core.data import StandaloneDataDict
+from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 
 
 def load_toy_data(config=None, client_cfgs=None):
@@ -110,9 +111,10 @@ def load_toy_data(config=None, client_cfgs=None):
     else:
         with open(config.distribute.data_file, 'rb') as f:
             data = pickle.load(f)
-        for key in data.keys():
-            data[key] = {k: np.asarray(v)
-                         for k, v in data[key].items()
-                         } if data[key] is not None else None
+        for client_id in data.keys():
+            data[client_id] = {
+                k: WrapDataset(np.asarray(v))
+                for k, v in data[client_id].items()
+            } if data[client_id] is not None else None
 
-    return StandaloneDataDict(data, config), config
+    return data, config

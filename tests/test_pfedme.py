@@ -35,7 +35,7 @@ class FEMNISTTest(unittest.TestCase):
         cfg.data.root = 'test_data/'
         cfg.data.type = 'femnist'
         cfg.data.splits = [0.6, 0.2, 0.2]
-        cfg.data.batch_size = 10
+        cfg.dataloader.batch_size = 10
         cfg.data.subsample = 0.05
         cfg.data.transform = [['ToTensor'],
                               [

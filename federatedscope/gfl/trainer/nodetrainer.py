@@ -119,7 +119,7 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                                 data.get(mode)
                             ]
                             init_dict["num_{}_data".format(
-                                mode)] = self.cfg.data.batch_size
+                                mode)] = self.cfg.dataloader.batch_size
                     else:
                         raise TypeError("Type {} is not supported.".format(
                             type(data.get(mode))))

@@ -1,5 +1,6 @@
 import logging
-from federatedscope.core.auxiliaries.utils import merge_data
+from federatedscope.core.data.utils import merge_data
+from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,49 @@ class StandaloneDataDict(dict):
                     datadict[1] = merge_data(
                         all_data=datadict,
                         merged_max_data_id=self.cfg.federate.client_num)
+        datadict = self.attack(datadict)
+        return datadict
+
+    def attack(self, datadict):
+        """
+        Apply attack to `StandaloneDataDict`.
+
+        """
+        if 'backdoor' in self.global_cfg.attack.attack_method and 'edge' in \
+                self.global_cfg.attack.trigger_type:
+            import os
+            import torch
+            from federatedscope.attack.auxiliary import \
+                create_ardis_poisoned_dataset, create_ardis_test_dataset
+            if not os.path.exists(self.global_cfg.attack.edge_path):
+                os.makedirs(self.global_cfg.attack.edge_path)
+                poisoned_edgeset = create_ardis_poisoned_dataset(
+                    data_path=self.global_cfg.attack.edge_path)
+
+                ardis_test_dataset = create_ardis_test_dataset(
+                    self.global_cfg.attack.edge_path)
+
+                logger.info("Writing poison_data to: {}".format(
+                    self.global_cfg.attack.edge_path))
+
+                with open(
+                        self.global_cfg.attack.edge_path +
+                        "poisoned_edgeset_training", "wb") as saved_data_file:
+                    torch.save(poisoned_edgeset, saved_data_file)
+
+                with open(
+                        self.global_cfg.attack.edge_path +
+                        "ardis_test_dataset.pt", "wb") as ardis_data_file:
+                    torch.save(ardis_test_dataset, ardis_data_file)
+                logger.warning(
+                    'please notice: downloading the poisoned dataset \
+                    on cifar-10 from \
+                        https://github.com/ksreenivasan/OOD_Federated_Learning'
+                )
+
+        if 'backdoor' in self.global_cfg.attack.attack_method:
+            from federatedscope.attack.auxiliary import poisoning
+            poisoning(datadict, self.global_cfg)
         return datadict
 
 
@@ -111,31 +155,18 @@ class ClientData(dict):
         """
         # if `batch_size` or `shuffle` change, reinstantiate DataLoader
         if self.client_cfg is not None:
-            if self.client_cfg.data.batch_size == \
-                    new_client_cfg.data.batch_size or \
-                    self.client_cfg.data.shuffle == \
-                    new_client_cfg.data.shuffle:
+            if dict(self.client_cfg.dataloader) == dict(
+                    new_client_cfg.dataloader):
                 return False
 
         self.client_cfg = new_client_cfg
         if self.train is not None:
-            self['train'] = self.loader(
-                self.train,
-                batch_size=new_client_cfg.data.batch_size,
-                shuffle=new_client_cfg.data.shuffle,
-                num_workers=new_client_cfg.data.num_workers)
+            self['train'] = get_dataloader(self.train, self.client_cfg,
+                                           'train')
 
         if self.val is not None:
-            self['val'] = self.loader(
-                self.val,
-                batch_size=new_client_cfg.data.batch_size,
-                shuffle=False,
-                num_workers=new_client_cfg.data.num_workers)
+            self['val'] = get_dataloader(self.train, self.client_cfg, 'val')
 
         if self.test is not None:
-            self['test'] = self.loader(
-                self.test,
-                batch_size=new_client_cfg.data.batch_size,
-                shuffle=False,
-                num_workers=new_client_cfg.data.num_workers)
+            self['test'] = get_dataloader(self.train, self.client_cfg, 'test')
         return True

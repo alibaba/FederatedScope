@@ -35,9 +35,9 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.data.type = 'CIFAR10@torchvision'
         cfg.data.args = [{'download': False}]
         cfg.data.splits = [0.8, 0.2, 0.2]
-        cfg.data.batch_size = 10
+        cfg.dataloader.batch_size = 10
         cfg.data.subsample = 0.2
-        cfg.data.num_workers = 0
+        cfg.dataloader.num_workers = 0
         cfg.data.transform = [['ToTensor'],
                               [
                                   'Normalize', {
@@ -94,9 +94,9 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.data.type = 'CIFAR10@torchvision'
         cfg.data.args = [{'download': False}]
         cfg.data.splits = [0.8, 0.2, 0.2]
-        cfg.data.batch_size = 10
+        cfg.dataloader.batch_size = 10
         cfg.data.subsample = 0.2
-        cfg.data.num_workers = 0
+        cfg.dataloader.num_workers = 0
         cfg.data.transform = [['ToTensor'],
                               [
                                   'Normalize', {
@@ -154,9 +154,9 @@ class AsynCIFAR10Test(unittest.TestCase):
         cfg.data.type = 'CIFAR10@torchvision'
         cfg.data.args = [{'download': False}]
         cfg.data.splits = [0.8, 0.2, 0.2]
-        cfg.data.batch_size = 10
+        cfg.dataloader.batch_size = 10
         cfg.data.subsample = 0.2
-        cfg.data.num_workers = 0
+        cfg.dataloader.num_workers = 0
         cfg.data.transform = [['ToTensor'],
                               [
                                   'Normalize', {

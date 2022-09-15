@@ -30,7 +30,7 @@ class RECTest(unittest.TestCase):
         cfg.data.root = 'test_data/'
         cfg.data.type = 'femnist'
         cfg.data.splits = [0.6, 0.2, 0.2]
-        cfg.data.batch_size = 1
+        cfg.dataloader.batch_size = 1
         cfg.data.subsample = 0.01
         cfg.data.transform = [['ToTensor'],
                               [

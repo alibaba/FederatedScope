@@ -173,7 +173,7 @@ class GeneralTorchTrainer(Trainer):
         if ctx.get("{}_loader".format(ctx.cur_split)) is None:
             loader = get_dataloader(
                 WrapDataset(ctx.get("{}_data".format(ctx.cur_split))),
-                self.cfg)
+                self.cfg, ctx.cur_split)
             setattr(ctx, "{}_loader".format(ctx.cur_split), ReIterator(loader))
         elif not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                             ReIterator):

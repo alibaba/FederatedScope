@@ -27,7 +27,7 @@ class NodeTrainerTest(unittest.TestCase):
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'cora'
-        cfg.data.batch_size = 1  # full batch train
+        cfg.dataloader.batch_size = 1  # full batch train
         cfg.data.splitter = 'louvain'
 
         cfg.model.type = 'gcn'

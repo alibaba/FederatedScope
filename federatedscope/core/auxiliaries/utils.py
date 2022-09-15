@@ -7,7 +7,6 @@ import random
 import signal
 import ssl
 import urllib.request
-from collections import defaultdict
 from os import path as osp
 import pickle
 
@@ -306,56 +305,3 @@ def merge_param_dict(raw_param, filtered_param):
     for key in filtered_param.keys():
         raw_param[key] = filtered_param[key]
     return raw_param
-
-
-def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
-    if specified_dataset_name is None:
-        dataset_names = list(all_data[1].keys())  # e.g., train, test, val
-    else:
-        if not isinstance(specified_dataset_name, list):
-            specified_dataset_name = [specified_dataset_name]
-        dataset_names = specified_dataset_name
-
-    import torch.utils.data
-    assert len(dataset_names) >= 1, \
-        "At least one sub-dataset is required in client 1"
-    data_name = "test" if "test" in dataset_names else dataset_names[0]
-    id_has_key = 1
-    while "test" not in all_data[id_has_key]:
-        id_has_key += 1
-        if len(all_data) <= id_has_key:
-            raise KeyError(f'All data do not key {data_name}.')
-    if isinstance(all_data[id_has_key][data_name], dict):
-        data_elem_names = list(
-            all_data[id_has_key][data_name].keys())  # e.g., x, y
-        merged_data = {name: defaultdict(list) for name in dataset_names}
-        for data_id in range(1, merged_max_data_id):
-            for d_name in dataset_names:
-                if d_name not in all_data[data_id]:
-                    continue
-                for elem_name in data_elem_names:
-                    merged_data[d_name][elem_name].append(
-                        all_data[data_id][d_name][elem_name])
-        for d_name in dataset_names:
-            for elem_name in data_elem_names:
-                merged_data[d_name][elem_name] = np.concatenate(
-                    merged_data[d_name][elem_name])
-    elif issubclass(type(all_data[id_has_key][data_name]),
-                    torch.utils.data.DataLoader):
-        merged_data = all_data[id_has_key]
-        for data_id in range(1, merged_max_data_id):
-            if data_id == id_has_key:
-                continue
-            for d_name in dataset_names:
-                if d_name not in all_data[data_id]:
-                    continue
-                merged_data[d_name].dataset.extend(
-                    all_data[data_id][d_name].dataset)
-    else:
-        raise NotImplementedError(
-            "Un-supported type when merging data across different clients."
-            f"Your data type is {type(all_data[id_has_key][data_name])}. "
-            f"Currently we only support the following forms: "
-            " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
-            " 2): {data_id: {train: DataLoader }")
-    return merged_data

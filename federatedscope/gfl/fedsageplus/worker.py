@@ -348,19 +348,21 @@ class FedSagePlusClient(Client):
             sizes=[-1],
             batch_size=4096,
             shuffle=False,
-            num_workers=self._cfg.data.num_workers)
+            num_workers=self._cfg.dataloader.num_workers)
         fill_dataloader = {
             'data': self.filled_data,
-            'train': NeighborSampler(self.filled_data.edge_index,
-                                     node_idx=self.filled_data.train_idx,
-                                     sizes=self._cfg.data.sizes,
-                                     batch_size=self.sage_batch_size,
-                                     shuffle=self._cfg.data.shuffle,
-                                     num_workers=self._cfg.data.num_workers),
+            'train': NeighborSampler(
+                self.filled_data.edge_index,
+                node_idx=self.filled_data.train_idx,
+                sizes=self._cfg.dataloader.sizes,
+                batch_size=self.sage_batch_size,
+                shuffle=self._cfg.dataloader.shuffle,
+                num_workers=self._cfg.dataloader.num_workers),
             'val': subgraph_sampler,
             'test': subgraph_sampler
         }
-        self._cfg.merge_from_list(['data.batch_size', self.sage_batch_size])
+        self._cfg.merge_from_list(
+            ['dataloader.batch_size', self.sage_batch_size])
         self.trainer_clf = NodeMiniBatchTrainer(self.clf,
                                                 fill_dataloader,
                                                 self.device,

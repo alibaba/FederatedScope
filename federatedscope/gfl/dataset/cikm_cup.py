@@ -71,18 +71,20 @@ def load_cikmcup_data(config, client_cfgs=None):
         if 'train' in dataset[client_idx]:
             dataloader_dict['train'] = DataLoader(
                 dataset[client_idx]['train'],
-                client_cfg.data.batch_size,
-                shuffle=client_cfg.data.shuffle)
+                client_cfg.dataloader.batch_size,
+                shuffle=client_cfg.dataloader.shuffle)
             tmp_dataset += dataset[client_idx]['train']
         if 'val' in dataset[client_idx]:
-            dataloader_dict['val'] = DataLoader(dataset[client_idx]['val'],
-                                                client_cfg.data.batch_size,
-                                                shuffle=False)
+            dataloader_dict['val'] = DataLoader(
+                dataset[client_idx]['val'],
+                client_cfg.dataloader.batch_size,
+                shuffle=False)
             tmp_dataset += dataset[client_idx]['val']
         if 'test' in dataset[client_idx]:
-            dataloader_dict['test'] = DataLoader(dataset[client_idx]['test'],
-                                                 client_cfg.data.batch_size,
-                                                 shuffle=False)
+            dataloader_dict['test'] = DataLoader(
+                dataset[client_idx]['test'],
+                client_cfg.dataloader.batch_size,
+                shuffle=False)
             tmp_dataset += dataset[client_idx]['test']
         if tmp_dataset:
             dataloader_dict['num_label'] = 0

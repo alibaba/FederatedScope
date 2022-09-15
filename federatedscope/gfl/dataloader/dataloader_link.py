@@ -24,15 +24,16 @@ def raw2loader(raw_data, config=None):
     elif config.data.loader == 'graphsaint-rw':
         loader = GraphSAINTRandomWalkSampler(
             raw_data,
-            batch_size=config.data.batch_size,
-            walk_length=config.data.graphsaint.walk_length,
-            num_steps=config.data.graphsaint.num_steps,
+            batch_size=config.dataloader.batch_size,
+            walk_length=config.dataloader.walk_length,
+            num_steps=config.dataloader.num_steps,
             sample_coverage=0)
-        subgraph_sampler = NeighborSampler(raw_data.edge_index,
-                                           sizes=[-1],
-                                           batch_size=4096,
-                                           shuffle=False,
-                                           num_workers=config.data.num_workers)
+        subgraph_sampler = NeighborSampler(
+            raw_data.edge_index,
+            sizes=[-1],
+            batch_size=4096,
+            shuffle=False,
+            num_workers=config.dataloader.num_workers)
         sampler = dict(data=raw_data,
                        train=loader,
                        val=subgraph_sampler,

@@ -20,10 +20,6 @@ def extend_data_cfg(cfg):
     cfg.data.target_transform = []  # target_transform for y, use as above
     cfg.data.pre_transform = [
     ]  # pre_transform for `torch_geometric` dataset, use as above
-    cfg.data.batch_size = 64
-    cfg.data.drop_last = False
-    cfg.data.sizes = [10, 5]
-    cfg.data.shuffle = True
     cfg.data.server_holds_all = False  # whether the server (workers with
     # idx 0) holds all data, useful in global training/evaluation case
     cfg.data.subsample = 1.0
@@ -32,11 +28,20 @@ def extend_data_cfg(cfg):
     # distributions of train/val/test set over clients will be kept
     # consistent during splitting
     cfg.data.cSBM_phi = [0.5, 0.5, 0.5]
-    cfg.data.loader = ''
-    cfg.data.num_workers = 0
-    cfg.data.graphsaint = CN()
-    cfg.data.graphsaint.walk_length = 2
-    cfg.data.graphsaint.num_steps = 30
+
+    # DataLoader related args
+    cfg.dataloader = CN()
+    cfg.dataloader.type = 'base'
+    cfg.dataloader.batch_size = 64
+    cfg.dataloader.shuffle = True
+    cfg.dataloader.num_workers = 0
+    cfg.dataloader.drop_last = False
+    cfg.dataloader.pin_memory = True
+    # GFL: graphsaint DataLoader
+    cfg.dataloader.walk_length = 2
+    cfg.dataloader.num_steps = 30
+    # GFL: neighbor sampler DataLoader
+    cfg.dataloader.sizes = [10, 5]
 
     # quadratic
     cfg.data.quadratic = CN()
@@ -49,12 +54,13 @@ def extend_data_cfg(cfg):
 
 
 def assert_data_cfg(cfg):
-    if cfg.data.loader == 'graphsaint-rw':
-        assert cfg.model.layer == cfg.data.graphsaint.walk_length, 'Sample ' \
+    if cfg.dataloader.type == 'graphsaint-rw':
+        assert cfg.model.layer == cfg.dataloader.walk_length, 'Sample ' \
                                                                    'size ' \
                                                                    'mismatch'
-    if cfg.data.loader == 'neighbor':
-        assert cfg.model.layer == len(cfg.data.sizes), 'Sample size mismatch'
+    if cfg.dataloader.type == 'neighbor':
+        assert cfg.model.layer == len(
+            cfg.dataloader.sizes), 'Sample size mismatch'
     if '@' in cfg.data.type:
         assert cfg.federate.client_num > 0, '`federate.client_num` should ' \
                                             'be greater than 0 when using ' \

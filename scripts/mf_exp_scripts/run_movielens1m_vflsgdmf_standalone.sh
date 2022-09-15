@@ -11,4 +11,4 @@ python federatedscope/main.py --cfg federatedscope/mf/baseline/vfl-sgdmf_fedavg_
           train.optimizer.lr 0.1 \
           train.local_update_steps 20 \
           federate.total_round_num 50 \
-          data.batch_size 64
+          dataloader.batch_size 64

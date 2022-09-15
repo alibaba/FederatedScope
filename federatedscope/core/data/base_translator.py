@@ -1,8 +1,17 @@
+import logging
+
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.data import ClientData, StandaloneDataDict
 
+logger = logging.getLogger(__name__)
+
 
 class BaseDataTranslator:
+    """
+    Perform process:
+        Dataset -> ML split -> FL split -> Data (passed to FedRunner)
+
+    """
     def __init__(self, global_cfg, loader, client_cfgs=None):
         """
         Convert data to `StandaloneDataDict`.
@@ -25,9 +34,22 @@ class BaseDataTranslator:
                 or split dataset tuple of (train, val, test) or Tuple of
                 split dataset with [train, val, test]
         """
-        train, val, test = self.split_train_val_test()
+        datadict = self.split(dataset)
+        datadict = StandaloneDataDict(datadict, self.global_cfg)
+
+        return datadict
+
+    def split(self, dataset):
+        """
+        Perform ML split and FL split.
+
+        Returns:
+            dict of `ClientData` with client_idx as key.
+
+        """
+        train, val, test = self.split_train_val_test(dataset)
         datadict = self.split_to_client(train, val, test)
-        return StandaloneDataDict(datadict, self.global_cfg)
+        return datadict
 
     def split_train_val_test(self, dataset):
         """
@@ -54,7 +76,7 @@ class BaseDataTranslator:
 
     def split_to_client(self, train, val, test):
         """
-        Split dataset to clients.
+        Split dataset to clients and build DataLoader.
 
         Returns:
             datadict (dict): dict of `ClientData` with client_idx as key.
@@ -75,8 +97,14 @@ class BaseDataTranslator:
         if len(test) > 0:
             split_test = self.splitter(test, prior=train_label_distribution)
 
-        # Build data dict with `ClientData`
-        datadict = {}
+        # Build data dict with `ClientData`, key `0` for server.
+        datadict = {
+            0: ClientData(self.loader,
+                          self.global_cfg,
+                          train=train,
+                          val=val,
+                          test=test)
+        }
         for client_id in range(1, client_num + 1):
             if self.client_cfgs is not None:
                 client_cfg = self.global_cfg.clone()
@@ -89,14 +117,4 @@ class BaseDataTranslator:
                                              train=split_train[client_id - 1],
                                              val=split_val[client_id - 1],
                                              test=split_test[client_id - 1])
-        return datadict
-
-
-class DummyDataTranslator(BaseDataTranslator):
-    """
-    Translator split data_dict to `StandaloneDataDict`.
-    """
-    def __call__(self, datadict):
-        if not isinstance(datadict, StandaloneDataDict):
-            datadict = StandaloneDataDict(datadict, self.global_cfg)
         return datadict
