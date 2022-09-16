@@ -5,7 +5,7 @@ from federatedscope.core.data.base_data import ClientData
 class DummyDataTranslator(BaseDataTranslator):
     """
     DummyDataTranslator convert FL dataset to DataLoader.
-    Do not perform ML split and FL split.
+    Do not perform FL split.
     """
     def split(self, dataset):
         if not isinstance(dataset, dict):
@@ -18,5 +18,21 @@ class DummyDataTranslator(BaseDataTranslator):
                     self.client_cfgs.get(f'client_{client_id}'))
             else:
                 client_cfg = self.global_cfg
-            datadict[client_id] = ClientData(client_cfg, **dataset[client_id])
+
+            if isinstance(dataset[client_id], dict):
+                datadict[client_id] = ClientData(client_cfg,
+                                                 **dataset[client_id])
+            else:
+                # Do not have train/val/test
+                train, val, test = self.split_train_val_test(
+                    datadict[client_id])
+                tmp_dict = dict(train=train, val=val, test=test)
+                # Only for graph-level task, get number of graph labels
+                if client_cfg.task.startswith('graph') and \
+                        client_cfg.out_channels == 0:
+                    s = set()
+                    for g in datadict[client_id]:
+                        s.add(g.y.item())
+                    tmp_dict['num_label'] = len(s)
+                datadict[client_id] = ClientData(client_cfg, **tmp_dict)
         return datadict

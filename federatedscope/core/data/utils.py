@@ -57,7 +57,7 @@ def load_dataset(config):
         dataset, modified_config = load_linklevel_dataset(config)
     elif config.data.type.lower() in [
             'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace', 'sider',
-            'clintox', 'esol', 'freesolv', 'lipo'
+            'clintox', 'esol', 'freesolv', 'lipo', 'cikmcup'
     ] or config.data.type.startswith('graph_multi_domain'):
         from federatedscope.gfl.dataloader import load_graphlevel_dataset
         dataset, modified_config = load_graphlevel_dataset(config)
@@ -71,9 +71,6 @@ def load_dataset(config):
     elif '@' in config.data.type.lower():
         from federatedscope.core.data.utils import load_external_data
         dataset, modified_config = load_external_data(config)
-    elif 'cikmcup' in config.data.type.lower():
-        from federatedscope.gfl.dataset.cikm_cup import load_cikmcup_data
-        dataset, modified_config = load_cikmcup_data(config)
     elif config.data.type is None or config.data.type == "":
         # The participant (only for server in this version) does not own data
         dataset = None

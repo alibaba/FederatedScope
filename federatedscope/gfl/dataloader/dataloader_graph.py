@@ -1,22 +1,12 @@
-import numpy as np
-
 from torch_geometric import transforms
-from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.core.data import ClientData, StandaloneDataDict
+from federatedscope.gfl.dataset.cikm_cup import CIKMCUPDataset
 
 
-def get_numGraphLabels(dataset):
-    s = set()
-    for g in dataset:
-        s.add(g.y.item())
-    return len(s)
-
-
-def load_graphlevel_dataset(config=None, client_cfgs=None):
+def load_graphlevel_dataset(config=None):
     r"""Convert dataset to Dataloader.
     :returns:
          data_local_dict
@@ -31,8 +21,6 @@ def load_graphlevel_dataset(config=None, client_cfgs=None):
     splits = config.data.splits
     path = config.data.root
     name = config.data.type.upper()
-    client_num = config.federate.client_num
-    batch_size = config.dataloader.batch_size
 
     # Splitter
     splitter = get_splitter(config)
@@ -103,6 +91,8 @@ def load_graphlevel_dataset(config=None, client_cfgs=None):
                     transform=transforms_funcs['transform']
                     if 'transform' in transforms_funcs else None)
             dataset.append(tmp_dataset)
+    elif name == 'CIKM':
+        dataset = CIKMCUPDataset(config.data.root)
     else:
         raise ValueError(f'No dataset named: {name}!')
 
@@ -111,41 +101,7 @@ def load_graphlevel_dataset(config=None, client_cfgs=None):
     config.merge_from_list(['federate.client_num', client_num])
 
     # get local dataset
-    data_local_dict = dict()
-
-    # Build train/valid/test dataloader
-    raw_train = []
-    raw_valid = []
-    raw_test = []
-    for client_idx, gs in enumerate(dataset):
-        if client_cfgs is not None:
-            client_cfg = config.clone()
-            client_cfg.merge_from_other_cfg(
-                client_cfgs.get(f'client_{client_idx+1}'))
-        else:
-            client_cfg = config
-
-        index = np.random.permutation(np.arange(len(gs)))
-        train_idx = index[:int(len(gs) * splits[0])]
-        valid_idx = index[int(len(gs) *
-                              splits[0]):int(len(gs) * sum(splits[:2]))]
-        test_idx = index[int(len(gs) * sum(splits[:2])):]
-        client_data = ClientData(DataLoader,
-                                 client_cfg,
-                                 train=[gs[idx] for idx in train_idx],
-                                 val=[gs[idx] for idx in valid_idx],
-                                 test=[gs[idx] for idx in test_idx])
-        client_data['num_label'] = get_numGraphLabels(gs)
-
-        data_local_dict[client_idx + 1] = client_data
-        raw_train = raw_train + [gs[idx] for idx in train_idx]
-        raw_valid = raw_valid + [gs[idx] for idx in valid_idx]
-        raw_test = raw_test + [gs[idx] for idx in test_idx]
-    if not name.startswith('graph_multi_domain'.upper()):
-        data_local_dict[0] = ClientData(DataLoader,
-                                        config,
-                                        train=raw_train,
-                                        val=raw_valid,
-                                        test=raw_test)
-
-    return StandaloneDataDict(data_local_dict, config), config
+    data_dict = dict()
+    for client_idx in range(1, len(dataset) + 1):
+        data_dict[client_idx] = dataset[client_idx]
+    return data_dict, config

@@ -16,17 +16,19 @@ except ImportError as error:
         f'{error} in `federatedscope.contrib.data`, some modules are not '
         f'available.')
 
+# TODO: Add PyGNodeDataTranslator and PyGLinkDataTranslator
+# TODO: move splitter to PyGNodeDataTranslator and PyGLinkDataTranslator
 TRANS_DATA_MAP = {
     'BaseDataTranslator': [
         '.*?@.*?', 'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace',
         'sider', 'clintox', 'esol', 'freesolv', 'lipo'
     ],
-    'PyGLinkDataTranslator': ['fb15k-237', 'wn18'],
     'DummyDataTranslator': [
         'toy', 'quadratic', 'femnist', 'celeba', 'shakespeare', 'twitter',
         'subreddit', 'synthetic', 'ciao', 'epinions', '.*?vertical_fl_data.*?',
         '.*?movielens.*?', '.*?cikmcup.*?', 'graph_multi_domain.*?', 'cora',
-        'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?'
+        'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?', 'fb15k-237',
+        'wn18'
     ],  # Dummy for FL dataset
 }
 DATA_TRANS_MAP = RegexInverseMap(TRANS_DATA_MAP, None)
