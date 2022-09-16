@@ -42,9 +42,9 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
 
         """
         init_dict = dict()
-        if isinstance(data, Data):
+        if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
-                edges = data.edge_index.T[data[MODE2MASK[mode]]]
+                edges = data['data'].edge_index.T[data[MODE2MASK[mode]]]
                 # Use an index loader
                 index_loader = DataLoader(
                     range(edges.size(0)),
@@ -57,7 +57,7 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
                 init_dict["num_{}_data".format(mode)] = edges.size(0)
                 init_dict["{}_data".format(mode)] = None
         else:
-            raise TypeError("Type of data should be PyG data.")
+            raise TypeError("Type of data should be dict.")
         return init_dict
 
     def _hook_on_epoch_start_data2device(self, ctx):
