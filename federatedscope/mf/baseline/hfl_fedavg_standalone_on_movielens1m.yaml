@@ -9,6 +9,8 @@ federate:
 data:
   root: data/
   type: HFLMovieLens1M
+dataloader:
+  type: mf
 model:
   type: HMFNet
   hidden: 20

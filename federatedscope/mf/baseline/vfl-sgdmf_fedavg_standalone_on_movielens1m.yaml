@@ -10,6 +10,7 @@ data:
   root: data/
   type: VFLMovieLens1M
 dataloader:
+  type: mf
   theta: -1
   batch_size: 8
 model:

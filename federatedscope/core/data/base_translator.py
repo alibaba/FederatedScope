@@ -12,16 +12,14 @@ class BaseDataTranslator:
         Dataset -> ML split -> FL split -> Data (passed to FedRunner)
 
     """
-    def __init__(self, global_cfg, loader, client_cfgs=None):
+    def __init__(self, global_cfg, client_cfgs=None):
         """
         Convert data to `StandaloneDataDict`.
 
         Args:
             global_cfg: global CfgNode
-            loader: `torch.utils.data.DataLoader` or subclass of it
             client_cfgs: client cfg `Dict`
         """
-        self.loader = loader
         self.global_cfg = global_cfg.clone()
         self.client_cfgs = client_cfgs
         self.splitter = get_splitter(global_cfg)
@@ -76,10 +74,10 @@ class BaseDataTranslator:
 
     def split_to_client(self, train, val, test):
         """
-        Split dataset to clients and build DataLoader.
+        Split dataset to clients and build `ClientData`.
 
         Returns:
-            datadict (dict): dict of `ClientData` with client_idx as key.
+            data_dict (dict): dict of `ClientData` with client_idx as key.
 
         """
 
@@ -98,12 +96,8 @@ class BaseDataTranslator:
             split_test = self.splitter(test, prior=train_label_distribution)
 
         # Build data dict with `ClientData`, key `0` for server.
-        datadict = {
-            0: ClientData(self.loader,
-                          self.global_cfg,
-                          train=train,
-                          val=val,
-                          test=test)
+        data_dict = {
+            0: ClientData(self.global_cfg, train=train, val=val, test=test)
         }
         for client_id in range(1, client_num + 1):
             if self.client_cfgs is not None:
@@ -112,9 +106,8 @@ class BaseDataTranslator:
                     self.client_cfgs.get(f'client_{client_id}'))
             else:
                 client_cfg = self.global_cfg
-            datadict[client_id] = ClientData(self.loader,
-                                             client_cfg,
-                                             train=split_train[client_id - 1],
-                                             val=split_val[client_id - 1],
-                                             test=split_test[client_id - 1])
-        return datadict
+            data_dict[client_id] = ClientData(client_cfg,
+                                              train=split_train[client_id - 1],
+                                              val=split_val[client_id - 1],
+                                              test=split_test[client_id - 1])
+        return data_dict

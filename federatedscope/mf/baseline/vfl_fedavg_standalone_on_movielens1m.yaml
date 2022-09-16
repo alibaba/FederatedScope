@@ -9,6 +9,8 @@ federate:
 data:
   root: data/
   type: VFLMovieLens1M
+dataloader:
+  type: mf
 model:
   type: VMFNet
   hidden: 20

@@ -26,9 +26,6 @@ def extend_dp_cfg(cfg):
     cfg.sgdmf.delta = 0.5  # \delta in dp
     cfg.sgdmf.constant = 1.  # constant
 
-    cfg.dataloader.theta = -1  # -1 means per-rating privacy,
-    # otherwise per-user privacy
-
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_dp_cfg)
 

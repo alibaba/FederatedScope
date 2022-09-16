@@ -10,6 +10,7 @@ data:
   root: data/
   type: HFLMovieLens1M
 dataloader:
+  type: mf
   theta: -1
 model:
   type: HMFNet

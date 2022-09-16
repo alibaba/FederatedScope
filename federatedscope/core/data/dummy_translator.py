@@ -19,7 +19,6 @@ class DummyDataTranslator(BaseDataTranslator):
             else:
                 client_cfg = self.global_cfg
             datadict[client_id] = ClientData(
-                self.loader,
                 client_cfg,
                 train=dataset[client_id].get('train'),
                 val=dataset[client_id].get('val'),

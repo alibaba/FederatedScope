@@ -2,11 +2,10 @@ import pickle
 
 import numpy as np
 
-from federatedscope.core.data import StandaloneDataDict
 from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 
 
-def load_toy_data(config=None, client_cfgs=None):
+def load_toy_data(config=None):
     generate = config.federate.mode.lower() == 'standalone'
 
     def _generate_data(client_num=5,

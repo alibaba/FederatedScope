@@ -1,13 +1,10 @@
-from torch.utils.data import DataLoader
-
 from federatedscope.nlp.dataset.leaf_nlp import LEAF_NLP
 from federatedscope.nlp.dataset.leaf_twitter import LEAF_TWITTER
 from federatedscope.nlp.dataset.leaf_synthetic import LEAF_SYNTHETIC
 from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.core.data import ClientData, StandaloneDataDict
 
 
-def load_nlp_dataset(config=None, client_cfgs=None):
+def load_nlp_dataset(config=None):
     r"""
     return {
                 'client_id': {
@@ -49,19 +46,8 @@ def load_nlp_dataset(config=None, client_cfgs=None):
     config.merge_from_list(['federate.client_num', client_num])
 
     # get local dataset
-    data_local_dict = dict()
+    data_dict = dict()
     for client_idx in range(1, client_num + 1):
-        if client_cfgs is not None:
-            client_cfg = config.clone()
-            client_cfg.merge_from_other_cfg(
-                client_cfgs.get(f'client_{client_idx}'))
-        else:
-            client_cfg = config
-        client_data = ClientData(DataLoader,
-                                 client_cfg,
-                                 train=dataset[client_idx - 1].get('train'),
-                                 val=dataset[client_idx - 1].get('val'),
-                                 test=dataset[client_idx - 1].get('test'))
-        data_local_dict[client_idx] = client_data
+        data_dict[client_idx] = dataset[client_idx - 1]
 
-    return StandaloneDataDict(data_local_dict, config), config
+    return data_dict, config

@@ -7,9 +7,7 @@ from collections import defaultdict
 import numpy as np
 from random import shuffle
 
-import torch.utils
-
-from federatedscope.core.auxiliaries.data_builder import logger
+logger = logging.getLogger(__name__)
 
 
 class RegexInverseMap:
@@ -30,21 +28,21 @@ class RegexInverseMap:
         return str(self._items.items())
 
 
-def load_dataset(config, client_cfgs):
+def load_dataset(config):
     if config.data.type.lower() == 'toy':
         from federatedscope.tabular.dataloader.toy import load_toy_data
-        dataset, modified_config = load_toy_data(config, client_cfgs)
+        dataset, modified_config = load_toy_data(config)
     elif config.data.type.lower() == 'quadratic':
         from federatedscope.tabular.dataloader import load_quadratic_dataset
-        dataset, modified_config = load_quadratic_dataset(config, client_cfgs)
+        dataset, modified_config = load_quadratic_dataset(config)
     elif config.data.type.lower() in ['femnist', 'celeba']:
         from federatedscope.cv.dataloader import load_cv_dataset
-        dataset, modified_config = load_cv_dataset(config, client_cfgs)
+        dataset, modified_config = load_cv_dataset(config)
     elif config.data.type.lower() in [
             'shakespeare', 'twitter', 'subreddit', 'synthetic'
     ]:
         from federatedscope.nlp.dataloader import load_nlp_dataset
-        dataset, modified_config = load_nlp_dataset(config, client_cfgs)
+        dataset, modified_config = load_nlp_dataset(config)
     elif config.data.type.lower() in [
             'cora',
             'citeseer',
@@ -53,29 +51,29 @@ def load_dataset(config, client_cfgs):
             'dblp_org',
     ] or config.data.type.lower().startswith('csbm'):
         from federatedscope.gfl.dataloader import load_nodelevel_dataset
-        dataset, modified_config = load_nodelevel_dataset(config, client_cfgs)
+        dataset, modified_config = load_nodelevel_dataset(config)
     elif config.data.type.lower() in ['ciao', 'epinions', 'fb15k-237', 'wn18']:
         from federatedscope.gfl.dataloader import load_linklevel_dataset
-        dataset, modified_config = load_linklevel_dataset(config, client_cfgs)
+        dataset, modified_config = load_linklevel_dataset(config)
     elif config.data.type.lower() in [
             'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace', 'sider',
             'clintox', 'esol', 'freesolv', 'lipo'
     ] or config.data.type.startswith('graph_multi_domain'):
         from federatedscope.gfl.dataloader import load_graphlevel_dataset
-        dataset, modified_config = load_graphlevel_dataset(config, client_cfgs)
+        dataset, modified_config = load_graphlevel_dataset(config)
     elif config.data.type.lower() == 'vertical_fl_data':
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         dataset, modified_config = load_vertical_data(config, generate=True)
     elif 'movielens' in config.data.type.lower(
     ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
-        dataset, modified_config = load_mf_dataset(config, client_cfgs)
+        dataset, modified_config = load_mf_dataset(config)
     elif '@' in config.data.type.lower():
         from federatedscope.core.data.utils import load_external_data
-        dataset, modified_config = load_external_data(config, client_cfgs)
+        dataset, modified_config = load_external_data(config)
     elif 'cikmcup' in config.data.type.lower():
         from federatedscope.gfl.dataset.cikm_cup import load_cikmcup_data
-        dataset, modified_config = load_cikmcup_data(config, client_cfgs)
+        dataset, modified_config = load_cikmcup_data(config)
     elif config.data.type is None or config.data.type == "":
         # The participant (only for server in this version) does not own data
         dataset = None
@@ -85,7 +83,7 @@ def load_dataset(config, client_cfgs):
     return dataset, modified_config
 
 
-def load_external_data(config=None, client_cfgs=None):
+def load_external_data(config=None):
     r""" Based on the configuration file, this function imports external
     datasets and applies train/valid/test splits and split by some specific
     `splitter` into the standard FederatedScope input data format.

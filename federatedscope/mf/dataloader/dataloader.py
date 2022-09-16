@@ -7,8 +7,6 @@ import numpy as np
 import collections
 import importlib
 
-from federatedscope.core.data import StandaloneDataDict
-
 MFDATA_CLASS_DICT = {
     "vflmovielens1m": "VFLMovieLens1M",
     "vflmovielens10m": "VFLMovieLens10M",
@@ -48,32 +46,15 @@ def load_mf_dataset(config=None, client_cfgs=None):
         raise NotImplementedError("Dataset {} is not implemented.".format(
             config.data.type))
 
-    data_local_dict = collections.defaultdict(dict)
-    for id_client, data in dataset.data.items():
-        if client_cfgs is not None:
-            client_cfg = config.clone()
-            client_cfg.merge_from_other_cfg(
-                client_cfgs.get(f'client_{id_client}'))
-        else:
-            client_cfg = config
-        data_local_dict[id_client]["train"] = MFDataLoader(
-            data["train"],
-            shuffle=client_cfg.dataloader.shuffle,
-            batch_size=client_cfg.dataloader.batch_size,
-            drop_last=client_cfg.dataloader.drop_last,
-            theta=client_cfg.dataloader.theta)
-        data_local_dict[id_client]["test"] = MFDataLoader(
-            data["test"],
-            shuffle=False,
-            batch_size=client_cfg.dataloader.batch_size,
-            drop_last=client_cfg.dataloader.drop_last,
-            theta=client_cfg.dataloader.theta)
+    data_dict = collections.defaultdict(dict)
+    for client_idx, data in dataset.data.items():
+        data_dict[client_idx] = data
 
     # Modify config
     config.merge_from_list(['model.num_user', dataset.n_user])
     config.merge_from_list(['model.num_item', dataset.n_item])
 
-    return StandaloneDataDict(data_local_dict, config), config
+    return data_dict, config
 
 
 class MFDataLoader(object):
