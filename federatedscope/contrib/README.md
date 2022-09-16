@@ -1,6 +1,6 @@
 # Register
 
-In addition to the rich collection of datasets, models, and evaluation metrics, FederatedScope also allows users to create their own or introduce more customized modules to FS. We provide `register` function to help build your own federated learning workflow, including:
+In addition to the rich collection of datasets, models, evaluation metrics, etc., FederatedScope (FS) also allows users to create their own ingredients or introduce more customized modules to FS. Inspired by GraphGym, we provide `register` mechanism to help integrating your own components into the FS-based federated learning workflow, including:
 
 * Configurations [`federatedscope/contrib/config`](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/contrib/config)
 * Data [`federatedscope/contrib/data`](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/contrib/data)
