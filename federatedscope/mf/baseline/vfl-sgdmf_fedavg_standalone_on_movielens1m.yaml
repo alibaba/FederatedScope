@@ -9,8 +9,9 @@ federate:
 data:
   root: data/
   type: VFLMovieLens1M
+dataloader:
+  theta: -1
   batch_size: 8
-  num_workers: 0
 model:
   type: VMFNet
   hidden: 20
@@ -30,4 +31,3 @@ sgdmf:
   epsilon: 4.
   delta: 0.75
   R: 5.
-  theta: -1

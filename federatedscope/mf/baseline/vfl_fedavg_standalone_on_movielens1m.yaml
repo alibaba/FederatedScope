@@ -9,8 +9,6 @@ federate:
 data:
   root: data/
   type: VFLMovieLens1M
-  batch_size: 64
-  num_workers: 0
 model:
   type: VMFNet
   hidden: 20

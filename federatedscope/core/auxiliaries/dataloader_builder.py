@@ -38,7 +38,7 @@ def get_dataloader(dataset, config, split='train'):
                 raw_args['sizes'] = [-1]
                 raw_args['batch_size'] = [4096]
             filtered_args = filter_dict(loader_cls.__init__, raw_args)
-            dataloader = DataLoader(dataset=dataset, **filtered_args)
+            dataloader = loader_cls(dataset=dataset, **filtered_args)
             return dataloader
         else:
             return dataset

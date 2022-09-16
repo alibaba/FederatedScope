@@ -12,6 +12,7 @@ data:
   root: data/
   type: cora
   splitter: 'louvain'
+dataloader:
   batch_size: 1
 model:
   type: gcn
