@@ -22,7 +22,7 @@ def load_nodelevel_dataset(config=None):
     path = config.data.root
     name = config.data.type.lower()
 
-    # TODO: move standalone dataset
+    # TODO: remove splitter
     # Splitter
     splitter = get_splitter(config)
     # Transforms
