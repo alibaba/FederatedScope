@@ -23,13 +23,14 @@ class DummyDataTranslator(BaseDataTranslator):
                 datadict[client_id] = ClientData(client_cfg,
                                                  **dataset[client_id])
             else:
+                print(type(datadict))
                 # Do not have train/val/test
                 train, val, test = self.split_train_val_test(
-                    datadict[client_id])
+                    dataset[client_id])
                 tmp_dict = dict(train=train, val=val, test=test)
                 # Only for graph-level task, get number of graph labels
-                if client_cfg.task.startswith('graph') and \
-                        client_cfg.out_channels == 0:
+                if client_cfg.model.task.startswith('graph') and \
+                        client_cfg.model.out_channels == 0:
                     s = set()
                     for g in datadict[client_id]:
                         s.add(g.y.item())

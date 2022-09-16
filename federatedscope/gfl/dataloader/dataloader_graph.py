@@ -1,7 +1,6 @@
 from torch_geometric import transforms
 from torch_geometric.datasets import TUDataset, MoleculeNet
 
-from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
 from federatedscope.gfl.dataset.cikm_cup import CIKMCUPDataset
 
@@ -22,9 +21,6 @@ def load_graphlevel_dataset(config=None):
     path = config.data.root
     name = config.data.type.upper()
 
-    # Splitter
-    splitter = get_splitter(config)
-
     # Transforms
     transforms_funcs = get_transform(config, 'torch_geometric')
 
@@ -39,18 +35,13 @@ def load_graphlevel_dataset(config=None):
             transforms_funcs['pre_transform'] = transforms.Constant(value=1.0,
                                                                     cat=False)
         dataset = TUDataset(path, name, **transforms_funcs)
-        if splitter is None:
-            raise ValueError('Please set the graph.')
-        dataset = splitter(dataset)
 
     elif name in [
             'HIV', 'ESOL', 'FREESOLV', 'LIPO', 'PCBA', 'MUV', 'BACE', 'BBBP',
             'TOX21', 'TOXCAST', 'SIDER', 'CLINTOX'
     ]:
         dataset = MoleculeNet(path, name, **transforms_funcs)
-        if splitter is None:
-            raise ValueError('Please set the graph.')
-        dataset = splitter(dataset)
+        return dataset, config
     elif name.startswith('graph_multi_domain'.upper()):
         """
             The `graph_multi_domain` datasets follows GCFL
@@ -103,5 +94,5 @@ def load_graphlevel_dataset(config=None):
     # get local dataset
     data_dict = dict()
     for client_idx in range(1, len(dataset) + 1):
-        data_dict[client_idx] = dataset[client_idx]
+        data_dict[client_idx] = dataset[client_idx - 1]
     return data_dict, config

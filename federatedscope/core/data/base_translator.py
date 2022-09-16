@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.data import ClientData, StandaloneDataDict
@@ -65,12 +66,16 @@ class BaseDataTranslator:
             assert len(dataset) == len(['train', 'val', 'test']), error_msg
             return [dataset[0], dataset[1], dataset[2]]
 
-        from torch.utils.data.dataset import random_split
+        index = np.random.permutation(np.arange(len(dataset)))
         train_size = int(splits[0] * len(dataset))
         val_size = int(splits[1] * len(dataset))
-        test_size = len(dataset) - train_size - val_size
-        split_data = random_split(dataset, [train_size, val_size, test_size])
-        return split_data
+
+        train_dataset = [dataset[x] for x in index[:train_size]]
+        val_dataset = [
+            dataset[x] for x in index[train_size:train_size + val_size]
+        ]
+        test_dataset = [dataset[x] for x in index[train_size + val_size:]]
+        return train_dataset, val_dataset, test_dataset
 
     def split_to_client(self, train, val, test):
         """
@@ -89,7 +94,12 @@ class BaseDataTranslator:
         # Split train/val/test to client
         if len(train) > 0:
             split_train = self.splitter(train)
-            train_label_distribution = [[j[1] for j in x] for x in split_train]
+            try:
+                train_label_distribution = [[j[1] for j in x]
+                                            for x in split_train]
+            except:
+                logger.warning('Cannot access train label distribution.')
+        # TODO: fix kwargs in splitter.
         if len(val) > 0:
             split_val = self.splitter(val, prior=train_label_distribution)
         if len(test) > 0:
