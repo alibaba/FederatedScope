@@ -6,8 +6,10 @@ from torch_geometric.utils import to_networkx, from_networkx
 import networkx as nx
 import community as community_louvain
 
+from federatedscope.core.splitters import BaseSplitter
 
-class LouvainSplitter(BaseTransform):
+
+class LouvainSplitter(BaseTransform, BaseSplitter):
     r"""
     Split Data into small data via louvain algorithm.
 
@@ -17,11 +19,10 @@ class LouvainSplitter(BaseTransform):
 
     """
     def __init__(self, client_num, delta=20):
-        self.client_num = client_num
         self.delta = delta
+        BaseSplitter.__init__(self, client_num)
 
     def __call__(self, data):
-
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,
@@ -71,6 +72,3 @@ class LouvainSplitter(BaseTransform):
             graphs.append(from_networkx(nx.subgraph(G, nodes)))
 
         return graphs
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.client_num})'
