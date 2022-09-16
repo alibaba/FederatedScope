@@ -24,7 +24,7 @@ class RelTypeSplitter(BaseTransform, BaseSplitter):
         self.alpha = alpha
         self.realloc_mask = realloc_mask
 
-    def __call__(self, data):
+    def __call__(self, data, **kwargs):
         data_list = []
         label = data.edge_type.numpy()
         idx_slice = dirichlet_distribution_noniid_slice(
