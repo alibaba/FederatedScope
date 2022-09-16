@@ -56,9 +56,6 @@ def load_linklevel_dataset(config=None):
         local_data = dataset[client_idx - 1]
         data_dict[client_idx] = local_data
         # To undirected and add self-loop
-        local_data.edge_index = add_self_loops(
-            to_undirected(remove_self_loops(local_data.edge_index)[0]),
-            num_nodes=local_data.x.shape[0])[0]
         data_dict[client_idx] = {
             'data': local_data,
             'train': [local_data],

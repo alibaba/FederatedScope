@@ -1,7 +1,6 @@
 import torch
 
 from torch.utils.data import DataLoader
-from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.enums import LIFECYCLE
@@ -44,7 +43,8 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         init_dict = dict()
         if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
-                edges = data['data'].edge_index.T[data[MODE2MASK[mode]]]
+                graph_data = data['data']
+                edges = graph_data.edge_index.T[graph_data[MODE2MASK[mode]]]
                 # Use an index loader
                 index_loader = DataLoader(
                     range(edges.size(0)),
@@ -61,6 +61,8 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         return init_dict
 
     def _hook_on_epoch_start_data2device(self, ctx):
+        if isinstance(ctx.data, dict):
+            ctx.data = ctx.data['data']
         ctx.data = ctx.data.to(ctx.device)
         # For handling different dict key
         if "input_edge_index" in ctx.data:
