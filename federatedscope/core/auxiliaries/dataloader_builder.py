@@ -15,8 +15,11 @@ def get_dataloader(dataset, config, split='train'):
             loader_cls = DataLoader
         elif config.dataloader.type == 'raw':
             loader_cls = None
-        elif config.dataloader.type == 'graphsaint':
-            if 'split' == 'train':
+        elif config.dataloader.type == 'pyg':
+            from torch_geometric.loader import DataLoader as PyGDataLoader
+            loader_cls = PyGDataLoader
+        elif config.dataloader.type == 'graphsaint-rw':
+            if split == 'train':
                 from torch_geometric.loader import GraphSAINTRandomWalkSampler
                 loader_cls = GraphSAINTRandomWalkSampler
             else:
@@ -35,12 +38,20 @@ def get_dataloader(dataset, config, split='train'):
             raw_args = dict(config.dataloader)
             if split != 'train':
                 raw_args['shuffle'] = False
-                raw_args['sizes'] = -1
+                raw_args['sizes'] = [-1]
                 # For evaluation in GFL
-                if config.dataloader.type in ['graphsaint', 'neighbor']:
+                if config.dataloader.type in ['graphsaint-rw', 'neighbor']:
                     raw_args['batch_size'] = 4096
+                    dataset = dataset[0].edge_index
+            else:
+                if config.dataloader.type in ['graphsaint-rw']:
+                    # Raw graph
+                    dataset = dataset[0]
+                elif config.dataloader.type in ['neighbor']:
+                    # edge_index of raw graph
+                    dataset = dataset[0].edge_index
             filtered_args = filter_dict(loader_cls.__init__, raw_args)
-            dataloader = loader_cls(dataset=dataset, **filtered_args)
+            dataloader = loader_cls(dataset, **filtered_args)
             return dataloader
         else:
             return dataset

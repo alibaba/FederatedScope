@@ -21,14 +21,12 @@ TRANS_DATA_MAP = {
         '.*?@.*?', 'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace',
         'sider', 'clintox', 'esol', 'freesolv', 'lipo'
     ],
-    'PyGNodeDataTranslator': [
-        'cora', 'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?'
-    ],
     'PyGLinkDataTranslator': ['fb15k-237', 'wn18'],
     'DummyDataTranslator': [
         'toy', 'quadratic', 'femnist', 'celeba', 'shakespeare', 'twitter',
         'subreddit', 'synthetic', 'ciao', 'epinions', '.*?vertical_fl_data.*?',
-        '.*?movielens.*?', '.*?cikmcup.*?', 'graph_multi_domain.*?'
+        '.*?movielens.*?', '.*?cikmcup.*?', 'graph_multi_domain.*?', 'cora',
+        'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?'
     ],  # Dummy for FL dataset
 }
 DATA_TRANS_MAP = RegexInverseMap(TRANS_DATA_MAP, None)

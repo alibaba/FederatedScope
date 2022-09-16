@@ -12,6 +12,7 @@ data:
   type: dblp_conf
   splits: [0.5, 0.2, 0.3]
 dataloader:
+  type: pyg
   batch_size: 1
 model:
   type: gcn

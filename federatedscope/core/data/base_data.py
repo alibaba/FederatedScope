@@ -122,24 +122,29 @@ class StandaloneDataDict(dict):
 
 class ClientData(dict):
     """
-        `ClientData` converts dataset to loader.
+        `ClientData` converts dataset to train/val/test DataLoader.
+        Key `data` in `ClientData` is the raw dataset.
     """
     client_cfg = None
 
-    def __init__(self, client_cfg, train=None, val=None, test=None):
+    def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
         """
 
         Args:
             loader: Dataloader class or data dict which have been built
             client_cfg: client-specific CfgNode
-            train: train dataset
-            val: valid dataset
-            test: test dataset
+            data: raw dataset, which will stay raw
+            train: train dataset, which will be converted to DataLoader
+            val: valid dataset, which will be converted to DataLoader
+            test: test dataset, which will be converted to DataLoader
         """
         self.train = train
         self.val = val
         self.test = test
         self.setup(client_cfg)
+        if kwargs is not None:
+            for key in kwargs:
+                self[key] = kwargs[key]
         super(ClientData, self).__init__()
 
     def setup(self, new_client_cfg=None):
@@ -161,10 +166,8 @@ class ClientData(dict):
         if self.train is not None:
             self['train'] = get_dataloader(self.train, self.client_cfg,
                                            'train')
-
         if self.val is not None:
             self['val'] = get_dataloader(self.train, self.client_cfg, 'val')
-
         if self.test is not None:
             self['test'] = get_dataloader(self.train, self.client_cfg, 'test')
         return True

@@ -24,6 +24,8 @@ data:
   # Use Louvain algorithm to split `Cora`
   splitter: 'louvain'
 dataloader:
+  # Type of sampler
+  type: pyg
   # Use fullbatch training, batch_size should be `1`
   batch_size: 1
 

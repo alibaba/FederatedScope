@@ -40,8 +40,7 @@ class MPNNs2s(nn.Module):
             x, edge_index, edge_attr, batch = data.x, data.edge_index, \
                                               data.edge_attr, data.batch
         elif isinstance(data, tuple):
-            x, edge_index, edge_attr, batch = data.x, data.edge_index, \
-                                              data.edge_attr, data.batch
+            x, edge_index, edge_attr, batch = data
         else:
             raise TypeError('Unsupported data type!')
 
