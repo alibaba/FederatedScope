@@ -98,8 +98,8 @@ class BaseDataTranslator:
                 train_label_distribution = [[j[1] for j in x]
                                             for x in split_train]
             except:
-                logger.warning('Cannot access train label distribution.')
-        # TODO: fix kwargs in splitter.
+                logger.warning('Cannot access train label distribution for '
+                               'splitter.')
         if len(val) > 0:
             split_val = self.splitter(val, prior=train_label_distribution)
         if len(test) > 0:

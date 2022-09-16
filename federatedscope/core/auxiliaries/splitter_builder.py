@@ -40,6 +40,7 @@ def get_splitter(config):
         from federatedscope.core.splitters.graph import RandChunkSplitter
         splitter = RandChunkSplitter(client_num, **kwargs)
     else:
-        logger.warning(f'Splitter {config.data.splitter} not found.')
+        logger.warning(f'Splitter {config.data.splitter} not found or not '
+                       f'used.')
         splitter = None
     return splitter

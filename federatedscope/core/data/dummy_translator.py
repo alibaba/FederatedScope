@@ -23,7 +23,6 @@ class DummyDataTranslator(BaseDataTranslator):
                 datadict[client_id] = ClientData(client_cfg,
                                                  **dataset[client_id])
             else:
-                print(type(datadict))
                 # Do not have train/val/test
                 train, val, test = self.split_train_val_test(
                     dataset[client_id])
@@ -32,7 +31,7 @@ class DummyDataTranslator(BaseDataTranslator):
                 if client_cfg.model.task.startswith('graph') and \
                         client_cfg.model.out_channels == 0:
                     s = set()
-                    for g in datadict[client_id]:
+                    for g in dataset[client_id]:
                         s.add(g.y.item())
                     tmp_dict['num_label'] = len(s)
                 datadict[client_id] = ClientData(client_cfg, **tmp_dict)
