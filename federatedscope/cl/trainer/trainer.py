@@ -6,8 +6,10 @@ from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries import utils
+from torchviz import make_dot, make_dot_from_trace
 import torch
 import numpy as np
+import copy
 
 
 class CLTrainer(GeneralTorchTrainer):
@@ -21,22 +23,22 @@ class CLTrainer(GeneralTorchTrainer):
         super(CLTrainer, self).__init__(model, data, device, config,
                                               only_for_eval, monitor)
         self.batches_aug_data_1, self.batches_aug_data_2 = [], []
+        self.z1, self.z2 = torch.empty(1), torch.empty(1)
 
-    @torch.no_grad()
+    
     def get_train_pred_embedding(self):
         model = self.ctx.model.to(self.ctx.device)
         ys_prob_1, ys_prob_2 = [], []
-        x1, x2 = torch.cat(self.batches_aug_data_1, dim=0), torch.cat(self.batches_aug_data_2, dim=0)
-        z1, z2 = model(x1.to(self.ctx.device), x2.to(self.ctx.device))
-        ys_prob_1 = z1.detach().cpu()
-        ys_prob_2 = z2.detach().cpu()
+        x1, x2 = torch.cat(self.batches_aug_data_1, dim=0).to(self.ctx.device), torch.cat(self.batches_aug_data_2, dim=0).to(self.ctx.device)
+        z1, z2 = model(x1, x2)
         self.batches_aug_data_1, self.batches_aug_data_2 = [], []
+        self.z1, self.z2 = z1, z2
+        self.ctx.model.to(torch.device('cpu'))
         
-        return [ys_prob_1, ys_prob_2]
+        return [self.z1, self.z2]
     
     def _hook_on_batch_forward(self, ctx):
         x, label = [utils.move_to(_, ctx.device) for _ in ctx.data_batch]
-#         print(len(x), x[0].size(), x[1].size(), label.size())
         x1, x2 = x[0], x[1]
         if ctx.cur_mode in [MODE.TRAIN]:
             self.batches_aug_data_1.append(x1)
@@ -60,19 +62,14 @@ class CLTrainer(GeneralTorchTrainer):
         ctx.ys_true.append(ctx.y_true.detach().cpu().numpy())
         ctx.ys_prob.append(ctx.y_prob[0].detach().cpu().numpy())
         
-    def train_with_global_loss(self, model_para, loss):
+    def train_with_global_loss(self, loss):
         """
         Arguments:
-            model_para: model parameters
             loss: loss after global calculate
         :returns:
             grads: grads to optimize the model of other clients
         """
 
-        for key in model_para.keys():
-            if isinstance(model_para[key], list):
-                model_para[key] = torch.FloatTensor(model_para[key])
-        self.ctx.model.load_state_dict(model_para)
         self.ctx.model = self.ctx.model.to(self.ctx.device)
 
         self.ctx.optimizer.zero_grad()

@@ -6,7 +6,8 @@ import numpy as np
 from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.auxiliaries.utils import merge_dict
-from federatedscope.cl.fedgc.utils import compute_global_NT_xentloss
+from federatedscope.cl.fedgc.utils import global_NT_xentloss
+from torchviz import make_dot, make_dot_from_trace
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ class GlobalContrastFLServer(Server):
             idx: 0
             for idx in range(1, self._cfg.federate.client_num + 1)
         }
-
     
     def check_and_move_on(self, check_eval_result=False):
 
@@ -73,28 +73,24 @@ class GlobalContrastFLServer(Server):
                             raise ValueError(
                                 'GlobalContrastFL server not support multi-model.')
 
+                    global_loss_fn = global_NT_xentloss(device=self.device)
                     for client_id in train_msg_buffer:
                         z1, z2 = self.seqs_embedding[client_id][0], self.seqs_embedding[client_id][1]
                         others_z2 = [self.seqs_embedding[other_client_id][1] 
                                      for other_client_id in train_msg_buffer 
                                      if other_client_id != client_id]
 #                         print("start cal loss")
-                        self.loss_list[client_id] = compute_global_NT_xentloss(z1, z2, others_z2, device=self.device)
+                        self.loss_list[client_id] = global_loss_fn(z1, z2, others_z2)
                         print(self.loss_list[client_id])
+                        print('client {} global_loss:{}'.format(client_id, self.loss_list[client_id]))
 #                         print("end cal loss")
 
 
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != \
-                        self.total_round_num:
-                    #  Evaluate
-                    logger.info(
-                        'Server: Starting evaluation at round {:d}.'.format(
-                            self.state))
-                    self.eval()
+
 
                 if self.state < self.total_round_num:
-                    self._start_new_training_round(aggregated_num)
+                    
                     for client_id in train_msg_buffer:
 
                         msg_list = {
@@ -108,8 +104,17 @@ class GlobalContrastFLServer(Server):
                                     receiver=[client_id],
                                     state=self.state,
                                     content=msg_list))
+                        
+                    if self.state % self._cfg.eval.freq == 0 and self.state != \
+                        self.total_round_num:
+                    #  Evaluate
+                        logger.info(
+                            'Server: Starting evaluation at round {:d}.'.format(
+                                self.state))
+                        self.eval()
 
 
+                    self._start_new_training_round(aggregated_num)
                     # Move to next round of training
                     logger.info(
                         f'----------- Starting a new traininground(Round '

@@ -3,13 +3,13 @@ seed: 1
 device: 2
 federate:
   mode: standalone
-  total_round_num: 200
+  total_round_num: 20
   client_num: 5
-  share_local_model: True
+  share_local_model: False
   online_aggr: True
   sample_client_rate: 1.0
   method: fedgc
-  save_to: 'FedGC_on_Cifar4CL_lda0.1_lr0.25_lus5b_rn100.ckpt'
+  save_to: 'FedGC_on_Cifar4CL_lda0.1_lr0.05_lus2b_rn20.ckpt'
 data:
   root: 'data'
   type: 'Cifar4CL'
@@ -20,10 +20,10 @@ data:
 model:
   type: 'SimCLR'
 train:
-  local_update_steps: 5
+  local_update_steps: 2
   batch_or_epoch: 'batch'
   optimizer:
-    lr: 0.25
+    lr: 0.05
     momentum: 0.1
 early_stop:
   patience: 0
@@ -32,6 +32,6 @@ criterion:
 trainer:
   type: 'cltrainer'
 eval:
-  freq: 2
+  freq: 5
   metrics: ['loss']
   split: ['val', 'test']

@@ -70,8 +70,10 @@ def Cifar4CL(config):
     splitter = get_splitter(config)
     data_train = splitter(data_train)
     print([len(i) for i in data_train])
+    label_data_train = [[i[1] for i in list_i] for list_i in data_train]
     data_val = data_train
-    data_test = splitter(data_test)
+    data_test = splitter(data_test, prior=label_data_train)
+    print([len(i) for i in data_test])
 
 
     client_num = min(len(data_train), config.federate.client_num
@@ -136,8 +138,9 @@ def Cifar4LP(config):
     # Splitter
     splitter = get_splitter(config)
     data_train = splitter(data_train)
+    label_data_train = [[i[1] for i in list_i] for list_i in data_train]
     data_val = splitter(data_val)
-    data_test = splitter(data_test)
+    data_test = splitter(data_test, prior=label_data_train)
 
 
     client_num = min(len(data_train), config.federate.client_num

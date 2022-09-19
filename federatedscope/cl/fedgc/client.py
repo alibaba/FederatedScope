@@ -33,8 +33,7 @@ class GlobalContrastFLClient(Client):
     def callback_funcs_for_global_loss(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
         global_loss = content['global_loss']
-        model_para_old = self.trainer.get_model_para()
-        model_para = self.trainer.train_with_global_loss(model_para_old, global_loss)
+        model_para = self.trainer.train_with_global_loss(global_loss)
         self.trainer.update(model_para)
         
     def callback_funcs_for_model_para(self, message: Message):
