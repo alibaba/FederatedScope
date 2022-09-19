@@ -24,17 +24,18 @@ class AdditiveSecretSharing(SecretSharing):
     AdditiveSecretSharing class, which can split a number into frames and
     recover it by summing up
     """
-    def __init__(self, shared_party_num, size=20):
+    def __init__(self, shared_party_num, size=10):
         super(SecretSharing, self).__init__()
         assert shared_party_num > 1, "AdditiveSecretSharing require " \
                                      "shared_party_num > 1"
         self.shared_party_num = shared_party_num
         self.maximum = 2**size
-        self.mod_number = 2 * self.maximum + 1
-        self.epsilon = 1e4
+        self.mod_number = 2**(2 * size)
+        self.epsilon = 1e2
         self.mod_funs = np.vectorize(lambda x: x % self.mod_number)
         self.float2fixedpoint = np.vectorize(self._float2fixedpoint)
         self.fixedpoint2float = np.vectorize(self._fixedpoint2float)
+        self.downgrade = np.vectorize(self._downgrade)
 
     def secret_split(self, secret):
         """
@@ -57,15 +58,13 @@ class AdditiveSecretSharing(SecretSharing):
             shape = [self.shared_party_num - 1]
 
         secret = self.float2fixedpoint(secret)
-        secret_seq = np.random.uniform(low=0, high=self.mod_number, size=shape)
-        # last_seq = self.mod_funs(secret - self.mod_funs(np.sum(secret_seq,
-        # axis=0)))
-        last_seq = secret - np.sum(secret_seq, axis=0)
+        secret_seq = np.random.randint(low=0, high=self.mod_number, size=shape)
+        last_seq = self.mod_funs(secret -
+                                 self.mod_funs(np.sum(secret_seq, axis=0)))
 
         secret_seq = np.append(secret_seq,
                                np.expand_dims(last_seq, axis=0),
                                axis=0)
-
         return secret_seq
 
     def secret_split_for_piece_of_ss(self, secret):
@@ -87,15 +86,13 @@ class AdditiveSecretSharing(SecretSharing):
             shape = [self.shared_party_num - 1] + list(secret.shape)
         else:
             shape = [self.shared_party_num - 1]
-        secret_seq = np.random.uniform(low=0, high=self.mod_number, size=shape)
-        # last_seq = self.mod_funs(secret - self.mod_funs(np.sum(secret_seq,
-        # axis=0)))
-        last_seq = secret - np.sum(secret_seq, axis=0)
+        secret_seq = np.random.randint(low=0, high=self.mod_number, size=shape)
+        last_seq = self.mod_funs(secret -
+                                 self.mod_funs(np.sum(secret_seq, axis=0)))
 
         secret_seq = np.append(secret_seq,
                                np.expand_dims(last_seq, axis=0),
                                axis=0)
-        # secret_seq = [self.fixedpoint2float(x) for x in secret_seq]
         return secret_seq
 
     def secret_reconstruct(self, secret_seq):
@@ -123,13 +120,19 @@ class AdditiveSecretSharing(SecretSharing):
         return merge_model
 
     def _float2fixedpoint(self, x):
-        x = round(x * self.epsilon, 0)
+        x = round(x * self.epsilon)
         assert abs(x) < self.maximum
-        return x % self.mod_number
+        return x  # % self.mod_number
 
     def _fixedpoint2float(self, x):
         x = x % self.mod_number
+        # assert x <= self.maximum or x >= self.mod_number - self.maximum
         if x > self.maximum:
             return -1 * (self.mod_number - x) / self.epsilon
         else:
             return x / self.epsilon
+
+    def _downgrade(self, x):
+        x = round(x / self.epsilon)
+        x = x % self.mod_number
+        return x
