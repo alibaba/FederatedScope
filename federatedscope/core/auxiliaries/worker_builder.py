@@ -106,7 +106,7 @@ def get_server_cls(cfg):
     elif server_type == 'gcflplus':
         from federatedscope.gfl.gcflplus.worker import GCFLPlusServer
         return GCFLPlusServer
-    elif client_type == 'fedgc':
+    elif server_type == 'fedgc':
         from federatedscope.cl.fedgc.server import GlobalContrastFLServer
         return GlobalContrastFLServer
     else:
