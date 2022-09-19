@@ -9,20 +9,17 @@ REGULARIZER_NAME = "l2_regularizer"
 class L2Regularizer(Module):
     """Returns the l2 norm of weight
 
-        Arguments:
-            p (int): The order of norm.
-            tensor_before: The original matrix or vector
-            tensor_after: The updated matrix or vector
-
-        Returns:
-            Tensor: the norm of the given udpate.
+    Returns:
+        Tensor: the norm of the given udpate.
     """
     def __init__(self):
         super(L2Regularizer, self).__init__()
 
-    def forward(self, ctx):
+    def forward(self, ctx, skip_bn=False):
         l2_norm = 0.
-        for param in ctx.model.parameters():
+        for name, param in ctx.model.named_parameters():
+            if skip_bn and 'bn' in name:
+                continue
             l2_norm += torch.sum(param**2)
         return l2_norm
 
