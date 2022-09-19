@@ -1,4 +1,7 @@
+import logging
 import federatedscope.register as register
+
+logger = logging.getLogger(__name__)
 
 try:
     from torch import nn
@@ -6,6 +9,13 @@ try:
     from federatedscope.cl.loss import *
 except ImportError:
     nn = None
+
+try:
+    from federatedscope.contrib.loss import *
+except ImportError as error:
+    logger.warning(
+        f'{error} in `federatedscope.contrib.loss`, some modules are not '
+        f'available.')
 
 
 def get_criterion(type, device):

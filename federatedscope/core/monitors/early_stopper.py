@@ -57,12 +57,12 @@ class EarlyStopper(object):
         elif self.the_smaller_the_better and self.comparator(
                 self.improvement_operator(self.best_metric, -self.delta),
                 new_result):
-            # by default: add(val_loss, -delta) < new_result
+            # add(best_metric, -delta) < new_result
             self.counter_no_improve += 1
         elif not self.the_smaller_the_better and self.comparator(
-                self.improvement_operator(self.best_metric, self.delta),
-                new_result):
-            # typical case: add(eval_score, delta) > new_result
+                new_result,
+                self.improvement_operator(self.best_metric, self.delta)):
+            # new_result < add(best_metric, delta)
             self.counter_no_improve += 1
         else:
             self.best_metric = new_result
@@ -80,9 +80,10 @@ class EarlyStopper(object):
                         -self.delta), new_result):
                 self.early_stopped = True
             elif not self.the_smaller_the_better and self.comparator(
+                    new_result,
                     self.improvement_operator(
                         np.mean(history_result[-self.patience - 1:-1]),
-                        self.delta), new_result):
+                        self.delta)):
                 self.early_stopped = True
         else:
             self.early_stopped = False

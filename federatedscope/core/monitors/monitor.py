@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from federatedscope.core.auxiliaries.utils import logline_2_wandb_dict
+from federatedscope.core.auxiliaries.logging import logline_2_wandb_dict
 
 try:
     import torch
@@ -250,7 +250,7 @@ class Monitor(object):
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
 
-            from federatedscope.core.auxiliaries.utils import \
+            from federatedscope.core.auxiliaries.logging import \
                 logfile_2_wandb_dict
             with open(os.path.join(self.outdir, "eval_results.log"),
                       "r") as exp_log_f:

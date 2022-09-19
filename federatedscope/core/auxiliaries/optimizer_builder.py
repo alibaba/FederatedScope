@@ -1,9 +1,20 @@
+import copy
+import logging
+import federatedscope.register as register
+
+logger = logging.getLogger(__name__)
+
 try:
     import torch
 except ImportError:
     torch = None
 
-import copy
+try:
+    from federatedscope.contrib.optimizer import *
+except ImportError as error:
+    logger.warning(
+        f'{error} in `federatedscope.contrib.optimizer`, some modules are not '
+        f'available.')
 
 
 def get_optimizer(model, type, lr, **kwargs):
@@ -17,6 +28,12 @@ def get_optimizer(model, type, lr, **kwargs):
         del tmp_kwargs['__cfg_check_funcs__']
     if 'is_ready_for_run' in tmp_kwargs:
         del tmp_kwargs['is_ready_for_run']
+
+    for func in register.optimizer_dict.values():
+        optimizer = func(model, type, lr, **tmp_kwargs)
+        if optimizer is not None:
+            return optimizer
+
     if isinstance(type, str):
         if hasattr(torch.optim, type):
             if isinstance(model, torch.nn.Module):
