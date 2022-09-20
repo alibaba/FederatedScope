@@ -8,6 +8,7 @@ from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.workers.client import Client
 from federatedscope.core.auxiliaries.utils import merge_dict
+from federatedscope.core.data import ClientData
 
 from federatedscope.gfl.trainer.nodetrainer import NodeMiniBatchTrainer
 from federatedscope.gfl.model.fedsageplus import LocalSage_Plus, FedSage_Plus
@@ -257,9 +258,15 @@ class FedSagePlusClient(Client):
         self.data = data
         self.hide_data = HideGraph(self._cfg.fedsageplus.hide_portion)(
             data['data'])
+        # Convert to `ClientData`
+        self.hide_data = ClientData(self._cfg,
+                                    train=[self.hide_data],
+                                    val=[self.hide_data],
+                                    test=[self.hide_data],
+                                    data=self.hide_data)
         self.device = device
         self.sage_batch_size = 64
-        self.gen = LocalSage_Plus(data.x.shape[-1],
+        self.gen = LocalSage_Plus(data['data'].x.shape[-1],
                                   self._cfg.model.out_channels,
                                   hidden=self._cfg.model.hidden,
                                   gen_hidden=self._cfg.fedsageplus.gen_hidden,
@@ -305,15 +312,17 @@ class FedSagePlusClient(Client):
                     sender=self.ID,
                     receiver=[sender],
                     state=self.state,
-                    content=[gen_para, embedding, self.hide_data.num_missing]))
+                    content=[
+                        gen_para, embedding, self.hide_data['data'].num_missing
+                    ]))
         logger.info(f'\tClient #{self.ID} send gen_para to Server #{sender}.')
 
     def callback_funcs_for_gen_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
         gen_para, embedding, label, ID = content
 
-        gen_grad = self.trainer_fedgen.cal_grad(self.data, gen_para, embedding,
-                                                label)
+        gen_grad = self.trainer_fedgen.cal_grad(self.data['data'], gen_para,
+                                                embedding, label)
         self.state = round
         self.comm_manager.send(
             Message(msg_type='gradient',
@@ -336,14 +345,17 @@ class FedSagePlusClient(Client):
                     sender=self.ID,
                     receiver=[sender],
                     state=self.state,
-                    content=[gen_para, embedding, self.hide_data.num_missing]))
+                    content=[
+                        gen_para, embedding, self.hide_data['data'].num_missing
+                    ]))
         logger.info(f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
 
     def callback_funcs_for_setup_fedsage(self, message: Message):
         round, sender, _ = message.state, message.sender, message.content
-        self.filled_data = GraphMender(model=self.fedgen,
-                                       impaired_data=self.hide_data.cpu(),
-                                       original_data=self.data)
+        self.filled_data = GraphMender(
+            model=self.fedgen,
+            impaired_data=self.hide_data['data'].cpu(),
+            original_data=self.data['data'])
         subgraph_sampler = NeighborSampler(
             self.filled_data.edge_index,
             sizes=[-1],

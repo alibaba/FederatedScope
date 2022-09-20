@@ -25,7 +25,6 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
                 init_dict["{}_data".format(mode)] = None
                 # For node-level task dataloader contains one graph
                 init_dict["num_{}_data".format(mode)] = 1
-
         else:
             raise TypeError("Type of data should be dict.")
         return init_dict
