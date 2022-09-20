@@ -1,8 +1,5 @@
 import numpy as np
 
-from federatedscope.core.data import StandaloneDataDict
-from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
-
 
 def load_vertical_data(config=None, generate=False):
     """
@@ -37,23 +34,22 @@ def load_vertical_data(config=None, generate=False):
         data[0] = dict()
         data[0]['train'] = None
         data[0]['val'] = None
-        data[0]['test'] = WrapDataset(test_data)
+        data[0]['test'] = test_data
 
         # For Client #1
         data[1] = dict()
-        data[1]['train'] = WrapDataset({
+        data[1]['train'] = {
             'x': x[:train_num, :config.vertical.dims[0]],
             'y': y[:train_num]
-        })
+        }
         data[1]['val'] = None
-        data[1]['test'] = WrapDataset(test_data)
+        data[1]['test'] = test_data
 
         # For Client #2
         data[2] = dict()
-        data[2]['train'] = WrapDataset(
-            {'x': x[:train_num, config.vertical.dims[0]:]})
+        data[2]['train'] = {'x': x[:train_num, config.vertical.dims[0]:]}
         data[2]['val'] = None
-        data[2]['test'] = WrapDataset(test_data)
+        data[2]['test'] = test_data
 
         return data, config
     else:

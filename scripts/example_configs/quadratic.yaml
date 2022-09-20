@@ -16,5 +16,6 @@ model:
   type: 'quadratic'
 criterion:
   type: 'L1Loss'
-optimizer:
-  lr: 0.01
+train:
+  optimizer:
+    lr: 0.01

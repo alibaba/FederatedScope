@@ -45,6 +45,8 @@ def get_shape_from_data(data, model_config, backend='torch'):
         keys = list(data.keys())
         if 'test' in keys:
             key_representative = 'test'
+        elif 'val' in keys:
+            key_representative = 'val'
         elif 'train' in keys:
             key_representative = 'train'
         elif 'data' in keys:

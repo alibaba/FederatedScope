@@ -30,6 +30,7 @@ class vFLTest(unittest.TestCase):
 
         cfg.data.type = 'vertical_fl_data'
         cfg.data.size = 50
+        cfg.dataloader.type = 'raw'
 
         cfg.vertical.use = True
         cfg.vertical.key_size = 256

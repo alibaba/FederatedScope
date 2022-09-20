@@ -74,7 +74,7 @@ def load_toy_data(config=None):
 
         # server_data
         data[0] = dict()
-        data[0]['train'] = None
+        # data[0]['train'] = None
         data[0]['val'] = val_data
         data[0]['test'] = test_data
 
@@ -110,10 +110,10 @@ def load_toy_data(config=None):
     else:
         with open(config.distribute.data_file, 'rb') as f:
             data = pickle.load(f)
-        for client_id in data.keys():
-            data[client_id] = {
-                k: WrapDataset(np.asarray(v))
-                for k, v in data[client_id].items()
-            } if data[client_id] is not None else None
+    for client_id in data.keys():
+        data[client_id] = {
+            k: WrapDataset(v)
+            for k, v in data[client_id].items()
+        } if data[client_id] is not None else None
 
     return data, config

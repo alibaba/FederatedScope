@@ -255,7 +255,8 @@ class FedSagePlusClient(Client):
               self).__init__(ID, server_id, state, config, data, model, device,
                              strategy, *args, **kwargs)
         self.data = data
-        self.hide_data = HideGraph(self._cfg.fedsageplus.hide_portion)(data)
+        self.hide_data = HideGraph(self._cfg.fedsageplus.hide_portion)(
+            data['data'])
         self.device = device
         self.sage_batch_size = 64
         self.gen = LocalSage_Plus(data.x.shape[-1],
