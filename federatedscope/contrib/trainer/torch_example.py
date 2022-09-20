@@ -1,14 +1,18 @@
 import inspect
 from federatedscope.register import register_trainer
+from federatedscope.core.trainers import BaseTrainer
 
 # An example for converting torch training process to FS training process
+
+# Refer to `federatedscope.core.trainers.BaseTrainer` for interface.
+
 # Try with FEMNIST:
 #  python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml \
 #  trainer.type mytorchtrainer federate.sample_client_rate 0.01 \
 #  federate.total_round_num 5 eval.best_res_update_round_wise_key test_loss
 
 
-class MyTorchTrainer(object):
+class MyTorchTrainer(BaseTrainer):
     def __init__(self, model, data, device, **kwargs):
         import torch
         # NN modules
