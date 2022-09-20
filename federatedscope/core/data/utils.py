@@ -532,6 +532,7 @@ def filter_dict(func, kwarg):
 
 
 def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
+    from federatedscope.core.data.wrap_dataset import WrapDataset
     if specified_dataset_name is None:
         dataset_names = list(all_data[1].keys())  # e.g., train, test, val
     else:
@@ -548,32 +549,37 @@ def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
         id_has_key += 1
         if len(all_data) <= id_has_key:
             raise KeyError(f'All data do not key {data_name}.')
-    if isinstance(all_data[id_has_key][data_name], dict):
-        data_elem_names = list(
-            all_data[id_has_key][data_name].keys())  # e.g., x, y
-        merged_data = {name: defaultdict(list) for name in dataset_names}
-        for data_id in range(1, merged_max_data_id):
+    if issubclass(type(all_data[id_has_key][data_name]),
+                  torch.utils.data.DataLoader):
+        if isinstance(all_data[id_has_key][data_name].dataset, WrapDataset):
+            data_elem_names = list(
+                all_data[id_has_key][data_name].dataset.dataset.keys())  #
+            # e.g., x, y
+            merged_data = {name: defaultdict(list) for name in dataset_names}
+            for data_id in range(1, merged_max_data_id):
+                for d_name in dataset_names:
+                    if d_name not in all_data[data_id]:
+                        continue
+                    for elem_name in data_elem_names:
+                        merged_data[d_name][elem_name].append(
+                            all_data[data_id]
+                            [d_name].dataset.dataset[elem_name])
             for d_name in dataset_names:
-                if d_name not in all_data[data_id]:
-                    continue
                 for elem_name in data_elem_names:
-                    merged_data[d_name][elem_name].append(
-                        all_data[data_id][d_name][elem_name])
-        for d_name in dataset_names:
-            for elem_name in data_elem_names:
-                merged_data[d_name][elem_name] = np.concatenate(
-                    merged_data[d_name][elem_name])
-    elif issubclass(type(all_data[id_has_key][data_name]),
-                    torch.utils.data.DataLoader):
-        merged_data = all_data[id_has_key]
-        for data_id in range(1, merged_max_data_id):
-            if data_id == id_has_key:
-                continue
-            for d_name in dataset_names:
-                if d_name not in all_data[data_id]:
+                    merged_data[d_name][elem_name] = np.concatenate(
+                        merged_data[d_name][elem_name])
+            for name in all_data[id_has_key]:
+                all_data[id_has_key][name].dataset.dataset = merged_data[name]
+        else:
+            merged_data = all_data[id_has_key]
+            for data_id in range(1, merged_max_data_id):
+                if data_id == id_has_key:
                     continue
-                merged_data[d_name].dataset.extend(
-                    all_data[data_id][d_name].dataset)
+                for d_name in dataset_names:
+                    if d_name not in all_data[data_id]:
+                        continue
+                    merged_data[d_name].dataset.extend(
+                        all_data[data_id][d_name].dataset)
     else:
         raise NotImplementedError(
             "Un-supported type when merging data across different clients."

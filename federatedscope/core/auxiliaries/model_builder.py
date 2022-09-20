@@ -1,4 +1,7 @@
 import logging
+
+import numpy as np
+
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)

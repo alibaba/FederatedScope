@@ -2,7 +2,7 @@ import pickle
 
 import numpy as np
 
-from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
+from federatedscope.core.data.wrap_dataset import WrapDataset
 
 
 def load_toy_data(config=None):
@@ -110,6 +110,7 @@ def load_toy_data(config=None):
     else:
         with open(config.distribute.data_file, 'rb') as f:
             data = pickle.load(f)
+        data = {config.distribute.data_idx: data}
     for client_id in data.keys():
         data[client_id] = {
             k: WrapDataset(v)
