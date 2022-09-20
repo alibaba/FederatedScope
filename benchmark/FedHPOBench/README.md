@@ -37,8 +37,8 @@ We recommend installing FedHPOB directly using git by:
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
-cd FederatedScope/benchmark/FedHPOB
-export PYTHONPATH=~/FedHPOB:$PYTHONPATH
+cd FederatedScope/benchmark/FedHPOBench
+export PYTHONPATH=~/FedHPOBench:$PYTHONPATH
 ```
 
 ### Step 2. Prepare data files
