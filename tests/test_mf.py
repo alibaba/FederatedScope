@@ -2,52 +2,56 @@
 import unittest
 
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
-class vFLTest(unittest.TestCase):
+class MFTest(unittest.TestCase):
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
 
-    def set_config(self, cfg):
+    def set_config_movielens1m(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
         cfg.use_gpu = torch.cuda.is_available()
+        cfg.early_stop_patience = 100
+        cfg.eval.best_res_update_round_wise_key = "test_avg_loss"
+        cfg.eval.freq = 5
+        cfg.eval.metrics = []
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.total_round_num = 30
-        cfg.federate.client_num = 2
+        cfg.train.local_update_steps = 20
+        cfg.federate.total_round_num = 50
+        cfg.federate.client_num = 5
 
-        cfg.model.type = 'lr'
-        cfg.model.use_bias = False
+        cfg.data.root = 'test_data/'
+        cfg.data.type = 'vflmovielens1m'
+        cfg.data.batch_size = 32
 
-        cfg.train.optimizer.lr = 0.05
+        cfg.model.type = 'VMFNet'
+        cfg.model.hidden = 20
 
-        cfg.data.type = 'vertical_fl_data'
-        cfg.data.size = 50
+        cfg.train.optimizer.lr = 1.
+        cfg.train.optimizer.weight_decay = 0.0
 
-        cfg.vertical.use = True
-        cfg.vertical.key_size = 256
-
-        cfg.trainer.type = 'none'
-        cfg.eval.freq = 5
-        cfg.eval.best_res_update_round_wise_key = "test_loss"
+        cfg.criterion.type = 'MSELoss'
+        cfg.trainer.type = 'mftrainer'
+        cfg.seed = 123
 
         return backup_cfg
 
-    def test_vFL(self):
+    def test_mf_standalone(self):
         init_cfg = global_cfg.clone()
-        backup_cfg = self.set_config(init_cfg)
+        backup_cfg = self.set_config_movielens1m(init_cfg)
         setup_seed(init_cfg.seed)
         update_logger(init_cfg, True)
 
-        data, modified_config = get_data(init_cfg.clone())
-        init_cfg.merge_from_other_cfg(modified_config)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
         Fed_runner = FedRunner(data=data,
@@ -57,8 +61,10 @@ class vFLTest(unittest.TestCase):
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
-        print(test_results)
-        self.assertGreater(test_results['server_global_eval']['test_acc'], 0.8)
+
+        self.assertLess(
+            test_results["client_summarized_weighted_avg"]["test_avg_loss"],
+            50)
 
 
 if __name__ == '__main__':
