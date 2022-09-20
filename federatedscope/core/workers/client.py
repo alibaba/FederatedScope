@@ -12,11 +12,12 @@ from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict, \
     calculate_time_cost
+from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
 
 
-class Client(Worker):
+class Client(BaseClient):
     """
     The Client class, which describes the behaviors of client in an FL course.
     The behaviors are described by the handling functions (named as
@@ -92,7 +93,6 @@ class Client(Worker):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
 
         # Register message handlers
-        self.msg_handlers = dict()
         self._register_default_handlers()
 
         # Communication and communication ability
@@ -160,31 +160,6 @@ class Client(Worker):
             return model_deltas
         else:
             return model_deltas[0]
-
-    def register_handlers(self, msg_type, callback_func):
-        """
-        To bind a message type with a handling function.
-
-        Arguments:
-            msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received
-            message
-        """
-        self.msg_handlers[msg_type] = callback_func
-
-    def _register_default_handlers(self):
-        self.register_handlers('assign_client_id',
-                               self.callback_funcs_for_assign_id)
-        self.register_handlers('ask_for_join_in_info',
-                               self.callback_funcs_for_join_in_info)
-        self.register_handlers('address', self.callback_funcs_for_address)
-        self.register_handlers('model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('ss_model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('evaluate', self.callback_funcs_for_evaluate)
-        self.register_handlers('finish', self.callback_funcs_for_finish)
-        self.register_handlers('converged', self.callback_funcs_for_converged)
 
     def join_in(self):
         """
