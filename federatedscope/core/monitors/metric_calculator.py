@@ -179,15 +179,7 @@ def eval_roc_auc(y_true, y_prob, **kwargs):
 
 
 def eval_rmse(y_true, y_prob, **kwargs):
-    rmse_list = []
-
-    for i in range(y_true.shape[1]):
-        # ignore nan values
-        is_labeled = y_true[:, i] == y_true[:, i]
-        rmse_list.append(
-            np.sqrt(((y_true[is_labeled, i] - y_prob[is_labeled, i])**2).mean()))
-
-    return sum(rmse_list) / len(rmse_list)
+    return np.sqrt(np.mean(np.power(y_true - y_prob, 2)))
 
 
 def eval_mse(y_true, y_prob, **kwargs):
