@@ -410,11 +410,10 @@ class Client(Worker):
                                  self._cfg.dataloader.batch_size
                 else:
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self.trainer.ctx.num_train_batch
+                                 len(self.data['train'])
                 join_in_info['num_sample'] = num_sample
                 if self._cfg.trainer.type == 'nodefullbatch_trainer':
-                    join_in_info['num_sample'] = \
-                        self.trainer.ctx.data['data'].x.shape[0]
+                    join_in_info['num_sample'] = self.data['data'].x.shape[0]
             elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \
