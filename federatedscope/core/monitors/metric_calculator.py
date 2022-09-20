@@ -185,7 +185,7 @@ def eval_rmse(y_true, y_prob, **kwargs):
         # ignore nan values
         is_labeled = y_true[:, i] == y_true[:, i]
         rmse_list.append(
-            np.sqrt(((y_true[is_labeled] - y_prob[is_labeled])**2).mean()))
+            np.sqrt(((y_true[is_labeled, i] - y_prob[is_labeled, i])**2).mean()))
 
     return sum(rmse_list) / len(rmse_list)
 
