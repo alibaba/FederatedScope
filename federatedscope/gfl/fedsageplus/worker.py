@@ -121,7 +121,7 @@ class FedSagePlusServer(Server):
                     gen_grad[key].cpu())
         self.check_and_move_on()
 
-    def check_and_move_on(self, check_eval_result=False):
+    def check_and_move_on(self, check_eval_result=False, **kwargs):
         client_IDs = [i for i in range(1, self.client_num + 1)]
 
         if check_eval_result:

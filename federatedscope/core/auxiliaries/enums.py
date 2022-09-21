@@ -11,7 +11,7 @@ class MODE:
     FINETUNE = 'finetune'
 
 
-class MSGBUFFER:
+class STAGE:
     TRAIN = 'train'
     EVAL = 'eval'
     CONSULT = 'consult'

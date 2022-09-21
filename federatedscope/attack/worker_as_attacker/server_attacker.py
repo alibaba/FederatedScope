@@ -1,3 +1,4 @@
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 
@@ -284,7 +285,7 @@ class PassiveServer(Server):
                         name='image_state_{}_client_{}.png'.format(
                             message.state, message.sender))
 
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
 
 class PassivePIAServer(Server):
@@ -359,7 +360,7 @@ class PassivePIAServer(Server):
             # TODO: put this line to `check_and_move_on`
             # currently, no way to know the latest `sender`
             self.aggregator.inc(content)
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
         if self.state == self.total_round_num:
             self.pia_attacker.train_property_classifier()

@@ -16,7 +16,7 @@ from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
     merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
-from federatedscope.core.auxiliaries.enums import MSGBUFFER
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
 logger = logging.getLogger(__name__)
@@ -252,10 +252,10 @@ class Server(Worker):
                     logger.info('Time out at the training round #{}'.format(
                         self.state))
                     move_on_flag_eval = self.check_and_move_on(
-                        buffer_type=MSGBUFFER.EVAL,
+                        stage=STAGE.EVAL,
                         min_received_num=min_received_num)
                     move_on_flag = self.check_and_move_on(
-                        buffer_type=MSGBUFFER.TRAIN,
+                        stage=STAGE.TRAIN,
                         min_received_num=min_received_num)
                     if not move_on_flag and not move_on_flag_eval:
                         num_failure += 1
@@ -273,8 +273,8 @@ class Server(Worker):
                             f'Round #{self.state}) for {num_failure} time '
                             f'-------------')
                         # TODO: Clean the msg_buffer
-                        if self.state in self.msg_buffer[MSGBUFFER.TRAIN]:
-                            self.msg_buffer[MSGBUFFER.TRAIN][self.state].clear()
+                        if self.state in self.msg_buffer[STAGE.TRAIN]:
+                            self.msg_buffer[STAGE.TRAIN][self.state].clear()
 
                         self.broadcast_model_para(
                             msg_type='model_para',
@@ -286,7 +286,7 @@ class Server(Worker):
         self.terminate(msg_type='finish')
 
     def check_and_move_on(self,
-                          buffer_type,
+                          stage,
                           min_received_num=None):
         """
         To check the message_buffer. When enough messages are receiving,
@@ -294,7 +294,7 @@ class Server(Worker):
         the next training round) would be triggered.
 
         Arguments:
-            buffer_type (str): The type of checked message buffer, chosen from MSGBUFFER.TRAIN, MSGBUFFER.EVAL and MSGBUFFER.CONSULT
+            stage (str): The type of checked message buffer, chosen from MSGBUFFER.TRAIN, MSGBUFFER.EVAL and MSGBUFFER.CONSULT
             min_received_num (int): The minimum number of received messages
         """
         if min_received_num is None:
@@ -304,7 +304,7 @@ class Server(Worker):
                 min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        if buffer_type == MSGBUFFER.EVAL and self._cfg.federate.mode.lower(
+        if stage == STAGE.EVAL and self._cfg.federate.mode.lower(
         ) == "standalone":
             # in evaluation stage and standalone simulation mode, we assume
             # strong synchronization that receives responses from all clients
@@ -312,8 +312,8 @@ class Server(Worker):
 
         move_on_flag = True  # To record whether moving to a new training
         # round or finishing the evaluation
-        if self.check_buffer(self.state, min_received_num, buffer_type):
-            if buffer_type == MSGBUFFER.TRAIN:
+        if self.check_buffer(self.state, min_received_num, stage):
+            if stage == STAGE.TRAIN:
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
 
@@ -331,8 +331,8 @@ class Server(Worker):
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
                     # Clean the msg_buffer
-                    self.msg_buffer[MSGBUFFER.TRAIN][self.state - 1].clear()
-                    self.msg_buffer[MSGBUFFER.TRAIN][self.state] = dict()
+                    self.msg_buffer[STAGE.TRAIN][self.state - 1].clear()
+                    self.msg_buffer[STAGE.TRAIN][self.state] = dict()
                     self.staled_msg_buffer.clear()
                     # Start a new training round
                     self._start_new_training_round(aggregated_num)
@@ -395,8 +395,8 @@ class Server(Worker):
 
         # Clean the clients evaluation msg buffer
         if not self._cfg.federate.make_global_eval:
-            round = max(self.msg_buffer[MSGBUFFER.EVAL].keys())
-            self.msg_buffer[MSGBUFFER.EVAL][round].clear()
+            round = max(self.msg_buffer[STAGE.EVAL].keys())
+            self.msg_buffer[STAGE.EVAL][round].clear()
 
         if self.state == self.total_round_num:
             # break out the loop for distributed mode
@@ -406,7 +406,7 @@ class Server(Worker):
         """
         Perform federated aggregation and update the global model
         """
-        train_msg_buffer = self.msg_buffer[MSGBUFFER.TRAIN][self.state]
+        train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
         for model_idx in range(self.model_num):
             model = self.models[model_idx]
             aggregator = self.aggregators[model_idx]
@@ -525,8 +525,8 @@ class Server(Worker):
 
         :return:
         """
-        round = max(self.msg_buffer[MSGBUFFER.EVAL].keys())
-        eval_msg_buffer = self.msg_buffer[MSGBUFFER.EVAL][round]
+        round = max(self.msg_buffer[STAGE.EVAL].keys())
+        eval_msg_buffer = self.msg_buffer[STAGE.EVAL][round]
 
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
@@ -547,8 +547,8 @@ class Server(Worker):
         :returns: the formatted merged results
         """
 
-        round = max(self.msg_buffer[MSGBUFFER.EVAL].keys())
-        eval_msg_buffer = self.msg_buffer[MSGBUFFER.EVAL][round]
+        round = max(self.msg_buffer[STAGE.EVAL].keys())
+        eval_msg_buffer = self.msg_buffer[STAGE.EVAL][round]
         eval_res_participated_clients = []
         eval_res_unseen_clients = []
         for client_id in eval_msg_buffer:
@@ -703,7 +703,7 @@ class Server(Worker):
         """
         buffer = self.msg_buffer.get(buffer_type, dict())
 
-        if buffer_type == MSGBUFFER.TRAIN:
+        if buffer_type == STAGE.TRAIN:
             cur_buffer = buffer.get(cur_round, dict())
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
                 if self.cur_timestamp >= self.deadline_for_cur_round and len(
@@ -728,12 +728,12 @@ class Server(Worker):
                 return len(cur_buffer)+len(self.staled_msg_buffer) >= \
                        min_received_num
 
-        elif buffer_type == MSGBUFFER.EVAL:
+        elif buffer_type == STAGE.EVAL:
             # Evaluation won't block the training process
             cur_buffer = buffer.get(max(buffer.keys()), dict())
             return len(cur_buffer) >= min_received_num
 
-        elif buffer_type == MSGBUFFER.CONSULT:
+        elif buffer_type == STAGE.CONSULT:
             cur_buffer = buffer.get(cur_round, dict())
             return len(cur_buffer) >= min_received_num
 
@@ -804,7 +804,7 @@ class Server(Worker):
             return False
 
         self.cur_timestamp = self.deadline_for_cur_round
-        self.check_and_move_on(buffer_type=MSGBUFFER.TRAIN)
+        self.check_and_move_on(stage=STAGE.TRAIN)
         return True
 
     def terminate(self, msg_type='finish'):
@@ -893,10 +893,10 @@ class Server(Worker):
         self.cur_timestamp = timestamp
 
         if round == self.state:
-            if round not in self.msg_buffer[MSGBUFFER.TRAIN]:
-                self.msg_buffer[MSGBUFFER.TRAIN][round] = dict()
+            if round not in self.msg_buffer[STAGE.TRAIN]:
+                self.msg_buffer[STAGE.TRAIN][round] = dict()
             # Save the messages in this round
-            self.msg_buffer[MSGBUFFER.TRAIN][round][sender] = content
+            self.msg_buffer[STAGE.TRAIN][round][sender] = content
         elif round >= self.state - self.staleness_toleration:
             # Save the staled messages
             self.staled_msg_buffer.append((round, sender, content))
@@ -908,7 +908,7 @@ class Server(Worker):
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(content)
 
-        move_on_flag = self.check_and_move_on(buffer_type=MSGBUFFER.TRAIN)
+        move_on_flag = self.check_and_move_on(stage=STAGE.TRAIN)
         if self._cfg.asyn.use and self._cfg.asyn.broadcast_manner == \
                 'after_receiving':
             self.broadcast_model_para(msg_type='model_para',
@@ -977,9 +977,9 @@ class Server(Worker):
         sender = message.sender
         content = message.content
 
-        if round not in self.msg_buffer[MSGBUFFER.EVAL].keys():
-            self.msg_buffer[MSGBUFFER.EVAL][round] = dict()
+        if round not in self.msg_buffer[STAGE.EVAL].keys():
+            self.msg_buffer[STAGE.EVAL][round] = dict()
 
-        self.msg_buffer[MSGBUFFER.EVAL][round][sender] = content
+        self.msg_buffer[STAGE.EVAL][round][sender] = content
 
-        return self.check_and_move_on(buffer_type=MSGBUFFER.EVAL)
+        return self.check_and_move_on(stage=STAGE.EVAL)
