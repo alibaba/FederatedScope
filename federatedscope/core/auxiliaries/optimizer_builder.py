@@ -1,12 +1,21 @@
+import copy
+import logging
+import federatedscope.register as register
+
+logger = logging.getLogger(__name__)
+
 try:
     import torch
 except ImportError:
     torch = None
 
-from federatedscope.differential_privacy.optimizers import *
-from federatedscope.register import optimizer_dict
-
-import copy
+try:
+    from federatedscope.contrib.optimizer import *
+    from federatedscope.differential_privacy.optimizers import *
+except ImportError as error:
+    logger.warning(
+        f'{error} in `federatedscope.contrib.optimizer` or `federatedscope.differential_privacy.optimizers`, some modules are not '
+        f'available.')
 
 
 def get_optimizer(model, type, lr, **kwargs):
@@ -29,7 +38,7 @@ def get_optimizer(model, type, lr, **kwargs):
                 return getattr(torch.optim, type)(model, lr, **tmp_kwargs)
         else:
             # registered optimizers
-            for func in optimizer_dict.values():
+            for func in register.optimizer_dict.values():
                 optimizer = func(type)
                 if optimizer is not None:
                     return optimizer(model.parameters(), lr, **tmp_kwargs)

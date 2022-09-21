@@ -2,11 +2,24 @@ import logging
 
 from federatedscope.core.configs import constants
 from federatedscope.core.workers import Server, Client
+import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
 
+try:
+    from federatedscope.contrib.worker import *
+except ImportError as error:
+    logger.warning(
+        f'{error} in `federatedscope.contrib.worker`, some modules are not '
+        f'available.')
+
 
 def get_client_cls(cfg):
+    for func in register.worker_dict.values():
+        worker_class = func(cfg.federate.method.lower())
+        if worker_class is not None:
+            return worker_class['client']
+
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExClient
         return FedExClient
@@ -49,6 +62,11 @@ def get_client_cls(cfg):
 
 
 def get_server_cls(cfg):
+    for func in register.worker_dict.values():
+        worker_class = func(cfg.federate.method.lower())
+        if worker_class is not None:
+            return worker_class['server']
+
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExServer
         return FedExServer
@@ -72,18 +90,20 @@ def get_server_cls(cfg):
         return vFLServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:
-        client_type = constants.SERVER_TYPE[cfg.federate.method.lower()]
+        server_type = constants.SERVER_TYPE[cfg.federate.method.lower()]
     else:
-        client_type = "normal"
+        server_type = "normal"
         logger.warning(
             'Server for method {} is not implemented. Will use default one'.
             format(cfg.federate.method))
 
-    if client_type == 'fedsageplus':
+    if server_type == 'fedsageplus':
         from federatedscope.gfl.fedsageplus.worker import FedSagePlusServer
-        return FedSagePlusServer
-    elif client_type == 'gcflplus':
+        server_class = FedSagePlusServer
+    elif server_type == 'gcflplus':
         from federatedscope.gfl.gcflplus.worker import GCFLPlusServer
-        return GCFLPlusServer
+        server_class = GCFLPlusServer
     else:
-        return Server
+        server_class = Server
+
+    return server_class

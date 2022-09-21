@@ -52,11 +52,22 @@ class CN(CfgNode):
         else:
             raise AttributeError(name)
 
-    def clear_check_funcs(self):
-        self.__cfg_check_funcs__.clear()
+    def __delattr__(self, name):
+        if name in self:
+            del self[name]
+        else:
+            raise AttributeError(name)
 
-    def clear_help_info(self):
-        self.__help_info__.clear()
+    def clear_aux_info(self):
+        if hasattr(self, "__cfg_check_funcs__"):
+            delattr(self, "__cfg_check_funcs__")
+        if hasattr(self, "__help_info__"):
+            delattr(self, "__help_info__")
+        if hasattr(self, "is_ready_for_run"):
+            delattr(self, "is_ready_for_run")
+        for v in self.values():
+            if isinstance(v, CN):
+                v.clear_aux_info()
 
     def print_help(self, arg_name=""):
         """
@@ -197,8 +208,7 @@ class CN(CfgNode):
                 from contextlib import redirect_stdout
                 with redirect_stdout(outfile):
                     tmp_cfg = copy.deepcopy(self)
-                    tmp_cfg.clear_check_funcs()
-                    tmp_cfg.clear_help_info()
+                    tmp_cfg.clear_aux_info()
                     print(tmp_cfg.dump())
                 if self.wandb.use:
                     # update the frozen config

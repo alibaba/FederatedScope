@@ -5,6 +5,8 @@ from rdkit import Chem
 from rdkit import RDLogger
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
+from federatedscope.core.splitters import BaseSplitter
+
 logger = logging.getLogger(__name__)
 
 RDLogger.DisableLog('rdApp.*')
@@ -47,9 +49,9 @@ def gen_scaffold_split(dataset, client_num=5):
     return [splits[ID] for ID in range(client_num)]
 
 
-class ScaffoldSplitter:
+class ScaffoldSplitter(BaseSplitter):
     def __init__(self, client_num):
-        self.client_num = client_num
+        super(ScaffoldSplitter, self).__init__(client_num)
 
     def __call__(self, dataset):
         r"""Split dataset with smiles string into scaffold split
@@ -65,6 +67,3 @@ class ScaffoldSplitter:
         idx_slice = gen_scaffold_split(dataset)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}()'
