@@ -47,18 +47,28 @@ class ClientManager(object):
             raise IndexError(f"Client ID {client_id} doesn't exist.")
 
     @property
-    def _num_join_client(self):
-        return self._num_join_client
+    def join_in_client_num(self):
+        return self._num_client_join
+
+    def register_client(self):
+        self._num_client_join += 1
+        return self._num_client_join
 
     def join_in(self, client_id):
         """
-        Register the client as online
+        Register the client, and assign client_id if it doesn't have
         """
-        self.__assert_client(client_id)
+        # Count the number of client
+        self._num_client_join += 1
+
+        if client_id == -1:
+            # Doesn't have client_id
+            client_id = self._num_client_join
 
         # Step into consulting (exchange information between server and client)
-        self._state_client[client_id] = CLIENT_STATE.CONSULTING
-        self._num_join_client += 1
+        self._state_client[client_id] = CLIENT_STATE.IDLE
+        # Return the client_id
+        return client_id
 
     def set_offline(self, client_id):
         """
@@ -67,7 +77,14 @@ class ClientManager(object):
         self.__assert_client(client_id)
 
         self.change_state(client_id, CLIENT_STATE.OFFLINE)
-        self._num_join_client -= 1
+        self._num_client_join -= 1
+
+    def block_unseen_client(self):
+        """
+        Set the state of the client as CLIENT_STATE.SIDELINE
+        """
+        if self._num_client_unseen > 0:
+            self.change_state(self._num_client_unseen, CLIENT_STATE.SIDELINE)
 
     def finish_consult(self, client_id):
         """
@@ -79,19 +96,19 @@ class ClientManager(object):
         """
         Check if enough clients has joined in.
         """
-        return self._num_join_client == self._num_client
+        return self._num_client_join == self._num_client_total
 
     def check_client_info(self):
         """
         Check if enough information is collected from the clients
         """
-        return len(self._info_by_client) == self._num_client
+        return len(self._info_by_client) == self._num_client_total
 
     def check_client_consult(self):
         """
         Check if all clients finish requiring information from the server (The state is CLIENT_STATE.IDLE)
         """
-        return len(self.get_idle_client()) == self._num_client
+        return len(self.get_idle_client()) == self._num_client_total
 
     def update_client_info(self, client_id, info: dict):
         """
@@ -143,7 +160,7 @@ class ClientManager(object):
     def get_client_by_state(self, state):
         CLIENT_STATE.assert_value(state)
 
-        return [client_id for client_id, client_state in self._state_client if client_state == state]
+        return [client_id for client_id, client_state in self._state_client.items() if client_state == state]
 
     def get_consult_client(self):
         """

@@ -54,7 +54,7 @@ class LIFECYCLE(BasicEnum):
 
 
 class CLIENT_STATE(BasicEnum):
-    OFFLINE = -1    # not join
+    OFFLINE = -1    # not join in
     CONSULTING = 2  # join in and is consulting
     IDLE = 1        # join in but not working, available for training
     WORKING = 0     # join in and is working

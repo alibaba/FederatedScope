@@ -17,7 +17,7 @@ from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
     merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
-from federatedscope.core.auxiliaries.enums import STAGE
+from federatedscope.core.auxiliaries.enums import STAGE, CLIENT_STATE
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
 logger = logging.getLogger(__name__)
@@ -133,22 +133,10 @@ class Server(Worker):
         self._client_num = client_num
         self._total_round_num = total_round_num
         self.sample_client_num = int(self._cfg.federate.sample_client_num)
-        self.join_in_client_num = 0
         self.join_in_info = dict()
 
         # Server state
         self.is_finish = False
-
-        # Sampler
-        if self._cfg.federate.sampler in ['uniform']:
-            self.sampler = get_sampler(
-                sample_strategy=self._cfg.federate.sampler,
-                client_num=self.client_num,
-                client_info=None)
-        else:
-            # Some type of sampler would be instantiated in trigger_for_start,
-            # since they need more information
-            self.sampler = None
 
         # Current Timestamp
         self.cur_timestamp = 0
@@ -230,7 +218,7 @@ class Server(Worker):
         """
 
         # Begin: Broadcast model parameters and start to FL train
-        while self.join_in_client_num < self.client_num:
+        while self.client_manager.check_client_join_in():
             msg = self.comm_manager.receive()
             self.msg_handlers[msg.msg_type](msg)
 
@@ -612,35 +600,27 @@ class Server(Worker):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1,
-                             filter_unseen_clients=True):
+                             sample_client_num=None):
         """
         To broadcast the message to all clients or sampled clients
 
         Arguments:
             msg_type: 'model_para' or other user defined msg_type
             sample_client_num: the number of sampled clients in the broadcast
-                behavior. And sample_client_num = -1 denotes to broadcast to
+                behavior. And sample_client_num = None denotes to broadcast to
                 all the clients.
-            filter_unseen_clients: whether filter out the unseen clients that
-                do not contribute to FL process by training on their local
-                data and uploading their local model update. The splitting is
-                useful to check participation generalization gap in [ICLR'22,
-                What Do We Mean by Generalization in Federated Learning?]
-                You may want to set it to be False when in evaluation stage
         """
-        if filter_unseen_clients:
-            # to filter out the unseen clients when sampling
-            self.sampler.change_state(self.unseen_clients_id, 'unseen')
-
-        if sample_client_num > 0:
-            receiver = self.sampler.sample(size=sample_client_num)
+        # Get the receivers
+        if sample_client_num:
+            receiver = self.client_manager.sample(size=sample_client_num)
         else:
-            # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
-            if msg_type == 'model_para':
-                self.sampler.change_state(receiver, 'working')
 
+        if msg_type == 'model_para':
+            # Training
+            self.client_manager.change_state(receiver, CLIENT_STATE.WORKING)
+
+        # Inject noise
         if self._noise_injector is not None and msg_type == 'model_para':
             # Inject noise only when broadcast parameters
             for model_idx_i in range(len(self.models)):
@@ -650,6 +630,7 @@ class Server(Worker):
                 self._noise_injector(self._cfg, num_sample_clients,
                                      self.models[model_idx_i])
 
+        # Prepare model parameters
         skip_broadcast = self._cfg.federate.method in ["local", "global"]
         if self.model_num > 1:
             model_para = [{} if skip_broadcast else model.state_dict()
@@ -657,6 +638,7 @@ class Server(Worker):
         else:
             model_para = {} if skip_broadcast else self.model.state_dict()
 
+        # Send model parameters
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
@@ -667,10 +649,6 @@ class Server(Worker):
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
-
-        if filter_unseen_clients:
-            # restore the state of the unseen clients within sampler
-            self.sampler.change_state(self.unseen_clients_id, 'seen')
 
     def broadcast_client_address(self):
         """
@@ -745,9 +723,9 @@ class Server(Worker):
         """
 
         if len(self._cfg.federate.join_in_info) != 0:
-            return len(self.join_in_info) == self.client_num
+            return self.client_manager.check_client_info()
         else:
-            return self.join_in_client_num == self.client_num
+            return self.client_manager.check_client_join_in()
 
     def trigger_for_start(self):
         """
@@ -761,6 +739,8 @@ class Server(Worker):
             # Prepare for training
             # init sampler within the client manager after finishing exchanging information
             self.client_manager.init_sampler()
+            # Block unseen clients from training
+            self.client_manager.block_unseen_client()
 
             # change the deadline if the asyn.aggregator is `time up`
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
@@ -868,7 +848,9 @@ class Server(Worker):
         sender = message.sender
         timestamp = message.timestamp
         content = message.content
-        self.sampler.change_state(sender, 'idle')
+
+        # After training, change the client status into idle
+        self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
 
         # update the currency timestamp according to the received message
         assert timestamp >= self.cur_timestamp  # for test
@@ -916,11 +898,16 @@ class Server(Worker):
                 assert key in info
             self.join_in_info[sender] = info
             logger.info('Server: Client #{:d} has joined in !'.format(sender))
+
+            # Set the client status as idle
+            self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
+
         else:
-            self.join_in_client_num += 1
             sender, address = message.sender, message.content
+            # Register client in client_manager
+            register_id = self.client_manager.register_client()
             if int(sender) == -1:  # assign number to client
-                sender = self.join_in_client_num
+                sender = register_id
                 self.comm_manager.add_neighbors(neighbor_id=sender,
                                                 address=address)
                 self.comm_manager.send(

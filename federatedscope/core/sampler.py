@@ -26,7 +26,7 @@ class UniformSampler(Sampler):
         """
         To sample clients
         """
-        sampled_items = np.random.choice(a,
+        sampled_items = np.random.choice(client_idle,
                                          size=size,
                                          replace=False).tolist()
         return sampled_items
