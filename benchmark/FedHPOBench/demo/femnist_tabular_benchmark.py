@@ -6,14 +6,14 @@ from typing import Union, Dict
 import ConfigSpace as CS
 import numpy as np
 
-from base_fed_tabular_benchmark import BaseFedHPOB
+from base_fed_tabular_benchmark import BaseTabularFedHPOBench
 
 __version__ = '0.0.1'
 
-logger = logging.getLogger('FEMNISTFed')
+logger = logging.getLogger('FEMNISTabularFed')
 
 
-class FEMNISTFedHPOB(BaseFedHPOB):
+class FEMNISTTabularFedHPOBench(BaseTabularFedHPOBench):
     def __init__(self,
                  data_path: Union[str, Path],
                  rng: Union[np.random.RandomState, int, None] = None):
@@ -38,12 +38,12 @@ class FEMNISTFedHPOB(BaseFedHPOB):
         triplets = ('cnn', 'femnist', 'avg')
         client_num = 200
         num_param = 871294
-        super(FEMNISTFedHPOB, self).__init__(data_path,
-                                             url,
-                                             triplets,
-                                             client_num,
-                                             num_param,
-                                             rng=rng)
+        super(FEMNISTTabularFedHPOBench, self).__init__(data_path,
+                                                        url,
+                                                        triplets,
+                                                        client_num,
+                                                        num_param,
+                                                        rng=rng)
 
     @staticmethod
     def get_configuration_space(
@@ -136,7 +136,7 @@ class FEMNISTFedHPOB(BaseFedHPOB):
 
 
 if __name__ == '__main__':
-    b = FEMNISTFedHPOB('data', 1)
+    b = FEMNISTTabularFedHPOBench('data', 1)
     config = b.get_configuration_space(seed=1).sample_configuration()
     result_dict = b.objective_function(configuration=config, rng=1)
     print(result_dict)

@@ -21,7 +21,7 @@ __version__ = '0.0.1'
 logger = logging.getLogger('BaseFedHPOB')
 
 
-class BaseFedHPOB(AbstractBenchmark):
+class BaseTabularFedHPOBench(AbstractBenchmark):
     def __init__(self,
                  data_path: Union[str, Path],
                  url: str,
@@ -61,7 +61,7 @@ class BaseFedHPOB(AbstractBenchmark):
             'server_down': 0.75 * 1024 * 1024 * 8 / 32
         }
         self.server_cmp_cost = 1.0
-        super(BaseFedHPOB, self).__init__(rng=rng)
+        super(BaseTabularFedHPOBench, self).__init__(rng=rng)
 
     def _setup(self):
         """ Download and extract the data. """
