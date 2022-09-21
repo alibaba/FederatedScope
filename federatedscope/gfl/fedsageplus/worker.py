@@ -120,21 +120,21 @@ class FedSagePlusServer(Server):
             for key in gen_grad.keys():
                 self.msg_buffer[STAGE.TRAIN][round][ID][key] += torch.FloatTensor(
                     gen_grad[key].cpu())
-        self.check_and_move_on()
+        self.check_and_move_on(buffer_type=STAGE.TRAIN)
 
-    def check_and_move_on(self, check_eval_result=False, **kwargs):
+    def check_and_move_on(self, buffer_type, **kwargs):
         client_IDs = [i for i in range(1, self.client_num + 1)]
 
-        if check_eval_result:
+        if buffer_type == STAGE.EVAL or buffer_type == STAGE.CONSULT:
             # all clients are participating in evaluation
             minimal_number = self.client_num
-        else:
+        elif buffer_type == STAGE.TRAIN:
             # sampled clients are participating in training
             minimal_number = self.sample_client_num
 
         # Transmit model and embedding to get gradient back
         if self.check_buffer(
-                self.state, self.client_num
+                self.state, self.client_num, STAGE.TRAIN
         ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
                 % 2 == 0:
             # FedGen: we should wait for all messages
@@ -154,7 +154,7 @@ class FedSagePlusServer(Server):
 
         # Sum up gradient client-wisely and send back
         if self.check_buffer(
-                self.state, self.client_num
+                self.state, self.client_num, STAGE.TRAIN
         ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
                 % 2 == 1 and self.grad_cnt == self.client_num * (
                 self.client_num - 1):
@@ -171,7 +171,7 @@ class FedSagePlusServer(Server):
             self.state += 1
 
         if self.check_buffer(
-                self.state, self.client_num
+                self.state, self.client_num, STAGE.TRAIN
         ) and self.state == self._cfg.fedsageplus.fedgen_epoch:
             self.state += 1
             # Setup Clf_trainer for each client
@@ -182,10 +182,10 @@ class FedSagePlusServer(Server):
                         state=self.state))
 
         if self.check_buffer(
-                self.state, minimal_number, check_eval_result
+                self.state, minimal_number, buffer_type
         ) and self.state >= self._cfg.fedsageplus.fedgen_epoch:
 
-            if not check_eval_result:  # in the training process
+            if buffer_type == STAGE.TRAIN:  # in the training process
                 # Get all the message
                 train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
                 msg_list = list()
@@ -232,12 +232,15 @@ class FedSagePlusServer(Server):
                                 'evaluation.')
                     self.eval()
 
-            else:  # in the evaluation process
+            elif buffer_type == STAGE.EVAL:  # in the evaluation process
                 # Get all the message & aggregate
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+            else:
+                # TODO: consult stage
+                pass
 
 
 class FedSagePlusClient(Client):
