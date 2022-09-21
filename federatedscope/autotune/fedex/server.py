@@ -8,6 +8,7 @@ import numpy as np
 from numpy.linalg import norm
 from scipy.special import logsumexp
 
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Server
 from federatedscope.core.auxiliaries.utils import merge_dict
@@ -204,10 +205,10 @@ class FedExServer(Server):
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
         # For a new round
-        if round not in self.msg_buffer['train'].keys():
-            self.msg_buffer['train'][round] = dict()
+        if round not in self.msg_buffer[STAGE.TRAIN].keys():
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
 
-        self.msg_buffer['train'][round][sender] = content
+        self.msg_buffer[STAGE.TRAIN][round][sender] = content
 
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(tuple(content[0:2]))
@@ -305,7 +306,7 @@ class FedExServer(Server):
             if not check_eval_result:  # in the training process
                 mab_feedbacks = list()
                 # Get all the message
-                train_msg_buffer = self.msg_buffer['train'][self.state]
+                train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
                 for model_idx in range(self.model_num):
                     model = self.models[model_idx]
                     aggregator = self.aggregators[model_idx]
@@ -363,7 +364,7 @@ class FedExServer(Server):
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
                     # Clean the msg_buffer
-                    self.msg_buffer['train'][self.state - 1].clear()
+                    self.msg_buffer[STAGE.TRAIN][self.state - 1].clear()
 
                     self.broadcast_model_para(
                         msg_type='model_para',
