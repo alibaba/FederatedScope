@@ -11,6 +11,12 @@ class MODE:
     FINETUNE = 'finetune'
 
 
+class MSGBUFFER:
+    TRAIN = 'train'
+    EVAL = 'eval'
+    CONSULT = 'consult'
+
+
 class TRIGGER:
     ON_FIT_START = 'on_fit_start'
     ON_EPOCH_START = 'on_epoch_start'
