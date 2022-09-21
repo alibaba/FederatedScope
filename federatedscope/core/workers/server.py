@@ -11,6 +11,7 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.workers import Worker
+from federatedscope.core.workers.client_manager import ClientManager
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
@@ -49,7 +50,7 @@ class Server(Worker):
                  total_round_num=10,
                  device='cpu',
                  strategy=None,
-                 unseen_clients_id=None,
+                 id_clients_unseen=[],
                  **kwargs):
 
         super(Server, self).__init__(ID, state, config, model, strategy)
@@ -124,18 +125,16 @@ class Server(Worker):
                 ])
 
         # Initialize the number of joined-in clients
+        self.client_manager = ClientManager(
+            client_num,
+            sample_strategy=self._cfg.federate.sampler,
+            id_client_unseen=id_clients_unseen)
+
         self._client_num = client_num
         self._total_round_num = total_round_num
         self.sample_client_num = int(self._cfg.federate.sample_client_num)
         self.join_in_client_num = 0
         self.join_in_info = dict()
-        # the unseen clients indicate the ones that do not contribute to FL
-        # process by training on their local data and uploading their local
-        # model update. The splitting is useful to check participation
-        # generalization gap in
-        # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
-        self.unseen_clients_id = [] if unseen_clients_id is None \
-            else unseen_clients_id
 
         # Server state
         self.is_finish = False
@@ -759,26 +758,9 @@ class Server(Worker):
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
 
-            # get sampler
-            if 'client_resource' in self._cfg.federate.join_in_info:
-                client_resource = [
-                    self.join_in_info[client_index]['client_resource']
-                    for client_index in np.arange(1, self.client_num + 1)
-                ]
-            else:
-                model_size = sys.getsizeof(pickle.dumps(
-                    self.model)) / 1024.0 * 8.
-                client_resource = [
-                    model_size / float(x['communication']) +
-                    float(x['computation']) / 1000.
-                    for x in self.client_resource_info
-                ] if self.client_resource_info is not None else None
-
-            if self.sampler is None:
-                self.sampler = get_sampler(
-                    sample_strategy=self._cfg.federate.sampler,
-                    client_num=self.client_num,
-                    client_info=client_resource)
+            # Prepare for training
+            # init sampler within the client manager after finishing exchanging information
+            self.client_manager.init_sampler()
 
             # change the deadline if the asyn.aggregator is `time up`
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
