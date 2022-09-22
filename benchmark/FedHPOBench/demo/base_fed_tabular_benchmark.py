@@ -53,7 +53,6 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
         self.triplets = triplets
         self.client_num = client_num
         self.num_param = num_param
-        self.table, self.info = self._setup()
         self.bandwidth = {
             'client_up': 0.25 * 1024 * 1024 * 8 / 32,
             'client_down': 0.75 * 1024 * 1024 * 8 / 32,
@@ -61,6 +60,7 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
             'server_down': 0.75 * 1024 * 1024 * 8 / 32
         }
         self.server_cmp_cost = 1.0
+        self._setup()
         super(BaseTabularFedHPOBench, self).__init__(rng=rng)
 
     def _setup(self):
@@ -94,7 +94,7 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
         with open(infofile, 'rb') as f:
             info = pickle.loads(f.read())
 
-        return df, info
+        self.table, self.info = df, info
 
     def _get_lambda_from_df(self, configuration, fidelity):
         lambdas = []
@@ -142,6 +142,9 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
         result = result.iloc[idx]["result"]
         return result
 
+    def get_results(self, configuration, fidelity, seed_id):
+        return self._search({'seed': seed_id, **configuration}, fidelity)
+
     def objective_function(self,
                            configuration: Union[CS.Configuration, Dict],
                            fidelity: Union[CS.Configuration, Dict,
@@ -151,7 +154,7 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
                            key: str = 'val_avg_loss',
                            **kwargs) -> Dict:
         """
-        Query the FEMNIST-benchmark using a given configuration and a (
+        Query the benchmark using a given configuration and a (
         round, sample_client_rate) (=budget).
         Parameters
         ----------
@@ -211,7 +214,7 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
 
         function_values, costs = [], []
         for seed_id in seed_index:
-            result = self._search({'seed': seed_id, **configuration}, fidelity)
+            result = self.get_results(configuration, fidelity, seed_id)
             index = list(result.keys())
             assert len(index) == 1, 'Multiple results.'
             filterd_result = eval(result[index[0]])
