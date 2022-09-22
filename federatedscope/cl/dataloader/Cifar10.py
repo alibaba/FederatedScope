@@ -139,7 +139,7 @@ def Cifar4LP(config):
     splitter = get_splitter(config)
     data_train = splitter(data_train)
     label_data_train = [[i[1] for i in list_i] for list_i in data_train]
-    data_val = splitter(data_val)
+    data_val = splitter(data_val, prior=label_data_train)
     data_test = splitter(data_test, prior=label_data_train)
 
 

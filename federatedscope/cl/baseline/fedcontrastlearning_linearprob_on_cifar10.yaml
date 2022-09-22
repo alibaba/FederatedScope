@@ -6,8 +6,8 @@ federate:
   total_round_num: 50
   client_num: 5
   sample_client_rate: 1.0
-  method: global
-  restore_from: '../fedsimclr_on_Cifar4CL_lda0.1_lr0.05_lus5_rn200batch_seed2.ckpt'
+  method: local
+  restore_from: '../fedsimclr_on_Cifar4CL_lda0.1_lr0.05_lus5_rn200batch_seed1.ckpt'
 data:
   root: 'data'
   type: 'Cifar4LP'

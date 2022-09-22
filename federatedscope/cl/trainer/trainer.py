@@ -3,6 +3,7 @@ from federatedscope.register import register_trainer
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.core.trainers import GeneralTorchTrainer
+from federatedscope.core.trainers.context import Context
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries import utils
@@ -24,11 +25,13 @@ class CLTrainer(GeneralTorchTrainer):
                                               only_for_eval, monitor)
         self.batches_aug_data_1, self.batches_aug_data_2 = [], []
         self.z1, self.z2 = torch.empty(1), torch.empty(1)
+        self.num_samples = 0
+        self.local_loss_ratio = 0.5
+        self.global_loss_ratio = 1 - self.local_loss_ratio
 
     
-    def get_train_pred_embedding(self):
+    def get_train_pred_embedding(self): 
         model = self.ctx.model.to(self.ctx.device)
-        ys_prob_1, ys_prob_2 = [], []
         x1, x2 = torch.cat(self.batches_aug_data_1, dim=0).to(self.ctx.device), torch.cat(self.batches_aug_data_2, dim=0).to(self.ctx.device)
         z1, z2 = model(x1, x2)
         self.batches_aug_data_1, self.batches_aug_data_2 = [], []
@@ -51,11 +54,20 @@ class CLTrainer(GeneralTorchTrainer):
         ctx.y_prob = CtxVar((z1, z2), LIFECYCLE.BATCH)
         ctx.loss_batch = CtxVar(ctx.criterion(z1, z2), LIFECYCLE.BATCH)
         ctx.batch_size = CtxVar(len(label), LIFECYCLE.BATCH)
-        
+
+    def _hook_on_batch_backward(self, ctx):
+        ctx.optimizer.zero_grad()
+        ctx.loss_task = ctx.loss_task * self.local_loss_ratio
+        ctx.loss_task.backward()
+        if ctx.grad_clip > 0:
+            torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
+                                           ctx.grad_clip)
         
     def _hook_on_batch_end(self, ctx):
         # update statistics
         ctx.num_samples += ctx.batch_size
+        if ctx.cur_mode in [MODE.TRAIN]:
+            self.num_samples = ctx.num_samples
         ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
         ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
         # cache label for evaluate
@@ -72,10 +84,12 @@ class CLTrainer(GeneralTorchTrainer):
 
         self.ctx.model = self.ctx.model.to(self.ctx.device)
 
-        self.ctx.optimizer.zero_grad()
+#         self.ctx.optimizer.zero_grad()
 
-        loss = loss.requires_grad_()
+        loss = loss.requires_grad_() * self.global_loss_ratio
         loss.backward()
+        
+            
         self.ctx.optimizer.step()
         
         return self.ctx.model.state_dict()

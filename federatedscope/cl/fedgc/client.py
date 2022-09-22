@@ -21,8 +21,8 @@ class GlobalContrastFLClient(Client):
                                self.callback_funcs_for_join_in_info)
         self.register_handlers('address', self.callback_funcs_for_address)
         self.register_handlers('model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('global_loss', self.callback_funcs_for_global_loss)
+                               self.callback_funcs_for_pred_embedding)
+        self.register_handlers('global_loss', self.callback_funcs_for_local_backward)
         self.register_handlers('ss_model_para',
                                self.callback_funcs_for_model_para)
         
@@ -30,29 +30,37 @@ class GlobalContrastFLClient(Client):
         self.register_handlers('finish', self.callback_funcs_for_finish)
         self.register_handlers('converged', self.callback_funcs_for_converged)
         
-    def callback_funcs_for_global_loss(self, message: Message):
+    def callback_funcs_for_local_backward(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
         global_loss = content['global_loss']
         model_para = self.trainer.train_with_global_loss(global_loss)
         self.trainer.update(model_para)
-        
-    def callback_funcs_for_model_para(self, message: Message):
-        round, sender, content = message.state, message.sender, message.content
-        self.trainer.update(content)
         self.state = round
-        sample_size, model_para, results = self.trainer.train()
-        pred_embedding = self.trainer.get_train_pred_embedding()
-        if self._cfg.federate.share_local_model and not \
-                self._cfg.federate.online_aggr:
-            model_para = copy.deepcopy(model_para)
-        logger.info(
-            self._monitor.format_eval_res(results,
-                                          rnd=self.state,
-                                          role='Client #{}'.format(self.ID)))
+        sample_size, model_para= self.trainer.num_samples, self.trainer.get_model_para()
 
         self.comm_manager.send(
             Message(msg_type='model_para',
                     sender=self.ID,
                     receiver=[sender],
                     state=self.state,
-                    content=(sample_size, model_para, pred_embedding)))
+                    content=(sample_size, model_para)))
+        
+    def callback_funcs_for_pred_embedding(self, message: Message):
+        round, sender, content = message.state, message.sender, message.content
+        self.trainer.update(content)
+        sample_size, model_para, results = self.trainer.train()
+        self.state = round
+        pred_embedding = self.trainer.get_train_pred_embedding()
+        
+        logger.info(
+            self._monitor.format_eval_res(results,
+                                          rnd=self.state,
+                                          role='Client #{}'.format(self.ID)))
+
+        self.comm_manager.send(
+            Message(msg_type='pred_embedding',
+                    sender=self.ID,
+                    receiver=[sender],
+                    state=self.state,
+                    content=(pred_embedding)))
+
