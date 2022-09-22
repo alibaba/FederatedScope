@@ -342,9 +342,12 @@ class Server(Worker):
                                 'evaluation.')
                     self.eval()
 
-            else:
+            elif stage == STAGE.EVAL:
                 # Receiving enough feedback in the evaluation process
                 self._merge_and_format_eval_results()
+            else:
+                # TODO: consultation
+                pass
 
         else:
             move_on_flag = False

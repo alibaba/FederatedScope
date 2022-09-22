@@ -120,15 +120,15 @@ class FedSagePlusServer(Server):
             for key in gen_grad.keys():
                 self.msg_buffer[STAGE.TRAIN][round][ID][key] += torch.FloatTensor(
                     gen_grad[key].cpu())
-        self.check_and_move_on(buffer_type=STAGE.TRAIN)
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
-    def check_and_move_on(self, buffer_type, **kwargs):
+    def check_and_move_on(self, stage, **kwargs):
         client_IDs = [i for i in range(1, self.client_num + 1)]
 
-        if buffer_type == STAGE.EVAL or buffer_type == STAGE.CONSULT:
+        if stage == STAGE.EVAL or stage == STAGE.CONSULT:
             # all clients are participating in evaluation
             minimal_number = self.client_num
-        elif buffer_type == STAGE.TRAIN:
+        elif stage == STAGE.TRAIN:
             # sampled clients are participating in training
             minimal_number = self.sample_client_num
 
@@ -182,10 +182,10 @@ class FedSagePlusServer(Server):
                         state=self.state))
 
         if self.check_buffer(
-                self.state, minimal_number, buffer_type
+                self.state, minimal_number, stage
         ) and self.state >= self._cfg.fedsageplus.fedgen_epoch:
 
-            if buffer_type == STAGE.TRAIN:  # in the training process
+            if stage == STAGE.TRAIN:  # in the training process
                 # Get all the message
                 train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
                 msg_list = list()
@@ -232,7 +232,7 @@ class FedSagePlusServer(Server):
                                 'evaluation.')
                     self.eval()
 
-            elif buffer_type == STAGE.EVAL:  # in the evaluation process
+            elif stage == STAGE.EVAL:  # in the evaluation process
                 # Get all the message & aggregate
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
