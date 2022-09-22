@@ -1,5 +1,7 @@
 set -e
 
+# Run: bash benchmark/FedHPOBench/scripts/cnn/run_hpo_dp_femnist_48.sh 0 0.0 1 16
+
 # wds=(0.0 0.001 0.01 0.1)
 # steps=(1 2 3 4)
 # batch_sizes=(16 32 64)
@@ -8,8 +10,6 @@ cudaid=$1
 wd=$2
 step=$3
 batch_size=$4
-
-cd ../..
 
 dataset=femnist
 
@@ -25,7 +25,7 @@ for ((l = 0; l < ${#lrs[@]}; l++)); do
   for ((d = 0; d < ${#dps[@]}; d++)); do
     for ((s = 0; s < ${#sample_rates[@]}; s++)); do
       for k in {1..3}; do
-        python federatedscope/main.py --cfg fedhpo/cnn/${dataset}_dp.yaml \
+        python federatedscope/main.py --cfg benchmark/FedHPOBench/scripts/cnn/${dataset}_dp.yaml \
         device $cudaid train.optimizer.lr ${lrs[$l]} \
         train.optimizer.weight_decay ${wd} \
         model.dropout ${dps[$d]} train.local_update_steps ${step} \
