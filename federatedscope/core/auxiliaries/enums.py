@@ -1,4 +1,14 @@
-class MODE:
+class BasicEnum(object):
+    @classmethod
+    def assert_value(cls, value):
+        """
+        Check if the **value** is legal for the given class (If the value equals one of the class attributes)
+        """
+        if not value in [v for k, v in cls.__dict__.items() if not k.startswith('__')]:
+            raise ValueError(f"Value {value} is not in {cls.__name__}.")
+
+
+class MODE(BasicEnum):
     """
 
     Note:
@@ -11,7 +21,13 @@ class MODE:
     FINETUNE = 'finetune'
 
 
-class TRIGGER:
+class STAGE(BasicEnum):
+    TRAIN = 'train'
+    EVAL = 'eval'
+    CONSULT = 'consult'
+
+
+class TRIGGER(BasicEnum):
     ON_FIT_START = 'on_fit_start'
     ON_EPOCH_START = 'on_epoch_start'
     ON_BATCH_START = 'on_batch_start'
@@ -30,8 +46,16 @@ class TRIGGER:
         ]
 
 
-class LIFECYCLE:
+class LIFECYCLE(BasicEnum):
     ROUTINE = 'routine'
     EPOCH = 'epoch'
     BATCH = 'batch'
     NONE = None
+
+
+class CLIENT_STATE(BasicEnum):
+    OFFLINE = -1    # not join in
+    CONSULTING = 2  # join in and is consulting
+    IDLE = 1        # join in but not working, available for training
+    WORKING = 0     # join in and is working
+    SIDELINE = 0    # join in but won't participate in federated training

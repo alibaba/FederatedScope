@@ -8,6 +8,7 @@ import numpy as np
 from numpy.linalg import norm
 from scipy.special import logsumexp
 
+from federatedscope.core.auxiliaries.enums import STAGE, CLIENT_STATE
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Server
 from federatedscope.core.auxiliaries.utils import merge_dict
@@ -146,23 +147,18 @@ class FedExServer(Server):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1,
-                             filter_unseen_clients=True):
+                             sample_client_num=-1):
         """
         To broadcast the message to all clients or sampled clients
         """
-        if filter_unseen_clients:
-            # to filter out the unseen clients when sampling
-            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
-            receiver = self.sampler.sample(size=sample_client_num)
+            receiver = self.client_manager.sample(size=sample_client_num)
         else:
             # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
-            if msg_type == 'model_para':
-                self.sampler.change_state(receiver, 'working')
 
+        # Inject noise
         if self._noise_injector is not None and msg_type == 'model_para':
             # Inject noise only when broadcast parameters
             for model_idx_i in range(len(self.models)):
@@ -196,18 +192,16 @@ class FedExServer(Server):
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
 
-        if filter_unseen_clients:
-            # restore the state of the unseen clients within sampler
-            self.sampler.change_state(self.unseen_clients_id, 'seen')
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
+        # After training, change the client status into idle
+        self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
         # For a new round
-        if round not in self.msg_buffer['train'].keys():
-            self.msg_buffer['train'][round] = dict()
+        if round not in self.msg_buffer[STAGE.TRAIN].keys():
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
 
-        self.msg_buffer['train'][round][sender] = content
+        self.msg_buffer[STAGE.TRAIN][round][sender] = content
 
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(tuple(content[0:2]))
@@ -284,7 +278,7 @@ class FedExServer(Server):
                    self._trace['mle'][-1]))
 
     def check_and_move_on(self,
-                          check_eval_result=False,
+                          stage,
                           min_received_num=None):
         """
         To check the message_buffer, when enough messages are receiving,
@@ -295,17 +289,17 @@ class FedExServer(Server):
             min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        if check_eval_result:
+        if stage == STAGE.EVAL:
             min_received_num = len(list(self.comm_manager.neighbors.keys()))
 
         move_on_flag = True  # To record whether moving to a new training
         # round or finishing the evaluation
-        if self.check_buffer(self.state, min_received_num, check_eval_result):
+        if self.check_buffer(self.state, min_received_num, stage):
 
-            if not check_eval_result:  # in the training process
+            if stage == STAGE.TRAIN:  # in the training process
                 mab_feedbacks = list()
                 # Get all the message
-                train_msg_buffer = self.msg_buffer['train'][self.state]
+                train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
                 for model_idx in range(self.model_num):
                     model = self.models[model_idx]
                     aggregator = self.aggregators[model_idx]
@@ -363,7 +357,7 @@ class FedExServer(Server):
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
                     # Clean the msg_buffer
-                    self.msg_buffer['train'][self.state - 1].clear()
+                    self.msg_buffer[STAGE.TRAIN][self.state - 1].clear()
 
                     self.broadcast_model_para(
                         msg_type='model_para',
@@ -374,12 +368,16 @@ class FedExServer(Server):
                                 'evaluation.')
                     self.eval()
 
-            else:  # in the evaluation process
+            elif stage == STAGE.EVAL:  # in the evaluation process
                 # Get all the message & aggregate
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+
+            else:
+                pass
+
         else:
             move_on_flag = False
 

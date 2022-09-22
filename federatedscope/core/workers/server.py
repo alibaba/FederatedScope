@@ -11,11 +11,13 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.workers import Worker
+from federatedscope.core.workers.client_manager import ClientManager
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
     merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
+from federatedscope.core.auxiliaries.enums import STAGE, CLIENT_STATE
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 
 logger = logging.getLogger(__name__)
@@ -48,7 +50,7 @@ class Server(Worker):
                  total_round_num=10,
                  device='cpu',
                  strategy=None,
-                 unseen_clients_id=None,
+                 id_clients_unseen=[],
                  **kwargs):
 
         super(Server, self).__init__(ID, state, config, model, strategy)
@@ -123,32 +125,18 @@ class Server(Worker):
                 ])
 
         # Initialize the number of joined-in clients
+        self.client_manager = ClientManager(
+            client_num,
+            sample_strategy=self._cfg.federate.sampler,
+            id_client_unseen=id_clients_unseen)
+
         self._client_num = client_num
         self._total_round_num = total_round_num
         self.sample_client_num = int(self._cfg.federate.sample_client_num)
-        self.join_in_client_num = 0
         self.join_in_info = dict()
-        # the unseen clients indicate the ones that do not contribute to FL
-        # process by training on their local data and uploading their local
-        # model update. The splitting is useful to check participation
-        # generalization gap in
-        # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
-        self.unseen_clients_id = [] if unseen_clients_id is None \
-            else unseen_clients_id
 
         # Server state
         self.is_finish = False
-
-        # Sampler
-        if self._cfg.federate.sampler in ['uniform']:
-            self.sampler = get_sampler(
-                sample_strategy=self._cfg.federate.sampler,
-                client_num=self.client_num,
-                client_info=None)
-        else:
-            # Some type of sampler would be instantiated in trigger_for_start,
-            # since they need more information
-            self.sampler = None
 
         # Current Timestamp
         self.cur_timestamp = 0
@@ -230,7 +218,7 @@ class Server(Worker):
         """
 
         # Begin: Broadcast model parameters and start to FL train
-        while self.join_in_client_num < self.client_num:
+        while self.client_manager.check_client_join_in():
             msg = self.comm_manager.receive()
             self.msg_handlers[msg.msg_type](msg)
 
@@ -251,9 +239,10 @@ class Server(Worker):
                     logger.info('Time out at the training round #{}'.format(
                         self.state))
                     move_on_flag_eval = self.check_and_move_on(
-                        min_received_num=min_received_num,
-                        check_eval_result=True)
+                        stage=STAGE.EVAL,
+                        min_received_num=min_received_num)
                     move_on_flag = self.check_and_move_on(
+                        stage=STAGE.TRAIN,
                         min_received_num=min_received_num)
                     if not move_on_flag and not move_on_flag_eval:
                         num_failure += 1
@@ -271,8 +260,8 @@ class Server(Worker):
                             f'Round #{self.state}) for {num_failure} time '
                             f'-------------')
                         # TODO: Clean the msg_buffer
-                        if self.state in self.msg_buffer['train']:
-                            self.msg_buffer['train'][self.state].clear()
+                        if self.state in self.msg_buffer[STAGE.TRAIN]:
+                            self.msg_buffer[STAGE.TRAIN][self.state].clear()
 
                         self.broadcast_model_para(
                             msg_type='model_para',
@@ -284,7 +273,7 @@ class Server(Worker):
         self.terminate(msg_type='finish')
 
     def check_and_move_on(self,
-                          check_eval_result=False,
+                          stage,
                           min_received_num=None):
         """
         To check the message_buffer. When enough messages are receiving,
@@ -292,8 +281,8 @@ class Server(Worker):
         the next training round) would be triggered.
 
         Arguments:
-            check_eval_result (bool): If True, check the message buffer for
-            evaluation; and check the message buffer for training otherwise.
+            stage (str): The type of checked message buffer, chosen from MSGBUFFER.TRAIN, MSGBUFFER.EVAL and MSGBUFFER.CONSULT
+            min_received_num (int): The minimum number of received messages
         """
         if min_received_num is None:
             if self._cfg.asyn.use:
@@ -302,7 +291,7 @@ class Server(Worker):
                 min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        if check_eval_result and self._cfg.federate.mode.lower(
+        if stage == STAGE.EVAL and self._cfg.federate.mode.lower(
         ) == "standalone":
             # in evaluation stage and standalone simulation mode, we assume
             # strong synchronization that receives responses from all clients
@@ -310,8 +299,8 @@ class Server(Worker):
 
         move_on_flag = True  # To record whether moving to a new training
         # round or finishing the evaluation
-        if self.check_buffer(self.state, min_received_num, check_eval_result):
-            if not check_eval_result:
+        if self.check_buffer(self.state, min_received_num, stage):
+            if stage == STAGE.TRAIN:
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
 
@@ -329,8 +318,8 @@ class Server(Worker):
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
                     # Clean the msg_buffer
-                    self.msg_buffer['train'][self.state - 1].clear()
-                    self.msg_buffer['train'][self.state] = dict()
+                    self.msg_buffer[STAGE.TRAIN][self.state - 1].clear()
+                    self.msg_buffer[STAGE.TRAIN][self.state] = dict()
                     self.staled_msg_buffer.clear()
                     # Start a new training round
                     self._start_new_training_round(aggregated_num)
@@ -340,9 +329,12 @@ class Server(Worker):
                                 'evaluation.')
                     self.eval()
 
-            else:
+            elif stage == STAGE.EVAL:
                 # Receiving enough feedback in the evaluation process
                 self._merge_and_format_eval_results()
+
+            else:
+                pass
 
         else:
             move_on_flag = False
@@ -393,8 +385,8 @@ class Server(Worker):
 
         # Clean the clients evaluation msg buffer
         if not self._cfg.federate.make_global_eval:
-            round = max(self.msg_buffer['eval'].keys())
-            self.msg_buffer['eval'][round].clear()
+            round = max(self.msg_buffer[STAGE.EVAL].keys())
+            self.msg_buffer[STAGE.EVAL][round].clear()
 
         if self.state == self.total_round_num:
             # break out the loop for distributed mode
@@ -404,7 +396,7 @@ class Server(Worker):
         """
         Perform federated aggregation and update the global model
         """
-        train_msg_buffer = self.msg_buffer['train'][self.state]
+        train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
         for model_idx in range(self.model_num):
             model = self.models[model_idx]
             aggregator = self.aggregators[model_idx]
@@ -523,8 +515,8 @@ class Server(Worker):
 
         :return:
         """
-        round = max(self.msg_buffer['eval'].keys())
-        eval_msg_buffer = self.msg_buffer['eval'][round]
+        round = max(self.msg_buffer[STAGE.EVAL].keys())
+        eval_msg_buffer = self.msg_buffer[STAGE.EVAL][round]
 
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
@@ -545,14 +537,14 @@ class Server(Worker):
         :returns: the formatted merged results
         """
 
-        round = max(self.msg_buffer['eval'].keys())
-        eval_msg_buffer = self.msg_buffer['eval'][round]
+        round = max(self.msg_buffer[STAGE.EVAL].keys())
+        eval_msg_buffer = self.msg_buffer[STAGE.EVAL][round]
         eval_res_participated_clients = []
         eval_res_unseen_clients = []
         for client_id in eval_msg_buffer:
             if eval_msg_buffer[client_id] is None:
                 continue
-            if client_id in self.unseen_clients_id:
+            if client_id in self.client_manager._id_client_unseen:
                 eval_res_unseen_clients.append(eval_msg_buffer[client_id])
             else:
                 eval_res_participated_clients.append(
@@ -611,35 +603,23 @@ class Server(Worker):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1,
-                             filter_unseen_clients=True):
+                             sample_client_num=None):
         """
         To broadcast the message to all clients or sampled clients
 
         Arguments:
             msg_type: 'model_para' or other user defined msg_type
             sample_client_num: the number of sampled clients in the broadcast
-                behavior. And sample_client_num = -1 denotes to broadcast to
+                behavior. And sample_client_num = None denotes to broadcast to
                 all the clients.
-            filter_unseen_clients: whether filter out the unseen clients that
-                do not contribute to FL process by training on their local
-                data and uploading their local model update. The splitting is
-                useful to check participation generalization gap in [ICLR'22,
-                What Do We Mean by Generalization in Federated Learning?]
-                You may want to set it to be False when in evaluation stage
         """
-        if filter_unseen_clients:
-            # to filter out the unseen clients when sampling
-            self.sampler.change_state(self.unseen_clients_id, 'unseen')
-
-        if sample_client_num > 0:
-            receiver = self.sampler.sample(size=sample_client_num)
+        # Get the receivers
+        if sample_client_num:
+            receiver = self.client_manager.sample(size=sample_client_num)
         else:
-            # broadcast to all clients
             receiver = list(self.comm_manager.neighbors.keys())
-            if msg_type == 'model_para':
-                self.sampler.change_state(receiver, 'working')
 
+        # Inject noise
         if self._noise_injector is not None and msg_type == 'model_para':
             # Inject noise only when broadcast parameters
             for model_idx_i in range(len(self.models)):
@@ -649,6 +629,7 @@ class Server(Worker):
                 self._noise_injector(self._cfg, num_sample_clients,
                                      self.models[model_idx_i])
 
+        # Prepare model parameters
         skip_broadcast = self._cfg.federate.method in ["local", "global"]
         if self.model_num > 1:
             model_para = [{} if skip_broadcast else model.state_dict()
@@ -656,6 +637,7 @@ class Server(Worker):
         else:
             model_para = {} if skip_broadcast else self.model.state_dict()
 
+        # Send model parameters
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
@@ -666,10 +648,6 @@ class Server(Worker):
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
-
-        if filter_unseen_clients:
-            # restore the state of the unseen clients within sampler
-            self.sampler.change_state(self.unseen_clients_id, 'seen')
 
     def broadcast_client_address(self):
         """
@@ -688,33 +666,21 @@ class Server(Worker):
     def check_buffer(self,
                      cur_round,
                      min_received_num,
-                     check_eval_result=False):
-        """
-        To check the message buffer
+                     buffer_type):
+        """Check if the message buffer receives enough messages
 
         Arguments:
-        cur_round (int): The current round number
-        min_received_num (int): The minimal number of the receiving messages
-        check_eval_result (bool): To check training results for evaluation
-        results
-        :returns: Whether enough messages have been received or not
-        :rtype: bool
+            cur_round (int): The current round number
+            min_received_num (int): The minimal number of the receiving messages
+            buffer_type (str): Which field to check, chosen from MSGBUFFER.TRAIN, MSGBUFFER.EVAL and MSGBUFFER.CONSULT
+
+        Return:
+            Whether enough messages have been received or not
         """
+        buffer = self.msg_buffer.get(buffer_type, dict())
 
-        if check_eval_result:
-            if 'eval' not in self.msg_buffer.keys() or len(
-                    self.msg_buffer['eval'].keys()) == 0:
-                return False
-
-            buffer = self.msg_buffer['eval']
-            cur_round = max(buffer.keys())
-            cur_buffer = buffer[cur_round]
-            return len(cur_buffer) >= min_received_num
-        else:
-            if cur_round not in self.msg_buffer['train']:
-                cur_buffer = dict()
-            else:
-                cur_buffer = self.msg_buffer['train'][cur_round]
+        if buffer_type == STAGE.TRAIN:
+            cur_buffer = buffer.get(cur_round, dict())
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
                 if self.cur_timestamp >= self.deadline_for_cur_round and len(
                         cur_buffer) + len(self.staled_msg_buffer) == 0:
@@ -738,15 +704,27 @@ class Server(Worker):
                 return len(cur_buffer)+len(self.staled_msg_buffer) >= \
                        min_received_num
 
+        elif buffer_type == STAGE.EVAL:
+            # Evaluation won't block the training process
+            cur_buffer = buffer.get(max(buffer.keys()), dict())
+            return len(cur_buffer) >= min_received_num
+
+        elif buffer_type == STAGE.CONSULT:
+            cur_buffer = buffer.get(cur_round, dict())
+            return len(cur_buffer) >= min_received_num
+
+        else:
+            raise NotImplementedError(f'Type of message buffer {buffer_type} is not implemented.')
+
     def check_client_join_in(self):
         """
         To check whether all the clients have joined in the FL course.
         """
 
         if len(self._cfg.federate.join_in_info) != 0:
-            return len(self.join_in_info) == self.client_num
+            return self.client_manager.check_client_info()
         else:
-            return self.join_in_client_num == self.client_num
+            return self.client_manager.check_client_join_in()
 
     def trigger_for_start(self):
         """
@@ -757,26 +735,12 @@ class Server(Worker):
             if self._cfg.federate.use_ss:
                 self.broadcast_client_address()
 
-            # get sampler
-            if 'client_resource' in self._cfg.federate.join_in_info:
-                client_resource = [
-                    self.join_in_info[client_index]['client_resource']
-                    for client_index in np.arange(1, self.client_num + 1)
-                ]
-            else:
-                model_size = sys.getsizeof(pickle.dumps(
-                    self.model)) / 1024.0 * 8.
-                client_resource = [
-                    model_size / float(x['communication']) +
-                    float(x['computation']) / 1000.
-                    for x in self.client_resource_info
-                ] if self.client_resource_info is not None else None
+            # Prepare for training
+            # init sampler within the client manager after finishing exchanging information
+            self.client_manager.init_sampler()
+            # Block unseen clients from training
 
-            if self.sampler is None:
-                self.sampler = get_sampler(
-                    sample_strategy=self._cfg.federate.sampler,
-                    client_num=self.client_num,
-                    client_info=client_resource)
+            self.client_manager.block_unseen_client()
 
             # change the deadline if the asyn.aggregator is `time up`
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
@@ -802,7 +766,7 @@ class Server(Worker):
             return False
 
         self.cur_timestamp = self.deadline_for_cur_round
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
         return True
 
     def terminate(self, msg_type='finish'):
@@ -862,8 +826,7 @@ class Server(Worker):
             self.check_and_save()
         else:
             # Preform evaluation in clients
-            self.broadcast_model_para(msg_type='evaluate',
-                                      filter_unseen_clients=False)
+            self.broadcast_model_para(msg_type='evaluate')
 
     def callback_funcs_model_para(self, message: Message):
         """
@@ -884,17 +847,19 @@ class Server(Worker):
         sender = message.sender
         timestamp = message.timestamp
         content = message.content
-        self.sampler.change_state(sender, 'idle')
+
+        # After training, change the client status into idle
+        self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
 
         # update the currency timestamp according to the received message
         assert timestamp >= self.cur_timestamp  # for test
         self.cur_timestamp = timestamp
 
         if round == self.state:
-            if round not in self.msg_buffer['train']:
-                self.msg_buffer['train'][round] = dict()
+            if round not in self.msg_buffer[STAGE.TRAIN]:
+                self.msg_buffer[STAGE.TRAIN][round] = dict()
             # Save the messages in this round
-            self.msg_buffer['train'][round][sender] = content
+            self.msg_buffer[STAGE.TRAIN][round][sender] = content
         elif round >= self.state - self.staleness_toleration:
             # Save the staled messages
             self.staled_msg_buffer.append((round, sender, content))
@@ -906,7 +871,7 @@ class Server(Worker):
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(content)
 
-        move_on_flag = self.check_and_move_on()
+        move_on_flag = self.check_and_move_on(stage=STAGE.TRAIN)
         if self._cfg.asyn.use and self._cfg.asyn.broadcast_manner == \
                 'after_receiving':
             self.broadcast_model_para(msg_type='model_para',
@@ -932,13 +897,19 @@ class Server(Worker):
                 assert key in info
             self.join_in_info[sender] = info
             logger.info('Server: Client #{:d} has joined in !'.format(sender))
+
+            # Set the client status as idle
+            self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
+
         else:
-            self.join_in_client_num += 1
             sender, address = message.sender, message.content
-            if int(sender) == -1:  # assign number to client
-                sender = self.join_in_client_num
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
+            # Register client in client_manager
+            register_id = self.client_manager.register_client(sender)
+
+            # TODO: maybe we shouldn't support user-defined ID
+            if register_id != sender: # assign number to client
+                sender = register_id
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
                 self.comm_manager.send(
                     Message(msg_type='assign_client_id',
                             sender=self.ID,
@@ -947,8 +918,7 @@ class Server(Worker):
                             timestamp=self.cur_timestamp,
                             content=str(sender)))
             else:
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
 
             if len(self._cfg.federate.join_in_info) != 0:
                 self.comm_manager.send(
@@ -975,9 +945,9 @@ class Server(Worker):
         sender = message.sender
         content = message.content
 
-        if round not in self.msg_buffer['eval'].keys():
-            self.msg_buffer['eval'][round] = dict()
+        if round not in self.msg_buffer[STAGE.EVAL].keys():
+            self.msg_buffer[STAGE.EVAL][round] = dict()
 
-        self.msg_buffer['eval'][round][sender] = content
+        self.msg_buffer[STAGE.EVAL][round][sender] = content
 
-        return self.check_and_move_on(check_eval_result=True)
+        return self.check_and_move_on(stage=STAGE.EVAL)

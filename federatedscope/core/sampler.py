@@ -5,56 +5,31 @@ import numpy as np
 
 class Sampler(ABC):
     """
-    The strategies of sampling clients for each training round
-
-    Arguments:
-        client_state: a dict to manager the state of clients (idle or busy)
+    The strategy of sampling
     """
-    def __init__(self, client_num):
-        self.client_state = np.asarray([1] * (client_num + 1))
-        # Set the state of server (index=0) to 'working'
-        self.client_state[0] = 0
+    def __init__(self):
+        pass
 
     @abstractmethod
-    def sample(self, size):
+    def sample(self, *args, **kwargs):
         raise NotImplementedError
-
-    def change_state(self, indices, state):
-        """
-        To modify the state of clients (idle or working)
-        """
-        if isinstance(indices, list) or isinstance(indices, np.ndarray):
-            all_idx = indices
-        else:
-            all_idx = [indices]
-        for idx in all_idx:
-            if state in ['idle', 'seen']:
-                self.client_state[idx] = 1
-            elif state in ['working', 'unseen']:
-                self.client_state[idx] = 0
-            else:
-                raise ValueError(
-                    f"The state of client should be one of "
-                    f"['idle', 'working', 'unseen], but got {state}")
 
 
 class UniformSampler(Sampler):
     """
-    To uniformly sample the clients from all the idle clients
+    A stateless sampler that samples items uniformly
     """
-    def __init__(self, client_num):
-        super(UniformSampler, self).__init__(client_num)
+    def __init__(self):
+        super(UniformSampler, self).__init__()
 
-    def sample(self, size):
+    def sample(self, client_idle, size, *args,  **kwargs):
         """
         To sample clients
         """
-        idle_clients = np.nonzero(self.client_state)[0]
-        sampled_clients = np.random.choice(idle_clients,
-                                           size=size,
-                                           replace=False).tolist()
-        self.change_state(sampled_clients, 'working')
-        return sampled_clients
+        sampled_items = np.random.choice(client_idle,
+                                         size=size,
+                                         replace=False).tolist()
+        return sampled_items
 
 
 class GroupSampler(Sampler):
@@ -62,22 +37,11 @@ class GroupSampler(Sampler):
     To grouply sample the clients based on their responsiveness (or other
     client information of the clients)
     """
-    def __init__(self, client_num, client_info, bins=10):
-        super(GroupSampler, self).__init__(client_num)
+    def __init__(self, client_info, bins=10):
+        super(GroupSampler, self).__init__()
         self.bins = bins
-        self.update_client_info(client_info)
+        self.client_info = client_info
         self.candidate_iterator = self.partition()
-
-    def update_client_info(self, client_info):
-        """
-        To update the client information
-        """
-        self.client_info = np.asarray(
-            [1.0] + [x for x in client_info
-                     ])  # client_info[0] is preversed for the server
-        assert len(self.client_info) == len(
-            self.client_state
-        ), "The first dimension of client_info is mismatched with client_num"
 
     def partition(self):
         """
@@ -87,7 +51,9 @@ class GroupSampler(Sampler):
         Arguments:
         :returns: a iteration of candidates
         """
-        sorted_index = np.argsort(self.client_info)
+        # sort client_info by xx
+        sorted_index = sorted(self.client_info.keys(), key=lambda x: self.client_info[x])
+        # bin的长度
         num_per_bins = np.int(len(sorted_index) / self.bins)
 
         # grouped clients
@@ -105,11 +71,14 @@ class GroupSampler(Sampler):
 
         return iter(candidates)
 
-    def sample(self, size, shuffle=False):
+    def sample(self, clients_idle, size, perturb=False):
         """
         To sample clients
         """
-        if shuffle:
+        if self.candidate_iterator is None:
+            self.partition()
+
+        if perturb:
             self.candidate_iterator = self.permutation()
 
         sampled_clients = list()
@@ -117,15 +86,14 @@ class GroupSampler(Sampler):
             # To find an idle client
             while True:
                 try:
-                    item = next(self.candidate_iterator)
+                    client_id = next(self.candidate_iterator)
                 except StopIteration:
                     self.candidate_iterator = self.permutation()
-                    item = next(self.candidate_iterator)
+                    client_id = next(self.candidate_iterator)
 
-                if self.client_state[item] == 1:
+                if client_id in clients_idle:
                     break
 
-            sampled_clients.append(item)
-            self.change_state(item, 'working')
+            sampled_clients.append(client_id)
 
         return sampled_clients

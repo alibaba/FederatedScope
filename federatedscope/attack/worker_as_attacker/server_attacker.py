@@ -1,3 +1,4 @@
+from federatedscope.core.auxiliaries.enums import STAGE, CLIENT_STATE
 from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 
@@ -46,8 +47,7 @@ class BackdoorServer(Server):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1,
-                             filter_unseen_clients=True):
+                             sample_client_num=-1):
         """
         To broadcast the message to all clients or sampled clients
 
@@ -56,17 +56,7 @@ class BackdoorServer(Server):
             sample_client_num: the number of sampled clients in the broadcast
                 behavior. And sample_client_num = -1 denotes to broadcast to
                 all the clients.
-            filter_unseen_clients: whether filter out the unseen clients that
-                do not contribute to FL process by training on their local
-                data and uploading their local model update. The splitting is
-                useful to check participation generalization gap in [ICLR'22,
-                What Do We Mean by Generalization in Federated Learning?]
-                You may want to set it to be False when in evaluation stage
         """
-
-        if filter_unseen_clients:
-            # to filter out the unseen clients when sampling
-            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:  # only activated at training process
             attacker_id = self._cfg.attack.attacker_id
@@ -158,10 +148,6 @@ class BackdoorServer(Server):
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
 
-        if filter_unseen_clients:
-            # restore the state of the unseen clients within sampler
-            self.sampler.change_state(self.unseen_clients_id, 'seen')
-
 
 class PassiveServer(Server):
     '''
@@ -244,15 +230,15 @@ class PassiveServer(Server):
     def run_reconstruct(self, state_list=None, sender_list=None):
 
         if state_list is None:
-            state_list = self.msg_buffer['train'].keys()
+            state_list = self.msg_buffer[STAGE.TRAIN].keys()
 
         # After FL running, using gradient based reconstruction method to
         # recover client's private training data
         for state in state_list:
             if sender_list is None:
-                sender_list = self.msg_buffer['train'][state].keys()
+                sender_list = self.msg_buffer[STAGE.TRAIN][state].keys()
             for sender in sender_list:
-                content = self.msg_buffer['train'][state][sender]
+                content = self.msg_buffer[STAGE.TRAIN][state][sender]
                 self._reconstruct(model_para=content[1],
                                   batch_size=content[0],
                                   state=state,
@@ -263,10 +249,12 @@ class PassiveServer(Server):
             return 'finish'
 
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
-        if round not in self.msg_buffer['train']:
-            self.msg_buffer['train'][round] = dict()
-        self.msg_buffer['train'][round][sender] = content
+        # After training, change the client status into idle
+        self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
+
+        if round not in self.msg_buffer[STAGE.TRAIN]:
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
+        self.msg_buffer[STAGE.TRAIN][round][sender] = content
 
         # run reconstruction before the clear of self.msg_buffer
 
@@ -284,7 +272,7 @@ class PassiveServer(Server):
                         name='image_state_{}_client_{}.png'.format(
                             message.state, message.sender))
 
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
 
 class PassivePIAServer(Server):
@@ -341,10 +329,13 @@ class PassivePIAServer(Server):
             return 'finish'
 
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
-        if round not in self.msg_buffer['train']:
-            self.msg_buffer['train'][round] = dict()
-        self.msg_buffer['train'][round][sender] = content
+
+        # After training, change the client status into idle
+        self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
+
+        if round not in self.msg_buffer[STAGE.TRAIN]:
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
+        self.msg_buffer[STAGE.TRAIN][round][sender] = content
 
         # collect the updates
         self.pia_attacker.collect_updates(
@@ -359,7 +350,7 @@ class PassivePIAServer(Server):
             # TODO: put this line to `check_and_move_on`
             # currently, no way to know the latest `sender`
             self.aggregator.inc(content)
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
         if self.state == self.total_round_num:
             self.pia_attacker.train_property_classifier()

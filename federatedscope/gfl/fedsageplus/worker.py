@@ -4,6 +4,7 @@ import copy
 
 from torch_geometric.loader import NeighborSampler
 
+from federatedscope.core.auxiliaries.enums import STAGE, CLIENT_STATE
 from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.workers.client import Client
@@ -67,22 +68,27 @@ class FedSagePlusServer(Server):
                 assert key in info
             self.join_in_info[sender] = info
             logger.info('Server: Client #{:d} has joined in !'.format(sender))
+
+            # Set the client status as idle
+            self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
         else:
-            self.join_in_client_num += 1
             sender, address = message.sender, message.content
-            if int(sender) == -1:  # assign number to client
-                sender = self.join_in_client_num
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
+
+            # Register client in client_manager
+            register_id = self.client_manager.register_client(sender)
+
+            if register_id != sender:  # assign number to client
+                sender = register_id
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
                 self.comm_manager.send(
                     Message(msg_type='assign_client_id',
                             sender=self.ID,
                             receiver=[sender],
                             state=self.state,
+                            timestamp=self.cur_timestamp,
                             content=str(sender)))
             else:
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
 
             if len(self._cfg.federate.join_in_info) != 0:
                 self.comm_manager.send(
@@ -106,22 +112,22 @@ class FedSagePlusServer(Server):
         round, _, content = message.state, message.sender, message.content
         gen_grad, ID = content
         # For a new round
-        if round not in self.msg_buffer['train'].keys():
-            self.msg_buffer['train'][round] = dict()
+        if round not in self.msg_buffer[STAGE.TRAIN].keys():
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
         self.grad_cnt += 1
         # Sum up all grad from other client
-        if ID not in self.msg_buffer['train'][round]:
-            self.msg_buffer['train'][round][ID] = dict()
+        if ID not in self.msg_buffer[STAGE.TRAIN][round]:
+            self.msg_buffer[STAGE.TRAIN][round][ID] = dict()
             for key in gen_grad.keys():
-                self.msg_buffer['train'][round][ID][key] = torch.FloatTensor(
+                self.msg_buffer[STAGE.TRAIN][round][ID][key] = torch.FloatTensor(
                     gen_grad[key].cpu())
         else:
             for key in gen_grad.keys():
-                self.msg_buffer['train'][round][ID][key] += torch.FloatTensor(
+                self.msg_buffer[STAGE.TRAIN][round][ID][key] += torch.FloatTensor(
                     gen_grad[key].cpu())
         self.check_and_move_on()
 
-    def check_and_move_on(self, check_eval_result=False):
+    def check_and_move_on(self, check_eval_result=False, **kwargs):
         client_IDs = [i for i in range(1, self.client_num + 1)]
 
         if check_eval_result:
@@ -137,8 +143,8 @@ class FedSagePlusServer(Server):
         ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
                 % 2 == 0:
             # FedGen: we should wait for all messages
-            for sender in self.msg_buffer['train'][self.state]:
-                content = self.msg_buffer['train'][self.state][sender]
+            for sender in self.msg_buffer[STAGE.TRAIN][self.state]:
+                content = self.msg_buffer[STAGE.TRAIN][self.state][sender]
                 gen_para, embedding, label = content
                 receiver_IDs = client_IDs[:sender - 1] + client_IDs[sender:]
                 self.comm_manager.send(
@@ -157,8 +163,8 @@ class FedSagePlusServer(Server):
         ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
                 % 2 == 1 and self.grad_cnt == self.client_num * (
                 self.client_num - 1):
-            for ID in self.msg_buffer['train'][self.state]:
-                grad = self.msg_buffer['train'][self.state][ID]
+            for ID in self.msg_buffer[STAGE.TRAIN][self.state]:
+                grad = self.msg_buffer[STAGE.TRAIN][self.state][ID]
                 self.comm_manager.send(
                     Message(msg_type='gradient',
                             sender=self.ID,
@@ -186,7 +192,7 @@ class FedSagePlusServer(Server):
 
             if not check_eval_result:  # in the training process
                 # Get all the message
-                train_msg_buffer = self.msg_buffer['train'][self.state]
+                train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
                 msg_list = list()
                 for client_id in train_msg_buffer:
                     msg_list.append(train_msg_buffer[client_id])
