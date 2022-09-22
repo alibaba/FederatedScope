@@ -4,7 +4,7 @@ import copy
 
 from torch_geometric.loader import NeighborSampler
 
-from federatedscope.core.auxiliaries.enums import STAGE
+from federatedscope.core.auxiliaries.enums import STAGE, CLIENT_STATE
 from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.workers.client import Client
@@ -68,22 +68,27 @@ class FedSagePlusServer(Server):
                 assert key in info
             self.join_in_info[sender] = info
             logger.info('Server: Client #{:d} has joined in !'.format(sender))
+
+            # Set the client status as idle
+            self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
         else:
-            self.join_in_client_num += 1
             sender, address = message.sender, message.content
-            if int(sender) == -1:  # assign number to client
-                sender = self.join_in_client_num
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
+
+            # Register client in client_manager
+            register_id = self.client_manager.register_client(sender)
+
+            if register_id != sender:  # assign number to client
+                sender = register_id
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
                 self.comm_manager.send(
                     Message(msg_type='assign_client_id',
                             sender=self.ID,
                             receiver=[sender],
                             state=self.state,
+                            timestamp=self.cur_timestamp,
                             content=str(sender)))
             else:
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
 
             if len(self._cfg.federate.join_in_info) != 0:
                 self.comm_manager.send(

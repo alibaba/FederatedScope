@@ -329,9 +329,12 @@ class Server(Worker):
                                 'evaluation.')
                     self.eval()
 
-            else:
+            elif stage == STAGE.EVAL:
                 # Receiving enough feedback in the evaluation process
                 self._merge_and_format_eval_results()
+
+            else:
+                pass
 
         else:
             move_on_flag = False
@@ -903,10 +906,10 @@ class Server(Worker):
             # Register client in client_manager
             register_id = self.client_manager.register_client(sender)
 
-            self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
-
+            # TODO: maybe we shouldn't support user-defined ID
             if register_id != sender: # assign number to client
                 sender = register_id
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
                 self.comm_manager.send(
                     Message(msg_type='assign_client_id',
                             sender=self.ID,
@@ -914,6 +917,8 @@ class Server(Worker):
                             state=self.state,
                             timestamp=self.cur_timestamp,
                             content=str(sender)))
+            else:
+                self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
 
             if len(self._cfg.federate.join_in_info) != 0:
                 self.comm_manager.send(

@@ -1,4 +1,4 @@
-from federatedscope.core.auxiliaries.enums import STAGE
+from federatedscope.core.auxiliaries.enums import STAGE, CLIENT_STATE
 from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 
@@ -47,8 +47,7 @@ class BackdoorServer(Server):
 
     def broadcast_model_para(self,
                              msg_type='model_para',
-                             sample_client_num=-1,
-                             filter_unseen_clients=True):
+                             sample_client_num=-1):
         """
         To broadcast the message to all clients or sampled clients
 
@@ -57,17 +56,7 @@ class BackdoorServer(Server):
             sample_client_num: the number of sampled clients in the broadcast
                 behavior. And sample_client_num = -1 denotes to broadcast to
                 all the clients.
-            filter_unseen_clients: whether filter out the unseen clients that
-                do not contribute to FL process by training on their local
-                data and uploading their local model update. The splitting is
-                useful to check participation generalization gap in [ICLR'22,
-                What Do We Mean by Generalization in Federated Learning?]
-                You may want to set it to be False when in evaluation stage
         """
-
-        if filter_unseen_clients:
-            # to filter out the unseen clients when sampling
-            self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:  # only activated at training process
             attacker_id = self._cfg.attack.attacker_id
@@ -158,10 +147,6 @@ class BackdoorServer(Server):
         if self._cfg.federate.online_aggr:
             for idx in range(self.model_num):
                 self.aggregators[idx].reset()
-
-        if filter_unseen_clients:
-            # restore the state of the unseen clients within sampler
-            self.sampler.change_state(self.unseen_clients_id, 'seen')
 
 
 class PassiveServer(Server):
@@ -264,7 +249,9 @@ class PassiveServer(Server):
             return 'finish'
 
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
+        # After training, change the client status into idle
+        self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
+
         if round not in self.msg_buffer[STAGE.TRAIN]:
             self.msg_buffer[STAGE.TRAIN][round] = dict()
         self.msg_buffer[STAGE.TRAIN][round][sender] = content
@@ -342,7 +329,10 @@ class PassivePIAServer(Server):
             return 'finish'
 
         round, sender, content = message.state, message.sender, message.content
-        self.sampler.change_state(sender, 'idle')
+
+        # After training, change the client status into idle
+        self.client_manager.change_state(sender, CLIENT_STATE.IDLE)
+
         if round not in self.msg_buffer[STAGE.TRAIN]:
             self.msg_buffer[STAGE.TRAIN][round] = dict()
         self.msg_buffer[STAGE.TRAIN][round][sender] = content
