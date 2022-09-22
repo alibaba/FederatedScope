@@ -6,10 +6,12 @@ from torch_geometric.utils import to_networkx, from_networkx
 import numpy as np
 import networkx as nx
 
+from federatedscope.core.splitters import BaseSplitter
+
 EPSILON = 1e-5
 
 
-class RandomSplitter(BaseTransform):
+class RandomSplitter(BaseTransform, BaseSplitter):
     r"""
     Split Data into small data via random sampling.
 
@@ -28,9 +30,8 @@ class RandomSplitter(BaseTransform):
                  sampling_rate=None,
                  overlapping_rate=0,
                  drop_edge=0):
-
+        BaseSplitter.__init__(self, client_num)
         self.ovlap = overlapping_rate
-
         if sampling_rate is not None:
             self.sampling_rate = np.array(
                 [float(val) for val in sampling_rate.split(',')])
@@ -49,11 +50,9 @@ class RandomSplitter(BaseTransform):
                 f'The sum of sampling_rate:{self.sampling_rate} and '
                 f'overlapping_rate({self.ovlap}) should be 1.')
 
-        self.client_num = client_num
         self.drop_edge = drop_edge
 
     def __call__(self, data):
-
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,
@@ -104,6 +103,3 @@ class RandomSplitter(BaseTransform):
             graphs.append(from_networkx(sub_g))
 
         return graphs
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.client_num})'

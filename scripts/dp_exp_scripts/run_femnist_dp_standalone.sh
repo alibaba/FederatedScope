@@ -10,4 +10,4 @@ python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_o
                 nbafl.epsilon 20. \
                 nbafl.constant 1. \
                 nbafl.w_clip 0.1 \
-                federate.join_in_info ["num_sample"]
+                federate.join_in_info ['num_sample']

@@ -9,7 +9,8 @@ if DEV_MODE:
 
 from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
+from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.configs.config import global_cfg, CfgNode
@@ -27,7 +28,7 @@ if __name__ == '__main__':
         init_cfg.merge_from_file(args.cfg_file)
     init_cfg.merge_from_list(args.opts)
 
-    update_logger(init_cfg)
+    update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file

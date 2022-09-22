@@ -23,7 +23,7 @@ elif [[ $dataset = 'proteins' ]]; then
 elif [[ $dataset = 'imdb-binary' ]]; then
     out_channels=2
     hidden=64
-    splitter='graph_type'
+    splitter='lda'
 else
     out_channels=4
     hidden=1024

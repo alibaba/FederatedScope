@@ -1,4 +1,5 @@
 import os
+import gzip
 import pickle
 import re
 from datetime import *
@@ -67,12 +68,26 @@ def logs2info(dname, root, sample_client_rate=[0.2, 0.4, 0.6, 0.8, 1.0]):
     return info
 
 
+def read_fairness(lines):
+    fairness_list = []
+    for line in lines:
+        tmp_line = str(line)
+        if 'Server' in tmp_line:
+            results = eval(line)
+            new_results = {}
+            for key in results['Results_raw']:
+                new_results[f'{key}_fair'] = results['Results_raw'][key]
+            fairness_list.append(new_results)
+    return fairness_list
+
+
 def logs2df(dname,
             root='',
             sample_client_rate=[0.2, 0.4, 0.6, 0.8, 1.0],
             metrics=[
                 'train_avg_loss', 'val_avg_loss', 'test_avg_loss', 'train_acc',
-                'val_acc', 'test_acc', 'train_f1', 'val_f1', 'test_f1'
+                'val_acc', 'test_acc', 'train_f1', 'val_f1', 'test_f1',
+                'fairness'
             ]):
     sample_client_rate = [str(round(x, 1)) for x in sample_client_rate]
     dir_names = [f'out_{dname}_' + str(x) for x in sample_client_rate]
@@ -96,6 +111,17 @@ def logs2df(dname,
                 x: []
                 for x in ['train_time', 'eval_time', 'tol_time']
             }
+            # Load fairness-related metric if exists.
+            fairness_list = None
+            fairness_gz = os.path.join(path, file_name, 'eval_results.raw.gz')
+            fairness_log = os.path.join(path, file_name, 'eval_results.raw')
+            if os.path.exists(fairness_gz):
+                with gzip.open(fairness_gz, 'rb') as f:
+                    fairness_list = read_fairness(f.readlines())
+            elif os.path.exists(fairness_log):
+                with open(fairness_log, 'rb') as f:
+                    fairness_list = read_fairness(f.readlines())
+
             with open(os.path.join(path, file_name, 'exp_print.log')) as f:
                 F = f.readlines()
                 start_time = datetime.strptime(F[0][:19], '%Y-%m-%d %H:%M:%S')
@@ -147,6 +173,8 @@ def logs2df(dname,
                         else:
                             metrics_dict[key].append(
                                 results['Results_weighted_avg'][key])
+                if fairness_list and cnt < len(fairness_list):
+                    metrics_dict = {**metrics_dict, **fairness_list[cnt]}
                 value = [
                     float(file_name.split('_')[i][len(arg):])
                     for i, arg in enumerate(args)

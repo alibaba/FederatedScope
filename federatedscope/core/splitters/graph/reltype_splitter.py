@@ -6,9 +6,10 @@ from torch_geometric.transforms import BaseTransform
 
 from federatedscope.core.splitters.utils import \
     dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters import BaseSplitter
 
 
-class RelTypeSplitter(BaseTransform):
+class RelTypeSplitter(BaseTransform, BaseSplitter):
     r"""
     Split Data into small data via dirichlet distribution to
     generate non-i.i.d data split.
@@ -19,7 +20,7 @@ class RelTypeSplitter(BaseTransform):
 
     """
     def __init__(self, client_num, alpha=0.5, realloc_mask=False):
-        self.client_num = client_num
+        BaseSplitter.__init__(self, client_num)
         self.alpha = alpha
         self.realloc_mask = realloc_mask
 
@@ -62,6 +63,3 @@ class RelTypeSplitter(BaseTransform):
             data_list.append(sub_g)
 
         return data_list
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.client_num})'
