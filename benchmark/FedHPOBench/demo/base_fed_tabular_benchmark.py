@@ -18,7 +18,7 @@ from hpobench.util import rng_helper
 
 __version__ = '0.0.1'
 
-logger = logging.getLogger('BaseFedHPOB')
+logger = logging.getLogger('BaseFedHPOBench')
 
 
 class BaseTabularFedHPOBench(AbstractBenchmark):
@@ -31,11 +31,11 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
                  rng: Union[np.random.RandomState, int, None] = None):
         """
         This is a base FL HPO benchmark from paper:
-        "FedHPO-B: A Benchmark Suite for Federated Hyperparameter
+        "FedHPOBench: A Benchmark Suite for Federated Hyperparameter
         Optimization",
         url: https://arxiv.org/pdf/2206.03966v4.pdf
         Source: https://github.com/alibaba/FederatedScope/tree/master
-        /benchmark/FedHPOB
+        /benchmark/FedHPOBench
         Parameters
         ----------
         data_path : str, Path

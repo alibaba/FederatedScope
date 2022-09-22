@@ -131,7 +131,7 @@ class FEMNISTTabularFedHPOBench(BaseTabularFedHPOBench):
                 '/benchmark/FedHPOB'
             ],
             'code': 'https://github.com/alibaba/FederatedScope/tree/master'
-            '/benchmark/FedHPOB',
+            '/benchmark/FedHPOBench',
         }
 
 
