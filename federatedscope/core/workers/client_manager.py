@@ -18,6 +18,8 @@ class ClientManager(object):
         self._num_client_join = 0
         self._num_client_total = num_client
 
+        self._ids_client = []
+
         # the unseen clients indicate the ones that do not contribute to FL
         # process by training on their local data and uploading their local
         # model update. The splitting is useful to check participation
@@ -32,7 +34,7 @@ class ClientManager(object):
         self._info_by_key = collections.defaultdict(dict)
 
         # Record the state of the clients (client_id counts from 1)
-        self._state_client = {client_id: CLIENT_STATE.OFFLINE for client_id in range(1, self._num_client_total+1)}
+        self._state_client = dict()
 
         self.sampler = None
         self.sample_strategy = sample_strategy
@@ -41,43 +43,34 @@ class ClientManager(object):
         """
         Check if the client_id is legal.
         """
-        if client_id >= 1 and client_id <= self._num_client_join + 1:
+        if client_id in self._ids_client:
             pass
         else:
             raise IndexError(f"Client ID {client_id} doesn't exist.")
+
+    def get_all_client(self):
+        return self._ids_client
 
     @property
     def join_in_client_num(self):
         return self._num_client_join
 
-    def register_client(self):
+    def register_client(self, sender):
+        """
+        Register new client into client manager
+        """
         self._num_client_join += 1
-        return self._num_client_join
+        # Assign new id if necessary
+        if sender == -1:
+            register_id = self._num_client_join
+        else:
+            register_id = sender
 
-    def join_in(self, client_id):
-        """
-        Register the client, and assign client_id if it doesn't have
-        """
-        # Count the number of client
-        self._num_client_join += 1
+        # Record the client
+        self._ids_client.append(register_id)
+        self._state_client[register_id] = CLIENT_STATE.IDLE
 
-        if client_id == -1:
-            # Doesn't have client_id
-            client_id = self._num_client_join
-
-        # Step into consulting (exchange information between server and client)
-        self._state_client[client_id] = CLIENT_STATE.IDLE
-        # Return the client_id
-        return client_id
-
-    def set_offline(self, client_id):
-        """
-        Set the state of the client as CLIENT_STATE.OFFLINE
-        """
-        self.__assert_client(client_id)
-
-        self.change_state(client_id, CLIENT_STATE.OFFLINE)
-        self._num_client_join -= 1
+        return register_id
 
     def block_unseen_client(self):
         """
@@ -85,12 +78,6 @@ class ClientManager(object):
         """
         if self._num_client_unseen > 0:
             self.change_state(self._num_client_unseen, CLIENT_STATE.SIDELINE)
-
-    def finish_consult(self, client_id):
-        """
-        Set the state of the client that finishes consulting as CLIENT_STATE.IDLE
-        """
-        self.change_state(client_id, CLIENT_STATE.IDLE)
 
     def check_client_join_in(self):
         """
@@ -103,12 +90,6 @@ class ClientManager(object):
         Check if enough information is collected from the clients
         """
         return len(self._info_by_client) == self._num_client_total
-
-    def check_client_consult(self):
-        """
-        Check if all clients finish requiring information from the server (The state is CLIENT_STATE.IDLE)
-        """
-        return len(self.get_idle_client()) == self._num_client_total
 
     def update_client_info(self, client_id, info: dict):
         """
@@ -162,12 +143,6 @@ class ClientManager(object):
 
         return [client_id for client_id, client_state in self._state_client.items() if client_state == state]
 
-    def get_consult_client(self):
-        """
-        Return all the clients with state CLIENT_STATE.CONSULTING
-        """
-        self.get_client_by_state(CLIENT_STATE.CONSULTING)
-
     def get_idle_client(self):
         """
         Return all the clients with state CLIENT_STATE.IDLE
@@ -187,13 +162,13 @@ class ClientManager(object):
             client_info=self._info_by_key
         )
 
-    def sample(self, size, perturb=False):
+    def sample(self, size, perturb=False, change_state=True):
         """Sample idle clients with the specific sampler
 
         Args:
             size: the number of sample size
             perturb: if perturb the clients before sampling
-
+            change_state: if change the state into CLIENT_STATE.WORKING
         Returns:
             index of the sampled clients
         """
@@ -205,6 +180,7 @@ class ClientManager(object):
         clients_idle = self.get_idle_client()
         # Sampling
         clients_sampled = self.sampler.sample(clients_idle, size, perturb)
-        # Change state for the sampled clients
-        self.change_state(clients_sampled, CLIENT_STATE.WORKING)
+        if change_state:
+            # Change state for the sampled clients
+            self.change_state(clients_sampled, CLIENT_STATE.WORKING)
         return clients_sampled

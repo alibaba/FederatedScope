@@ -541,7 +541,7 @@ class Server(Worker):
         for client_id in eval_msg_buffer:
             if eval_msg_buffer[client_id] is None:
                 continue
-            if client_id in self.unseen_clients_id:
+            if client_id in self.client_manager._id_client_unseen:
                 eval_res_unseen_clients.append(eval_msg_buffer[client_id])
             else:
                 eval_res_participated_clients.append(
@@ -615,10 +615,6 @@ class Server(Worker):
             receiver = self.client_manager.sample(size=sample_client_num)
         else:
             receiver = list(self.comm_manager.neighbors.keys())
-
-        if msg_type == 'model_para':
-            # Training
-            self.client_manager.change_state(receiver, CLIENT_STATE.WORKING)
 
         # Inject noise
         if self._noise_injector is not None and msg_type == 'model_para':
@@ -740,6 +736,7 @@ class Server(Worker):
             # init sampler within the client manager after finishing exchanging information
             self.client_manager.init_sampler()
             # Block unseen clients from training
+
             self.client_manager.block_unseen_client()
 
             # change the deadline if the asyn.aggregator is `time up`
@@ -826,8 +823,7 @@ class Server(Worker):
             self.check_and_save()
         else:
             # Preform evaluation in clients
-            self.broadcast_model_para(msg_type='evaluate',
-                                      filter_unseen_clients=False)
+            self.broadcast_model_para(msg_type='evaluate')
 
     def callback_funcs_model_para(self, message: Message):
         """
@@ -905,11 +901,12 @@ class Server(Worker):
         else:
             sender, address = message.sender, message.content
             # Register client in client_manager
-            register_id = self.client_manager.register_client()
-            if int(sender) == -1:  # assign number to client
+            register_id = self.client_manager.register_client(sender)
+
+            self.comm_manager.add_neighbors(neighbor_id=sender, address=address)
+
+            if register_id != sender: # assign number to client
                 sender = register_id
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
                 self.comm_manager.send(
                     Message(msg_type='assign_client_id',
                             sender=self.ID,
@@ -917,9 +914,6 @@ class Server(Worker):
                             state=self.state,
                             timestamp=self.cur_timestamp,
                             content=str(sender)))
-            else:
-                self.comm_manager.add_neighbors(neighbor_id=sender,
-                                                address=address)
 
             if len(self._cfg.federate.join_in_info) != 0:
                 self.comm_manager.send(
