@@ -48,12 +48,13 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
         X, Y = [], []
         fidelity_space = sorted(['sample_client', 'round'])
         configuration_space = sorted(
-            list(set(self.table.keys()) - {'result', 'seed'} - set(
-                fidelity_space)))
+            list(
+                set(self.table.keys()) - {'result', 'seed'} -
+                set(fidelity_space)))
 
-        if not os.path.exists(os.path.join(root_path,
-                                           'X.npy')) or not os.path.exists(
-            os.path.join(root_path, 'Y.npy')):
+        if not os.path.exists(os.path.join(
+                root_path, 'X.npy')) or not os.path.exists(
+                    os.path.join(root_path, 'Y.npy')):
             print('Building data mat...')
             for idx in range(len(root_path)):
                 row = root_path.iloc[idx]
@@ -94,8 +95,10 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
                                         return_train_score=True)
                 test_metric = np.mean(res['test_score'])
                 train_metric = np.mean(res['train_score'])
-                print(f'n_estimators: {n_estimators}, max_depth: {max_depth}, '
-                      f'train_metric: {train_metric}, test_metric: {test_metric}')
+                print(
+                    f'n_estimators: {n_estimators}, max_depth: {max_depth}, '
+                    f'train_metric: {train_metric}, test_metric: {test_metric}'
+                )
                 if test_metric > best_res:
                     best_res = test_metric
                     best_models = res['estimator']
@@ -145,4 +148,3 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
     @staticmethod
     def get_meta_information() -> Dict:
         raise NotImplementedError
-
