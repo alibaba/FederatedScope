@@ -1,14 +1,13 @@
 import os
 import pickle
 import logging
+import datetime
 
-from typing import Union, Dict
+from pathlib import Path
+from typing import Union, Dict, Tuple
 
 import ConfigSpace as CS
 import numpy as np
-
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_validate as sk_cross_validate
 
 from base_fed_tabular_benchmark import BaseTabularFedHPOBench
 
@@ -17,109 +16,67 @@ __version__ = '0.0.1'
 logger = logging.getLogger('BaseFedHPOBench')
 
 
-def sampling(X, Y, over_rate=1, down_rate=1.0, cvg_score=0.5):
-    rel_score = Y
-    over_X = np.repeat(X[rel_score > cvg_score], over_rate, axis=0)
-    over_Y = np.repeat(Y[rel_score > cvg_score], over_rate, axis=0)
-
-    mask = np.random.choice(X[rel_score <= cvg_score].shape[0],
-                            size=int(X[rel_score <= cvg_score].shape[0] *
-                                     down_rate),
-                            replace=False)
-    down_X = np.array(X[rel_score <= cvg_score])[mask]
-    down_Y = np.array(Y[rel_score <= cvg_score])[mask]
-    return np.concatenate([over_X, down_X],
-                          axis=0), np.concatenate([over_Y, down_Y], axis=0)
-
-
 class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
     target_key = 'val_avg_loss'
     surrogate_models = []
     info = []
 
+    def __init__(self,
+                 data_path: Union[str, Path],
+                 model_path: Union[str, Path],
+                 data_url: str,
+                 model_url: str,
+                 triplets: Tuple,
+                 client_num: int,
+                 num_param: int,
+                 rng: Union[np.random.RandomState, int, None] = None):
+        """
+        This is a base FL HPO surrogate benchmark from paper:
+        "FedHPOBench: A Benchmark Suite for Federated Hyperparameter
+        Optimization",
+        url: https://arxiv.org/pdf/2206.03966v4.pdf
+        Source: https://github.com/alibaba/FederatedScope/tree/master
+        /benchmark/FedHPOBench
+        Parameters
+        ----------
+        data_path : str, Path
+            Path to Tabular data
+        data_path : str, Path
+            Path to surrogate models
+        data_url : download url for raw data
+        model_url: download url for surrogate models
+        triplets: Tuple, (model, dataset_name, algo)
+        client_num: total client_num joining the FL
+        num_param: number of model param
+        rng : np.random.RandomState, int, None
+            Random seed for the benchmarks
+        """
+        self.model_path = model_path
+        self.model_url = model_url
+        super(BaseTabularFedHPOBench,
+              self).__init__(data_path, data_url, triplets, client_num,
+                             num_param, rng)
+
     def _setup(self):
         super(BaseSurrogateFedHPOBench, self)._setup()
-        self.build_surrogate_model(self.target_key)
 
-    def build_surrogate_model(self, key='val_avg_loss'):
-        root_path = os.path.join(self.data_path, self.triplets[0],
-                                 self.triplets[1], self.triplets[2])
-        os.makedirs(root_path, exist_ok=True)
-        X, Y = [], []
-        fidelity_space = sorted(['sample_client', 'round'])
-        configuration_space = sorted(
-            list(
-                set(self.table.keys()) - {'result', 'seed'} -
-                set(fidelity_space)))
+    def load_surrogate_model(self):
+        model_list = []
+        model_path = os.path.join(self.model_path, self.triplets[0],
+                                  self.triplets[1], self.triplets[2])
+        file_names = os.listdir(model_path)
+        for fname in file_names:
+            if not fname.startswith('surrogate_model'):
+                continue
+            with open(os.path.join(model_path, fname), 'rb') as f:
+                model_state = f.read()
+                model = pickle.loads(model_state)
+                model_list.append(model)
 
-        if not os.path.exists(os.path.join(
-                root_path, 'X.npy')) or not os.path.exists(
-                    os.path.join(root_path, 'Y.npy')):
-            print('Building data mat...')
-            for idx in range(len(root_path)):
-                row = root_path.iloc[idx]
-                x = [row[col]
-                     for col in configuration_space] + [row['sample_client']]
-                result = eval(row['result'])
-                val_loss = result['val_avg_loss']
-                for rnd in range(len(val_loss)):
-                    X.append(x + [rnd * self.info['eval_freq']])
-                    best_round = np.argmin(val_loss[:rnd + 1])
-                    Y.append(result[key][best_round])
-            X, Y = np.array(X), np.array(Y)
-            np.save(os.path.join(root_path, 'X.npy'), X)
-            np.save(os.path.join(root_path, 'Y.npy'), Y)
-        else:
-            print('Loading cache...')
-            X = np.load(os.path.join(root_path, 'X.npy'))
-            Y = np.load(os.path.join(root_path, 'Y.npy'))
-
-        new_X, new_Y = sampling(X, Y, over_rate=1, down_rate=1)
-
-        perm = np.random.permutation(np.arange(len(new_Y)))
-        new_X, new_Y = new_X[perm], new_Y[perm]
-
-        best_res = -np.inf
-        # Ten-fold validation to get ten surrogate_model
-        for n_estimators in [10, 20]:
-            for max_depth in [10, 15, 20]:
-                regr = RandomForestRegressor(n_estimators=n_estimators,
-                                             max_depth=max_depth)
-                res = sk_cross_validate(regr,
-                                        new_X,
-                                        new_Y,
-                                        cv=10,
-                                        n_jobs=-1,
-                                        scoring='neg_mean_absolute_error',
-                                        return_estimator=True,
-                                        return_train_score=True)
-                test_metric = np.mean(res['test_score'])
-                train_metric = np.mean(res['train_score'])
-                print(
-                    f'n_estimators: {n_estimators}, max_depth: {max_depth}, '
-                    f'train_metric: {train_metric}, test_metric: {test_metric}'
-                )
-                if test_metric > best_res:
-                    best_res = test_metric
-                    best_models = res['estimator']
-
-        # Save model
-        for i, rf in enumerate(best_models):
-            file_name = f'surrogate_model_{i}.pkl'
-            model_state = pickle.dumps(rf)
-            with open(os.path.join(root_path, file_name), 'wb') as f:
-                f.write(model_state)
-
-        # Save info
-        info = {
-            'configuration_space': configuration_space,
-            'fidelity_space': fidelity_space
-        }
-        pkl = pickle.dumps(info)
-        with open(os.path.join(root_path, 'info.pkl'), 'wb') as f:
-            f.write(pkl)
-        self.surrogate_models = best_models
-        self.info = info
+        infofile = os.path.join(model_path, 'info.pkl')
+        with open(infofile, 'rb') as f:
+            self.info = pickle.loads(f.read())
+        self.surrogate_models = model_list
 
     def get_results(self, configuration, fidelity, seed_id):
         return self._make_prediction(configuration, fidelity, seed_id)
