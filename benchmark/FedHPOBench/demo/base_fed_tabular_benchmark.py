@@ -4,7 +4,6 @@ import datetime
 import urllib.request
 import logging
 import zipfile
-import pickle
 
 from pathlib import Path
 from typing import Union, Dict, Tuple, List
@@ -76,9 +75,9 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
 
         # Download
         if os.path.exists(file_path):
-            logger.info(f'File {file} exists, use existing file.')
+            print(f'File {file} exists, use existing file.')
         else:
-            logger.info(f'Downloading {url}')
+            print(f'Downloading {url}')
             os.makedirs(save_path, exist_ok=True)
             ctx = ssl._create_unverified_context()
             data = urllib.request.urlopen(url, context=ctx)
@@ -87,6 +86,7 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
 
         # Extract
         if not np.all([os.path.exists(x) for x in files_path_list]):
+            print(f'Extract files {files}.')
             with zipfile.ZipFile(file_path, 'r') as f:
                 f.extractall(save_path)
         return root_path
@@ -217,16 +217,21 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
         function_values, costs = [], []
         for seed_id in seed_index:
             result = self.get_results(configuration, fidelity, seed_id)
-            index = list(result.keys())
-            assert len(index) == 1, 'Multiple results.'
-            filterd_result = eval(result[index[0]])
-            assert key in filterd_result.keys(
-            ), f'`key` should be in {filterd_result.keys()}.'
+            if isinstance(result, dict):
+                index = list(result.keys())
+                assert len(index) == 1, 'Multiple results.'
+                filterd_result = eval(result[index[0]])
+                assert key in filterd_result.keys(
+                ), f'`key` should be in {filterd_result.keys()}.'
 
-            # Find the best val round.
-            val_loss = filterd_result['val_avg_loss']
-            best_round = np.argmin(val_loss[:fidelity['round'] + 1])
-            function_value = filterd_result[key][best_round]
+                # Find the best val round.
+                val_loss = filterd_result['val_avg_loss']
+                best_round = np.argmin(val_loss[:fidelity['round'] + 1])
+                function_value = filterd_result[key][best_round]
+            elif isinstance(result, np.float64):
+                function_value = result
+            else:
+                raise TypeError(f'Unsupport type {type(type(result))}!')
 
             function_values.append(function_value)
             costs.append(self._cost(configuration, fidelity))

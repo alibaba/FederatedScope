@@ -51,45 +51,25 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
         self.info = None
         self.model_path = model_path
         self.model_url = model_url
-        super(BaseTabularFedHPOBench,
+        super(BaseSurrogateFedHPOBench,
               self).__init__(data_path, data_url, triplets, client_num,
                              num_param, rng)
 
     def _setup(self):
         super(BaseSurrogateFedHPOBench, self)._setup()
-        self.load_surrogate_model()
-
-    def load_surrogate_model(self):
-        """ Download and extract the model. """
-        file = self.model_url.rpartition('/')[2]
-        file = file if file[0] == '?' else file.split('?')[0]
-        path = os.path.join(self.model_path, file)
-
-        root_path = os.path.join(self.model_path, self.triplets[0],
-                                 self.triplets[1], self.triplets[2])
-
-        modelfile = os.path.join(root_path, '??')
-        infofile = os.path.join(root_path, 'info.pkl')
-
-        # Download
-        if os.path.exists(path):
-            pass
-
+        # Download and extract the model.
+        file_list = [f'surrogate_model_{x}.pkl' for x in range(10)]
+        root_path = self.download_and_extract(self.model_url, self.model_path,
+                                              file_list)
+        file_names = os.listdir(root_path)
         model_list = []
-        model_path = os.path.join(self.model_path, self.triplets[0],
-                                  self.triplets[1], self.triplets[2])
-        file_names = os.listdir(model_path)
         for fname in file_names:
             if not fname.startswith('surrogate_model'):
                 continue
-            with open(os.path.join(model_path, fname), 'rb') as f:
+            with open(os.path.join(root_path, fname), 'rb') as f:
                 model_state = f.read()
                 model = pickle.loads(model_state)
                 model_list.append(model)
-
-        infofile = os.path.join(model_path, 'info.pkl')
-        with open(infofile, 'rb') as f:
-            self.info = pickle.loads(f.read())
         self.surrogate_models = model_list
 
     def get_results(self, configuration, fidelity, seed_id):

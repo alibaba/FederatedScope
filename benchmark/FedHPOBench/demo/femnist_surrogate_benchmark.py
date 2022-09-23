@@ -53,7 +53,10 @@ class FENISTSurrogateFedHPOBench(BaseSurrogateFedHPOBench):
                                           upper=1.0,
                                           log=True))
         cs.add_hyperparameter(
-            CS.UniformFloatHyperparameter('wd', lower=0, upper=0.1, log=True))
+            CS.UniformFloatHyperparameter('wd',
+                                          lower=10e-5,
+                                          upper=0.1,
+                                          log=True))
         cs.add_hyperparameter(
             CS.UniformFloatHyperparameter('dropout', lower=0, upper=0.5))
         cs.add_hyperparameter(
