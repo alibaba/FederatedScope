@@ -60,6 +60,21 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
         self.load_surrogate_model()
 
     def load_surrogate_model(self):
+        """ Download and extract the model. """
+        file = self.model_url.rpartition('/')[2]
+        file = file if file[0] == '?' else file.split('?')[0]
+        path = os.path.join(self.model_path, file)
+
+        root_path = os.path.join(self.model_path, self.triplets[0],
+                                 self.triplets[1], self.triplets[2])
+
+        modelfile = os.path.join(root_path, '??')
+        infofile = os.path.join(root_path, 'info.pkl')
+
+        # Download
+        if os.path.exists(path):
+            pass
+
         model_list = []
         model_path = os.path.join(self.model_path, self.triplets[0],
                                   self.triplets[1], self.triplets[2])

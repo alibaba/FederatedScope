@@ -63,38 +63,40 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
         self._setup()
         super(BaseTabularFedHPOBench, self).__init__(rng=rng)
 
-    def _setup(self):
+    def download_and_extract(self, url, save_path, files):
         """ Download and extract the data. """
-        file = self.url.rpartition('/')[2]
+        file = url.rpartition('/')[2]
         file = file if file[0] == '?' else file.split('?')[0]
-        path = os.path.join(self.data_path, file)
+        file_path = os.path.join(save_path, file)
 
-        root_path = os.path.join(self.data_path, self.triplets[0],
-                                 self.triplets[1], self.triplets[2])
-        datafile = os.path.join(root_path, 'tabular.csv.gz')
-        infofile = os.path.join(root_path, 'info.pkl')
+        root_path = os.path.join(save_path, self.triplets[0], self.triplets[1],
+                                 self.triplets[2])
+
+        files_path_list = [os.path.join(root_path, fname) for fname in files]
 
         # Download
-        if os.path.exists(path):
+        if os.path.exists(file_path):
             logger.info(f'File {file} exists, use existing file.')
         else:
-            logger.info(f'Downloading {self.url}')
-            os.makedirs(self.data_path, exist_ok=True)
+            logger.info(f'Downloading {url}')
+            os.makedirs(save_path, exist_ok=True)
             ctx = ssl._create_unverified_context()
-            data = urllib.request.urlopen(self.url, context=ctx)
-            with open(path, 'wb') as f:
+            data = urllib.request.urlopen(url, context=ctx)
+            with open(file_path, 'wb') as f:
                 f.write(data.read())
 
         # Extract
-        if not os.path.exists(datafile) and not os.path.exists(infofile):
-            with zipfile.ZipFile(path, 'r') as f:
-                f.extractall(self.data_path)
+        if not np.all([os.path.exists(x) for x in files_path_list]):
+            with zipfile.ZipFile(file_path, 'r') as f:
+                f.extractall(save_path)
+        return root_path
 
-        df = pd.read_csv(datafile)
-        with open(infofile, 'rb') as f:
-            info = pickle.loads(f.read())
-
-        self.table, self.info = df, info
+    def _setup(self):
+        file_list = ['tabular.csv.gz', 'info.pkl']
+        root_path = self.download_and_extract(self.url, self.data_path,
+                                              file_list)
+        datafile = os.path.join(root_path, 'tabular.csv.gz')
+        self.table = pd.read_csv(datafile)
 
     def _get_lambda_from_df(self, configuration, fidelity):
         lambdas = []
