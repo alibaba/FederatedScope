@@ -179,7 +179,7 @@ class vFLClient(Client):
         en_para = message.content
         # self.my_part_of_my_z =
         #       np.matmul(self.input_x, self.my_part_of_my_para)
-        upgrade_x = self.ss.float2fixedpoint(self.input_x)
+        upgrade_x = self.ss.upgrade(self.input_x)
 
         self.my_part_of_my_z = self.mod_matmul(upgrade_x,
                                                self.my_part_of_my_para,
@@ -275,17 +275,6 @@ class vFLClient(Client):
     # B keeps <g_b>_2
     # B sends [<g_b>_1]_a to A
     # B sends [<e>_2]_b to A
-    '''
-    def biginteger_mod(self, n, m):
-        ans = 0
-        while n < 0:
-            n += m
-        n = int(n)
-        s = str(n)
-        for i in range(len(s)):
-            ans = ((ans * 10 + int(s[i])) % m)
-        return ans
-    '''
 
     def err_mul_data(self, e, data, epsilon, mod_number):
         res = [0 for _ in range(data.shape[1])]
@@ -295,7 +284,6 @@ class vFLClient(Client):
                 a = e[i].item()
                 b = data[i, j].item()
                 tmp += a * b  # % mod_number
-                tmp = tmp  # % mod_number
             res[j] = round(tmp / epsilon)
             res[j] = res[j] % mod_number
         return res
@@ -315,6 +303,10 @@ class vFLClient(Client):
         za = [tmp1[i] + z2[i] for i in range(len(tmp1))]
         # print(za)
         za = self.ss.mod_funs(za)
+
+        # za = [round(x/self.ss.epsilon) if x <= self.ss.mod_number/2
+        # else round(-((self.ss.mod_number-x)/self.ss.epsilon)) for x in za]
+        za = [round(self.ss.fixedpoint2float(x) / self.ss.epsilon) for x in za]
         print("za: ", za)
         print("za float: ", self.ss.fixedpoint2float(za))
 
@@ -327,14 +319,15 @@ class vFLClient(Client):
         # here linear is enough
 
         # print(za)
-        t1 = [self.ss.float2fixedpoint(1 / 4) * x for x in za]
+        # t1 = [self.ss.upgrade(1 / 4) * x for x in za]
         # print(t1)
-        t1 = self.ss.downgrade(t1)
+        # t1 = self.ss.downgrade(t1)
         # print(t1)
+        t1 = [self.ss.const_mul_fixedpoint(1 / 4, x) for x in za]
 
-        y_hat_a = [self.ss.float2fixedpoint(1 / 2) + x for x in t1]
-        y_hat_a = self.ss.mod_funs(y_hat_a)
-        # y_hat_a = [x//self.ss.epsilon**2 for x in y_hat_a]
+        # y_hat_a = [self.ss.upgrade(1 / 2) + x for x in t1]
+        # y_hat_a = self.ss.mod_funs(y_hat_a)
+        y_hat_a = [self.ss.const_add_fixedpoint(1 / 2, x) for x in t1]
         print("y_hat_a: ", y_hat_a)
         """
         zzz = [3 * tmp2[i].item() * z2[i].item() % self.ss.mod_number
@@ -343,7 +336,7 @@ class vFLClient(Client):
                     for i in range(len(tmp3))]
         zzz = self.ss.mod_funs(zzz)
         print(zzz)
-        ttt = [self.ss.float2fixedpoint(1/48) * zzz[i]
+        ttt = [self.ss.upgrade(1/48) * zzz[i]
                 for i in range(len(zzz))]
         ttt = self.ss.downgrade(ttt)
         y_hat_a = [y_hat_a[i] - ttt[i] for i in range(len(y_hat_a))]
@@ -355,11 +348,12 @@ class vFLClient(Client):
         #    for i in range(len(za))
         # ]
 
-        upgrade_y = self.ss.float2fixedpoint(self.y)
+        upgrade_y = self.ss.upgrade(self.y)
         # e_a = y_hat_a - self.y
         # print(y_hat_a)
         # print(upgrade_y)
         e_a = self.ss.mod_funs(y_hat_a - upgrade_y)
+        # e_a = y_hat_a - upgrade_y
         print("e_a: ", e_a)
 
         y_hat_2, y_hat_1 = self.ss.secret_split_for_piece_of_ss(y_hat_a)
@@ -371,7 +365,7 @@ class vFLClient(Client):
         e_2 = self.ss.mod_funs(y_hat_2 - upgrade_y)
         print("e_2: ", e_2)
 
-        upgrade_x = self.ss.float2fixedpoint(self.input_x)
+        upgrade_x = self.ss.upgrade(self.input_x)
         # g_b_a = np.matmul(e_a, self.input_x)
 
         # print(e_a)
@@ -387,7 +381,7 @@ class vFLClient(Client):
         print("g_b_2: ", g_b_2)
 
         # user b update w_b_2
-        upgrade_lr = self.ss.float2fixedpoint(self.lr)
+        upgrade_lr = self.ss.upgrade(self.lr)
         t1 = [upgrade_lr * x for x in g_b_2]
         # t1 = self.ss.downgrade(t1)
         self.my_part_of_my_para = self.ss.mod_funs(
@@ -428,7 +422,7 @@ class vFLClient(Client):
         print("e_1: ", e_1)
 
         # g_a_1 = np.matmul(e_1, self.input_x)
-        upgrade_x = self.ss.float2fixedpoint(self.input_x)
+        upgrade_x = self.ss.upgrade(self.input_x)
         g_a_1 = self.err_mul_data(e_1, upgrade_x, self.ss.epsilon,
                                   self.ss.mod_number)
         # g_a_1 = self.ss.downgrade(g_a_1)
@@ -450,7 +444,7 @@ class vFLClient(Client):
         print("g_a_2_1: ", g_a_2_1)
         print("g_a_2_2: ", g_a_2_2)
         # user A updates w_a_1
-        upgrade_lr = self.ss.float2fixedpoint(self.lr)
+        upgrade_lr = self.ss.upgrade(self.lr)
         t1 = self.ss.mod_funs(
             [g_a_1[i] + g_a_2_1[i] for i in range(len(g_a_1))])
         t2 = [upgrade_lr * x for x in t1]
@@ -502,7 +496,7 @@ class vFLClient(Client):
         g_a_2_2 = [self.my_private_key.decrypt(x) for x in g_a_2_2]
 
         #  user B updates w_a_2
-        upgrade_lr = self.ss.float2fixedpoint(self.lr)
+        upgrade_lr = self.ss.upgrade(self.lr)
         t1 = [upgrade_lr * x for x in g_a_2_2]
         # t1 = self.ss.downgrade(t1)
 
@@ -557,8 +551,10 @@ class vFLClient(Client):
 
     def callback_func_for_para_exchange(self, message: Message):
         para = message.content
-        self.my_para = self.ss.secret_reconstruct(
+        self.my_para = self.ss.secret_reconstruct_for_ss_pieces(
             (self.my_part_of_my_para, para))
+        self.my_para = self.ss.fixedpoint2float(self.my_para)
+        self.my_para = self.my_para / self.ss.epsilon
         # print(para)
         # self.my_para = self.my_para / self.ss.epsilon
 

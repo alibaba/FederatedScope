@@ -79,7 +79,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.caesar_vertical = CN()
     cfg.caesar_vertical.use = False
     cfg.caesar_vertical.encryption = 'paillier'
-    cfg.caesar_vertical.dims = [2, 2]
+    cfg.caesar_vertical.dims = [5, 10]
     cfg.caesar_vertical.key_size = 3072
 
     # --------------- register corresponding check function ----------

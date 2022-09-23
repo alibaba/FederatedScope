@@ -24,17 +24,18 @@ class AdditiveSecretSharing(SecretSharing):
     AdditiveSecretSharing class, which can split a number into frames and
     recover it by summing up
     """
-    def __init__(self, shared_party_num, size=10):
+    def __init__(self, shared_party_num, size=30):
         super(SecretSharing, self).__init__()
         assert shared_party_num > 1, "AdditiveSecretSharing require " \
                                      "shared_party_num > 1"
         self.shared_party_num = shared_party_num
         self.maximum = 2**size
         self.mod_number = 2**(2 * size)
-        self.epsilon = 1e2
+        self.epsilon = 1e8
         self.mod_funs = np.vectorize(lambda x: x % self.mod_number)
         self.float2fixedpoint = np.vectorize(self._float2fixedpoint)
         self.fixedpoint2float = np.vectorize(self._fixedpoint2float)
+        self.upgrade = np.vectorize(self._upgrade)
         self.downgrade = np.vectorize(self._downgrade)
 
     def secret_split(self, secret):
@@ -119,18 +120,56 @@ class AdditiveSecretSharing(SecretSharing):
             merge_model = self.fixedpoint2float(merge_model)
         return merge_model
 
+    def secret_reconstruct_for_ss_pieces(self, secret_seq):
+        """
+        To recover a piece of ss pieces
+        """
+        assert len(secret_seq) == self.shared_party_num
+        merge_model = secret_seq[0].copy()
+        if isinstance(merge_model, dict):
+            for key in merge_model:
+                for idx in range(len(secret_seq)):
+                    if idx == 0:
+                        merge_model[key] = secret_seq[idx][key].copy()
+                    else:
+                        merge_model[key] += secret_seq[idx][key]
+                merge_model[key] = self.fixedpoint2float(merge_model[key])
+        else:
+            secret_seq = [np.asarray(x) for x in secret_seq]
+            for idx in range(len(secret_seq)):
+                if idx == 0:
+                    merge_model = secret_seq[idx].copy()
+                else:
+                    merge_model += secret_seq[idx]
+            merge_model = self.mod_funs(merge_model)
+        return merge_model
+
+    def const_add_fixedpoint(self, c, x):
+        up_c = self.upgrade(c)
+        res = self.mod_funs(up_c + x)
+        return res
+
+    def const_mul_fixedpoint(self, c, x):
+        up_c = self.upgrade(c)
+        res = self.downgrade(up_c * x)
+        return res
+
     def _float2fixedpoint(self, x):
         x = round(x * self.epsilon)
         assert abs(x) < self.maximum
-        return x  # % self.mod_number
+        return x % self.mod_number
 
     def _fixedpoint2float(self, x):
         x = x % self.mod_number
-        # assert x <= self.maximum or x >= self.mod_number - self.maximum
-        if x > self.maximum:
+        if x > self.mod_number / 2:  # self.maximum:
             return -1 * (self.mod_number - x) / self.epsilon
         else:
             return x / self.epsilon
+
+    def _upgrade(self, x):
+        x = round(x * self.epsilon)
+        assert abs(x) < self.maximum
+        return x
 
     def _downgrade(self, x):
         x = round(x / self.epsilon)

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def load_data(config=None, generate=False, standard=False):
+def load_data(config=None, generate=False):
     """
     To generate the synthetic data for vertical FL
 
@@ -26,35 +26,6 @@ def load_data(config=None, generate=False, standard=False):
             1.0 if x >= 0 else -1.0
             for x in np.reshape(np.matmul(x, theta), -1)
         ])
-
-        def standardize(X):
-            m, n = X.shape
-            for j in range(n):
-                features = X[:, j]
-                meanVal = features.mean(axis=0)
-                std = features.std(axis=0)
-                if std != 0:
-                    X[:, j] = (features - meanVal) / std
-                else:
-                    X[:, j] = 0
-            return X
-
-        def normalize(X):
-            m, n = X.shape
-            for j in range(n):
-                features = X[:, j]
-                minVal = features.min(axis=0)
-                maxVal = features.max(axis=0)
-                diff = maxVal - minVal
-                if diff != 0:
-                    X[:, j] = (features - minVal) / diff
-                else:
-                    X[:, j] = 0
-            return X
-
-        if not standard:
-            x = standardize(x)
-        # x = normalize(x)
 
         train_num = int(TRAIN_SPLIT * INSTANCE_NUM)
         test_data = {'theta': theta, 'x': x[train_num:], 'y': y[train_num:]}

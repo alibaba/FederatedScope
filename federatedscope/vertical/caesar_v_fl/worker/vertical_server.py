@@ -34,7 +34,7 @@ class vFLServer(Server):
                              total_round_num, device, strategy, **kwargs)
         self.dims = [0] + config.caesar_vertical.dims
         self.omega = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
-        self.omega = [0 for _ in range(sum(self.dims))]
+        # self.omega = [0 for _ in range(sum(self.dims))]
 
         self.lr = config.train.optimizer.lr
         self.w_a = None
