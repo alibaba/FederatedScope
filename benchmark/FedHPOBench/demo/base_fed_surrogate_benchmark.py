@@ -90,9 +90,9 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
         assert key == self.target_key, f'The key should be' \
                                        f' {self.target_key}, ' \
                                        f'but get {key}.'
-        super(BaseSurrogateFedHPOBench,
-              self).objective_function(configuration, fidelity, seed_index,
-                                       rng, key, **kwargs)
+        return super(BaseSurrogateFedHPOBench,
+                     self).objective_function(configuration, fidelity,
+                                              seed_index, rng, key, **kwargs)
 
     def _make_prediction(self, configuration, fidelity, seed_id):
         model = self.surrogate_models[seed_id % len(self.surrogate_models)]
