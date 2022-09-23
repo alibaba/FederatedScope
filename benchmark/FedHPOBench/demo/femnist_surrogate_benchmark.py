@@ -25,14 +25,9 @@ class FENISTSurrogateFedHPOBench(BaseSurrogateFedHPOBench):
         triplets = ('cnn', 'femnist', 'avg')
         client_num = 200
         num_param = 871294
-        super(FENISTSurrogateFedHPOBench, self).__init__(data_path,
-                                                         model_path,
-                                                         data_url,
-                                                         model_url,
-                                                         triplets,
-                                                         client_num,
-                                                         num_param,
-                                                         rng)
+        super(FENISTSurrogateFedHPOBench,
+              self).__init__(data_path, model_path, data_url, model_url,
+                             triplets, client_num, num_param, rng)
 
     @staticmethod
     def get_configuration_space(
@@ -58,18 +53,13 @@ class FENISTSurrogateFedHPOBench(BaseSurrogateFedHPOBench):
                                           upper=1.0,
                                           log=True))
         cs.add_hyperparameter(
-            CS.UniformFloatHyperparameter('wd', lower=0,
-                                          upper=0.1,
-                                          log=True))
+            CS.UniformFloatHyperparameter('wd', lower=0, upper=0.1, log=True))
         cs.add_hyperparameter(
-            CS.UniformFloatHyperparameter('dropout', lower=0,
-                                          upper=0.5))
+            CS.UniformFloatHyperparameter('dropout', lower=0, upper=0.5))
         cs.add_hyperparameter(
-            CS.UniformIntegerHyperparameter('batch', lower=16,
-                                            upper=64))
+            CS.UniformIntegerHyperparameter('batch', lower=16, upper=64))
         cs.add_hyperparameter(
-            CS.UniformIntegerHyperparameter('step', lower=1,
-                                            upper=4))
+            CS.UniformIntegerHyperparameter('step', lower=1, upper=4))
         return cs
 
     @staticmethod
@@ -122,7 +112,7 @@ class FENISTSurrogateFedHPOBench(BaseSurrogateFedHPOBench):
                 '/benchmark/FedHPOB'
             ],
             'code': 'https://github.com/alibaba/FederatedScope/tree/master'
-                    '/benchmark/FedHPOBench',
+            '/benchmark/FedHPOBench',
         }
 
 
