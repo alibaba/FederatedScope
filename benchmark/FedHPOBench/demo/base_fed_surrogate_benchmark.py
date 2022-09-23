@@ -1,7 +1,6 @@
 import os
 import pickle
 import logging
-import datetime
 
 from pathlib import Path
 from typing import Union, Dict, Tuple
@@ -17,10 +16,6 @@ logger = logging.getLogger('BaseFedHPOBench')
 
 
 class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
-    target_key = 'val_avg_loss'
-    surrogate_models = []
-    info = []
-
     def __init__(self,
                  data_path: Union[str, Path],
                  model_path: Union[str, Path],
@@ -51,6 +46,9 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
         rng : np.random.RandomState, int, None
             Random seed for the benchmarks
         """
+        self.target_key = 'val_avg_loss'
+        self.surrogate_models = []
+        self.info = None
         self.model_path = model_path
         self.model_url = model_url
         super(BaseTabularFedHPOBench,
@@ -80,6 +78,21 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
 
     def get_results(self, configuration, fidelity, seed_id):
         return self._make_prediction(configuration, fidelity, seed_id)
+
+    def objective_function(self,
+                           configuration: Union[CS.Configuration, Dict],
+                           fidelity: Union[CS.Configuration, Dict,
+                                           None] = None,
+                           seed_index: Union[int, Tuple, None] = (1, 2, 3),
+                           rng: Union[np.random.RandomState, int, None] = None,
+                           key: str = 'val_avg_loss',
+                           **kwargs) -> Dict:
+        assert key == self.target_key, f'The key should be' \
+                                       f' {self.target_key}, ' \
+                                       f'but get {key}.'
+        super(BaseSurrogateFedHPOBench,
+              self).objective_function(configuration, fidelity, seed_index,
+                                       rng, key, **kwargs)
 
     def _make_prediction(self, configuration, fidelity, seed_id):
         model = self.surrogate_models[seed_id % len(self.surrogate_models)]
