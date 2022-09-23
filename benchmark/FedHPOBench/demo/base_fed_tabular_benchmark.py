@@ -31,7 +31,7 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
                  rng: Union[np.random.RandomState, int, None] = None):
         """
         This is a base FL HPO benchmark from paper:
-        "FedHPOBench: A Benchmark Suite for Federated Hyperparameter
+        "FedHPO-Bench: A Benchmark Suite for Federated Hyperparameter
         Optimization",
         url: https://arxiv.org/pdf/2206.03966v4.pdf
         Source: https://github.com/alibaba/FederatedScope/tree/master

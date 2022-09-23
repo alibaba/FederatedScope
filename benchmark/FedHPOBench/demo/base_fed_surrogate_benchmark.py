@@ -27,7 +27,7 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
                  rng: Union[np.random.RandomState, int, None] = None):
         """
         This is a base FL HPO surrogate benchmark from paper:
-        "FedHPOBench: A Benchmark Suite for Federated Hyperparameter
+        "FedHPO-Bench: A Benchmark Suite for Federated Hyperparameter
         Optimization",
         url: https://arxiv.org/pdf/2206.03966v4.pdf
         Source: https://github.com/alibaba/FederatedScope/tree/master
@@ -57,6 +57,7 @@ class BaseSurrogateFedHPOBench(BaseTabularFedHPOBench):
 
     def _setup(self):
         super(BaseSurrogateFedHPOBench, self)._setup()
+        self.load_surrogate_model()
 
     def load_surrogate_model(self):
         model_list = []
