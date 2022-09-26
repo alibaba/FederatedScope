@@ -733,7 +733,7 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
     :return:
     """
     if merged_max_data_id is None:
-        merged_max_data_id = len(all_data)
+        merged_max_data_id = len(all_data) - 1
     assert merged_max_data_id >= 1
 
     if specified_dataset_name is None:
@@ -749,7 +749,7 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
     data_name = "test" if "test" in dataset_names else dataset_names[0]
     id_contain_all_dataset_key = -1
     # check the existence of the data to be merged
-    for client_id in range(1, merged_max_data_id):
+    for client_id in range(1, merged_max_data_id + 1):
         contain_all_dataset_key = True
         for dataset_name in dataset_names:
             if dataset_name not in all_data[client_id]:
@@ -767,7 +767,7 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                                [data_name].keys())  # e.g., x, y
         # init with empty list for each dataset_name
         merged_data = {name: defaultdict(list) for name in dataset_names}
-        for data_id in range(1, merged_max_data_id):
+        for data_id in range(1, merged_max_data_id + 1):
             for d_name in dataset_names:
                 if d_name not in all_data[data_id]:
                     continue
@@ -786,7 +786,7 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
             name: copy.deepcopy(all_data[id_contain_all_dataset_key][name])
             for name in dataset_names
         }
-        for data_id in range(1, merged_max_data_id):
+        for data_id in range(1, merged_max_data_id + 1):
             if data_id == id_contain_all_dataset_key:
                 continue
             for d_name in dataset_names:
