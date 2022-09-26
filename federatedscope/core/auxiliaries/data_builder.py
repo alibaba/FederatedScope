@@ -732,7 +732,7 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
     :param specified_dataset_name:
     :return:
     """
-    if merged_max_data_id is not None:
+    if merged_max_data_id is None:
         merged_max_data_id = len(all_data)
     assert merged_max_data_id >= 1
 
