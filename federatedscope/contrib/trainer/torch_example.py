@@ -34,7 +34,6 @@ class MyTorchTrainer(BaseTrainer):
         # _hook_on_fit_start_init
         self.model.to(self.device)
         self.model.train()
-        self.optimizer.zero_grad()
 
         total_loss = num_samples = 0
         # _hook_on_batch_start_init
@@ -45,6 +44,7 @@ class MyTorchTrainer(BaseTrainer):
             loss = self.criterion(outputs, y)
 
             # _hook_on_batch_backward
+            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
