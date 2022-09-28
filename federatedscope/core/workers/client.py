@@ -104,8 +104,15 @@ class Client(Worker):
         else:
             self.comp_speed = None
             self.comm_bandwidth = None
-        self.model_size = sys.getsizeof(pickle.dumps(
-            self.model)) / 1024.0 * 8.  # kbits
+
+        if self._cfg.backend == 'torch':
+            self.model_size = sys.getsizeof(pickle.dumps(
+                self.model)) / 1024.0 * 8.  # kbits
+        else:
+            # TODO: calculate model size for TF Model
+            self.model_size = 1.0
+            logger.warning(f'The calculation of model size in backend:'
+                           f'{self._cfg.backend} is not provided.')
 
         # Initialize communication manager
         self.server_id = server_id
