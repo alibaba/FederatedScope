@@ -1,6 +1,6 @@
 use_gpu: True
-device: 2
-outdir: exp/pfedhpo_cifar
+device: 0
+outdir: exp/pfedhpo_cifar2
 seed: 12345
 early_stop:
   patience: 100000
@@ -54,4 +54,4 @@ hpo:
     target_fl_total_round: 800
     ss: 'scripts/example_configs/cifar/ss.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: exp/pfedhpo_cifar/working
+  working_folder: exp/pfedhpo_cifar2/working

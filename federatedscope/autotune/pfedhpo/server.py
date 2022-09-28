@@ -1,5 +1,6 @@
 import copy
 import os
+import json
 import logging
 import pdb
 from itertools import product
@@ -99,33 +100,45 @@ class pFedHPOServer(Server):
         # prepare hyper-net
         self.client2idx = None
 
-        encoding_tensor = F.one_hot(torch.arange(0, client_num)).float().to(self._cfg.device)
+        self.var = 0.1
+        dist = MultivariateNormal(loc=torch.zeros(len(self.pbounds)),
+            covariance_matrix=torch.eye(len(self.pbounds)) * self.var)
+        self.logprob_max = dist.log_prob(dist.sample() * 0)
 
-        # TODO: client encoding
-        self.client_encoding = torch.nn.Parameter(encoding_tensor, requires_grad=True).to(self._cfg.device)
+        # encoding_tensor = F.one_hot(torch.arange(0, client_num)).float()
 
-        self.HyperNet = HyperNet(input_dim=client_num, num_params=len(self.pbounds),
-                                 n_clients=client_num).to(self._cfg.device)
+        encoding_tensor = []
+        for i in range(self._cfg.federate.client_num+1):
+            p = os.path.join(self._cfg.hpo.working_folder, 'client_%d_encoding.pt' % i)
+            if os.path.exists(p):
+                t = torch.load(p)
+                encoding_tensor.append(t)
+        encoding_tensor = torch.stack(encoding_tensor)
+
+
+        self.HyperNet = HyperNet(encoding=encoding_tensor,
+                                 num_params=len(self.pbounds),
+                                 n_clients=client_num,
+                                 device=self._cfg.device,
+                                 var=self.var).to(self._cfg.device)
         self.saved_models = [None] * self._cfg.hpo.pfedhpo.target_fl_total_round
 
-        self.opt = torch.optim.Adam([
-                {'params': self.client_encoding, },
-                {'params': self.HyperNet.parameters(), 'weight_decay': 1e-5},
-            ], lr=0.01)
+        # self.opt = torch.optim.SGD([
+        #         {'params': self.HyperNet.encoding, 'lr': 0.1},
+        #         {'params': self.HyperNet.PolicyNet.parameters(), 'weight_decay': 1e-5, 'lr': 0.1},
+        #     ])
 
-        self.anchor_res = {}
+        self.opt = torch.optim.SGD(self.HyperNet.parameters(), lr=0.01)
+
         with open(os.path.join(self._cfg.hpo.working_folder,
-                               "anchor_eval_results.log"), "r") as exp_log_f:
-            # track the prediction related performance
-            for line in exp_log_f:
-                res = ast.literal_eval(line)
-                if 'round' in res.keys():
-                    self.anchor_res['round %d' % int(res['round'])] = res['results']
+                               'anchor_eval_results.json'), 'r') as f:
+            self.anchor_res = json.load(f)
+
 
         # TODO: sampler
         # self.sampler = None
 
-        self.tb_writer = SummaryWriter(os.path.join(self._cfg.hpo.working_folder, 'tb'))
+        self.tb_writer = SummaryWriter(os.path.join(self._cfg.outdir, 'tb'))
 
     def broadcast_model_para(self,
                              msg_type='model_para',
@@ -147,8 +160,9 @@ class pFedHPOServer(Server):
                 self.sampler.change_state(self.receiver, 'working')
 
         # random sample start round and load saved global model
-        self.start_round = np.random.randint(0,
-            self.self._cfg.hpo.pfedhpo.target_fl_total_round)
+        self.start_round = np.random.randint(1,
+            self._cfg.hpo.pfedhpo.target_fl_total_round)
+        logger.info('==> Sampled start round: %d'%self.start_round)
         ckpt_path = os.path.join(self._cfg.hpo.working_folder,
                                  'temp_model_round_%d.pt' % self.start_round)
         if self.model_num > 1:
@@ -165,7 +179,7 @@ class pFedHPOServer(Server):
                 client2idx[k] = i
             self.client2idx = client2idx
 
-        param_raw, self.logprob, self.entropy = self.HyperNet(self.client_encoding)
+        param_raw, self.logprob, self.entropy = self.HyperNet()
         xs = param_raw.detach().cpu().numpy()
 
         # sample the hyper-parameter config specific to the clients
@@ -204,35 +218,75 @@ class pFedHPOServer(Server):
 
         return self.check_and_move_on()
 
-    def update_policy(self, feedbacks):
-        losses = []
-        for cid in feedbacks.keys():
-            fb = feedbacks[cid]
+    def update_policy(self):
+        print('>>>>>>> fuck')
+
+        key1 = 'Results_weighted_avg' # 'Results_avg', 'Results_fairness'
+        key2 = 'val_acc' # 'test_acc', 'test_correct', 'test_loss', 'test_total', 'test_avg_loss', 'val_acc', 'val_correct', 'val_loss', 'val_total', 'val_avg_loss'
+
+        anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
+        anchor_res_end = self.anchor_res[key1][key2][self.start_round]
+        res_end = self.history_results[key1][key2][0]
+
+        anchor_res_start += 1e-6
+        anchor_reward = anchor_res_end - anchor_res_start
+        reward = np.maximum(0, res_end - anchor_res_start)
+
+        losses = (1.0 - reward) * (torch.exp(self.logprob_max) - torch.exp(self.logprob))
+
+        loss = losses.mean()
+        self.opt.zero_grad()
+        loss.backward()
+        self.opt.step()
+
+        for cid in self.fb.keys():
             idx = self.client2idx[cid]
+            self.tb_writer.add_scalar('logprob_%d'%cid, self.logprob[idx], self.state)
+            self.tb_writer.add_scalar('loss_%d'%cid, losses[idx], self.state)
+            self.tb_writer.add_scalar('entropy_%d'%cid, self.entropy[idx], self.state)
+        self.tb_writer.add_scalar('loss', loss, self.state)
+
+
+        # self.history_results = {}
+        #
+        # losses = []
+        # for cid in feedbacks.keys():
+        #     fb = feedbacks[cid]
+        #     idx = self.client2idx[cid]
 
             # TODO: design reward
-            reward = fb['val_avg_loss_after'] - fb['val_avg_loss_before']
-
-            afb = self.anchor_res['round %d' % self.start_round][cid]
-            anchor_reward = afb['val_avg_loss_after'] - afb['val_avg_loss_before']
-
-            normalized_reward = reward / anchor_reward
+            # reward = np.maximum(1 - fb['val_avg_loss_after'] / (fb['val_avg_loss_before'] + 1e-8), 1e-4)
+            # afb = self.anchor_res['round %d' % self.start_round][cid]
+            # anchor_reward = afb['val_avg_loss_after'] - afb['val_avg_loss_before']
+            # anchor_reward = fb['val_avg_loss_before']
+            # normalized_reward = reward / anchor_reward
 
             # TODO: design loss
-            loss = - self.logprob[idx] * normalized_reward
 
-            self.tb_writer.add_scalar('reward_%d'%cid, reward, self.state)
-            self.tb_writer.add_scalar('Nreward_%d'%cid, normalized_reward, self.state)
-            self.tb_writer.add_scalar('loss_%d'%cid, loss, self.state)
+        #     improve = (fb['val_avg_loss_before'] - fb['val_avg_loss_after']) / (fb['val_avg_loss_before'] + 1e-8)
+        #
+        #     normalized_loss = max(target_ratio - improve, 0) * 2.
+        #
+        #     # normalized_prob = F.relu(target_prob - self.logprob[idx] / logprob_T)
+        #
+        #     normalized_prob = 2. - F.sigmoid(self.logprob[idx])
+        #
+        #     loss = normalized_loss + normalized_prob
+        #
+        #     self.tb_writer.add_scalar('Nlogprob_%d'%cid, normalized_prob, self.state)
+        #     self.tb_writer.add_scalar('Nloss_%d'%cid, normalized_loss, self.state)
+        #     self.tb_writer.add_scalar('entropy_%d'%cid, self.entropy[idx], self.state)
+        #     losses.append(loss)
+        #
+        # losses = torch.stack((losses)).mean()
+        # self.tb_writer.add_scalar('loss', losses, self.state)
+        #
+        # self.opt.zero_grad()
+        # losses.backward()
+        # self.opt.step()
 
-            losses.append(loss)
+        # TODO: replace saved ckpt
 
-        losses = torch.stack((losses)).mean()
-        self.tb_writer.add_scalar('loss', losses, self.state)
-
-        self.opt.zero_grad()
-        losses.backward()
-        self.opt.step()
 
     def check_and_move_on(self,
                           check_eval_result=False,
@@ -294,17 +348,13 @@ class pFedHPOServer(Server):
                     result = aggregator.aggregate(agg_info)
                     model.load_state_dict(result, strict=False)
 
-                # update the policy
-                self.update_policy(mab_feedbacks)
-
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != \
-                        self.total_round_num:
-                    #  Evaluate
-                    logger.info(
-                        'Server: Starting evaluation at round {:d}.'.format(
-                            self.state))
-                    self.eval()
+                #  Evaluate
+                logger.info(
+                    'Server: Starting evaluation at round {:d}.'.format(
+                        self.state))
+                self.eval()
+                self.fb = mab_feedbacks
 
                 if self.state < self.total_round_num:
                     # Move to next round of training
@@ -330,6 +380,11 @@ class pFedHPOServer(Server):
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+
+                if len(self.history_results) > 0:
+                    logger.info('=' * 10 + ' updating hypernet ' + '=' * 10)
+                    self.update_policy()
+
         else:
             move_on_flag = False
 
@@ -364,7 +419,6 @@ class pFedHPOServer(Server):
                                     'hyperNet_encoding.pt')
             hyper_enc = {
                 'hyperNet': self.HyperNet.state_dict(),
-                'encoding': self.client_encoding
             }
             torch.save(hyper_enc, _path)
 

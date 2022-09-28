@@ -2,6 +2,9 @@ import os
 import logging
 import copy
 
+import torch
+import torchvision
+from torchvision.models.feature_extraction import create_feature_extractor
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Client
 
@@ -9,6 +12,34 @@ logger = logging.getLogger(__name__)
 
 
 class pFedHPOClient(Client):
+
+    def __init__(self,
+                 ID=-1,
+                 server_id=None,
+                 state=-1,
+                 config=None,
+                 data=None,
+                 model=None,
+                 device='cpu',
+                 strategy=None,
+                 is_unseen_client=False,
+                 *args,
+                 **kwargs):
+
+        super(pFedHPOClient, self).__init__(ID, server_id, state, config,
+            data, model, device, strategy, is_unseen_client, *args, **kwargs)
+
+        if self._cfg.hpo.pfedhpo.train_fl and self._cfg.hpo.pfedhpo.train_anchor:
+            _model = torchvision.models.resnet18(pretrained=True)
+            feat_extractor = create_feature_extractor(_model, {'avgpool': 'feat'})
+
+            feats = []
+            for _, d in enumerate(data['train']):
+                out = feat_extractor(d[0])
+                feats.append(out['feat'])
+
+            feats = torch.cat(feats).mean(0).squeeze()
+            torch.save(feats, os.path.join(self._cfg.hpo.working_folder, 'client_%d_encoding.pt' % self.ID))
 
     def _apply_hyperparams(self, hyperparams):
         """Apply the given hyperparameters

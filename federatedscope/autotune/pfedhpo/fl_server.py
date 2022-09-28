@@ -1,4 +1,5 @@
 import copy
+import json
 import os
 import logging
 from itertools import product
@@ -102,7 +103,8 @@ class pFedHPOFLServer(Server):
             hyper_enc = torch.load(os.path.join(self._cfg.hpo.working_folder,
                                                 'hyperNet_encoding.pt'))
             self.client_encoding = hyper_enc['encoding'].to(self._cfg.device)
-            self.HyperNet = HyperNet(input_dim=client_num, num_params=len(self.pbounds),
+            self.HyperNet = HyperNet(input_dim=self.client_encoding.shape[1],
+                                     num_params=len(self.pbounds),
                                      n_clients=client_num).to(self._cfg.device)
             self.HyperNet.load_state_dict(hyper_enc['hyperNet'])
             self.raw_params = self.HyperNet(self.client_encoding)[0].detach().cpu().numpy()
@@ -275,17 +277,12 @@ class pFedHPOFLServer(Server):
                     result = aggregator.aggregate(agg_info)
                     model.load_state_dict(result, strict=False)
 
-                if self.train_anchor:
-                    self.save_res(mab_feedbacks)
-
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != \
-                        self.total_round_num:
-                    #  Evaluate
-                    logger.info(
-                        'Server: Starting evaluation at round {:d}.'.format(
-                            self.state))
-                    self.eval()
+                #  Evaluate
+                logger.info(
+                    'Server: Starting evaluation at round {:d}.'.format(
+                        self.state))
+                self.eval()
 
                 if self.state < self.total_round_num:
                     # Move to next round of training
@@ -311,6 +308,11 @@ class pFedHPOFLServer(Server):
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+
+            if self.train_anchor and self.history_results:
+                with open(os.path.join(self._cfg.hpo.working_folder,
+                                       'anchor_eval_results.json'), 'w') as f:
+                    json.dump(self.history_results, f)
         else:
             move_on_flag = False
 

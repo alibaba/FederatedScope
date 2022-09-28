@@ -7,52 +7,74 @@ import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
 import math
 
-
-class PolicyNet(nn.Module):
-    def __init__(self, in_channel, num_params):
-        super(PolicyNet, self).__init__()
-
+class EncNet(nn.Module):
+    def __init__(self, in_channel, num_params, hid_dim=64):
+        super(EncNet, self).__init__()
         self.num_params = num_params
-        out_channel = num_params * num_params + num_params
 
         self.fc_layer = nn.Sequential(
-            nn.Linear(in_channel, 128),
+            nn.Linear(in_channel, hid_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(128, 256),
-            nn.ReLU(inplace=True),
-            nn.Linear(256, out_channel),
+            nn.Linear(hid_dim, num_params),
         )
 
     def forward(self, client_enc):
-        x = self.fc_layer(client_enc)
-        mean_update = x[:, :self.num_params]
-        precision_component_update = x[:, self.num_params:].reshape([-1, self.num_params, self.num_params])
-        return mean_update, precision_component_update
+        mean_update = self.fc_layer(client_enc)
+        return mean_update
 
+class PolicyNet(nn.Module):
+    def __init__(self, in_channel, num_params, hid_dim=32):
+        super(PolicyNet, self).__init__()
+        self.num_params = num_params
 
-class HyperNet(nn.Module):
-    def __init__(self, input_dim, num_params, n_clients):
-        super(HyperNet, self).__init__()
-
-        self.dim = input_dim
-        self.PolicyNet = PolicyNet(input_dim, num_params)
-        self.n_clients = n_clients
-
-        self.alpha1 = 0.9
-        self.alpha2 = 0.9
-        self.T = 1.
+        self.fc_layer = nn.Sequential(
+            nn.Linear(in_channel, hid_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hid_dim, hid_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hid_dim, num_params),
+        )
 
     def forward(self, client_enc):
-        mean, cov = self.PolicyNet(client_enc)
-        cov_matrix = F.relu(torch.matmul(cov, cov.transpose(1, 2)))
+        mean_update = self.fc_layer(client_enc)
+        return mean_update
+
+class HyperNet(nn.Module):
+    def __init__(self, encoding, num_params, n_clients, device, var):
+        super(HyperNet, self).__init__()
+        self.dim = input_dim = encoding.shape[1]
+        self.var = var
+        self.encoding = torch.nn.Parameter(encoding, requires_grad=True)
+        self.mean = torch.zeros((n_clients, num_params)).to(device)
+
+        self.EncNet = EncNet(input_dim, num_params)
+        self.meanNet = PolicyNet(num_params, num_params)
+        self.combine = nn.Sequential(
+            nn.Linear(num_params*2, num_params),
+            nn.Tanh()
+        )
+
+        self.alpha = 0.9
+
+    def forward(self):
+        client_enc = self.EncNet(self.encoding)
+        mean_update = self.meanNet(self.mean)
+        mean_update = self.combine(torch.cat([client_enc, mean_update], dim=-1))
+        mean = self.mean + mean_update
+        mean = torch.clamp(mean, -1., 1.)
+
+        cov_matrix = torch.eye(mean.shape[-1]).to(mean.device) * self.var
         dist = MultivariateNormal(loc=mean, covariance_matrix=cov_matrix)
         sample = dist.sample()
+        sample = F.relu(sample)
+        sample = torch.clamp(sample, -1., 1.)
         logprob = dist.log_prob(sample)
-
         entropy = dist.entropy()
-        param_raw = F.sigmoid(sample / self.T)
 
-        return param_raw, logprob, entropy
+        self.mean.data.copy_(mean.data)
+
+        sample = sample / 2. + 0.5
+        return sample, logprob, entropy
 
 
 def parse_pbounds(search_space):
