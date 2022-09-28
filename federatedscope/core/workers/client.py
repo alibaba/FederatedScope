@@ -162,7 +162,7 @@ class Client(Worker):
         else:
             return model_deltas[0]
 
-    def register_handlers(self, msg_type, callback_func):
+    def register_handlers(self, msg_type, callback_func, send_msg=None):
         """
         To bind a message type with a handling function.
 
@@ -171,7 +171,7 @@ class Client(Worker):
             callback_func: The handling functions to handle the received
             message
         """
-        self.msg_handlers[msg_type] = callback_func
+        self.msg_handlers[msg_type] = (callback_func, send_msg)
 
     def _register_default_handlers(self):
         self.register_handlers('assign_client_id',
@@ -206,7 +206,7 @@ class Client(Worker):
         while True:
             msg = self.comm_manager.receive()
             if self.state <= msg.state:
-                self.msg_handlers[msg.msg_type](msg)
+                self.msg_handlers[msg.msg_type][0](msg)
 
             if msg.msg_type == 'finish':
                 break
