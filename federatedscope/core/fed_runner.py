@@ -63,6 +63,7 @@ class FedRunner(object):
         self.resource_info = get_resource_info(
             config.federate.resource_info_file)
 
+    def setup(self):
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
             self._setup_for_standalone()
@@ -184,6 +185,7 @@ class FedRunner(object):
         For the standalone mode, a shared message queue will be set up to
         simulate ``receiving message``.
         """
+        self.setup()
         if self.mode == 'standalone':
             # trigger the FL course
             for each_client in self.client:
@@ -427,3 +429,23 @@ class FedRunner(object):
                 self.client[each_receiver].msg_handlers[msg.msg_type](msg)
                 self.client[each_receiver]._monitor.track_download_bytes(
                     download_bytes)
+
+    def check(self):
+        """
+        Check the completeness of Server and Client.
+
+        Returns:
+
+        """
+        # try:
+        client_msg_handler_dict = self.client_class.get_msg_handler_dict()
+        server_msg_handler_dict = self.server_class.get_msg_handler_dict()
+        # except:
+        #     logger.warning('Completeness check failed for '
+        #                    'NotImplementedError.')
+        #     return True
+
+        logger.info(client_msg_handler_dict)
+        logger.info(server_msg_handler_dict)
+        # import networkx as nx
+        # TODO: Check the connectivity of the Digraph

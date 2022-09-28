@@ -45,7 +45,12 @@ class Client(Worker):
                  is_unseen_client=False,
                  *args,
                  **kwargs):
+        # Register message handlers
+        self.msg_handlers = dict()
+        self._register_default_handlers()
 
+        if config is None:
+            return
         super(Client, self).__init__(ID, state, config, model, strategy)
 
         # the unseen_client indicates that whether this client contributes to
@@ -90,10 +95,6 @@ class Client(Worker):
             shared_party_num=int(self._cfg.federate.sample_client_num
                                  )) if self._cfg.federate.use_ss else None
         self.msg_buffer = {'train': dict(), 'eval': dict()}
-
-        # Register message handlers
-        self.msg_handlers = dict()
-        self._register_default_handlers()
 
         # Communication and communication ability
         if 'resource_info' in kwargs and kwargs['resource_info'] is not None:
@@ -534,3 +535,7 @@ class Client(Worker):
         """
 
         self._monitor.global_converged()
+
+    @classmethod
+    def get_msg_handler_dict(cls):
+        return cls().msg_handlers
