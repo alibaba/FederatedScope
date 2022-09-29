@@ -475,20 +475,19 @@ class FedRunner(object):
                         node_size=800)
                 fig_path = os.path.join(self.cfg.outdir, 'msg_handler.png')
                 plt.savefig(fig_path)
-                if not nx.is_weakly_connected(G):
-                    if nx.has_path(G, 'Client_join_in', 'Server_finish'):
+                if nx.has_path(G, 'Client_join_in', 'Server_finish'):
+                    if nx.is_weakly_connected(G):
+                        logger.info(f'Completeness check passes! Save check '
+                                    f'results in {fig_path}.')
+                    else:
                         logger.warning(
                             f'Completeness check raises warning for '
                             f'some handlers not in FL process! Save '
                             f'check results in {fig_path}.')
-                    else:
-                        logger.error(
-                            f'Completeness check fails for there is no'
-                            f'path from `join_in` to `finish`! Save '
-                            f'check results in {fig_path}.')
                 else:
-                    logger.info(f'Completeness check passes! Save check '
-                                f'results in {fig_path}.')
+                    logger.error(f'Completeness check fails for there is no'
+                                 f'path from `join_in` to `finish`! Save '
+                                 f'check results in {fig_path}.')
             except Exception as error:
                 logger.warning(f'Completeness check failed for {error}!')
         return
