@@ -52,6 +52,7 @@ class Server(Worker):
                  **kwargs):
         # Register message handlers
         self.msg_handlers = dict()
+        self.msg_handlers_str = dict()
         self._register_default_handlers()
 
         if config is None:
@@ -207,7 +208,7 @@ class Server(Worker):
     def register_noise_injector(self, func):
         self._noise_injector = func
 
-    def register_handlers(self, msg_type, callback_func, send_msg=None):
+    def register_handlers(self, msg_type, callback_func, send_msg=[None]):
         """
         To bind a message type with a handling function.
 
@@ -216,13 +217,22 @@ class Server(Worker):
             callback_func: The handling functions to handle the received
             message
         """
-        self.msg_handlers[msg_type] = (callback_func, send_msg)
+        self.msg_handlers[msg_type] = callback_func
+        self.msg_handlers_str[msg_type] = (callback_func.__name__, send_msg)
 
     def _register_default_handlers(self):
-        self.register_handlers('join_in', self.callback_funcs_for_join_in)
-        self.register_handlers('join_in_info', self.callback_funcs_for_join_in)
-        self.register_handlers('model_para', self.callback_funcs_model_para)
-        self.register_handlers('metrics', self.callback_funcs_for_metrics)
+        self.register_handlers('join_in', self.callback_funcs_for_join_in, [
+            'assign_client_id', 'ask_for_join_in_info', 'address', 'model_para'
+        ])
+        self.register_handlers('join_in_info', self.callback_funcs_for_join_in,
+                               [
+                                   'assign_client_id', 'ask_for_join_in_info',
+                                   'address', 'model_para'
+                               ])
+        self.register_handlers('model_para', self.callback_funcs_model_para,
+                               ['model_para', 'finish'])
+        self.register_handlers('metrics', self.callback_funcs_for_metrics,
+                               ['converged'])
 
     def run(self):
         """
@@ -233,7 +243,7 @@ class Server(Worker):
         # Begin: Broadcast model parameters and start to FL train
         while self.join_in_client_num < self.client_num:
             msg = self.comm_manager.receive()
-            self.msg_handlers[msg.msg_type][0](msg)
+            self.msg_handlers[msg.msg_type](msg)
 
         # Running: listen for message (updates from clients),
         # aggregate and broadcast feedbacks (aggregated model parameters)
@@ -245,7 +255,7 @@ class Server(Worker):
             while self.state <= self.total_round_num:
                 try:
                     msg = self.comm_manager.receive()
-                    move_on_flag = self.msg_handlers[msg.msg_type][0](msg)
+                    move_on_flag = self.msg_handlers[msg.msg_type](msg)
                     if move_on_flag:
                         time_counter.reset()
                 except TimeoutError:
@@ -985,4 +995,4 @@ class Server(Worker):
 
     @classmethod
     def get_msg_handler_dict(cls):
-        return cls().msg_handlers
+        return cls().msg_handlers_str

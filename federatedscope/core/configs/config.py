@@ -262,6 +262,9 @@ def init_global_cfg(cfg):
     # Whether to use GPU
     cfg.use_gpu = False
 
+    # Whether to check the completeness of msg_handler
+    cfg.check_completeness = False
+
     # Whether to print verbose logging info
     cfg.verbose = 1
 

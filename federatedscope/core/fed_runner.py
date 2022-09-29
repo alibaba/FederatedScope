@@ -63,6 +63,9 @@ class FedRunner(object):
         self.resource_info = get_resource_info(
             config.federate.resource_info_file)
 
+        # Check the completeness of msg_handler.
+        self.check()
+
     def setup(self):
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
@@ -437,15 +440,55 @@ class FedRunner(object):
         Returns:
 
         """
-        # try:
-        client_msg_handler_dict = self.client_class.get_msg_handler_dict()
-        server_msg_handler_dict = self.server_class.get_msg_handler_dict()
-        # except:
-        #     logger.warning('Completeness check failed for '
-        #                    'NotImplementedError.')
-        #     return True
-
-        logger.info(client_msg_handler_dict)
-        logger.info(server_msg_handler_dict)
-        # import networkx as nx
-        # TODO: Check the connectivity of the Digraph
+        if self.cfg.check_completeness:
+            try:
+                import os
+                import networkx as nx
+                import matplotlib.pyplot as plt
+                # Build check graph
+                G = nx.DiGraph()
+                flags = {0: 'Client', 1: 'Server'}
+                msg_handler_dicts = [
+                    self.client_class.get_msg_handler_dict(),
+                    self.server_class.get_msg_handler_dict()
+                ]
+                for flag, msg_handler_dict in zip(flags.keys(),
+                                                  msg_handler_dicts):
+                    role, oppo = flags[flag], flags[(flag + 1) % 2]
+                    for msg_in, (handler, msgs_out) in \
+                            msg_handler_dict.items():
+                        for msg_out in msgs_out:
+                            msg_in_key = f'{oppo}_{msg_in}'
+                            handler_key = f'{role}_{handler}'
+                            msg_out_key = f'{role}_{msg_out}'
+                            G.add_node(msg_in_key, subset=1)
+                            G.add_node(handler_key, subset=0 if flag else 2)
+                            G.add_node(msg_out_key, subset=1)
+                            G.add_edge(msg_in_key, handler_key)
+                            G.add_edge(handler_key, msg_out_key)
+                pos = nx.multipartite_layout(G)
+                plt.figure(figsize=(20, 15))
+                nx.draw(G,
+                        pos,
+                        with_labels=True,
+                        node_color='white',
+                        node_size=800)
+                fig_path = os.path.join(self.cfg.outdir, 'msg_handler.png')
+                plt.savefig(fig_path)
+                if not nx.is_weakly_connected(G):
+                    if nx.has_path(G, 'Client_join_in', 'Server_finish'):
+                        logger.warning(
+                            f'Completeness check raises warning for '
+                            f'some handlers not in FL process! Save '
+                            f'check results in {fig_path}.')
+                    else:
+                        logger.error(
+                            f'Completeness check fails for there is no'
+                            f'path from `join_in` to `finish`! Save '
+                            f'check results in {fig_path}.')
+                else:
+                    logger.info(f'Completeness check passes! Save check '
+                                f'results in {fig_path}.')
+            except Exception as error:
+                logger.warning(f'Completeness check failed for {error}!')
+        return

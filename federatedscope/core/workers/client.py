@@ -47,6 +47,7 @@ class Client(Worker):
                  **kwargs):
         # Register message handlers
         self.msg_handlers = dict()
+        self.msg_handlers_str = dict()
         self._register_default_handlers()
 
         if config is None:
@@ -162,7 +163,7 @@ class Client(Worker):
         else:
             return model_deltas[0]
 
-    def register_handlers(self, msg_type, callback_func, send_msg=None):
+    def register_handlers(self, msg_type, callback_func, send_msg=[None]):
         """
         To bind a message type with a handling function.
 
@@ -171,19 +172,24 @@ class Client(Worker):
             callback_func: The handling functions to handle the received
             message
         """
-        self.msg_handlers[msg_type] = (callback_func, send_msg)
+        self.msg_handlers[msg_type] = callback_func
+        self.msg_handlers_str[msg_type] = (callback_func.__name__, send_msg)
 
     def _register_default_handlers(self):
         self.register_handlers('assign_client_id',
-                               self.callback_funcs_for_assign_id)
+                               self.callback_funcs_for_assign_id, [None])
         self.register_handlers('ask_for_join_in_info',
-                               self.callback_funcs_for_join_in_info)
+                               self.callback_funcs_for_join_in_info,
+                               ['join_in_info'])
         self.register_handlers('address', self.callback_funcs_for_address)
         self.register_handlers('model_para',
-                               self.callback_funcs_for_model_para)
+                               self.callback_funcs_for_model_para,
+                               ['model_para'])
         self.register_handlers('ss_model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('evaluate', self.callback_funcs_for_evaluate)
+                               self.callback_funcs_for_model_para,
+                               ['ss_model_para'])
+        self.register_handlers('evaluate', self.callback_funcs_for_evaluate,
+                               ['metric'])
         self.register_handlers('finish', self.callback_funcs_for_finish)
         self.register_handlers('converged', self.callback_funcs_for_converged)
 
@@ -206,7 +212,7 @@ class Client(Worker):
         while True:
             msg = self.comm_manager.receive()
             if self.state <= msg.state:
-                self.msg_handlers[msg.msg_type][0](msg)
+                self.msg_handlers[msg.msg_type](msg)
 
             if msg.msg_type == 'finish':
                 break
@@ -538,4 +544,4 @@ class Client(Worker):
 
     @classmethod
     def get_msg_handler_dict(cls):
-        return cls().msg_handlers
+        return cls().msg_handlers_str
