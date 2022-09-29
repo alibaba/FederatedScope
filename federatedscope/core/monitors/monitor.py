@@ -376,6 +376,21 @@ class Monitor(object):
                                 all_res.size // 10]
                             new_results[f"{key}_top_decile"] = all_res[
                                 all_res.size * 9 // 10]
+                            # log extra fairness metrics
+                            # min and max
+                            new_results[f"{key}_min"] = np.mean(all_res[0])
+                            new_results[f"{key}_max"] = np.mean(all_res[-1])
+                            # best and worst 10%
+                            new_results[f"{key}_worst10%"] = np.mean(all_res[:
+                                                                             all_res.size // 10])
+                            new_results[f"{key}_best10%"] = np.mean(all_res[
+                                                                    all_res.size * 9 // 10:])
+                            # cosine similarity between the performance distribution and 1
+                            new_results[f"{key}_cos1"] = np.mean(all_res) / (np.sqrt(np.mean(all_res ** 2)))
+                            # entropy of performance distribution
+                            new_results[f"{key}_entropy"] = np.sum(
+                                -all_res / np.sum(all_res + 1e-9) * (np.log((all_res + 1e-9) / np.sum(all_res + 1e-9))))
+
                 round_formatted_results[f'Results_{form}'] = new_results
 
         with open(os.path.join(self.outdir, "eval_results.raw"),
