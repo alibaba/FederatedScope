@@ -2,6 +2,8 @@ import logging
 
 from collections import deque
 import heapq
+import multiprocessing
+import time
 
 import numpy as np
 
@@ -65,6 +67,7 @@ class FedRunner(object):
 
         if self.mode == 'standalone':
             self.shared_comm_queue = deque()
+            self.manager = multiprocessing.Manager()
             self._setup_for_standalone()
             # in standalone mode, by default, we print the trainer info only
             # once for better logs readability
@@ -131,11 +134,16 @@ class FedRunner(object):
             server_resource_info = None
             client_resource_info = None
 
+        self.server2client_channels = dict()
+        for client_id in range(1, self.cfg.federate.client_num + 1):
+            self.server2client_channels[client_id] = self.manager.Queue()
+
         self.server = self._setup_server(
             resource_info=server_resource_info,
             client_resource_info=client_resource_info)
 
         self.client = dict()
+        self.client2server_channel = self.manager.Queue()
 
         # assume the client-wise data are consistent in their input&output
         # shape
@@ -144,6 +152,7 @@ class FedRunner(object):
         ) if self.cfg.federate.share_local_model else None
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
+
             self.client[client_id] = self._setup_client(
                 client_id=client_id,
                 client_model=self._shared_client_model,
@@ -186,8 +195,10 @@ class FedRunner(object):
         """
         if self.mode == 'standalone':
             # trigger the FL course
+            self.pool = multiprocessing.Pool(processes=self.cfg.federate.client_num)
             for each_client in self.client:
-                self.client[each_client].join_in()
+                self.pool.apply_async(self.client[each_client].run_standalone)
+            self.pool.close()
 
             if self.cfg.federate.online_aggr:
                 # any broadcast operation would be executed client-by-client
@@ -199,6 +210,7 @@ class FedRunner(object):
                 self._run_simulation()
 
             self.server._monitor.finish_fed_runner(fl_mode=self.mode)
+            self.pool.join()
 
             return self.server.best_results
 
@@ -242,18 +254,18 @@ class FedRunner(object):
                 break
 
     def _run_simulation(self):
-
         server_msg_cache = list()
+        while self.client2server_channel.empty():
+            continue
         while True:
-            if len(self.shared_comm_queue) > 0:
-                msg = self.shared_comm_queue.popleft()
-                if msg.receiver == [self.server_id]:
-                    # For the server, move the received message to a
-                    # cache for reordering the messages according to
-                    # the timestamps
-                    heapq.heappush(server_msg_cache, msg)
-                else:
-                    self._handle_msg(msg)
+            if not self.client2server_channel.empty():
+                
+                msg = self.client2server_channel.get()
+                logger.info(f"server receive message from {msg.sender}")
+                # For the server, move the received message to a
+                # cache for reordering the messages according to
+                # the timestamps
+                heapq.heappush(server_msg_cache, msg)
             elif len(server_msg_cache) > 0:
                 msg = heapq.heappop(server_msg_cache)
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
@@ -272,13 +284,14 @@ class FedRunner(object):
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
                         == 'time_up':
                     self.server.trigger_for_time_up()
-                    if len(self.shared_comm_queue) == 0 and \
+                    if self.client2server_channel.empty() and \
                             len(server_msg_cache) == 0:
                         break
                 else:
                     # terminate when shared_comm_queue and
                     # server_msg_cache are all empty
-                    break
+                    time.sleep(1)
+                    # break
 
     def _setup_server(self, resource_info=None, client_resource_info=None):
         """
@@ -309,7 +322,7 @@ class FedRunner(object):
                 )  # get the model according to client's data if the server
                 # does not own data
             kw = {
-                'shared_comm_queue': self.shared_comm_queue,
+                'channels': self.server2client_channels,
                 'resource_info': resource_info,
                 'client_resource_info': client_resource_info
             }
@@ -360,7 +373,8 @@ class FedRunner(object):
         if self.mode == 'standalone':
             client_data = self.data[client_id]
             kw = {
-                'shared_comm_queue': self.shared_comm_queue,
+                'client2server_channel': self.client2server_channel,
+                'server2client_channel': self.server2client_channels[client_id],
                 'resource_info': resource_info
             }
         elif self.mode == 'distributed':
@@ -424,6 +438,7 @@ class FedRunner(object):
                 self.server.msg_handlers[msg.msg_type](msg)
                 self.server._monitor.track_download_bytes(download_bytes)
             else:
+                logger.error("wrong place to go")
                 self.client[each_receiver].msg_handlers[msg.msg_type](msg)
                 self.client[each_receiver]._monitor.track_download_bytes(
                     download_bytes)

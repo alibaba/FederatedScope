@@ -8,7 +8,7 @@ import pickle
 
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
-from federatedscope.core.communication import StandaloneCommManager, \
+from federatedscope.core.communication import StandaloneServerCommManager, \
     gRPCCommManager
 from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
@@ -173,8 +173,8 @@ class Server(Worker):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
-            comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+            channels = kwargs['channels']
+            self.comm_manager = StandaloneServerCommManager(channels=channels,
                                                       monitor=self._monitor)
         elif self.mode == 'distributed':
             host = kwargs['host']

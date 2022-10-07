@@ -4,7 +4,7 @@ import sys
 import pickle
 
 from federatedscope.core.message import Message
-from federatedscope.core.communication import StandaloneCommManager, \
+from federatedscope.core.communication import StandaloneClientCommManager, \
     gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.workers import Worker
@@ -117,8 +117,10 @@ class Client(Worker):
         # Initialize communication manager
         self.server_id = server_id
         if self.mode == 'standalone':
-            comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+            client2server_channel = kwargs['client2server_channel']
+            server2client_channel = kwargs['server2client_channel']
+            self.comm_manager = StandaloneClientCommManager(receive_channel=server2client_channel,
+                                                      send_channel=client2server_channel,
                                                       monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
@@ -216,6 +218,13 @@ class Client(Worker):
 
             if msg.msg_type == 'finish':
                 break
+
+    def run_standalone(self):
+        """
+        Run in standalone mode
+        """
+        self.join_in()
+        self.run()
 
     def callback_funcs_for_model_para(self, message: Message):
         """
