@@ -451,8 +451,7 @@ class FedRunner(object):
                 self.client_class.get_msg_handler_dict(),
                 self.server_class.get_msg_handler_dict()
             ]
-            for flag, msg_handler_dict in zip(flags.keys(),
-                                              msg_handler_dicts):
+            for flag, msg_handler_dict in zip(flags.keys(), msg_handler_dicts):
                 role, oppo = flags[flag], flags[(flag + 1) % 2]
                 for msg_in, (handler, msgs_out) in \
                         msg_handler_dict.items():
@@ -479,10 +478,9 @@ class FedRunner(object):
                     logger.info(f'Completeness check passes! Save check '
                                 f'results in {fig_path}.')
                 else:
-                    logger.warning(
-                        f'Completeness check raises warning for '
-                        f'some handlers not in FL process! Save '
-                        f'check results in {fig_path}.')
+                    logger.warning(f'Completeness check raises warning for '
+                                   f'some handlers not in FL process! Save '
+                                   f'check results in {fig_path}.')
             else:
                 logger.error(f'Completeness check fails for there is no'
                              f'path from `join_in` to `finish`! Save '
