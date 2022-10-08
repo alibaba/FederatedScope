@@ -31,7 +31,7 @@ def get_dataloader(dataset, config, split='train'):
         from torch.utils.data import DataLoader
         loader_cls = DataLoader
     elif config.dataloader.type == 'raw':
-        loader_cls = None
+        return None
     elif config.dataloader.type == 'pyg':
         from torch_geometric.loader import DataLoader as PyGDataLoader
         loader_cls = PyGDataLoader
@@ -51,22 +51,22 @@ def get_dataloader(dataset, config, split='train'):
     else:
         raise ValueError(f'data.loader.type {config.data.loader.type} '
                          f'not found!')
-    if loader_cls is not None:
-        raw_args = dict(config.dataloader)
-        if split != 'train':
-            raw_args['shuffle'] = False
-            raw_args['sizes'] = [-1]
-            # For evaluation in GFL
-            if config.dataloader.type in ['graphsaint-rw', 'neighbor']:
-                raw_args['batch_size'] = 4096
-                dataset = dataset[0].edge_index
-        else:
-            if config.dataloader.type in ['graphsaint-rw']:
-                # Raw graph
-                dataset = dataset[0]
-            elif config.dataloader.type in ['neighbor']:
-                # edge_index of raw graph
-                dataset = dataset[0].edge_index
-        filtered_args = filter_dict(loader_cls.__init__, raw_args)
-        dataloader = loader_cls(dataset, **filtered_args)
-        return dataloader
+
+    raw_args = dict(config.dataloader)
+    if split != 'train':
+        raw_args['shuffle'] = False
+        raw_args['sizes'] = [-1]
+        # For evaluation in GFL
+        if config.dataloader.type in ['graphsaint-rw', 'neighbor']:
+            raw_args['batch_size'] = 4096
+            dataset = dataset[0].edge_index
+    else:
+        if config.dataloader.type in ['graphsaint-rw']:
+            # Raw graph
+            dataset = dataset[0]
+        elif config.dataloader.type in ['neighbor']:
+            # edge_index of raw graph
+            dataset = dataset[0].edge_index
+    filtered_args = filter_dict(loader_cls.__init__, raw_args)
+    dataloader = loader_cls(dataset, **filtered_args)
+    return dataloader
