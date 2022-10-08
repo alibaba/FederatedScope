@@ -257,6 +257,7 @@ class FedRunner(object):
         server_msg_cache = list()
         while self.client2server_channel.empty():
             continue
+        cnt = 0
         while True:
             if not self.client2server_channel.empty():
                 
@@ -266,6 +267,7 @@ class FedRunner(object):
                 # cache for reordering the messages according to
                 # the timestamps
                 heapq.heappush(server_msg_cache, msg)
+                cnt = 0
             elif len(server_msg_cache) > 0:
                 msg = heapq.heappop(server_msg_cache)
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
@@ -290,7 +292,11 @@ class FedRunner(object):
                 else:
                     # terminate when shared_comm_queue and
                     # server_msg_cache are all empty
-                    time.sleep(1)
+                    time.sleep(0.1)
+                    cnt += 1
+                    if cnt > 100:
+                        logger.info("server wait timeout")
+                        break
                     # break
 
     def _setup_server(self, resource_info=None, client_resource_info=None):
@@ -394,9 +400,13 @@ class FedRunner(object):
                 client_specific_config.merge_from_other_cfg(
                     self.client_cfg.get('client_{}'.format(client_id)))
                 client_specific_config.freeze()
-            client_device = self._server_device if \
-                self.cfg.federate.share_local_model else \
-                self.gpu_manager.auto_choice()
+            if self.cfg.federate.parallel:
+                card_id = client_id % self.cfg.federate.card_num
+                client_device = f'cuda:{card_id}'
+            else:
+                client_device = self._server_device if \
+                    self.cfg.federate.share_local_model else \
+                    self.gpu_manager.auto_choice()
             client = self.client_class(
                 ID=client_id,
                 server_id=self.server_id,
