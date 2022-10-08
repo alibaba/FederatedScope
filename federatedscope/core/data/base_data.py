@@ -9,8 +9,6 @@ class StandaloneDataDict(dict):
     """
         `StandaloneDataDict` maintain several `ClientData`.
     """
-    client_cfgs = None
-
     def __init__(self, datadict, global_cfg):
         """
 
@@ -19,6 +17,7 @@ class StandaloneDataDict(dict):
             global_cfg: global CfgNode
         """
         self.cfg = global_cfg
+        self.client_cfgs = None
         datadict = self.preprocess(datadict)
         super(StandaloneDataDict, self).__init__(datadict)
 
@@ -28,7 +27,7 @@ class StandaloneDataDict(dict):
 
         Args:
             global_cfg: enable new config for `ClientData`
-            client_cfg: enable new client-specific config for `ClientData`
+            client_cfgs: enable new client-specific config for `ClientData`
         """
         self.cfg, self.client_cfgs = global_cfg, client_cfgs
         for client_id, client_data in self.items():
@@ -47,7 +46,9 @@ class StandaloneDataDict(dict):
 
     def preprocess(self, datadict):
         """
-        Preprocess for StandaloneDataDict.
+        Preprocess for StandaloneDataDict for:
+            1. Global evaluation (merge test data).
+            2. Global mode (train with centralized setting, merge all data).
 
         Args:
             datadict: dict with `client_id` as key,  `ClientData` as value.

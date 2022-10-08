@@ -32,6 +32,10 @@ class BaseDataTranslator:
             dataset: `torch.utils.data.Dataset`, `List` of (feature, label)
                 or split dataset tuple of (train, val, test) or Tuple of
                 split dataset with [train, val, test]
+
+        Returns:
+            datadict: instance of `StandaloneDataDict`, which is a subclass of
+            `dict`.
         """
         datadict = self.split(dataset)
         datadict = StandaloneDataDict(datadict, self.global_cfg)
