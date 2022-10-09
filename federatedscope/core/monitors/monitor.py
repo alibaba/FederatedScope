@@ -316,13 +316,20 @@ class Monitor(object):
                 3356, 'test_loss': 2892, 'test_total': 5000
                 },
             'Results_fairness': {
-                'test_correct': 3356,      'test_total': 5000,
-                'test_avg_loss_std': 0.04, 'test_avg_loss_bottom_decile':
-                0.52, 'test_avg_loss_top_decile': 0.64,
-                'test_acc_std': 0.06,      'test_acc_bottom_decile': 0.60,
-                'test_acc_top_decile': 0.75,
-                'test_loss_std': 214.17,   'test_loss_bottom_decile':
-                2644.64, 'test_loss_top_decile': 3241.23
+             'test_total': 33.99, 'test_correct': 27.185, 'test_avg_loss_std': 0.433551,
+             'test_avg_loss_bottom_decile': 0.356503, 'test_avg_loss_top_decile': 1.212492,
+             'test_avg_loss_min': 0.198317, 'test_avg_loss_max': 3.603567,
+             'test_avg_loss_bottom10%': 0.276681, 'test_avg_loss_top10%': 1.686649,
+             'test_avg_loss_cos1': 0.867932, 'test_avg_loss_entropy': 5.164172,
+             'test_loss_std': 13.686828, 'test_loss_bottom_decile': 11.822035,
+             'test_loss_top_decile': 39.727236, 'test_loss_min': 7.337724,
+             'test_loss_max': 100.899873, 'test_loss_bottom10%': 9.618685,
+             'test_loss_top10%': 54.96769, 'test_loss_cos1': 0.880356,
+             'test_loss_entropy': 5.175803, 'test_acc_std': 0.123823,
+             'test_acc_bottom_decile': 0.676471, 'test_acc_top_decile': 0.916667,
+             'test_acc_min': 0.071429, 'test_acc_max': 0.972973,
+             'test_acc_bottom10%': 0.527482, 'test_acc_top10%': 0.94486,
+             'test_acc_cos1': 0.988134, 'test_acc_entropy': 5.283755
                 },
             }
         """
