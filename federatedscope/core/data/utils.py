@@ -1,3 +1,4 @@
+import copy
 import inspect
 import logging
 import os
@@ -531,32 +532,56 @@ def filter_dict(func, kwarg):
     return filtered_dict
 
 
-def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
+def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
+    """
+        Merge data from client 1 to `merged_max_data_id` contained in given
+        `all_data`.
+    :param all_data:
+    :param merged_max_data_id:
+    :param specified_dataset_name:
+    :return:
+    """
+    import torch.utils.data
     from federatedscope.core.data.wrap_dataset import WrapDataset
+
+    # Assert
+    if merged_max_data_id is None:
+        merged_max_data_id = len(all_data) - 1
+    assert merged_max_data_id >= 1
     if specified_dataset_name is None:
         dataset_names = list(all_data[1].keys())  # e.g., train, test, val
     else:
         if not isinstance(specified_dataset_name, list):
             specified_dataset_name = [specified_dataset_name]
         dataset_names = specified_dataset_name
-
-    import torch.utils.data
     assert len(dataset_names) >= 1, \
         "At least one sub-dataset is required in client 1"
+
     data_name = "test" if "test" in dataset_names else dataset_names[0]
-    id_has_key = 1
-    while "test" not in all_data[id_has_key]:
-        id_has_key += 1
-        if len(all_data) <= id_has_key:
-            raise KeyError(f'All data do not key {data_name}.')
-    if issubclass(type(all_data[id_has_key][data_name]),
+    id_contain_all_dataset_key = -1
+    # check the existence of the data to be merged
+    for client_id in range(1, merged_max_data_id + 1):
+        contain_all_dataset_key = True
+        for dataset_name in dataset_names:
+            if dataset_name not in all_data[client_id]:
+                contain_all_dataset_key = False
+                logger.warning(f'Client {client_id} does not contain '
+                               f'dataset key {dataset_name}.')
+        if id_contain_all_dataset_key == -1 and contain_all_dataset_key:
+            id_contain_all_dataset_key = client_id
+    assert id_contain_all_dataset_key != -1, \
+        "At least one client within [1, merged_max_data_id] should contain " \
+        "all the key for expected dataset names."
+
+    if issubclass(type(all_data[id_contain_all_dataset_key][data_name]),
                   torch.utils.data.DataLoader):
-        if isinstance(all_data[id_has_key][data_name].dataset, WrapDataset):
-            data_elem_names = list(
-                all_data[id_has_key][data_name].dataset.dataset.keys())  #
+        if isinstance(all_data[id_contain_all_dataset_key][data_name].dataset,
+                      WrapDataset):
+            data_elem_names = list(all_data[id_contain_all_dataset_key]
+                                   [data_name].dataset.dataset.keys())  #
             # e.g., x, y
             merged_data = {name: defaultdict(list) for name in dataset_names}
-            for data_id in range(1, merged_max_data_id):
+            for data_id in range(1, merged_max_data_id + 1):
                 for d_name in dataset_names:
                     if d_name not in all_data[data_id]:
                         continue
@@ -568,12 +593,13 @@ def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
                 for elem_name in data_elem_names:
                     merged_data[d_name][elem_name] = np.concatenate(
                         merged_data[d_name][elem_name])
-            for name in all_data[id_has_key]:
-                all_data[id_has_key][name].dataset.dataset = merged_data[name]
+            for name in all_data[id_contain_all_dataset_key]:
+                all_data[id_contain_all_dataset_key][
+                    name].dataset.dataset = merged_data[name]
         else:
-            merged_data = all_data[id_has_key]
-            for data_id in range(1, merged_max_data_id):
-                if data_id == id_has_key:
+            merged_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
+            for data_id in range(1, merged_max_data_id + 1):
+                if data_id == id_contain_all_dataset_key:
                     continue
                 for d_name in dataset_names:
                     if d_name not in all_data[data_id]:
@@ -583,7 +609,8 @@ def merge_data(all_data, merged_max_data_id, specified_dataset_name=None):
     else:
         raise NotImplementedError(
             "Un-supported type when merging data across different clients."
-            f"Your data type is {type(all_data[id_has_key][data_name])}. "
+            f"Your data type is "
+            f"{type(all_data[id_contain_all_dataset_key][data_name])}. "
             f"Currently we only support the following forms: "
             " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
             " 2): {data_id: {train: DataLoader }")
