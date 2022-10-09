@@ -31,7 +31,8 @@ def get_dataloader(dataset, config, split='train'):
         from torch.utils.data import DataLoader
         loader_cls = DataLoader
     elif config.dataloader.type == 'raw':
-        return None
+        # No DataLoader
+        return dataset
     elif config.dataloader.type == 'pyg':
         from torch_geometric.loader import DataLoader as PyGDataLoader
         loader_cls = PyGDataLoader
