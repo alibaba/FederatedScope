@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import federatedscope.core.proto.gRPC_comm_manager_pb2 \
+from federatedscope.core.proto import gRPC_comm_manager_pb2 \
     as gRPC__comm__manager__pb2
 
 

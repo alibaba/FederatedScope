@@ -1,4 +1,5 @@
 import datetime
+import logging
 import numpy as np
 
 from fedhpob.utils.util import dict2cfg
@@ -34,6 +35,8 @@ class TabularBenchmark(BaseBenchmark):
                            fidelity,
                            key='val_acc',
                            seed=1,
+                           fairness_reg_func=None,
+                           fairness_reg_coef=0.0,
                            **kwargs):
         fidelity = self._init_fidelity(fidelity)
         self._check(configuration, fidelity)
@@ -51,7 +54,21 @@ class TabularBenchmark(BaseBenchmark):
         # Find the best val round.
         val_loss = filterd_result['val_avg_loss']
         best_round = np.argmin(val_loss[:fidelity['round'] + 1])
-        function_value = filterd_result[key][best_round]
+
+        # Fairness reg, default is 0.0
+        reg_term = 0
+        if fairness_reg_func is not None:
+            fair_key = key + '_fair'
+            try:
+                vector_value = filterd_result[fair_key][best_round]
+            except KeyError:
+                vector_value = None
+                logging.WARNING(f'{fair_key} is not in Benchmark.')
+
+            if vector_value is not None:
+                reg_term = fairness_reg_func(vector_value) * fairness_reg_coef
+
+        function_value = filterd_result[key][best_round] + reg_term
         if self._cost(configuration, fidelity, **kwargs):
             cost = self._cost(configuration, fidelity, **kwargs)
         else:
