@@ -16,7 +16,7 @@ class StandaloneDataDict(dict):
             datadict: `Dict` with `client_id` as key,  `ClientData` as value.
             global_cfg: global CfgNode
         """
-        self.cfg = global_cfg
+        self.global_cfg = global_cfg
         self.client_cfgs = None
         datadict = self.preprocess(datadict)
         super(StandaloneDataDict, self).__init__(datadict)
@@ -29,7 +29,7 @@ class StandaloneDataDict(dict):
             global_cfg: enable new config for `ClientData`
             client_cfgs: enable new client-specific config for `ClientData`
         """
-        self.cfg, self.client_cfgs = global_cfg, client_cfgs
+        self.global_cfg, self.client_cfgs = global_cfg, client_cfgs
         for client_id, client_data in self.items():
             if isinstance(client_data, ClientData):
                 if client_cfgs is not None:
@@ -53,17 +53,17 @@ class StandaloneDataDict(dict):
         Args:
             datadict: dict with `client_id` as key,  `ClientData` as value.
         """
-        if self.cfg.federate.merge_test_data:
+        if self.global_cfg.federate.merge_test_data:
             server_data = merge_data(
                 all_data=datadict,
-                merged_max_data_id=self.cfg.federate.client_num,
+                merged_max_data_id=self.global_cfg.federate.client_num,
                 specified_dataset_name=['test'])
             # `0` indicate Server
             datadict[0] = server_data
 
-        if self.cfg.federate.method == "global":
-            if self.cfg.federate.client_num != 1:
-                if self.cfg.data.server_holds_all:
+        if self.global_cfg.federate.method == "global":
+            if self.global_cfg.federate.client_num != 1:
+                if self.global_cfg.data.server_holds_all:
                     assert datadict[0] is not None \
                         and len(datadict[0]) != 0, \
                         "You specified cfg.data.server_holds_all=True " \
@@ -72,10 +72,10 @@ class StandaloneDataDict(dict):
                     datadict[1] = datadict[0]
                 else:
                     logger.info(f"Will merge data from clients whose ids in "
-                                f"[1, {self.cfg.federate.client_num}]")
+                                f"[1, {self.global_cfg.federate.client_num}]")
                     datadict[1] = merge_data(
                         all_data=datadict,
-                        merged_max_data_id=self.cfg.federate.client_num)
+                        merged_max_data_id=self.global_cfg.federate.client_num)
         datadict = self.attack(datadict)
         return datadict
 
@@ -84,30 +84,31 @@ class StandaloneDataDict(dict):
         Apply attack to `StandaloneDataDict`.
 
         """
-        if 'backdoor' in self.cfg.attack.attack_method and 'edge' in \
-                self.cfg.attack.trigger_type:
+        if 'backdoor' in self.global_cfg.attack.attack_method and 'edge' in \
+                self.global_cfg.attack.trigger_type:
             import os
             import torch
             from federatedscope.attack.auxiliary import \
                 create_ardis_poisoned_dataset, create_ardis_test_dataset
-            if not os.path.exists(self.cfg.attack.edge_path):
-                os.makedirs(self.cfg.attack.edge_path)
+            if not os.path.exists(self.global_cfg.attack.edge_path):
+                os.makedirs(self.global_cfg.attack.edge_path)
                 poisoned_edgeset = create_ardis_poisoned_dataset(
-                    data_path=self.cfg.attack.edge_path)
+                    data_path=self.global_cfg.attack.edge_path)
 
                 ardis_test_dataset = create_ardis_test_dataset(
-                    self.cfg.attack.edge_path)
+                    self.global_cfg.attack.edge_path)
 
                 logger.info("Writing poison_data to: {}".format(
-                    self.cfg.attack.edge_path))
+                    self.global_cfg.attack.edge_path))
 
                 with open(
-                        self.cfg.attack.edge_path +
+                        self.global_cfg.attack.edge_path +
                         "poisoned_edgeset_training", "wb") as saved_data_file:
                     torch.save(poisoned_edgeset, saved_data_file)
 
-                with open(self.cfg.attack.edge_path + "ardis_test_dataset.pt",
-                          "wb") as ardis_data_file:
+                with open(
+                        self.global_cfg.attack.edge_path +
+                        "ardis_test_dataset.pt", "wb") as ardis_data_file:
                     torch.save(ardis_test_dataset, ardis_data_file)
                 logger.warning(
                     'please notice: downloading the poisoned dataset \
@@ -115,9 +116,9 @@ class StandaloneDataDict(dict):
                         https://github.com/ksreenivasan/OOD_Federated_Learning'
                 )
 
-        if 'backdoor' in self.cfg.attack.attack_method:
+        if 'backdoor' in self.global_cfg.attack.attack_method:
             from federatedscope.attack.auxiliary import poisoning
-            poisoning(datadict, self.cfg)
+            poisoning(datadict, self.global_cfg)
         return datadict
 
 
@@ -126,8 +127,6 @@ class ClientData(dict):
         `ClientData` converts dataset to train/val/test DataLoader.
         Key `data` in `ClientData` is the raw dataset.
     """
-    client_cfg = None
-
     def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
         """
 
@@ -139,6 +138,7 @@ class ClientData(dict):
             val: valid dataset, which will be converted to DataLoader
             test: test dataset, which will be converted to DataLoader
         """
+        self.client_cfg = None
         self.train = train
         self.val = val
         self.test = test

@@ -21,7 +21,7 @@ class BaseDataTranslator:
             global_cfg: global CfgNode
             client_cfgs: client cfg `Dict`
         """
-        self.global_cfg = global_cfg.clone()
+        self.global_cfg = global_cfg
         self.client_cfgs = client_cfgs
         self.splitter = get_splitter(global_cfg)
 
