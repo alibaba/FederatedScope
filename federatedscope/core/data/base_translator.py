@@ -96,14 +96,16 @@ class BaseDataTranslator:
         train_label_distribution = None
 
         # Split train/val/test to client
-        if len(train) > 0:
-            split_train = self.splitter(train)
-            try:
-                train_label_distribution = [[j[1] for j in x]
-                                            for x in split_train]
-            except:
-                logger.warning('Cannot access train label distribution for '
-                               'splitter.')
+        if self.global_cfg.data.consistent_label_distribution:
+            if len(train) > 0:
+                split_train = self.splitter(train)
+                try:
+                    train_label_distribution = [[j[1] for j in x]
+                                                for x in split_train]
+                except:
+                    logger.warning(
+                        'Cannot access train label distribution for '
+                        'splitter.')
         if len(val) > 0:
             split_val = self.splitter(val, prior=train_label_distribution)
         if len(test) > 0:

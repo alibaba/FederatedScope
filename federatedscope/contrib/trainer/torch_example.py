@@ -54,7 +54,8 @@ class MyTorchTrainer(BaseTrainer):
 
         # _hook_on_fit_end
         return num_samples, self.model.cpu().state_dict(), \
-            {'loss_total': total_loss}
+            {'loss_total': total_loss, 'avg_loss': total_loss/float(
+                num_samples)}
 
     def evaluate(self, target_data_split_name='test'):
         import torch
@@ -76,7 +77,9 @@ class MyTorchTrainer(BaseTrainer):
             # _hook_on_fit_end
             return {
                 f'{target_data_split_name}_loss': total_loss,
-                f'{target_data_split_name}_total': num_samples
+                f'{target_data_split_name}_total': num_samples,
+                f'{target_data_split_name}_avg_loss': total_loss /
+                float(num_samples)
             }
 
     def update(self, model_parameters, strict=False):

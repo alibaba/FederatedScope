@@ -1,7 +1,7 @@
 from federatedscope.register import register_data
 
 
-def MyData(config, client_cfgs):
+def MyData(config, client_cfgs=None):
     r"""
     Returns:
             data:

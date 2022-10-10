@@ -13,8 +13,6 @@ import pickle
 import numpy as np
 
 # Blind torch
-import torch.utils
-
 try:
     import torch
     import torchvision
