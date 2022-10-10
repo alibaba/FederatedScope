@@ -96,9 +96,9 @@ class BaseDataTranslator:
         train_label_distribution = None
 
         # Split train/val/test to client
-        if self.global_cfg.data.consistent_label_distribution:
-            if len(train) > 0:
-                split_train = self.splitter(train)
+        if len(train) > 0:
+            split_train = self.splitter(train)
+            if self.global_cfg.data.consistent_label_distribution:
                 try:
                     train_label_distribution = [[j[1] for j in x]
                                                 for x in split_train]
