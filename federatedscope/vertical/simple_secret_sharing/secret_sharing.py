@@ -145,14 +145,77 @@ class AdditiveSecretSharing(SecretSharing):
         return merge_model
 
     def const_add_fixedpoint(self, c, x):
-        up_c = self.upgrade(c)
-        res = self.mod_funs(up_c + x)
+        up_c = self._upgrade(c)
+        res = (up_c + x) % self.mod_number
         return res
 
     def const_mul_fixedpoint(self, c, x):
         up_c = self.upgrade(c)
         res = self.downgrade(up_c * x)
         return res
+
+    def mod_add(self, *args):
+        # sum the values in an array
+        if len(args) == 1 and isinstance(args[0], np.ndarray):
+            res = 0
+            for x in args[0]:
+                res += x.item()
+                res = res % self.mod_number
+            return res
+        # sum the values in a list
+        if len(args) == 1 and isinstance(args[0], list):
+            res = 0
+            for x in args[0]:
+                res += x
+                res = res % self.mod_number
+            return res
+        # sum an integer with a list or an array
+        if len(args) == 2:
+            if (isinstance(args[0], int) or isinstance(
+                    args[0], np.int64)) and not isinstance(args[1], int):
+                res = [(int(args[0]) + x) % self.mod_number for x in args[1]]
+                return res
+            elif (isinstance(args[1], int) or isinstance(
+                    args[1], np.int64)) and not isinstance(args[0], int):
+                res = [(args[1] + x) % self.mod_number for x in args[0]]
+                return res
+        # sum several lists
+        if isinstance(args[0], np.ndarray) or isinstance(args[0], list):
+            n = len(args[0])
+            num = len(args)
+            res = [0] * n
+            for i in range(n):
+                for j in range(num):
+                    res[i] += args[j][i].item()
+                    res[i] = res[i] % self.mod_number
+            return np.asarray(res)
+        # sum all the integers in args
+        if isinstance(args[0], int) or isinstance(args[0], np.int64):
+            res = 0
+            for x in args:
+                res += x
+                res = res % self.mod_number
+            return res
+        # sum dict_values
+        else:
+            l_tmp = list(args[0])
+            num = len(l_tmp)
+            # a list of integers
+            if isinstance(l_tmp[0], int):
+                res = 0
+                for x in l_tmp:
+                    res += x
+                    res = res % self.mod_number
+                return res
+            # a list of lists
+            else:
+                n = len(l_tmp[0])
+                res = [0] * n
+                for i in range(n):
+                    for j in range(num):
+                        res[i] += l_tmp[j][i]
+                        res[i] = res[i] % self.mod_number
+                return np.asarray(res)
 
     def _float2fixedpoint(self, x):
         x = round(x * self.epsilon)

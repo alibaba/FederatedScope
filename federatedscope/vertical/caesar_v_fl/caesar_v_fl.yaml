@@ -2,13 +2,13 @@ use_gpu: False
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 30
+  total_round_num: 1
 model:
   type: lr
   use_bias: False
 train:
   optimizer:
-    lr: 0.0005
+    lr: 0.001
 data:
   type: caesar_v_fl_data
   batch_size: 50

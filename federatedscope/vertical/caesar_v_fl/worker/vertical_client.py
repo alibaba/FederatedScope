@@ -171,8 +171,8 @@ class vFLClient(Client):
                 b = para[j].item()
                 tmp += a * b  # % mod_number
                 tmp = tmp  # % mod_number
-            res[i] = round(tmp / epsilon)
-            res[i] = res[i] % mod_number
+            tmp = round(tmp / epsilon)
+            res[i] = tmp % mod_number
         return res
 
     def callback_func_for_encrypted(self, message: Message):
@@ -306,7 +306,7 @@ class vFLClient(Client):
 
         # za = [round(x/self.ss.epsilon) if x <= self.ss.mod_number/2
         # else round(-((self.ss.mod_number-x)/self.ss.epsilon)) for x in za]
-        za = [round(self.ss.fixedpoint2float(x) / self.ss.epsilon) for x in za]
+        za = [round(self.ss._fixedpoint2float(x)) for x in za]
         print("za: ", za)
         print("za float: ", self.ss.fixedpoint2float(za))
 
@@ -384,8 +384,10 @@ class vFLClient(Client):
         upgrade_lr = self.ss.upgrade(self.lr)
         t1 = [upgrade_lr * x for x in g_b_2]
         # t1 = self.ss.downgrade(t1)
-        self.my_part_of_my_para = self.ss.mod_funs(
-            [self.my_part_of_my_para[i] - t1[i] for i in range(len(t1))])
+        # self.my_part_of_my_para = self.ss.mod_funs(
+        #    [self.my_part_of_my_para[i] - t1[i] for i in range(len(t1))])
+        self.my_part_of_my_para = self.ss.mod_add(self.my_part_of_my_para,
+                                                  [-x for x in t1])
         print("lr * g_b_2", t1)
         print("new w_b_2", self.my_part_of_my_para)
         '''
@@ -500,8 +502,10 @@ class vFLClient(Client):
         t1 = [upgrade_lr * x for x in g_a_2_2]
         # t1 = self.ss.downgrade(t1)
 
-        self.my_part_of_others_para = self.ss.mod_funs(
-            [self.my_part_of_others_para[i] - t1[i] for i in range(len(t1))])
+        # self.my_part_of_others_para = self.ss.mod_funs(
+        #    [self.my_part_of_others_para[i] - t1[i] for i in range(len(t1))])
+        self.my_part_of_others_para = self.ss.mod_add(
+            self.my_part_of_others_para, [-x for x in t1])
 
         print("lr * g_a_2_2: ", t1)
         print("new w_a_2: ", self.my_part_of_others_para)
