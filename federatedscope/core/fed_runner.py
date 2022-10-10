@@ -470,7 +470,10 @@ class FedRunner(object):
                     pos,
                     with_labels=True,
                     node_color='white',
-                    node_size=800)
+                    node_size=800,
+                    width=1.0,
+                    arrowsize=25,
+                    arrowstyle='->')
             fig_path = os.path.join(self.cfg.outdir, 'msg_handler.png')
             plt.savefig(fig_path)
             if nx.has_path(G, 'Client_join_in', 'Server_finish'):

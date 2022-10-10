@@ -225,12 +225,9 @@ class Server(Worker):
             'assign_client_id', 'ask_for_join_in_info', 'address', 'model_para'
         ])
         self.register_handlers('join_in_info', self.callback_funcs_for_join_in,
-                               [
-                                   'assign_client_id', 'ask_for_join_in_info',
-                                   'address', 'model_para'
-                               ])
+                               ['address', 'model_para'])
         self.register_handlers('model_para', self.callback_funcs_model_para,
-                               ['model_para', 'finish'])
+                               ['model_para', 'evaluate', 'finish'])
         self.register_handlers('metrics', self.callback_funcs_for_metrics,
                                ['converged'])
 

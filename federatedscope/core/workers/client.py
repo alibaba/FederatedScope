@@ -184,12 +184,12 @@ class Client(Worker):
         self.register_handlers('address', self.callback_funcs_for_address)
         self.register_handlers('model_para',
                                self.callback_funcs_for_model_para,
-                               ['model_para'])
+                               ['model_para', 'ss_model_para'])
         self.register_handlers('ss_model_para',
                                self.callback_funcs_for_model_para,
-                               ['ss_model_para'])
+                               ['ss_model_para', 'model_para'])
         self.register_handlers('evaluate', self.callback_funcs_for_evaluate,
-                               ['metric'])
+                               ['metrics'])
         self.register_handlers('finish', self.callback_funcs_for_finish)
         self.register_handlers('converged', self.callback_funcs_for_converged)
 
