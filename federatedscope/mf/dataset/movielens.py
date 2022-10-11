@@ -87,44 +87,12 @@ class MovieLensData(object):
                                "You can use download=True to download it")
 
         ratings = self._load_meta()
-        if issubclass(type(self), HMFDataset):
-            self._split_n_clients_rating_hmf(ratings, num_client, split)
-        else:
-            self._split_n_clients_rating_vmf(ratings, num_client, split)
+        self._split_n_clients_rating(ratings, num_client, split)
 
-    def _split_n_clients_rating_hmf(self, ratings: csc_matrix, num_client: int,
-                                    split: list):
-        id_user = np.arange(self.n_user)
-        shuffle(id_user)
-        users_per_client = np.array_split(id_user, num_client)
-        data = dict()
-        for clientId, users in enumerate(users_per_client):
-            client_ratings = ratings[users, :]
-            train_ratings, val_ratings, test_ratings = \
-                self._split_train_val_test_ratings(client_ratings, split)
-            data[clientId + 1] = {
-                "train": train_ratings,
-                "val": val_ratings,
-                "test": test_ratings
-            }
-        self.data = data
-
-    def _split_n_clients_rating_vmf(self, ratings: csc_matrix, num_client: int,
-                                    split: list):
-        id_item = np.arange(self.n_item)
-        shuffle(id_item)
-        items_per_client = np.array_split(id_item, num_client)
-        data = dict()
-        for clientId, items in enumerate(items_per_client):
-            client_ratings = ratings[:, items]
-            train_ratings, val_ratings, test_ratings = \
-                self._split_train_val_test_ratings(client_ratings, split)
-            data[clientId + 1] = {
-                "train": train_ratings,
-                "val": val_ratings,
-                "test": test_ratings
-            }
-        self.data = data
+    def _split_n_clients_rating(self, ratings: csc_matrix, num_client: int,
+                                split: list):
+        raise NotImplementedError("You should use the parent class of "
+                                  "MovieLensData")
 
     def _split_train_val_test_ratings(self, ratings: csc_matrix, split: list):
         train_ratio, val_ratio, test_ratio = split

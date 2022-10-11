@@ -55,7 +55,8 @@ class MFTrainer(GeneralTorchTrainer):
             }
         else:
             results = {
-                f"{ctx.cur_mode}_avg_loss": ctx.loss_batch_total /
+                f"{ctx.cur_mode}_avg_loss": ctx.get(
+                    "loss_batch_total_{}".format(ctx.cur_mode)) /
                 ctx.num_samples,
                 f"{ctx.cur_mode}_total": ctx.num_samples
             }

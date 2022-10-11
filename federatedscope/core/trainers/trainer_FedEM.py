@@ -196,7 +196,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         """
             Ensemble evaluation for matrix factorization model
         """
-        cur_data = ctx.cur_mode
+        cur_data = ctx.cur_split
         batch_num = len(ctx[f"{cur_data}_y_prob"])
         if f"{cur_data}_y_prob_ensemble" not in ctx or ctx[
                 f"{cur_data}_y_prob_ensemble"] is None:
@@ -234,18 +234,18 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             if ctx.num_samples == 0:
                 results = {
                     f"{cur_data}_avg_loss": ctx.get(
-                        "loss_batch_total_{}".format(ctx.cur_mode)),
+                        "loss_batch_total_{}".format(ctx.cur_split)),
                     f"{cur_data}_total": 0
                 }
             else:
                 results = {
-                    f"{ctx.cur_mode}_avg_loss": ctx.get(
-                        f"loss_batch_total_{ctx.cur_mode}") / ctx.num_samples,
-                    f"{ctx.cur_mode}_total": ctx.num_samples
+                    f"{ctx.cur_split}_avg_loss": ctx.get(
+                        f"loss_batch_total_{ctx.cur_split}") / ctx.num_samples,
+                    f"{ctx.cur_split}_total": ctx.num_samples
                 }
-            if isinstance(results[f"{ctx.cur_mode}_avg_loss"], torch.Tensor):
-                results[f"{ctx.cur_mode}_avg_loss"] = results[
-                    f"{ctx.cur_mode}_avg_loss"].item()
+            if isinstance(results[f"{ctx.cur_split}_avg_loss"], torch.Tensor):
+                results[f"{ctx.cur_split}_avg_loss"] = results[
+                    f"{ctx.cur_split}_avg_loss"].item()
             setattr(ctx, 'eval_metrics', results)
 
             # reset for next run_routine that may have different
