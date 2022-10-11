@@ -102,12 +102,16 @@ class pFedHPOFLServer(Server):
         if not self.train_anchor:
             hyper_enc = torch.load(os.path.join(self._cfg.hpo.working_folder,
                                                 'hyperNet_encoding.pt'))
-            self.client_encoding = hyper_enc['encoding'].to(self._cfg.device)
-            self.HyperNet = HyperNet(input_dim=self.client_encoding.shape[1],
+            # self.client_encoding = hyper_enc['encoding'].to(self._cfg.device)
+            self.HyperNet = HyperNet(encoding=torch.ones(client_num, 512),
                                      num_params=len(self.pbounds),
-                                     n_clients=client_num).to(self._cfg.device)
+                                     n_clients=client_num,
+                                     device=self._cfg.device,
+                                     var=0.01).to(self._cfg.device)
+
             self.HyperNet.load_state_dict(hyper_enc['hyperNet'])
-            self.raw_params = self.HyperNet(self.client_encoding)[0].detach().cpu().numpy()
+            self.HyperNet.eval()
+            self.raw_params = self.HyperNet()[0].detach().cpu().numpy()
 
 
     def callback_funcs_model_para(self, message: Message):
@@ -289,6 +293,7 @@ class pFedHPOFLServer(Server):
                     logger.info(
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
+                    logger.info(self._cfg.device)
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 

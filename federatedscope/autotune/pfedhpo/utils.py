@@ -14,9 +14,15 @@ class EncNet(nn.Module):
 
         self.fc_layer = nn.Sequential(
             nn.Linear(in_channel, hid_dim),
-            nn.ReLU(inplace=True),
+            nn.Tanh(),
             nn.Linear(hid_dim, num_params),
         )
+
+        # self.fc_layer = nn.Sequential(
+        #     spectral_norm( nn.Linear(in_channel, hid_dim)),
+        #     nn.ReLU(inplace=True),
+        #     spectral_norm(nn.Linear(hid_dim, num_params)),
+        # )
 
     def forward(self, client_enc):
         mean_update = self.fc_layer(client_enc)
@@ -27,11 +33,19 @@ class PolicyNet(nn.Module):
         super(PolicyNet, self).__init__()
         self.num_params = num_params
 
+        # self.fc_layer = nn.Sequential(
+        #     spectral_norm(nn.Linear(in_channel, hid_dim)),
+        #     nn.ReLU(inplace=True),
+        #     spectral_norm(nn.Linear(hid_dim, hid_dim)),
+        #     nn.ReLU(inplace=True),
+        #     spectral_norm(nn.Linear(hid_dim, num_params)),
+        # )
+
         self.fc_layer = nn.Sequential(
             nn.Linear(in_channel, hid_dim),
-            nn.ReLU(inplace=True),
+            nn.Tanh(),
             nn.Linear(hid_dim, hid_dim),
-            nn.ReLU(inplace=True),
+            nn.Tanh(),
             nn.Linear(hid_dim, num_params),
         )
 
@@ -45,35 +59,34 @@ class HyperNet(nn.Module):
         self.dim = input_dim = encoding.shape[1]
         self.var = var
         self.encoding = torch.nn.Parameter(encoding, requires_grad=True)
-        self.mean = torch.zeros((n_clients, num_params)).to(device)
+        self.mean = torch.zeros((n_clients, num_params)).to(device) + 0.5
 
         self.EncNet = EncNet(input_dim, num_params)
         self.meanNet = PolicyNet(num_params, num_params)
         self.combine = nn.Sequential(
             nn.Linear(num_params*2, num_params),
-            nn.Tanh()
+            nn.Sigmoid()
         )
 
-        self.alpha = 0.9
+        self.alpha = 0.8
+
 
     def forward(self):
         client_enc = self.EncNet(self.encoding)
         mean_update = self.meanNet(self.mean)
-        mean_update = self.combine(torch.cat([client_enc, mean_update], dim=-1))
-        mean = self.mean + mean_update
-        mean = torch.clamp(mean, -1., 1.)
+        mean = self.combine(torch.cat([client_enc, mean_update],
+                                      dim=-1))
 
         cov_matrix = torch.eye(mean.shape[-1]).to(mean.device) * self.var
-        dist = MultivariateNormal(loc=mean, covariance_matrix=cov_matrix)
+        dist = MultivariateNormal(loc=mean,
+                    covariance_matrix=cov_matrix)
         sample = dist.sample()
-        sample = F.relu(sample)
-        sample = torch.clamp(sample, -1., 1.)
+        sample = torch.clamp(sample, 0., 1.)
         logprob = dist.log_prob(sample)
         entropy = dist.entropy()
 
         self.mean.data.copy_(mean.data)
 
-        sample = sample / 2. + 0.5
         return sample, logprob, entropy
 
 

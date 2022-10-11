@@ -100,7 +100,7 @@ class pFedHPOServer(Server):
         # prepare hyper-net
         self.client2idx = None
 
-        self.var = 0.1
+        self.var = 0.01
         dist = MultivariateNormal(loc=torch.zeros(len(self.pbounds)),
             covariance_matrix=torch.eye(len(self.pbounds)) * self.var)
         self.logprob_max = dist.log_prob(dist.sample() * 0)
@@ -123,22 +123,18 @@ class pFedHPOServer(Server):
                                  var=self.var).to(self._cfg.device)
         self.saved_models = [None] * self._cfg.hpo.pfedhpo.target_fl_total_round
 
-        # self.opt = torch.optim.SGD([
-        #         {'params': self.HyperNet.encoding, 'lr': 0.1},
-        #         {'params': self.HyperNet.PolicyNet.parameters(), 'weight_decay': 1e-5, 'lr': 0.1},
-        #     ])
+        self.opt_params = list(self.HyperNet.EncNet.parameters()) + list(self.HyperNet.meanNet.parameters())
+        # self.opt_params = self.HyperNet.parameters()
 
-        # self.opt = torch.optim.SGD(self.HyperNet.parameters(), lr=0.01)
-        self.opt = torch.optim.Adam(
-            list(self.HyperNet.EncNet.parameters()) + list(self.HyperNet.meanNet.parameters()),
-            lr=0.01,
-            # betas=(0.7, 0.7)
-        )
+        self.opt = torch.optim.Adam(self.opt_params,
+                                   lr=0.01,
+                                   # betas=(0.7, 0.7)
+                                   )
 
         with open(os.path.join(self._cfg.hpo.working_folder,
                                'anchor_eval_results.json'), 'r') as f:
             self.anchor_res = json.load(f)
-
+        self.anchor_res_smooth = None
 
         # TODO: sampler
         # self.sampler = None
@@ -167,20 +163,16 @@ class pFedHPOServer(Server):
         if msg_type == 'model_para':
             # random sample start round and load saved global model
             self.start_round = np.random.randint(1,
-                self._cfg.hpo.pfedhpo.target_fl_total_round)
+                self._cfg.hpo.pfedhpo.target_fl_total_round // 2)
             logger.info('==> Sampled start round: %d'%self.start_round)
             ckpt_path = os.path.join(self._cfg.hpo.working_folder,
-                                     'temp_model_round_%d.pt' % self.start_round)
+                'temp_model_round_%d.pt' % self.start_round)
             if self.model_num > 1:
                 raise NotImplementedError
             else:
                 self.model.load_state_dict(torch.load(ckpt_path))
 
         model_para = self.model.state_dict()
-
-        logger.info('')
-        logger.info(msg_type)
-        logger.info(self.model.state_dict()['conv1.bias'].view(-1)[:10])
 
         # generate hyper-params for all clients
         if not self.client2idx:
@@ -233,12 +225,24 @@ class pFedHPOServer(Server):
         key1 = 'Results_weighted_avg' # 'Results_avg', 'Results_fairness'
         key2 = 'val_acc' # 'test_acc', 'test_correct', 'test_loss', 'test_total', 'test_avg_loss', 'val_acc', 'val_correct', 'val_loss', 'val_total', 'val_avg_loss'
 
-        anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
-        anchor_res_end = self.anchor_res[key1][key2][self.start_round]
-        res_end = self.history_results[key1][key2][0]
+        if self.anchor_res_smooth is None:
+            def moving_average(interval, windowsize):
+                interval = np.array(interval)
+                interval = interval.reshape(-1)
+                l = len(interval)
+                interval = np.concatenate([interval, interval[-windowsize:]])
+                print(interval.shape)
+                window = np.ones(int(windowsize)) / float(windowsize)
+                re = np.convolve(interval, window, 'same')
+                return re[:l]
 
-        anchor_res_start += 1e-6
-        anchor_reward = anchor_res_end - anchor_res_start
+            _anchor_res = self.anchor_res[key1][key2]
+            self.anchor_res_smooth = moving_average(_anchor_res, windowsize=len(_anchor_res)//10)
+
+        scale = abs(self.anchor_res_smooth[self.start_round] - self.anchor_res_smooth[self.start_round - 1]) + 1e-6
+
+        anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
+        res_end = self.history_results[key1][key2][-1]
 
         if 'cifar13' in str(self._cfg.hpo.working_folder):
             reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
@@ -258,11 +262,15 @@ class pFedHPOServer(Server):
 
         elif 'cifar15' in str(self._cfg.hpo.working_folder):
             reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
-            losses = (1.0 - reward) * (torch.exp(self.logprob_max) - torch.exp(self.logprob))
+            losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
 
         elif 'cifar16' in str(self._cfg.hpo.working_folder):
             reward = np.maximum(0, res_end - anchor_res_start)
-            losses = (1.0 - reward) / anchor_res_start * (torch.exp(self.logprob_max) - torch.exp(self.logprob))
+            losses = ((1.0 - reward) / anchor_res_start) **0.5 * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
+
+        elif 'cifar20' in str(self._cfg.hpo.working_folder):
+            reward = np.maximum(0, res_end - anchor_res_start) ** 0.5 * anchor_res_start
+            losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
 
         else:
             raise NotImplementedError
@@ -270,6 +278,7 @@ class pFedHPOServer(Server):
         self.opt.zero_grad()
         loss = losses.mean()
         loss.backward()
+        # nn.utils.clip_grad_norm_(self.opt_params, max_norm=10, norm_type=2)
         self.opt.step()
 
         for cid in self.fb.keys():
@@ -365,6 +374,7 @@ class pFedHPOServer(Server):
                     logger.info(
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
+                    logger.info(self._cfg.device)
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 
