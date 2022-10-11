@@ -47,7 +47,8 @@ def get_trainer(model=None,
                                           only_for_eval=only_for_eval,
                                           monitor=monitor)
         elif config.backend == 'tensorflow':
-            from federatedscope.core.trainers import GeneralTFTrainer
+            from federatedscope.core.trainers.tf_trainer import \
+                GeneralTFTrainer
             trainer = GeneralTFTrainer(model=model,
                                        data=data,
                                        device=device,

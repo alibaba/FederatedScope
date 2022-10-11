@@ -1,5 +1,5 @@
-from fedhpob.config import fhb_cfg
-from fedhpob.benchmarks import TabularBenchmark
+from fedhpobench.config import fhb_cfg
+from fedhpobench.benchmarks import TabularBenchmark
 
 benchmark = TabularBenchmark('cnn', 'femnist', 'avg')
 
