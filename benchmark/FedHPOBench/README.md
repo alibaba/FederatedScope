@@ -37,8 +37,8 @@ We recommend installing FedHPOB directly using git by:
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
-cd FederatedScope/benchmark/FedHPOB
-export PYTHONPATH=~/FedHPOB:$PYTHONPATH
+cd FederatedScope/benchmark/FedHPOBench
+export PYTHONPATH=~/FedHPOBench:$PYTHONPATH
 ```
 
 ### Step 2. Prepare data files
@@ -102,6 +102,30 @@ We take Figure 11 as an example.
   from fedhpob.utils.draw import rank_over_time
   
   rank_over_time('exp_results', 'gcn', algo='avg', loss=False)
+  ```
+
+## Using FedHPOBench with HPOBench
+
+HPOBench is a very popular and influential library in the HPO field, so we provide serval demos for exposing FedHPOBench through the interfaces of HPOBench in `demo\`:
+
+How to use:
+
+* Install HPOBench:
+
+  ```bash
+  git clone https://github.com/automl/HPOBench.git
+  cd HPOBench 
+  pip install .
+  ```
+
+* Start to use:
+
+  ```python
+  from femnist_tabular_ benchmark import FEMNISTTabularFedHPOBench
+  b = FEMNISTTabularFedHPOBench('data', 1)
+  config = b.get_configuration_space(seed=1).sample_configuration()
+  result_dict = b.objective_function(configuration=config, rng=1)
+  print(result_dict)
   ```
 
 ## Publications
