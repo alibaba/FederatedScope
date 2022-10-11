@@ -127,12 +127,12 @@ class FEMNISTTest(unittest.TestCase):
                                client_class=get_client_cls(init_cfg),
                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
-        test_best_results = Fed_runner.run()
-        print(test_best_results)
+        test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
+
         self.assertLess(
-            test_best_results["client_summarized_weighted_avg"]['test_loss'],
-            600)
+            test_results["client_summarized_weighted_avg"]["test_avg_loss"],
+            50)
 
 
 if __name__ == '__main__':
