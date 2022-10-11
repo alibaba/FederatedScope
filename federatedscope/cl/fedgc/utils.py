@@ -19,7 +19,7 @@ class global_NT_xentloss(nn.Module):
     :rtype:
         torch.FloatTensor
     """
-    def __init__(self, temperature=0.5, device=torch.device("cpu")):
+    def __init__(self, temperature=0.1, device=torch.device("cpu")):
         super(global_NT_xentloss, self).__init__()
         self.temperature = temperature
         self.device = device

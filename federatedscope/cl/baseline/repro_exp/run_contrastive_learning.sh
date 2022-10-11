@@ -13,18 +13,18 @@ fi
 
 if [[ $method_name = 'fedgc' ]]; then
     method='fedgc'
-    total_round_num='200'
-    batch_or_epoch='batch'
+    total_round_num='100'
+    batch_or_epoch='epoch'
 elif [[ $method_name = 'fedsimclr' ]]; then
     method='Fedavg'
-    total_round_num='200'
-    batch_or_epoch='batch'
+    total_round_num='100'
+    batch_or_epoch='epoch'
 fi
 
 echo "Fed Contrastive Learning starts..."
 
-lrs=(0.01 0.05 0.25)
-local_updates=(1 3 5)
+lrs=(0.003 0.01 0.03)
+local_updates=(10)
 
 
 for (( i=0; i<${#lrs[@]}; i++ ))

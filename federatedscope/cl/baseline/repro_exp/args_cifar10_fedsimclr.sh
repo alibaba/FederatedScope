@@ -2,6 +2,6 @@
 # Fedsimclr
 # ---------------------------------------------------------------------- #
 
-bash run_contrastive_learning.sh 0 fedsimclr cifar10 0.5
+bash run_contrastive_learning.sh 1 fedsimclr cifar10 0.1
 
 

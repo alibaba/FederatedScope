@@ -23,16 +23,16 @@ class CLTrainer(GeneralTorchTrainer):
                  monitor=None):
         super(CLTrainer, self).__init__(model, data, device, config,
                                               only_for_eval, monitor)
-        self.batches_aug_data_1, self.batches_aug_data_2 = [], []
+        self.batches_aug_data_1, self.batches_aug_data_2 = torch.empty(1), torch.empty(1)
         self.z1, self.z2 = torch.empty(1), torch.empty(1)
         self.num_samples = 0
-        self.local_loss_ratio = 0.5
-        self.global_loss_ratio = 1 - self.local_loss_ratio
+        self.local_loss_ratio = 1
+        self.global_loss_ratio = 5
 
     
     def get_train_pred_embedding(self): 
         model = self.ctx.model.to(self.ctx.device)
-        x1, x2 = torch.cat(self.batches_aug_data_1, dim=0).to(self.ctx.device), torch.cat(self.batches_aug_data_2, dim=0).to(self.ctx.device)
+        x1, x2 = self.batches_aug_data_1.to(self.ctx.device), self.batches_aug_data_2.to(self.ctx.device)
         z1, z2 = model(x1, x2)
         self.batches_aug_data_1, self.batches_aug_data_2 = [], []
         self.z1, self.z2 = z1, z2
@@ -44,8 +44,8 @@ class CLTrainer(GeneralTorchTrainer):
         x, label = [utils.move_to(_, ctx.device) for _ in ctx.data_batch]
         x1, x2 = x[0], x[1]
         if ctx.cur_mode in [MODE.TRAIN]:
-            self.batches_aug_data_1.append(x1)
-            self.batches_aug_data_2.append(x2)
+            self.batches_aug_data_1 = x1
+            self.batches_aug_data_2 = x2
         z1, z2 = ctx.model(x1, x2)
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
@@ -62,6 +62,10 @@ class CLTrainer(GeneralTorchTrainer):
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)
+            
+        ctx.optimizer.step()
+        if ctx.scheduler is not None:
+            ctx.scheduler.step()
         
     def _hook_on_batch_end(self, ctx):
         # update statistics

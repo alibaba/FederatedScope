@@ -82,10 +82,8 @@ class GlobalContrastFLServer(Server):
                     print('client {} global_loss:{}'.format(client_id, self.loss_list[client_id]))
 #                         print("end cal loss")
 
-
             self.state += 1
-
-            if self.state < self.total_round_num:
+            if self.state <= self.total_round_num:
 
                 for client_id in train_msg_buffer:
 
@@ -100,13 +98,73 @@ class GlobalContrastFLServer(Server):
                                 receiver=[client_id],
                                 state=self.state,
                                 content=msg_list))
-                # Clean the msg_buffer
-                self.msg_buffer['train'][self.state - 1].clear()
-                self.msg_buffer['train'][self.state] = dict()
-                self.staled_msg_buffer.clear()
-                # Start a new training round
                     
+    def check_and_move_on(self,
+                          check_eval_result=False,
+                          min_received_num=None):
+        """
+        To check the message_buffer. When enough messages are receiving,
+        some events (such as perform aggregation, evaluation, and move to
+        the next training round) would be triggered.
+
+        Arguments:
+            check_eval_result (bool): If True, check the message buffer for
+            evaluation; and check the message buffer for training otherwise.
+        """
+        if min_received_num is None:
+            if self._cfg.asyn.use:
+                min_received_num = self._cfg.asyn.min_received_num
+            else:
+                min_received_num = self._cfg.federate.sample_client_num
+        assert min_received_num <= self.sample_client_num
+
+        if check_eval_result and self._cfg.federate.mode.lower(
+        ) == "standalone":
+            # in evaluation stage and standalone simulation mode, we assume
+            # strong synchronization that receives responses from all clients
+            min_received_num = len(self.comm_manager.get_neighbors().keys())
+
+        move_on_flag = True  # To record whether moving to a new training
+        # round or finishing the evaluation
+        if self.check_buffer(self.state, min_received_num, check_eval_result):
+            if not check_eval_result:
+                # Receiving enough feedback in the training process
+                aggregated_num = self._perform_federated_aggregation()
+
                 
+                if self.state % self._cfg.eval.freq == 0 and self.state != \
+                        self.total_round_num:
+                    #  Evaluate
+                    logger.info(f'Server: Starting evaluation at the end '
+                                f'of round {self.state - 1}.')
+                    self.eval()
+
+                if self.state < self.total_round_num:
+                    # Move to next round of training
+                    logger.info(
+                        f'----------- Starting a new training round (Round '
+                        f'#{self.state}) -------------')
+                    # Clean the msg_buffer
+                    self.msg_buffer['train'][self.state - 1].clear()
+                    self.msg_buffer['train'][self.state] = dict()
+                    self.staled_msg_buffer.clear()
+                    # Start a new training round
+                    self._start_new_training_round(aggregated_num)
+                else:
+                    # Final Evaluate
+                    logger.info('Server: Training is finished! Starting '
+                                'evaluation.')
+                    self.eval()
+
+            else:
+                # Receiving enough feedback in the evaluation process
+                self._merge_and_format_eval_results()
+
+        else:
+            move_on_flag = False
+
+        return move_on_flag            
+    
     def callback_funcs_global_loss(self, message: Message):
         """
         The handling function for receiving model embeddings, which triggers
@@ -139,10 +197,6 @@ class GlobalContrastFLServer(Server):
         elif round >= self.state - self.staleness_toleration:
             # Save the staled messages
             self.staled_msg_buffer.append((round, sender, content))
-        else:
-            # Drop the out-of-date messages
-            logger.info(f'Drop a out-of-date message from round #{round}')
-            self.dropout_num += 1
 
         move_on_flag = self.check_and_move_on_for_global_loss()
 

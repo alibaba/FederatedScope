@@ -140,6 +140,21 @@ class simclr_linearprob(nn.Module):
         self.linear = nn.Linear(512, num_classes, bias=True)
 
     def forward(self, x):
+        with torch.no_grad():
+            out = self.backbone(x)
+        out = self.linear(out)
+
+        return out
+    
+class simclr_supervised(nn.Module):
+    def __init__(self, bbone_arch, num_classes=10):
+        super(simclr_supervised, self).__init__()
+        self.register_buffer("rounds_done", torch.zeros(1))
+
+        self.backbone = create_backbone(bbone_arch, num_classes=0)
+        self.linear = nn.Linear(512, num_classes, bias=True)
+
+    def forward(self, x):
         out = self.backbone(x)
         out = self.linear(out)
 
@@ -150,8 +165,11 @@ def ModelBuilder(model_config, local_data):
     if model_config.type == "SimCLR":
         model = simclr(bbone_arch='res18')
         return model
-    if model_config.type in ["SimCLR_linear","supervised_local","supervised_fedavg"]:
+    if model_config.type in ["SimCLR_linear"]:
         model = simclr_linearprob(bbone_arch='res18', num_classes=10)
+        return model
+    if model_config.type in ["supervised_local","supervised_fedavg"]:
+        model = simclr_supervised(bbone_arch='res18', num_classes=10)
         return model
 
 from federatedscope.register import register_model

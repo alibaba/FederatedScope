@@ -456,6 +456,7 @@ class Server(Worker):
             # Due to lazy load, we merge two state dict
             merged_param = merge_param_dict(model.state_dict().copy(), result)
             model.load_state_dict(merged_param, strict=False)
+            aggregator.update(merged_param)
 
         return aggregated_num
 

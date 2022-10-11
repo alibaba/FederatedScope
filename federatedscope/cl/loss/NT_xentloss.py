@@ -15,7 +15,7 @@ class NT_xentloss(nn.Module):
     :rtype:
         torch.FloatTensor
     """
-    def __init__(self, temperature=0.5):
+    def __init__(self, temperature=0.1):
         super(NT_xentloss, self).__init__()
         self.temperature = temperature
         

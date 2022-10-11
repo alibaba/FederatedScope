@@ -52,10 +52,12 @@ class GlobalContrastFLClient(Client):
         self.state = round
         pred_embedding = self.trainer.get_train_pred_embedding()
         
-        logger.info(
-            self._monitor.format_eval_res(results,
-                                          rnd=self.state,
-                                          role='Client #{}'.format(self.ID)))
+        train_log_res = self._monitor.format_eval_res(
+            results,
+            rnd=self.state,
+            role='Client #{}'.format(self.ID),
+            return_raw=True)
+        logger.info(train_log_res)
 
         self.comm_manager.send(
             Message(msg_type='pred_embedding',
