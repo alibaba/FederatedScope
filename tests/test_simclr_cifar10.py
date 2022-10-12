@@ -22,16 +22,21 @@ class SimCLR_CIFAR10Test(unittest.TestCase):
         cfg.use_gpu = torch.cuda.is_available()
         cfg.eval.freq = 5
         cfg.eval.metrics = ['loss']
+        cfg.eval.split = ['val', 'test']
 
         cfg.federate.mode = 'standalone'
         cfg.train.local_update_steps = 5
+        cfg.train.batch_or_epoch = 'batch'
         cfg.federate.total_round_num = 20
         cfg.federate.sample_client_num = 5
 
         cfg.data.root = 'data/'
         cfg.data.type = 'Cifar4CL'
         cfg.data.splits = [0.8, 0.1, 0.1]
-        cfg.data.batch_size = 10
+        cfg.data.batch_size = 256
+        cfg.data.splitter = 'lda'
+        cfg.data.splitter_args = [{'alpha': 0.1}]
+        cfg.data.num_workers = 4
         cfg.data.subsample = 1.0
 
         cfg.model.type = 'SimCLR'
