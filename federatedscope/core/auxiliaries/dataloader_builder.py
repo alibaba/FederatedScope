@@ -57,6 +57,7 @@ def get_dataloader(dataset, config, split='train'):
     if split != 'train':
         raw_args['shuffle'] = False
         raw_args['sizes'] = [-1]
+        raw_args['drop_last'] = False
         # For evaluation in GFL
         if config.dataloader.type in ['graphsaint-rw', 'neighbor']:
             raw_args['batch_size'] = 4096
