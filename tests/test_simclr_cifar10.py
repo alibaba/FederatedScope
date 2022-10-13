@@ -30,7 +30,7 @@ class SimCLR_CIFAR10Test(unittest.TestCase):
         cfg.federate.total_round_num = 20
         cfg.federate.sample_client_num = 5
 
-        cfg.data.root = 'data/'
+        cfg.data.root = 'test_data/'
         cfg.data.type = 'Cifar4CL'
         cfg.data.splits = [0.8, 0.1, 0.1]
         cfg.data.batch_size = 256
