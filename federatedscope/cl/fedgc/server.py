@@ -78,8 +78,7 @@ class GlobalContrastFLServer(Server):
                                  if other_client_id != client_id]
 #                         print("start cal loss")
                     self.loss_list[client_id] = global_loss_fn(z1, z2, others_z2)
-                    print(self.loss_list[client_id])
-                    print('client {} global_loss:{}'.format(client_id, self.loss_list[client_id]))
+                    logger.info(f'client {client_id} global_loss:{self.loss_list[client_id]}')
 #                         print("end cal loss")
 
             self.state += 1

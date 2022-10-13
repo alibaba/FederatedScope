@@ -7,7 +7,6 @@ from federatedscope.core.trainers.context import Context
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries import utils
-from torchviz import make_dot, make_dot_from_trace
 import torch
 import numpy as np
 import copy
@@ -79,21 +78,12 @@ class CLTrainer(GeneralTorchTrainer):
         ctx.ys_prob.append(ctx.y_prob[0].detach().cpu().numpy())
         
     def train_with_global_loss(self, loss):
-        """
-        Arguments:
-            loss: loss after global calculate
-        :returns:
-            grads: grads to optimize the model of other clients
-        """
 
         self.ctx.model = self.ctx.model.to(self.ctx.device)
-
-#         self.ctx.optimizer.zero_grad()
 
         loss = loss.requires_grad_() * self.global_loss_ratio
         loss.backward()
         
-            
         self.ctx.optimizer.step()
         
         return self.ctx.model.state_dict()
