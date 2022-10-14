@@ -50,7 +50,7 @@ class SimCLR_CIFAR10Test(unittest.TestCase):
 
         cfg.criterion.type = 'NT_xentloss'
         cfg.trainer.type = 'cltrainer'
-        cfg.seed = 2
+        cfg.seed = 1
 
         return backup_cfg
 
