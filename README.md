@@ -5,7 +5,7 @@ dddd
 </h1> dfdfd
 
 ![](https://img.shields.io/badge/language-python-blue.svg)
-![](https://img.shields.io/badge/license-Apache-000000.svg)
+![](https://img.shields.io/badge/license-Apache-000000fdfdfdfdfdfdfdf.svg)
 [![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
 [![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
 [![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
