@@ -1,0 +1,24 @@
+use_gpu: False
+federate:
+  mode: standalone
+  client_num: 3
+model:
+  type: lr
+  use_bias: False
+train:
+  optimizer:
+    lambda_: 0.1
+    gamma: 0
+    num_of_trees: 2
+    max_tree_depth: 3
+data:
+  type: xgb_base_data
+  batch_size: 2000
+xgb_base:
+  use: True
+  key_size: 256
+trainer:
+  type: none  
+eval:
+  freq: 5
+  best_res_update_round_wise_key: test_loss
