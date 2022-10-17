@@ -40,6 +40,8 @@ if __name__ == '__main__':
     # cfg object
     data, modified_cfg = get_data(config=init_cfg.clone())
     init_cfg.merge_from_other_cfg(modified_cfg)
+    
+    THIS_IS_A_TEST_FOR_FORMAT_CHECKING = 'THIS_IS_A_TEST_FOR_FORMAT_CHECKINGTHIS_IS_A_TEST_FOR_FORMAT_CHECKINGTHIS_IS_A_TEST_FOR_FORMAT_CHECKING'
 
     init_cfg.freeze()
 
