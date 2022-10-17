@@ -1,4 +1,5 @@
 import grpc
+import logging
 from concurrent import futures
 import logging
 import torch.distributed as dist
@@ -186,7 +187,8 @@ class gRPCCommManager(object):
         request = message.transform(to_list=True)
         try:
             stub.sendMessage(request)
-        except grpc._channel._InactiveRpcError:
+        except grpc._channel._InactiveRpcError as error:
+            logger.warning(error)
             pass
         channel.close()
 
