@@ -7,7 +7,6 @@ from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.cl.fedgc.utils import global_NT_xentloss
-from torchviz import make_dot, make_dot_from_trace
 
 logger = logging.getLogger(__name__)
 
