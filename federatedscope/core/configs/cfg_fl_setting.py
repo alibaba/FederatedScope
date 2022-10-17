@@ -73,6 +73,15 @@ def extend_fl_setting_cfg(cfg):
     cfg.vertical.dims = [5, 10]
     cfg.vertical.key_size = 3072
 
+    # ---------------------------------------------------------------------- #
+    # Vertical xgb related options (for demo)
+    # ---------------------------------------------------------------------- #
+    cfg.xgb_base = CN()
+    cfg.xgb_base.use = False
+    cfg.xgb_base.encryption = 'paillier'
+    cfg.xgb_base.dims = [3, 6, 10]
+    cfg.xgb_base.key_size = 3072
+
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
 
