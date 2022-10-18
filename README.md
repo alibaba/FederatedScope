@@ -17,7 +17,7 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 | [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
 
 ## News
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [10-05-2022] Our benchmark paper for personalized FL, [pFL-Bench](https://arxiv.org/abs/2206.03655) has been accepted by NeurIPS 2022, Dataset and Benchmark Track!
+- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [10-05-2022] Our benchmark paper for personalized FL, [pFL-Bench](https://arxiv.org/abs/2206.03655) has been accepted by NeurIPS'22, Dataset and Benchmark Track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [07-30-2022] We release FederatedScope v0.2.0! 
 - [06-17-2022] We release **pFL-Bench**, a comprehensive benchmark for personalized Federated Learning (pFL), containing 10+ datasets and 20+ baselines. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench), [pdf](https://arxiv.org/abs/2206.03655)]
@@ -294,7 +294,7 @@ If you find FederatedScope useful for your research or development, please cite 
 ```
 @article{federatedscope,
   title = {FederatedScope: A Flexible Federated Learning Platform for Heterogeneity},
-  author = {Xie, Yuexiang and Wang, Zhen and Chen, Daoyuan and Gao, Dawei and Yao, Liuyi and Kuang, Weirui and Li, Yaliang and Ding, Bolin and Zhou, Jingren},
+  author = {Xie, Yuexiang and Wang, Zhen and Gao, Dawei and Chen, Daoyuan and Yao, Liuyi and Kuang, Weirui and Li, Yaliang and Ding, Bolin and Zhou, Jingren},
   journal={arXiv preprint arXiv:2204.05011},
   year = {2022},
 }
