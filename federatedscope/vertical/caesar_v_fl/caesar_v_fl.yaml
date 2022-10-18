@@ -2,7 +2,7 @@ use_gpu: False
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 1
+  total_round_num: 30
 model:
   type: lr
   use_bias: False

@@ -217,6 +217,30 @@ class AdditiveSecretSharing(SecretSharing):
                         res[i] = res[i] % self.mod_number
                 return np.asarray(res)
 
+    def mod_matmul(self, data, para):
+        res = [0 for _ in range(data.shape[0])]
+        for i in range(data.shape[0]):
+            tmp = 0
+            for j in range(data.shape[1]):
+                a = data[i, j].item()
+                b = para[j].item()
+                tmp += a * b
+            tmp = round(tmp / self.epsilon)
+            res[i] = tmp % self.mod_number
+        return res
+
+    def err_mul_data(self, e, data):
+        res = [0 for _ in range(data.shape[1])]
+        for j in range(data.shape[1]):
+            tmp = 0
+            for i in range(data.shape[0]):
+                a = e[i].item()
+                b = data[i, j].item()
+                tmp += a * b  # % mod_number
+            res[j] = round(tmp / self.epsilon)
+            res[j] = res[j] % self.mod_number
+        return res
+
     def _float2fixedpoint(self, x):
         x = round(x * self.epsilon)
         assert abs(x) < self.maximum
