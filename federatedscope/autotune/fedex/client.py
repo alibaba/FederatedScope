@@ -25,8 +25,8 @@ class FedExClient(Client):
             cmd_args.append(v)
 
         self._cfg.defrost()
-        self._cfg.merge_from_list(cmd_args)
-        self._cfg.freeze(inform=False)
+        self._cfg.merge_from_list(cmd_args, check_cfg=False)
+        self._cfg.freeze(inform=False, check_cfg=False)
 
         self.trainer.ctx.setup_vars()
 

@@ -3,7 +3,8 @@ import unittest
 
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
-from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
+from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 
@@ -57,7 +58,7 @@ class vFLTest(unittest.TestCase):
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)
         print(test_results)
-        self.assertGreater(test_results['server_global_eval']['test_acc'], 0.9)
+        self.assertGreater(test_results['server_global_eval']['test_acc'], 0.8)
 
 
 if __name__ == '__main__':

@@ -6,7 +6,6 @@ import threading
 import math
 
 import ConfigSpace as CS
-from yacs.config import CfgNode as CN
 import yaml
 import numpy as np
 
@@ -68,12 +67,12 @@ class TrialExecutor(threading.Thread):
 def get_scheduler(init_cfg):
     """To instantiate a scheduler object for conducting HPO
     Arguments:
-        init_cfg (yacs.Node): configuration.
+        init_cfg (federatedscope.core.configs.config.CN): configuration.
     """
 
-    if init_cfg.hpo.scheduler == 'rs':
-        scheduler = ModelFreeBase(init_cfg)
-    elif init_cfg.hpo.scheduler in ['sha', 'bo_kde', 'bohb', 'bo_gp', 'bo_rf']:
+    if init_cfg.hpo.scheduler in [
+            'sha', 'rs', 'bo_kde', 'bohb', 'hb', 'bo_gp', 'bo_rf'
+    ]:
         scheduler = SuccessiveHalvingAlgo(init_cfg)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
@@ -88,8 +87,9 @@ class Scheduler(object):
     def __init__(self, cfg):
         """
             Arguments:
-                cfg (yacs.Node): dict like object, where each key-value pair
-                corresponds to a field and its choices.
+                cfg (federatedscope.core.configs.config.CN): dict like object,
+                where each key-value pair corresponds to a field and its
+                choices.
         """
 
         self._cfg = cfg

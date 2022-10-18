@@ -16,6 +16,7 @@ model:
   type: gcn
   hidden: 1024
   out_channels: 4
+  task: node
 train:
   optimizer:
     lr: 0.05

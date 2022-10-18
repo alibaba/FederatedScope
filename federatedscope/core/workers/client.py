@@ -104,8 +104,15 @@ class Client(Worker):
         else:
             self.comp_speed = None
             self.comm_bandwidth = None
-        self.model_size = sys.getsizeof(pickle.dumps(
-            self.model)) / 1024.0 * 8.  # kbits
+
+        if self._cfg.backend == 'torch':
+            self.model_size = sys.getsizeof(pickle.dumps(
+                self.model)) / 1024.0 * 8.  # kbits
+        else:
+            # TODO: calculate model size for TF Model
+            self.model_size = 1.0
+            logger.warning(f'The calculation of model size in backend:'
+                           f'{self._cfg.backend} is not provided.')
 
         # Initialize communication manager
         self.server_id = server_id
@@ -412,6 +419,9 @@ class Client(Worker):
                     num_sample = self._cfg.train.local_update_steps * \
                                  self.trainer.ctx.num_train_batch
                 join_in_info['num_sample'] = num_sample
+                if self._cfg.trainer.type == 'nodefullbatch_trainer':
+                    join_in_info['num_sample'] = \
+                        self.trainer.ctx.data.x.shape[0]
             elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \

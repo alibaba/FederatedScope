@@ -572,7 +572,7 @@ class Server(Worker):
                             float(client_eval_results[key]))
                 formatted_logs = self._monitor.format_eval_res(
                     metrics_all_clients,
-                    rnd=self.state,
+                    rnd=round,
                     role='Server #',
                     forms=self._cfg.eval.report)
                 if merge_type == "unseen":
@@ -764,8 +764,15 @@ class Server(Worker):
                     for client_index in np.arange(1, self.client_num + 1)
                 ]
             else:
-                model_size = sys.getsizeof(pickle.dumps(
-                    self.model)) / 1024.0 * 8.
+                if self._cfg.backend == 'torch':
+                    model_size = sys.getsizeof(pickle.dumps(
+                        self.model)) / 1024.0 * 8.
+                else:
+                    # TODO: calculate model size for TF Model
+                    model_size = 1.0
+                    logger.warning(f'The calculation of model size in backend:'
+                                   f'{self._cfg.backend} is not provided.')
+
                 client_resource = [
                     model_size / float(x['communication']) +
                     float(x['computation']) / 1000.

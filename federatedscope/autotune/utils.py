@@ -78,6 +78,8 @@ def summarize_hpo_results(configs, perfs, white_list=None, desc=False):
     ] + [result] for trial_cfg, result in zip(configs, perfs)]
     d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
     df = pd.DataFrame(d, columns=cols)
+    pd.set_option('display.max_colwidth', None)
+    pd.set_option('display.max_columns', None)
     return df
 
 

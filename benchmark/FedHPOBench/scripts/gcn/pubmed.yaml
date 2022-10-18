@@ -1,0 +1,35 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 100
+seed: 12345
+federate:
+  mode: standalone
+  make_global_eval: True
+  client_num: 5
+  local_update_steps: 1
+  total_round_num: 500
+  share_local_model: True
+  online_aggr: True
+data:
+  root: data/
+  type: pubmed
+  splitter: 'louvain'
+  batch_size: 1
+model:
+  type: gcn
+  hidden: 64
+  dropout: 0.5
+  out_channels: 3
+  task: node
+optimizer:
+  lr: 0.25
+  weight_decay: 0.0005
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nodefullbatch_trainer
+eval:
+  freq: 1
+  metrics: ['acc', 'correct', 'f1']
+  split: ['test', 'val', 'train']

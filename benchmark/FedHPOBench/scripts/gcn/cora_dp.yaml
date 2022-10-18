@@ -1,0 +1,41 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 100
+seed: 12345
+federate:
+  mode: standalone
+  make_global_eval: True
+  client_num: 5
+  total_round_num: 500
+  join_in_info: ['num_sample']
+data:
+  root: data/
+  type: cora
+  splitter: 'louvain'
+  batch_size: 1
+model:
+  type: gcn
+  hidden: 64
+  dropout: 0.5
+  out_channels: 7
+  task: node
+criterion:
+  type: CrossEntropyLoss
+train:
+  local_update_steps: 1
+  optimizer:
+    lr: 0.25
+    weight_decay: 0.0005
+trainer:
+  type: nodefullbatch_trainer
+eval:
+  freq: 1
+  metrics: ['acc', 'correct', 'f1']
+  split: ['test', 'val', 'train']
+nbafl:
+  use: True
+  mu: 0.0
+  w_clip: 0.1
+  epsilon: 20
+  constant: 1

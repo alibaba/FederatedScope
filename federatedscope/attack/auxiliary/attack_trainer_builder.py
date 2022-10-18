@@ -3,7 +3,7 @@ def wrap_attacker_trainer(base_trainer, config):
     Args:
         base_trainer (core.trainers.GeneralTorchTrainer): the trainer that
         will be wrapped;
-        config (yacs.config.CfgNode): the configure;
+        config (federatedscope.core.configs.config.CN): the configure;
 
     :returns:
         The wrapped trainer; Type: core.trainers.GeneralTorchTrainer

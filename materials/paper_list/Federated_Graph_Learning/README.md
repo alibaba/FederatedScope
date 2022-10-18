@@ -1,5 +1,11 @@
 ## Federated Learning for Graph
 
+### 2022
+
+| Title                                                        | Venue | Link                                                         |
+| ------------------------------------------------------------ | ----- | ------------------------------------------------------------ |
+| FederatedScope-GNN: Towards a Unified, Comprehensive and Efficient Package for Federated Graph Learning | KDD   | [pdf](https://dl.acm.org/doi/abs/10.1145/3534678.3539112), [code](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) |
+
 ### 2021
 
 | Title                                                        | Venue      | Link                                                         |
@@ -21,4 +27,3 @@
 | Title                                                        | Venue | Link                                          |
 | ------------------------------------------------------------ | ----- | --------------------------------------------- |
 | Towards Federated Graph Learning for Collaborative Financial Crimes Detection | Arxiv | [pdf](https://arxiv.org/pdf/1909.12946v2.pdf) |
-

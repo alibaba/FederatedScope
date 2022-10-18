@@ -16,6 +16,7 @@ model:
   type: gpr
   hidden: 256
   out_channels: 2
+  task: node
 personalization:
   local_param: ['prop1']
 train:

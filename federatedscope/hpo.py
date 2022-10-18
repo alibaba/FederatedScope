@@ -1,8 +1,6 @@
 import os
 import sys
 
-from yacs.config import CfgNode
-
 import yaml
 
 DEV_MODE = False  # simplify the federatedscope re-setup everytime we change
@@ -11,7 +9,8 @@ if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(file_dir)
 
-from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
+from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.autotune import get_scheduler
@@ -40,10 +39,11 @@ if __name__ == '__main__':
     # global_cfg.merge_from_list(args.opts)
 
     scheduler = get_scheduler(init_cfg)
-    if init_cfg.hpo.scheduler in ['rs', 'sha', 'wrap_sha']:
+    if init_cfg.hpo.scheduler in ['sha', 'wrap_sha']:
         _ = scheduler.optimize()
     elif init_cfg.hpo.scheduler in [
-            'bo_kde', 'bohb', 'wrap_bo_kde', 'wrap_bohb'
+            'rs', 'bo_kde', 'hb', 'bohb', 'wrap_rs', 'wrap_bo_kde', 'wrap_hb',
+            'wrap_bohb'
     ]:
         from federatedscope.autotune.hpbandster import run_hpbandster
         run_hpbandster(init_cfg, scheduler)

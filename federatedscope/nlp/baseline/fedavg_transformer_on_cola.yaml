@@ -1,0 +1,43 @@
+# different from federatedscope/nlp/baseline/fedavg_bert_on_sst2.yaml,
+# this yaml demonstrate
+# (1) using cached tokenizer via  `load_disk_dir` and `hg_cache_dir`
+# (2) using some GLUE validation data as partial test data of the FL version
+
+use_gpu: True
+device: -1
+early_stop:
+  patience: 5
+seed: 1
+federate:
+  mode: standalone
+  total_round_num: 500
+  client_num: 50
+  sample_client_rate: 0.2
+  unseen_clients_rate: 0.2
+data:
+  root: 'glue'
+  type: 'cola@huggingface_datasets'
+  args: [{'load_disk_dir': 'huggingface/datasets/glue/cola',
+          'hg_cache_dir': 'huggingface', 'max_len': 128,
+          'val_as_dummy_test': True, 'part_train_dummy_val': 0.2} ]
+  batch_size: 64
+  splitter: 'lda'
+  splitter_args: [ { 'alpha': 0.4, 'min_size': 1} ]
+  num_workers: 0
+model:
+  type: 'google/bert_uncased_L-2_H-128_A-2@transformers'
+  task: 'SequenceClassification'
+  out_channels: 2
+train:
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  optimizer:
+    lr: 0.1
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nlptrainer
+eval:
+  freq: 5
+  metrics: ['acc', 'correct', 'f1']
