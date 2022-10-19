@@ -8,11 +8,11 @@ model:
   use_bias: False
 train:
   optimizer:
-    lr: 0.05
+    lr: 0.001
 data:
-  type: vertical_fl_data
+  type: caesar_v_fl_data
   batch_size: 50
-vertical:
+caesar_vertical:
   use: True
   key_size: 256
 trainer:

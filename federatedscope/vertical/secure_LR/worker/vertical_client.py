@@ -3,7 +3,7 @@ import logging
 
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
-from federatedscope.vertical_fl.dataloader.utils import batch_iter
+from federatedscope.vertical.dataloader.utils import batch_iter
 
 
 class vFLClient(Client):
@@ -44,10 +44,10 @@ class vFLClient(Client):
                                self.callback_funcs_for_public_keys)
         self.register_handlers('model_para',
                                self.callback_funcs_for_model_para)
-        self.register_handlers('encryped_gradient_u',
-                               self.callback_funcs_for_encryped_gradient_u)
-        self.register_handlers('encryped_gradient_v',
-                               self.callback_funcs_for_encryped_gradient_v)
+        self.register_handlers('encrypted_gradient_u',
+                               self.callback_funcs_for_encrypted_gradient_u)
+        self.register_handlers('encrypted_gradient_v',
+                               self.callback_funcs_for_encrypted_gradient_v)
 
     def sample_data(self, index=None):
         if index is None:
@@ -69,7 +69,7 @@ class vFLClient(Client):
             en_u_A = [self.public_key.encrypt(x) for x in u_A]
 
             self.comm_manager.send(
-                Message(msg_type='encryped_gradient_u',
+                Message(msg_type='encrypted_gradient_u',
                         sender=self.ID,
                         receiver=[
                             each for each in self.comm_manager.neighbors
@@ -78,7 +78,7 @@ class vFLClient(Client):
                         state=self.state,
                         content=(self.batch_index, en_u_A)))
 
-    def callback_funcs_for_encryped_gradient_u(self, message: Message):
+    def callback_funcs_for_encrypted_gradient_u(self, message: Message):
         index, en_u_A = message.content
         self.batch_index = index
         input_x = self.sample_data(index=self.batch_index)
@@ -88,7 +88,7 @@ class vFLClient(Client):
         en_v_B = en_u * input_x
 
         self.comm_manager.send(
-            Message(msg_type='encryped_gradient_v',
+            Message(msg_type='encrypted_gradient_v',
                     sender=self.ID,
                     receiver=[
                         each for each in self.comm_manager.neighbors
@@ -97,14 +97,14 @@ class vFLClient(Client):
                     state=self.state,
                     content=(en_u, en_v_B)))
 
-    def callback_funcs_for_encryped_gradient_v(self, message: Message):
+    def callback_funcs_for_encrypted_gradient_v(self, message: Message):
         en_u, en_v_B = message.content
         input_x = self.sample_data(index=self.batch_index)
         en_v_A = en_u * input_x
-        en_v = np.concatenate([en_v_A, en_v_B], axis=-1)
+        en_v = np.concatenate([en_v_B, en_v_A], axis=-1)
 
         self.comm_manager.send(
-            Message(msg_type='encryped_gradient',
+            Message(msg_type='encrypted_gradient',
                     sender=self.ID,
                     receiver=[self.server_id],
                     state=self.state,

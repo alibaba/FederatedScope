@@ -24,14 +24,14 @@ class AdditiveSecretSharing(SecretSharing):
     AdditiveSecretSharing class, which can split a number into frames and
     recover it by summing up
     """
-    def __init__(self, shared_party_num, size=60):
+    def __init__(self, shared_party_num, size=20):
         super(SecretSharing, self).__init__()
         assert shared_party_num > 1, "AdditiveSecretSharing require " \
                                      "shared_party_num > 1"
         self.shared_party_num = shared_party_num
         self.maximum = 2**size
         self.mod_number = 2 * self.maximum + 1
-        self.epsilon = 1e8
+        self.epsilon = 1e4
         self.mod_funs = np.vectorize(lambda x: x % self.mod_number)
         self.float2fixedpoint = np.vectorize(self._float2fixedpoint)
         self.fixedpoint2float = np.vectorize(self._fixedpoint2float)
@@ -73,16 +73,23 @@ class AdditiveSecretSharing(SecretSharing):
         To recover the secret
         """
         assert len(secret_seq) == self.shared_party_num
-        merge_model = secret_seq[0].copy()
+        merge_model = None
+        secret_seq = [np.asarray(x) for x in secret_seq]
         if isinstance(merge_model, dict):
             for key in merge_model:
                 for idx in range(len(secret_seq)):
                     if idx == 0:
-                        merge_model[key] = secret_seq[idx][key]
+                        merge_model[key] = secret_seq[idx][key].copy()
                     else:
                         merge_model[key] += secret_seq[idx][key]
                 merge_model[key] = self.fixedpoint2float(merge_model[key])
-
+        else:
+            for idx in range(len(secret_seq)):
+                if idx == 0:
+                    merge_model = secret_seq[idx].copy()
+                else:
+                    merge_model += secret_seq[idx]
+            merge_model = self.fixedpoint2float(merge_model)
         return merge_model
 
     def _float2fixedpoint(self, x):

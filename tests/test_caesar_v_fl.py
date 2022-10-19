@@ -9,7 +9,7 @@ from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.fed_runner import FedRunner
 
 
-class vFLTest(unittest.TestCase):
+class caesarTest(unittest.TestCase):
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
 
@@ -20,7 +20,7 @@ class vFLTest(unittest.TestCase):
         cfg.use_gpu = torch.cuda.is_available()
 
         cfg.federate.mode = 'standalone'
-        cfg.federate.total_round_num = 30
+        cfg.federate.total_round_num = 50
         cfg.federate.client_num = 2
 
         cfg.model.type = 'lr'
@@ -28,11 +28,11 @@ class vFLTest(unittest.TestCase):
 
         cfg.train.optimizer.lr = 0.05
 
-        cfg.data.type = 'vertical_fl_data'
+        cfg.data.type = 'caesar_v_fl_data'
         cfg.data.size = 50
 
-        cfg.vertical.use = True
-        cfg.vertical.key_size = 256
+        cfg.caesar_vertical.use = True
+        cfg.caesar_vertical.key_size = 256
 
         cfg.trainer.type = 'none'
         cfg.eval.freq = 5
@@ -40,7 +40,7 @@ class vFLTest(unittest.TestCase):
 
         return backup_cfg
 
-    def test_vFL(self):
+    def test_caesar(self):
         init_cfg = global_cfg.clone()
         backup_cfg = self.set_config(init_cfg)
         setup_seed(init_cfg.seed)

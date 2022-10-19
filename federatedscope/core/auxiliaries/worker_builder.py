@@ -24,8 +24,12 @@ def get_client_cls(cfg):
         from federatedscope.autotune.fedex import FedExClient
         return FedExClient
 
-    if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLClient
+    if cfg.secure_vertical.use:
+        from federatedscope.vertical.secure_LR.worker import vFLClient
+        return vFLClient
+
+    if cfg.caesar_vertical.use:
+        from federatedscope.vertical.caesar_v_fl.worker import vFLClient
         return vFLClient
 
     if cfg.federate.method.lower() in constants.CLIENTS_TYPE:
@@ -85,8 +89,12 @@ def get_server_cls(cfg):
             import BackdoorServer
         return BackdoorServer
 
-    if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLServer
+    if cfg.secure_vertical.use:
+        from federatedscope.vertical.secure_LR.worker import vFLServer
+        return vFLServer
+
+    if cfg.caesar_vertical.use:
+        from federatedscope.vertical.caesar_v_fl.worker import vFLServer
         return vFLServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:

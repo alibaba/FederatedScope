@@ -65,13 +65,22 @@ def extend_fl_setting_cfg(cfg):
     cfg.distribute.grpc_enable_http_proxy = False
 
     # ---------------------------------------------------------------------- #
-    # Vertical FL related options (for demo)
+    # Secure_LR vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
-    cfg.vertical = CN()
-    cfg.vertical.use = False
-    cfg.vertical.encryption = 'paillier'
-    cfg.vertical.dims = [5, 10]
-    cfg.vertical.key_size = 3072
+    cfg.secure_vertical = CN()
+    cfg.secure_vertical.use = False
+    cfg.secure_vertical.encryption = 'paillier'
+    cfg.secure_vertical.dims = [5, 10]
+    cfg.secure_vertical.key_size = 3072
+
+    # ---------------------------------------------------------------------- #
+    # caesar vertical FL related options (for demo)
+    # ---------------------------------------------------------------------- #
+    cfg.caesar_vertical = CN()
+    cfg.caesar_vertical.use = False
+    cfg.caesar_vertical.encryption = 'paillier'
+    cfg.caesar_vertical.dims = [5, 10]
+    cfg.caesar_vertical.key_size = 3072
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
