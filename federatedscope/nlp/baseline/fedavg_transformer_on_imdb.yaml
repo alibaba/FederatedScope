@@ -12,10 +12,10 @@ data:
   type: 'IMDB@torchtext'
   args: [{'max_len': 512}]
   splits: [0.8, 0.2, 0.0] # test is fixed
-  batch_size: 128
   splitter: 'lda'
   splitter_args: [{'alpha': 0.5}]
-  num_workers: 0
+dataloader:
+  batch_size: 128
 model:
   type: 'google/bert_uncased_L-2_H-128_A-2@transformers'
   task: 'SequenceClassification'

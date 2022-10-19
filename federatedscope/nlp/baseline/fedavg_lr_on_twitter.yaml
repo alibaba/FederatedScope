@@ -11,9 +11,9 @@ federate:
 data:
   root: data/
   type: twitter
-  batch_size: 5
   subsample: 0.005
-  num_workers: 0
+dataloader:
+  batch_size: 5
 model:
   type: lr
   out_channels: 2

@@ -2,6 +2,7 @@ import collections
 import copy
 import logging
 
+from federatedscope.core.trainers.base_trainer import BaseTrainer
 from federatedscope.core.auxiliaries.enums import MODE
 from federatedscope.core.auxiliaries.enums import LIFECYCLE
 from federatedscope.core.auxiliaries.decorators import use_diff
@@ -23,7 +24,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class Trainer(object):
+class Trainer(BaseTrainer):
     """
         Register, organize and run the train/test/val procedures
     """

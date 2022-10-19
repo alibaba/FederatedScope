@@ -10,18 +10,18 @@ from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
-from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
     merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
+from federatedscope.core.workers.base_server import BaseServer
 
 logger = logging.getLogger(__name__)
 
 
-class Server(Worker):
+class Server(BaseServer):
     """
     The Server class, which describes the behaviors of server in an FL course.
     The behaviors are described by the handled functions (named as
@@ -166,7 +166,6 @@ class Server(Worker):
             if 'client_resource_info' in kwargs else None
 
         # Register message handlers
-        self.msg_handlers = dict()
         self._register_default_handlers()
 
         # Initialize communication manager and message buffer
@@ -205,23 +204,6 @@ class Server(Worker):
 
     def register_noise_injector(self, func):
         self._noise_injector = func
-
-    def register_handlers(self, msg_type, callback_func):
-        """
-        To bind a message type with a handling function.
-
-        Arguments:
-            msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received
-            message
-        """
-        self.msg_handlers[msg_type] = callback_func
-
-    def _register_default_handlers(self):
-        self.register_handlers('join_in', self.callback_funcs_for_join_in)
-        self.register_handlers('join_in_info', self.callback_funcs_for_join_in)
-        self.register_handlers('model_para', self.callback_funcs_model_para)
-        self.register_handlers('metrics', self.callback_funcs_for_metrics)
 
     def run(self):
         """

@@ -12,6 +12,8 @@ data:
   type: 'csbm'
   #type: 'csbm_data_feb_07_2022-00:19'
   cSBM_phi: [0.1, 0.5, 0.9]
+dataloader:
+  type: pyg
   batch_size: 1
 model:
   type: gpr

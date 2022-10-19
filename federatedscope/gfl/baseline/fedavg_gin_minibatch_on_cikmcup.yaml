@@ -12,6 +12,8 @@ federate:
 data:
   root: data/
   type: cikmcup
+dataloader:
+  type: pyg
 model:
   type: gin
   hidden: 64

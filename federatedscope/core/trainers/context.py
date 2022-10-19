@@ -1,4 +1,3 @@
-import math
 import logging
 import collections
 
@@ -8,6 +7,7 @@ from federatedscope.core.auxiliaries.model_builder import \
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.enums import MODE
 from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
+from federatedscope.core.data import ClientData
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +128,8 @@ class Context(LifecycleDict):
                                            self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
             self.grad_clip = self.cfg.grad.grad_clip
+            if isinstance(self.data, ClientData):
+                self.data.setup(self.cfg)
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None
@@ -145,7 +147,8 @@ class Context(LifecycleDict):
                 calculate_batch_epoch_num(
                     self.cfg.train.local_update_steps,
                     self.cfg.train.batch_or_epoch, self.num_train_data,
-                    self.cfg.data.batch_size, self.cfg.data.drop_last)
+                    self.cfg.dataloader.batch_size,
+                    self.cfg.dataloader.drop_last)
 
         # Process evaluation data
         for mode in ["val", "test"]:
@@ -155,10 +158,10 @@ class Context(LifecycleDict):
                 setattr(
                     self, "num_{}_batch".format(mode),
                     getattr(self, "num_{}_data".format(mode)) //
-                    self.cfg.data.batch_size +
-                    int(not self.cfg.data.drop_last and bool(
+                    self.cfg.dataloader.batch_size +
+                    int(not self.cfg.dataloader.drop_last and bool(
                         getattr(self, "num_{}_data".format(mode)) %
-                        self.cfg.data.batch_size)))
+                        self.cfg.dataloader.batch_size)))
 
     def track_mode(self, mode):
         self.mode_stack.append(mode)

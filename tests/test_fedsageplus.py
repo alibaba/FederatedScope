@@ -29,7 +29,9 @@ class FedSagePlusTest(unittest.TestCase):
         cfg.data.root = 'test_data/'
         cfg.data.type = 'cora'
         cfg.data.splitter = 'louvain'
-        cfg.data.batch_size = 1
+
+        cfg.dataloader.type = 'pyg'
+        cfg.dataloader.batch_size = 1
 
         cfg.model.type = 'sage'
         cfg.model.hidden = 64

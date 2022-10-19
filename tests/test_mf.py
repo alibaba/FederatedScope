@@ -30,7 +30,9 @@ class MFTest(unittest.TestCase):
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'vflmovielens1m'
-        cfg.data.batch_size = 32
+
+        cfg.dataloader.type = 'mf'
+        cfg.dataloader.batch_size = 32
 
         cfg.model.type = 'VMFNet'
         cfg.model.hidden = 20

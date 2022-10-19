@@ -19,10 +19,10 @@ data:
   root: data/
   type: femnist
   splits: [0.6,0.2,0.2]
-  batch_size: 10
   subsample: 0.05
-  num_workers: 0
   transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+dataloader:
+  batch_size: 10
 model:
   type: convnet2
   hidden: 128

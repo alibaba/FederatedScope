@@ -9,9 +9,11 @@ federate:
 data:
   root: data/
   splitter: scaffold_lda
-  batch_size: 64
   transform: ['AddSelfLoops']
   splitter_args: [{'alpha': 0.1}]
+dataloader:
+  type: pyg
+  batch_size: 64
 model:
   type: mpnn
   hidden: 64

@@ -9,8 +9,8 @@ federate:
 data:
   root: data/
   type: HFLMovieLens1M
-  batch_size: 64
-  num_workers: 0
+dataloader:
+  type: mf
 model:
   type: HMFNet
   hidden: 20

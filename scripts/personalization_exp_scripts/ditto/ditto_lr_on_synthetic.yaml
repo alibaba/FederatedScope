@@ -11,7 +11,6 @@ federate:
 data:
   root: data/
   type: synthetic
-  batch_size: 64
   subsample: 1.0
 personalization:
   local_update_steps: 30

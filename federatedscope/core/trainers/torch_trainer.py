@@ -16,7 +16,7 @@ from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
+from federatedscope.core.data.wrap_dataset import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 from federatedscope.core.auxiliaries.utils import param2tensor, \
@@ -173,7 +173,7 @@ class GeneralTorchTrainer(Trainer):
         if ctx.get("{}_loader".format(ctx.cur_split)) is None:
             loader = get_dataloader(
                 WrapDataset(ctx.get("{}_data".format(ctx.cur_split))),
-                self.cfg)
+                self.cfg, ctx.cur_split)
             setattr(ctx, "{}_loader".format(ctx.cur_split), ReIterator(loader))
         elif not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                             ReIterator):

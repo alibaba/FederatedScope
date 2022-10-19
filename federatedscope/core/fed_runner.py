@@ -8,8 +8,8 @@ import numpy as np
 from federatedscope.core.workers import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
-from federatedscope.core.auxiliaries.data_builder import merge_data
 from federatedscope.core.auxiliaries.utils import get_resource_info
+from federatedscope.core.data.utils import merge_data
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +28,14 @@ class FedRunner(object):
         client_class: The client class is used for instantiating a (
         customized) client.
         config: The configurations of the FL course.
-        client_config: The clients' configurations.
+        client_configs: The clients' configurations.
     """
     def __init__(self,
                  data,
                  server_class=Server,
                  client_class=Client,
                  config=None,
-                 client_config=None):
+                 client_configs=None):
         self.data = data
         self.server_class = server_class
         self.client_class = client_class
@@ -44,7 +44,7 @@ class FedRunner(object):
         if not config.is_ready_for_run:
             config.ready_for_run()
         self.cfg = config
-        self.client_cfg = client_config
+        self.client_cfgs = client_configs
 
         self.mode = self.cfg.federate.mode.lower()
         self.gpu_manager = GPUManager(gpu_available=self.cfg.use_gpu,
@@ -89,24 +89,10 @@ class FedRunner(object):
             "specify a non-zero value for client_num"
 
         if self.cfg.federate.method == "global":
-            if self.cfg.federate.client_num != 1:
-                if self.cfg.data.server_holds_all:
-                    assert self.data[0] is not None \
-                        and len(self.data[0]) != 0, \
-                        "You specified cfg.data.server_holds_all=True " \
-                        "but data[0] is None. Please check whether you " \
-                        "pre-process the data[0] correctly"
-                    self.data[1] = self.data[0]
-                else:
-                    logger.info(f"Will merge data from clients whose ids in "
-                                f"[1, {self.cfg.federate.client_num}]")
-                    self.data[1] = merge_data(
-                        all_data=self.data,
-                        merged_max_data_id=self.cfg.federate.client_num)
-                self.cfg.defrost()
-                self.cfg.federate.client_num = 1
-                self.cfg.federate.sample_client_num = 1
-                self.cfg.freeze()
+            self.cfg.defrost()
+            self.cfg.federate.client_num = 1
+            self.cfg.federate.sample_client_num = 1
+            self.cfg.freeze()
 
         # sample resource information
         if self.resource_info is not None:
@@ -286,15 +272,7 @@ class FedRunner(object):
         """
         self.server_id = 0
         if self.mode == 'standalone':
-            if self.cfg.federate.merge_test_data:
-                server_data = merge_data(
-                    all_data=self.data,
-                    merged_max_data_id=self.cfg.federate.client_num,
-                    specified_dataset_name=['test'])
-                model = get_model(self.cfg.model,
-                                  server_data,
-                                  backend=self.cfg.backend)
-            elif self.server_id in self.data:
+            if self.server_id in self.data:
                 server_data = self.data[self.server_id]
                 model = get_model(self.cfg.model,
                                   server_data,
@@ -375,10 +353,10 @@ class FedRunner(object):
 
         if self.client_class:
             client_specific_config = self.cfg.clone()
-            if self.client_cfg:
+            if self.client_cfgs:
                 client_specific_config.defrost()
                 client_specific_config.merge_from_other_cfg(
-                    self.client_cfg.get('client_{}'.format(client_id)))
+                    self.client_cfgs.get('client_{}'.format(client_id)))
                 client_specific_config.freeze()
             client_device = self._server_device if \
                 self.cfg.federate.share_local_model else \
