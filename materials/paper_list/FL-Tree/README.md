@@ -1,9 +1,9 @@
-# Federated Database
+# Federated Learning for Tree
+This list is constantly being updated. Feel free to contribute!
 
 # 2022
 | Title    | Venue | Link                                                                                                                                |
-| -------- |-------|-------------------------------------------------------------------------------------------------------------------------------------|
- | FedTree: A Fast, Effective, and Secure Tree-based Federated Learning System |       | [pdf](https://github.com/Xtra-Computing/FedTree/blob/main/FedTree_draft_paper.pdf), [code](https://github.com/Xtra-Computing/FedTree/) |
+| -------- |-------|---------------------------------------------------------------------------------------------------------|
 |Federated Boosted Decision Trees with Differential Privacy| arxiv | [pdf](https://arxiv.org/pdf/2210.02910.pdf) |
  
 # 2021
