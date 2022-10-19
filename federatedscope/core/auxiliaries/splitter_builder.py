@@ -39,6 +39,9 @@ def get_splitter(config):
     elif config.data.splitter == 'rand_chunk':
         from federatedscope.core.splitters.graph import RandChunkSplitter
         splitter = RandChunkSplitter(client_num, **kwargs)
+    elif config.data.splitter == 'iid':
+        from federatedscope.core.splitters.generic import IIDSplitter
+        splitter = IIDSplitter(client_num)
     else:
         logger.warning(f'Splitter {config.data.splitter} not found or not '
                        f'used.')
