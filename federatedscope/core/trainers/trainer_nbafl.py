@@ -1,4 +1,4 @@
-from federatedscope.core.auxiliaries.utils import get_random
+from federatedscope.core.trainers.utils import get_random
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from typing import Type
 from copy import deepcopy

@@ -158,15 +158,15 @@ class GeneralTorchTrainer(Trainer):
         ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
-        if not isinstance(self.ctx.monitor, Monitor):
+        if not isinstance(ctx.monitor, Monitor):
             logger.warning(
                 f"The trainer {type(self)} does contain a valid monitor, "
                 f"this may be caused by initializing trainer subclasses "
                 f"without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
-        if self.ctx.monitor.total_model_size == 0:
-            self.ctx.monitor.track_model_size(ctx.models)
+        if ctx.monitor.total_model_size == 0:
+            ctx.monitor.track_model_size(ctx.models)
 
     def _hook_on_epoch_start(self, ctx):
         # prepare dataloader
@@ -213,16 +213,15 @@ class GeneralTorchTrainer(Trainer):
         :param ctx:
         :return:
         """
-        if not isinstance(self.ctx.monitor, Monitor):
+        if not isinstance(ctx.monitor, Monitor):
             logger.warning(
                 f"The trainer {type(self)} does contain a valid monitor, "
                 f"this may be caused by initializing trainer subclasses "
                 f"without passing a valid monitor instance."
-                f"Plz check whether this is you want.")
+                f"Please check whether this is you want.")
             return
 
-        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample \
-                == 0:
+        if self.cfg.eval.count_flops and ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 x, y = [_.to(ctx.device) for _ in ctx.data_batch]
@@ -235,9 +234,9 @@ class GeneralTorchTrainer(Trainer):
                         "by internal model nums as self.mirrored_models=True."
                         "if this is not the case you want, "
                         "please customize the count hook")
-                self.ctx.monitor.track_avg_flops(flops_one_batch,
-                                                 ctx.batch_size)
+                ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
             except:
+                # Raise warning at the first failure
                 logger.warning(
                     "current flop count implementation is for general "
                     "trainer case: "
@@ -245,13 +244,12 @@ class GeneralTorchTrainer(Trainer):
                     "2) the ctx.model takes only x as input."
                     "Please check the forward format or implement your own "
                     "flop_count function")
-                self.ctx.monitor.flops_per_sample = -1  # warning at the
-                # first failure
+                ctx.monitor.flops_per_sample = -1
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward
-        self.ctx.monitor.total_flops +=\
-            self.ctx.monitor.flops_per_sample * ctx.batch_size
+        ctx.monitor.total_flops += ctx.monitor.flops_per_sample * \
+            ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
         ctx.loss_regular = CtxVar(
@@ -285,7 +283,7 @@ class GeneralTorchTrainer(Trainer):
         """
         ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
         ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)
-        results = self.metric_calculator.eval(ctx)
+        results = ctx.monitor.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
     def save_model(self, path, cur_round=-1):
@@ -305,8 +303,8 @@ class GeneralTorchTrainer(Trainer):
             raise ValueError("The file {} does NOT exist".format(path))
 
     def discharge_model(self):
-        """Discharge the model from GPU device
-
+        """
+        Discharge the model from GPU device
         """
         # Avoid memory leak
         if not self.cfg.federate.share_local_model:

@@ -10,6 +10,7 @@ from collections import defaultdict
 import numpy as np
 
 from federatedscope.core.auxiliaries.logging import logline_2_wandb_dict
+from federatedscope.core.monitors.metric_calculator import MetricCalculator
 
 try:
     import torch
@@ -40,6 +41,17 @@ class Monitor(object):
         # self.use_tensorboard = cfg.use_tensorboard
 
         self.monitored_object = monitored_object
+        self.metric_calculator = MetricCalculator(cfg.eval.metrics)
+
+        # Obtain the whether the larger the better
+        self.round_wise_update_key = cfg.eval.best_res_update_round_wise_key
+        for mode in ['train', 'val', 'test']:
+            if mode in self.round_wise_update_key:
+                update_key = self.round_wise_update_key.split(f'{mode}_')[1]
+        assert update_key in self.metric_calculator.eval_metric, \
+            f'{update_key} not found in metrics.'
+        self.the_larger_the_better = self.metric_calculator.eval_metric[
+            update_key][1]
 
         # =======  efficiency indicators of the worker to be monitored =======
         # leveraged the flops counter provided by [fvcore](
@@ -79,6 +91,10 @@ class Monitor(object):
                 logger.error(
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
+
+    def eval(self, ctx):
+        results = self.metric_calculator.eval(ctx)
+        return results
 
     def global_converged(self):
         self.global_convergence_wall_time = datetime.datetime.now(
@@ -517,11 +533,7 @@ class Monitor(object):
     def track_download_bytes(self, bytes):
         self.total_download_bytes += bytes
 
-    def update_best_result(self,
-                           best_results,
-                           new_results,
-                           results_type,
-                           round_wise_update_key="val_loss"):
+    def update_best_result(self, best_results, new_results, results_type):
         """
             update best evaluation results.
             by default, the update is based on validation loss with
@@ -538,7 +550,7 @@ class Monitor(object):
             best_result = best_results[results_type]
             # update different keys separately: the best values can be in
             # different rounds
-            if round_wise_update_key is None:
+            if self.round_wise_update_key is None:
                 for key in new_results:
                     cur_result = new_results[key]
                     if 'loss' in key or 'std' in key:  # the smaller,
@@ -569,24 +581,10 @@ class Monitor(object):
             # update different keys round-wise: if find better
             # round_wise_update_key, update others at the same time
             else:
-                if round_wise_update_key not in [
-                        "val_loss", "test_loss", "loss", "val_avg_loss",
-                        "test_avg_loss", "avg_loss", "test_acc", "test_std",
-                        "val_acc", "val_std", "val_imp_ratio", "train_loss",
-                        "train_avg_loss"
-                ]:
-                    raise NotImplementedError(
-                        f"We currently support round_wise_update_key as one "
-                        f"of ['val_loss', 'test_loss', 'loss', "
-                        f"'val_avg_loss', 'test_avg_loss', 'avg_loss,"
-                        f"''val_acc', 'val_std', 'test_acc', 'test_std', "
-                        f"'val_imp_ratio'] for round-wise best results "
-                        f" update, but got {round_wise_update_key}.")
-
                 found_round_wise_update_key = False
                 sorted_keys = []
                 for key in new_results:
-                    if round_wise_update_key in key:
+                    if self.round_wise_update_key in key:
                         sorted_keys.insert(0, key)
                         found_round_wise_update_key = True
                     else:
@@ -597,15 +595,13 @@ class Monitor(object):
                         "is not in target results, "
                         "use another key or check the name. \n"
                         f"Got eval.best_res_update_round_wise_key"
-                        f"={round_wise_update_key}, "
+                        f"={self.round_wise_update_key}, "
                         f"the keys of results are {list(new_results.keys())}")
 
                 for key in sorted_keys:
                     cur_result = new_results[key]
-                    if update_best_this_round or \
-                            ('loss' in round_wise_update_key and 'loss' in
-                             key) or \
-                            ('std' in round_wise_update_key and 'std' in key):
+                    if update_best_this_round or (
+                            not self.the_larger_the_better):
                         # The smaller the better
                         if results_type in [
                                 "client_best_individual",
@@ -617,8 +613,7 @@ class Monitor(object):
                                 best_result[key]:
                             best_result[key] = cur_result
                             update_best_this_round = True
-                    elif update_best_this_round or \
-                            'acc' in round_wise_update_key and 'acc' in key:
+                    elif update_best_this_round or self.the_larger_the_better:
                         # The larger the better
                         if results_type in [
                                 "client_best_individual",

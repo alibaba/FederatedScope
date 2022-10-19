@@ -1,110 +1,51 @@
-import collections
-import json
 import logging
 import math
 import os
 import random
 import signal
-import ssl
-import urllib.request
-from os import path as osp
 import pickle
 
 import numpy as np
 
-# Blind torch
 try:
     import torch
-    import torchvision
-    import torch.distributions as distributions
 except ImportError:
     torch = None
-    torchvision = None
-    distributions = None
+
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
 
 logger = logging.getLogger(__name__)
 
 
-def setup_seed(seed):
-    np.random.seed(seed)
-    random.seed(seed)
-    if torch is not None:
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-    else:
-        import tensorflow as tf
-        tf.set_random_seed(seed)
+# ****** Worker-related utils ******
+class Timeout(object):
+    def __init__(self, seconds, max_failure=5):
+        self.seconds = seconds
+        self.max_failure = max_failure
 
+    def __enter__(self):
+        def signal_handler(signum, frame):
+            raise TimeoutError()
 
-def get_dataset(type, root, transform, target_transform, download=True):
-    if isinstance(type, str):
-        if hasattr(torchvision.datasets, type):
-            return getattr(torchvision.datasets,
-                           type)(root=root,
-                                 transform=transform,
-                                 target_transform=target_transform,
-                                 download=download)
-        else:
-            raise NotImplementedError('Dataset {} not implement'.format(type))
-    else:
-        raise TypeError()
+        if self.seconds > 0:
+            signal.signal(signal.SIGALRM, signal_handler)
+            signal.alarm(self.seconds)
+        return self
 
+    def __exit__(self, exc_type, exc_value, traceback):
+        signal.alarm(0)
 
-def save_local_data(dir_path,
-                    train_data=None,
-                    train_targets=None,
-                    test_data=None,
-                    test_targets=None,
-                    val_data=None,
-                    val_targets=None):
-    r"""
-    https://github.com/omarfoq/FedEM/blob/main/data/femnist/generate_data.py
+    def reset(self):
+        signal.alarm(self.seconds)
 
-    save (`train_data`, `train_targets`) in {dir_path}/train.pt,
-    (`val_data`, `val_targets`) in {dir_path}/val.pt
-    and (`test_data`, `test_targets`) in {dir_path}/test.pt
-    :param dir_path:
-    :param train_data:
-    :param train_targets:
-    :param test_data:
-    :param test_targets:
-    :param val_data:
-    :param val_targets
-    """
-    if (train_data is not None) and (train_targets is not None):
-        torch.save((train_data, train_targets), osp.join(dir_path, "train.pt"))
+    def block(self):
+        signal.alarm(0)
 
-    if (test_data is not None) and (test_targets is not None):
-        torch.save((test_data, test_targets), osp.join(dir_path, "test.pt"))
-
-    if (val_data is not None) and (val_targets is not None):
-        torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
-
-
-def filter_by_specified_keywords(param_name, filter_keywords):
-    '''
-    Arguments:
-        param_name (str): parameter name.
-    Returns:
-        preserve (bool): whether to preserve this parameter.
-    '''
-    preserve = True
-    for kw in filter_keywords:
-        if kw in param_name:
-            preserve = False
-            break
-    return preserve
-
-
-def get_random(type, sample_shape, params, device):
-    if not hasattr(distributions, type):
-        raise NotImplementedError("Distribution {} is not implemented, "
-                                  "please refer to ```torch.distributions```"
-                                  "(https://pytorch.org/docs/stable/ "
-                                  "distributions.html).".format(type))
-    generator = getattr(distributions, type)(**params)
-    return generator.sample(sample_shape=sample_shape).to(device)
+    def exceed_max_failure(self, num_failure):
+        return num_failure > self.max_failure
 
 
 def batch_iter(data, batch_size=64, shuffled=True):
@@ -140,57 +81,7 @@ def merge_dict(dict1, dict2):
     return dict1
 
 
-def download_url(url: str, folder='folder'):
-    r"""Downloads the content of an url to a folder.
-
-    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master
-    /torch_geometric/data/download.py`
-
-    Args:
-        url (string): The url of target file.
-        folder (string): The target folder.
-
-    Returns:
-        path (string): File path of downloaded files.
-    """
-
-    file = url.rpartition('/')[2]
-    file = file if file[0] == '?' else file.split('?')[0]
-    path = osp.join(folder, file)
-    if osp.exists(path):
-        logger.info(f'File {file} exists, use existing file.')
-        return path
-
-    logger.info(f'Downloading {url}')
-    os.makedirs(folder, exist_ok=True)
-    ctx = ssl._create_unverified_context()
-    data = urllib.request.urlopen(url, context=ctx)
-    with open(path, 'wb') as f:
-        f.write(data.read())
-
-    return path
-
-
-def move_to(obj, device):
-    import torch
-    if torch.is_tensor(obj):
-        return obj.to(device)
-    elif isinstance(obj, dict):
-        res = {}
-        for k, v in obj.items():
-            res[k] = move_to(v, device)
-        return res
-    elif isinstance(obj, list):
-        res = []
-        for v in obj:
-            res.append(move_to(v, device))
-        return res
-    else:
-        raise TypeError("Invalid type for move_to")
-
-
 def param2tensor(param):
-    import torch
     if isinstance(param, list):
         param = torch.FloatTensor(param)
     elif isinstance(param, int):
@@ -200,63 +91,10 @@ def param2tensor(param):
     return param
 
 
-class Timeout(object):
-    def __init__(self, seconds, max_failure=5):
-        self.seconds = seconds
-        self.max_failure = max_failure
-
-    def __enter__(self):
-        def signal_handler(signum, frame):
-            raise TimeoutError()
-
-        if self.seconds > 0:
-            signal.signal(signal.SIGALRM, signal_handler)
-            signal.alarm(self.seconds)
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        signal.alarm(0)
-
-    def reset(self):
-        signal.alarm(self.seconds)
-
-    def block(self):
-        signal.alarm(0)
-
-    def exceed_max_failure(self, num_failure):
-        return num_failure > self.max_failure
-
-
-def format_log_hooks(hooks_set):
-    def format_dict(target_dict):
-        print_dict = collections.defaultdict(list)
-        for k, v in target_dict.items():
-            for element in v:
-                print_dict[k].append(element.__name__)
-        return print_dict
-
-    if isinstance(hooks_set, list):
-        print_obj = [format_dict(_) for _ in hooks_set]
-    elif isinstance(hooks_set, dict):
-        print_obj = format_dict(hooks_set)
-    return json.dumps(print_obj, indent=2).replace('\n', '\n\t')
-
-
-def get_resource_info(filename):
-    if filename is None or not os.path.exists(filename):
-        logger.info('The device information file is not provided')
-        return None
-
-    # Users can develop this loading function according to resource_info_file
-    # As an example, we use the device_info provided by FedScale (FedScale:
-    # Benchmarking Model and System Performance of Federated Learning
-    # at Scale), which can be downloaded from
-    # https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/
-    # data/device_info/client_device_capacity The expected format is
-    # { INDEX:{'computation': FLOAT_VALUE_1, 'communication': FLOAT_VALUE_2}}
-    with open(filename, 'br') as f:
-        device_info = pickle.load(f)
-    return device_info
+def merge_param_dict(raw_param, filtered_param):
+    for key in filtered_param.keys():
+        raw_param[key] = filtered_param[key]
+    return raw_param
 
 
 def calculate_time_cost(instance_number,
@@ -278,28 +116,30 @@ def calculate_time_cost(instance_number,
     return comp_cost, comm_cost
 
 
-def calculate_batch_epoch_num(steps, batch_or_epoch, num_data, batch_size,
-                              drop_last):
-    num_batch_per_epoch = num_data // batch_size + int(
-        not drop_last and bool(num_data % batch_size))
-    if num_batch_per_epoch == 0:
-        raise RuntimeError(
-            "The number of batch is 0, please check 'batch_size' or set "
-            "'drop_last' as False")
-    elif batch_or_epoch == "epoch":
-        num_epoch = steps
-        num_batch_last_epoch = num_batch_per_epoch
-        num_total_batch = steps * num_batch_per_epoch
-    else:
-        num_epoch = math.ceil(steps / num_batch_per_epoch)
-        num_batch_last_epoch = steps % num_batch_per_epoch or \
-            num_batch_per_epoch
-        num_total_batch = steps
-    return num_batch_per_epoch, num_batch_last_epoch, num_epoch, \
-        num_total_batch
+# ****** Runner-related utils ******
+def setup_seed(seed):
+    np.random.seed(seed)
+    random.seed(seed)
+    if torch is not None:
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+    if tf is not None:
+        tf.set_random_seed(seed)
 
 
-def merge_param_dict(raw_param, filtered_param):
-    for key in filtered_param.keys():
-        raw_param[key] = filtered_param[key]
-    return raw_param
+def get_resource_info(filename):
+    if filename is None or not os.path.exists(filename):
+        logger.info('The device information file is not provided')
+        return None
+
+    # Users can develop this loading function according to resource_info_file
+    # As an example, we use the device_info provided by FedScale (FedScale:
+    # Benchmarking Model and System Performance of Federated Learning
+    # at Scale), which can be downloaded from
+    # https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/
+    # data/device_info/client_device_capacity The expected format is
+    # { INDEX:{'computation': FLOAT_VALUE_1, 'communication': FLOAT_VALUE_2}}
+    with open(filename, 'br') as f:
+        device_info = pickle.load(f)
+    return device_info

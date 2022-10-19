@@ -60,7 +60,7 @@ class Server(BaseServer):
         self.early_stopper = EarlyStopper(
             self._cfg.early_stop.patience, self._cfg.early_stop.delta,
             self._cfg.early_stop.improve_indicator_mode,
-            self._cfg.early_stop.the_smaller_the_better)
+            self._monitor.the_larger_the_better)
 
         if self._cfg.federate.share_local_model:
             # put the model to the specified device
@@ -572,9 +572,7 @@ class Server(BaseServer):
                     self.best_results,
                     metrics_all_clients,
                     results_type="unseen_client_best_individual"
-                    if merge_type == "unseen" else "client_best_individual",
-                    round_wise_update_key=self._cfg.eval.
-                    best_res_update_round_wise_key)
+                    if merge_type == "unseen" else "client_best_individual")
                 self._monitor.save_formatted_results(formatted_logs)
                 for form in self._cfg.eval.report:
                     if form != "raw":
@@ -585,9 +583,7 @@ class Server(BaseServer):
                             formatted_logs[f"Results_{metric_name}"],
                             results_type=f"unseen_client_summarized_{form}"
                             if merge_type == "unseen" else
-                            f"client_summarized_{form}",
-                            round_wise_update_key=self._cfg.eval.
-                            best_res_update_round_wise_key)
+                            f"client_summarized_{form}")
 
         return formatted_logs_all_set
 
@@ -841,9 +837,7 @@ class Server(BaseServer):
                 self._monitor.update_best_result(
                     self.best_results,
                     formatted_eval_res['Results_raw'],
-                    results_type="server_global_eval",
-                    round_wise_update_key=self._cfg.eval.
-                    best_res_update_round_wise_key)
+                    results_type="server_global_eval")
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self._monitor.save_formatted_results(formatted_eval_res)

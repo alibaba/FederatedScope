@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class BaseDataTranslator:
     """
     Perform process:
-        Dataset -> ML split -> FL split -> Data (passed to FedRunner)
+        Dataset -> ML split -> FL split -> Data (passed to Runner)
 
     """
     def __init__(self, global_cfg, client_cfgs=None):

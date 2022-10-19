@@ -180,7 +180,6 @@ The following configurations are related to the grad clipping.
 |          `early_stop.patience`           | (int) 5 |  How long to wait after last time the monitored metric improved. |                        Note that the actual_checking_round = `early_step.patience` * `eval.freq`. To disable the early stop, set the `early_stop.patience` <=0                        |
 |            `early_stop.delta`            | (float) 0. |  Minimum change in the monitored metric to indicate a improvement. |                                                                                           -                                                                                           |
 |   `early_stop.improve_indicaator_mode`   | (string) 'best' | Early stop when there is no improvement within the last `early_step.patience` rounds, in ['mean', 'best'] |                                                                             Chosen from 'mean' or 'best'                                                                              |
-|   `early_step.the_smaller_the_better`    | (bool) True | The optimized direction of the chosen metric |                                                                                           -                                                                                           |
 
 
 ### FL Setting

@@ -2,6 +2,7 @@ import logging
 import importlib
 
 import federatedscope.register as register
+from federatedscope.core.trainers import Trainer
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +46,7 @@ def get_trainer(model=None,
                                           only_for_eval=only_for_eval,
                                           monitor=monitor)
         elif config.backend == 'tensorflow':
-            from federatedscope.core.trainers.tf_trainer import \
-                GeneralTFTrainer
+            from federatedscope.core.trainers import GeneralTFTrainer
             trainer = GeneralTFTrainer(model=model,
                                        data=data,
                                        device=device,
@@ -107,6 +107,11 @@ def get_trainer(model=None,
         if trainer is None:
             raise ValueError('Trainer {} is not provided'.format(
                 config.trainer.type))
+
+    if not isinstance(trainer, Trainer):
+        logger.warning(f'When using {trainer}, trainer plug-in cannot be '
+                       f'enabled. Please use {Trainer} instead.')
+        return trainer
 
     # differential privacy plug-in
     if config.nbafl.use:

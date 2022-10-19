@@ -13,7 +13,7 @@ from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.fed_runner import get_runner
 from federatedscope.autotune.utils import parse_search_space, \
     config2cmdargs, config2str, summarize_hpo_results
 
@@ -26,10 +26,10 @@ def make_trial(trial_cfg):
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
     # TODO: enable client-wise configuration
-    Fed_runner = FedRunner(data=data,
-                           server_class=get_server_cls(trial_cfg),
-                           client_class=get_client_cls(trial_cfg),
-                           config=trial_cfg.clone())
+    Fed_runner = get_runner(data=data,
+                            server_class=get_server_cls(trial_cfg),
+                            client_class=get_client_cls(trial_cfg),
+                            config=trial_cfg.clone())
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
     return results[key1][key2]
@@ -53,10 +53,10 @@ class TrialExecutor(threading.Thread):
         self._trial_cfg.merge_from_other_cfg(modified_config)
         self._trial_cfg.freeze()
         # TODO: enable client-wise configuration
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(self._trial_cfg),
-                               client_class=get_client_cls(self._trial_cfg),
-                               config=self._trial_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(self._trial_cfg),
+                                client_class=get_client_cls(self._trial_cfg),
+                                config=self._trial_cfg.clone())
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]

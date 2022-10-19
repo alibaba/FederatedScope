@@ -16,7 +16,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-# TODO: make this as a sub-module of monitor class
 class MetricCalculator(object):
     def __init__(self, eval_metric: Union[Set[str], List[str], str]):
 
@@ -41,7 +40,7 @@ class MetricCalculator(object):
     def eval(self, ctx):
         results = {}
         y_true, y_pred, y_prob = self._check_and_parse(ctx)
-        for metric, func in self.eval_metric.items():
+        for metric, (func, _) in self.eval_metric.items():
             results["{}_{}".format(ctx.cur_split,
                                    metric)] = func(ctx=ctx,
                                                    y_true=y_true,
@@ -218,18 +217,21 @@ def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):
     return (base - perform) / base * 100.
 
 
+# SUPPORT_METRICS dict, key: `metric_name`, value: (eval_func,
+# the_larger_the_better)
 SUPPORT_METRICS = {
-    'loss': eval_loss,
-    'avg_loss': eval_avg_loss,
-    'total': eval_total,
-    'correct': eval_correct,
-    'acc': eval_acc,
-    'ap': eval_ap,
-    'f1': eval_f1_score,
-    'roc_auc': eval_roc_auc,
-    'rmse': eval_rmse,
-    'mse': eval_mse,
-    'loss_regular': eval_regular,
-    'imp_ratio': eval_imp_ratio,
-    **dict.fromkeys([f'hits@{n}' for n in range(1, 101)], eval_hits)
+    'loss': (eval_loss, False),
+    'avg_loss': (eval_avg_loss, False),
+    'total': (eval_total, False),
+    'correct': (eval_correct, True),
+    'acc': (eval_acc, True),
+    'ap': (eval_ap, True),
+    'f1': (eval_f1_score, True),
+    'roc_auc': (eval_roc_auc, True),
+    'rmse': (eval_rmse, False),
+    'mse': (eval_mse, False),
+    'loss_regular': (eval_regular, False),
+    'imp_ratio': (eval_imp_ratio, True),
+    'std': (None, False),
+    **dict.fromkeys([f'hits@{n}' for n in range(1, 101)], (eval_hits, True))
 }

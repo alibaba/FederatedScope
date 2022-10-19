@@ -166,4 +166,4 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true),
                                  LIFECYCLE.ROUTINE)
             ctx.ys_prob = ctx.ys_prob_ensemble
-            ctx.eval_metrics = self.metric_calculator.eval(ctx)
+            ctx.eval_metrics = self.ctx.monitor.eval(ctx)

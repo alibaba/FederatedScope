@@ -84,7 +84,7 @@ class Client(BaseClient):
         self.early_stopper = EarlyStopper(
             patience, self._cfg.early_stop.delta,
             self._cfg.early_stop.improve_indicator_mode,
-            self._cfg.early_stop.the_smaller_the_better)
+            self._monitor.the_larger_the_better)
 
         # Secret Sharing Manager and message buffer
         self.ss_manager = AdditiveSecretSharing(
@@ -468,12 +468,9 @@ class Client(BaseClient):
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)
-            self._monitor.update_best_result(
-                self.best_results,
-                formatted_eval_res['Results_raw'],
-                results_type=f"client #{self.ID}",
-                round_wise_update_key=self._cfg.eval.
-                best_res_update_round_wise_key)
+            self._monitor.update_best_result(self.best_results,
+                                             formatted_eval_res['Results_raw'],
+                                             results_type=f"client #{self.ID}")
             self.history_results = merge_dict(
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check(self.history_results[

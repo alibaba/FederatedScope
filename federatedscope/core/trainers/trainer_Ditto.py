@@ -6,7 +6,7 @@ import torch
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
-from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
+from federatedscope.core.trainers.utils import calculate_batch_epoch_num
 from typing import Type
 
 logger = logging.getLogger(__name__)

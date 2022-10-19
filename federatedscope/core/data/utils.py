@@ -3,10 +3,14 @@ import inspect
 import logging
 import os
 import re
-from collections import defaultdict
+import ssl
+import urllib.request
 
 import numpy as np
+import os.path as osp
+
 from random import shuffle
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -615,3 +619,66 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
             " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
             " 2): {data_id: {train: DataLoader }")
     return merged_data
+
+
+def save_local_data(dir_path,
+                    train_data=None,
+                    train_targets=None,
+                    test_data=None,
+                    test_targets=None,
+                    val_data=None,
+                    val_targets=None):
+    r"""
+    https://github.com/omarfoq/FedEM/blob/main/data/femnist/generate_data.py
+
+    save (`train_data`, `train_targets`) in {dir_path}/train.pt,
+    (`val_data`, `val_targets`) in {dir_path}/val.pt
+    and (`test_data`, `test_targets`) in {dir_path}/test.pt
+    :param dir_path:
+    :param train_data:
+    :param train_targets:
+    :param test_data:
+    :param test_targets:
+    :param val_data:
+    :param val_targets
+    """
+    import torch
+    if (train_data is not None) and (train_targets is not None):
+        torch.save((train_data, train_targets), osp.join(dir_path, "train.pt"))
+
+    if (test_data is not None) and (test_targets is not None):
+        torch.save((test_data, test_targets), osp.join(dir_path, "test.pt"))
+
+    if (val_data is not None) and (val_targets is not None):
+        torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
+
+
+def download_url(url: str, folder='folder'):
+    r"""Downloads the content of an url to a folder.
+
+    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master
+    /torch_geometric/data/download.py`
+
+    Args:
+        url (string): The url of target file.
+        folder (string): The target folder.
+
+    Returns:
+        path (string): File path of downloaded files.
+    """
+
+    file = url.rpartition('/')[2]
+    file = file if file[0] == '?' else file.split('?')[0]
+    path = osp.join(folder, file)
+    if osp.exists(path):
+        logger.info(f'File {file} exists, use existing file.')
+        return path
+
+    logger.info(f'Downloading {url}')
+    os.makedirs(folder, exist_ok=True)
+    ctx = ssl._create_unverified_context()
+    data = urllib.request.urlopen(url, context=ctx)
+    with open(path, 'wb') as f:
+        f.write(data.read())
+
+    return path

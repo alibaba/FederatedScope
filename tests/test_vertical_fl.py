@@ -6,7 +6,7 @@ from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_s
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.fed_runner import get_runner
 
 
 class vFLTest(unittest.TestCase):
@@ -52,10 +52,10 @@ class vFLTest(unittest.TestCase):
         init_cfg.merge_from_other_cfg(modified_config)
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)

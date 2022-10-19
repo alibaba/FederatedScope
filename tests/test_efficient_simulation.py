@@ -5,7 +5,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.fed_runner import get_runner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -21,10 +21,10 @@ class EfficientSimulationTest(unittest.TestCase):
         update_logger(case_cfg)
 
         data, _ = get_data(case_cfg.clone())
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(case_cfg),
-                               client_class=get_client_cls(case_cfg),
-                               config=case_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(case_cfg),
+                                client_class=get_client_cls(case_cfg),
+                                config=case_cfg.clone())
         efficient_test_results = Fed_runner.run()
 
         setup_seed(case_cfg.seed)
@@ -33,10 +33,10 @@ class EfficientSimulationTest(unittest.TestCase):
             'False'
         ])
         data, _ = get_data(case_cfg.clone())
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(case_cfg),
-                               client_class=get_client_cls(case_cfg),
-                               config=case_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(case_cfg),
+                                client_class=get_client_cls(case_cfg),
+                                config=case_cfg.clone())
         ordinary_test_results = Fed_runner.run()
         gap = efficient_test_results["client_summarized_weighted_avg"][
             'test_loss'] - ordinary_test_results[

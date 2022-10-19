@@ -13,7 +13,8 @@ def load_toy_data(config=None):
                        feature_num=5,
                        save_data=False):
         """
-        Generate data in FedRunner format
+        Generate data in Runner format
+
         Args:
             client_num:
             instance_num:
