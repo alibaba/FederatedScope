@@ -96,6 +96,8 @@ The `Context` class (a subclass of `dict`) is used to hold learning-related attr
 * Metric-related attributes
   * `ctx.loss_batch_total`: Loss of current batch
   * `ctx.loss_regular_total`: Loss of regular term 
+  * `ctx.y_true`:  true label of batch data
+  * `ctx.y_prob`: output of the model with batch data as input
   * `ctx.ys_true`: true label of data
   * `ctx.ys_prob`: output of the model
   * `ctx.eval_metrics`: evaluation metrics caculated by `Monitor`
@@ -240,15 +242,84 @@ Hook trigger is where the hook functions are executed,  and all the hook functio
 
 ##### Hook functions
 
-In this section, we will briefly describe what the hook functions do with the properties/variables in ctx.
+In this section, we will briefly describe what the hook functions do with the attributes/variables in ctx.
 
 * `_hook_on_fit_start_init`
+
+  | Modified attribute       | Operation               |
+  | ------------------------ | ----------------------- |
+  | `ctx.model`              | Move to `ctx.device`    |
+  | `ctx.optimizer`          | Initialize by `ctx.cfg` |
+  | `ctx.scheduler`          | Initialize by `ctx.cfg` |
+  | `ctx.loss_batch_total`   | Initialize to `0`       |
+  | `ctx.loss_regular_total` | Initialize to `0`       |
+  | `ctx.num_samples`        | Initialize to `0`       |
+  | `ctx.ys_true`            | Initialize to `[]`      |
+  | `ctx.ys_prob`            | Initialize to `[]`      |
+
 * `_hook_on_fit_start_calculate_model_size`
+
+  | Modified attribute | Operation        |
+  | ------------------ | ---------------- |
+  | `ctx.monitor`      | Track model size |
+
 * `_hook_on_epoch_start`
+
+  | Modified attribute           | Operation             |
+  | ---------------------------- | --------------------- |
+  | `ctx.{ctx.cur_split}_loader` | Initialize DataLoader |
+
 * `_hook_on_batch_start_init`
+
+  | Modified attribute | Operation             |
+  | ------------------ | --------------------- |
+  | `ctx.data_batch`   | Initialize batch data |
+
 * `_hook_on_batch_forward`
+
+  | Modified attribute | Operation                           |
+  | ------------------ | ----------------------------------- |
+  | `ctx.y_true`       | Move to `ctx.device`                |
+  | `ctx.y_prob`       | Forward propagation to get `y_prob` |
+  | `ctx.loss_batch`   | Calculate the loss                  |
+  | `ctx.batch_size`   | Get the batch_size                  |
+
 * `_hook_on_batch_forward_regularizer`
+
+  | Modified attribute | Operation                                 |
+  | ------------------ | ----------------------------------------- |
+  | `ctx.loss_regular` | Calculate the regular loss                |
+  | `ctx.loss_task`    | Sum the `ctx.loss_regular` and `ctx.loss` |
+
 * `_hook_on_batch_forward_flop_count`
+
+  | Modified attribute | Operation           |
+  | ------------------ | ------------------- |
+  | `ctx.monitor`      | Track average flops |
+
 * `_hook_on_batch_backward`
+
+  | Modified attribute | Operation            |
+  | ------------------ | -------------------- |
+  | `ctx.optimizer`    | Update by gradient   |
+  | `ctx.loss_task`    | Backward propagation |
+  | `ctx.scheduler`    | Update by gradient   |
+
 * `_hook_on_batch_end`
+
+  | Modified attribute       | Operation              |
+  | ------------------------ | ---------------------- |
+  | `ctx.num_samples`        | Add `ctx.batch_size`   |
+  | `ctx.loss_batch_total`   | Add batch loss         |
+  | `ctx.loss_regular_total` | Add batch regular loss |
+  | `ctx.ys_true`            | Append `ctx.y_true`    |
+  | `ctx.ys_prob`            | Append `ctx.ys_prob`   |
+
 * `_hook_on_fit_end`
+
+  | Modified attribute | Operation                                |
+  | ------------------ | ---------------------------------------- |
+  | `ctx.ys_true`      | Convert to `numpy.array`                 |
+  | `ctx.ys_prob`      | Convert to `numpy.array`                 |
+  | `ctx.monitor`      | Evaluate the results                     |
+  | `ctx.eval_metrics` | Get evaluated results from `ctx.monitor` |
