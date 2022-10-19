@@ -45,7 +45,8 @@ class BasicMFNet(Module):
                                        device=pred.device,
                                        dtype=torch.float32).to_dense()
 
-        return mask * pred, label, float(np.prod(pred.size())) / len(ratings)
+        return mask * pred, label, torch.Tensor(
+            [float(np.prod(pred.size())) / len(ratings)])
 
     def load_state_dict(self, state_dict, strict: bool = True):
 
@@ -55,7 +56,8 @@ class BasicMFNet(Module):
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         state_dict = super().state_dict(destination, prefix, keep_vars)
         # Mask embed_item
-        del state_dict[self.name_reserve]
+        if self.name_reserve in state_dict:
+            del state_dict[self.name_reserve]
         return state_dict
 
 

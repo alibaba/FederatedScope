@@ -10,6 +10,10 @@ from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.trainers.trainer_multi_model import \
     GeneralMultiModelTrainer
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class FedEMTrainer(GeneralMultiModelTrainer):
     """
@@ -41,6 +45,10 @@ class FedEMTrainer(GeneralMultiModelTrainer):
 
         self.ctx.all_losses_model_batch = torch.zeros(
             self.model_nums, self.ctx.num_train_batch).to(device)
+        if self.cfg.model.type.lower() in ["vmfnet", "hmfnet"]:
+            # for MF model, we need to use the ratio to adjust the loss
+            self.ctx.all_ratios_per_model = [[]
+                                             for _ in range(self.model_nums)]
         self.ctx.cur_batch_idx = -1
         # `ctx[f"{cur_data}_y_prob_ensemble"] = 0` in
         #   func `_hook_on_fit_end_ensemble_eval`
@@ -84,13 +92,23 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             new_hook=self.hook_on_batch_end_gather_loss,
             trigger="on_batch_end",
             insert_pos=0
-        )  # insert at the front, (we need gather the loss before clean it)
+        )  # insert at the front, we need gather the loss before clean it
+        if self.cfg.model.type.lower() in ["vmfnet", "hmfnet"]:
+            # for MF model, we need to use the ratio to adjust the loss
+            self.register_hook_in_eval(
+                new_hook=self.hook_on_batch_end_gather_ratio_mf,
+                trigger="on_batch_end",
+                insert_pos=0
+            )  # insert at the front, we need gather the ratio before clean it
         self.register_hook_in_eval(
             new_hook=self.hook_on_batch_start_track_batch_idx,
             trigger="on_batch_start",
             insert_pos=0)  # insert at the front
         # replace the original evaluation into the ensemble one
-        self.replace_hook_in_eval(new_hook=self._hook_on_fit_end_ensemble_eval,
+        ensemble_hook = self._hook_on_fit_end_ensemble_eval_mf if \
+            self.cfg.model.type.lower() in ["vmfnet", "hmfnet"] else \
+            self._hook_on_fit_end_ensemble_eval
+        self.replace_hook_in_eval(new_hook=ensemble_hook,
                                   target_trigger="on_fit_end",
                                   target_hook_name="_hook_on_fit_end")
 
@@ -121,6 +139,12 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         # for further weights_data_sample update
         ctx.all_losses_model_batch[ctx.cur_model_idx][
             ctx.cur_batch_idx] = ctx.loss_batch.item()
+
+    def hook_on_batch_end_gather_ratio_mf(self, ctx):
+        # for only eval
+        # before clean the ratio_batch for matrix factorization model;
+        # we record it for further model ensemble
+        ctx["all_ratios_per_model"][ctx.cur_model_idx].append(ctx.ratio_batch)
 
     def hook_on_fit_start_mixture_weights_update(self, ctx):
         # for only train
@@ -167,3 +191,68 @@ class FedEMTrainer(GeneralMultiModelTrainer):
                                  LIFECYCLE.ROUTINE)
             ctx.ys_prob = ctx.ys_prob_ensemble
             ctx.eval_metrics = self.metric_calculator.eval(ctx)
+
+    def _hook_on_fit_end_ensemble_eval_mf(self, ctx):
+        """
+            Ensemble evaluation for matrix factorization model
+        """
+        cur_data = ctx.cur_split
+        batch_num = len(ctx[f"{cur_data}_y_prob"])
+        if f"{cur_data}_y_prob_ensemble" not in ctx or ctx[
+                f"{cur_data}_y_prob_ensemble"] is None:
+            # ctx[f"{cur_data}_y_prob_ensemble"] = 0
+            ctx[f"{cur_data}_y_prob_ensemble"] = [0 for i in range(batch_num)]
+
+        for batch_i in range(batch_num):
+            try:
+                ctx[f"{cur_data}_y_prob_ensemble"][batch_i] += \
+                    ctx[f"{cur_data}_y_prob"][batch_i] *\
+                    self.weights_internal_models[ctx.cur_model_idx].item()
+            except IndexError as e:
+                logger.error(
+                    str(e) + f" When batch_i={batch_i}, "
+                    f"cur_model_idx={ctx.cur_model_idx}")
+
+        # do metrics calculation after the last internal model evaluation done
+        if ctx.cur_model_idx == self.model_nums - 1:
+            for batch_i in range(batch_num):
+                try:
+                    ctx[f"{cur_data}_total"] = 0
+                    pred = ctx[f"{cur_data}_y_prob_ensemble"][batch_i].\
+                        todense()
+                    label = ctx[f"{cur_data}_y_true"][batch_i].todense()
+                    ctx[f"loss_batch_total_{cur_data}"] += ctx.criterion(
+                        torch.Tensor(pred).to(ctx.device),
+                        torch.Tensor(label).to(ctx.device)
+                    ) * ctx["all_ratios_per_model"][ctx.cur_model_idx][batch_i]
+                except IndexError as e:
+                    logger.error(
+                        str(e) + f" When batch_i={batch_i}, "
+                        f"cur_model_idx={ctx.cur_model_idx}")
+
+            # set the eval_metrics
+            if ctx.num_samples == 0:
+                results = {
+                    f"{cur_data}_avg_loss": ctx.get(
+                        "loss_batch_total_{}".format(ctx.cur_split)),
+                    f"{cur_data}_total": 0
+                }
+            else:
+                results = {
+                    f"{ctx.cur_split}_avg_loss": ctx.get(
+                        f"loss_batch_total_{ctx.cur_split}") / ctx.num_samples,
+                    f"{ctx.cur_split}_total": ctx.num_samples
+                }
+            if isinstance(results[f"{ctx.cur_split}_avg_loss"], torch.Tensor):
+                results[f"{ctx.cur_split}_avg_loss"] = results[
+                    f"{ctx.cur_split}_avg_loss"].item()
+            setattr(ctx, 'eval_metrics', results)
+
+            # reset for next run_routine that may have different
+            # len([f"{cur_data}_y_prob"])
+            ctx[f"{cur_data}_y_prob_ensemble"] = None
+            self.ctx.all_ratios_per_model = [[]
+                                             for _ in range(self.model_nums)]
+
+        ctx[f"{cur_data}_y_prob"] = []
+        ctx[f"{cur_data}_y_true"] = []
