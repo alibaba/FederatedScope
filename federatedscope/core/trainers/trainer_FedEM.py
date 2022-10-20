@@ -13,8 +13,8 @@ from federatedscope.core.trainers.trainer_multi_model import \
 
 class FedEMTrainer(GeneralMultiModelTrainer):
     """
-    The FedEM implementation, "Federated Multi-Task Learning under a
-    Mixture of Distributions (NeurIPS 2021)"
+    The FedEM implementation, "Federated Multi-Task Learning under a \
+    Mixture of Distributions (NeurIPS 2021)" \
     based on the Algorithm 1 in their paper and official codes:
     https://github.com/omarfoq/FedEM
     """
