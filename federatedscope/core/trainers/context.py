@@ -57,45 +57,84 @@ class Context(LifecycleDict):
         init_dict (dict): a dict used to initialize the instance of Context
         init_attr (bool): if set up the static variables
     Note:
-        - The variables within an instance of class `Context`
-        can be set/get as an attribute.
+        - The variables within an instance of class `Context` can be set/get \
+        as an attribute.
         ```
         ctx.${NAME_VARIABLE} = ${VALUE_VARIABLE}
         ```
-        where `${NAME_VARIABLE}` and `${VALUE_VARIABLE}`
+        where ``${NAME_VARIABLE}`` and ``${VALUE_VARIABLE}``
         is the name and value of the variable.
 
-        - To achieve automatically lifecycle management, you can
-        wrap the variable with `CtxVar` and a lifecycle parameter
+        - To achieve automatically lifecycle management, you can \
+        wrap the variable with ``CtxVar`` and a lifecycle parameter \
         as follows
         ```
         ctx.${NAME_VARIABLE} = CtxVar(${VALUE_VARIABLE}, ${LFECYCLE})
         ```
-        The parameter `${LFECYCLE}` can be chosen from `LIFECYCLE.BATCH`,
-        `LIFECYCLE.EPOCH` and `LIFECYCLE.ROUTINE`.
-        Then the variable `ctx.${NAME_VARIABLE}` will be deleted at
+        The parameter ``${LFECYCLE}`` can be chosen from ``LIFECYCLE.BATCH``, \
+        ``LIFECYCLE.EPOCH`` and ``LIFECYCLE.ROUTINE``. \
+        Then the variable ``ctx.${NAME_VARIABLE}`` will be deleted at \
         the end of the corresponding stage
-            - `LIFECYCLE.BATCH`: the variables will
+            - ``LIFECYCLE.BATCH``: the variables will \
             be deleted after running a batch
-            - `LIFECYCLE.EPOCH`: the variables will be
+            - ``LIFECYCLE.EPOCH``: the variables will be \
             deleted after running a epoch
-            - `LIFECYCLE.ROUTINE`: the variables will be
+            - ``LIFECYCLE.ROUTINE``: the variables will be \
             deleted after running a routine
         More details please refer to our
         [tutorial](https://federatedscope.io/docs/trainer/).
 
-        Context also maintains some special variables across different
-        routines, like
-            - cfg
-            - model
-            - data
-            - device
-            - ${split}_data: the dataset object of data split
-            named `${split}`
-            - ${split}_loader: the data loader object of data
-            split named `${split}`
-            - num_${split}_data: the number of examples within
-            the dataset named `${split}`
+        We classify and show the default attributes below:
+
+        Data-related attributes
+          - ``ctx.data``: the raw data (not split) the trainer holds
+          - ``ctx.num_samples``: the number of samples used in training
+          - ``ctx.train_data``, ``ctx.val_data``, ``ctx.test_data``: the \
+          split data the trainer holds
+          - ``ctx.train_loader``, ``ctx.val_loader``, ``ctx.test_loader``: \
+          the DataLoader of each split data
+          - ``ctx.num_train_data``, ``ctx.num_val_data``, \
+          ``ctx.num_test_data``: the number of samples of  the split data \
+          Model-related attributes
+          - ``ctx.model``: the model used
+          - ``ctx.models``: the multi models if use
+          - ``ctx.mirrored_models``: the mirrored models
+          - ``ctx.trainable_para_names``: the trainable parameter names of \
+          the model
+        Optimizer-related attributes
+          - ``ctx.optimizer``: see ``torch.optim``
+          - ``ctx.scheduler``: decays the learning rate of each parameter group
+          - ``ctx.criterion``: loss/criterion function
+          - ``ctx.regularizer``: regular terms
+          - ``ctx.grad_clip``: gradient clipping
+        Mode-related attributes
+          - ``ctx.cur_mode``: mode of trainer, which is one of ``['train', \
+          'val', 'test']``
+          - ``ctx.mode_stack``: stack of mode, only used for switching mode
+          - ``ctx.cur_split``: split of data, which is one of ``['train', \
+          'val', 'test']`` (Note: use ``train`` data in ``test`` mode is \
+          allowed)
+          - ``ctx.split_stack``: stack of split, only used for switching data \
+          split
+        Metric-related attributes
+          - ``ctx.loss_batch_total``: Loss of current batch
+          - ``ctx.loss_regular_total``: Loss of regular term
+          - ``ctx.y_true``:  true label of batch data
+          - ``ctx.y_prob``: output of the model with batch data as input
+          - ``ctx.ys_true``: true label of data
+          - ``ctx.ys_prob``: output of the model
+          - ``ctx.eval_metrics``: evaluation metrics caculated by \
+          ``ctx.monitor``
+        Other (statistics) attributes
+          - ``ctx.cfg``: configuration of FL course
+          - ``ctx.device``: current device, such as ``cpu`` and ``gpu0``.
+          - ``ctx.monitor``: used for monitor trainer's behavior and statistics
+          - ``ctx.num_train_batch_last_epoch``, \
+          ``ctx.num_total_train_batch``: the number of batch
+          - ``ctx.num_train_epoch``, ``ctx.num_val_epoch``, \
+          ``ctx.num_test_epoch``: the number of epoch in each data split
+          - ``ctx.num_train_batch``, ``ctx.num_val_batch``, \
+          ``ctx.num_test_batch``: the number of batch in each data split
     """
     def __init__(self,
                  model,
