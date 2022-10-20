@@ -20,7 +20,7 @@ federatedscope.core.fed_runner
 .. automodule:: federatedscope.core.fed_runner
     :members:
 
-federatedscope.core.worker
+federatedscope.core.workers
 -----------------------
 
 .. automodule:: federatedscope.core.worker
