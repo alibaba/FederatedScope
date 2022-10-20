@@ -1,19 +1,6 @@
 Core Module References
 =======================
 
-federatedscope.core.configs
------------------------
-
-.. automodule:: federatedscope.core.configs
-    :members:
-
-
-federatedscope.core.monitors
------------------------
-
-.. automodule:: federatedscope.core.monitors
-    :members:
-
 federatedscope.core.fed_runner
 -----------------------
 
@@ -30,4 +17,29 @@ federatedscope.core.trainers
 -----------------------
 
 .. automodule:: federatedscope.core.trainers
+    :members:
+
+federatedscope.core.data
+-----------------------
+
+.. automodule:: federatedscope.core.data
+    :members:
+
+federatedscope.core.splitters
+-----------------------
+
+.. automodule:: federatedscope.core.splitters
+    :members:
+
+federatedscope.core.configs
+-----------------------
+
+.. automodule:: federatedscope.core.configs
+    :members:
+
+
+federatedscope.core.monitors
+-----------------------
+
+.. automodule:: federatedscope.core.monitors
     :members:
