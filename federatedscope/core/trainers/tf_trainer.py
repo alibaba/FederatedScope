@@ -77,7 +77,12 @@ class GeneralTFTrainer(Trainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.model``                       Move to `ctx.device`
+            ``ctx.loss_batch_total``            Initialize to 0
+            ``ctx.loss_regular_total``          Initialize to 0
+            ``ctx.num_samples``                 Initialize to 0
+            ``ctx.ys_true``                     Initialize to ``[]``
+            ``ctx.ys_prob``                     Initialize to ``[]``
             ==================================  ===========================
         """
         # prepare model
@@ -97,7 +102,7 @@ class GeneralTFTrainer(Trainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.{cur_split}_loader``          Initialize DataLoader
             ==================================  ===========================
         """
         # prepare dataloader
@@ -111,7 +116,7 @@ class GeneralTFTrainer(Trainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.data_batch``                  Initialize batch data
             ==================================  ===========================
         """
         # prepare data batch
@@ -127,7 +132,13 @@ class GeneralTFTrainer(Trainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.optimizer``                   Initialize optimizer
+            ``ctx.batch_size``                  Calculate batch size
+            ``ctx.loss_batch``                  Calculate batch loss
+            ``ctx.model``                       Forward propagation
+            ``ctx.y_true``                      Get y_true from batch
+            ``ctx.y_prob``                      Forward propagation to get \
+            `y_prob`
             ==================================  ===========================
         """
         ctx.optimizer = ctx.model.optimizer
@@ -163,7 +174,11 @@ class GeneralTFTrainer(Trainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.num_samples``                 Add ``ctx.batch_size``
+            ``ctx.loss_batch_total``            Add batch loss
+            ``ctx.loss_regular_total``          Add batch regular loss
+            ``ctx.ys_true``                     Append ``ctx.y_true``
+            ``ctx.ys_prob``                     Append ``ctx.ys_prob``
             ==================================  ===========================
         """
         # TODO: the same with the torch_trainer
@@ -185,7 +200,11 @@ class GeneralTFTrainer(Trainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.ys_true``                     Convert to `numpy.array`
+            ``ctx.ys_prob``                     Convert to `numpy.array`
+            ``ctx.monitor``                     Evaluate the results
+            ``ctx.eval_metrics``                Get evaluated results from \
+            ``ctx.monitor``
             ==================================  ===========================
         """
         ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
