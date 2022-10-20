@@ -24,23 +24,23 @@ def wrap_nbafl_trainer(
     init_nbafl_ctx(base_trainer)
 
     # ---------------- action-level plug-in -----------------------
-    base_trainer.register_hook_in_train(new_hook=record_initialization,
+    base_trainer.register_hook_in_train(new_hook=_hook_record_initialization,
                                         trigger='on_fit_start',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=record_initialization,
+    base_trainer.register_hook_in_eval(new_hook=_hook_record_initialization,
                                        trigger='on_fit_start',
                                        insert_pos=-1)
 
-    base_trainer.register_hook_in_train(new_hook=del_initialization,
+    base_trainer.register_hook_in_train(new_hook=_hook_del_initialization,
                                         trigger='on_fit_end',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=del_initialization,
+    base_trainer.register_hook_in_eval(new_hook=_hook_del_initialization,
                                        trigger='on_fit_end',
                                        insert_pos=-1)
 
-    base_trainer.register_hook_in_train(new_hook=inject_noise_in_upload,
+    base_trainer.register_hook_in_train(new_hook=_hook_inject_noise_in_upload,
                                         trigger='on_fit_end',
                                         insert_pos=-1)
     return base_trainer
@@ -78,7 +78,7 @@ def init_nbafl_ctx(base_trainer):
 
 
 # Trainer
-def record_initialization(ctx):
+def _hook_record_initialization(ctx):
     """Record the initialized weights within local updates
 
     """
@@ -86,14 +86,14 @@ def record_initialization(ctx):
         [_.data.detach() for _ in ctx.model.parameters()])
 
 
-def del_initialization(ctx):
+def _hook_del_initialization(ctx):
     """Clear the variable to avoid memory leakage
 
     """
     ctx.weight_init = None
 
 
-def inject_noise_in_upload(ctx):
+def _hook_inject_noise_in_upload(ctx):
     """Inject noise into weights before the client upload them to server
 
     """

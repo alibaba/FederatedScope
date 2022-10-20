@@ -5,10 +5,10 @@ except ImportError:
 
 import numpy as np
 from federatedscope.core.trainers import Trainer
-from federatedscope.core.auxiliaries.enums import MODE
+from federatedscope.core.trainers.enums import MODE
 from federatedscope.core.auxiliaries.utils import batch_iter
 from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 
 
 class GeneralTFTrainer(Trainer):

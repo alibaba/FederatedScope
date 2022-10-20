@@ -2,7 +2,7 @@
 
 FederatedScope decouples the local learning process and details of FL communication and schedule, allowing users to freely customize the local learning algorithm via the `trainer`. Each worker holds a `trainer` object to manage the details of local learning, such as the loss function, optimizer, training step, evaluation, etc.
 
-This tutorial is a shorter version of [full verison tutorial](https://federatedscope.io/docs/trainer/), where you can learn more details about FS Trainer.
+This tutorial is a shorter version of [full version tutorial](https://federatedscope.io/docs/trainer/), where you can learn more details about FS Trainer.
 
 ## Code Structure
 
@@ -115,7 +115,7 @@ The `Hooks` represent fine-grained learning behaviors at different point-in-time
 
 ##### Hook trigger
 
-Hook trigger is where the hook functions are executed,  and all the hook functions are executed following the pattern bellow:
+The hook trigger is where the hook functions are executed,  and all the hook functions are executed following the pattern below:
 
 * **on_fit_start**
   * **on_epoch_start**
@@ -127,6 +127,8 @@ Hook trigger is where the hook functions are executed,  and all the hook functio
 * **on_fit_end**
 
 ##### Train hooks
+
+Train hooks are executed when `ctx.cur_mode` is `train`, following the execution paradigm as shown below:
 
 * **on_fit_start**
 
@@ -168,6 +170,8 @@ Hook trigger is where the hook functions are executed,  and all the hook functio
 
 ##### Evaluation (val/test) hooks
 
+Evaluation hooks are executed when `ctx.cur_mode` is `val` or `test`, following the execution paradigm as shown below:
+
 * **on_fit_start**
 
   `_hook_on_fit_start_init`
@@ -201,6 +205,8 @@ Hook trigger is where the hook functions are executed,  and all the hook functio
   `_hook_on_fit_end`
 
 ##### Finetune hooks
+
+Finetune hooks are executed when `ctx.cur_mode` is `finetune`, following the execution paradigm as shown below:
 
 * **on_fit_start**
 
@@ -242,7 +248,9 @@ Hook trigger is where the hook functions are executed,  and all the hook functio
 
 ##### Hook functions
 
-In this section, we will briefly describe what the hook functions do with the attributes/variables in ctx.
+In this section, we will briefly describe what the hook functions do with the attributes/variables in `ctx`.
+
+###### GeneralTorchTrainer
 
 * `_hook_on_fit_start_init`
 
@@ -269,7 +277,7 @@ In this section, we will briefly describe what the hook functions do with the at
   | ---------------------------- | --------------------- |
   | `ctx.{ctx.cur_split}_loader` | Initialize DataLoader |
 
-* `_hook_on_batch_start_init`
+* `_hook_on_batch_start_init` 
 
   | Modified attribute | Operation             |
   | ------------------ | --------------------- |
@@ -305,7 +313,7 @@ In this section, we will briefly describe what the hook functions do with the at
   | `ctx.loss_task`    | Backward propagation |
   | `ctx.scheduler`    | Update by gradient   |
 
-* `_hook_on_batch_end`
+* `_hook_on_batch_end `
 
   | Modified attribute       | Operation              |
   | ------------------------ | ---------------------- |
@@ -315,7 +323,7 @@ In this section, we will briefly describe what the hook functions do with the at
   | `ctx.ys_true`            | Append `ctx.y_true`    |
   | `ctx.ys_prob`            | Append `ctx.ys_prob`   |
 
-* `_hook_on_fit_end`
+* `_hook_on_fit_end `
 
   | Modified attribute | Operation                                |
   | ------------------ | ---------------------------------------- |
@@ -323,3 +331,130 @@ In this section, we will briefly describe what the hook functions do with the at
   | `ctx.ys_prob`      | Convert to `numpy.array`                 |
   | `ctx.monitor`      | Evaluate the results                     |
   | `ctx.eval_metrics` | Get evaluated results from `ctx.monitor` |
+
+###### DittoTrainer
+
+* `_hook_on_fit_start_set_regularized_para`
+
+  | Modified attribute               | Operation                                                    |
+  | -------------------------------- | ------------------------------------------------------------ |
+  | `ctx.global_model`               | Move to `ctx.device` and set to `train` mode                 |
+  | `ctx.local_model`                | Move to `ctx.device` and set to `train` mode                 |
+  | `ctx.optimizer_for_global_model` | Initialize by `ctx.cfg` and wrapped by `wrap_regularized_optimizer` |
+  | `ctx.optimizer_for_local_model`  | Initialize by `ctx.cfg` and set compared parameter group     |
+
+* `_hook_on_fit_start_clean`
+
+  | Modified attribute                  | Operation         |
+  | ----------------------------------- | ----------------- |
+  | `ctx.optimizer`                     | Delete            |
+  | `ctx.num_samples_local_model_train` | Initialize to `0` |
+
+* `_hook_on_fit_start_switch_local_model`
+
+  | Modified attribute | Operation                                       |
+  | ------------------ | ----------------------------------------------- |
+  | `ctx.model`        | Set to `ctx.local_model` and set to `eval` mode |
+
+* `_hook_on_batch_start_switch_model`
+
+  | Modified attribute            | Operation                                                    |
+  | ----------------------------- | ------------------------------------------------------------ |
+  | `ctx.use_local_model_current` | Set to `True` or `False`                                     |
+  | `ctx.model`                   | Set to `ctx.local_model` or `ctx.global_model`               |
+  | `ctx.optimizer`               | Set to `ctx.optimizer_for_local_model` or `ctx.optimizer_for_global_model` |
+
+* `_hook_on_batch_forward_cnt_num`
+
+  | Modified attribute                  | Operation            |
+  | ----------------------------------- | -------------------- |
+  | `ctx.num_samples_local_model_train` | add `ctx.batch_size` |
+
+* `_hook_on_batch_end_flop_count`
+
+  | Modified attribute | Operation           |
+  | ------------------ | ------------------- |
+  | `ctx.monitor`      | Monitor total flops |
+
+* `_hook_on_fit_end_calibrate`
+
+  | Modified attribute | Operation                                          |
+  | ------------------ | -------------------------------------------------- |
+  | `ctx.num_samples`  | Minus `ctx.num_samples_local_model_train`          |
+  | `ctx.eval_metrics` | Record `train_total` and `train_total_local_model` |
+
+* `_hook_on_fit_end_switch_global_model`
+
+  | Modified attribute | Operation                 |
+  | ------------------ | ------------------------- |
+  | `ctx.model `       | Set to `ctx.global_model` |
+
+* `_hook_on_fit_end_free_cuda`
+
+  | Modified attribute | Operation     |
+  | ------------------ | ------------- |
+  | `ctx.global_model` | Move to `cpu` |
+  | `ctx.local_model`  | Move to `cpu` |
+
+###### pFedMeTrainer
+
+* `_hook_on_fit_start_set_local_para_tmp`
+
+  | Modified attribute           | Operation                                                    |
+  | ---------------------------- | ------------------------------------------------------------ |
+  | `ctx.optimizer`              | Wrapped by `wrap_regularized_optimizer` and set compared parameter group |
+  | `ctx.pFedMe_outer_lr`        | Initialize to `ctx.cfg.train.optimizer.lr`                   |
+  | `ctx.pFedMe_local_model_tmp` | Copy from `ctx.model`                                        |
+
+* `_hook_on_batch_start_init_pfedme`
+
+  | Modified attribute              | Operation                          |
+  | ------------------------------- | ---------------------------------- |
+  | `ctx.data_batch_cache`          | Copy from `ctx.data_batch`         |
+  | `ctx.pFedMe_approx_fit_counter` | Count to refresh data every K step |
+
+* `_hook_on_batch_end_flop_count`
+
+  | Modified attribute | Operation           |
+  | ------------------ | ------------------- |
+  | `ctx.monitor`      | Monitor total flops |
+
+* `_hook_on_epoch_end_flop_count`
+
+  | Modified attribute | Operation           |
+  | ------------------ | ------------------- |
+  | `ctx.monitor`      | Monitor total flops |
+
+* `_hook_on_epoch_end_update_local`
+
+  | Modified attribute | Operation                                         |
+  | ------------------ | ------------------------------------------------- |
+  | `ctx.model`        | Update parameters by `ctx.pFedMe_local_model_tmp` |
+  | `ctx.optimizer`    | set compared parameter group                      |
+
+* `_hook_on_fit_end_update_local`
+
+  | Modified attribute           | Operation                                         |
+  | ---------------------------- | ------------------------------------------------- |
+  | `ctx.model`                  | Update parameters by `ctx.pFedMe_local_model_tmp` |
+  | `ctx.pFedMe_local_model_tmp` | Delete                                            |
+
+###### FedProxTrainer & NbaflTrainer
+
+* `_hook_record_initialization`
+
+  | Modified attribute | Operation             |
+  | ------------------ | --------------------- |
+  | `ctx.weight_init`  | Copy from `ctx.model` |
+
+* `_hook_record_initialization`
+
+  | Modified attribute | Operation     |
+  | ------------------ | ------------- |
+  | `ctx.weight_init`  | Set to `None` |
+
+* `_hook_inject_noise_in_upload`
+
+  | Modified attribute | Operation                  |
+  | ------------------ | -------------------------- |
+  | `ctx.model`        | Inject noise to parameters |

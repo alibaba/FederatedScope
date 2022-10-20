@@ -10,12 +10,11 @@ except ImportError:
     DataLoader = None
     Dataset = None
 
-from federatedscope.core.auxiliaries.enums import MODE
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
+from federatedscope.core.trainers.enums import MODE, LIFECYCLE
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.trainers.context import CtxVar
+from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.core.data.wrap_dataset import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.ReIterator import ReIterator

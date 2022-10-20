@@ -1,6 +1,8 @@
-from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from typing import Type
-from copy import deepcopy
+
+from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
+from federatedscope.core.trainers.trainer_nbafl import \
+    _hook_record_initialization, _hook_del_initialization
 
 
 def wrap_fedprox_trainer(
@@ -16,19 +18,19 @@ def wrap_fedprox_trainer(
     init_fedprox_ctx(base_trainer)
 
     # ---------------- action-level plug-in -----------------------
-    base_trainer.register_hook_in_train(new_hook=record_initialization,
+    base_trainer.register_hook_in_train(new_hook=_hook_record_initialization,
                                         trigger='on_fit_start',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=record_initialization,
+    base_trainer.register_hook_in_eval(new_hook=_hook_record_initialization,
                                        trigger='on_fit_start',
                                        insert_pos=-1)
 
-    base_trainer.register_hook_in_train(new_hook=del_initialization,
+    base_trainer.register_hook_in_train(new_hook=_hook_del_initialization,
                                         trigger='on_fit_end',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=del_initialization,
+    base_trainer.register_hook_in_eval(new_hook=_hook_del_initialization,
                                        trigger='on_fit_end',
                                        insert_pos=-1)
 
@@ -50,24 +52,3 @@ def init_fedprox_ctx(base_trainer):
     from federatedscope.core.auxiliaries.regularizer_builder import \
         get_regularizer
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
-
-
-# ---------------------------------------------------------------------- #
-# Additional functions for FedProx algorithm
-# ---------------------------------------------------------------------- #
-
-
-# Trainer
-def record_initialization(ctx):
-    """Record the initialized weights within local updates
-
-    """
-    ctx.weight_init = deepcopy(
-        [_.data.detach() for _ in ctx.model.parameters()])
-
-
-def del_initialization(ctx):
-    """Clear the variable to avoid memory leakage
-
-    """
-    ctx.weight_init = None

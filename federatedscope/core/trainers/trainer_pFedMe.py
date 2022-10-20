@@ -22,14 +22,14 @@ def wrap_pFedMeTrainer(
 
     # ---------------- action-level plug-in -----------------------
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_fit_start_set_local_para_tmp,
+        new_hook=_hook_on_fit_start_set_local_para_tmp,
         trigger="on_fit_start",
         insert_pos=-1)
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_epoch_end_update_local,
+        new_hook=_hook_on_epoch_end_update_local,
         trigger="on_epoch_end",
         insert_pos=-1)
-    base_trainer.register_hook_in_train(new_hook=hook_on_fit_end_update_local,
+    base_trainer.register_hook_in_train(new_hook=_hook_on_fit_end_update_local,
                                         trigger="on_fit_end",
                                         insert_pos=-1)
 
@@ -47,7 +47,7 @@ def wrap_pFedMeTrainer(
         base_trainer.hooks_in_train["on_batch_start"]
     # 2) replace the original hooks for "on_batch_start"
     base_trainer.replace_hook_in_train(
-        new_hook=hook_on_batch_start_init_pfedme,
+        new_hook=_hook_on_batch_start_init_pfedme,
         target_trigger="on_batch_start",
         target_hook_name=None)
 
@@ -75,7 +75,7 @@ def init_pFedMe_ctx(base_trainer):
     ctx.pFedMe_local_model_tmp = None
 
 
-def hook_on_fit_start_set_local_para_tmp(ctx):
+def _hook_on_fit_start_set_local_para_tmp(ctx):
     # the optimizer used in pFedMe is based on Moreau Envelopes regularization
     # besides, there are two distinct lr for the approximate model and base
     # model
@@ -94,7 +94,7 @@ def hook_on_fit_start_set_local_para_tmp(ctx):
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
 
 
-def hook_on_batch_start_init_pfedme(ctx):
+def _hook_on_batch_start_init_pfedme(ctx):
     # refresh data every K step
     if ctx.pFedMe_approx_fit_counter == 0:
         if ctx.cur_mode == "train":
@@ -123,7 +123,7 @@ def _hook_on_epoch_end_flop_count(ctx):
     ctx.monitor.total_flops += ctx.monitor.total_model_size / 2
 
 
-def hook_on_epoch_end_update_local(ctx):
+def _hook_on_epoch_end_update_local(ctx):
     # update local weight after finding approximate theta
     for client_param, local_para_tmp in zip(
             ctx.model.parameters(), ctx.pFedMe_local_model_tmp.parameters()):
@@ -140,7 +140,7 @@ def hook_on_epoch_end_update_local(ctx):
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
 
 
-def hook_on_fit_end_update_local(ctx):
+def _hook_on_fit_end_update_local(ctx):
     for param, local_para_tmp in zip(ctx.model.parameters(),
                                      ctx.pFedMe_local_model_tmp.parameters()):
         param.data = local_para_tmp.data

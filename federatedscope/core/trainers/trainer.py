@@ -3,7 +3,7 @@ import copy
 import logging
 
 from federatedscope.core.trainers.base_trainer import BaseTrainer
-from federatedscope.core.auxiliaries.enums import MODE, LIFECYCLE
+from federatedscope.core.trainers.enums import MODE, LIFECYCLE
 from federatedscope.core.auxiliaries.decorators import use_diff
 from federatedscope.core.trainers.utils import format_log_hooks, \
     filter_by_specified_keywords

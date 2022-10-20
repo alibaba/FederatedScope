@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch.nn.functional import softmax as f_softmax
 
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.trainers.trainer_multi_model import \
@@ -60,7 +60,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         # First register hooks for model 0
         # ---------------- train hooks -----------------------
         self.register_hook_in_train(
-            new_hook=self.hook_on_fit_start_mixture_weights_update,
+            new_hook=self._hook_on_fit_start_mixture_weights_update,
             trigger="on_fit_start",
             insert_pos=0)  # insert at the front
         self.register_hook_in_train(
@@ -72,21 +72,21 @@ class FedEMTrainer(GeneralMultiModelTrainer):
                                     trigger="on_fit_end",
                                     insert_pos=-1)
         self.register_hook_in_train(
-            new_hook=self.hook_on_batch_forward_weighted_loss,
+            new_hook=self._hook_on_batch_forward_weighted_loss,
             trigger="on_batch_forward",
             insert_pos=-1)
         self.register_hook_in_train(
-            new_hook=self.hook_on_batch_start_track_batch_idx,
+            new_hook=self._hook_on_batch_start_track_batch_idx,
             trigger="on_batch_start",
             insert_pos=0)  # insert at the front
         # ---------------- eval hooks -----------------------
         self.register_hook_in_eval(
-            new_hook=self.hook_on_batch_end_gather_loss,
+            new_hook=self._hook_on_batch_end_gather_loss,
             trigger="on_batch_end",
             insert_pos=0
         )  # insert at the front, (we need gather the loss before clean it)
         self.register_hook_in_eval(
-            new_hook=self.hook_on_batch_start_track_batch_idx,
+            new_hook=self._hook_on_batch_start_track_batch_idx,
             trigger="on_batch_start",
             insert_pos=0)  # insert at the front
         # replace the original evaluation into the ensemble one
@@ -106,23 +106,23 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             for _ in range(1, self.model_nums)
         ])
 
-    def hook_on_batch_start_track_batch_idx(self, ctx):
+    def _hook_on_batch_start_track_batch_idx(self, ctx):
         # for both train & eval
         ctx.cur_batch_idx = (self.ctx.cur_batch_idx +
                              1) % self.ctx.num_train_batch
 
-    def hook_on_batch_forward_weighted_loss(self, ctx):
+    def _hook_on_batch_forward_weighted_loss(self, ctx):
         # for only train
         ctx.loss_batch *= self.weights_internal_models[ctx.cur_model_idx]
 
-    def hook_on_batch_end_gather_loss(self, ctx):
+    def _hook_on_batch_end_gather_loss(self, ctx):
         # for only eval
         # before clean the loss_batch; we record it
         # for further weights_data_sample update
         ctx.all_losses_model_batch[ctx.cur_model_idx][
             ctx.cur_batch_idx] = ctx.loss_batch.item()
 
-    def hook_on_fit_start_mixture_weights_update(self, ctx):
+    def _hook_on_fit_start_mixture_weights_update(self, ctx):
         # for only train
         if ctx.cur_model_idx != 0:
             # do the mixture_weights_update once
