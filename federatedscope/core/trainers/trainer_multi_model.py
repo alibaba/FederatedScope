@@ -217,9 +217,9 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
 
         Note:
             Considering evaluation could be in ```hooks_set[
-            "on_epoch_end"]```, there could be two data loaders in
-        self.ctx, we must tell the running hooks which data_loader to call
-        and which num_samples to count
+            "on_epoch_end"]```, there could be two data loaders in \
+            self.ctx, we must tell the running hooks which data_loader to \
+            call and which num_samples to count
 
         """
         num_samples_model = list()

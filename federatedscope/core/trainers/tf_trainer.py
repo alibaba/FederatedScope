@@ -71,6 +71,15 @@ class GeneralTFTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
     def _hook_on_fit_start_init(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # prepare model
         ctx.model.to(ctx.device)
 
@@ -82,11 +91,29 @@ class GeneralTFTrainer(Trainer):
         ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_epoch_start(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # prepare dataloader
         setattr(ctx, "{}_loader".format(ctx.cur_split),
                 batch_iter(ctx.get("{}_data".format(ctx.cur_split))))
 
     def _hook_on_batch_start_init(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # prepare data batch
         try:
             ctx.data_batch = next(ctx.get("{}_loader".format(ctx.cur_split)))
@@ -94,7 +121,15 @@ class GeneralTFTrainer(Trainer):
             raise StopIteration
 
     def _hook_on_batch_forward(self, ctx):
-
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         ctx.optimizer = ctx.model.optimizer
 
         ctx.batch_size = len(ctx.data_batch)
@@ -122,6 +157,15 @@ class GeneralTFTrainer(Trainer):
         pass
 
     def _hook_on_batch_end(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # TODO: the same with the torch_trainer
         # update statistics
         ctx.num_samples += ctx.batch_size
@@ -133,8 +177,16 @@ class GeneralTFTrainer(Trainer):
         ctx.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
-        """Evaluate metrics.
+        """
+        Evaluate metrics.
 
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
         """
         ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
         ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)

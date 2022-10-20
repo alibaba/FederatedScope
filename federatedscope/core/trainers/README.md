@@ -368,7 +368,7 @@ In this section, we will briefly describe what the hook functions do with the at
 
   | Modified attribute                  | Operation            |
   | ----------------------------------- | -------------------- |
-  | `ctx.num_samples_local_model_train` | add `ctx.batch_size` |
+  | `ctx.num_samples_local_model_train` | Add `ctx.batch_size` |
 
 * `_hook_on_batch_end_flop_count`
 
@@ -430,7 +430,7 @@ In this section, we will briefly describe what the hook functions do with the at
   | Modified attribute | Operation                                         |
   | ------------------ | ------------------------------------------------- |
   | `ctx.model`        | Update parameters by `ctx.pFedMe_local_model_tmp` |
-  | `ctx.optimizer`    | set compared parameter group                      |
+  | `ctx.optimizer`    | Set compared parameter group                      |
 
 * `_hook_on_fit_end_update_local`
 
@@ -447,7 +447,7 @@ In this section, we will briefly describe what the hook functions do with the at
   | ------------------ | --------------------- |
   | `ctx.weight_init`  | Copy from `ctx.model` |
 
-* `_hook_record_initialization`
+* `_hook_del_initialization`
 
   | Modified attribute | Operation     |
   | ------------------ | ------------- |
@@ -458,3 +458,4 @@ In this section, we will briefly describe what the hook functions do with the at
   | Modified attribute | Operation                  |
   | ------------------ | -------------------------- |
   | `ctx.model`        | Inject noise to parameters |
+

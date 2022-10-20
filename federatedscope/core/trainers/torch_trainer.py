@@ -134,6 +134,22 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
     def _hook_on_fit_start_init(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.model``                       Move to ``ctx.device``
+            ``ctx.optimizer``                   Initialize by ``ctx.cfg``
+            ``ctx.scheduler``                   Initialize by ``ctx.cfg``
+            ``ctx.loss_batch_total``            Initialize to 0
+            ``ctx.loss_regular_total``          Initialize to 0
+            ``ctx.num_samples``                 Initialize to 0
+            ``ctx.ys_true``                     Initialize to ``[]``
+            ``ctx.ys_prob``                     Initialize to ``[]``
+            ==================================  ===========================
+        """
         # prepare model and optimizer
         ctx.model.to(ctx.device)
 
@@ -157,6 +173,15 @@ class GeneralTorchTrainer(Trainer):
         ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.monitor``                     Track model size
+            ==================================  ===========================
+        """
         if not isinstance(ctx.monitor, Monitor):
             logger.warning(
                 f"The trainer {type(self)} does contain a valid monitor, "
@@ -168,6 +193,15 @@ class GeneralTorchTrainer(Trainer):
             ctx.monitor.track_model_size(ctx.models)
 
     def _hook_on_epoch_start(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.{ctx.cur_split}_loader``      Initialize DataLoader
+            ==================================  ===========================
+        """
         # prepare dataloader
         if ctx.get("{}_loader".format(ctx.cur_split)) is None:
             loader = get_dataloader(
@@ -182,6 +216,15 @@ class GeneralTorchTrainer(Trainer):
             ctx.get("{}_loader".format(ctx.cur_split)).reset()
 
     def _hook_on_batch_start_init(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.data_batch``                  Initialize batch data
+            ==================================  ===========================
+        """
         # prepare data batch
         try:
             ctx.data_batch = CtxVar(
@@ -191,6 +234,18 @@ class GeneralTorchTrainer(Trainer):
             raise StopIteration
 
     def _hook_on_batch_forward(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.y_true``                      Move to `ctx.device`
+            ``ctx.y_prob``                      Forward propagation get y_prob
+            ``ctx.loss_batch``                  Calculate the loss
+            ``ctx.batch_size``                  Get the batch_size
+            ==================================  ===========================
+        """
         x, label = [_.to(ctx.device) for _ in ctx.data_batch]
         pred = ctx.model(x)
         if len(label.size()) == 0:
@@ -203,14 +258,19 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         """
-            the monitoring hook to calculate the flops during the fl course
+        The monitoring hook to calculate the flops during the fl course
 
-            Note: for customized cases that the forward process is not only
-            based on ctx.model, please override this function (inheritance
-            case) or replace this hook (plug-in case)
+        Note:
+          For customized cases that the forward process is not only \
+          based on ctx.model, please override this function (inheritance \
+          case) or replace this hook (plug-in case)
 
-        :param ctx:
-        :return:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.monitor``                     Track average flops
+            ==================================  ===========================
         """
         if not isinstance(ctx.monitor, Monitor):
             logger.warning(
@@ -251,12 +311,34 @@ class GeneralTorchTrainer(Trainer):
             ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.loss_regular``                Calculate the regular loss
+            ``ctx.loss_task``                   Sum the ``ctx.loss_regular`` \
+            and ``ctx.loss``
+            ==================================  ===========================
+        """
         ctx.loss_regular = CtxVar(
             self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
         ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular,
                                LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer``                   Update by gradient
+            ``ctx.loss_task``                   Backward propagation
+            ``ctx.scheduler``                   Update by gradient
+            ==================================  ===========================
+        """
         ctx.optimizer.zero_grad()
         ctx.loss_task.backward()
         if ctx.grad_clip > 0:
@@ -268,6 +350,19 @@ class GeneralTorchTrainer(Trainer):
             ctx.scheduler.step()
 
     def _hook_on_batch_end(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.num_samples``                 Add ``ctx.batch_size``
+            ``ctx.loss_batch_total``            Add batch loss
+            ``ctx.loss_regular_total``          Add batch regular loss
+            ``ctx.ys_true``                     Append ``ctx.y_true``
+            ``ctx.ys_prob``                     Append ``ctx.ys_prob``
+            ==================================  ===========================
+        """
         # update statistics
         ctx.num_samples += ctx.batch_size
         ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
@@ -277,8 +372,20 @@ class GeneralTorchTrainer(Trainer):
         ctx.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
-        """Evaluate metrics.
+        """
+        Evaluate metrics.
 
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.ys_true``                     Convert to ``numpy.array``
+            ``ctx.ys_prob``                     Convert to ``numpy.array``
+            ``ctx.monitor``                     Evaluate the results
+            ``ctx.eval_metrics``                Get evaluated results from \
+            ``ctx.monitor``
+            ==================================  ===========================
         """
         ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
         ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)

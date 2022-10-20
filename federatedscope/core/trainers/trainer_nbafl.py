@@ -79,23 +79,47 @@ def init_nbafl_ctx(base_trainer):
 
 # Trainer
 def _hook_record_initialization(ctx):
-    """Record the initialized weights within local updates
+    """
+    Record the initialized weights within local updates
 
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.weight_init``                 Copy from `ctx.model`
+        ==================================  ===========================
     """
     ctx.weight_init = deepcopy(
         [_.data.detach() for _ in ctx.model.parameters()])
 
 
 def _hook_del_initialization(ctx):
-    """Clear the variable to avoid memory leakage
+    """
+    Clear the variable to avoid memory leakage
 
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.weight_init``                 Set to `None`
+        ==================================  ===========================
     """
     ctx.weight_init = None
 
 
 def _hook_inject_noise_in_upload(ctx):
-    """Inject noise into weights before the client upload them to server
+    """
+    Inject noise into weights before the client upload them to server
 
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.model``                       Inject noise to parameters
+        ==================================  ===========================
     """
     for p in ctx.model.parameters():
         noise = get_random("Normal", p.shape, {

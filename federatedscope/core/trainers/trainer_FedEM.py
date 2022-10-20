@@ -107,15 +107,42 @@ class FedEMTrainer(GeneralMultiModelTrainer):
         ])
 
     def _hook_on_batch_start_track_batch_idx(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # for both train & eval
         ctx.cur_batch_idx = (self.ctx.cur_batch_idx +
                              1) % self.ctx.num_train_batch
 
     def _hook_on_batch_forward_weighted_loss(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # for only train
         ctx.loss_batch *= self.weights_internal_models[ctx.cur_model_idx]
 
     def _hook_on_batch_end_gather_loss(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # for only eval
         # before clean the loss_batch; we record it
         # for further weights_data_sample update
@@ -123,6 +150,15 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ctx.cur_batch_idx] = ctx.loss_batch.item()
 
     def _hook_on_fit_start_mixture_weights_update(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         # for only train
         if ctx.cur_model_idx != 0:
             # do the mixture_weights_update once
@@ -144,16 +180,42 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             self._switch_model_ctx(0)
 
     def _hook_on_fit_start_flop_count(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * \
-                                        self.model_nums * ctx.num_train_data
+            self.model_nums * ctx.num_train_data
 
     def _hook_on_fit_end_flop_count(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
+        """
         self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * \
-                                        self.model_nums * ctx.num_train_data
+            self.model_nums * ctx.num_train_data
 
     def _hook_on_fit_end_ensemble_eval(self, ctx):
         """
-            Ensemble evaluation
+        Ensemble evaluation
+
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer_for_global_model``  False
+            ==================================  ===========================
         """
         if ctx.get("ys_prob_ensemble", None) is None:
             ctx.ys_prob_ensemble = CtxVar(0, LIFECYCLE.ROUTINE)
