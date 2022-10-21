@@ -136,11 +136,7 @@ class Context(LifecycleDict):
           - ``ctx.num_train_batch``, ``ctx.num_val_batch``, \
           ``ctx.num_test_batch``: the number of batch in each data split
     """
-    def __init__(self,
-                 model,
-                 cfg,
-                 data=None,
-                 device=None):
+    def __init__(self, model, cfg, data=None, device=None):
         super(Context, self).__init__({})
 
         self.cfg = cfg

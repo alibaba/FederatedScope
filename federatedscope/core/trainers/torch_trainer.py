@@ -60,15 +60,18 @@ class GeneralTorchTrainer(Trainer):
                 init_dict["num_{}_data".format(split)] = 0
                 if ctx.data.get(split, None) is not None:
                     if isinstance(ctx.data.get(split), Dataset):
-                        init_dict["{}_data".format(split)] = ctx.data.get(split)
+                        init_dict["{}_data".format(split)] = ctx.data.get(
+                            split)
                         init_dict["num_{}_data".format(split)] = len(
                             ctx.data.get(split))
                     elif isinstance(ctx.data.get(split), DataLoader):
-                        init_dict["{}_loader".format(split)] = ctx.data.get(split)
+                        init_dict["{}_loader".format(split)] = ctx.data.get(
+                            split)
                         init_dict["num_{}_data".format(split)] = len(
                             ctx.data.get(split).dataset)
                     elif isinstance(ctx.data.get(split), dict):
-                        init_dict["{}_data".format(split)] = ctx.data.get(split)
+                        init_dict["{}_data".format(split)] = ctx.data.get(
+                            split)
                         init_dict["num_{}_data".format(split)] = len(
                             ctx.data.get(split)['y'])
                     else:

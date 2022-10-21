@@ -152,9 +152,10 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
                 init_dict["{}_loader".format(mode)] = None
                 init_dict["num_{}_data".format(mode)] = 0
                 if ctx.data.get(mode, None) is not None:
-                    if isinstance(
-                            ctx.data.get(mode), NeighborSampler) or isinstance(
-                                ctx.data.get(mode), GraphSAINTRandomWalkSampler):
+                    if isinstance(ctx.data.get(mode),
+                                  NeighborSampler) or isinstance(
+                                      ctx.data.get(mode),
+                                      GraphSAINTRandomWalkSampler):
                         if mode == 'train':
                             init_dict["{}_loader".format(mode)] = ctx.data.get(
                                 mode)

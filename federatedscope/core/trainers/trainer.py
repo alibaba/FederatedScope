@@ -31,10 +31,7 @@ class Trainer(BaseTrainer):
                  monitor=None):
         self._cfg = config
 
-        self.ctx = Context(model,
-                           self.cfg,
-                           data,
-                           device)
+        self.ctx = Context(model, self.cfg, data, device)
 
         # Parse data and setup init vars in ctx
         self.setup_data_related_var_in_ctx(self.ctx)

@@ -40,8 +40,8 @@ class GeneralTFTrainer(Trainer):
                 init_dict["num_{}_data".format(mode)] = 0
                 if ctx.data.get(mode, None) is not None:
                     init_dict["{}_data".format(mode)] = ctx.data.get(mode)
-                    init_dict["num_{}_data".format(mode)] = len(ctx.data.get(
-                        mode))
+                    init_dict["num_{}_data".format(mode)] = len(
+                        ctx.data.get(mode))
         else:
             raise TypeError("Type of data should be dict.")
         ctx.setup_vars(init_dict)
