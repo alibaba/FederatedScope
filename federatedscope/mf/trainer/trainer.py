@@ -21,29 +21,32 @@ class MFTrainer(GeneralTorchTrainer):
         data (dict): input data
         device (str): device.
     """
-    def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
-        modes
-
+    def setup_data_related_var_in_ctx(self, ctx):
         """
+        Populate ``${split}_data``, ``${split}_loader`` and \
+        ``num_${split}_data`` for different data splits, and setup init var \
+        in ctx.
+        """
+        self.setup_data(ctx)
         init_dict = dict()
-        if isinstance(data, dict):
+        if isinstance(ctx.data, dict):
             for mode in ["train", "val", "test"]:
                 init_dict["{}_data".format(mode)] = None
                 init_dict["{}_loader".format(mode)] = None
                 init_dict["num_{}_data".format(mode)] = 0
-                if data.get(mode, None) is not None:
-                    if isinstance(data.get(mode), MFDataLoader):
-                        init_dict["{}_loader".format(mode)] = data.get(mode)
-                        init_dict["num_{}_data".format(mode)] = data.get(
+                if ctx.data.get(mode, None) is not None:
+                    if isinstance(ctx.data.get(mode), MFDataLoader):
+                        init_dict["{}_loader".format(mode)] = ctx.data.get(
+                            mode)
+                        init_dict["num_{}_data".format(mode)] = ctx.data.get(
                             mode).n_rating
                     else:
                         raise TypeError(
                             "Type {} is not supported for MFTrainer.".format(
-                                type(data.get(mode))))
+                                type(ctx.data.get(mode))))
         else:
             raise TypeError("Type of data should be dict.")
-        return init_dict
+        ctx.setup_vars(init_dict)
 
     def _hook_on_fit_end(self, ctx):
         results = {

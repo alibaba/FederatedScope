@@ -29,13 +29,15 @@ class Trainer(BaseTrainer):
                  config,
                  only_for_eval=False,
                  monitor=None):
-        self.cfg = config
+        self._cfg = config
 
         self.ctx = Context(model,
                            self.cfg,
                            data,
-                           device,
-                           init_dict=self.parse_data(data))
+                           device)
+
+        # Parse data and setup init vars in ctx
+        self.setup_data_related_var_in_ctx(self.ctx)
 
         assert monitor is not None, \
             f"Monitor not found in trainer with class {type(self)}"
@@ -71,8 +73,22 @@ class Trainer(BaseTrainer):
             # once for better logs readability
             pass
 
-    def parse_data(self, data):
-        pass
+    @property
+    def cfg(self):
+        return self._cfg
+
+    @cfg.setter
+    def cfg(self, new_cfg):
+        self._cfg = new_cfg
+        self.setup_data_related_var_in_ctx(self.ctx)
+
+    def setup_data_related_var_in_ctx(self, ctx):
+        """
+        Populate ``${split}_data``, ``${split}_loader`` and \
+        ``num_${split}_data`` for different data splits, and setup init var \
+        in ctx.
+        """
+        raise NotImplementedError
 
     def register_default_hooks_train(self):
         pass

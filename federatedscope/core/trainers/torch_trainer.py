@@ -15,6 +15,7 @@ from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
+from federatedscope.core.data import ClientData
 from federatedscope.core.data.wrap_dataset import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
@@ -31,38 +32,51 @@ class GeneralTorchTrainer(Trainer):
             self.ctx.model.state_dict() if self.cfg.federate.
             share_local_model else self.ctx.model.cpu().state_dict())
 
-    def parse_data(self, data):
-        """Populate "${split}_data", "${split}_loader" and "num_${
-        split}_data" for different data splits
-
+    def setup_data(self, ctx):
         """
+        Initialization data by ``cfg``.
+        """
+        if isinstance(ctx.data, ClientData):
+            ctx.data.setup(ctx.cfg)
+        else:
+            logger.warning(f'The data type should be `ClientData` to '
+                           f'enable new `config`, but got '
+                           f'{type(self.data)} instead.')
+
+    def setup_data_related_var_in_ctx(self, ctx):
+        """
+        Populate ``${split}_data``, ``${split}_loader`` and \
+        ``num_${split}_data`` for different data splits, and setup init var \
+        in ctx.
+        """
+        self.setup_data(ctx)
         init_dict = dict()
-        if isinstance(data, dict):
-            for split in data.keys():
+        if isinstance(ctx.data, dict):
+            for split in ctx.data.keys():
                 if split not in ['train', 'val', 'test']:
                     continue
                 init_dict["{}_data".format(split)] = None
                 init_dict["{}_loader".format(split)] = None
                 init_dict["num_{}_data".format(split)] = 0
-                if data.get(split, None) is not None:
-                    if isinstance(data.get(split), Dataset):
-                        init_dict["{}_data".format(split)] = data.get(split)
+                if ctx.data.get(split, None) is not None:
+                    if isinstance(ctx.data.get(split), Dataset):
+                        init_dict["{}_data".format(split)] = ctx.data.get(split)
                         init_dict["num_{}_data".format(split)] = len(
-                            data.get(split))
-                    elif isinstance(data.get(split), DataLoader):
-                        init_dict["{}_loader".format(split)] = data.get(split)
+                            ctx.data.get(split))
+                    elif isinstance(ctx.data.get(split), DataLoader):
+                        init_dict["{}_loader".format(split)] = ctx.data.get(split)
                         init_dict["num_{}_data".format(split)] = len(
-                            data.get(split).dataset)
-                    elif isinstance(data.get(split), dict):
-                        init_dict["{}_data".format(split)] = data.get(split)
+                            ctx.data.get(split).dataset)
+                    elif isinstance(ctx.data.get(split), dict):
+                        init_dict["{}_data".format(split)] = ctx.data.get(split)
                         init_dict["num_{}_data".format(split)] = len(
-                            data.get(split)['y'])
+                            ctx.data.get(split)['y'])
                     else:
                         raise TypeError("Type {} is not supported.".format(
-                            type(data.get(split))))
+                            type(ctx.data.get(split))))
         else:
             raise TypeError("Type of data should be dict.")
-        return init_dict
+        ctx.setup_vars(init_dict)
 
     def update(self, model_parameters, strict=False):
         """

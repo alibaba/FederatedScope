@@ -5,9 +5,9 @@ from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.model_builder import \
     get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
+from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.core.trainers.enums import MODE
 from federatedscope.core.trainers.utils import calculate_batch_epoch_num
-from federatedscope.core.data import ClientData
 
 logger = logging.getLogger(__name__)
 
@@ -140,10 +140,8 @@ class Context(LifecycleDict):
                  model,
                  cfg,
                  data=None,
-                 device=None,
-                 init_dict=None,
-                 init_attr=True):
-        super(Context, self).__init__(init_dict)
+                 device=None):
+        super(Context, self).__init__({})
 
         self.cfg = cfg
         self.model = model
@@ -158,19 +156,29 @@ class Context(LifecycleDict):
 
         self.lifecycles = collections.defaultdict(set)
 
-        if init_attr:
-            # setup static variables for training/evaluation
-            self.setup_vars()
+    def setup_vars(self, init_dict):
+        """
+        Merge data related key-value and initialize training-related attributes
 
-    def setup_vars(self):
+        Arguments:
+            init_dict (dict): ``dict`` to be merged to ``ctx``
+
+        Notes:
+            This function should be called in \
+            ``trainer.setup_data_related_var_in_ctx()`` after parsing \
+            data, which aims to initialize training-related attributes in \
+            ``ctx``. And this function will be called when `trainer.cfg` \
+            changes to make the configuration consistent.
+        """
+        # Merge from init_dict
+        self = merge_dict(self, init_dict)
+
         if self.cfg.backend == 'torch':
             self.trainable_para_names = get_trainable_para_names(self.model)
             self.criterion = get_criterion(self.cfg.criterion.type,
                                            self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
             self.grad_clip = self.cfg.grad.grad_clip
-            if isinstance(self.data, ClientData):
-                self.data.setup(self.cfg)
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None
@@ -255,7 +263,9 @@ class Context(LifecycleDict):
 
 
 class CtxVar(object):
-    """Basic variable class
+    """
+    Basic variable class
+
     Arguments:
         lifecycle: specific lifecycle of the attribute
     """
@@ -269,9 +279,11 @@ class CtxVar(object):
 
 
 def lifecycle(lifecycle):
-    """Manage the lifecycle of the variables within context,
+    """
+    Manage the lifecycle of the variables within context, \
     and blind these operations from user.
-    Args:
+
+    Arguments:
         lifecycle: the type of lifecycle, choose from "batch/epoch/routine"
     """
     if lifecycle == "routine":

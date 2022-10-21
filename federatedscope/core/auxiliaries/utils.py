@@ -66,7 +66,17 @@ def batch_iter(data, batch_size=64, shuffled=True):
 
 
 def merge_dict(dict1, dict2):
-    # Merge results for history
+    """
+    Merge two ``dict`` according to their keys.
+
+    Args:
+        dict1: ``dict`` to be merged
+        dict2: ``dict`` to be merged
+
+    Returns:
+        dict1: Merged ``dict``.
+
+    """
     for key, value in dict2.items():
         if key not in dict1:
             if isinstance(value, dict):
