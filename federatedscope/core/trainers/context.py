@@ -159,7 +159,7 @@ class Context(LifecycleDict):
         Arguments:
             init_dict (dict): ``dict`` to be merged to ``ctx``
 
-        Notes:
+        Note:
             This function should be called in \
             ``trainer.setup_data_related_var_in_ctx()`` after parsing \
             data, which aims to initialize training-related attributes in \
