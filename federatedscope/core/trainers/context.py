@@ -151,6 +151,7 @@ class Context(LifecycleDict):
 
         self.lifecycles = collections.defaultdict(set)
 
+    # TODO: Delete this function as we have @property
     def setup_vars(self, init_dict):
         """
         Merge data related key-value and initialize training-related attributes
@@ -170,6 +171,8 @@ class Context(LifecycleDict):
 
         if self.cfg.backend == 'torch':
             self.trainable_para_names = get_trainable_para_names(self.model)
+            # TODO: make `criterion` and `regularizer` @property and cached
+            #  to compare whether changes happen
             self.criterion = get_criterion(self.cfg.criterion.type,
                                            self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
@@ -181,10 +184,13 @@ class Context(LifecycleDict):
             self.optimizer = None
             self.grad_clip = None
 
+        # TODO: make these attributes (related to `cfg`)decorated by @property
+        # TODO: add API train.train(on=ctx.MODE), and these attribute could
+        #  access to the right value
         # Process training data
         if self.get('train_data', None) is not None or self.get(
                 'train_loader', None) is not None:
-            # Calculate the number of update steps during training given the
+            # Calculate the number of update steps during training given the \
             # local_update_steps
             self.num_train_batch, self.num_train_batch_last_epoch, \
                 self.num_train_epoch, self.num_total_train_batch = \
