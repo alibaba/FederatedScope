@@ -5,7 +5,6 @@ from federatedscope.core.auxiliaries.criterion_builder import get_criterion
 from federatedscope.core.auxiliaries.model_builder import \
     get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
-from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.core.trainers.enums import MODE
 from federatedscope.core.trainers.utils import calculate_batch_epoch_num
 
@@ -167,7 +166,7 @@ class Context(LifecycleDict):
             changes to make the configuration consistent.
         """
         # Merge from init_dict
-        self = merge_dict(self, init_dict)
+        self.merge_from_dict(init_dict)
 
         if self.cfg.backend == 'torch':
             self.trainable_para_names = get_trainable_para_names(self.model)
@@ -256,6 +255,10 @@ class Context(LifecycleDict):
                                  f" {target_split_name}_loader in the trainer")
         else:
             return True
+
+    def merge_from_dict(self, other_dict):
+        for key, value in other_dict.items():
+            setattr(self, key, value)
 
 
 class CtxVar(object):

@@ -65,9 +65,9 @@ def batch_iter(data, batch_size=64, shuffled=True):
             yield {'x': data_x[sample_index], 'y': data_y[sample_index]}
 
 
-def merge_dict(dict1, dict2):
+def merge_dict_of_results(dict1, dict2):
     """
-    Merge two ``dict`` according to their keys.
+    Merge two ``dict`` according to their keys, and concatenate their value.
 
     Args:
         dict1: ``dict`` to be merged
@@ -80,12 +80,12 @@ def merge_dict(dict1, dict2):
     for key, value in dict2.items():
         if key not in dict1:
             if isinstance(value, dict):
-                dict1[key] = merge_dict({}, value)
+                dict1[key] = merge_dict_of_results({}, value)
             else:
                 dict1[key] = [value]
         else:
             if isinstance(value, dict):
-                merge_dict(dict1[key], value)
+                merge_dict_of_results(dict1[key], value)
             else:
                 dict1[key].append(value)
     return dict1

@@ -10,7 +10,7 @@ from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
-from federatedscope.core.auxiliaries.utils import merge_dict, \
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
     calculate_time_cost
 from federatedscope.core.workers.base_client import BaseClient
 
@@ -471,7 +471,7 @@ class Client(BaseClient):
             self._monitor.update_best_result(self.best_results,
                                              formatted_eval_res['Results_raw'],
                                              results_type=f"client #{self.ID}")
-            self.history_results = merge_dict(
+            self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check(self.history_results[
                 self._cfg.eval.best_res_update_round_wise_key])

@@ -12,8 +12,8 @@ from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
-from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
-    merge_param_dict
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
+    Timeout, merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
@@ -473,8 +473,8 @@ class Server(BaseServer):
         # Get all the message & aggregate
         formatted_eval_res = \
             self.merge_eval_results_from_all_clients()
-        self.history_results = merge_dict(self.history_results,
-                                          formatted_eval_res)
+        self.history_results = merge_dict_of_results(self.history_results,
+                                                     formatted_eval_res)
         if self.mode == 'standalone' and \
                 self._monitor.wandb_online_track and \
                 self._monitor.use_wandb:
@@ -838,8 +838,8 @@ class Server(BaseServer):
                     self.best_results,
                     formatted_eval_res['Results_raw'],
                     results_type="server_global_eval")
-                self.history_results = merge_dict(self.history_results,
-                                                  formatted_eval_res)
+                self.history_results = merge_dict_of_results(
+                    self.history_results, formatted_eval_res)
                 self._monitor.save_formatted_results(formatted_eval_res)
                 logger.info(formatted_eval_res)
             self.check_and_save()
