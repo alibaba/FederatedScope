@@ -66,8 +66,7 @@
 | Title                                                        | Venue      | Link                                        
 | ------------------------------------------------------------ | ---------- |---------------------------------------------
 |Collaboration equilibrium in federated learning| KDD | [pdf](https://arxiv.org/pdf/2108.07926.pdf)
-| Fedfaim: A model performance-based fair incentive mechanism for federated learning| IEEE Transactions
-on Big Data| [pdf](https://ieeexplore.ieee.org/document/9797864)
+| Fedfaim: A model performance-based fair incentive mechanism for federated learning| IEEE Transactionson Big Data| [pdf](https://ieeexplore.ieee.org/document/9797864)
 
 
 
@@ -81,7 +80,7 @@ on Big Data| [pdf](https://ieeexplore.ieee.org/document/9797864)
  ### 2020
 | Title                                                        | Venue      | Link                                        
 | ------------------------------------------------------------ | ---------- |---------------------------------------------
-|A fairness-aware incentive scheme for federated learning| AIES | 2020 ｜[pdf](https://dl.acm.org/doi/10.1145/3375627.3375840)
+|A fairness-aware incentive scheme for federated learning| AIES ｜[pdf](https://dl.acm.org/doi/10.1145/3375627.3375840)
 | Collaborative fairness in federated learning | Federated Learning | [pdf](https://arxiv.org/pdf/2008.12161.pdf)
 | Towards fair and privacy-preserving federated deep models | IEEE TPDS | [pdf](https://arxiv.org/pdf/1906.01167.pdf)
 
