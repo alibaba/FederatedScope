@@ -15,7 +15,7 @@ from federatedscope.core.data.utils import merge_data
 logger = logging.getLogger(__name__)
 
 
-def get_runner(data, server_class, client_class, config, client_configs):
+def get_runner(data, server_class, client_class, config, client_configs=None):
     # Instantiate a Runner based on a configuration file
     mode = config.federate.mode.lower()
     runner_dict = {
