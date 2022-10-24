@@ -151,24 +151,7 @@ class Context(LifecycleDict):
 
         self.lifecycles = collections.defaultdict(set)
 
-    # TODO: Delete this function as we have @property
-    def setup_vars(self, init_dict):
-        """
-        Merge data related key-value and initialize training-related attributes
-
-        Arguments:
-            init_dict (dict): ``dict`` to be merged to ``ctx``
-
-        Note:
-            This function should be called in \
-            ``trainer.setup_data_related_var_in_ctx()`` after parsing \
-            data, which aims to initialize training-related attributes in \
-            ``ctx``. And this function will be called when `trainer.cfg` \
-            changes to make the configuration consistent.
-        """
-        # Merge from init_dict
-        self.merge_from_dict(init_dict)
-
+        # Setup optimize-related context variable
         if self.cfg.backend == 'torch':
             self.trainable_para_names = get_trainable_para_names(self.model)
             # TODO: make `criterion` and `regularizer` @property and cached
@@ -184,34 +167,102 @@ class Context(LifecycleDict):
             self.optimizer = None
             self.grad_clip = None
 
-        # TODO: make these attributes (related to `cfg`)decorated by @property
-        # TODO: add API train.train(on=ctx.MODE), and these attribute could
-        #  access to the right value
-        # Process training data
-        if self.get('train_data', None) is not None or self.get(
-                'train_loader', None) is not None:
-            # Calculate the number of update steps during training given the \
-            # local_update_steps
-            self.num_train_batch, self.num_train_batch_last_epoch, \
-                self.num_train_epoch, self.num_total_train_batch = \
+    @property
+    def num_train_batch(self):
+        """
+        Train related property, query from `cfg`.
+        Returns:
+            num_train_batch
+        """
+        return self._calculate_batch_epoch_num()[0]
+
+    @property
+    def num_train_batch_last_epoch(self):
+        """
+        Train related property, query from `cfg`.
+        Returns:
+            num_train_batch
+        """
+        return self._calculate_batch_epoch_num()[1]
+
+    @property
+    def num_train_epoch(self):
+        """
+        Train related property, query from `cfg`.
+        Returns:
+            num_train_batch
+        """
+        return self._calculate_batch_epoch_num()[2]
+
+    @property
+    def num_total_train_batch(self):
+        """
+        Train related property, query from `cfg`.
+        Returns:
+            num_total_train_batch
+        """
+        return self._calculate_batch_epoch_num()[3]
+
+    # Val related property, query from `cfg`
+    @property
+    def num_val_batch(self):
+        """
+        Val related property, query from `cfg`.
+        Returns:
+            num_val_batch
+        """
+        return self._calculate_batch_epoch_num()[0]
+
+    @property
+    def num_val_epoch(self):
+        """
+        Val related property, query from `cfg`.
+        Returns:
+            num_val_epoch
+        """
+        return self._calculate_batch_epoch_num()[2]
+
+    # Test related property, query from `cfg`
+    @property
+    def num_test_batch(self):
+        """
+        Test related property, query from `cfg`.
+        Returns:
+            num_test_batch
+        """
+        return self._calculate_batch_epoch_num()[0]
+
+    @property
+    def num_test_epoch(self):
+        """
+        Train related property, query from `cfg`.
+        Returns:
+            num_test_epoch
+        """
+        return self._calculate_batch_epoch_num()[2]
+
+    def _calculate_batch_epoch_num(self):
+        num_batch_last_epoch, num_total_batch = None, None
+        if self.cur_mode in ['train', 'finetune']:
+            num_batch, num_batch_last_epoch, num_epoch, num_total_batch = \
                 calculate_batch_epoch_num(
                     self.cfg.train.local_update_steps,
-                    self.cfg.train.batch_or_epoch, self.num_train_data,
+                    self.cfg.train.batch_or_epoch,
+                    self.get(f'num_{self.cur_split}_data'),
                     self.cfg.dataloader.batch_size,
                     self.cfg.dataloader.drop_last)
+        elif self.cur_mode in ['val', 'test']:
+            num_epoch = 1
+            num_batch = self.get(f'num_{self.cur_split}_data'
+                                 ) // self.cfg.dataloader.batch_size + int(
+                                     not self.cfg.dataloader.drop_last
+                                     and bool(
+                                         self.get(f'num_{self.cur_split}_data')
+                                         % self.cfg.dataloader.batch_size))
+        else:
+            raise KeyError(f"Invalid mode {self.cur_mode}.")
 
-        # Process evaluation data
-        for mode in ["val", "test"]:
-            setattr(self, "num_{}_epoch".format(mode), 1)
-            if self.get("{}_data".format(mode)) is not None or self.get(
-                    "{}_loader".format(mode)) is not None:
-                setattr(
-                    self, "num_{}_batch".format(mode),
-                    getattr(self, "num_{}_data".format(mode)) //
-                    self.cfg.dataloader.batch_size +
-                    int(not self.cfg.dataloader.drop_last and bool(
-                        getattr(self, "num_{}_data".format(mode)) %
-                        self.cfg.dataloader.batch_size)))
+        return num_batch, num_batch_last_epoch, num_epoch, num_total_batch
 
     def track_mode(self, mode):
         self.mode_stack.append(mode)

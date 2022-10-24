@@ -25,26 +25,22 @@ class GeneralTFTrainer(Trainer):
 
         return num_samples, self.ctx.model.state_dict(), self.ctx.eval_metrics
 
-    def setup_data_related_var_in_ctx(self, ctx):
+    def parse_data(self, data):
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
+        modes
         """
-        Populate ``${split}_data``, ``${split}_loader`` and \
-        ``num_${split}_data`` for different data splits, and setup init var \
-        in ctx.
-        """
-        # TODO: setup_data in TF ClientData
         init_dict = dict()
-        if isinstance(ctx.data, dict):
+        if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
                 init_dict["{}_data".format(mode)] = None
                 init_dict["{}_loader".format(mode)] = None
                 init_dict["num_{}_data".format(mode)] = 0
-                if ctx.data.get(mode, None) is not None:
-                    init_dict["{}_data".format(mode)] = ctx.data.get(mode)
-                    init_dict["num_{}_data".format(mode)] = len(
-                        ctx.data.get(mode))
+                if data.get(mode, None) is not None:
+                    init_dict["{}_data".format(mode)] = data.get(mode)
+                    init_dict["num_{}_data".format(mode)] = len(data.get(mode))
         else:
             raise TypeError("Type of data should be dict.")
-        ctx.setup_vars(init_dict)
+        return init_dict
 
     def register_default_hooks_train(self):
         self.register_hook_in_train(self._hook_on_fit_start_init,

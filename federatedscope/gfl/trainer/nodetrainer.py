@@ -13,23 +13,20 @@ logger = logging.getLogger(__name__)
 
 
 class NodeFullBatchTrainer(GeneralTorchTrainer):
-    def setup_data_related_var_in_ctx(self, ctx):
+    def parse_data(self, data):
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
+        modes
         """
-        Populate ``${split}_data``, ``${split}_loader`` and \
-        ``num_${split}_data`` for different data splits, and setup init var \
-        in ctx.
-        """
-        self.setup_data(ctx)
         init_dict = dict()
-        if isinstance(ctx.data, dict):
+        if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
-                init_dict["{}_loader".format(mode)] = ctx.data.get(mode)
+                init_dict["{}_loader".format(mode)] = data.get(mode)
                 init_dict["{}_data".format(mode)] = None
                 # For node-level task dataloader contains one graph
                 init_dict["num_{}_data".format(mode)] = 1
         else:
             raise TypeError("Type of data should be dict.")
-        ctx.setup_vars(init_dict)
+        return init_dict
 
     def _hook_on_batch_forward(self, ctx):
         batch = ctx.data_batch.to(ctx.device)
@@ -91,42 +88,38 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
 
 
 class NodeMiniBatchTrainer(GeneralTorchTrainer):
-    def setup_data_related_var_in_ctx(self, ctx):
+    def parse_data(self, data):
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
+        modes
         """
-        Populate ``${split}_data``, ``${split}_loader`` and \
-        ``num_${split}_data`` for different data splits, and setup init var \
-        in ctx.
-        """
-        self.setup_data(ctx)
         init_dict = dict()
-        if isinstance(ctx.data, dict):
+        if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
                 init_dict["{}_data".format(mode)] = None
                 init_dict["{}_loader".format(mode)] = None
                 init_dict["num_{}_data".format(mode)] = 0
-                if ctx.data.get(mode, None) is not None:
-                    if isinstance(ctx.data.get(mode),
-                                  NeighborSampler) or isinstance(
-                                      ctx.data.get(mode),
-                                      GraphSAINTRandomWalkSampler):
+                if data.get(mode, None) is not None:
+                    if isinstance(
+                            data.get(mode), NeighborSampler) or isinstance(
+                                data.get(mode), GraphSAINTRandomWalkSampler):
                         if mode == 'train':
-                            init_dict["{}_loader".format(mode)] = ctx.data.get(
+                            init_dict["{}_loader".format(mode)] = data.get(
                                 mode)
                             init_dict["num_{}_data".format(mode)] = len(
-                                ctx.data.get(mode).dataset)
+                                data.get(mode).dataset)
                         else:
                             # We need to pass Full Dataloader to model
                             init_dict["{}_loader".format(mode)] = [
-                                ctx.data.get(mode)
+                                data.get(mode)
                             ]
                             init_dict["num_{}_data".format(
                                 mode)] = self.cfg.dataloader.batch_size
                     else:
                         raise TypeError("Type {} is not supported.".format(
-                            type(ctx.data.get(mode))))
+                            type(data.get(mode))))
         else:
             raise TypeError("Type of data should be dict.")
-        ctx.setup_vars(init_dict)
+        return init_dict
 
     def _hook_on_epoch_start(self, ctx):
         if not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),

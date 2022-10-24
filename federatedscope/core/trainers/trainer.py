@@ -34,7 +34,7 @@ class Trainer(BaseTrainer):
         self.ctx = Context(model, self.cfg, data, device)
 
         # Parse data and setup init vars in ctx
-        self.setup_data_related_var_in_ctx(self.ctx)
+        self._setup_data_related_var_in_ctx(self.ctx)
 
         assert monitor is not None, \
             f"Monitor not found in trainer with class {type(self)}"
@@ -77,15 +77,30 @@ class Trainer(BaseTrainer):
     @cfg.setter
     def cfg(self, new_cfg):
         self._cfg = new_cfg
-        self.setup_data_related_var_in_ctx(self.ctx)
+        self._setup_data_related_var_in_ctx(self.ctx)
 
-    def setup_data_related_var_in_ctx(self, ctx):
+    def parse_data(self, data):
+        """
+        Populate ``${split}_data``, ``${split}_loader`` and \
+        ``num_${split}_data`` for different data splits
+        """
+        raise NotImplementedError
+
+    def setup_data(self, ctx):
+        """
+        Initialization data by ``cfg``.
+        """
+        pass
+
+    def _setup_data_related_var_in_ctx(self, ctx):
         """
         Populate ``${split}_data``, ``${split}_loader`` and \
         ``num_${split}_data`` for different data splits, and setup init var \
         in ctx.
         """
-        raise NotImplementedError
+        self.setup_data(ctx)
+        init_dict = self.parse_data(ctx.data)
+        ctx.merge_from_dict(init_dict)
 
     def register_default_hooks_train(self):
         pass
