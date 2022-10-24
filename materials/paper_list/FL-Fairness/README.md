@@ -80,7 +80,7 @@
  ### 2020
 | Title                                                        | Venue      | Link                                        
 | ------------------------------------------------------------ | ---------- |---------------------------------------------
-|A fairness-aware incentive scheme for federated learning| AIES ｜[pdf](https://dl.acm.org/doi/10.1145/3375627.3375840)
+|A fairness-aware incentive scheme for federated learning| AIES | [pdf](https://dl.acm.org/doi/10.1145/3375627.3375840)
 | Collaborative fairness in federated learning | Federated Learning | [pdf](https://arxiv.org/pdf/2008.12161.pdf)
 | Towards fair and privacy-preserving federated deep models | IEEE TPDS | [pdf](https://arxiv.org/pdf/1906.01167.pdf)
 
