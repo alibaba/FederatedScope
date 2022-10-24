@@ -42,7 +42,7 @@ class MFTrainer(GeneralTorchTrainer):
                                 type(data.get(mode))))
         else:
             raise TypeError("Type of data should be dict.")
-        return
+        return init_dict
 
     def _hook_on_fit_end(self, ctx):
         results = {
