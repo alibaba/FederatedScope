@@ -16,6 +16,7 @@ data:
 model:
   type: gin
   hidden: 64
+  task: graph
 personalization:
   local_param: ['encoder_atom', 'encoder', 'clf']   # to handle size-different pre & post layers
 optimizer:
