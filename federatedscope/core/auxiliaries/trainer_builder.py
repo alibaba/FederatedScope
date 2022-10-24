@@ -25,6 +25,8 @@ TRAINER_CLASS_DICT = {
     "fedvattrainer": "FedVATTrainer",
     "fedfocaltrainer": "FedFocalTrainer",
     "mftrainer": "MFTrainer",
+    "cltrainer": "CLTrainer",
+    "lptrainer": "LPTrainer",
 }
 
 
@@ -62,6 +64,8 @@ def get_trainer(model=None,
             dict_path = "federatedscope.cv.trainer.trainer"
         elif config.trainer.type.lower() in ['nlptrainer']:
             dict_path = "federatedscope.nlp.trainer.trainer"
+        elif config.trainer.type.lower() in ['cltrainer', 'lptrainer']:
+            dict_path = "federatedscope.cl.trainer.trainer"            
         elif config.trainer.type.lower() in [
                 'graphminibatch_trainer',
         ]:

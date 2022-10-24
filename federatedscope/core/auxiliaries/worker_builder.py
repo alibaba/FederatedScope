@@ -42,6 +42,9 @@ def get_client_cls(cfg):
     elif client_type == 'gcflplus':
         from federatedscope.gfl.gcflplus.worker import GCFLPlusClient
         client_class = GCFLPlusClient
+    elif client_type == 'fedgc':
+        from federatedscope.cl.fedgc.client import GlobalContrastFLClient
+        client_class = GlobalContrastFLClient
     else:
         client_class = Client
 
@@ -102,7 +105,10 @@ def get_server_cls(cfg):
         server_class = FedSagePlusServer
     elif server_type == 'gcflplus':
         from federatedscope.gfl.gcflplus.worker import GCFLPlusServer
-        server_class = GCFLPlusServer
+        return GCFLPlusServer
+    elif server_type == 'fedgc':
+        from federatedscope.cl.fedgc.server import GlobalContrastFLServer
+        return GlobalContrastFLServer
     else:
         server_class = Server
 
