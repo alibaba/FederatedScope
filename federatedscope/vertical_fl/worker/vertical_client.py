@@ -37,7 +37,7 @@ class vFLClient(Client):
         self.batch_index = None
         self.own_label = ('y' in self.data['train'])
         self.dataloader = batch_iter(self.data['train'],
-                                     self._cfg.data.batch_size,
+                                     self._cfg.dataloader.batch_size,
                                      shuffled=True)
 
         self.register_handlers('public_keys',

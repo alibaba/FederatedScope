@@ -9,7 +9,7 @@ class LDASplitter(BaseSplitter):
         self.alpha = alpha
         super(LDASplitter, self).__init__(client_num)
 
-    def __call__(self, dataset, prior=None):
+    def __call__(self, dataset, prior=None, **kwargs):
         dataset = [ds for ds in dataset]
         label = np.array([y for x, y in dataset])
         idx_slice = dirichlet_distribution_noniid_slice(label,

@@ -12,11 +12,12 @@ from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict, \
     calculate_time_cost
+from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
 
 
-class Client(Worker):
+class Client(BaseClient):
     """
     The Client class, which describes the behaviors of client in an FL course.
     The behaviors are described by the handling functions (named as
@@ -92,7 +93,6 @@ class Client(Worker):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
 
         # Register message handlers
-        self.msg_handlers = dict()
         self._register_default_handlers()
 
         # Communication and communication ability
@@ -104,8 +104,15 @@ class Client(Worker):
         else:
             self.comp_speed = None
             self.comm_bandwidth = None
-        self.model_size = sys.getsizeof(pickle.dumps(
-            self.model)) / 1024.0 * 8.  # kbits
+
+        if self._cfg.backend == 'torch':
+            self.model_size = sys.getsizeof(pickle.dumps(
+                self.model)) / 1024.0 * 8.  # kbits
+        else:
+            # TODO: calculate model size for TF Model
+            self.model_size = 1.0
+            logger.warning(f'The calculation of model size in backend:'
+                           f'{self._cfg.backend} is not provided.')
 
         # Initialize communication manager
         self.server_id = server_id
@@ -160,31 +167,6 @@ class Client(Worker):
             return model_deltas
         else:
             return model_deltas[0]
-
-    def register_handlers(self, msg_type, callback_func):
-        """
-        To bind a message type with a handling function.
-
-        Arguments:
-            msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received
-            message
-        """
-        self.msg_handlers[msg_type] = callback_func
-
-    def _register_default_handlers(self):
-        self.register_handlers('assign_client_id',
-                               self.callback_funcs_for_assign_id)
-        self.register_handlers('ask_for_join_in_info',
-                               self.callback_funcs_for_join_in_info)
-        self.register_handlers('address', self.callback_funcs_for_address)
-        self.register_handlers('model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('ss_model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('evaluate', self.callback_funcs_for_evaluate)
-        self.register_handlers('finish', self.callback_funcs_for_finish)
-        self.register_handlers('converged', self.callback_funcs_for_converged)
 
     def join_in(self):
         """
@@ -407,14 +389,13 @@ class Client(Worker):
             if requirement.lower() == 'num_sample':
                 if self._cfg.train.batch_or_epoch == 'batch':
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self._cfg.data.batch_size
+                                 self._cfg.dataloader.batch_size
                 else:
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self.trainer.ctx.num_train_batch
+                                 len(self.data['train'])
                 join_in_info['num_sample'] = num_sample
                 if self._cfg.trainer.type == 'nodefullbatch_trainer':
-                    join_in_info['num_sample'] = \
-                        self.trainer.ctx.data.x.shape[0]
+                    join_in_info['num_sample'] = self.data['data'].x.shape[0]
             elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \

@@ -32,13 +32,14 @@ if __name__ == '__main__':
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file
-    client_cfg = CfgNode.load_cfg(open(args.client_cfg_file,
-                                       'r')) if args.client_cfg_file else None
+    client_cfgs = CfgNode.load_cfg(open(args.client_cfg_file,
+                                        'r')) if args.client_cfg_file else None
 
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global
     # cfg object
-    data, modified_cfg = get_data(config=init_cfg.clone())
+    data, modified_cfg = get_data(config=init_cfg.clone(),
+                                  client_cfgs=client_cfgs)
     init_cfg.merge_from_other_cfg(modified_cfg)
 
     init_cfg.freeze()
@@ -47,5 +48,5 @@ if __name__ == '__main__':
                        server_class=get_server_cls(init_cfg),
                        client_class=get_client_cls(init_cfg),
                        config=init_cfg.clone(),
-                       client_config=client_cfg)
+                       client_configs=client_cfgs)
     _ = runner.run()

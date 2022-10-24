@@ -17,12 +17,12 @@ data:
   type: CIFAR10@torchvision
   args: [{'download': True}]
   splits: [0.8,0.2,0.2]
-  batch_size: 10
   subsample: 0.2
-  num_workers: 0
   transform: [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.247, 0.243, 0.261]}]]
   splitter: 'lda'
   splitter_args: [{'alpha': 0.2}]
+dataloader:
+  batch_size: 10
 model:
   type: convnet2
   hidden: 512

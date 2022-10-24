@@ -9,9 +9,7 @@ federate:
 data:
   root: data/
   type: shakespeare
-  batch_size: 64
   subsample: 0.2
-  num_workers: 0
   splits: [0.6,0.2,0.2]
 model:
   type: lstm

@@ -99,8 +99,8 @@ def init_Ditto_ctx(base_trainer):
         calculate_batch_epoch_num(cfg_p_local_update_steps,
                                   cfg.train.batch_or_epoch,
                                   ctx.num_train_data,
-                                  cfg.data.batch_size,
-                                  cfg.data.drop_last)
+                                  cfg.dataloader.batch_size,
+                                  cfg.dataloader.drop_last)
 
     # In the first
     # 1. `num_train_batch` and `num_train_batch_last_epoch`
