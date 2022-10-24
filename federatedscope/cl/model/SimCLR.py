@@ -98,8 +98,6 @@ def create_backbone(name, num_classes=10, block='BasicBlock'):
         net = ResNet18(num_classes=num_classes, block=block)
     elif(name == 'res34'):
         net = ResNet34(num_classes=num_classes, block=block)
-    elif(name == 'res56'):
-        net = ResNet56(num_classes=num_classes, block=block)
 
     return net
 
