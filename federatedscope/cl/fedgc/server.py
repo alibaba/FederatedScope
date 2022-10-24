@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 class GlobalContrastFLServer(Server):
     r"""
-    GlobalContrastFL(Fedgc) Server contain two part in training: Fedavg aggragator 
-    for client model weight and calculate global loss from all sampled client embedding
-    then broadcast all client to train model.
+    GlobalContrastFL(Fedgc) Server contain two part in training: Fedavg
+    aggragator for client model weight and calculate global loss from
+    all sampled client embedding then broadcast all client to train model.
     """
     def __init__(self,
                  ID=-1,
@@ -71,14 +71,14 @@ class GlobalContrastFLServer(Server):
 
                 global_loss_fn = global_NT_xentloss(device=self.device)
                 for client_id in train_msg_buffer:
-                    z1, z2 = self.seqs_embedding[client_id][0], self.seqs_embedding[client_id][1]
+                    z1 = self.seqs_embedding[client_id][0]
+                    z2 = self.seqs_embedding[client_id][1]
                     others_z2 = [self.seqs_embedding[other_client_id][1] 
-                                 for other_client_id in train_msg_buffer 
-                                 if other_client_id != client_id]
-#                         print("start cal loss")
+                                for other_client_id in train_msg_buffer 
+                                if other_client_id != client_id]
                     self.loss_list[client_id] = global_loss_fn(z1, z2, others_z2)
-                    logger.info(f'client {client_id} global_loss:{self.loss_list[client_id]}')
-#                         print("end cal loss")
+                    logger.info(f'client {client_id}' 
+                                f'global_loss:{self.loss_list[client_id]}')
 
             self.state += 1
             if self.state <= self.total_round_num:
@@ -89,7 +89,6 @@ class GlobalContrastFLServer(Server):
                         'global_loss': self.loss_list[client_id],
                     }
 
-                    # Send loss to Clients
                     self.comm_manager.send(
                         Message(msg_type='global_loss',
                                 sender=self.ID,
@@ -128,7 +127,6 @@ class GlobalContrastFLServer(Server):
             if not check_eval_result:
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
-
                 
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
                         self.total_round_num:
