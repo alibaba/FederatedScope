@@ -255,8 +255,7 @@ class Context(LifecycleDict):
                     self.get(f'num_{self.cur_split}_data'),
                     self.cfg.dataloader.batch_size,
                     self.cfg.dataloader.drop_last)
-        else:
-            # mode in ['val', 'test']
+        elif mode in ['val', 'test']:
             num_epoch = 1
             num_batch = self.get(f'num_{self.cur_split}_data'
                                  ) // self.cfg.dataloader.batch_size + int(
@@ -264,6 +263,8 @@ class Context(LifecycleDict):
                                      and bool(
                                          self.get(f'num_{self.cur_split}_data')
                                          % self.cfg.dataloader.batch_size))
+        else:
+            raise ValueError(f'Invalid mode {mode}.')
 
         return num_batch, num_batch_last_epoch, num_epoch, num_total_batch
 

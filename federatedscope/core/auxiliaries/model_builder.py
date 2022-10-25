@@ -57,12 +57,19 @@ def get_shape_from_data(data, model_config, backend='torch'):
             key_representative = keys[0]
             logger.warning(f'We chose the key {key_representative} as the '
                            f'representative key to extract data shape.')
-
         data_representative = data[key_representative]
     else:
         # Handle the data with non-dict format
         data_representative = data
-    if backend == 'torch':
+
+    if isinstance(data_representative, dict):
+        if 'x' in data_representative:
+            shape = data_representative['x'].shape
+            if len(shape) == 1:  # (batch, ) = (batch, 1)
+                return 1
+            else:
+                return shape
+    elif backend == 'torch':
         import torch
         if issubclass(type(data_representative), torch.utils.data.DataLoader):
             x, _ = next(iter(data_representative))
