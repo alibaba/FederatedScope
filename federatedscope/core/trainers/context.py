@@ -174,6 +174,8 @@ class Context(LifecycleDict):
         Returns:
             num_train_batch
         """
+        if self.get('num_train_batch'):
+            return self.get('num_train_batch')
         return self._calculate_batch_epoch_num(mode='train')[0]
 
     @property
@@ -181,8 +183,10 @@ class Context(LifecycleDict):
         """
         Train related property, query from `cfg`.
         Returns:
-            num_train_batch
+            num_train_batch_last_epoch
         """
+        if self.get('num_train_batch_last_epoch'):
+            return self.get('num_train_batch_last_epoch')
         return self._calculate_batch_epoch_num(mode='train')[1]
 
     @property
@@ -190,8 +194,10 @@ class Context(LifecycleDict):
         """
         Train related property, query from `cfg`.
         Returns:
-            num_train_batch
+            num_train_epoch
         """
+        if self.get('num_train_epoch'):
+            return self.get('num_train_epoch')
         return self._calculate_batch_epoch_num(mode='train')[2]
 
     @property
@@ -201,6 +207,8 @@ class Context(LifecycleDict):
         Returns:
             num_total_train_batch
         """
+        if self.get('num_total_train_batch'):
+            return self.get('num_total_train_batch')
         return self._calculate_batch_epoch_num(mode='train')[3]
 
     # Val related property, query from `cfg`
@@ -211,6 +219,8 @@ class Context(LifecycleDict):
         Returns:
             num_val_batch
         """
+        if self.get('num_val_batch'):
+            return self.get('num_val_batch')
         return self._calculate_batch_epoch_num(mode='val')[0]
 
     @property
@@ -220,6 +230,8 @@ class Context(LifecycleDict):
         Returns:
             num_val_epoch
         """
+        if self.get('num_val_epoch'):
+            return self.get('num_val_epoch')
         return self._calculate_batch_epoch_num(mode='val')[2]
 
     # Test related property, query from `cfg`
@@ -230,6 +242,8 @@ class Context(LifecycleDict):
         Returns:
             num_test_batch
         """
+        if self.get('num_test_batch'):
+            return self.get('num_test_batch')
         return self._calculate_batch_epoch_num(mode='test')[0]
 
     @property
@@ -239,13 +253,22 @@ class Context(LifecycleDict):
         Returns:
             num_test_epoch
         """
+        if self.get('num_test_epoch'):
+            return self.get('num_test_epoch')
         return self._calculate_batch_epoch_num(mode='test')[2]
 
     def _calculate_batch_epoch_num(self, mode='train'):
         if self.cur_mode is not None and self.cur_mode != mode:
             logger.warning(
                 f'cur_mode `{self.cur_mode}` mismatch mode `{mode}`, '
-                f'will use `{mode}`.')
+                f'will use `{mode}` to calculate `ctx.var`.')
+        if self.cur_split is None:
+            logger.warning(
+                f'cur_split `{self.cur_split}` not found in data_split, '
+                f'will use `train` split to calculate `ctx.var`.')
+            cur_split = 'train'
+        else:
+            cur_split = self.cur_split
 
         num_batch_last_epoch, num_total_batch = None, None
         if mode in ['train', 'finetune']:
@@ -253,17 +276,17 @@ class Context(LifecycleDict):
                 calculate_batch_epoch_num(
                     self.cfg.train.local_update_steps,
                     self.cfg.train.batch_or_epoch,
-                    self.get(f'num_{self.cur_split}_data'),
+                    self.get(f'num_{cur_split}_data'),
                     self.cfg.dataloader.batch_size,
                     self.cfg.dataloader.drop_last)
         elif mode in ['val', 'test']:
             num_epoch = 1
-            num_batch = self.get(f'num_{self.cur_split}_data'
+            num_batch = self.get(f'num_{cur_split}_data'
                                  ) // self.cfg.dataloader.batch_size + int(
                                      not self.cfg.dataloader.drop_last
                                      and bool(
-                                         self.get(f'num_{self.cur_split}_data')
-                                         % self.cfg.dataloader.batch_size))
+                                         self.get(f'num_{cur_split}_data') %
+                                         self.cfg.dataloader.batch_size))
         else:
             raise ValueError(f'Invalid mode {mode}.')
 
