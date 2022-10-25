@@ -38,8 +38,9 @@ def load_dataset(config):
         dataset, modified_config = load_quadratic_dataset(config)
     elif config.data.type.lower() in ['femnist', 'celeba']:
         from federatedscope.cv.dataloader import load_cv_dataset
+        dataset, modified_config = load_cv_dataset(config)
     elif config.data.type.lower() in ['cifar4cl', 'cifar4lp']:
-        from federatedscope.cl.dataloader import load_cifar_dataset
+        from federatedscope.cl.dataloader import load_cifar_dataset_for_contrast_learning
         dataset, modified_config = load_cv_dataset(config)
     elif config.data.type.lower() in [
             'shakespeare', 'twitter', 'subreddit', 'synthetic'

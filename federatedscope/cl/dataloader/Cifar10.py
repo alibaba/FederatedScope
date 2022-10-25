@@ -183,7 +183,7 @@ def Cifar4LP(config):
     return data_dict, config
 
 
-def load_cifar_dataset(config):
+def load_cifar_dataset_for_contrast_learning(config):
     if config.data.type == "Cifar4CL":
         data, modified_config = Cifar4CL(config)
         return data, modified_config
