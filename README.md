@@ -7,10 +7,9 @@
 [![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
 [![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
 [![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
+![Github Repo Size](https://img.shields.io/github/repo-size/alibaba/FederatedScope)
 
-![Github Repo Size](https://img.shields.io/github/repo-size/alibaba/FederatedScope?style=for-the-badge&color=aqua)
-
-FederatedScope is a **comprehensive federated learning platform** that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on an event-driven architecture, it integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and **aims to build up an easy-to-use platform** for promoting learning safely and effectively.
+FederatedScope is a comprehensive federated learning platform that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on an event-driven architecture, it integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
 A [detailed tutorial](https://federatedscope.io/) is provided on our website.
 
@@ -21,7 +20,7 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 |--|--|--|--|--|--|
 | [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
 
-<details><summary><h2> News 😎 </h2></summary>
+<details><summary><h2> News </h2></summary>
 
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [10-05-2022] Our benchmark paper for personalized FL, [pFL-Bench](https://arxiv.org/abs/2206.03655) has been accepted by NeurIPS'22, Dataset and Benchmark Track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
