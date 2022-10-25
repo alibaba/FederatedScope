@@ -36,26 +36,23 @@ class GlobalContrastFLServer(Server):
             idx: ()
             for idx in range(1, self._cfg.federate.client_num + 1)
         }
-        self.loss_list = {
+        self.loss_list= {
             idx: 0
             for idx in range(1, self._cfg.federate.client_num + 1)
         }
-
+    
     def _register_default_handlers(self):
         self.register_handlers('join_in', self.callback_funcs_for_join_in)
         self.register_handlers('join_in_info', self.callback_funcs_for_join_in)
         self.register_handlers('model_para', self.callback_funcs_model_para)
         self.register_handlers('metrics', self.callback_funcs_for_metrics)
-        self.register_handlers('pred_embedding',
-                               self.callback_funcs_global_loss)
-
+        self.register_handlers('pred_embedding', self.callback_funcs_global_loss)
+    
     def check_and_move_on_for_global_loss(self):
 
         minimal_number = self.sample_client_num
 
-        if self.check_buffer(self.state,
-                             minimal_number,
-                             check_eval_result=False):
+        if self.check_buffer(self.state, minimal_number, check_eval_result=False):
 
             # Receiving enough feedback in the training process
 
@@ -76,14 +73,11 @@ class GlobalContrastFLServer(Server):
                 for client_id in train_msg_buffer:
                     z1 = self.seqs_embedding[client_id][0]
                     z2 = self.seqs_embedding[client_id][1]
-                    others_z2 = [
-                        self.seqs_embedding[other_client_id][1]
-                        for other_client_id in train_msg_buffer
-                        if other_client_id != client_id
-                    ]
-                    self.loss_list[client_id] = global_loss_fn(
-                        z1, z2, others_z2)
-                    logger.info(f'client {client_id}'
+                    others_z2 = [self.seqs_embedding[other_client_id][1] 
+                                for other_client_id in train_msg_buffer 
+                                if other_client_id != client_id]
+                    self.loss_list[client_id] = global_loss_fn(z1, z2, others_z2)
+                    logger.info(f'client {client_id}' 
                                 f'global_loss:{self.loss_list[client_id]}')
 
             self.state += 1
@@ -101,7 +95,7 @@ class GlobalContrastFLServer(Server):
                                 receiver=[client_id],
                                 state=self.state,
                                 content=msg_list))
-
+                    
     def check_and_move_on(self,
                           check_eval_result=False,
                           min_received_num=None):
@@ -133,7 +127,7 @@ class GlobalContrastFLServer(Server):
             if not check_eval_result:
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
-
+                
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
                         self.total_round_num:
                     #  Evaluate
@@ -165,8 +159,8 @@ class GlobalContrastFLServer(Server):
         else:
             move_on_flag = False
 
-        return move_on_flag
-
+        return move_on_flag            
+    
     def callback_funcs_global_loss(self, message: Message):
         """
         The handling function for receiving model embeddings, which triggers
@@ -203,7 +197,7 @@ class GlobalContrastFLServer(Server):
         move_on_flag = self.check_and_move_on_for_global_loss()
 
         return move_on_flag
-
+    
     def callback_funcs_model_para(self, message: Message):
         """
         The handling function for receiving model parameters, which triggers
