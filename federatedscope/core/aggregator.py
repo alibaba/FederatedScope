@@ -109,14 +109,14 @@ class NoCommunicationAggregator(ClientsAvgAggregator):
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(NoCommunicationAggregator, self).__init__(model, device, config)
-        
+
     def aggregate(self, agg_info):
         # do nothing
         return {}
-    
+
     def update(self, model_parameters):
         pass
-    
+
     def save_model(self, path, cur_round=-1):
         assert self.model is not None
 
@@ -132,7 +132,7 @@ class NoCommunicationAggregator(ClientsAvgAggregator):
             return ckpt['cur_round']
         else:
             raise ValueError("The file {} does NOT exist".format(path))
-    
+
     def _para_weighted_avg(self, models, recover_fun=None):
         pass
 

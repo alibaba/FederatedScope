@@ -65,7 +65,7 @@ def get_trainer(model=None,
         elif config.trainer.type.lower() in ['nlptrainer']:
             dict_path = "federatedscope.nlp.trainer.trainer"
         elif config.trainer.type.lower() in ['cltrainer', 'lptrainer']:
-            dict_path = "federatedscope.cl.trainer.trainer"            
+            dict_path = "federatedscope.cl.trainer.trainer"
         elif config.trainer.type.lower() in [
                 'graphminibatch_trainer',
         ]:

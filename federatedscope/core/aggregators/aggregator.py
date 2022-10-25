@@ -20,7 +20,7 @@ class NoCommunicationAggregator(Aggregator):
         self.model = model
         self.device = device
         self.cfg = config
-        
+
     def update(self, model_parameters):
         '''
         Arguments:
@@ -43,7 +43,7 @@ class NoCommunicationAggregator(Aggregator):
             return ckpt['cur_round']
         else:
             raise ValueError("The file {} does NOT exist".format(path))
-            
+
     def aggregate(self, agg_info):
         # do nothing
         return {}
