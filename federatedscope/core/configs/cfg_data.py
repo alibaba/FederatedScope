@@ -55,6 +55,17 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.min_curv = 0.02
     cfg.data.quadratic.max_curv = 12.5
 
+    # fednlp
+    cfg.data.datasets = ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
+    cfg.data.num_grouped_clients = [1, 3, 3, 2, 5, 4]
+    cfg.data.max_seq_len = 384
+    cfg.data.max_tgt_len = 128
+    cfg.data.max_query_len = 128
+    cfg.data.trunc_stride = 128
+    cfg.data.cache_dir = ''
+    cfg.data.num_contrast = 0
+    cfg.data.debug = False
+
     # --------------- outdated configs ---------------
     # TODO: delete this code block
     cfg.data.loader = ''

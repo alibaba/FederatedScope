@@ -1,8 +1,6 @@
 import logging
-
-import numpy as np
-
 import federatedscope.register as register
+from federatedscope.nlp.model import *
 
 logger = logging.getLogger(__name__)
 

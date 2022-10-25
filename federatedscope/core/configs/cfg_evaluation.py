@@ -22,6 +22,10 @@ def extend_evaluation_cfg(cfg):
 
     cfg.eval.count_flops = True
 
+    # fednlp
+    cfg.eval.result_path = ''
+    cfg.eval.temp_dir = ''
+
     # ---------------------------------------------------------------------- #
     # wandb related options
     # ---------------------------------------------------------------------- #
