@@ -68,10 +68,10 @@ class Context(LifecycleDict):
         wrap the variable with ``CtxVar`` and a lifecycle parameter \
         as follows
         ```
-        ctx.${NAME_VARIABLE} = CtxVar(${VALUE_VARIABLE}, ${LFECYCLE})
+        ctx.${NAME_VARIABLE} = CtxVar(${VALUE_VARIABLE}, ${LIFECYCLE})
         ```
-        The parameter ``${LFECYCLE}`` can be chosen from ``LIFECYCLE.BATCH``, \
-        ``LIFECYCLE.EPOCH`` and ``LIFECYCLE.ROUTINE``. \
+        The parameter ``${LIFECYCLE}`` can be chosen from \
+        ``LIFECYCLE.BATCH``, ``LIFECYCLE.EPOCH`` and ``LIFECYCLE.ROUTINE``. \
         Then the variable ``ctx.${NAME_VARIABLE}`` will be deleted at \
         the end of the corresponding stage
             - ``LIFECYCLE.BATCH``: the variables will \
@@ -122,7 +122,7 @@ class Context(LifecycleDict):
           - ``ctx.y_prob``: output of the model with batch data as input
           - ``ctx.ys_true``: true label of data
           - ``ctx.ys_prob``: output of the model
-          - ``ctx.eval_metrics``: evaluation metrics caculated by \
+          - ``ctx.eval_metrics``: evaluation metrics calculated by \
           ``ctx.monitor``
           - ``ctx.monitor``: used for monitor trainer's behavior and statistics
         Other (statistics) attributes (@property, query from ``cfg`` if not \
@@ -316,10 +316,10 @@ class CtxVar(object):
         lifecycle: specific lifecycle of the attribute
     """
 
-    LIEFTCYCLES = ["batch", "epoch", "routine", None]
+    LIFECYCLES = ["batch", "epoch", "routine", None]
 
     def __init__(self, obj, lifecycle=None):
-        assert lifecycle in CtxVar.LIEFTCYCLES
+        assert lifecycle in CtxVar.LIFECYCLES
         self.obj = obj
         self.lifecycle = lifecycle
 

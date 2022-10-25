@@ -100,7 +100,7 @@ The `Context` class (a subclass of `dict`) is used to hold learning-related attr
   * `ctx.y_prob`: output of the model with batch data as input
   * `ctx.ys_true`: true label of data
   * `ctx.ys_prob`: output of the model
-  * `ctx.eval_metrics`: evaluation metrics caculated by `Monitor`
+  * `ctx.eval_metrics`: evaluation metrics calculated by `Monitor`
   * `ctx.monitor`: used for monitor trainer's behavior and statistics
 * Other (statistics) attributes (@property, query from ``cfg`` if not set)
   * `ctx.cfg`: configuration of FL course, see [link](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/core/configs) for details
