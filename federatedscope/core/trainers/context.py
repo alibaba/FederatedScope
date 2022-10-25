@@ -124,10 +124,11 @@ class Context(LifecycleDict):
           - ``ctx.ys_prob``: output of the model
           - ``ctx.eval_metrics``: evaluation metrics caculated by \
           ``ctx.monitor``
-        Other (statistics) attributes
+          - ``ctx.monitor``: used for monitor trainer's behavior and statistics
+        Other (statistics) attributes (@property, query from ``cfg`` if not \
+        set)
           - ``ctx.cfg``: configuration of FL course
           - ``ctx.device``: current device, such as ``cpu`` and ``gpu0``.
-          - ``ctx.monitor``: used for monitor trainer's behavior and statistics
           - ``ctx.num_train_batch_last_epoch``, \
           ``ctx.num_total_train_batch``: the number of batch
           - ``ctx.num_train_epoch``, ``ctx.num_val_epoch``, \
