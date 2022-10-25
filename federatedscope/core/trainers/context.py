@@ -167,92 +167,53 @@ class Context(LifecycleDict):
             self.optimizer = None
             self.grad_clip = None
 
+    # Train related property, query from `cfg` if not set
     @property
     def num_train_batch(self):
-        """
-        Train related property, query from `cfg`.
-        Returns:
-            num_train_batch
-        """
         if self.get('num_train_batch'):
             return self.get('num_train_batch')
         return self._calculate_batch_epoch_num(mode='train')[0]
 
     @property
     def num_train_batch_last_epoch(self):
-        """
-        Train related property, query from `cfg`.
-        Returns:
-            num_train_batch_last_epoch
-        """
         if self.get('num_train_batch_last_epoch'):
             return self.get('num_train_batch_last_epoch')
         return self._calculate_batch_epoch_num(mode='train')[1]
 
     @property
     def num_train_epoch(self):
-        """
-        Train related property, query from `cfg`.
-        Returns:
-            num_train_epoch
-        """
         if self.get('num_train_epoch'):
             return self.get('num_train_epoch')
         return self._calculate_batch_epoch_num(mode='train')[2]
 
     @property
     def num_total_train_batch(self):
-        """
-        Train related property, query from `cfg`.
-        Returns:
-            num_total_train_batch
-        """
         if self.get('num_total_train_batch'):
             return self.get('num_total_train_batch')
         return self._calculate_batch_epoch_num(mode='train')[3]
 
-    # Val related property, query from `cfg`
+    # Val related property, query from `cfg` if not set
     @property
     def num_val_batch(self):
-        """
-        Val related property, query from `cfg`.
-        Returns:
-            num_val_batch
-        """
         if self.get('num_val_batch'):
             return self.get('num_val_batch')
         return self._calculate_batch_epoch_num(mode='val')[0]
 
     @property
     def num_val_epoch(self):
-        """
-        Val related property, query from `cfg`.
-        Returns:
-            num_val_epoch
-        """
         if self.get('num_val_epoch'):
             return self.get('num_val_epoch')
         return self._calculate_batch_epoch_num(mode='val')[2]
 
-    # Test related property, query from `cfg`
+    # Test related property, query from `cfg` if not set
     @property
     def num_test_batch(self):
-        """
-        Test related property, query from `cfg`.
-        Returns:
-            num_test_batch
-        """
         if self.get('num_test_batch'):
             return self.get('num_test_batch')
         return self._calculate_batch_epoch_num(mode='test')[0]
 
     @property
     def num_test_epoch(self):
-        """
-        Train related property, query from `cfg`.
-        Returns:
-            num_test_epoch
-        """
         if self.get('num_test_epoch'):
             return self.get('num_test_epoch')
         return self._calculate_batch_epoch_num(mode='test')[2]
