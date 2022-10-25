@@ -68,7 +68,7 @@ FederatedScope
 └── setup.py
 ```
 
-<details><summary><h2> Quick Start </h2></summary>
+## Quick Start 
 
 We provide an end-to-end example for users to start running a standard FL course with FederatedScope.
 
