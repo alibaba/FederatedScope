@@ -8,7 +8,7 @@ conda install -y nltk
 # Speech and NLP
 conda install -y sentencepiece textgrid typeguard -c conda-forge
 conda install -y transformers==4.16.2 tokenizers==0.10.3 datasets -c huggingface -c conda-forge
-conda install -y torchtext -c pytorch
+conda install -y torchtext==0.9.0 -c pytorch
 
 # Tabular
 conda install -y openml==0.12.2

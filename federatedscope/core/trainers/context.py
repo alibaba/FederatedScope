@@ -243,8 +243,9 @@ class Context(LifecycleDict):
 
     def _calculate_batch_epoch_num(self, mode='train'):
         if self.cur_mode is not None and self.cur_mode != mode:
-            logger.warning(f'cur_mode {self.cur_mode} mismatch mode {mode}, '
-                           f'will use {mode}.')
+            logger.warning(
+                f'cur_mode `{self.cur_mode}` mismatch mode `{mode}`, '
+                f'will use `{mode}`.')
 
         num_batch_last_epoch, num_total_batch = None, None
         if mode in ['train', 'finetune']:
@@ -307,7 +308,7 @@ class Context(LifecycleDict):
                 logger.warning(
                     f"No {target_split_name}_data or"
                     f" {target_split_name}_loader in the trainer, "
-                    f"will skip evaluation"
+                    f"will skip evaluation."
                     f"If this is not the case you want, please check "
                     f"whether there is typo for the name")
                 return False
