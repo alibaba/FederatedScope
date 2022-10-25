@@ -127,7 +127,8 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.loss_batch``                  Multiply by \
+            ``weights_internal_models``
             ==================================  ===========================
         """
         # for only train
@@ -140,7 +141,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.all_losses_model_batch``      Gather loss
             ==================================  ===========================
         """
         # for only eval
@@ -156,7 +157,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.mode``                        Evaluate
             ==================================  ===========================
         """
         # for only train
@@ -165,7 +166,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             pass
         else:
             # gathers losses for all sample in iterator
-            # for each internal model, calling *evaluate()*
+            # for each internal model, calling `evaluate()`
             for model_idx in range(self.model_nums):
                 self._switch_model_ctx(model_idx)
                 self.evaluate(target_data_split_name="train")
@@ -186,7 +187,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.monitor``                     Count total_flops
             ==================================  ===========================
         """
         self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * \
@@ -199,7 +200,7 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.monitor``                     Count total_flops
             ==================================  ===========================
         """
         self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * \
@@ -214,7 +215,11 @@ class FedEMTrainer(GeneralMultiModelTrainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.optimizer_for_global_model``  False
+            ``ctx.ys_prob_ensemble``            Ensemble ys_prob
+            ``ctx.ys_true``                     Concatenate results
+            ``ctx.ys_prob``                     Concatenate results
+            ``ctx.eval_metrics``                Get evaluated results from \
+            ``ctx.monitor``
             ==================================  ===========================
         """
         if ctx.get("ys_prob_ensemble", None) is None:
