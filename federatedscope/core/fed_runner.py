@@ -176,7 +176,6 @@ class BaseRunner(object):
         client_device = self._server_device if \
             self.cfg.federate.share_local_model else \
             self.gpu_manager.auto_choice()
-        print(client_model, type(client_model))
         client = self.client_class(ID=client_id,
                                    server_id=self.server_id,
                                    config=client_specific_config,
