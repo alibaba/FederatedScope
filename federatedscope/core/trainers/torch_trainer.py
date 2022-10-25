@@ -39,6 +39,7 @@ class GeneralTorchTrainer(Trainer):
         if isinstance(ctx.data, ClientData):
             ctx.data.setup(ctx.cfg)
         else:
+            print(type(ctx.data))
             logger.warning(f'The data type should be `ClientData` to '
                            f'enable new `config`, but got '
                            f'{type(self.data)} instead.')

@@ -581,9 +581,9 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                   torch.utils.data.DataLoader):
         if isinstance(all_data[id_contain_all_dataset_key][data_name].dataset,
                       WrapDataset):
-            data_elem_names = list(all_data[id_contain_all_dataset_key]
-                                   [data_name].dataset.dataset.keys())  #
             # e.g., x, y
+            data_elem_names = list(all_data[id_contain_all_dataset_key]
+                                   [data_name].dataset.dataset.keys())
             merged_data = {name: defaultdict(list) for name in dataset_names}
             for data_id in range(1, merged_max_data_id + 1):
                 for d_name in dataset_names:
@@ -597,9 +597,7 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                 for elem_name in data_elem_names:
                     merged_data[d_name][elem_name] = np.concatenate(
                         merged_data[d_name][elem_name])
-            for name in all_data[id_contain_all_dataset_key]:
-                all_data[id_contain_all_dataset_key][
-                    name].dataset.dataset = merged_data[name]
+                merged_data[d_name] = WrapDataset(merged_data[d_name])
         else:
             merged_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
             for data_id in range(1, merged_max_data_id + 1):

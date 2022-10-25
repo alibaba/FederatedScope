@@ -1,8 +1,7 @@
 import logging
 
-import numpy as np
-
 import federatedscope.register as register
+from federatedscope.core.data.wrap_dataset import WrapDataset
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +62,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
     else:
         # Handle the data with non-dict format
         data_representative = data
-
-    if isinstance(data_representative, dict):
-        if 'x' in data_representative:
-            shape = data_representative['x'].shape
-            if len(shape) == 1:  # (batch, ) = (batch, 1)
-                return 1
-            else:
-                return shape
-    elif backend == 'torch':
+    if backend == 'torch':
         import torch
         if issubclass(type(data_representative), torch.utils.data.DataLoader):
             x, _ = next(iter(data_representative))

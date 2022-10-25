@@ -59,7 +59,7 @@ class StandaloneDataDict(dict):
                 merged_max_data_id=self.global_cfg.federate.client_num,
                 specified_dataset_name=['test'])
             # `0` indicate Server
-            datadict[0] = server_data
+            datadict[0] = ClientData(self.global_cfg, **server_data)
 
         if self.global_cfg.federate.method == "global":
             if self.global_cfg.federate.client_num != 1:
@@ -73,9 +73,10 @@ class StandaloneDataDict(dict):
                 else:
                     logger.info(f"Will merge data from clients whose ids in "
                                 f"[1, {self.global_cfg.federate.client_num}]")
-                    datadict[1] = merge_data(
+                    merged_data = merge_data(
                         all_data=datadict,
                         merged_max_data_id=self.global_cfg.federate.client_num)
+                    datadict[1] = ClientData(self.global_cfg, **merged_data)
         datadict = self.attack(datadict)
         return datadict
 

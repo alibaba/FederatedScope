@@ -174,7 +174,7 @@ class Context(LifecycleDict):
         Returns:
             num_train_batch
         """
-        return self._calculate_batch_epoch_num()[0]
+        return self._calculate_batch_epoch_num(mode='train')[0]
 
     @property
     def num_train_batch_last_epoch(self):
@@ -183,7 +183,7 @@ class Context(LifecycleDict):
         Returns:
             num_train_batch
         """
-        return self._calculate_batch_epoch_num()[1]
+        return self._calculate_batch_epoch_num(mode='train')[1]
 
     @property
     def num_train_epoch(self):
@@ -192,7 +192,7 @@ class Context(LifecycleDict):
         Returns:
             num_train_batch
         """
-        return self._calculate_batch_epoch_num()[2]
+        return self._calculate_batch_epoch_num(mode='train')[2]
 
     @property
     def num_total_train_batch(self):
@@ -201,7 +201,7 @@ class Context(LifecycleDict):
         Returns:
             num_total_train_batch
         """
-        return self._calculate_batch_epoch_num()[3]
+        return self._calculate_batch_epoch_num(mode='train')[3]
 
     # Val related property, query from `cfg`
     @property
@@ -211,7 +211,7 @@ class Context(LifecycleDict):
         Returns:
             num_val_batch
         """
-        return self._calculate_batch_epoch_num()[0]
+        return self._calculate_batch_epoch_num(mode='val')[0]
 
     @property
     def num_val_epoch(self):
@@ -220,7 +220,7 @@ class Context(LifecycleDict):
         Returns:
             num_val_epoch
         """
-        return self._calculate_batch_epoch_num()[2]
+        return self._calculate_batch_epoch_num(mode='val')[2]
 
     # Test related property, query from `cfg`
     @property
@@ -230,7 +230,7 @@ class Context(LifecycleDict):
         Returns:
             num_test_batch
         """
-        return self._calculate_batch_epoch_num()[0]
+        return self._calculate_batch_epoch_num(mode='test')[0]
 
     @property
     def num_test_epoch(self):
@@ -239,11 +239,15 @@ class Context(LifecycleDict):
         Returns:
             num_test_epoch
         """
-        return self._calculate_batch_epoch_num()[2]
+        return self._calculate_batch_epoch_num(mode='test')[2]
 
-    def _calculate_batch_epoch_num(self):
+    def _calculate_batch_epoch_num(self, mode='train'):
+        if self.cur_mode is not None and self.cur_mode != mode:
+            logger.warning(f'cur_mode {self.cur_mode} mismatch mode {mode}, '
+                           f'will use {mode}.')
+
         num_batch_last_epoch, num_total_batch = None, None
-        if self.cur_mode in ['train', 'finetune']:
+        if mode in ['train', 'finetune']:
             num_batch, num_batch_last_epoch, num_epoch, num_total_batch = \
                 calculate_batch_epoch_num(
                     self.cfg.train.local_update_steps,
@@ -251,7 +255,8 @@ class Context(LifecycleDict):
                     self.get(f'num_{self.cur_split}_data'),
                     self.cfg.dataloader.batch_size,
                     self.cfg.dataloader.drop_last)
-        elif self.cur_mode in ['val', 'test']:
+        else:
+            # mode in ['val', 'test']
             num_epoch = 1
             num_batch = self.get(f'num_{self.cur_split}_data'
                                  ) // self.cfg.dataloader.batch_size + int(
@@ -259,8 +264,6 @@ class Context(LifecycleDict):
                                      and bool(
                                          self.get(f'num_{self.cur_split}_data')
                                          % self.cfg.dataloader.batch_size))
-        else:
-            raise KeyError(f"Invalid mode {self.cur_mode}.")
 
         return num_batch, num_batch_last_epoch, num_epoch, num_total_batch
 

@@ -176,6 +176,7 @@ class BaseRunner(object):
         client_device = self._server_device if \
             self.cfg.federate.share_local_model else \
             self.gpu_manager.auto_choice()
+        print(client_model, type(client_model))
         client = self.client_class(ID=client_id,
                                    server_id=self.server_id,
                                    config=client_specific_config,
@@ -255,7 +256,6 @@ class StandaloneRunner(BaseRunner):
         self._shared_client_model = get_model(
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
-
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id,
