@@ -8,7 +8,7 @@ from datetime import datetime
 
 import numpy as np
 
-from federatedscope.core.auxiliaries.utils import logger
+logger = logging.getLogger(__name__)
 
 
 class CustomFormatter(logging.Formatter):

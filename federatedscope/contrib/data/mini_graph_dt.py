@@ -105,7 +105,7 @@ class MiniGraphDTDataset(InMemoryDataset):
                 'num_samples': 1128
             },
             'BACE': {
-                'task': 'regression',
+                'task': 'classification',
                 'input_dim': 74,
                 'output_dim': 2,
                 'num_samples': 1513
@@ -117,14 +117,14 @@ class MiniGraphDTDataset(InMemoryDataset):
                 'num_samples': 4200
             },
             'ENZYMES': {
-                'task': 'regression',
-                'input_dim': 74,
+                'task': 'classification',
+                'input_dim': 3,
                 'output_dim': 6,
                 'num_samples': 600
             },
             'PROTEINS_full': {
-                'task': 'regression',
-                'input_dim': 74,
+                'task': 'classification',
+                'input_dim': 3,
                 'output_dim': 2,
                 'num_samples': 1113
             },

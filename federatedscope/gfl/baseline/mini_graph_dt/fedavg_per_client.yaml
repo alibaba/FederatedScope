@@ -1,0 +1,45 @@
+client_1:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  train:
+    optimizer:
+      lr: 0.1
+client_2:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.01
+client_3:
+  model:
+    out_channels: 1
+    task: graphRegression
+  criterion:
+    type: MSELoss
+  train:
+    optimizer:
+      lr: 0.001
+client_4:
+  model:
+    out_channels: 6
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.01
+client_5:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    optimizer:
+      lr: 0.0001
