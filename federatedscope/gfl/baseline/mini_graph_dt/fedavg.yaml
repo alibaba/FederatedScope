@@ -10,7 +10,7 @@ federate:
   share_local_model: False
 data:
   root: data/
-  type: mini_graph_dt
+  type: mini-graph-dt
 dataloader:
   type: pyg
 model:
@@ -30,4 +30,4 @@ trainer:
 eval:
   freq: 5
   metrics: ['loss']
-  best_res_update_round_wise_key: loss
+  best_res_update_round_wise_key: val_loss

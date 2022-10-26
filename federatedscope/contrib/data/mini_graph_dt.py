@@ -10,6 +10,11 @@ from federatedscope.core.data import DummyDataTranslator
 from federatedscope.core.splitters.graph.scaffold_lda_splitter import \
     GenFeatures
 
+# Run with mini_graph_dt:
+# python federatedscope/main.py --cfg \
+# federatedscope/gfl/baseline/mini_graph_dt/fedavg.yaml --client_cfg \
+# federatedscope/gfl/baseline/mini_graph_dt/fedavg_per_client.yaml
+
 
 class MiniGraphDTDataset(InMemoryDataset):
     NAME = 'mini_graph_dt'
@@ -134,8 +139,10 @@ class MiniGraphDTDataset(InMemoryDataset):
 def load_mini_graph_dt(config, client_cfgs=None):
     dataset = MiniGraphDTDataset(config.data.root)
     # Convert to dict
-    datadict = {client_id: dataset[client_id] for client_id in len(dataset)}
-
+    datadict = {
+        client_id + 1: dataset[client_id]
+        for client_id in range(len(dataset))
+    }
     config.merge_from_list(['federate.client_num', len(dataset)])
     translator = DummyDataTranslator(config, client_cfgs)
 
@@ -148,4 +155,4 @@ def call_mini_graph_dt(config, client_cfgs):
         return data, modified_config
 
 
-register_data("mini_graph_dt", call_mini_graph_dt)
+register_data("mini-graph-dt", call_mini_graph_dt)
