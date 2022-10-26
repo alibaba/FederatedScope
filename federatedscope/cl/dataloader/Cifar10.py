@@ -78,35 +78,14 @@ def Cifar4CL(config):
 
     # Split data into dict
     data_dict = dict()
-    splitter = get_splitter(config)
-    data_train = splitter(data_train)
-    label_data_train = [[i[1] for i in list_i] for list_i in data_train]
     data_val = data_train
-    data_test = splitter(data_test, prior=label_data_train)
 
-    client_num = min(len(data_train), config.federate.client_num
-                     ) if config.federate.client_num > 0 else len(data_train)
-    config.merge_from_list(['federate.client_num', client_num])
-
-    for client_idx in range(1, client_num + 1):
-        dataloader_dict = {
-            'train': DataLoader(data_train[client_idx - 1],
-                                config.data.batch_size,
-                                shuffle=config.data.shuffle,
-                                num_workers=config.data.num_workers),
-            'val': DataLoader(data_val[client_idx - 1],
-                              config.data.batch_size,
-                              shuffle=False,
-                              num_workers=config.data.num_workers),
-            'test': DataLoader(data_test[client_idx - 1],
-                               config.data.batch_size,
-                               shuffle=False,
-                               num_workers=config.data.num_workers),
-        }
-        data_dict[client_idx] = dataloader_dict
+    data_dict = {'train': data_train, 'val': data_val, 'test': data_test}
+    data_split_tuple = (data_dict.get('train'), data_dict.get('val'),
+                        data_dict.get('test'))
 
     config = config
-    return data_dict, config
+    return data_split_tuple, config
 
 
 def Cifar4LP(config):
@@ -150,40 +129,17 @@ def Cifar4LP(config):
 
     # Split data into dict
     data_dict = dict()
+    data_val = data_train
 
-    # Splitter
-    splitter = get_splitter(config)
-    data_train = splitter(data_train)
-    label_data_train = [[i[1] for i in list_i] for list_i in data_train]
-    data_val = splitter(data_val, prior=label_data_train)
-    data_test = splitter(data_test, prior=label_data_train)
-
-    client_num = min(len(data_train), config.federate.client_num
-                     ) if config.federate.client_num > 0 else len(data_train)
-    config.merge_from_list(['federate.client_num', client_num])
-
-    for client_idx in range(1, client_num + 1):
-        dataloader_dict = {
-            'train': DataLoader(data_train[client_idx - 1],
-                                config.data.batch_size,
-                                shuffle=config.data.shuffle,
-                                num_workers=config.data.num_workers),
-            'val': DataLoader(data_val[client_idx - 1],
-                              config.data.batch_size,
-                              shuffle=False,
-                              num_workers=config.data.num_workers),
-            'test': DataLoader(data_test[client_idx - 1],
-                               config.data.batch_size,
-                               shuffle=False,
-                               num_workers=config.data.num_workers),
-        }
-        data_dict[client_idx] = dataloader_dict
+    data_dict = {'train': data_train, 'val': data_val, 'test': data_test}
+    data_split_tuple = (data_dict.get('train'), data_dict.get('val'),
+                        data_dict.get('test'))
 
     config = config
-    return data_dict, config
+    return data_split_tuple, config
 
 
-def load_cifar_dataset_for_contrast_learning(config):
+def load_cifar_dataset(config):
     if config.data.type == "Cifar4CL":
         data, modified_config = Cifar4CL(config)
         return data, modified_config

@@ -40,8 +40,8 @@ def load_dataset(config):
         from federatedscope.cv.dataloader import load_cv_dataset
         dataset, modified_config = load_cv_dataset(config)
     elif config.data.type.lower() in ['cifar4cl', 'cifar4lp']:
-        from federatedscope.cl.dataloader import load_cifar_dataset_for_contrast_learning
-        dataset, modified_config = load_cv_dataset(config)
+        from federatedscope.cl.dataloader import load_cifar_dataset
+        dataset, modified_config = load_cifar_dataset(config)
     elif config.data.type.lower() in [
             'shakespeare', 'twitter', 'subreddit', 'synthetic'
     ]:

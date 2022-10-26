@@ -21,14 +21,14 @@ except ImportError as error:
 TRANS_DATA_MAP = {
     'BaseDataTranslator': [
         '.*?@.*?', 'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace',
-        'sider', 'clintox', 'esol', 'freesolv', 'lipo'
+        'sider', 'clintox', 'esol', 'freesolv', 'lipo', 'cifar4cl', 'cifar4lp'
     ],
     'DummyDataTranslator': [
         'toy', 'quadratic', 'femnist', 'celeba', 'shakespeare', 'twitter',
         'subreddit', 'synthetic', 'ciao', 'epinions', '.*?vertical_fl_data.*?',
         '.*?movielens.*?', '.*?cikmcup.*?', 'graph_multi_domain.*?', 'cora',
         'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?', 'fb15k-237',
-        'wn18', 'cifar4cl', 'cifar4lp'
+        'wn18'
     ],  # Dummy for FL dataset
 }
 DATA_TRANS_MAP = RegexInverseMap(TRANS_DATA_MAP, None)
