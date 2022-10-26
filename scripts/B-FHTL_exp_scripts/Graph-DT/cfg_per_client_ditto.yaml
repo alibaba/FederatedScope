@@ -5,10 +5,10 @@ client_1:
   criterion:
     type: MSELoss
   optimizer:
-    lr: 0.01
+    lr: 0.05
     grad_clip: 5.0
   federate:
-    local_update_steps: 4
+    local_update_steps: 50
 client_2:
   model:
     out_channels: 1
@@ -16,9 +16,9 @@ client_2:
   criterion:
     type: MSELoss
   optimizer:
-    lr: 0.1
+    lr: 0.05
   federate:
-    local_update_steps: 2
+    local_update_steps: 20
 client_3:
   model:
     out_channels: 1
@@ -26,9 +26,9 @@ client_3:
   criterion:
     type: MSELoss
   optimizer:
-    lr: 0.1
+    lr: 0.05
   federate:
-    local_update_steps: 14
+    local_update_steps: 20
 client_4:
   model:
     out_channels: 2
@@ -36,9 +36,9 @@ client_4:
   criterion:
     type: CrossEntropyLoss
   optimizer:
-    lr: 0.01
+    lr: 0.05
   federate:
-    local_update_steps: 5
+    local_update_steps: 20
 client_5:
   model:
     out_channels: 2
@@ -48,7 +48,7 @@ client_5:
   optimizer:
     lr: 0.05
   federate:
-    local_update_steps: 7
+    local_update_steps: 20
 client_6:
   model:
     out_channels: 2
@@ -58,7 +58,7 @@ client_6:
   optimizer:
     lr: 0.05
   federate:
-    local_update_steps: 5
+    local_update_steps: 10
 client_7:
   model:
     out_channels: 2
@@ -108,7 +108,7 @@ client_11:
   optimizer:
     lr: 0.1
   federate:
-    local_update_steps: 1
+    local_update_steps: 5
 client_12:
   model:
     out_channels: 2
@@ -116,7 +116,7 @@ client_12:
   criterion:
     type: CrossEntropyLoss
   optimizer:
-    lr: 0.05
+    lr: 0.1
   federate:
     local_update_steps: 14
 client_13:
@@ -136,7 +136,7 @@ client_14:
   criterion:
     type: MSELoss
   optimizer:
-    lr: 0.05
+    lr: 0.1
   federate:
     local_update_steps: 675
 client_15:
@@ -156,6 +156,6 @@ client_16:
   criterion:
     type: MSELoss
   optimizer:
-    lr: 0.05
+    lr: 0.1
   federate:
     local_update_steps: 431

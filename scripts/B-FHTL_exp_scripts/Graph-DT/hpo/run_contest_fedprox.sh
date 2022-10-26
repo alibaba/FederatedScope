@@ -7,6 +7,7 @@ root=$2
 dataset=graph-dt
 method=fedprox
 outdir=exp_out/${method}
+datelog=$(date '+%Y-%m-%d-%H-%M-%S')
 
 if [ ! -d ${outdir} ];then
   mkdir -p ${outdir}
@@ -18,7 +19,7 @@ mus=(0.05)
 
 for (( im=0; im<${#mus[@]}; im++ ))
 do
-    log=${outdir}/gin_mu-${mus[$im]}_on_${dataset}.log
+    log=${outdir}/gin_mu-${mus[$im]}_on_${dataset}_${datelog}.log
     for k in {1..3}
     do
         python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedavg_gnn_minibatch_on_multi_task.yaml \

@@ -83,6 +83,7 @@ class GenFeatures:
 
 
 class GraphDTDataset(InMemoryDataset):
+    inmemory_data = {}
     def __init__(self, root):
         self.root = root
         super().__init__(root)
@@ -177,7 +178,7 @@ class GraphDTDataset(InMemoryDataset):
                 os.makedirs(os.path.join(self.processed_dir, str(idx)))
 
             train_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
-            test_path = os.path.join(self.processed_dir, str(idx), 'train.pt')
+            test_path = os.path.join(self.processed_dir, str(idx), 'test.pt')
             valid_path = os.path.join(self.processed_dir, str(idx), 'val.pt')
 
             if idx == 1:
@@ -258,12 +259,16 @@ class GraphDTDataset(InMemoryDataset):
                 torch.save(pro_valid, valid_path)
 
     def __getitem__(self, idx):
-        data = {}
-        for split in ['train', 'val', 'test']:
-            split_data = self._load(idx, split)
-            if split_data:
-                data[split] = split_data
-        return data
+        if idx in self.inmemory_data:
+            return self.inmemory_data[idx]
+        else:
+            self.inmemory_data[idx] = {}
+            for split in ['train', 'val', 'test']:
+                split_data = self._load(idx, split)
+                if split_data:
+                    self.inmemory_data[split] = split_data
+            return self.inmemory_data[idx]
+
 
 
 def load_graph_dt_data(config):

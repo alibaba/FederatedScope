@@ -7,6 +7,7 @@ root=$2
 dataset=graph-dt
 method=ditto
 outdir=exp_out/${method}
+datelog=$(date '+%Y-%m-%d-%H-%M-%S')
 
 if [ ! -d ${outdir} ];then
   mkdir ${outdir}
@@ -16,7 +17,7 @@ echo "HPO starts..."
 
 personalization_regular_weight=0.01
 
-log=${outdir}/gin_weight-${personalization_regular_weight}_on_${dataset}.log
+log=${outdir}/gin_weight-${personalization_regular_weight}_on_${dataset}_${datelog}.log
 for k in {1..3}
 do
     python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DT/hpo/ditto_gnn_minibatch_on_multi_task.yaml \

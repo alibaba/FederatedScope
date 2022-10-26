@@ -7,6 +7,7 @@ root=$2
 dataset=graph-dt
 method=fedbn_ft
 outdir=exp_out/${method}
+datelog=$(date '+%Y-%m-%d-%H-%M-%S')
 
 if [ ! -d ${outdir} ];then
   mkdir -p ${outdir}
@@ -16,7 +17,7 @@ echo "HPO starts..."
 
 step=1
 
-log=${outdir}/gin_patience-0_lstep-${step}_on_${dataset}.log
+log=${outdir}/gin_patience-0_lstep-${step}_on_${dataset}_${datelog}.log
 for k in {1..3}
 do
     python federatedscope/main.py --cfg scripts/B-FHTL_exp_scripts/Graph-DT/hpo/fedbn_ft_gnn_minibatch_on_multi_task.yaml \
