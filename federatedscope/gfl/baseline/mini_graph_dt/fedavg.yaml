@@ -1,8 +1,8 @@
 use_gpu: True
 device: 0
 early_stop:
-  patience: 20
-  improve_indicator_mode: mean
+  patience: 100
+  improve_indicator_mode: best
 federate:
   mode: 'standalone'
   make_global_eval: False
@@ -23,11 +23,12 @@ train:
   batch_or_epoch: epoch
   local_update_steps: 1
   optimizer:
-    weight_decay: 0.0005
     type: SGD
 trainer:
   type: graphminibatch_trainer
 eval:
-  freq: 5
-  metrics: ['loss']
-  best_res_update_round_wise_key: val_loss
+  metrics: [ 'imp_ratio' ]
+  report: [ 'avg' ]
+  best_res_update_round_wise_key: val_imp_ratio
+  count_flops: False
+  base: 0.

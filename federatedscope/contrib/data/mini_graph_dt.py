@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from torch_geometric.data import InMemoryDataset, Data
-from torch_geometric.datasets import TUDataset, MoleculeNet
+from torch_geometric.datasets import MoleculeNet
 
 from federatedscope.register import register_data
 from federatedscope.core.data import DummyDataTranslator
@@ -18,7 +18,7 @@ from federatedscope.core.splitters.graph.scaffold_lda_splitter import \
 
 class MiniGraphDTDataset(InMemoryDataset):
     NAME = 'mini_graph_dt'
-    DATA_NAME = ['ESOL', 'BACE', 'LIPO', 'ENZYMES', 'PROTEINS_full']
+    DATA_NAME = ['ESOL', 'FreeSolv', 'BACE', 'LIPO', 'CLINTOX']
     IN_MEMORY_DATA = {}
 
     def __init__(self, root, splits=[0.8, 0.1, 0.1]):
@@ -57,7 +57,7 @@ class MiniGraphDTDataset(InMemoryDataset):
     def process(self):
         np.random.seed(0)
         for idx, name in enumerate(self.DATA_NAME):
-            if name in ['ESOL', 'BACE', 'LIPO']:
+            if name in ['ESOL', 'FreeSolv', 'BACE', 'LIPO', 'CLINTOX']:
                 dataset = MoleculeNet(self.root, name)
                 featurizer = GenFeatures()
                 ds = []
@@ -68,16 +68,12 @@ class MiniGraphDTDataset(InMemoryDataset):
                              y=graph.y))
                 dataset = ds
                 if name in ['BACE']:
-                    # Classification
                     for i in range(len(dataset)):
                         dataset[i].y = dataset[i].y.long()
-            else:
-                # Classification
-                dataset = TUDataset(self.root, name)
-                dataset = [
-                    Data(edge_index=graph.edge_index, x=graph.x, y=graph.y)
-                    for graph in dataset
-                ]
+                if name in ['CLINTOX']:
+                    for i in range(len(dataset)):
+                        dataset[i].y = torch.argmax(
+                            dataset[i].y).view(-1).unsqueeze(0)
 
             # We fix train/val/test
             index = np.random.permutation(np.arange(len(dataset)))
@@ -103,31 +99,36 @@ class MiniGraphDTDataset(InMemoryDataset):
                 'task': 'regression',
                 'input_dim': 74,
                 'output_dim': 1,
-                'num_samples': 1128
+                'num_samples': 1128,
+                'base': 1.4509,
+            },
+            'FreeSolv': {
+                'task': 'regression',
+                'input_dim': 74,
+                'output_dim': 1,
+                'num_samples': 1113,
+                'base': 0.0985,
             },
             'BACE': {
                 'task': 'classification',
                 'input_dim': 74,
                 'output_dim': 2,
-                'num_samples': 1513
+                'num_samples': 1513,
+                'base': 0.4211,
             },
             'LIPO': {
                 'task': 'regression',
                 'input_dim': 74,
                 'output_dim': 1,
-                'num_samples': 4200
+                'num_samples': 4200,
+                'base': 0.9542,
             },
-            'ENZYMES': {
+            'CLINTOX': {
                 'task': 'classification',
-                'input_dim': 3,
-                'output_dim': 6,
-                'num_samples': 600
-            },
-            'PROTEINS_full': {
-                'task': 'classification',
-                'input_dim': 3,
+                'input_dim': 74,
                 'output_dim': 2,
-                'num_samples': 1113
+                'num_samples': 1478,
+                'base': 0.2337,
             },
         }
 
