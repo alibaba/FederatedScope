@@ -2,6 +2,7 @@ import logging
 
 from collections import deque
 import heapq
+import math
 import multiprocessing
 import time
 
@@ -69,11 +70,12 @@ class FedRunner(object):
             self.shared_comm_queue = deque()
             self.manager = multiprocessing.Manager()
             self._setup_for_standalone()
+            logger.info(f"setup finished")
             # in standalone mode, by default, we print the trainer info only
             # once for better logs readability
-            trainer_representative = self.client[1].trainer
-            if trainer_representative is not None:
-                trainer_representative.print_trainer_meta_info()
+            # trainer_representative = self.client[1].trainer
+            # if trainer_representative is not None:
+            #     trainer_representative.print_trainer_meta_info()
         elif self.mode == 'distributed':
             self._setup_for_distributed()
 
@@ -135,14 +137,14 @@ class FedRunner(object):
             client_resource_info = None
 
         self.server2client_channels = dict()
-        for client_id in range(1, self.cfg.federate.client_num + 1):
-            self.server2client_channels[client_id] = self.manager.Queue()
+        for process_id in range(0, self.cfg.federate.process_num):
+            self.server2client_channels[process_id] = self.manager.Queue()
 
         self.server = self._setup_server(
             resource_info=server_resource_info,
             client_resource_info=client_resource_info)
 
-        self.client = dict()
+        self.client_runner = dict()
         self.client2server_channel = self.manager.Queue()
 
         # assume the client-wise data are consistent in their input&output
@@ -151,13 +153,20 @@ class FedRunner(object):
             self.cfg.model, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
 
-        for client_id in range(1, self.cfg.federate.client_num + 1):
+        part_size = math.ceil(
+            self.cfg.federate.client_num / self.cfg.federate.process_num)
 
-            self.client[client_id] = self._setup_client(
-                client_id=client_id,
-                client_model=self._shared_client_model,
-                resource_info=client_resource_info[client_id - 1]
-                if client_resource_info is not None else None)
+        for process_id in range(0, self.cfg.federate.process_num):
+            base_client_id = process_id * part_size + 1
+            client_num = min((process_id + 1) * part_size,
+                             self.cfg.federate.client_num) - base_client_id + 1
+            self.client_runner[process_id] = ClientRunner(base_client_id,
+                                                          client_num,
+                                                          f'cuda:{process_id}',
+                                                          self.cfg.clone(),
+                                                          self.data, self.client_class,
+                                                          self.unseen_clients_id, self.client2server_channel,
+                                                          self.server2client_channels[process_id], client_resource_info)
 
     def _setup_for_distributed(self):
         """
@@ -195,9 +204,10 @@ class FedRunner(object):
         """
         if self.mode == 'standalone':
             # trigger the FL course
-            self.pool = multiprocessing.Pool(processes=self.cfg.federate.client_num)
-            for each_client in self.client:
-                self.pool.apply_async(self.client[each_client].run_standalone)
+            self.pool = multiprocessing.Pool(
+                processes=self.cfg.federate.process_num)
+            for each_client_runner in self.client_runner:
+                self.pool.apply_async(self.client_runner[each_client_runner].simulate)
             self.pool.close()
 
             if self.cfg.federate.online_aggr:
@@ -209,9 +219,8 @@ class FedRunner(object):
             else:
                 self._run_simulation()
 
-            self.server._monitor.finish_fed_runner(fl_mode=self.mode)
             self.pool.join()
-
+            self.server._monitor.finish_fed_runner(fl_mode=self.mode)
             return self.server.best_results
 
         elif self.mode == 'distributed':
@@ -260,7 +269,6 @@ class FedRunner(object):
         cnt = 0
         while True:
             if not self.client2server_channel.empty():
-                
                 msg = self.client2server_channel.get()
                 logger.info(f"server receive message from {msg.sender}")
                 # For the server, move the received message to a
@@ -294,7 +302,7 @@ class FedRunner(object):
                     # server_msg_cache are all empty
                     time.sleep(0.1)
                     cnt += 1
-                    if cnt > 100:
+                    if cnt > 1000:
                         logger.info("server wait timeout")
                         break
                     # break
@@ -434,11 +442,6 @@ class FedRunner(object):
         To simulate the message handling process (used only for the
         standalone mode)
         """
-        if rcv != -1:
-            # simulate broadcast one-by-one
-            self.client[rcv].msg_handlers[msg.msg_type](msg)
-            return
-
         _, receiver = msg.sender, msg.receiver
         download_bytes, upload_bytes = msg.count_bytes()
         if not isinstance(receiver, list):
@@ -449,6 +452,67 @@ class FedRunner(object):
                 self.server._monitor.track_download_bytes(download_bytes)
             else:
                 logger.error("wrong place to go")
-                self.client[each_receiver].msg_handlers[msg.msg_type](msg)
-                self.client[each_receiver]._monitor.track_download_bytes(
+
+
+class ClientRunner(object):
+    """Simulate a group of clients in standalone mode
+    """
+
+    def __init__(self,
+                 base_client_id,
+                 client_num,
+                 device,
+                 config,
+                 data,
+                 client_class,
+                 unseen_clients_id,
+                 client2server_channel,
+                 server2client_channel,
+                 client_resource_info):
+        self.clients = []
+        self.receive_channel = server2client_channel
+        self.shared_model = get_model(
+            config.model, data[1], backend=config.backend) if config.federate.share_local_model else None
+        self.base_client_id = base_client_id
+        for client_id in range(base_client_id, base_client_id + client_num):
+            kw = {
+                'client2server_channel': client2server_channel,
+                'resource_info': client_resource_info[client_id - 1] if client_resource_info is not None else None
+            }
+            client_data = data[client_id]
+            client = client_class(
+                ID=client_id,
+                server_id=0,
+                config=config,
+                data=data[client_id],
+                model=self.shared_model or get_model(
+                    config.model, client_data, backend=config.backend),
+                device=device,
+                is_unseen_client=client_id in unseen_clients_id,
+                **kw)
+            self.clients.append(client)
+
+    def simulate(self):
+        for client in self.clients:
+            client.join_in()
+        while True:
+            if not self.receive_channel.empty():
+                msg = self.receive_channel.get()
+                self._handle_msg(msg)
+
+    def _handle_msg(self, msg, rcv=-1):
+        if rcv != -1:
+            # simulate broadcast one-by-one
+            self.clients[rcv - self.base_client_id].msg_handlers[msg.msg_type](msg)
+            return
+
+        _, receiver = msg.sender, msg.receiver
+        download_bytes, upload_bytes = msg.count_bytes()
+        if not isinstance(receiver, list):
+            receiver = [receiver]
+        for each_receiver in receiver:
+            client_id = each_receiver - self.base_client_id
+            if client_id < len(self.clients):
+                self.clients[each_receiver - self.base_client_id].msg_handlers[msg.msg_type](msg)
+                self.clients[each_receiver - self.base_client_id]._monitor.track_download_bytes(
                     download_bytes)

@@ -19,7 +19,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.total_round_num = 50
     cfg.federate.mode = 'standalone'
     cfg.federate.parallel = True
-    cfg.federate.card_num = 1
+    cfg.federate.process_num = 1
     cfg.federate.share_local_model = False
     cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is
     # the number of training samples in dataset.

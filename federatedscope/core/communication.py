@@ -1,6 +1,7 @@
 import grpc
 from concurrent import futures
 import logging
+import math
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.proto import gRPC_comm_manager_pb2, \
@@ -10,21 +11,54 @@ from federatedscope.core.message import Message
 
 logger = logging.getLogger(__name__)
 
+# class StandaloneCommManager(object):
+#     """
+#     The communicator used for standalone mode
+#     """
+#     def __init__(self, comm_queue, monitor=None):
+#         self.comm_queue = comm_queue
+#         self.neighbors = dict()
+#         self.monitor = monitor  # used to track the communication related
+#         # metrics
+
+#     def receive(self):
+#         # we don't need receive() in standalone
+#         pass
+
+#     def add_neighbors(self, neighbor_id, address=None):
+#         self.neighbors[neighbor_id] = address
+
+#     def get_neighbors(self, neighbor_id=None):
+#         address = dict()
+#         if neighbor_id:
+#             if isinstance(neighbor_id, list):
+#                 for each_neighbor in neighbor_id:
+#                     address[each_neighbor] = self.get_neighbors(each_neighbor)
+#                 return address
+#             else:
+#                 return self.neighbors[neighbor_id]
+#         else:
+#             # Get all neighbors
+#             return self.neighbors
+
+#     def send(self, message):
+#         self.comm_queue.append(message)
+#         download_bytes, upload_bytes = message.count_bytes()
+#         self.monitor.track_upload_bytes(upload_bytes)
+
 class StandaloneClientCommManager(object):
     """
     The communicator used for standalone mode
     """
-    def __init__(self, receive_channel, send_channel, monitor=None):
-        self.receive_channel = receive_channel
+    def __init__(self, send_channel, monitor=None):
         self.send_channel = send_channel
         self.neighbors = dict()
         self.monitor = monitor  # used to track the communication related
         # metrics
 
     def receive(self):
-        message = self.receive_channel.get()
-        logger.info(f"client {message.receiver} receive message {message.msg_type}")
-        return message
+        # we don't need receive() in standalone
+        pass
 
     def add_neighbors(self, neighbor_id, address=None):
         self.neighbors[neighbor_id] = address
@@ -53,13 +87,17 @@ class StandaloneServerCommManager(object):
     """
     The communicator used for standalone mode
     """
-    def __init__(self, channels, monitor=None):
+    def __init__(self, client_num, channels, monitor=None):
+        self.client_num = client_num
+        self.process_num = len(channels)
+        self.part_size = math.ceil(self.client_num / self.process_num)
         self.send_channel = channels
         self.neighbors = dict()
         self.monitor = monitor  # used to track the communication related
         # metrics
 
     def receive(self):
+        # we don't need receive() in standalone
         pass
 
     def add_neighbors(self, neighbor_id, address=None):
@@ -84,17 +122,16 @@ class StandaloneServerCommManager(object):
         if receiver is not None:
             if not isinstance(receiver, list):
                 receiver = [receiver]
-            for each_receiver in receiver:
-                if each_receiver in self.neighbors:
-                    logger.info(f"server send message to {each_receiver}")
-                    channel = self.send_channel[each_receiver]
-                    channel.put(message)
-                    self.monitor.track_upload_bytes(upload_bytes)
+            for process_id in range(0, self.process_num):
+                for each_receiver in receiver:
+                    if each_receiver in self.neighbors:
+                        logger.info(f"server send message to {each_receiver} in client runner {(each_receiver - 1) // self.part_size}")
+                        self.send_channel[process_id].put(message)
+                        self.monitor.track_upload_bytes(upload_bytes)
+                        break
         else:
-            for channel in self.send_channel:
-                channel.put(message)
-                self.monitor.track_upload_bytes(upload_bytes)
-        
+            logger.error(f"wrong message type in standalone mode")
+
 
 class gRPCCommManager(object):
     """

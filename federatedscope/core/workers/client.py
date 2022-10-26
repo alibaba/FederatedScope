@@ -118,9 +118,7 @@ class Client(Worker):
         self.server_id = server_id
         if self.mode == 'standalone':
             client2server_channel = kwargs['client2server_channel']
-            server2client_channel = kwargs['server2client_channel']
-            self.comm_manager = StandaloneClientCommManager(receive_channel=server2client_channel,
-                                                      send_channel=client2server_channel,
+            self.comm_manager = StandaloneClientCommManager(send_channel=client2server_channel,
                                                       monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':

@@ -174,8 +174,10 @@ class Server(Worker):
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
             channels = kwargs['channels']
-            self.comm_manager = StandaloneServerCommManager(channels=channels,
-                                                      monitor=self._monitor)
+            self.comm_manager = StandaloneServerCommManager(
+                                                    client_num=self.client_num,
+                                                    channels=channels,
+                                                    monitor=self._monitor)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
