@@ -33,7 +33,6 @@ def extend_model_cfg(cfg):
     cfg.model.eos_token_id = -1
     cfg.model.eoq_token_id = -1
     cfg.model.pad_token_id = -1
-    cfg.model.task = ''
     cfg.model.pretrain_task = ''
     cfg.model.pretrain_tasks = []
     cfg.model.downstream_tasks = []

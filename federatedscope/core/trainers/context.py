@@ -6,6 +6,8 @@ from federatedscope.core.auxiliaries.model_builder import \
     get_trainable_para_names
 from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
 from federatedscope.core.auxiliaries.enums import MODE
+from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
 from federatedscope.core.data import ClientData
 
@@ -134,7 +136,6 @@ class Context(LifecycleDict):
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None
             self.regularizer = None
-            self.optimizer = None
             self.grad_clip = None
 
         # Process training data
@@ -142,13 +143,28 @@ class Context(LifecycleDict):
                 'train_loader', None) is not None:
             # Calculate the number of update steps during training given the
             # local_update_steps
-            self.num_train_batch, self.num_train_batch_last_epoch, \
-                self.num_train_epoch, self.num_total_train_batch = \
+            (self.num_train_batch, self.num_train_batch_last_epoch,
+             self.num_train_epoch, self.num_total_train_batch) = \
                 calculate_batch_epoch_num(
-                    self.cfg.train.local_update_steps,
-                    self.cfg.train.batch_or_epoch, self.num_train_data,
+                    self.cfg.train.local_update_steps *
+                    self.cfg.grad.grad_accum_count,
+                    self.cfg.train.batch_or_epoch,
+                    self.num_train_data,
                     self.cfg.dataloader.batch_size,
                     self.cfg.dataloader.drop_last)
+            self.setup_optimizer_and_scheduler('train')
+
+            if self.cfg.finetune.before_eval:
+                (self.num_finetune_batch, self.num_finetune_batch_last_epoch,
+                 self.num_finetune_epoch, self.num_total_finetune_batch) = \
+                    calculate_batch_epoch_num(
+                        self.cfg.finetune.local_update_steps *
+                        self.cfg.grad.grad_accum_count,
+                        self.cfg.finetune.batch_or_epoch,
+                        self.num_train_data,
+                        self.cfg.dataloader.batch_size,
+                        self.cfg.dataloader.drop_last)
+                self.setup_optimizer_and_scheduler('finetune')
 
         # Process evaluation data
         for mode in ["val", "test"]:
@@ -162,6 +178,19 @@ class Context(LifecycleDict):
                     int(not self.cfg.dataloader.drop_last and bool(
                         getattr(self, "num_{}_data".format(mode)) %
                         self.cfg.dataloader.batch_size)))
+
+    def setup_optimizer_and_scheduler(self, mode):
+        total_steps = self.get(f'num_total_{mode}_batch') * \
+                      self.cfg.federate.total_round_num
+        warmup_steps = int(self.cfg[mode].scheduler.warmup_ratio * total_steps)
+        setattr(self, f'{mode}_optimizer',
+                get_optimizer(self.model, **self.cfg[mode].optimizer))
+        setattr(
+            self, f'{mode}_scheduler',
+            get_scheduler(self.train_optimizer,
+                          total_steps=total_steps,
+                          warmup_steps=warmup_steps,
+                          **self.cfg.train.scheduler))
 
     def track_mode(self, mode):
         self.mode_stack.append(mode)

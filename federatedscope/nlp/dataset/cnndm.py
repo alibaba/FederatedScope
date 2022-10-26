@@ -33,7 +33,7 @@ def create_cnndm_dataset(data,
                                              max_src_len, raw_cache_dir,
                                              client_id, debug)
 
-    cache_dir = osp.join(raw_cache_dir, 'finetune', str(client_id), split)
+    cache_dir = osp.join(raw_cache_dir, 'train', str(client_id), split)
     src_examples, tgt_examples = create_cnndm_examples(data, debug)
     if osp.exists(cache_dir):
         logger.info('Loading cache file from \'{}\''.format(cache_dir))

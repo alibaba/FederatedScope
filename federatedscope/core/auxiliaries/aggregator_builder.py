@@ -1,6 +1,8 @@
 import logging
 
 from federatedscope.core.configs import constants
+from federatedscope.nlp.aggregator import FedNLPAggregator, \
+    PFedNLPAggregator, PCFedNLPAggregator
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,13 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         logger.warning(
             'Aggregator for method {} is not implemented. Will use default one'
             .format(method))
+
+    if config.federate.hfl_method.lower() == 'fednlp':
+        return FedNLPAggregator(model=model, config=config, device=device)
+    elif config.federate.hfl_method.lower() == 'pfednlp':
+        return PFedNLPAggregator(model=model, config=config, device=device)
+    elif config.federate.hfl_method.lower() == 'pcfednlp':
+        return PCFedNLPAggregator(model=model, config=config, device=device)
 
     if config.fedopt.use or aggregator_type == 'fedopt':
         return FedOptAggregator(config=config, model=model, device=device)

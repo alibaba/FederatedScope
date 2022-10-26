@@ -281,7 +281,6 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_fit_end(self, ctx):
         """Evaluate metrics.
-
         """
         ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
         ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)

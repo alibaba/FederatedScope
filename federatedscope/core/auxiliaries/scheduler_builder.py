@@ -1,5 +1,6 @@
 import logging
 import federatedscope.register as register
+from federatedscope.nlp.scheduler import *
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ except ImportError as error:
 
 def get_scheduler(optimizer, type, **kwargs):
     for func in register.scheduler_dict.values():
-        scheduler = func(optimizer, type)
+        scheduler = func(optimizer, type, **kwargs)
         if scheduler is not None:
             return scheduler
 

@@ -1,0 +1,88 @@
+client_group_1:
+  data:
+    batch_size: 32
+    max_seq_len: 128
+  model:
+    task: imdb
+    num_labels: 2
+  train:
+    local_update_steps: 2000
+  eval:
+    metrics: ['acc']
+client_group_2:
+  data:
+    batch_size: 32
+    max_seq_len: 128
+  model:
+    task: agnews
+    num_labels: 4
+  train:
+    local_update_steps: 2000
+  eval:
+    metrics: ['acc']
+client_group_3:
+  data:
+    batch_size: 32
+    max_seq_len: 384
+    max_query_len: 128
+    trunc_stride: 128
+  model:
+    task: squad
+    num_labels: 2
+    n_best_size: 20
+    max_answer_len: 30
+    null_score_diff_threshold: 0.0
+  train:
+    local_update_steps: 2000
+  eval:
+    metrics: ['squad']
+client_group_4:
+  data:
+    batch_size: 32
+    max_seq_len: 384
+    max_query_len: 128
+    trunc_stride: 128
+  model:
+    task: newsqa
+    num_labels: 2
+    n_best_size: 20
+    max_answer_len: 30
+    null_score_diff_threshold: 0.0
+  train:
+    local_update_steps: 20000
+  eval:
+    metrics: ['newsqa']
+client_group_5:
+  data:
+    batch_size: 32
+    max_seq_len: 384
+    max_tgt_len: 128
+  model:
+    task: cnndm
+    max_length: 150
+    min_length: 50
+    no_repeat_ngram_size: 3
+    length_penalty: 2.0
+    num_beams: 5
+    label_smoothing: 0.1
+  train:
+    local_update_steps: 20000
+  eval:
+    metrics: ['cnndm']
+client_group_6:
+  data:
+    batch_size: 32
+    max_seq_len: 384
+    max_tgt_len: 64
+  model:
+    task: msqg
+    max_length: 100
+    min_length: 1
+    no_repeat_ngram_size: 3
+    length_penalty: 2.0
+    num_beams: 5
+    label_smoothing: 0.1
+  train:
+    local_update_steps: 20000
+  eval:
+    metrics: ['msqg']

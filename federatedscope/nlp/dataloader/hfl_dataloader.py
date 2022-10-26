@@ -15,6 +15,7 @@ from federatedscope.nlp.dataset.msqg import create_msqg_dataset
 from federatedscope.nlp.dataloader.data_collator import DataCollatorForMLM, \
     DataCollatorForDenoisingTasks, DataCollatorForPFedNLP
 
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 logger = logging.getLogger(__name__)
 
 
@@ -31,10 +32,10 @@ def extend_cfg(cfg, cfg_client):
     if cfg.model.task == 'pretrain':
         downstream_tasks = []
         for group_id, num_clients in enumerate(cfg.data.num_grouped_clients):
-            downstream_tasks += [cfg.model.downstream_tasks[group_id]] * \
-                                num_clients
+            downstream_tasks += [cfg.data.datasets[group_id]] * num_clients
         cfg.model.downstream_tasks = downstream_tasks
-    elif cfg.aggregator.num_agg_topk is not None:
+    elif cfg.aggregator.num_agg_topk is not None and \
+            len(cfg.aggregator.num_agg_topk) > 0:
         num_agg_topk = []
         for group_id, num_clients in enumerate(cfg.data.num_grouped_clients):
             if isinstance(cfg.aggregator.num_agg_topk, list):
@@ -53,29 +54,33 @@ def extend_cfg(cfg, cfg_client):
     if cfg.data.debug:
         if cfg.federate.total_round_num > 5:
             cfg.federate.total_round_num = 5
+        if cfg.train.local_update_steps > 5:
+            cfg.train.local_update_steps = 5
         cfg.federate.save_to = ''
         if cfg.data.num_contrast is not None and cfg.data.num_contrast > 20:
             cfg.data.num_contrast = 20
         cfg.data.cache_dir = ''
-        cfg.trainer.train_steps = 5
 
     # client_config
-    with open(os.path.join(cfg.outdir, 'config_client.yaml'), 'w') as outfile:
-        from contextlib import redirect_stdout
-        with redirect_stdout(outfile):
-            tmp_cfg = copy.deepcopy(cfg_client)
-            tmp_cfg.cfg_check_funcs = []
-            print(tmp_cfg.dump())
+    if cfg_client is not None:
+        with open(os.path.join(cfg.outdir, 'config_client.yaml'),
+                  'w') as outfile:
+            from contextlib import redirect_stdout
+            with redirect_stdout(outfile):
+                tmp_cfg = copy.deepcopy(cfg_client)
+                tmp_cfg.cfg_check_funcs = []
+                print(tmp_cfg.dump())
 
-    num_grouped_clients = cfg.data.num_grouped_clients
-    client_start_id = 1
-    for group_id, num_clients in enumerate(num_grouped_clients):
-        group_cfg = cfg_client['client_group_{}'.format(group_id + 1)]
-        if cfg.data.debug:
-            group_cfg.trainer.train_steps = 5
-        for client_id in range(client_start_id, client_start_id + num_clients):
-            cfg_client['client_{}'.format(client_id)] = group_cfg
-        client_start_id += num_clients
+        num_grouped_clients = cfg.data.num_grouped_clients
+        client_start_id = 1
+        for group_id, num_clients in enumerate(num_grouped_clients):
+            group_cfg = cfg_client['client_group_{}'.format(group_id + 1)]
+            if cfg.data.debug and group_cfg.train.local_update_steps > 5:
+                group_cfg.train.local_update_steps = 5
+            for client_id in range(client_start_id,
+                                   client_start_id + num_clients):
+                cfg_client['client_{}'.format(client_id)] = group_cfg
+            client_start_id += num_clients
 
     return cfg, cfg_client
 
@@ -285,7 +290,7 @@ def load_pfednlp_data(config, client_config):
     return data_dict, config
 
 
-def load_pfednlp_contrast_data(config, client_config):
+def load_pcfednlp_data(config, client_config):
     extend_cfg(config, client_config)
     model_type = config.model.model_type
     tokenizer = setup_tokenizer(config)
@@ -389,13 +394,12 @@ def call_pfednlp_data(config, client_config):
         return data, modified_config
 
 
-def call_pfednlp_contrast_data(config, client_config):
-    if config.data.type == 'pfednlp_contrast_data':
-        data, modified_config = load_pfednlp_contrast_data(
-            config, client_config)
+def call_pcfednlp_data(config, client_config):
+    if config.data.type == 'pcfednlp_data':
+        data, modified_config = load_pcfednlp_data(config, client_config)
         return data, modified_config
 
 
 register_data('fednlp_data', call_fednlp_data)
 register_data('pfednlp_data', call_pfednlp_data)
-register_data('pfednlp_contrast_data', call_pfednlp_contrast_data)
+register_data('pcfednlp_data', call_pcfednlp_data)

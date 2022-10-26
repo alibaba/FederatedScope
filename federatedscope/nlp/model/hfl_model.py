@@ -291,7 +291,7 @@ class PFedNLPModel(nn.Module):
                            hidden_states=enc_outputs.last_hidden_state)
 
 
-class PFedNLPContrastModel(nn.Module):
+class PCFedNLPModel(nn.Module):
     def __init__(self, config):
         super().__init__()
 
@@ -550,12 +550,12 @@ def call_pfednlp_model(model_config, local_data):
         return model
 
 
-def call_pfednlp_contrast_model(model_config, local_data):
-    if model_config.type == 'pfednlp_contrast_model':
-        model = PFedNLPContrastModel(model_config)
+def call_pcfednlp_model(model_config, local_data):
+    if model_config.type == 'pcfednlp_model':
+        model = PCFedNLPModel(model_config)
         return model
 
 
 register_model('fednlp_model', call_fednlp_model)
 register_model('pfednlp_model', call_pfednlp_model)
-register_model('pfednlp_contrast_model', call_pfednlp_contrast_model)
+register_model('pcfednlp_model', call_pcfednlp_model)

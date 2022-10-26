@@ -95,6 +95,13 @@ def assert_data_cfg(cfg):
                                             'external data'
         assert cfg.data.splitter, '`data.splitter` should not be empty when ' \
                                   'using external data'
+
+    # fednlp
+    if len(cfg.data.num_grouped_clients) > 0:
+        assert cfg.federate.client_num == sum(cfg.data.num_grouped_clients), \
+            '`federate.client_num` should be equal to ' \
+            'sum of `data.num_grouped_clients`'
+
     # --------------------------------------------------------------------
     # For compatibility with older versions of FS
     # TODO: delete this code block

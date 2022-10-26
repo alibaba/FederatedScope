@@ -13,8 +13,6 @@ def extend_training_cfg(cfg):
     # fednlp
     cfg.trainer.disp_freq = 50
     cfg.trainer.val_freq = 100000000  # eval freq across batches
-    cfg.trainer.grad_accum_count = 1
-    cfg.trainer.train_steps = 1
 
     # ---------------------------------------------------------------------- #
     # Training related options
@@ -33,7 +31,7 @@ def extend_training_cfg(cfg):
     cfg.train.scheduler.type = ''
 
     # fednlp
-    cfg.train.scheduler.warmup_ratio = 0.
+    cfg.train.scheduler.warmup_ratio = 0.0
 
     # ---------------------------------------------------------------------- #
     # Finetune related options
@@ -52,11 +50,15 @@ def extend_training_cfg(cfg):
     cfg.finetune.scheduler = CN(new_allowed=True)
     cfg.finetune.scheduler.type = ''
 
+    # fednlp
+    cfg.finetune.scheduler.warmup_ratio = 0.0
+
     # ---------------------------------------------------------------------- #
     # Gradient related options
     # ---------------------------------------------------------------------- #
     cfg.grad = CN()
     cfg.grad.grad_clip = -1.0  # negative numbers indicate we do not clip grad
+    cfg.grad.grad_accum_count = 1
 
     # ---------------------------------------------------------------------- #
     # Early stopping related options

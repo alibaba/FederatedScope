@@ -20,7 +20,7 @@ def extend_evaluation_cfg(cfg):
     # Monitoring, e.g., 'dissim' for B-local dissimilarity
     cfg.eval.monitoring = []
 
-    cfg.eval.count_flops = True
+    cfg.eval.count_flops = False
 
     # fednlp
     cfg.eval.result_path = ''

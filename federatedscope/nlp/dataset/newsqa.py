@@ -188,7 +188,7 @@ def create_newsqa_dataset(data,
                                               max_seq_len, cache_dir,
                                               client_id, debug)
 
-    save_dir = osp.join(cache_dir, 'finetune', str(client_id))
+    save_dir = osp.join(cache_dir, 'train', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
     if osp.exists(cache_file):
         logger.info('Loading cache file from \'{}\''.format(cache_file))
