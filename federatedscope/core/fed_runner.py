@@ -512,7 +512,7 @@ class ClientRunner(object):
             receiver = [receiver]
         for each_receiver in receiver:
             client_id = each_receiver - self.base_client_id
-            if client_id < len(self.clients):
+            if client_id < len(self.clients) and client_id >= 0:
                 self.clients[each_receiver - self.base_client_id].msg_handlers[msg.msg_type](msg)
                 self.clients[each_receiver - self.base_client_id]._monitor.track_download_bytes(
                     download_bytes)

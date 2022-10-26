@@ -122,10 +122,11 @@ class StandaloneServerCommManager(object):
         if receiver is not None:
             if not isinstance(receiver, list):
                 receiver = [receiver]
+            # TODO: opt
             for process_id in range(0, self.process_num):
                 for each_receiver in receiver:
-                    if each_receiver in self.neighbors:
-                        logger.info(f"server send message to {each_receiver} in client runner {(each_receiver - 1) // self.part_size}")
+                    if each_receiver in self.neighbors and (each_receiver - 1) // self.part_size == process_id:
+                        logger.info(f"server send message to {each_receiver} in client runner {process_id}")
                         self.send_channel[process_id].put(message)
                         self.monitor.track_upload_bytes(upload_bytes)
                         break
