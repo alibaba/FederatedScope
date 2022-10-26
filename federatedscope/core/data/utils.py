@@ -599,15 +599,19 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                         merged_data[d_name][elem_name])
                 merged_data[d_name] = WrapDataset(merged_data[d_name])
         else:
-            merged_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
+            client_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
             for data_id in range(1, merged_max_data_id + 1):
                 if data_id == id_contain_all_dataset_key:
                     continue
                 for d_name in dataset_names:
                     if d_name not in all_data[data_id]:
                         continue
-                    merged_data[d_name].dataset.extend(
+                    client_data[d_name].dataset.extend(
                         all_data[data_id][d_name].dataset)
+            merged_data = {
+                key: client_data[key].dataset
+                for key in client_data
+            }
     else:
         raise NotImplementedError(
             "Un-supported type when merging data across different clients."
