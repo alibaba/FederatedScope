@@ -67,14 +67,10 @@ class MiniGraphDTDataset(InMemoryDataset):
                         Data(edge_index=graph.edge_index, x=graph.x,
                              y=graph.y))
                 dataset = ds
-                if name in ['ESOL', 'LIPO']:
-                    # Regression
-                    for i in range(len(dataset)):
-                        dataset[i].y = dataset[i].y.squeeze(0)
                 if name in ['BACE']:
                     # Classification
                     for i in range(len(dataset)):
-                        dataset[i].y = dataset[i].y.long().squeeze(0)
+                        dataset[i].y = dataset[i].y.long()
             else:
                 # Classification
                 dataset = TUDataset(self.root, name)
