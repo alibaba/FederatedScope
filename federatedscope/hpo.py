@@ -9,7 +9,7 @@ if DEV_MODE:
 
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
-from federatedscope.core.cmd_args import parse_args
+from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.core.configs.config import global_cfg, CfgNode
 from federatedscope.autotune import get_scheduler
 
@@ -21,15 +21,21 @@ if os.environ.get('http_proxy'):
 if __name__ == '__main__':
     init_cfg = global_cfg.clone()
     args = parse_args()
-    init_cfg.merge_from_file(args.cfg_file)
-    init_cfg.merge_from_list(args.opts)
+    if args.cfg_file:
+        init_cfg.merge_from_file(args.cfg_file)
+    cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
+    init_cfg.merge_from_list(cfg_opt)
 
     update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file
-    client_cfgs = CfgNode.load_cfg(open(args.client_cfg_file, 'r')) if \
-        args.client_cfg_file else None
+    if args.client_cfg_file:
+        client_cfgs = CfgNode.load_cfg(open(args.client_cfg_file, 'r'))
+        # client_cfgs.set_new_allowed(True)
+        client_cfgs.merge_from_list(client_cfg_opt)
+    else:
+        client_cfgs = None
 
     scheduler = get_scheduler(init_cfg, client_cfgs)
 

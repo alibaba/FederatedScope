@@ -7,7 +7,7 @@ if DEV_MODE:
     file_dir = os.path.join(os.path.dirname(__file__), '..')
     sys.path.append(file_dir)
 
-from federatedscope.core.cmd_args import parse_args
+from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
@@ -26,14 +26,20 @@ if __name__ == '__main__':
     args = parse_args()
     if args.cfg_file:
         init_cfg.merge_from_file(args.cfg_file)
-    init_cfg.merge_from_list(args.opts)
+    cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
+    print(cfg_opt)
+    init_cfg.merge_from_list(cfg_opt)
 
     update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file
-    client_cfgs = CfgNode.load_cfg(open(args.client_cfg_file,
-                                        'r')) if args.client_cfg_file else None
+    if args.client_cfg_file:
+        client_cfgs = CfgNode.load_cfg(open(args.client_cfg_file, 'r'))
+        # client_cfgs.set_new_allowed(True)
+        client_cfgs.merge_from_list(client_cfg_opt)
+    else:
+        client_cfgs = None
 
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global

@@ -354,7 +354,7 @@ class FedRunner(object):
         if self.client_class:
             client_specific_config = self.cfg.clone()
             if self.client_cfgs and \
-                    self.client_cfg.get('client_{}'.format(client_id)):
+                    self.client_cfgs.get('client_{}'.format(client_id)):
                 client_specific_config.defrost()
                 client_specific_config.merge_from_other_cfg(
                     self.client_cfgs.get('client_{}'.format(client_id)))
