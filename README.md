@@ -15,12 +15,20 @@ A [detailed tutorial](https://federatedscope.io/) is provided on our website.
 
 You can try FederatedScope via [FederatedScope Playground](https://try.federatedscope.io/) or [Google Colab](https://colab.research.google.com/github/alibaba/FederatedScope).
 
+<br>
 
-|||||||
-|--|--|--|--|--|--|
-| [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
+<p> 
 
-<details><summary><h2> News </h2></summary>
+[Code Structure](#code-structure) &nbsp;
+[Quick Start](#quick-start) &nbsp;
+[Advanced](#advanced) &nbsp;
+[Documentation](#documentation) &nbsp;
+[Publications](#publications) &nbsp;
+[Contributing](#contributing) </p>
+
+<br>
+
+## News 
 
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [10-05-2022] Our benchmark paper for personalized FL, [pFL-Bench](https://arxiv.org/abs/2206.03655) has been accepted by NeurIPS'22, Dataset and Benchmark Track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
@@ -32,7 +40,7 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 - [05-25-2022] Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!
 - [05-06-2022] We release FederatedScope v0.1.0! 
 
-</details>
+<br>
 
 ## Code Structure
 ```
