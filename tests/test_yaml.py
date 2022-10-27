@@ -14,7 +14,8 @@ class YAMLTest(unittest.TestCase):
         self.exclude_file = [
             '.pre-commit-config.yaml', 'meta.yaml',
             'federatedscope/gfl/baseline/isolated_gin_minibatch_on_cikmcup_per_client.yaml',
-            'federatedscope/gfl/baseline/fedavg_gin_minibatch_on_cikmcup_per_client.yaml'
+            'federatedscope/gfl/baseline/fedavg_gin_minibatch_on_cikmcup_per_client.yaml',
+            'federatedscope/gfl/baseline/mini_graph_dc/fedavg_per_client.yaml.yaml'
         ]
         self.root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.exclude_all = [
