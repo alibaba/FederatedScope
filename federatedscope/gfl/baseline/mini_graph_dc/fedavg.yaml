@@ -2,11 +2,11 @@ use_gpu: True
 device: 0
 early_stop:
   patience: 100
-  improve_indicator_mode: best
+  improve_indicator_mode: mean
 federate:
   mode: 'standalone'
   make_global_eval: False
-  total_round_num: 100
+  total_round_num: 400
   share_local_model: False
 data:
   root: data/
@@ -27,6 +27,7 @@ train:
 trainer:
   type: graphminibatch_trainer
 eval:
-  metrics: [ 'acc' ]
-  best_res_update_round_wise_key: val_loss
+  freq: 1
+  metrics: ['acc', 'correct']
   count_flops: False
+  split: ['train', 'val', 'test']

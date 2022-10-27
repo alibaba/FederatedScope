@@ -27,7 +27,6 @@ if __name__ == '__main__':
     if args.cfg_file:
         init_cfg.merge_from_file(args.cfg_file)
     cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
-    print(cfg_opt)
     init_cfg.merge_from_list(cfg_opt)
 
     update_logger(init_cfg, clear_before_add=True)
