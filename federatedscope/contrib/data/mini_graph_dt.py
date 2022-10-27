@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from torch_geometric.data import InMemoryDataset, Data
-from torch_geometric.datasets import MoleculeNet
+from torch_geometric.datasets import TUDataset, MoleculeNet
 
 from federatedscope.register import register_data
 from federatedscope.core.data import DummyDataTranslator
@@ -12,19 +12,20 @@ from federatedscope.core.splitters.graph.scaffold_lda_splitter import \
 
 # Run with mini_graph_dt:
 # python federatedscope/main.py --cfg \
-# federatedscope/gfl/baseline/mini_graph_dt/fedavg.yaml --client_cfg \
-# federatedscope/gfl/baseline/mini_graph_dt/fedavg_per_client.yaml
+# federatedscope/gfl/baseline/mini_graph_dc/fedavg.yaml --client_cfg \
+# federatedscope/gfl/baseline/mini_graph_dc/fedavg_per_client.yaml
+# Test Accuracy: ~0.7
 
 
-class MiniGraphDTDataset(InMemoryDataset):
+class MiniGraphDCDataset(InMemoryDataset):
     NAME = 'mini_graph_dt'
-    DATA_NAME = ['ESOL', 'FreeSolv', 'BACE', 'LIPO', 'CLINTOX']
+    DATA_NAME = ['BACE', 'BBBP', 'CLINTOX', 'ENZYMES', 'PROTEINS_full']
     IN_MEMORY_DATA = {}
 
     def __init__(self, root, splits=[0.8, 0.1, 0.1]):
         self.root = root
         self.splits = splits
-        super(MiniGraphDTDataset, self).__init__(root)
+        super(MiniGraphDCDataset, self).__init__(root)
 
     @property
     def processed_dir(self):
@@ -57,7 +58,7 @@ class MiniGraphDTDataset(InMemoryDataset):
     def process(self):
         np.random.seed(0)
         for idx, name in enumerate(self.DATA_NAME):
-            if name in ['ESOL', 'FreeSolv', 'BACE', 'LIPO', 'CLINTOX']:
+            if name in ['BACE', 'BBBP', 'CLINTOX']:
                 dataset = MoleculeNet(self.root, name)
                 featurizer = GenFeatures()
                 ds = []
@@ -67,13 +68,20 @@ class MiniGraphDTDataset(InMemoryDataset):
                         Data(edge_index=graph.edge_index, x=graph.x,
                              y=graph.y))
                 dataset = ds
-                if name in ['BACE']:
+                if name in ['BACE', 'BBBP']:
                     for i in range(len(dataset)):
                         dataset[i].y = dataset[i].y.long()
                 if name in ['CLINTOX']:
                     for i in range(len(dataset)):
                         dataset[i].y = torch.argmax(
                             dataset[i].y).view(-1).unsqueeze(0)
+            else:
+                # Classification
+                dataset = TUDataset(self.root, name)
+                dataset = [
+                    Data(edge_index=graph.edge_index, x=graph.x, y=graph.y)
+                    for graph in dataset
+                ]
 
             # We fix train/val/test
             index = np.random.permutation(np.arange(len(dataset)))
@@ -93,48 +101,45 @@ class MiniGraphDTDataset(InMemoryDataset):
             torch.save([dataset[i] for i in valid_idx], valid_path)
             torch.save([dataset[i] for i in test_idx], test_path)
 
+            print(name, len(dataset), dataset[0])
+
     def meta_info(self):
         return {
-            'ESOL': {
-                'task': 'regression',
-                'input_dim': 74,
-                'output_dim': 1,
-                'num_samples': 1128,
-                'base': 1.4509,
-            },
-            'FreeSolv': {
-                'task': 'regression',
-                'input_dim': 74,
-                'output_dim': 1,
-                'num_samples': 1113,
-                'base': 0.0985,
-            },
             'BACE': {
                 'task': 'classification',
                 'input_dim': 74,
                 'output_dim': 2,
                 'num_samples': 1513,
-                'base': 0.4211,
             },
-            'LIPO': {
-                'task': 'regression',
+            'BBBP': {
+                'task': 'classification',
                 'input_dim': 74,
-                'output_dim': 1,
-                'num_samples': 4200,
-                'base': 0.9542,
+                'output_dim': 2,
+                'num_samples': 2039,
             },
             'CLINTOX': {
                 'task': 'classification',
                 'input_dim': 74,
                 'output_dim': 2,
                 'num_samples': 1478,
-                'base': 0.2337,
+            },
+            'ENZYMES': {
+                'task': 'classification',
+                'input_dim': 3,
+                'output_dim': 6,
+                'num_samples': 600,
+            },
+            'PROTEINS_full': {
+                'task': 'classification',
+                'input_dim': 3,
+                'output_dim': 2,
+                'num_samples': 1113,
             },
         }
 
 
 def load_mini_graph_dt(config, client_cfgs=None):
-    dataset = MiniGraphDTDataset(config.data.root)
+    dataset = MiniGraphDCDataset(config.data.root)
     # Convert to dict
     datadict = {
         client_id + 1: dataset[client_id]
@@ -147,9 +152,9 @@ def load_mini_graph_dt(config, client_cfgs=None):
 
 
 def call_mini_graph_dt(config, client_cfgs):
-    if config.data.type == "mini-graph-dt":
+    if config.data.type == "mini-graph-dc":
         data, modified_config = load_mini_graph_dt(config, client_cfgs)
         return data, modified_config
 
 
-register_data("mini-graph-dt", call_mini_graph_dt)
+register_data("mini-graph-dc", call_mini_graph_dt)

@@ -10,13 +10,13 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-def run_smac(cfg, scheduler):
+def run_smac(cfg, scheduler, client_cfgs=None):
     init_configs = []
     perfs = []
 
     def optimization_function_wrapper(config):
         budget = cfg.hpo.sha.budgets[-1]
-        res = eval_in_fs(cfg, config, budget)
+        res = eval_in_fs(cfg, config, budget, client_cfgs)
         config = dict(config)
         config['federate.total_round_num'] = budget
         init_configs.append(config)

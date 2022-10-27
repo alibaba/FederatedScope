@@ -1,29 +1,21 @@
 client_1:
   model:
-    out_channels: 1
-    task: graphRegression
+    out_channels: 2
+    task: graphClassification
   criterion:
-    type: MSELoss
+    type: CrossEntropyLoss
   train:
     optimizer:
       lr: 0.1
-  grad:
-    grad_clip: 5.0
-  eval:
-    base: 1.4509
 client_2:
   model:
-    out_channels: 1
-    task: graphRegression
+    out_channels: 2
+    task: graphClassification
   criterion:
-    type: MSELoss
+    type: CrossEntropyLoss
   train:
     optimizer:
       lr: 0.1
-  eval:
-    base: 0.0985
-  grad:
-    grad_clip: 5.0
 client_3:
   model:
     out_channels: 2
@@ -33,21 +25,15 @@ client_3:
   train:
     optimizer:
       lr: 0.1
-  eval:
-    base: 0.4211
 client_4:
   model:
-    out_channels: 1
-    task: graphRegression
+    out_channels: 6
+    task: graphClassification
   criterion:
-    type: MSELoss
+    type: CrossEntropyLoss
   train:
     optimizer:
-      lr: 0.4211
-  eval:
-    base: 0.9542
-  grad:
-    grad_clip: 5.0
+      lr: 0.1
 client_5:
   model:
     out_channels: 2
@@ -57,5 +43,3 @@ client_5:
   train:
     optimizer:
       lr: 0.1
-  eval:
-    base: 0.2337

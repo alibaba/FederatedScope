@@ -10,7 +10,7 @@ federate:
   share_local_model: False
 data:
   root: data/
-  type: mini-graph-dt
+  type: mini-graph-dc
 dataloader:
   type: pyg
 model:
@@ -27,8 +27,6 @@ train:
 trainer:
   type: graphminibatch_trainer
 eval:
-  metrics: [ 'imp_ratio' ]
-  report: [ 'avg' ]
-  best_res_update_round_wise_key: val_imp_ratio
+  metrics: [ 'acc' ]
+  best_res_update_round_wise_key: val_loss
   count_flops: False
-  base: 0.
