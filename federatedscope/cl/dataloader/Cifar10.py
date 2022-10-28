@@ -146,7 +146,3 @@ def load_cifar_dataset(config):
     elif config.data.type == "Cifar4LP":
         data, modified_config = Cifar4LP(config)
         return data, modified_config
-
-
-register_data("Cifar4CL", load_cifar_dataset)
-register_data("Cifar4LP", load_cifar_dataset)
