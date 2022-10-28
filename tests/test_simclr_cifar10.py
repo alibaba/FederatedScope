@@ -38,7 +38,7 @@ class SimCLR_CIFAR10Test(unittest.TestCase):
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.1}]
         cfg.data.consistent_label_distribution = True
-        cfg.data.num_workers = 0
+        cfg.data.num_workers = 4
         cfg.data.subsample = 1.0
 
         cfg.model.type = 'SimCLR'
