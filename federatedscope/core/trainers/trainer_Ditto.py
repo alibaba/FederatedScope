@@ -6,7 +6,7 @@ import torch
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
-from federatedscope.core.auxiliaries.utils import calculate_batch_epoch_num
+from federatedscope.core.trainers.utils import calculate_batch_epoch_num
 from typing import Type
 
 logger = logging.getLogger(__name__)
@@ -34,16 +34,17 @@ def wrap_DittoTrainer(
                                         trigger='on_fit_start',
                                         insert_pos=-1)
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_fit_start_set_regularized_para,
+        new_hook=_hook_on_fit_start_set_regularized_para,
         trigger="on_fit_start",
         insert_pos=0)
     base_trainer.register_hook_in_train(
-        new_hook=hook_on_batch_start_switch_model,
+        new_hook=_hook_on_batch_start_switch_model,
         trigger="on_batch_start",
         insert_pos=0)
-    base_trainer.register_hook_in_train(new_hook=hook_on_batch_forward_cnt_num,
-                                        trigger="on_batch_forward",
-                                        insert_pos=-1)
+    base_trainer.register_hook_in_train(
+        new_hook=_hook_on_batch_forward_cnt_num,
+        trigger="on_batch_forward",
+        insert_pos=-1)
     base_trainer.register_hook_in_train(new_hook=_hook_on_batch_end_flop_count,
                                         trigger="on_batch_end",
                                         insert_pos=-1)
@@ -52,18 +53,18 @@ def wrap_DittoTrainer(
                                         insert_pos=-1)
     # evaluation is based on the local personalized model
     base_trainer.register_hook_in_eval(
-        new_hook=hook_on_fit_start_switch_local_model,
+        new_hook=_hook_on_fit_start_switch_local_model,
         trigger="on_fit_start",
         insert_pos=0)
     base_trainer.register_hook_in_eval(
-        new_hook=hook_on_fit_end_switch_global_model,
+        new_hook=_hook_on_fit_end_switch_global_model,
         trigger="on_fit_end",
         insert_pos=-1)
 
-    base_trainer.register_hook_in_train(new_hook=hook_on_fit_end_free_cuda,
+    base_trainer.register_hook_in_train(new_hook=_hook_on_fit_end_free_cuda,
                                         trigger="on_fit_end",
                                         insert_pos=-1)
-    base_trainer.register_hook_in_eval(new_hook=hook_on_fit_end_free_cuda,
+    base_trainer.register_hook_in_eval(new_hook=_hook_on_fit_end_free_cuda,
                                        trigger="on_fit_end",
                                        insert_pos=-1)
 
@@ -117,7 +118,23 @@ def init_Ditto_ctx(base_trainer):
         ctx.num_train_epoch += ctx.num_train_epoch_for_local_model
 
 
-def hook_on_fit_start_set_regularized_para(ctx):
+def _hook_on_fit_start_set_regularized_para(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.global_model``                Move to ``ctx.device`` and set \
+        to ``train`` mode
+        ``ctx.local_model``                 Move to ``ctx.device`` and set \
+        to ``train`` mode
+        ``ctx.optimizer_for_global_model``  Initialize by ``ctx.cfg`` and \
+        wrapped by ``wrap_regularized_optimizer``
+        ``ctx.optimizer_for_local_model``   Initialize by ``ctx.cfg`` and \
+        set compared parameter group
+        ==================================  ===========================
+    """
     # set the compared model data for local personalized model
     ctx.global_model.to(ctx.device)
     ctx.local_model.to(ctx.device)
@@ -140,12 +157,34 @@ def hook_on_fit_start_set_regularized_para(ctx):
 
 
 def _hook_on_fit_start_clean(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.optimizer``                   Delete
+        ``ctx.num_..._local_model_train``   Initialize to 0
+        ==================================  ===========================
+    """
     # remove the unnecessary optimizer
     del ctx.optimizer
     ctx.num_samples_local_model_train = 0
 
 
 def _hook_on_fit_end_calibrate(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.num_samples``                 Minus \
+        ``ctx.num_samples_local_model_train``
+        ``ctx.eval_metrics``                Record ``train_total`` and \
+        ``train_total_local_model``
+        ==================================  ===========================
+    """
     # make the num_samples_train only related to the global model.
     # (num_samples_train will be used in aggregation process)
     ctx.num_samples -= ctx.num_samples_local_model_train
@@ -155,17 +194,48 @@ def _hook_on_fit_end_calibrate(ctx):
 
 
 def _hook_on_batch_end_flop_count(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.monitor``                     Monitor total flops
+        ==================================  ===========================
+    """
     # besides the normal forward flops, the regularization adds the cost of
     # number of model parameters
     ctx.monitor.total_flops += ctx.monitor.total_model_size / 2
 
 
-def hook_on_batch_forward_cnt_num(ctx):
+def _hook_on_batch_forward_cnt_num(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.num_..._local_model_train``   Add `ctx.batch_size`
+        ==================================  ===========================
+    """
     if ctx.use_local_model_current:
         ctx.num_samples_local_model_train += ctx.batch_size
 
 
-def hook_on_batch_start_switch_model(ctx):
+def _hook_on_batch_start_switch_model(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.use_local_model_current``     Set to ``True`` or ``False``
+        ``ctx.model``                       Set to ``ctx.local_model`` or \
+        ``ctx.global_model``
+        ``ctx.optimizer``                   Set to \
+        ``ctx.optimizer_for_local_model`` or ``ctx.optimizer_for_global_model``
+        ==================================  ===========================
+    """
     if ctx.cfg.train.batch_or_epoch == 'batch':
         if ctx.cur_epoch_i == (ctx.num_train_epoch - 1):
             ctx.use_local_model_current = \
@@ -205,15 +275,44 @@ def hook_on_batch_start_switch_model(ctx):
 #     ctx.model = ctx.global_model
 
 
-def hook_on_fit_start_switch_local_model(ctx):
+def _hook_on_fit_start_switch_local_model(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.model``                       Set to ``ctx.local_model`` and \
+        set to ``eval`` mode
+        ==================================  ===========================
+    """
     ctx.model = ctx.local_model
     ctx.model.eval()
 
 
-def hook_on_fit_end_switch_global_model(ctx):
+def _hook_on_fit_end_switch_global_model(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.model ``                      Set to ``ctx.global_model``
+        ==================================  ===========================
+    """
     ctx.model = ctx.global_model
 
 
-def hook_on_fit_end_free_cuda(ctx):
+def _hook_on_fit_end_free_cuda(ctx):
+    """
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.global_model``                Move to ``cpu``
+        ``ctx.locol_model``                  Move to ``cpu``
+        ==================================  ===========================
+    """
     ctx.global_model.to(torch.device("cpu"))
     ctx.local_model.to(torch.device("cpu"))

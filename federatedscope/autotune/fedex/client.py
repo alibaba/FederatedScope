@@ -27,8 +27,7 @@ class FedExClient(Client):
         self._cfg.defrost()
         self._cfg.merge_from_list(cmd_args, check_cfg=False)
         self._cfg.freeze(inform=False, check_cfg=False)
-
-        self.trainer.ctx.setup_vars()
+        self.trainer.cfg = self._cfg
 
     def callback_funcs_for_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content

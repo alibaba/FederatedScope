@@ -3,23 +3,11 @@ import copy
 import logging
 
 from federatedscope.core.trainers.base_trainer import BaseTrainer
-from federatedscope.core.auxiliaries.enums import MODE
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import MODE, LIFECYCLE
 from federatedscope.core.auxiliaries.decorators import use_diff
-from federatedscope.core.auxiliaries.utils import format_log_hooks
-from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
-from federatedscope.core.trainers.context import Context
-from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.trainers.context import lifecycle
-from federatedscope.core.monitors.metric_calculator import MetricCalculator
-
-try:
-    import torch
-    from torch.utils.data import DataLoader, Dataset
-except ImportError:
-    torch = None
-    DataLoader = None
-    Dataset = None
+from federatedscope.core.trainers.utils import format_log_hooks, \
+    filter_by_specified_keywords
+from federatedscope.core.trainers.context import Context, CtxVar, lifecycle
 
 logger = logging.getLogger(__name__)
 
@@ -41,18 +29,15 @@ class Trainer(BaseTrainer):
                  config,
                  only_for_eval=False,
                  monitor=None):
-        self.cfg = config
-        self.metric_calculator = MetricCalculator(config.eval.metrics)
+        self._cfg = config
 
-        self.ctx = Context(model,
-                           self.cfg,
-                           data,
-                           device,
-                           init_dict=self.parse_data(data))
+        self.ctx = Context(model, self.cfg, data, device)
 
-        if monitor is None:
-            logger.warning(
-                f"Will not use monitor in trainer with class {type(self)}")
+        # Parse data and setup init vars in ctx
+        self._setup_data_related_var_in_ctx(self.ctx)
+
+        assert monitor is not None, \
+            f"Monitor not found in trainer with class {type(self)}"
         self.ctx.monitor = monitor
         # the "model_nums", and "models" are used for multi-model case and
         # model size calculation
@@ -85,8 +70,37 @@ class Trainer(BaseTrainer):
             # once for better logs readability
             pass
 
+    @property
+    def cfg(self):
+        return self._cfg
+
+    @cfg.setter
+    def cfg(self, new_cfg):
+        self._cfg = new_cfg
+        self._setup_data_related_var_in_ctx(self.ctx)
+
     def parse_data(self, data):
+        """
+        Populate ``${split}_data``, ``${split}_loader`` and \
+        ``num_${split}_data`` for different data splits
+        """
+        raise NotImplementedError
+
+    def setup_data(self, ctx):
+        """
+        Initialization data by ``cfg``.
+        """
         pass
+
+    def _setup_data_related_var_in_ctx(self, ctx):
+        """
+        Populate ``${split}_data``, ``${split}_loader`` and \
+        ``num_${split}_data`` for different data splits, and setup init var \
+        in ctx.
+        """
+        self.setup_data(ctx)
+        init_dict = self.parse_data(ctx.data)
+        ctx.merge_from_dict(init_dict)
 
     def register_default_hooks_train(self):
         pass
@@ -265,7 +279,8 @@ class Trainer(BaseTrainer):
 
     @lifecycle(LIFECYCLE.EPOCH)
     def _run_epoch(self, hooks_set):
-        for epoch_i in range(self.ctx.get(f"num_{self.ctx.cur_split}_epoch")):
+        for epoch_i in range(
+                getattr(self.ctx, f"num_{self.ctx.cur_split}_epoch")):
             self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
 
             for hook in hooks_set["on_epoch_start"]:
@@ -278,7 +293,8 @@ class Trainer(BaseTrainer):
 
     @lifecycle(LIFECYCLE.BATCH)
     def _run_batch(self, hooks_set):
-        for batch_i in range(self.ctx.get(f"num_{self.ctx.cur_split}_batch")):
+        for batch_i in range(
+                getattr(self.ctx, f"num_{self.ctx.cur_split}_batch")):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
             for hook in hooks_set["on_batch_start"]:
@@ -301,26 +317,26 @@ class Trainer(BaseTrainer):
                     break
 
     def update(self, model_parameters, strict=False):
-        '''
+        """
             Called by the FL client to update the model parameters
         Arguments:
             model_parameters (dict): {model_name: model_val}
             strict (bool): ensure the k-v paris are strictly same
-        '''
+        """
         pass
 
     def get_model_para(self):
-        '''
+        """
 
         :return: model_parameters (dict): {model_name: model_val}
-        '''
+        """
         pass
 
     def print_trainer_meta_info(self):
-        '''
+        """
             print some meta info for code-users, e.g., model type; the para
             names will be filtered out, etc.,
-        '''
+        """
         logger.info(f"Model meta-info: {type(self.ctx.model)}.")
         logger.debug(f"Model meta-info: {self.ctx.model}.")
         # logger.info(f"Data meta-info: {self.ctx['data']}.")
@@ -348,7 +364,7 @@ class Trainer(BaseTrainer):
             t{format_log_hooks(self.hooks_in_eval)}")
 
     def _param_filter(self, state_dict, filter_keywords=None):
-        '''
+        """
         model parameter filter when transmit between local and gloabl,
         which is useful in personalization.
         e.g., setting cfg.personalization.local_param= ['bn', 'norms']
@@ -362,7 +378,7 @@ class Trainer(BaseTrainer):
         Returns:
             state_dict (dict): remove the keys that match any of the given
             keywords.
-        '''
+        """
         if self.cfg.federate.method in ["local", "global"]:
             return {}
 

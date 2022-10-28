@@ -5,7 +5,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.fed_runner import get_runner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 SAMPLE_CLIENT_NUM = 5
@@ -67,10 +67,10 @@ class FEMNISTTest(unittest.TestCase):
         self.assertEqual(init_cfg.federate.sample_client_num,
                          SAMPLE_CLIENT_NUM)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)

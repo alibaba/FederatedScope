@@ -4,7 +4,7 @@ from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 
 logger = logging.getLogger(__name__)
 

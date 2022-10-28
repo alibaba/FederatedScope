@@ -16,6 +16,6 @@ def get_metric(types):
     for func in register.metric_dict.values():
         res = func(types)
         if res is not None:
-            name, metric = res
-            metrics[name] = metric
+            name, metric, the_larger_the_better = res
+            metrics[name] = metric, the_larger_the_better
     return metrics

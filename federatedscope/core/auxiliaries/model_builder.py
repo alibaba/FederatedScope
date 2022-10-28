@@ -1,8 +1,7 @@
 import logging
 
-import numpy as np
-
 import federatedscope.register as register
+from federatedscope.core.data.wrap_dataset import WrapDataset
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +38,10 @@ def get_shape_from_data(data, model_config, backend='torch'):
         if model_config.task.startswith('graph'):
             # graph-level task
             data_representative = next(iter(data['train']))
-            return (data_representative.x.shape, num_label, num_edge_features)
+            return data_representative.x.shape, num_label, num_edge_features
         else:
             # node/link-level task
-            return (data['data'].x.shape, num_label, num_edge_features)
+            return data['data'].x.shape, num_label, num_edge_features
 
     if isinstance(data, dict):
         keys = list(data.keys())
@@ -58,7 +57,6 @@ def get_shape_from_data(data, model_config, backend='torch'):
             key_representative = keys[0]
             logger.warning(f'We chose the key {key_representative} as the '
                            f'representative key to extract data shape.')
-
         data_representative = data[key_representative]
     else:
         # Handle the data with non-dict format
