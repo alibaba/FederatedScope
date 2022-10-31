@@ -16,13 +16,13 @@ except ImportError as error:
         f'available.')
 
 
-def get_scheduler(optimizer, scheduler_type, **kwargs):
+def get_scheduler(optimizer, type, **kwargs):
     """
     This function builds an instance of scheduler.
 
     Args:
         optimizer: optimizer to be scheduled
-        scheduler_type: type of scheduler
+        type: type of scheduler
         **kwargs: kwargs dict
 
     Returns:
@@ -33,16 +33,15 @@ def get_scheduler(optimizer, scheduler_type, **kwargs):
         scheduler.
     """
     for func in register.scheduler_dict.values():
-        scheduler = func(optimizer, scheduler_type)
+        scheduler = func(optimizer, type)
         if scheduler is not None:
             return scheduler
 
-    if torch is None or scheduler_type == '':
+    if torch is None or type == '':
         return None
-    if isinstance(scheduler_type, str):
-        if hasattr(torch.optim.lr_scheduler, scheduler_type):
-            return getattr(torch.optim.lr_scheduler, scheduler_type)(optimizer,
-                                                                     **kwargs)
+    if isinstance(type, str):
+        if hasattr(torch.optim.lr_scheduler, type):
+            return getattr(torch.optim.lr_scheduler, type)(optimizer, **kwargs)
         else:
             raise NotImplementedError(
                 'Scheduler {} not implement'.format(scheduler_type))
