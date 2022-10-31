@@ -15,13 +15,12 @@ except ImportError as error:
 
 def get_shape_from_data(data, model_config, backend='torch'):
     """
-    Extract the input shape from the given data, which can be used to build
-    the data. Users can also use `data.input_shape` to specify the shape
+    Extract the input shape from the given data, which can be used to build \
+    the data. Users can also use `data.input_shape` to specify the shape.
+
     Arguments:
-        data (`ClientData`): the data used for local training or evaluation
-        The expected data format:
-        1): {train/val/test: {x:ndarray, y:ndarray}}}
-        2): {train/val/test: DataLoader}
+        data (`ClientData`): the data used for local training or evaluation \
+
     Returns:
         shape (tuple): the input shape
     """
@@ -91,11 +90,32 @@ def get_shape_from_data(data, model_config, backend='torch'):
 
 def get_model(model_config, local_data=None, backend='torch'):
     """
+    This function builds an instance of model to be trained.
+
     Arguments:
-        local_data (object): the model to be instantiated is
-        responsible for the given data.
+        model_config: ``cfg.model``, a submodule of ``cfg``
+        local_data: the model to be instantiated is responsible for the \
+        given data
+        backend: chosen from ``torch`` and ``tensorflow``
     Returns:
-        model (torch.Module): the instantiated model.
+        model (``torch.Module``): the instantiated model.
+
+    Note:
+      The key-value pairs of built-in model and source are shown below:
+        ===================================  ==============================
+        Model type                           Source
+        ===================================  ==============================
+        ``lr``                               ``core.lr.LogisticRegression`` \
+        or ``cross_backends.LogisticRegression``
+        ``mlp``                              ``core.mlp.MLP``
+        ``quadratic``                        ``tabular.model.QuadraticModel``
+        ``convnet2, convnet5, vgg11``        ``cv.model.get_cnn()``
+        ``lstm``                             ``nlp.model.get_rnn()``
+        ``{}@transformers``                  ``nlp.model.get_transformer()``
+        ``gcn, sage, gpr, gat, gin, mpnn``   ``gfl.model.get_gnn()``
+        ``vmfnet, hmfnet``                   \
+        ``mf.model.model_builder.get_mfnet()``
+        ===================================  ==============================
     """
     if local_data is not None:
         input_shape = get_shape_from_data(local_data, model_config, backend)
@@ -135,7 +155,7 @@ def get_model(model_config, local_data=None, backend='torch'):
         from federatedscope.tabular.model import QuadraticModel
         model = QuadraticModel(input_shape[-1], 1)
 
-    elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11', 'lr']:
+    elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11']:
         from federatedscope.cv.model import get_cnn
         model = get_cnn(model_config, input_shape)
     elif model_config.type.lower() in ['lstm']:

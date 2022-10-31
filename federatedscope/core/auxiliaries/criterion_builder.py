@@ -19,8 +19,9 @@ except ImportError as error:
 
 def get_criterion(criterion_type, device):
     """
-    This function builds an instance of loss functions from \
-    "https://pytorch.org/docs/stable/nn.html#loss-functions".
+    This function builds an instance of loss functions from: \
+    "https://pytorch.org/docs/stable/nn.html#loss-functions",
+    where the ``criterion_type`` is chosen from.
 
     Arguments:
         criterion_type: loss function type
