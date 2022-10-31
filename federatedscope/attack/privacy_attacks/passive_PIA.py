@@ -93,7 +93,7 @@ class PassivePropertyInference():
         # get last phase model parameters
         model.load_state_dict(previous_para, strict=False)
 
-        optimizer = get_optimizer(type=self.fl_type_optimizer,
+        optimizer = get_optimizer(opt_type=self.fl_type_optimizer,
                                   model=model,
                                   lr=self.fl_lr)
 

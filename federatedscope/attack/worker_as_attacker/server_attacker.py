@@ -333,7 +333,7 @@ class PassivePIAServer(Server):
             batch_size=100)
 
         # self.optimizer = get_optimizer(
-        # type=self._cfg.fedopt.type_optimizer, model=self.model,
+        # opt_type=self._cfg.fedopt.type_optimizer, model=self.model,
         # lr=self._cfg.fedopt.optimizer.lr)
         # print(self.optimizer)
     def callback_funcs_model_para(self, message: Message):

@@ -15,6 +15,17 @@ def get_runner(data, server_class, client_class, config, client_configs=None):
 
     Returns:
         An instantiated FedRunner to run the FL course.
+
+    Note:
+      The key-value pairs of built-in runner and source are shown below:
+        ===================================  ==============================
+        Mode                                 Source
+        ===================================  ==============================
+        ``standalone``                       \
+        ``core.fed_runner.StandaloneRunner``
+        ``distributed``                      \
+        ``core.fed_runner.DistributedRunner``
+        ===================================  ==============================
     """
 
     mode = config.federate.mode.lower()
