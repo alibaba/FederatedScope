@@ -8,18 +8,14 @@ except ImportError:
 
 def get_regularizer(reg_type):
     """
-    This function builds an instance of scheduler to regularize training.
+    This function builds an instance of regularizer to regularize training.
 
     Args:
         reg_type: type of scheduler, such as see \
             https://pytorch.org/docs/stable/optim.html for details
 
     Returns:
-        An instantiated scheduler.
-
-    Note:
-        We do not provide built-in scheduler, please follow \
-        ``contrib.scheduler.example`` to implement your own scheduler.
+        An instantiated regularizer.
     """
     if reg_type is None or reg_type == '':
         return DummyRegularizer()

@@ -68,4 +68,5 @@ federatedscope.core.auxiliaries
 .. autofunction:: federatedscope.core.auxiliaries.splitter_builder.get_splitter()
 .. autofunction:: federatedscope.core.auxiliaries.trainer_builder.get_trainer()
 .. autofunction:: federatedscope.core.auxiliaries.transform_builder.get_transform()
-.. autofunction:: federatedscope.core.auxiliaries.worker_builder.get_worker()
+.. autofunction:: federatedscope.core.auxiliaries.worker_builder.get_client_cls()
+.. autofunction:: federatedscope.core.auxiliaries.worker_builder.get_server_cls()

@@ -39,7 +39,7 @@ def get_data(config, client_cfgs=None):
     necessary.
 
     Arguments:
-        config: a cfg node object, see ``cfg.data`` for details
+        config: a cfg node object
         client_cfgs: dict of client-specific cfg node object
     Returns:
         The dataset object and the updated configuration.
