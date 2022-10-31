@@ -17,13 +17,13 @@ except ImportError as error:
         f'available.')
 
 
-def get_optimizer(model, opt_type, lr, **kwargs):
+def get_optimizer(model, type, lr, **kwargs):
     """
     This function returns an instantiated optimizer to optimize the model.
 
     Args:
         model: model to be optimized
-        opt_type: type of optimizer, see \
+        type: type of optimizer, see \
           https://pytorch.org/docs/stable/optim.html
         lr: learning rate
         **kwargs: kwargs dict
@@ -43,19 +43,19 @@ def get_optimizer(model, opt_type, lr, **kwargs):
         del tmp_kwargs['is_ready_for_run']
 
     for func in register.optimizer_dict.values():
-        optimizer = func(model, opt_type, lr, **tmp_kwargs)
+        optimizer = func(model, type, lr, **tmp_kwargs)
         if optimizer is not None:
             return optimizer
 
-    if isinstance(opt_type, str):
-        if hasattr(torch.optim, opt_type):
+    if isinstance(type, str):
+        if hasattr(torch.optim, type):
             if isinstance(model, torch.nn.Module):
-                return getattr(torch.optim, opt_type)(model.parameters(), lr,
-                                                      **tmp_kwargs)
+                return getattr(torch.optim, type)(model.parameters(), lr,
+                                                  **tmp_kwargs)
             else:
-                return getattr(torch.optim, opt_type)(model, lr, **tmp_kwargs)
+                return getattr(torch.optim, type)(model, lr, **tmp_kwargs)
         else:
             raise NotImplementedError(
-                'Optimizer {} not implement'.format(opt_type))
+                'Optimizer {} not implement'.format(type))
     else:
         raise TypeError()
