@@ -18,8 +18,6 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.unseen_clients_rate = 0.0
     cfg.federate.total_round_num = 50
     cfg.federate.mode = 'standalone'
-    cfg.federate.parallel = True
-    cfg.federate.process_num = 1
     cfg.federate.share_local_model = False
     cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is
     # the number of training samples in dataset.
@@ -43,6 +41,10 @@ def extend_fl_setting_cfg(cfg):
     # in each training round, ['uniform', 'group']
     cfg.federate.resource_info_file = ""  # the device information file to
     # record computation and communication ability
+
+    # The configurations for parallel in standalone
+    cfg.federate.parallel = False
+    cfg.federate.process_num = 1
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options
@@ -181,5 +183,14 @@ def assert_fl_setting_cfg(cfg):
         logger.warning('Set cfg.federate.make_global_eval=True since '
                        'cfg.federate.merge_test_data=True')
 
+    if cfg.federate.parallel and cfg.federate.mode != 'standalone':
+        cfg.federate.parallel = False
+        logger.warning('Parallel training can only be used in standalone mode'
+                       ', thus cfg.federate.parallel is modified to False')
+    if cfg.federate.parallel and cfg.federate.process_num <= 1:
+        cfg.federate.parallel = False
+        logger.warning('We found that cfg.federate.process_num is invalid for '
+                       'applying parallel training (i.e., process_num <= 1), '
+                       'thus cfg.federate.parallel is modified to False')
 
 register_config("fl_setting", extend_fl_setting_cfg)
