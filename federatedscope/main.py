@@ -14,7 +14,7 @@ from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.configs.config import global_cfg, CfgNode
-from federatedscope.core.fed_runner import get_runner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 
 if os.environ.get('https_proxy'):
     del os.environ['https_proxy']

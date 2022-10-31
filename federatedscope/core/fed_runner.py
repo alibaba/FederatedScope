@@ -10,23 +10,8 @@ from federatedscope.core.workers import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
 from federatedscope.core.auxiliaries.utils import get_resource_info
-from federatedscope.core.data.utils import merge_data
 
 logger = logging.getLogger(__name__)
-
-
-def get_runner(data, server_class, client_class, config, client_configs=None):
-    # Instantiate a Runner based on a configuration file
-    mode = config.federate.mode.lower()
-    runner_dict = {
-        'standalone': StandaloneRunner,
-        'distributed': DistributedRunner
-    }
-    return runner_dict[mode](data=data,
-                             server_class=server_class,
-                             client_class=client_class,
-                             config=config,
-                             client_configs=client_configs)
 
 
 class BaseRunner(object):
