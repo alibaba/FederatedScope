@@ -6,7 +6,7 @@ from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_s
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import get_runner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 
 
 class vFLTest(unittest.TestCase):
