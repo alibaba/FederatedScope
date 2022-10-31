@@ -11,7 +11,7 @@ class Aggregator(ABC):
 
 
 class NoCommunicationAggregator(Aggregator):
-    """"Clients do not communicate. Each client work locally
+    """Clients do not communicate. Each client work locally
     """
     def aggregate(self, agg_info):
         # do nothing
