@@ -180,7 +180,8 @@ class Context(LifecycleDict):
                         self.cfg.dataloader.batch_size)))
 
     def setup_optimizer_and_scheduler(self, mode):
-        total_steps = self.get(f'num_total_{mode}_batch') * \
+        total_steps = self.get(f'num_total_{mode}_batch') // \
+                      self.cfg.grad.grad_accum_count * \
                       self.cfg.federate.total_round_num
         warmup_steps = int(self.cfg[mode].scheduler.warmup_ratio * total_steps)
         setattr(self, f'{mode}_optimizer',

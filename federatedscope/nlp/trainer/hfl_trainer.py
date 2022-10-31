@@ -106,16 +106,21 @@ class FedNLPTrainer(GeneralTorchTrainer):
         model_ckpt = ctx.model.state_dict()
         logger.info('Loading model from \'{}\''.format(global_ckpt_path))
         global_ckpt = torch.load(global_ckpt_path, map_location='cpu')['model']
-        model_ckpt.update(global_ckpt)
+        model_ckpt.update({
+            k: v
+            for k, v in global_ckpt.items()
+            if k in model_ckpt and v.size() == model_ckpt[k].size()
+        })
         if osp.exists(client_ckpt_path):
             logger.info('Updating model from \'{}\''.format(client_ckpt_path))
             client_ckpt = torch.load(client_ckpt_path,
                                      map_location='cpu')['model']
-            model_ckpt.update(client_ckpt)
-        ctx.model.load_state_dict({
-            k: v
-            for k, v in model_ckpt.items() if k in ctx.model.state_dict()
-        })
+            model_ckpt.update({
+                k: v
+                for k, v in client_ckpt.items()
+                if k in model_ckpt and v.size() == model_ckpt[k].size()
+            })
+        ctx.model.load_state_dict(model_ckpt)
 
     def _save_model(self, ctx):
         if len(ctx.cfg.personalization.local_param) > 0:
@@ -427,13 +432,21 @@ class PFedNLPTrainer(FedNLPTrainer):
             logger.info('Loading model from \'{}\''.format(global_ckpt_path))
             global_ckpt = torch.load(global_ckpt_path,
                                      map_location='cpu')['model']
-            model_ckpt.update(global_ckpt)
+            model_ckpt.update({
+                k: v
+                for k, v in global_ckpt.items()
+                if k in model_ckpt and v.size() == model_ckpt[k].size()
+            })
             if os.path.exists(client_ckpt_path):
                 logger.info(
                     'Updating model from \'{}\''.format(client_ckpt_path))
                 client_ckpt = torch.load(client_ckpt_path,
                                          map_location='cpu')['model']
-                model_ckpt.update(client_ckpt)
+                model_ckpt.update({
+                    k: v
+                    for k, v in client_ckpt.items()
+                    if k in model_ckpt and v.size() == model_ckpt[k].size()
+                })
             ctx.model.load_state_dict(model_ckpt)
         else:
             raise RuntimeError(

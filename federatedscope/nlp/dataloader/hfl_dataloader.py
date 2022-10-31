@@ -34,15 +34,11 @@ def extend_cfg(cfg, cfg_client):
         for group_id, num_clients in enumerate(cfg.data.num_grouped_clients):
             downstream_tasks += [cfg.data.datasets[group_id]] * num_clients
         cfg.model.downstream_tasks = downstream_tasks
-    elif cfg.aggregator.num_agg_topk is not None and \
-            len(cfg.aggregator.num_agg_topk) > 0:
+    elif len(cfg.aggregator.num_agg_topk) > 0:
         num_agg_topk = []
         for group_id, num_clients in enumerate(cfg.data.num_grouped_clients):
-            if isinstance(cfg.aggregator.num_agg_topk, list):
-                num_agg_topk += [cfg.aggregator.num_agg_topk[group_id]] * \
-                                num_clients
-            else:
-                num_agg_topk += [cfg.aggregator.num_agg_topk] * num_clients
+            num_agg_topk += [cfg.aggregator.num_agg_topk[group_id]] * \
+                            num_clients
         cfg.aggregator.num_agg_topk = num_agg_topk
 
     tokenizer = setup_tokenizer(cfg)
@@ -57,7 +53,7 @@ def extend_cfg(cfg, cfg_client):
         if cfg.train.local_update_steps > 5:
             cfg.train.local_update_steps = 5
         cfg.federate.save_to = ''
-        if cfg.data.num_contrast is not None and cfg.data.num_contrast > 20:
+        if cfg.data.num_contrast > 20:
             cfg.data.num_contrast = 20
         cfg.data.cache_dir = ''
 
