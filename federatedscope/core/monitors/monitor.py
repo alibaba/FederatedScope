@@ -25,10 +25,25 @@ global_all_monitors = [
 
 class Monitor(object):
     """
-        Provide the monitoring functionalities such as formatting the
-        evaluation results into diverse metrics.
-        Besides the prediction related performance, the monitor also can
-        track efficiency related metrics for a worker
+    Provide the monitoring functionalities such as formatting the \
+    evaluation results into diverse metrics. \
+    Besides the prediction related performance, the monitor also can \
+    track efficiency related metrics for a worker
+
+    Args:
+        cfg: a cfg node object
+        monitored_object: object to be monitored
+
+    Attributes:
+        log_res_best: best ever seen results
+        outdir: output directory
+        use_wandb: whether use ``wandb``
+        wandb_online_track: whether use ``wandb`` to track online
+        monitored_object: object to be monitored
+        metric_calculator: metric calculator, /
+            see ``core.monitors.metric_calculator``
+        round_wise_update_key: key to decide which result of evaluation \
+            round is better
     """
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
@@ -93,20 +108,38 @@ class Monitor(object):
                 exit()
 
     def eval(self, ctx):
+        """
+        Evaluates the given context with ``metric_calculator``.
+
+        Args:
+            ctx: context of trainer, see ``core.trainers.context``
+
+        Returns:
+            Evaluation results.
+        """
         results = self.metric_calculator.eval(ctx)
         return results
 
     def global_converged(self):
+        """
+        Calculate wall time and round when global convergence has been reached.
+        """
         self.global_convergence_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
         self.global_convergence_round = self.monitored_object.state
 
     def local_converged(self):
+        """
+        Calculate wall time and round when local convergence has been reached.
+        """
         self.local_convergence_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
         self.local_convergence_round = self.monitored_object.state
 
     def finish_fl(self):
+        """
+        When FL finished, write system metrics to file.
+        """
         self.fl_end_wall_time = datetime.datetime.now(
         ) - self.fl_begin_wall_time
 
@@ -143,9 +176,8 @@ class Monitor(object):
                                              file_io=True,
                                              from_global_monitors=False):
         """
-            average the system metrics recorded in "system_metrics.json" by
-            all workers
-        :return:
+        Average the system metrics recorded in ``system_metrics.json`` by \
+        all workers
         """
 
         all_sys_metrics = defaultdict(list)
@@ -236,6 +268,9 @@ class Monitor(object):
     def save_formatted_results(self,
                                formatted_res,
                                save_file_name="eval_results.log"):
+        """
+        Save formatted results to a file.
+        """
         line = str(formatted_res) + "\n"
         if save_file_name != "":
             with open(os.path.join(self.outdir, save_file_name),
@@ -254,6 +289,9 @@ class Monitor(object):
                 exit()
 
     def finish_fed_runner(self, fl_mode=None):
+        """
+        Finish the Fed runner.
+        """
         self.compress_raw_res_file()
         if fl_mode == "standalone":
             self.merge_system_metrics_simulation_mode()
@@ -289,6 +327,9 @@ class Monitor(object):
                                 wandb.summary[k] = v
 
     def compress_raw_res_file(self):
+        """
+        Compress the raw res file to be written to disk.
+        """
         old_f_name = os.path.join(self.outdir, "eval_results.raw")
         if os.path.exists(old_f_name):
             logger.info(
@@ -306,7 +347,7 @@ class Monitor(object):
                         forms=None,
                         return_raw=False):
         """
-        format the evaluation results from trainer.ctx.eval_results
+        Format the evaluation results from ``trainer.ctx.eval_results``
 
         Args:
             results (dict): a dict to store the evaluation results {metric:
@@ -317,41 +358,45 @@ class Monitor(object):
             return_raw (bool): return either raw results, or other results
 
         Returns:
-            round_formatted_results (dict): a formatted results with
-            different forms and roles,
-            e.g.,
-            {
-            'Role': 'Server #',
-            'Round': 200,
-            'Results_weighted_avg': {
-                'test_avg_loss': 0.58, 'test_acc': 0.67, 'test_correct':
-                3356, 'test_loss': 2892, 'test_total': 5000
-                },
-            'Results_avg': {
-                'test_avg_loss': 0.57, 'test_acc': 0.67, 'test_correct':
-                3356, 'test_loss': 2892, 'test_total': 5000
-                },
-            'Results_fairness': {
-             'test_total': 33.99, 'test_correct': 27.185,
-             'test_avg_loss_std': 0.433551,
-             'test_avg_loss_bottom_decile': 0.356503,
-             'test_avg_loss_top_decile': 1.212492,
-             'test_avg_loss_min': 0.198317, 'test_avg_loss_max': 3.603567,
-             'test_avg_loss_bottom10%': 0.276681, 'test_avg_loss_top10%':
-             1.686649,
-             'test_avg_loss_cos1': 0.867932, 'test_avg_loss_entropy': 5.164172,
-             'test_loss_std': 13.686828, 'test_loss_bottom_decile': 11.822035,
-             'test_loss_top_decile': 39.727236, 'test_loss_min': 7.337724,
-             'test_loss_max': 100.899873, 'test_loss_bottom10%': 9.618685,
-             'test_loss_top10%': 54.96769, 'test_loss_cos1': 0.880356,
-             'test_loss_entropy': 5.175803, 'test_acc_std': 0.123823,
-             'test_acc_bottom_decile': 0.676471, 'test_acc_top_decile':
-             0.916667,
-             'test_acc_min': 0.071429, 'test_acc_max': 0.972973,
-             'test_acc_bottom10%': 0.527482, 'test_acc_top10%': 0.94486,
-             'test_acc_cos1': 0.988134, 'test_acc_entropy': 5.283755
-                },
+            dict: round_formatted_results, a formatted results with \
+            different forms and roles
+
+        Note:
+          Example of return value:
+            ```
+            {                                                                 \
+            'Role': 'Server #',                                               \
+            'Round': 200,                                                     \
+            'Results_weighted_avg': {                                         \
+                'test_avg_loss': 0.58, 'test_acc': 0.67, 'test_correct':      \
+                3356, 'test_loss': 2892, 'test_total': 5000                   \
+                },                                                            \
+            'Results_avg': {                                                  \
+                'test_avg_loss': 0.57, 'test_acc': 0.67, 'test_correct':      \
+                3356, 'test_loss': 2892, 'test_total': 5000                   \
+                },                                                            \
+            'Results_fairness': {                                             \
+             'test_total': 33.99, 'test_correct': 27.185,                     \
+             'test_avg_loss_std': 0.433551,                                   \
+             'test_avg_loss_bottom_decile': 0.356503,                         \
+             'test_avg_loss_top_decile': 1.212492,                            \
+             'test_avg_loss_min': 0.198317, 'test_avg_loss_max': 3.603567,    \
+             'test_avg_loss_bottom10%': 0.276681, 'test_avg_loss_top10%':     \
+             1.686649,                                                        \
+             'test_avg_loss_cos1': 0.8679, 'test_avg_loss_entropy': 5.1641,   \
+             'test_loss_std': 13.686828, 'test_loss_bottom_decile': 11.8220,  \
+             'test_loss_top_decile': 39.727236, 'test_loss_min': 7.337724,    \
+             'test_loss_max': 100.899873, 'test_loss_bottom10%': 9.618685,    \
+             'test_loss_top10%': 54.96769, 'test_loss_cos1': 0.880356,        \
+             'test_loss_entropy': 5.175803, 'test_acc_std': 0.123823,         \
+             'test_acc_bottom_decile': 0.676471, 'test_acc_top_decile':       \
+             0.916667,                                                        \
+             'test_acc_min': 0.071429, 'test_acc_max': 0.972973,              \
+             'test_acc_bottom10%': 0.527482, 'test_acc_top10%': 0.94486,      \
+             'test_acc_cos1': 0.988134, 'test_acc_entropy': 5.283755          \
+                },                                                            \
             }
+            ```
         """
         if forms is None:
             forms = ['weighted_avg', 'avg', 'fairness', 'raw']
@@ -433,15 +478,16 @@ class Monitor(object):
             round_formatted_results
 
     def calc_blocal_dissim(self, last_model, local_updated_models):
-        '''
+        """
         Arguments:
             last_model (dict): the state of last round.
-            local_updated_models (list): each element is ooxx.
+            local_updated_models (list): each element is model.
+
         Returns:
-            b_local_dissimilarity (dict): the measurements proposed in
-            "Tian Li, Anit Kumar Sahu, Manzil Zaheer, and et al. Federated
+            dict: b_local_dissimilarity, the measurements proposed in \
+            "Tian Li, Anit Kumar Sahu, Manzil Zaheer, and et al. Federated \
             Optimization in Heterogeneous Networks".
-        '''
+        """
         # for k, v in last_model.items():
         #    print(k, v)
         # for i, elem in enumerate(local_updated_models):
@@ -481,6 +527,9 @@ class Monitor(object):
         return b_local_dissimilarity
 
     def convert_size(self, size_bytes):
+        """
+        Convert bytes to human-readable size.
+        """
         import math
         if size_bytes <= 0:
             return str(size_bytes)
@@ -492,11 +541,11 @@ class Monitor(object):
 
     def track_model_size(self, models):
         """
-            calculate the total model size given the models hold by the
-            worker/trainer
+        calculate the total model size given the models hold by the \
+        worker/trainer
 
-        :param models: torch.nn.Module or list of torch.nn.Module
-        :return:
+        Args
+            models: torch.nn.Module or list of torch.nn.Module
         """
         if self.total_model_size != 0:
             logger.warning(
@@ -514,13 +563,9 @@ class Monitor(object):
 
     def track_avg_flops(self, flops, sample_num=1):
         """
-            update the average flops for forwarding each data sample,
-            for most models and tasks,
-            the averaging is not needed as the input shape is fixed
-
-        :param flops: flops/
-        :param sample_num:
-        :return:
+        update the average flops for forwarding each data sample, \
+        for most models and tasks, \
+        the averaging is not needed as the input shape is fixed
         """
 
         self.flops_per_sample = (self.flops_per_sample * self.flop_count +
@@ -528,16 +573,22 @@ class Monitor(object):
         self.flop_count += 1
 
     def track_upload_bytes(self, bytes):
+        """
+        Track the number of bytes uploaded.
+        """
         self.total_upload_bytes += bytes
 
     def track_download_bytes(self, bytes):
+        """
+        Track the number of bytes downloaded.
+        """
         self.total_download_bytes += bytes
 
     def update_best_result(self, best_results, new_results, results_type):
         """
-            update best evaluation results.
-            by default, the update is based on validation loss with
-            `round_wise_update_key="val_loss" `
+        Update best evaluation results. \
+        by default, the update is based on validation loss with \
+        ``round_wise_update_key="val_loss" ``
         """
         update_best_this_round = False
         if not isinstance(new_results, dict):

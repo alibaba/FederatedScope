@@ -17,8 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class MetricCalculator(object):
-    def __init__(self, eval_metric: Union[Set[str], List[str], str]):
+    """
+    Initializes the metric functions for the monitor. Use ``eval(ctx)`` \
+    to get evaluation results.
 
+    Args:
+        eval_metric: set of metric names
+    """
+    def __init__(self, eval_metric: Union[Set[str], List[str], str]):
         # Add personalized metrics
         if isinstance(eval_metric, str):
             eval_metric = {eval_metric}
@@ -29,6 +35,53 @@ class MetricCalculator(object):
         self.eval_metric = self.get_metric_funcs(eval_metric)
 
     def get_metric_funcs(self, eval_metric):
+        """
+        Build metrics for evaluation.
+        Args:
+            self: write your description
+            eval_metric: write your description
+
+        Returns:
+        A metric calculator dict, such as \
+        ``{'loss': (eval_loss, False), 'acc': (eval_acc, True), ...}``
+
+        Note:
+          The key-value pairs of built-in metric and related funcs and \
+          ``the_larger_the_better`` sign is shown below:
+            =================  =============================================  =
+            Metric name        Source                                         \
+            The larger the better
+            =================  =============================================  =
+            ``loss``           ``monitors.metric_calculator.eval_loss``       \
+            False
+            ``avg_loss``       ``monitors.metric_calculator.eval_avg_loss``   \
+            False
+            ``total``          ``monitors.metric_calculator.eval_total``      \
+            False
+            ``correct``        ``monitors.metric_calculator.eval_correct``    \
+            True
+            ``acc``            ``monitors.metric_calculator.eval_acc``        \
+            True
+            ``ap``             ``monitors.metric_calculator.eval_ap``         \
+            True
+            ``f1``             ``monitors.metric_calculator.eval_f1_score``   \
+            True
+            ``roc_auc``        ``monitors.metric_calculator.eval_roc_auc``    \
+            True
+            ``rmse``           ``monitors.metric_calculator.eval_rmse``       \
+            False
+            ``mse``            ``monitors.metric_calculator.eval_mse``        \
+            False
+            ``loss_regular``   ``monitors.metric_calculator.eval_regular``    \
+            False
+            ``imp_ratio``      ``monitors.metric_calculator.eval_imp_ratio``  \
+            True
+            ``std``            ``None``                                       \
+            False
+            ``hits@{n}``       ``monitors.metric_calculator.eval_hits``       \
+            True
+            =================  =============================================  =
+        """
         metric_buildin = {
             metric: SUPPORT_METRICS[metric]
             for metric in {'loss', 'avg_loss', 'total'} | eval_metric
@@ -50,10 +103,11 @@ class MetricCalculator(object):
         return results
 
     def _check_and_parse(self, ctx):
-        """Check the format of the prediction and labels
+        """
+        Check the format of the prediction and labels
 
         Args:
-            ctx:
+            ctx: context of trainer, see ``core.trainers.context``
 
         Returns:
             y_true: The ground truth labels
