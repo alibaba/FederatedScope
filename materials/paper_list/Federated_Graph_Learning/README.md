@@ -5,6 +5,7 @@
 | Title                                                        | Venue | Link                                                         |
 | ------------------------------------------------------------ | ----- | ------------------------------------------------------------ |
 | FederatedScope-GNN: Towards a Unified, Comprehensive and Efficient Package for Federated Graph Learning | KDD   | [pdf](https://dl.acm.org/doi/abs/10.1145/3534678.3539112), [code](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) |
+| Federated Graph Representation Learning using Self-Supervision | CIKM workshop | [pdf](https://arxiv.org/pdf/2210.15120.pdf) |
 
 ### 2021
 
