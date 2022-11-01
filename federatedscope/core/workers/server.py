@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 class Server(BaseServer):
     """
-    The Server class, which describes the behaviors of server in an FL course.
-    The behaviors are described by the handled functions (named as
-    callback_funcs_for_xxx).
+    The Server class, which describes the behaviors of server in an FL \
+    course. The behaviors are described by the handled functions (named as \
+    ``callback_funcs_for_xxx``).
 
     Arguments:
         ID: The unique ID of the server, which is set to 0 by default
@@ -36,7 +36,28 @@ class Server(BaseServer):
         client_num: The (expected) client num to start the FL course
         total_round_num: The total number of the training round
         device: The device to run local training and evaluation
-        strategy: redundant attribute
+
+    Attributes:
+        ID: ID of worker
+        state: the training round index
+        model: the model maintained locally
+        cfg: the configuration of FL course, \
+            see ``federatedscope.core.configs``
+        mode: the run mode for FL, ``distributed`` or ``standalone``
+        monitor: monite FL course and record metrics, \
+            see ``federatedscope.core.monitors.monitor.Monitor``
+        trainer: instantiated trainer, see ``federatedscope.core.trainers``
+        best_results: best results ever seen
+        history_results: all evaluation results
+        early_stopper: determine when to early stop, \
+            see ``federatedscope.core.monitors.early_stopper.EarlyStopper``
+        aggregators: a protocol for aggregate all clients' model(s), see \
+            ``federatedscope.core.aggregators``
+        sample_client_num: number of client aggregated in each round
+        msg_buffer: dict buffer for storing message
+        staled_msg_buffer: list buffer for storing staled message
+        comm_manager: manager for communication, \
+            see ``federatedscope.core.communication``
     """
     def __init__(self,
                  ID=-1,
@@ -207,7 +228,7 @@ class Server(BaseServer):
 
     def run(self):
         """
-        To start the FL course, listen and handle messages (for distributed
+        To start the FL course, listen and handle messages (for distributed \
         mode).
         """
 
@@ -269,13 +290,16 @@ class Server(BaseServer):
                           check_eval_result=False,
                           min_received_num=None):
         """
-        To check the message_buffer. When enough messages are receiving,
-        some events (such as perform aggregation, evaluation, and move to
+        To check the message_buffer. When enough messages are receiving, \
+        some events (such as perform aggregation, evaluation, and move to \
         the next training round) would be triggered.
 
         Arguments:
-            check_eval_result (bool): If True, check the message buffer for
-            evaluation; and check the message buffer for training otherwise.
+            check_eval_result (bool): If True, check the message buffer for \
+                evaluation; and check the message buffer for training \
+                otherwise.
+            min_received_num: number of minimal received message, used for \
+                async mode
         """
         if min_received_num is None:
             if self._cfg.asyn.use:
@@ -333,7 +357,8 @@ class Server(BaseServer):
 
     def check_and_save(self):
         """
-        To save the results and save model after each evaluation.
+        To save the results and save model after each evaluation, and check \
+        whether to early stop.
         """
 
         # early stopping
@@ -500,13 +525,11 @@ class Server(BaseServer):
 
     def save_client_eval_results(self):
         """
-            save the evaluation results of each client when the fl course
-            early stopped or terminated
-
-        :return:
+        save the evaluation results of each client when the fl course \
+        early stopped or terminated
         """
-        round = max(self.msg_buffer['eval'].keys())
-        eval_msg_buffer = self.msg_buffer['eval'][round]
+        rnd = max(self.msg_buffer['eval'].keys())
+        eval_msg_buffer = self.msg_buffer['eval'][rnd]
 
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
@@ -521,12 +544,12 @@ class Server(BaseServer):
 
     def merge_eval_results_from_all_clients(self):
         """
-            Merge evaluation results from all clients, update best,
-            log the merged results and save them into eval_results.log
+        Merge evaluation results from all clients, update best, \
+        log the merged results and save them into eval_results.log
 
-        :returns: the formatted merged results
+        Returns:
+            the formatted merged results
         """
-
         round = max(self.msg_buffer['eval'].keys())
         eval_msg_buffer = self.msg_buffer['eval'][round]
         eval_res_participated_clients = []
@@ -596,14 +619,14 @@ class Server(BaseServer):
 
         Arguments:
             msg_type: 'model_para' or other user defined msg_type
-            sample_client_num: the number of sampled clients in the broadcast
-                behavior. And sample_client_num = -1 denotes to broadcast to
-                all the clients.
-            filter_unseen_clients: whether filter out the unseen clients that
-                do not contribute to FL process by training on their local
-                data and uploading their local model update. The splitting is
-                useful to check participation generalization gap in [ICLR'22,
-                What Do We Mean by Generalization in Federated Learning?]
+            sample_client_num: the number of sampled clients in the broadcast \
+                behavior. And ``sample_client_num = -1`` denotes to \
+                broadcast to all the clients.
+            filter_unseen_clients: whether filter out the unseen clients that \
+                do not contribute to FL process by training on their local \
+                data and uploading their local model update. The splitting is \
+                useful to check participation generalization gap in [ICLR'22, \
+                What Do We Mean by Generalization in Federated Learning?] \
                 You may want to set it to be False when in evaluation stage
         """
         if filter_unseen_clients:
@@ -651,7 +674,7 @@ class Server(BaseServer):
 
     def broadcast_client_address(self):
         """
-        To broadcast the communication addresses of clients (used for
+        To broadcast the communication addresses of clients (used for \
         additive secret sharing)
         """
 
@@ -671,12 +694,14 @@ class Server(BaseServer):
         To check the message buffer
 
         Arguments:
-        cur_round (int): The current round number
-        min_received_num (int): The minimal number of the receiving messages
-        check_eval_result (bool): To check training results for evaluation
-        results
-        :returns: Whether enough messages have been received or not
-        :rtype: bool
+            cur_round (int): The current round number
+            min_received_num (int): The minimal number of the receiving \
+                messages
+            check_eval_result (bool): To check training results for \
+                evaluation results
+
+        Returns
+            bool: Whether enough messages have been received or not
         """
 
         if check_eval_result:
@@ -776,7 +801,7 @@ class Server(BaseServer):
 
     def trigger_for_time_up(self, check_timestamp=None):
         """
-        The handler for time up: modify the currency timestamp
+        The handler for time up: modify the currency timestamp \
         and check the trigger condition
         """
         if self.is_finish:
@@ -812,7 +837,7 @@ class Server(BaseServer):
 
     def eval(self):
         """
-        To conduct evaluation. When cfg.federate.make_global_eval=True,
+        To conduct evaluation. When ``cfg.federate.make_global_eval=True``, \
         a global evaluation is conducted by the server.
         """
 
@@ -850,15 +875,13 @@ class Server(BaseServer):
 
     def callback_funcs_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters, which triggers
-            check_and_move_on (perform aggregation when enough feedback has
-            been received).
-        This handling function is widely used in various FL courses.
+        The handling function for receiving model parameters, which triggers \
+        ``check_and_move_on`` (perform aggregation when enough feedback has \
+        been received). This handling function is widely used in various FL \
+        courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver,
-                state, and content. More detail can be found in
-                federatedscope.core.message
+            message: The received message.
         """
         if self.is_finish:
             return 'finish'
@@ -899,10 +922,10 @@ class Server(BaseServer):
 
     def callback_funcs_for_join_in(self, message: Message):
         """
-        The handling function for receiving the join in information. The
-        server might request for some information (such as num_of_samples)
-        if necessary, assign IDs for the servers.
-        If all the clients have joined in, the training process will be
+        The handling function for receiving the join in information. The \
+        server might request for some information (such as \
+        ``num_of_samples``) if necessary, assign IDs for the servers. \
+        If all the clients have joined in, the training process will be \
         triggered.
 
         Arguments:
@@ -946,21 +969,21 @@ class Server(BaseServer):
 
     def callback_funcs_for_metrics(self, message: Message):
         """
-        The handling function for receiving the evaluation results,
-        which triggers check_and_move_on
-            (perform aggregation when enough feedback has been received).
+        The handling function for receiving the evaluation results, \
+        which triggers ``check_and_move_on`` (perform aggregation when \
+        enough feedback has been received).
 
         Arguments:
             message: The received message
         """
 
-        round = message.state
+        rnd = message.state
         sender = message.sender
         content = message.content
 
-        if round not in self.msg_buffer['eval'].keys():
-            self.msg_buffer['eval'][round] = dict()
+        if rnd not in self.msg_buffer['eval'].keys():
+            self.msg_buffer['eval'][rnd] = dict()
 
-        self.msg_buffer['eval'][round][sender] = content
+        self.msg_buffer['eval'][rnd][sender] = content
 
         return self.check_and_move_on(check_eval_result=True)

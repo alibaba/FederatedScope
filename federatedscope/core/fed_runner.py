@@ -16,19 +16,31 @@ logger = logging.getLogger(__name__)
 
 class BaseRunner(object):
     """
-    This class is used to construct an FL course, which includes `_set_up`
-    and `run`.
+    This class is a base class to construct an FL course, which includes \
+    ``_set_up()`` and ``run()``.
 
-    Arguments:
-        data: The data used in the FL courses, which are formatted as {
-        'ID':data} for standalone mode. More details can be found in
+    Args:
+        data: The data used in the FL courses, which are formatted as \
+        ``{'ID':data}`` for standalone mode. More details can be found in \
         federatedscope.core.auxiliaries.data_builder .
-        server_class: The server class is used for instantiating a (
+        server_class: The server class is used for instantiating a ( \
         customized) server.
-        client_class: The client class is used for instantiating a (
+        client_class: The client class is used for instantiating a ( \
         customized) client.
         config: The configurations of the FL course.
         client_configs: The clients' configurations.
+
+    Attributes:
+        data: The data used in the FL courses, which are formatted as \
+        ``{'ID':data}`` for standalone mode. More details can be found in \
+        federatedscope.core.auxiliaries.data_builder .
+        server: The instantiated server.
+        client: The instantiate client(s).
+        cfg : The configurations of the FL course.
+        client_cfgs: The clients' configurations.
+        mode: The run mode for FL, ``distributed`` or ``standalone``
+        gpu_manager: manager of GPU resource
+        resource_info: information of resource
     """
     def __init__(self,
                  data,
@@ -69,7 +81,7 @@ class BaseRunner(object):
     @abc.abstractmethod
     def _set_up(self):
         """
-        Set up client and/or server
+        Set up and instantiate the client/server.
         """
         raise NotImplementedError
 
@@ -83,9 +95,8 @@ class BaseRunner(object):
             client_resource_info: information of client's resource
 
         Returns:
-            server_data: None or data which server holds.
-            model: model to be aggregated.
-            kw: kwargs dict to instantiate the server.
+            (server_data, model, kw): None or data which server holds; model \
+            to be aggregated; kwargs dict to instantiate the server.
         """
         raise NotImplementedError
 
@@ -99,24 +110,31 @@ class BaseRunner(object):
             resource_info: information of resource
 
         Returns:
-            client_data: data which client holds.
-            kw: kwargs dict to instantiate the client.
+            (client_data, kw): data which client holds; kwargs dict to \
+            instantiate the client.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def run(self):
         """
-        Launch the worker
+        Launch the FL course
 
         Returns:
-            best_results: best results during the FL course
+            dict: best results during the FL course
         """
         raise NotImplementedError
 
     def _setup_server(self, resource_info=None, client_resource_info=None):
         """
-        Set up the server
+        Set up and instantiate the server.
+
+        Args:
+            resource_info: information of resource
+            client_resource_info: information of client's resource
+
+        Returns:
+            Instantiate server.
         """
         assert self.server_class is not None, \
             "`server_class` cannot be None."
@@ -146,7 +164,15 @@ class BaseRunner(object):
                       client_model=None,
                       resource_info=None):
         """
-        Set up the Client
+        Set up and instantiate the client.
+
+        Args:
+            client_id: ID of client
+            client_model: model of client
+            resource_info: information of resource
+
+        Returns:
+            Instantiate client.
         """
         assert self.client_class is not None, \
             "`client_class` cannot be None"
@@ -185,9 +211,6 @@ class BaseRunner(object):
 
 class StandaloneRunner(BaseRunner):
     def _set_up(self):
-        """
-        To set up server and client for standalone mode.
-        """
         self.is_run_online = True if self.cfg.federate.online_aggr else False
         self.shared_comm_queue = deque()
 
@@ -297,7 +320,7 @@ class StandaloneRunner(BaseRunner):
 
     def _handle_msg(self, msg, rcv=-1):
         """
-        To simulate the message handling process (used only for the
+        To simulate the message handling process (used only for the \
         standalone mode)
         """
         if rcv != -1:
@@ -321,9 +344,9 @@ class StandaloneRunner(BaseRunner):
     def _run_simulation_online(self):
         """
         Run for online aggregation.
-        Any broadcast operation would be executed client-by-clien to avoid
-        the existence of #clients messages at the same time. Currently,
-        only consider centralized topology
+        Any broadcast operation would be executed client-by-clien to avoid \
+        the existence of #clients messages at the same time. Currently, \
+        only consider centralized topology \
         """
         def is_broadcast(msg):
             return len(msg.receiver) >= 1 and msg.sender == 0
@@ -399,9 +422,6 @@ class StandaloneRunner(BaseRunner):
 
 class DistributedRunner(BaseRunner):
     def _set_up(self):
-        """
-        To set up server or client for distributed mode.
-        """
         # sample resource information
         if self.resource_info is not None:
             sampled_index = np.random.choice(list(self.resource_info.keys()))
@@ -457,15 +477,19 @@ class FedRunner(object):
     and `run`.
 
     Arguments:
-        data: The data used in the FL courses, which are formatted as {
-        'ID':data} for standalone mode. More details can be found in
+        data: The data used in the FL courses, which are formatted as \
+        ``{'ID':data}`` for standalone mode. More details can be found in \
         federatedscope.core.auxiliaries.data_builder .
-        server_class: The server class is used for instantiating a (
+        server_class: The server class is used for instantiating a ( \
         customized) server.
-        client_class: The client class is used for instantiating a (
+        client_class: The client class is used for instantiating a ( \
         customized) client.
         config: The configurations of the FL course.
         client_configs: The clients' configurations.
+
+    Warnings:
+        ``FedRunner`` will be removed in the future, consider \
+        using ``StandaloneRunner`` or ``DistributedRunner`` instead!
     """
     def __init__(self,
                  data,

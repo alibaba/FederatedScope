@@ -3,7 +3,21 @@ from federatedscope.core.monitors.monitor import Monitor
 
 class Worker(object):
     """
-    The base worker class.
+    The base worker class, the parent of ``BaseClient`` and ``BaseServer``
+
+    Args:
+        ID: ID of worker
+        state: the training round index
+        config: the configuration of FL course
+        model: the model maintained locally
+
+    Attributes:
+        ID: ID of worker
+        state: the training round index
+        model: the model maintained locally
+        cfg: the configuration of FL course
+        mode: the run mode for FL, ``distributed`` or ``standalone``
+        monitor: monite FL course and record metrics
     """
     def __init__(self, ID=-1, state=0, config=None, model=None, strategy=None):
         self._ID = ID

@@ -7,7 +7,6 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
-from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
@@ -19,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 class Client(BaseClient):
     """
-    The Client class, which describes the behaviors of client in an FL course.
-    The behaviors are described by the handling functions (named as
-    callback_funcs_for_xxx)
+    The Client class, which describes the behaviors of client in an FL \
+    course. The behaviors are described by the handling functions (named as \
+    ``callback_funcs_for_xxx``)
 
     Arguments:
         ID: The unique ID of the client, which is assigned by the server
@@ -32,7 +31,25 @@ class Client(BaseClient):
         data: The data owned by the client
         model: The model maintained locally
         device: The device to run local training and evaluation
-        strategy: redundant attribute
+
+    Attributes:
+        ID: ID of worker
+        state: the training round index
+        model: the model maintained locally
+        cfg: the configuration of FL course, \
+            see ``federatedscope.core.configs``
+        mode: the run mode for FL, ``distributed`` or ``standalone``
+        monitor: monite FL course and record metrics, \
+            see ``federatedscope.core.monitors.monitor.Monitor``
+        trainer: instantiated trainer, see ``federatedscope.core.trainers``
+        best_results: best results ever seen
+        history_results: all evaluation results
+        early_stopper: determine when to early stop, \
+            see ``federatedscope.core.monitors.early_stopper.EarlyStopper``
+        ss_manager: secret sharing manager
+        msg_buffer: dict buffer for storing message
+        comm_manager: manager for communication, \
+            see ``federatedscope.core.communication``
     """
     def __init__(self,
                  ID=-1,
@@ -170,7 +187,7 @@ class Client(BaseClient):
 
     def join_in(self):
         """
-        To send 'join_in' message to the server for joining in the FL course.
+        To send ``join_in`` message to the server for joining in the FL course.
         """
         self.comm_manager.send(
             Message(msg_type='join_in',
@@ -181,7 +198,7 @@ class Client(BaseClient):
 
     def run(self):
         """
-        To listen to the message and handle them accordingly (used for
+        To listen to the message and handle them accordingly (used for \
         distributed mode)
         """
         while True:
@@ -194,14 +211,12 @@ class Client(BaseClient):
 
     def callback_funcs_for_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters,
-        which triggers the local training process.
+        The handling function for receiving model parameters, \
+        which triggers the local training process. \
         This handling function is widely used in various FL courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver,
-            state, and content.
-                More detail can be found in federatedscope.core.message
+            message: The received message
         """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
@@ -362,9 +377,9 @@ class Client(BaseClient):
 
     def callback_funcs_for_assign_id(self, message: Message):
         """
-        The handling function for receiving the client_ID assigned by the
-        server (during the joining process),
-        which is used in the distributed mode.
+        The handling function for receiving the client_ID assigned by the \
+        server (during the joining process), which is used in the \
+        distributed mode.
 
         Arguments:
             message: The received message
@@ -376,8 +391,9 @@ class Client(BaseClient):
 
     def callback_funcs_for_join_in_info(self, message: Message):
         """
-        The handling function for receiving the request of join in information
-        (such as batch_size, num_of_samples) during the joining process.
+        The handling function for receiving the request of join in \
+        information (such as ``batch_size``, ``num_of_samples``) during \
+        the joining process.
 
         Arguments:
             message: The received message
@@ -416,7 +432,7 @@ class Client(BaseClient):
 
     def callback_funcs_for_address(self, message: Message):
         """
-        The handling function for receiving other clients' IP addresses,
+        The handling function for receiving other clients' IP addresses, \
         which is used for constructing a complex topology
 
         Arguments:
@@ -486,7 +502,7 @@ class Client(BaseClient):
 
     def callback_funcs_for_finish(self, message: Message):
         """
-        The handling function for receiving the signal of finishing the FL
+        The handling function for receiving the signal of finishing the FL \
         course.
 
         Arguments:
@@ -504,11 +520,10 @@ class Client(BaseClient):
 
     def callback_funcs_for_converged(self, message: Message):
         """
-        The handling function for receiving the signal that the FL course
+        The handling function for receiving the signal that the FL course \
         converged
 
         Arguments:
             message: The received message
         """
-
         self._monitor.global_converged()
