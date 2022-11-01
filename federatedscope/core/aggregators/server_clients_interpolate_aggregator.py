@@ -2,9 +2,9 @@ from federatedscope.core.aggregators import ClientsAvgAggregator
 
 
 class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
-    """"
-        # conduct aggregation by interpolating global model from server and
-        local models from clients
+    """
+    conduct aggregation by interpolating global model from server and \
+    local models from clients
     """
     def __init__(self, model=None, device='cpu', config=None, beta=1.0):
         super(ServerClientsInterpolateAggregator,
@@ -12,6 +12,9 @@ class ServerClientsInterpolateAggregator(ClientsAvgAggregator):
         self.beta = beta  # the weight for local models used in interpolation
 
     def aggregate(self, agg_info):
+        """
+        Returns the aggregated value
+        """
         models = agg_info["client_feedback"]
         global_model = self.model
         elem_each_client = next(iter(models))

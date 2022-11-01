@@ -23,11 +23,10 @@ def set_help_info(cn_node, help_info_dict, prefix=""):
 
 class CN(CfgNode):
     """
-        An extended configuration system based on [yacs](
-        https://github.com/rbgirshick/yacs).
-        The two-level tree structure consists of several internal dict-like
-        containers to allow simple key-value access and management.
-
+    An extended configuration system based on [yacs]( \
+    https://github.com/rbgirshick/yacs). \
+    The two-level tree structure consists of several internal dict-like \
+    containers to allow simple key-value access and management.
     """
     def __init__(self, init_dict=None, key_list=None, new_allowed=False):
         init_dict = super().__init__(init_dict, key_list, new_allowed)
@@ -59,6 +58,9 @@ class CN(CfgNode):
             raise AttributeError(name)
 
     def clear_aux_info(self):
+        """
+        Clears all the auxiliary information of the CN object.
+        """
         if hasattr(self, "__cfg_check_funcs__"):
             delattr(self, "__cfg_check_funcs__")
         if hasattr(self, "__help_info__"):
@@ -71,10 +73,11 @@ class CN(CfgNode):
 
     def print_help(self, arg_name=""):
         """
-            print help info for a specific given `arg_name` or
-            for all arguments if not given `arg_name`
-        :param arg_name:
-        :return:
+        print help info for a specific given ``arg_name`` or \
+        for all arguments if not given ``arg_name``
+
+        Args:
+            arg_name: name of specific args
         """
         if arg_name != "" and arg_name in self.__help_info__:
             print(f"  --{arg_name} \t {self.__help_info__[arg_name]}")
@@ -83,15 +86,22 @@ class CN(CfgNode):
                 print(f"  --{k} \t {v}")
 
     def register_cfg_check_fun(self, cfg_check_fun):
+        """
+        Register a function that checks the configuration node.
+
+        Args:
+            cfg_check_fun: function for validation the correctness of cfg.
+        """
         self.__cfg_check_funcs__.append(cfg_check_fun)
 
     def merge_from_file(self, cfg_filename, check_cfg=True):
         """
-            load configs from a yaml file, another cfg instance or a list
-            stores the keys and values.
+        load configs from a yaml file, another cfg instance or a list \
+        stores the keys and values.
 
-        :param cfg_filename (string):
-        :return:
+        Args:
+            cfg_filename: file name of yaml file
+            check_cfg: whether enable ``assert_cfg()``
         """
         cfg_check_funcs = copy.copy(self.__cfg_check_funcs__)
         with open(cfg_filename, "r") as f:
@@ -104,12 +114,12 @@ class CN(CfgNode):
 
     def merge_from_other_cfg(self, cfg_other, check_cfg=True):
         """
-            load configs from another cfg instance
+        load configs from another cfg instance
 
-        :param cfg_other (CN):
-        :return:
+        Args:
+            cfg_other: other cfg to be merged
+            check_cfg: whether enable ``assert_cfg()``
         """
-
         cfg_check_funcs = copy.copy(self.__cfg_check_funcs__)
         _merge_a_into_b(cfg_other, self, self, [])
         self.__cfg_check_funcs__.clear()
@@ -119,12 +129,13 @@ class CN(CfgNode):
 
     def merge_from_list(self, cfg_list, check_cfg=True):
         """
-           load configs from a list stores the keys and values.
-           modified `merge_from_list` in `yacs.config.py` to allow adding
-           new keys if `is_new_allowed()` returns True
+        load configs from a list stores the keys and values. \
+        modified ``merge_from_list`` in ``yacs.config.py`` to allow adding \
+        new keys if ``is_new_allowed()`` returns True \
 
-        :param cfg_list (list):
-        :return:
+        Args:
+            cfg_list: list of pairs of cfg name and value
+            check_cfg: whether enable ``assert_cfg()``
         """
         cfg_check_funcs = copy.copy(self.__cfg_check_funcs__)
         super().merge_from_list(cfg_list)
@@ -135,9 +146,10 @@ class CN(CfgNode):
 
     def assert_cfg(self, check_cfg=True):
         """
-            check the validness of the configuration instance
+        check the validness of the configuration instance
 
-        :return:
+        Args:
+            check_cfg: whether enable checks
         """
         if check_cfg:
             for check_func in self.__cfg_check_funcs__:
@@ -145,10 +157,8 @@ class CN(CfgNode):
 
     def clean_unused_sub_cfgs(self):
         """
-            Clean the un-used secondary-level CfgNode, whose `.use`
-            attribute is `True`
-
-        :return:
+        Clean the un-used secondary-level CfgNode, whose ``.use`` \
+        attribute is ``True``
         """
         for v in self.values():
             if isinstance(v, CfgNode) or isinstance(v, CN):
@@ -162,6 +172,9 @@ class CN(CfgNode):
                             del v[k]
 
     def check_required_args(self):
+        """
+        Check required arguments.
+        """
         for k, v in self.items():
             if isinstance(v, CN):
                 v.check_required_args()
@@ -170,11 +183,10 @@ class CN(CfgNode):
 
     def de_arguments(self):
         """
-            some config values are managed via `Argument` class, this function
-            is used to make these values clean without the `Argument` class,
-            such that the potential type-specific methods work correctly,
-            e.g., len(cfg.federate.method) for a string config
-        :return:
+        some config values are managed via ``Argument`` class, this function \
+        is used to make these values clean without the ``Argument`` class, \
+        such that the potential type-specific methods work correctly, \
+        e.g., ``len(cfg.federate.method)`` for a string config
         """
         for k, v in copy.deepcopy(self).items():
             if isinstance(v, CN):
@@ -183,6 +195,12 @@ class CN(CfgNode):
                 self[k] = v.value
 
     def ready_for_run(self, check_cfg=True):
+        """
+        Check and cleans up the internal state of cfg and save cfg.
+
+        Args:
+            check_cfg: whether enable ``assert_cfg()``
+        """
         self.assert_cfg(check_cfg)
         self.clean_unused_sub_cfgs()
         self.check_required_args()
@@ -191,12 +209,10 @@ class CN(CfgNode):
 
     def freeze(self, inform=True, save=True, check_cfg=True):
         """
-            1) make the cfg attributes immutable;
-            2) if save=True, save the frozen cfg_check_funcs into
-            "self.outdir/config.yaml" for better reproducibility;
-            3) if self.wandb.use=True, update the frozen config
-
-        :return:
+        (1) make the cfg attributes immutable;
+        (2) if ``save==True``, save the frozen cfg_check_funcs into \
+            ``self.outdir/config.yaml`` for better reproducibility;
+        (3) if ``self.wandb.use==True``, update the frozen config
         """
         self.ready_for_run(check_cfg)
         super(CN, self).freeze()
@@ -243,15 +259,14 @@ global_cfg = CN()
 
 
 def init_global_cfg(cfg):
-    r'''
+    """
     This function sets the default config value.
-    1) Note that for an experiment, only part of the arguments will be used
-    The remaining unused arguments won't affect anything.
-    So feel free to register any argument in graphgym.contrib.config
-    2) We support more than one levels of configs, e.g., cfg.dataset.name
 
-    :return: configuration use by the experiment.
-    '''
+    (1) Note that for an experiment, only part of the arguments will be used \
+    The remaining unused arguments won't affect anything. \
+    So feel free to register any argument in graphgym.contrib.config
+    (2) We support more than one levels of configs, e.g., cfg.dataset.name
+    """
 
     # ---------------------------------------------------------------------- #
     # Basic options, first level configs

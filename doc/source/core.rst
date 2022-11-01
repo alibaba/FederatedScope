@@ -31,8 +31,13 @@ federatedscope.core.data
 
 federatedscope.core.splitters
 -----------------------
-
 .. automodule:: federatedscope.core.splitters
+    :members:
+    :private-members:
+.. automodule:: federatedscope.core.splitters.generic
+    :members:
+    :private-members:
+.. automodule:: federatedscope.core.splitters.graph
     :members:
     :private-members:
 
@@ -50,6 +55,12 @@ federatedscope.core.monitors
 .. automodule:: federatedscope.core.monitors
     :members:
     :private-members:
+
+federatedscope.core.aggregators
+-----------------------
+
+.. automodule:: federatedscope.core.aggregators
+    :members:
 
 federatedscope.core.auxiliaries
 -----------------------

@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class StandaloneDataDict(dict):
     """
-        `StandaloneDataDict` maintain several `ClientData`.
+    `StandaloneDataDict` maintain several `ClientData`.
     """
     def __init__(self, datadict, global_cfg):
         """
