@@ -40,7 +40,7 @@ def load_dataset(config):
     Args:
         config: configurations for FL, see ``federatedscope.core.configs``
 
-    Notes:
+    Note:
         See https://federatedscope.io/docs/datazoo/ for all available data.
     """
 
