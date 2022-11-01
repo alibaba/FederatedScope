@@ -538,8 +538,9 @@ def convert_data_mode(data, config):
 def get_func_args(func):
     """
     Get the set of arguments that the function expects.
+
     Args:
-        func: function
+        func: function to be analysis
 
     Returns:
         Arguments  that the function expects
