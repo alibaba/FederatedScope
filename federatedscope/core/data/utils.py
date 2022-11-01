@@ -34,6 +34,16 @@ class RegexInverseMap:
 
 
 def load_dataset(config):
+    """
+    Loads the dataset for the given config from branches
+
+    Args:
+        config: configurations for FL, see ``federatedscope.core.configs``
+
+    Notes:
+        See https://federatedscope.io/docs/datazoo/ for all available data.
+    """
+
     if config.data.type.lower() == 'toy':
         from federatedscope.tabular.dataloader.toy import load_toy_data
         dataset, modified_config = load_toy_data(config)
@@ -86,26 +96,17 @@ def load_dataset(config):
 
 
 def load_external_data(config=None):
-    r""" Based on the configuration file, this function imports external
-    datasets and applies train/valid/test splits and split by some specific
-    `splitter` into the standard FederatedScope input data format.
+    """
+    Based on the configuration file, this function imports external \
+    datasets and applies train/valid/test.
 
     Args:
         config: `CN` from `federatedscope/core/configs/config.py`
 
     Returns:
-        data_local_dict: dict of split dataloader.
-                        Format:
-                            {
-                                'client_id': {
-                                    'train': DataLoader(),
-                                    'test': DataLoader(),
-                                    'val': DataLoader()
-                                }
-                            }
-        modified_config: `CN` from `federatedscope/core/configs/config.py`,
+        (data, modified_config): tuple of ML split dataset, \
+        and `CN` from `federatedscope/core/configs/config.py`, \
         which might be modified in the function.
-
     """
 
     import torch
@@ -506,6 +507,17 @@ def load_external_data(config=None):
 
 
 def convert_data_mode(data, config):
+    """
+    Convert ``StandaloneDataDict`` to ``ClientData`` in ``distributed`` mode.
+
+    Args:
+        data: ``StandaloneDataDict``
+        config: configuration of FL course, see `federatedscope.core.configs`
+
+    Returns:
+        ``StandaloneDataDict`` in ``standalone`` mode, or ``ClientData`` in \
+        ``distributed`` mode.
+    """
     if config.federate.mode.lower() == 'standalone':
         return data
     else:
@@ -524,12 +536,30 @@ def convert_data_mode(data, config):
 
 
 def get_func_args(func):
+    """
+    Get the set of arguments that the function expects.
+    Args:
+        func: function
+
+    Returns:
+        Arguments  that the function expects
+    """
     sign = inspect.signature(func).parameters.values()
     sign = set([val.name for val in sign])
     return sign
 
 
 def filter_dict(func, kwarg):
+    """
+    Filters out the common keys of kwarg that are not in kwarg.
+
+    Args:
+        func: function to be filtered
+        kwarg: dict to filter
+
+    Returns:
+        Filtered dict of arguments of the function.
+    """
     sign = get_func_args(func)
     common_args = sign.intersection(kwarg.keys())
     filtered_dict = {key: kwarg[key] for key in common_args}
@@ -538,12 +568,16 @@ def filter_dict(func, kwarg):
 
 def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
     """
-        Merge data from client 1 to `merged_max_data_id` contained in given
-        `all_data`.
-    :param all_data:
-    :param merged_max_data_id:
-    :param specified_dataset_name:
-    :return:
+    Merge data from client 1 to ``merged_max_data_id`` contained in given \
+    ``all_data``.
+
+    Args:
+        all_data: ``StandaloneDataDict``
+        merged_max_data_id: max merged data index
+        specified_dataset_name: split name to be merged
+
+    Returns:
+        Merged data.
     """
     import torch.utils.data
     from federatedscope.core.data.wrap_dataset import WrapDataset
@@ -631,18 +665,21 @@ def save_local_data(dir_path,
                     val_data=None,
                     val_targets=None):
     r"""
+    Save data to disk. Source: \
     https://github.com/omarfoq/FedEM/blob/main/data/femnist/generate_data.py
 
-    save (`train_data`, `train_targets`) in {dir_path}/train.pt,
-    (`val_data`, `val_targets`) in {dir_path}/val.pt
-    and (`test_data`, `test_targets`) in {dir_path}/test.pt
-    :param dir_path:
-    :param train_data:
-    :param train_targets:
-    :param test_data:
-    :param test_targets:
-    :param val_data:
-    :param val_targets
+    Args:
+        train_data: x of train data
+        train_targets: y of train data
+        test_data: x of test data
+        test_targets: y of test data
+        val_data: x of validation data
+        val_targets:y of validation data
+
+    Note:
+        save ``(`train_data`, `train_targets`)`` in ``{dir_path}/train.pt``, \
+        ``(`val_data`, `val_targets`)`` in ``{dir_path}/val.pt`` \
+        and ``(`test_data`, `test_targets`)`` in ``{dir_path}/test.pt``
     """
     import torch
     if (train_data is not None) and (train_targets is not None):
@@ -656,17 +693,16 @@ def save_local_data(dir_path,
 
 
 def download_url(url: str, folder='folder'):
-    r"""Downloads the content of an url to a folder.
-
-    Modified from `https://github.com/pyg-team/pytorch_geometric/blob/master
-    /torch_geometric/data/download.py`
+    """
+    Downloads the content of an url to a folder. Modified from \
+    https://github.com/pyg-team/pytorch_geometric/tree/master/torch_geometric
 
     Args:
         url (string): The url of target file.
         folder (string): The target folder.
 
     Returns:
-        path (string): File path of downloaded files.
+        string: File path of downloaded files.
     """
 
     file = url.rpartition('/')[2]

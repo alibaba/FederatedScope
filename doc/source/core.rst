@@ -25,9 +25,17 @@ federatedscope.core.trainers
 federatedscope.core.data
 -----------------------
 
-.. automodule:: federatedscope.core.data
+.. automodule:: federatedscope.core.data.base_data
     :members:
     :private-members:
+.. automodule:: federatedscope.core.data.base_translator
+    :members:
+    :private-members:
+.. automodule:: federatedscope.core.data.dummy_translator
+    :members:
+    :private-members:
+.. automodule:: federatedscope.core.data.utils
+    :members:
 
 federatedscope.core.splitters
 -----------------------
