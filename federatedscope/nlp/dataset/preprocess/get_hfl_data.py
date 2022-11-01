@@ -16,7 +16,6 @@ class HFLDataProcessor(object):
     def __init__(self, config, train_frac=0.9):
         self.data_dir = config.data.root
         self.datasets = config.data.datasets
-        self.total_client_num = config.federate.client_num
         self.num_grouped_clients = config.data.num_grouped_clients
         self.train_frac = train_frac
         self.all_train_data = []

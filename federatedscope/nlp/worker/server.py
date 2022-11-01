@@ -294,7 +294,7 @@ class PFedNLPServer(FedNLPServer):
             # broadcast to all clients
             sample_ids = list(range(self.client_num))
 
-        receivers = list(self.comm_manager.neighbors.keys())
+        receivers = sorted(list(self.comm_manager.neighbors.keys()))
         model_para = [model.state_dict() for model in self.models]
         skip_broadcast = self._cfg.federate.method in ['local', 'global']
         if skip_broadcast:
@@ -449,7 +449,7 @@ class PCFedNLPServer(FedNLPServer):
             # broadcast to all clients
             sample_ids = list(range(self.client_num))
 
-        receivers = list(self.comm_manager.neighbors.keys())
+        receivers = sorted(list(self.comm_manager.neighbors.keys()))
         model_para = [model.state_dict() for model in self.models]
         skip_broadcast = self._cfg.federate.method in ['local', 'global']
         if skip_broadcast:

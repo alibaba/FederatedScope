@@ -196,15 +196,15 @@ class FedNLPTrainer(GeneralTorchTrainer):
             self.load_ckpt = False
 
         # prepare statistics
-        ctx.loss_agg = AverageMeter()
-        ctx.loss_batch_total = 0
-        ctx.loss_regular_total = 0
-        ctx.num_samples = 0
-        ctx.accum_steps = 0
-        ctx.ys_true = []
-        ctx.ys_pred = []
-        ctx.squad_results = []
-        ctx.newsqa_results = []
+        ctx.loss_agg = CtxVar(AverageMeter(), LIFECYCLE.ROUTINE)
+        ctx.loss_batch_total = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.loss_regular_total = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.accum_steps = CtxVar(0, LIFECYCLE.ROUTINE)
+        ctx.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
+        ctx.ys_pred = CtxVar([], LIFECYCLE.ROUTINE)
+        ctx.squad_results = CtxVar([], LIFECYCLE.ROUTINE)
+        ctx.newsqa_results = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_batch_forward(self, ctx):
         token_ids = ctx.data_batch.get('token_ids', None)
@@ -221,16 +221,17 @@ class FedNLPTrainer(GeneralTorchTrainer):
                 attention_mask=attention_mask.to(ctx.device),
                 labels=labels.to(ctx.device),
             )
-            ctx.batch_size = len(token_ids)
-            ctx.loss_batch = outputs.loss
+            ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+            ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
             pretrain_task = ctx.cfg.model.pretrain_task
             if pretrain_task == 'mlm':
-                ctx.y_true = labels
+                y_true = labels
             elif pretrain_task == 'denoise':
-                ctx.y_true = labels[:, 1:]
-            count_idx = ctx.y_true.ne(-100) & ctx.y_true.ne(ctx.padding_idx)
-            ctx.y_true = ctx.y_true[count_idx]
-            ctx.y_pred = outputs.logits.argmax(dim=-1)[count_idx]
+                y_true = labels[:, 1:]
+            count_idx = y_true.ne(-100) & y_true.ne(ctx.padding_idx)
+            ctx.y_true = CtxVar(y_true[count_idx], LIFECYCLE.BATCH)
+            ctx.y_pred = CtxVar(
+                outputs.logits.argmax(dim=-1)[count_idx], LIFECYCLE.BATCH)
 
         elif self.task in {'imdb', 'agnews'}:
             outputs = ctx.model(
@@ -239,10 +240,10 @@ class FedNLPTrainer(GeneralTorchTrainer):
                 attention_mask=attention_mask.to(ctx.device),
                 labels=labels.to(ctx.device),
             )
-            ctx.batch_size = len(token_ids)
-            ctx.loss_batch = outputs.loss
-            ctx.y_true = labels
-            ctx.y_pred = outputs.logits.argmax(dim=-1)
+            ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+            ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+            ctx.y_true = CtxVar(labels, LIFECYCLE.BATCH)
+            ctx.y_pred = CtxVar(outputs.logits.argmax(dim=-1), LIFECYCLE.BATCH)
 
         elif self.task in {'squad', 'newsqa'}:
             outputs = ctx.model(
@@ -266,11 +267,13 @@ class FedNLPTrainer(GeneralTorchTrainer):
                         ctx.newsqa_results.append(
                             NewsQAResult(unique_id, start_logits, end_logits))
 
-            ctx.batch_size = len(token_ids)
-            ctx.loss_batch = outputs.loss
-            ctx.y_true = torch.cat([start_positions, end_positions])
-            ctx.y_pred = torch.cat(
-                [out.argmax(dim=-1) for out in outputs.logits])
+            ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+            ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+            ctx.y_true = CtxVar(torch.cat([start_positions, end_positions]),
+                                LIFECYCLE.BATCH)
+            ctx.y_pred = CtxVar(
+                torch.cat([out.argmax(dim=-1) for out in outputs.logits]),
+                LIFECYCLE.BATCH)
 
         elif self.task in {'cnndm', 'msqg'}:
             if ctx.cur_split != 'test':
@@ -280,13 +283,13 @@ class FedNLPTrainer(GeneralTorchTrainer):
                     attention_mask=attention_mask.to(ctx.device),
                     labels=labels.to(ctx.device),
                 )
-                ctx.batch_size = len(labels)
-                ctx.loss_batch = outputs.loss
-                ctx.y_pred = outputs.logits.argmax(dim=-1)
-                ctx.y_true = labels[:, 1:]
-                non_padding_idx = ctx.y_true.ne(ctx.padding_idx)
-                ctx.y_true = ctx.y_true[non_padding_idx]
-                ctx.y_pred = ctx.y_pred[non_padding_idx]
+                ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+                ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+                y_pred = outputs.logits.argmax(dim=-1)
+                y_true = labels[:, 1:]
+                non_padding_idx = y_true.ne(ctx.padding_idx)
+                ctx.y_true = CtxVar(y_true[non_padding_idx], LIFECYCLE.BATCH)
+                ctx.y_pred = CtxVar(y_pred[non_padding_idx], LIFECYCLE.BATCH)
 
             else:
                 outputs = ctx.model.generate(
@@ -309,9 +312,9 @@ class FedNLPTrainer(GeneralTorchTrainer):
                 self.src_file.flush()
                 self.tgt_file.flush()
 
-                ctx.batch_size = len(labels)
-                ctx.y_pred = outputs
-                ctx.y_true = labels[:, 1:]
+                ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+                ctx.y_pred = CtxVar(outputs, LIFECYCLE.BATCH)
+                ctx.y_true = CtxVar(labels[:, 1:], LIFECYCLE.BATCH)
                 return
 
         ctx.loss_agg.update(ctx.loss_batch.detach().item(), ctx.batch_size)
@@ -319,7 +322,7 @@ class FedNLPTrainer(GeneralTorchTrainer):
     def _hook_on_batch_backward(self, ctx):
         cur_step = (ctx.cur_batch_i + 1) // ctx.grad_accum_count
         ctx.accum_steps += 1
-        ctx.loss_task = ctx.loss_task / ctx.grad_accum_count
+        ctx.loss_task /= ctx.grad_accum_count
         ctx.loss_task.backward()
 
         if ctx.accum_steps == ctx.grad_accum_count:
@@ -329,7 +332,7 @@ class FedNLPTrainer(GeneralTorchTrainer):
             ctx.optimizer.step()
             ctx.scheduler.step()
             ctx.optimizer.zero_grad()
-            ctx.accum_steps = 0
+            ctx.accum_steps = CtxVar(0, LIFECYCLE.ROUTINE)
 
         total_epoch = ctx.get(f'num_{ctx.cur_mode}_epoch')
         total_batch = ctx.get(f'num_{ctx.cur_mode}_batch') if \
@@ -369,16 +372,20 @@ class FedNLPTrainer(GeneralTorchTrainer):
 
         # cache label for evaluate
         if self.task in {'pretrain', 'squad', 'newsqa', 'cnndm', 'msqg'}:
-            ctx.ys_true = [ctx.y_true.detach().cpu().numpy()]
-            ctx.ys_pred = [ctx.y_pred.detach().cpu().numpy()]
+            ctx.ys_true = CtxVar([ctx.y_true.detach().cpu().numpy()],
+                                 LIFECYCLE.ROUTINE)
+            ctx.ys_pred = CtxVar([ctx.y_pred.detach().cpu().numpy()],
+                                 LIFECYCLE.ROUTINE)
         else:
             ctx.ys_true.append(ctx.y_true.detach().cpu().numpy())
             ctx.ys_pred.append(ctx.y_pred.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
         if ctx.cur_split != 'train':
-            ctx.ys_true = np.concatenate(ctx.ys_true)
-            ctx.ys_pred = np.concatenate(ctx.ys_pred)
+            ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true),
+                                 LIFECYCLE.ROUTINE)
+            ctx.ys_pred = CtxVar(np.concatenate(ctx.ys_pred),
+                                 LIFECYCLE.ROUTINE)
             results = self.metric_calculator.eval(ctx)
             setattr(ctx, 'eval_metrics', results)
 
@@ -472,17 +479,16 @@ class PFedNLPTrainer(FedNLPTrainer):
             torch.save(ckpt, ckpt_path)
 
     def train(self, target_data_split_name='train', hooks_set=None):
-        hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
-        if self.ctx.get(
-                f'{target_data_split_name}_data') is None and self.ctx.get(
-                    f'{target_data_split_name}_loader') is None:
-            raise ValueError(f'No {target_data_split_name}_data or '
-                             f'{target_data_split_name}_loader in the trainer')
-        self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+        hooks_set = hooks_set or self.hooks_in_train
+
+        self.ctx.check_split(target_data_split_name)
+
+        num_samples = self._run_routine(MODE.TRAIN, hooks_set,
+                                        target_data_split_name)
 
         return \
-            self.ctx.num_samples, self.get_model_para(), \
-            self.get_model_grads(), self.ctx.eval_metrics
+            num_samples, self.get_model_para(), self.get_model_grads(), \
+            self.ctx.eval_metrics
 
     def _hook_on_batch_forward(self, ctx):
         if self.task == 'pretrain':
@@ -497,15 +503,16 @@ class PFedNLPTrainer(FedNLPTrainer):
                 labels=labels.to(ctx.device),
                 pretrain_task=self.pretrain_task,
             )
-            ctx.batch_size = len(token_ids)
-            ctx.loss_batch = outputs.loss
+            ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+            ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
             if self.pretrain_task == 'mlm':
-                ctx.y_true = labels
+                y_true = labels
             elif self.pretrain_task == 'denoise':
-                ctx.y_true = labels[:, 1:]
-            count_idx = ctx.y_true.ne(-100) & ctx.y_true.ne(ctx.padding_idx)
-            ctx.y_true = ctx.y_true[count_idx]
-            ctx.y_pred = outputs.logits.argmax(dim=-1)[count_idx]
+                y_true = labels[:, 1:]
+            count_idx = y_true.ne(-100) & y_true.ne(ctx.padding_idx)
+            ctx.y_true = CtxVar(y_true[count_idx], LIFECYCLE.BATCH)
+            ctx.y_pred = CtxVar(
+                outputs.logits.argmax(dim=-1)[count_idx], LIFECYCLE.BATCH)
 
         else:
             token_ids = ctx.data_batch.get('token_ids', None)
@@ -523,10 +530,11 @@ class PFedNLPTrainer(FedNLPTrainer):
                     attention_mask=attention_mask.to(ctx.device),
                     labels=labels.to(ctx.device),
                 )
-                ctx.batch_size = len(token_ids)
-                ctx.loss_batch = outputs.loss
-                ctx.y_true = labels
-                ctx.y_pred = outputs.logits.argmax(dim=-1)
+                ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+                ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+                ctx.y_true = CtxVar(labels, LIFECYCLE.BATCH)
+                ctx.y_pred = CtxVar(outputs.logits.argmax(dim=-1),
+                                    LIFECYCLE.BATCH)
 
             elif self.task in {'squad', 'newsqa'}:
                 outputs = ctx.model(
@@ -552,11 +560,14 @@ class PFedNLPTrainer(FedNLPTrainer):
                                 NewsQAResult(unique_id, start_logits,
                                              end_logits))
 
-                ctx.batch_size = len(token_ids)
-                ctx.loss_batch = outputs.loss
-                ctx.y_true = torch.cat([start_positions, end_positions])
-                ctx.y_pred = torch.cat(
-                    [out.argmax(dim=-1) for out in outputs.logits])
+                ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+                ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+                ctx.y_true = CtxVar(
+                    torch.cat([start_positions, end_positions]),
+                    LIFECYCLE.BATCH)
+                ctx.y_pred = CtxVar(
+                    torch.cat([out.argmax(dim=-1) for out in outputs.logits]),
+                    LIFECYCLE.BATCH)
 
             elif self.task in {'cnndm', 'msqg'}:
                 if ctx.cur_split != 'test':
@@ -566,13 +577,15 @@ class PFedNLPTrainer(FedNLPTrainer):
                         attention_mask=attention_mask.to(ctx.device),
                         labels=labels.to(ctx.device),
                     )
-                    ctx.batch_size = len(labels)
-                    ctx.loss_batch = outputs.loss
-                    ctx.y_pred = outputs.logits.argmax(dim=-1)
-                    ctx.y_true = labels[:, 1:]
-                    non_padding_idx = ctx.y_true.ne(ctx.padding_idx)
-                    ctx.y_true = ctx.y_true[non_padding_idx]
-                    ctx.y_pred = ctx.y_pred[non_padding_idx]
+                    ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+                    ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+                    y_pred = outputs.logits.argmax(dim=-1)
+                    y_true = labels[:, 1:]
+                    non_padding_idx = y_true.ne(ctx.padding_idx)
+                    ctx.y_true = CtxVar(y_true[non_padding_idx],
+                                        LIFECYCLE.BATCH)
+                    ctx.y_pred = CtxVar(y_pred[non_padding_idx],
+                                        LIFECYCLE.BATCH)
 
                 else:
                     outputs = ctx.model.generate(
@@ -595,9 +608,9 @@ class PFedNLPTrainer(FedNLPTrainer):
                     self.src_file.flush()
                     self.tgt_file.flush()
 
-                    ctx.batch_size = len(labels)
-                    ctx.y_pred = outputs
-                    ctx.y_true = labels[:, 1:]
+                    ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+                    ctx.y_pred = CtxVar(outputs, LIFECYCLE.BATCH)
+                    ctx.y_true = CtxVar(labels[:, 1:], LIFECYCLE.BATCH)
                     return
 
         ctx.loss_agg.update(ctx.loss_batch.detach().item(), ctx.batch_size)
@@ -605,7 +618,7 @@ class PFedNLPTrainer(FedNLPTrainer):
     def _hook_on_batch_backward(self, ctx):
         cur_step = (ctx.cur_batch_i + 1) // ctx.grad_accum_count
         ctx.accum_steps += 1
-        ctx.loss_task = ctx.loss_task / ctx.grad_accum_count
+        ctx.loss_task /= ctx.grad_accum_count
         ctx.loss_task.backward()
 
         if ctx.accum_steps == ctx.grad_accum_count:
@@ -615,7 +628,7 @@ class PFedNLPTrainer(FedNLPTrainer):
             ctx.optimizer.step()
             ctx.scheduler.step()
             ctx.optimizer.zero_grad()
-            ctx.accum_steps = 0
+            ctx.accum_steps = CtxVar(0, LIFECYCLE.ROUTINE)
 
         total_epoch = ctx.get(f'num_{ctx.cur_mode}_epoch')
         total_batch = ctx.get(f'num_{ctx.cur_mode}_batch') if \
@@ -716,18 +729,16 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                 self.ctx.num_train_epoch * self.ctx.num_train_batch
 
     def train(self, target_data_split_name='train', hooks_set=None):
-        hooks_set = self.hooks_in_train if hooks_set is None else hooks_set
-        if self.ctx.get(
-                f'{target_data_split_name}_data') is None and self.ctx.get(
-                    f'{target_data_split_name}_loader') is None:
-            raise ValueError(f'No {target_data_split_name}_data or '
-                             f'{target_data_split_name}_loader in the trainer')
-        self._run_routine('train', hooks_set, target_data_split_name)
+        hooks_set = hooks_set or self.hooks_in_train
+
+        self.ctx.check_split(target_data_split_name)
+
+        num_samples = self._run_routine(MODE.TRAIN, hooks_set,
+                                        target_data_split_name)
 
         return \
-            self.ctx.num_samples, self.get_model_para(), \
-            self.get_model_grads(), self.ctx.contrast_monitor, \
-            self.ctx.eval_metrics
+            num_samples, self.get_model_para(), self.get_model_grads(), \
+            self.ctx.contrast_monitor, self.ctx.eval_metrics
 
     def parse_data(self, data):
         init_dict = dict()
@@ -769,14 +780,15 @@ class PCFedNLPTrainer(PFedNLPTrainer):
     def _hook_on_fit_start_init(self, ctx):
         super()._hook_on_fit_start_init(ctx)
         if ctx.cur_mode == MODE.TRAIN and self._in_contrast_prepare:
-            ctx.train_loader = ctx.train_contrast_loader
+            ctx.train_loader = CtxVar(ctx.train_contrast_loader,
+                                      LIFECYCLE.ROUTINE)
         elif ctx.cur_mode == MODE.TRAIN:
-            ctx.regular_loss_agg = AverageMeter()
-            ctx.contrast_loss_agg = AverageMeter()
-            ctx.train_loader = ctx.train_raw_loader
+            ctx.regular_loss_agg = CtxVar(AverageMeter(), LIFECYCLE.ROUTINE)
+            ctx.contrast_loss_agg = CtxVar(AverageMeter(), LIFECYCLE.ROUTINE)
+            ctx.train_loader = CtxVar(ctx.train_raw_loader, LIFECYCLE.ROUTINE)
 
     def _hook_on_batch_forward(self, ctx):
-        ctx.contrast_loss_batch = None
+        ctx.contrast_loss_batch = CtxVar(None, LIFECYCLE.BATCH)
         if self.task == 'pretrain':
             token_ids = ctx.data_batch[self.pretrain_task]['token_ids']
             attention_mask = \
@@ -792,15 +804,16 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                 pretrain_task=self.pretrain_task,
                 example_indices=example_indices,
             )
-            ctx.batch_size = len(token_ids)
-            ctx.loss_batch = outputs.loss
+            ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+            ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
             if self.pretrain_task == 'mlm':
-                ctx.y_true = labels
+                y_true = labels
             elif self.pretrain_task == 'denoise':
-                ctx.y_true = labels[:, 1:]
-            count_idx = ctx.y_true.ne(-100) & ctx.y_true.ne(ctx.padding_idx)
-            ctx.y_true = ctx.y_true[count_idx]
-            ctx.y_pred = outputs.logits.argmax(dim=-1)[count_idx]
+                y_true = labels[:, 1:]
+            count_idx = y_true.ne(-100) & y_true.ne(ctx.padding_idx)
+            ctx.y_true = CtxVar(y_true[count_idx], LIFECYCLE.BATCH)
+            ctx.y_pred = CtxVar(
+                outputs.logits.argmax(dim=-1)[count_idx], LIFECYCLE.BATCH)
 
         else:
             token_ids = ctx.data_batch.get('token_ids', None)
@@ -822,12 +835,15 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                     example_indices=example_indices,
                 )
                 if not self._in_contrast_prepare:
-                    ctx.batch_size = len(token_ids)
-                    ctx.loss_batch = outputs.loss
-                    ctx.regular_loss_batch = outputs.regular_loss
-                    ctx.contrast_loss_batch = outputs.contrast_loss
-                    ctx.y_true = labels
-                    ctx.y_pred = outputs.logits.argmax(dim=-1)
+                    ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+                    ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+                    ctx.regular_loss_batch = CtxVar(outputs.regular_loss,
+                                                    LIFECYCLE.BATCH)
+                    ctx.contrast_loss_batch = CtxVar(outputs.contrast_loss,
+                                                     LIFECYCLE.BATCH)
+                    ctx.y_true = CtxVar(labels, LIFECYCLE.BATCH)
+                    ctx.y_pred = CtxVar(outputs.logits.argmax(dim=-1),
+                                        LIFECYCLE.BATCH)
 
             elif self.task in {'squad', 'newsqa'}:
                 outputs = ctx.model(
@@ -861,13 +877,19 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                                         NewsQAResult(unique_id, start_logits,
                                                      end_logits))
 
-                    ctx.batch_size = len(token_ids)
-                    ctx.loss_batch = outputs.loss
-                    ctx.regular_loss_batch = outputs.regular_loss
-                    ctx.contrast_loss_batch = outputs.contrast_loss
-                    ctx.y_true = torch.cat([start_positions, end_positions])
-                    ctx.y_pred = torch.cat(
-                        [out.argmax(dim=-1) for out in outputs.logits])
+                    ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
+                    ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+                    ctx.regular_loss_batch = CtxVar(outputs.regular_loss,
+                                                    LIFECYCLE.BATCH)
+                    ctx.contrast_loss_batch = CtxVar(outputs.contrast_loss,
+                                                     LIFECYCLE.BATCH)
+                    ctx.y_true = CtxVar(
+                        torch.cat([start_positions, end_positions]),
+                        LIFECYCLE.BATCH)
+                    ctx.y_pred = CtxVar(
+                        torch.cat(
+                            [out.argmax(dim=-1) for out in outputs.logits]),
+                        LIFECYCLE.BATCH)
 
             elif self.task in {'cnndm', 'msqg'}:
                 if ctx.cur_split != 'test':
@@ -881,15 +903,20 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                         example_indices=example_indices,
                     )
                     if not self._in_contrast_prepare:
-                        ctx.batch_size = len(labels)
-                        ctx.loss_batch = outputs.loss
-                        ctx.regular_loss_batch = outputs.regular_loss
-                        ctx.contrast_loss_batch = outputs.contrast_loss
-                        ctx.y_pred = outputs.logits.argmax(dim=-1)
-                        ctx.y_true = labels[:, 1:]
-                        non_padding_idx = ctx.y_true.ne(ctx.padding_idx)
-                        ctx.y_true = ctx.y_true[non_padding_idx]
-                        ctx.y_pred = ctx.y_pred[non_padding_idx]
+                        ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+                        ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
+                        ctx.regular_loss_batch = CtxVar(
+                            outputs.regular_loss, LIFECYCLE.BATCH)
+                        ctx.contrast_loss_batch = CtxVar(
+                            outputs.contrast_loss, LIFECYCLE.BATCH)
+
+                        y_pred = outputs.logits.argmax(dim=-1)
+                        y_true = labels[:, 1:]
+                        non_padding_idx = y_true.ne(ctx.padding_idx)
+                        ctx.y_true = CtxVar(y_true[non_padding_idx],
+                                            LIFECYCLE.BATCH)
+                        ctx.y_pred = CtxVar(y_pred[non_padding_idx],
+                                            LIFECYCLE.BATCH)
                 else:
                     outputs = ctx.model.generate(
                         input_ids=token_ids.to(ctx.device),
@@ -911,9 +938,9 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                     self.src_file.flush()
                     self.tgt_file.flush()
 
-                    ctx.batch_size = len(labels)
-                    ctx.y_pred = outputs
-                    ctx.y_true = labels[:, 1:]
+                    ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+                    ctx.y_pred = CtxVar(outputs, LIFECYCLE.BATCH)
+                    ctx.y_true = CtxVar(labels[:, 1:], LIFECYCLE.BATCH)
                     return
 
         if self._in_contrast_prepare:

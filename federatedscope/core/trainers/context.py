@@ -189,9 +189,9 @@ class Context(LifecycleDict):
         setattr(
             self, f'{mode}_scheduler',
             get_scheduler(self.train_optimizer,
+                          **self.cfg.train.scheduler,
                           total_steps=total_steps,
-                          warmup_steps=warmup_steps,
-                          **self.cfg.train.scheduler))
+                          warmup_steps=warmup_steps))
 
     def track_mode(self, mode):
         self.mode_stack.append(mode)

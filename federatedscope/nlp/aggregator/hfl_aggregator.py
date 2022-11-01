@@ -63,7 +63,7 @@ class PFedNLPAggregator(FedNLPAggregator):
 
         path = os.path.join(path, 'global')
         os.makedirs(path, exist_ok=True)
-        neighbor_ids = list(self.neighbors.keys())
+        neighbor_ids = sorted(list(self.neighbors.keys()))
         for i, model in enumerate(self.models):
             ckpt = {'cur_round': cur_round, 'model': model.state_dict()}
             torch.save(
