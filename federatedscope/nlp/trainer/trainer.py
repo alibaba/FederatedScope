@@ -4,6 +4,9 @@ from federatedscope.core.trainers.utils import move_to
 
 
 class NLPTrainer(GeneralTorchTrainer):
+    """
+    ``NLPTrainer`` is used for text data.
+    """
     def _hook_on_batch_forward(self, ctx):
         x, label = [move_to(_, ctx.device) for _ in ctx.data_batch]
         if isinstance(x, dict):

@@ -4,7 +4,11 @@ Federated Computer Vision  Module References
 federatedscope.cv.dataset
 -----------------------
 
-.. automodule:: federatedscope.cv.dataset
+.. automodule:: federatedscope.cv.dataset.leaf
+    :members:
+    :private-members:
+
+.. automodule:: federatedscope.cv.dataset.leaf_cv
     :members:
     :private-members:
 

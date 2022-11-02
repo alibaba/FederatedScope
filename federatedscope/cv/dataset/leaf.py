@@ -18,7 +18,8 @@ def is_exists(path, names):
 
 
 class LEAF(Dataset):
-    """Base class for LEAF dataset from "LEAF: A Benchmark for Federated Settings"
+    """
+    Base class for LEAF dataset from "LEAF: A Benchmark for Federated Settings"
 
     Arguments:
         root (str): root path.
@@ -91,7 +92,7 @@ class LEAF(Dataset):
 
 class LocalDataset(Dataset):
     """
-        Convert data list to torch Dataset to save memory usage.
+    Convert data list to torch Dataset to save memory usage.
     """
     def __init__(self,
                  Xs,
