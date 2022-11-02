@@ -1,0 +1,72 @@
+# Whether to use GPU
+use_gpu: False
+
+# Deciding which GPU to use
+device: 0
+
+backend: torch
+
+# Federate learning related options
+federate:
+  # `standalone` or `distributed`
+  mode: standalone
+  # Evaluate in Server or Client test set
+  # make_global_eval: True
+  # Number of dataset being split
+  client_num: 2
+
+# Model related options
+model:
+  # Model type
+  type: lr
+  # Hidden dim
+  # hidden: 64
+  # Dropout rate
+  # dropout: 0.5
+  # Number of Class of `Cora`
+  # out_channels: 7
+
+
+data:
+  root: data/
+  type: blogfeedback
+  batch_size: 4000
+  splits: [1.0, 0.0]
+
+
+#dataloader:
+  # Type of sampler
+#  type: pyg
+  # Use fullbatch training, batch_size should be `1`
+#  batch_size: 1
+
+# Criterion related options
+criterion:
+  # Criterion type
+  type: Regression
+
+# Trainer related options
+trainer:
+  # Trainer type
+  type: none
+
+# Train related options
+train:
+  optimizer:
+    bin_num: 1000
+    lambda_: 10
+    gamma: 0
+    num_of_trees: 5
+    max_tree_depth: 3
+
+xgb_base:
+  use: True
+  key_size: 256
+  dims: [10, 20]
+
+# Evaluation related options
+eval:
+  # Frequency of evaluation
+  freq: 1
+  # Evaluation metrics, accuracy and number of correct items
+  metrics: ['acc', 'correct']

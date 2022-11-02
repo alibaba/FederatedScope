@@ -10,7 +10,12 @@ from federatedscope.core.message import Message
 from federatedscope.xgb_base.dataloader.utils import batch_iter
 
 from federatedscope.xgb_base.worker.Feature_sort_base import Feature_sort_base
+from federatedscope.xgb_base.worker.Feature_sort_by_bin \
+    import Feature_sort_by_bin
 from federatedscope.xgb_base.worker.Test_base import Test_base
+
+from federatedscope.xgb_base.worker.Loss_function \
+    import TwoClassification, Regression_by_mse, Regression_by_mae
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +42,19 @@ class XGBClient(Client):
         self.num_of_trees = None
         self.max_tree_depth = None
 
+        self.bin_num = config.train.optimizer.bin_num
+        self.batch_size = config.data.batch_size
+
         self.data = data
         self.own_label = ('y' in self.data['train'])
         self.y_hat = None
         self.y = None
         self.num_of_parties = config.federate.client_num
 
-        # self.num_of_feature_dict = {}
-
         self.dataloader = batch_iter(self.data['train'],
                                      self._cfg.data.batch_size,
                                      shuffled=True)
 
-        # self.feature = None
         self.feature_order = None
 
         self.z = 0
@@ -64,37 +69,29 @@ class XGBClient(Client):
 
         self.feature_order = [0] * self.my_num_of_feature
 
-        self.total_ordered_g_list = [0] * self.total_num_of_feature
-        self.total_ordered_h_list = [0] * self.total_num_of_feature
-
         # self.ss = AdditiveSecretSharing(shared_party_num=self.num_of_parties)
         # self.ns = Node_split()
         # self.fs = Feature_sort()
-        self.fs = Feature_sort_base(self)
+        # self.fs = Feature_sort_base(self)
+        self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
         self.ts = Test_base(self)
+
+        if config.criterion.type == 'CrossEntropyLoss':
+            self.ls = TwoClassification()
+        elif config.criterion.type == 'Regression':
+            self.ls = Regression_by_mse()
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('data_sample',
                                self.callback_func_for_data_sample)
 
-        self.register_handlers('split', self.callback_func_for_split)
-
-        self.register_handlers('children_index_vectors',
-                               self.callback_func_for_children_index_vectors)
+        self.register_handlers('compute_next_node',
+                               self.callback_func_for_compute_next_node)
 
     # save the order of values in each feature
     def order_feature(self, data):
         for j in range(data.shape[1]):
             self.feature_order[j] = data[:, j].argsort()
-
-    # define the function for computing grad and hess
-    def get_grad_and_hess(self, y, pred):
-        pred = np.array(pred)
-        y = np.array(y)
-        prob = 1.0 / (1.0 + np.exp(-pred))
-        grad = prob - y
-        hess = prob * (1.0 - prob)
-        return grad, hess
 
     # sample data
     def sample_data(self, index=None):
@@ -143,102 +140,24 @@ class XGBClient(Client):
         # self.preparation()
         self.fs.preparation()
 
-    # label owner
-    def compute_for_node(self, tree_num, node_num):
-        if node_num >= 2**self.max_tree_depth - 1:
-            self.prediction(tree_num)
-        elif self.tree_list[tree_num][node_num].status == 'off':
-            self.compute_for_node(tree_num, node_num + 1)
-        elif node_num >= 2**(self.max_tree_depth - 1) - 1:
-            self.set_weight(tree_num, node_num)
-        else:
-            self.fs.order_act_on_gh(tree_num, node_num)
-            best_gain = 0
-            split_ref = {'feature_idx': None, 'value_idx': None}
+    def _gain(self, grad, hess):
+        return np.power(grad, 2) / (hess + self.lambda_)
 
-            for feature_idx in range(self.total_num_of_feature):
-                for value_idx in range(self.x.shape[0]):
-                    left_grad = np.sum(
-                        self.total_ordered_g_list[feature_idx][:value_idx])
-                    right_grad = np.sum(
-                        self.total_ordered_g_list[feature_idx]) - left_grad
-                    left_hess = np.sum(
-                        self.total_ordered_h_list[feature_idx][:value_idx])
-                    right_hess = np.sum(
-                        self.total_ordered_h_list[feature_idx]) - left_hess
-                    gain = self.fs.cal_gain(left_grad, right_grad, left_hess,
-                                            right_hess)
-
-                    if gain > best_gain:
-                        best_gain = gain
-                        split_ref['feature_idx'] = feature_idx
-                        split_ref['value_idx'] = value_idx
-
-            if best_gain > 0:
-                print(best_gain, split_ref)
-                for i in range(self.num_of_parties):
-                    if self.feature_list[i] <= split_ref[
-                            'feature_idx'] < self.feature_list[i + 1]:
-                        self.tree_list[tree_num][node_num].member = i + 1
-                        self.tree_list[tree_num][
-                            node_num].feature_idx = split_ref[
-                                'feature_idx'] - self.feature_list[i]
-                        self.comm_manager.send(
-                            Message(msg_type='split',
-                                    sender=self.ID,
-                                    state=self.state,
-                                    receiver=i + 1,
-                                    content=(tree_num, node_num, split_ref)))
-                        break
-            else:
-                self.set_weight(tree_num, node_num)
+    def cal_gain(self, left_grad, right_grad, left_hess, right_hess):
+        left_gain = self._gain(left_grad, left_hess)
+        right_gain = self._gain(right_grad, right_hess)
+        total_gain = self._gain(left_grad + right_grad, left_hess + right_hess)
+        return (left_gain + right_gain - total_gain) * 0.5 - self.gamma
 
     def split_for_lr(self, data, feature_value):
         left_index = [1 if x < feature_value else 0 for x in data]
         right_index = [1 if x >= feature_value else 0 for x in data]
         return left_index, right_index
 
-    def callback_func_for_split(self, message: Message):
-        tree_num, node_num, split_ref = message.content
-        feature_idx = split_ref['feature_idx'] - self.feature_list[self.ID - 1]
-        value_idx = split_ref['value_idx']
-        # feature_value = sorted(self.x[:, feature_idx])[value_idx]
-        feature_value = self.x[:, feature_idx][self.feature_order[feature_idx]
-                                               [value_idx]]
-
-        self.tree_list[tree_num][node_num].feature_idx = feature_idx
-        self.tree_list[tree_num][node_num].feature_value = feature_value
-
-        left_child_idx, right_child_idx = self.split_for_lr(
-            self.x[:, feature_idx], feature_value)
-        self.comm_manager.send(
-            Message(msg_type='children_index_vectors',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=self.num_of_parties,
-                    content=(tree_num, node_num, left_child_idx,
-                             right_child_idx)))
-
     # label owner
-    def callback_func_for_children_index_vectors(self, message: Message):
-        tree_num, node_num, left_child_idx, right_child_idx = message.content
-        self.tree_list[tree_num][
-            2 * node_num +
-            1].grad = self.tree_list[tree_num][node_num].grad * left_child_idx
-        self.tree_list[tree_num][
-            2 * node_num +
-            1].hess = self.tree_list[tree_num][node_num].hess * left_child_idx
-        self.tree_list[tree_num][2 * node_num + 1].indicator = self.tree_list[
-            tree_num][node_num].indicator * left_child_idx
-        self.tree_list[tree_num][
-            2 * node_num +
-            2].grad = self.tree_list[tree_num][node_num].grad * right_child_idx
-        self.tree_list[tree_num][
-            2 * node_num +
-            2].hess = self.tree_list[tree_num][node_num].hess * right_child_idx
-        self.tree_list[tree_num][2 * node_num + 2].indicator = self.tree_list[
-            tree_num][node_num].indicator * right_child_idx
-        self.compute_for_node(tree_num, node_num + 1)
+    def callback_func_for_compute_next_node(self, message: Message):
+        tree_num, node_num = message.content
+        self.fs.compute_for_node(tree_num, node_num + 1)
 
     def set_weight(self, tree_num, node_num):
         sum_of_g = np.sum(self.tree_list[tree_num][node_num].grad)
@@ -255,25 +174,22 @@ class XGBClient(Client):
             if 2 * x + 2 <= 2**self.max_tree_depth - 1:
                 tmp.append(2 * x + 1)
                 tmp.append(2 * x + 2)
-        self.compute_for_node(tree_num, node_num + 1)
+        self.fs.compute_for_node(tree_num, node_num + 1)
 
     def prediction(self, tree_num):
         node_num = 0
         self.compute_weight(tree_num, node_num)
 
     def compute_weight(self, tree_num, node_num):
-        if node_num >= 2**(self.max_tree_depth) - 1:
+        if node_num >= 2**self.max_tree_depth - 1:
             if tree_num == 0:
                 self.y_hat = self.z
             else:
                 self.y_hat += self.z
             self.z = 0
-            yy = 1.0 / (1.0 + np.exp(-self.y_hat))
-            # print(yy)
-            yy[yy >= 0.5] = 1.
-            yy[yy < 0.5] = 0
-            acc = np.sum(yy == self.y) / len(self.y)
-            print('Train accuracy: {:.2f}%'.format(acc * 100.0))
+            metric = self.ls.metric(self.y, self.y_hat)
+
+            print('Train accuracy: {}'.format(metric))
 
             if tree_num + 1 == self.num_of_trees:
                 print("train over")

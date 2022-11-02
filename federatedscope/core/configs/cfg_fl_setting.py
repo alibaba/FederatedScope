@@ -79,7 +79,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.xgb_base = CN()
     cfg.xgb_base.use = False
     cfg.xgb_base.encryption = 'paillier'
-    cfg.xgb_base.dims = [3, 6, 10]
+    cfg.xgb_base.dims = [5, 10]
     cfg.xgb_base.key_size = 3072
 
     # --------------- register corresponding check function ----------

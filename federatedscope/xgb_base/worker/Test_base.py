@@ -39,12 +39,8 @@ class Test_base():
     def test_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 == self.client.num_of_trees:
-                yy = 1.0 / (1.0 + np.exp(-self.test_z))
-                # print(yy)
-                yy[yy >= 0.5] = 1.
-                yy[yy < 0.5] = 0
-                acc = np.sum(yy == self.test_y) / len(self.test_y)
-                print('Test accuracy: {:.2f}%'.format(acc * 100.0))
+                metric = self.client.ls.metric(self.test_y, self.test_z)
+                print('Test accuracy: {}'.format(metric))
             else:
                 self.test_for_root(tree_num + 1)
         elif self.client.tree_list[tree_num][node_num].weight:

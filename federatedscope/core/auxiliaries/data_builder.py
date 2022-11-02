@@ -654,9 +654,15 @@ def get_data(config):
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         data, modified_config = load_vertical_data(config, generate=True)
 
-    elif config.data.type.lower() == 'xgb_base_data':
+    elif config.data.type.lower() in ['xgb_base_data']:
         from federatedscope.xgb_base.dataloader import load_xgb_base_data
         data, modified_config = load_xgb_base_data(config, generate=True)
+
+    elif config.data.type.lower() in [
+            'givemesomecredit', 'adult', 'abalone', 'blogfeedback'
+    ]:
+        from federatedscope.xgb_base.dataloader import load_xgb_base_data
+        data, modified_config = load_xgb_base_data(config)
 
     elif 'movielens' in config.data.type.lower(
     ) or 'netflix' in config.data.type.lower():
