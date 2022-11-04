@@ -4,7 +4,8 @@ import copy
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from federatedscope.register import register_data
-from federatedscope.nlp.dataset.preprocess.get_hfl_data import HFLDataProcessor
+from federatedscope.nlp.dataset.preprocess.get_hfl_data import \
+    HFLDataProcessor, HFLSynthDataProcessor
 from federatedscope.nlp.dataset.utils import setup_tokenizer
 from federatedscope.nlp.dataset.imdb import create_imdb_dataset
 from federatedscope.nlp.dataset.agnews import create_agnews_dataset
@@ -374,6 +375,10 @@ def load_pcfednlp_data(config, client_config):
             },
         }
         data_dict[client_id] = dataloader_dict
+
+    logger.info('Preprocessing synthetic dataset')
+    synth_data_processor = HFLSynthDataProcessor(config, data_dict)
+    synth_data_processor.save_data()
 
     return data_dict, config
 

@@ -283,7 +283,6 @@ class PFedNLPServer(FedNLPServer):
                              sample_client_num=-1,
                              filter_unseen_clients=True):
         if filter_unseen_clients:
-            # to filter out the unseen clients when sampling
             self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
@@ -291,7 +290,6 @@ class PFedNLPServer(FedNLPServer):
                                           size=sample_client_num,
                                           replace=False).tolist()
         else:
-            # broadcast to all clients
             sample_ids = list(range(self.client_num))
 
         receivers = sorted(list(self.comm_manager.neighbors.keys()))
@@ -312,7 +310,6 @@ class PFedNLPServer(FedNLPServer):
                         }))
 
         if filter_unseen_clients:
-            # restore the state of the unseen clients within sampler
             self.sampler.change_state(self.unseen_clients_id, 'seen')
 
 
@@ -365,18 +362,17 @@ class PCFedNLPServer(FedNLPServer):
 
     def _load_synth_data(self):
         if self._cfg.data.debug:
-            synth_dir = 'cache/v5/synthetic/'
+            synth_dir = 'cache/synthetic/'
         else:
             synth_dir = os.path.join(self._cfg.data.cache_dir, 'synthetic')
-        synth_ratio = self._cfg.aggregator.synth_ratio
-        logger.info('Loading synthetic data from \'{}\' (synthetic ratio: '
-                    '{})'.format(synth_dir, synth_ratio))
+        synth_prim_weight = self._cfg.data.synth_prim_weight
+        logger.info('Loading synthetic data from \'{}\''.format(synth_dir))
         with open(os.path.join(synth_dir, 'shapes.json')) as f:
             shapes = json.load(f)
-        synth_feat_path = os.path.join(synth_dir,
-                                       'feature_{}.memmap'.format(synth_ratio))
-        synth_tok_path = os.path.join(synth_dir,
-                                      'token_{}.memmap'.format(synth_ratio))
+        synth_feat_path = os.path.join(
+            synth_dir, 'feature_{}.memmap'.format(synth_prim_weight))
+        synth_tok_path = os.path.join(
+            synth_dir, 'token_{}.memmap'.format(synth_prim_weight))
         synth_feats = np.memmap(filename=synth_feat_path,
                                 shape=tuple(shapes['feature']),
                                 mode='r',
@@ -438,7 +434,6 @@ class PCFedNLPServer(FedNLPServer):
                              sample_client_num=-1,
                              filter_unseen_clients=True):
         if filter_unseen_clients:
-            # to filter out the unseen clients when sampling
             self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
@@ -446,7 +441,6 @@ class PCFedNLPServer(FedNLPServer):
                                           size=sample_client_num,
                                           replace=False).tolist()
         else:
-            # broadcast to all clients
             sample_ids = list(range(self.client_num))
 
         receivers = sorted(list(self.comm_manager.neighbors.keys()))
@@ -468,5 +462,4 @@ class PCFedNLPServer(FedNLPServer):
                         }))
 
         if filter_unseen_clients:
-            # restore the state of the unseen clients within sampler
             self.sampler.change_state(self.unseen_clients_id, 'seen')

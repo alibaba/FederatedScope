@@ -6,9 +6,14 @@ import json
 import gzip
 import zipfile
 import shutil
+import copy
+import torch
+import numpy as np
+from tqdm import tqdm
 from federatedscope.core.auxiliaries.utils import download_url
+from federatedscope.nlp.model.hfl_model import PFedNLPModel
 
-HFL_NAMES = ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
+HFL_DATA = ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +29,7 @@ class HFLDataProcessor(object):
 
     def get_data(self):
         for i, dataset in enumerate(self.datasets):
-            if dataset not in HFL_NAMES:
+            if dataset not in HFL_DATA:
                 raise ValueError(f'No HFL dataset named {dataset}')
             train_val_data = self._load_data(dataset, 'train',
                                              self.num_grouped_clients[i])
@@ -147,3 +152,162 @@ class HFLDataProcessor(object):
             os.remove(os.path.join(extract_dir, '.DS_Store'))
         os.remove(os.path.join(self.data_dir, f'{dataset}.zip'))
         shutil.rmtree(raw_dir)
+
+
+class HFLSynthDataProcessor(object):
+    def __init__(self, config, datasets):
+        self.cfg = config
+        self.pretrain_dir = config.federate.hfl_load_from
+        self.cache_dir = config.data.cache_dir
+        self.save_dir = os.path.join(self.cache_dir, 'synthetic')
+        self.batch_size = config.data.synth_batch_size
+        self.datasets = datasets
+        self.num_clients = len(datasets)
+        self.synth_prim_weight = config.data.synth_prim_weight
+        self.synth_feat_dim = config.data.synth_feat_dim
+        self.models = {}
+
+    def save_data(self):
+        if os.path.exists(self.save_dir):
+            return
+
+        device = self.cfg.device
+        max_sz, max_len = 1e8, 0
+        for client_id in range(1, self.num_clients + 1):
+            dataset = self.datasets[client_id]['train_contrast'][
+                'dataloader'].dataset
+            max_sz = min(max_sz, len(dataset))
+            max_len = max(max_len, len(dataset[0]['token_ids']))
+        enc_hiddens = np.memmap(filename=os.path.join(self.cfg.outdir,
+                                                      'tmp_feat.memmap'),
+                                shape=(self.num_clients, max_sz, max_len,
+                                       self.synth_feat_dim),
+                                mode='w+',
+                                dtype=np.float32)
+        self._get_models()
+
+        logger.info('Generating synthetic encoder hidden states')
+        for client_id in tqdm(range(1, self.num_clients + 1)):
+            dataloader = self.datasets[client_id]['train_contrast'][
+                'dataloader']
+            model = self.models[client_id]
+            model.eval()
+            model.to(device)
+            enc_hid = []
+            for batch_i, data_batch in tqdm(enumerate(dataloader),
+                                            total=len(dataloader)):
+                token_ids = data_batch['token_ids']
+                token_type_ids = data_batch['token_type_ids']
+                attention_mask = data_batch['attention_mask']
+                enc_out = model.model.encoder(
+                    input_ids=token_ids.to(device),
+                    attention_mask=attention_mask.to(device),
+                    token_type_ids=token_type_ids.to(device),
+                )
+                enc_hid.append(enc_out.last_hidden_state.detach().cpu())
+
+            enc_hid = torch.cat(enc_hid)
+            if enc_hid.size(1) < max_len:
+                enc_hid = torch.cat([
+                    enc_hid,
+                    torch.zeros(enc_hid.size(0), max_len - enc_hid.size(1),
+                                self.synth_feat_dim)
+                ],
+                                    dim=1)
+            enc_hiddens[client_id - 1] = enc_hid[:max_sz]
+            model.to('cpu')
+
+        all_hids = torch.from_numpy(enc_hiddens)
+        prim_indices = [
+            random.randint(0,
+                           len(all_hids) - 1) for _ in range(len(all_hids[0]))
+        ]  # avoid over-smooth results when setting
+        # equal merging weights to all clients
+        all_weights = torch.ones(len(all_hids), len(all_hids[0]))
+        all_weights *= (1 - self.synth_prim_weight) / (len(all_hids) - 1)
+        for i, pi in enumerate(prim_indices):
+            all_weights[pi, i] = self.synth_prim_weight
+        avg_hids = (all_hids * all_weights[:, :, None, None]).sum(0)
+
+        logger.info('Generating synthetic input tokens')
+        lm_head = self._get_avg_lm_head().to(device)
+        with torch.no_grad():
+            pred_toks = torch.cat([
+                lm_head(avg_hids[i:i + self.batch_size].to(
+                    device)).detach().cpu().argmax(dim=-1)
+                for i in tqdm(range(0, avg_hids.size(0), self.batch_size))
+            ])
+
+        if self.cache_dir:
+            logger.info('Saving synthetic data to \'{}\''.format(
+                self.save_dir))
+            os.makedirs(self.save_dir, exist_ok=True)
+            saved_feats = np.memmap(
+                filename=os.path.join(
+                    self.save_dir,
+                    'feature_{}.memmap'.format(self.synth_prim_weight)),
+                shape=avg_hids.size(),
+                mode='w+',
+                dtype=np.float32,
+            )
+            saved_toks = np.memmap(
+                filename=os.path.join(
+                    self.save_dir,
+                    'token_{}.memmap'.format(self.synth_prim_weight)),
+                shape=pred_toks.size(),
+                mode='w+',
+                dtype=np.int64,
+            )
+            for i in range(len(avg_hids)):
+                saved_feats[i] = avg_hids[i]
+                saved_toks[i] = pred_toks[i]
+            shapes = {'feature': avg_hids.size(), 'token': pred_toks.size()}
+            with open(os.path.join(self.save_dir, 'shapes.json'), 'w') as f:
+                json.dump(shapes, f)
+
+        if os.path.exists(os.path.join(self.cfg.outdir, 'tmp_feat.memmap')):
+            os.remove(os.path.join(self.cfg.outdir, 'tmp_feat.memmap'))
+
+    def _get_models(self):
+        for client_id in range(1, self.num_clients + 1):
+            self.models[client_id] = self._load_model(
+                PFedNLPModel(self.cfg.model), client_id)
+
+    def _get_avg_lm_head(self):
+        all_params = copy.deepcopy([
+            self.models[k].lm_head.state_dict()
+            for k in range(1, self.num_clients + 1)
+        ])
+        avg_param = all_params[0]
+        for k in avg_param:
+            for i in range(len(all_params)):
+                local_param = all_params[i][k].float()
+                if i == 0:
+                    avg_param[k] = local_param / len(all_params)
+                else:
+                    avg_param[k] += local_param / len(all_params)
+        avg_lm_head = copy.deepcopy(self.models[1].lm_head)
+        avg_lm_head.load_state_dict(avg_param)
+        return avg_lm_head
+
+    def _load_model(self, model, client_id):
+        global_dir = os.path.join(self.pretrain_dir, 'global')
+        client_dir = os.path.join(self.pretrain_dir, 'client')
+        global_ckpt_path = os.path.join(global_dir,
+                                        'global_model_{}.pt'.format(client_id))
+        client_ckpt_path = os.path.join(client_dir,
+                                        'client_model_{}.pt'.format(client_id))
+        if os.path.exists(global_ckpt_path):
+            model_ckpt = model.state_dict()
+            logger.info('Loading model from \'{}\''.format(global_ckpt_path))
+            global_ckpt = torch.load(global_ckpt_path,
+                                     map_location='cpu')['model']
+            model_ckpt.update(global_ckpt)
+            if os.path.exists(client_ckpt_path):
+                logger.info(
+                    'Updating model from \'{}\''.format(client_ckpt_path))
+                client_ckpt = torch.load(client_ckpt_path,
+                                         map_location='cpu')['model']
+                model_ckpt.update(client_ckpt)
+            model.load_state_dict(model_ckpt)
+        return model

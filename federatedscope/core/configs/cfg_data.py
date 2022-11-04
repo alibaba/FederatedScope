@@ -63,6 +63,9 @@ def extend_data_cfg(cfg):
     cfg.data.max_query_len = 128
     cfg.data.trunc_stride = 128
     cfg.data.cache_dir = ''
+    cfg.data.synth_batch_size = 32
+    cfg.data.synth_prim_weight = 0.5
+    cfg.data.synth_feat_dim = 128
     cfg.data.num_contrast = 0
     cfg.data.debug = False
 

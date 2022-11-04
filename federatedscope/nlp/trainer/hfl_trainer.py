@@ -157,7 +157,7 @@ class FedNLPTrainer(GeneralTorchTrainer):
     def _run_batch(self, hooks_set):
         for batch_i in tqdm(range(
                 self.ctx.get(f"num_{self.ctx.cur_split}_batch")),
-                            disable=self.ctx.cur_mode != MODE.TEST):
+                            disable=self.ctx.cur_split != "test"):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
             for hook in hooks_set["on_batch_start"]:
@@ -367,7 +367,8 @@ class FedNLPTrainer(GeneralTorchTrainer):
     def _hook_on_batch_end(self, ctx):
         # update statistics
         ctx.num_samples += ctx.batch_size
-        ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
+        ctx.loss_batch_total += ctx.get(
+            "loss_batch", torch.tensor(0.)).item() * ctx.batch_size
         ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
 
         # cache label for evaluate
@@ -694,13 +695,13 @@ class PCFedNLPTrainer(PFedNLPTrainer):
 
     @property
     def _in_contrast_prepare(self):
-        return self.task != 'pretrain' and \
-               self.ctx.cur_split == 'train' and \
+        return self.task != 'pretrain' and self.ctx.cur_split == 'train' and \
                self.ctx.contrast_monitor.stat == 1
 
     @lifecycle(LIFECYCLE.ROUTINE)
     def _run_routine(self, mode, hooks_set, dataset_name=None):
-        if mode == MODE.TRAIN and self._in_contrast_prepare:
+        raw_num_train_epoch, raw_num_train_batch = None, None
+        if self._in_contrast_prepare:
             raw_num_train_epoch, raw_num_train_batch = \
                 self.ctx.num_train_epoch, self.ctx.num_train_batch
             batch_size = self.ctx.cfg.data.batch_size
@@ -721,12 +722,42 @@ class PCFedNLPTrainer(PFedNLPTrainer):
         for hook in hooks_set["on_fit_end"]:
             hook(self.ctx)
 
-        if mode == MODE.TRAIN and self._in_contrast_prepare:
+        if raw_num_train_epoch is not None and raw_num_train_batch is not None:
             self.ctx.num_train_epoch = raw_num_train_epoch
             self.ctx.num_train_batch = raw_num_train_batch
             self.ctx.num_train_batch_last_epoch = self.ctx.num_train_batch
             self.ctx.num_total_train_batch = \
                 self.ctx.num_train_epoch * self.ctx.num_train_batch
+
+        return self.ctx.num_samples
+
+    @lifecycle(LIFECYCLE.BATCH)
+    def _run_batch(self, hooks_set):
+        for batch_i in tqdm(range(
+                self.ctx.get(f"num_{self.ctx.cur_split}_batch")),
+                            disable=not (self._in_contrast_prepare
+                                         or self.ctx.cur_split == "test")):
+            self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
+
+            for hook in hooks_set["on_batch_start"]:
+                hook(self.ctx)
+
+            for hook in hooks_set["on_batch_forward"]:
+                hook(self.ctx)
+
+            for hook in hooks_set["on_batch_backward"]:
+                hook(self.ctx)
+
+            for hook in hooks_set["on_batch_end"]:
+                hook(self.ctx)
+
+            # Break in the final epoch
+            if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and \
+                self.ctx.cur_epoch_i == self.ctx.get(
+                    f'num_{self.ctx.cur_mode}_epoch') - 1:
+                if batch_i >= self.ctx.get(
+                        f'num_{self.ctx.cur_mode}_batch_last_epoch') - 1:
+                    break
 
     def train(self, target_data_split_name='train', hooks_set=None):
         hooks_set = hooks_set or self.hooks_in_train
@@ -779,13 +810,12 @@ class PCFedNLPTrainer(PFedNLPTrainer):
 
     def _hook_on_fit_start_init(self, ctx):
         super()._hook_on_fit_start_init(ctx)
-        if ctx.cur_mode == MODE.TRAIN and self._in_contrast_prepare:
-            ctx.train_loader = CtxVar(ctx.train_contrast_loader,
-                                      LIFECYCLE.ROUTINE)
-        elif ctx.cur_mode == MODE.TRAIN:
+        if self._in_contrast_prepare:
+            ctx.train_loader = ctx.train_contrast_loader
+        else:
             ctx.regular_loss_agg = CtxVar(AverageMeter(), LIFECYCLE.ROUTINE)
             ctx.contrast_loss_agg = CtxVar(AverageMeter(), LIFECYCLE.ROUTINE)
-            ctx.train_loader = CtxVar(ctx.train_raw_loader, LIFECYCLE.ROUTINE)
+            ctx.train_loader = ctx.train_raw_loader
 
     def _hook_on_batch_forward(self, ctx):
         ctx.contrast_loss_batch = CtxVar(None, LIFECYCLE.BATCH)
@@ -867,15 +897,13 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                             outputs.logits[1][i].detach().cpu().tolist()
                         if ctx.cur_split != 'train':
                             if self.task == 'squad':
-                                ctx.get('{}_squad_results'.format(
-                                    ctx.cur_split)).append(
-                                        SquadResult(unique_id, start_logits,
-                                                    end_logits))
+                                ctx.squad_results.append(
+                                    SquadResult(unique_id, start_logits,
+                                                end_logits))
                             elif self.task == 'newsqa':
-                                ctx.get('{}_newsqa_results'.format(
-                                    ctx.cur_split)).append(
-                                        NewsQAResult(unique_id, start_logits,
-                                                     end_logits))
+                                ctx.newsqa_results.append(
+                                    NewsQAResult(unique_id, start_logits,
+                                                 end_logits))
 
                     ctx.batch_size = CtxVar(len(token_ids), LIFECYCLE.BATCH)
                     ctx.loss_batch = CtxVar(outputs.loss, LIFECYCLE.BATCH)
@@ -944,6 +972,7 @@ class PCFedNLPTrainer(PFedNLPTrainer):
                     return
 
         if self._in_contrast_prepare:
+            ctx.batch_size = CtxVar(0, LIFECYCLE.BATCH)
             dec_out, dec_hidden, example_indices = \
                 outputs.logits, outputs.hidden_states, outputs.example_indices
             for ex, out in zip(example_indices, dec_out.detach().cpu()):

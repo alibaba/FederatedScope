@@ -57,8 +57,7 @@ class FedNLPModel(nn.Module):
 
         self.label_smoothing = config.label_smoothing
         self.padding_idx = config.pad_token_id
-        self.classifier = nn.Linear(self.hidden_size, config.num_labels) \
-            if config.num_labels is not None else None
+        self.classifier = nn.Linear(self.hidden_size, config.num_labels)
 
         # for eval generation
         self.model.config.decoder_start_token_id = config.bos_token_id
@@ -181,8 +180,7 @@ class PFedNLPModel(nn.Module):
 
         self.label_smoothing = config.label_smoothing
         self.padding_idx = config.pad_token_id
-        self.classifier = nn.Linear(self.hidden_size, config.num_labels) \
-            if config.num_labels is not None else None
+        self.classifier = nn.Linear(self.hidden_size, config.num_labels)
 
         # for eval generation
         self.model.config.decoder_start_token_id = config.bos_token_id
@@ -309,8 +307,7 @@ class PCFedNLPModel(nn.Module):
 
         self.label_smoothing = config.label_smoothing
         self.padding_idx = config.pad_token_id
-        self.classifier = nn.Linear(self.hidden_size, config.num_labels) \
-            if config.num_labels is not None else None
+        self.classifier = nn.Linear(self.hidden_size, config.num_labels)
 
         self.contrast_topk = config.contrast_topk
         self.contrast_temp = config.contrast_temp
