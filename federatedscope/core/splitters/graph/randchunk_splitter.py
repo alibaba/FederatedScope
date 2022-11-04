@@ -1,13 +1,14 @@
 import numpy as np
 
 from torch_geometric.transforms import BaseTransform
+from federatedscope.core.splitters import BaseSplitter
 
 
-class RandChunkSplitter(BaseTransform):
+class RandChunkSplitter(BaseTransform, BaseSplitter):
     def __init__(self, client_num):
-        super(RandChunkSplitter, self).__init__(client_num)
+        BaseSplitter.__init__(self, client_num)
 
-    def __call__(self, dataset):
+    def __call__(self, dataset, **kwargs):
         r"""Split dataset via random chunk.
 
         Arguments:

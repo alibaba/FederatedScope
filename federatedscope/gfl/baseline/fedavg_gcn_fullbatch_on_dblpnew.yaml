@@ -10,8 +10,10 @@ federate:
 data:
   root: data/
   type: dblp_conf
-  batch_size: 1
   splits: [0.5, 0.2, 0.3]
+dataloader:
+  type: pyg
+  batch_size: 1
 model:
   type: gcn
   hidden: 1024

@@ -4,19 +4,32 @@ This list is constantly being updated. Feel free to contribute!
 ### 2022
 | Title | Venue | Link |  
 | --- | --- | --- | 
-| Towards Personalized Federated Learning.| Transactions on Neural Networks and Learning Systems | [pdf](https://arxiv.org/pdf/2103.00710)| 
+| FedPop: A Bayesian Approach for Personalised Federated Learning | NeurIPS | [pdf](https://arxiv.org/pdf/2206.03611)
+| pFL-Bench: A Comprehensive Benchmark for Personalized Federated Learning | NeurIPS | [pdf](https://arxiv.org/pdf/2206.03655), [code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench)
+| Self-Aware Personalized Federated Learning | NeurIPS | [pdf](https://arxiv.org/pdf/2204.08069.pdf)
+| Factorized-FL: Personalized Federated Learning with Parameter Factorization & Similarity Matching | NeurIPS | [pdf](https://arxiv.org/pdf/2202.00270)
+| On Sample Optimality in Personalized Collaborative and Federated Learning | NeurIPS | [pdf](https://arxiv.org/pdf/2201.13097)
+| Personalized Federated Learning towards Communication Efficiency, Robustness and Fairness | NeurIPS | 
+| DisPFL: Towards Communication-Efficient Personalized Federated Learning via Decentralized Sparse Training | ICML | [pdf](https://arxiv.org/abs/2206.00187)
+| Personalization Improves Privacy-Accuracy Tradeoffs in Federated Learning | ICML | [pdf](https://arxiv.org/abs/2202.05318)
+| Personalized Federated Learning through Local Memorization | ICML | [pdf](https://arxiv.org/abs/2111.09360)
+| Personalized Federated Learning via Variational Bayesian Inference | ICML | [pdf](https://arxiv.org/abs/2206.07977)
+| Federated Learning with Partial Model Personalization | ICML | [pdf](https://proceedings.mlr.press/v162/pillutla22a/pillutla22a.pdf)
+| On Bridging Generic and Personalized Federated Learning for Image Classification | ICLR | [pdf](https://arxiv.org/pdf/2107.00778)
+| FedBABU: Toward Enhanced Representation for Federated Image Classification | ICLR | [pdf](https://openreview.net/pdf?id=HuaYQfggn5u)
+| Towards Personalized Federated Learning | Transactions on Neural Networks and Learning Systems | [pdf](https://arxiv.org/pdf/2103.00710)| 
 
 ### 2021
 | Title | Venue | Link |  
 | --- | --- | --- | 
-| FedBN: Federated Learning on Non-IID Features via Local Batch Normalization  | ICLR | [pdf](https://arxiv.org/pdf/2102.07623), [code](https://github.com/med-air/FedBN) | 
-| Ditto: Fair and robust federated learning through personalization  | ICML | [pdf](https://arxiv.org/pdf/2012.04221), [code](https://github.com/litian96/ditto) | 
+| Federated muli-task learning under a mixture of distributions  | NeurIPS | [pdf](https://arxiv.org/pdf/2108.10252), [code](https://github.com/omarfoq/FedEM) | 
 | Parameterized Knowledge Transfer for Personalized Federated Learning  | NeurIPS | [pdf](https://arxiv.org/pdf/2111.02862) | 
 | Personalized Federated Learning with Gaussian Processes | NeurIPS | [pdf](https://arxiv.org/pdf/2106.15482), [code](https://github.com/IdanAchituve/pFedGP) | 
-| Federated muli-task learning under a mixture of distributions  | NeurIPS | [pdf](https://arxiv.org/pdf/2108.10252), [code](https://github.com/omarfoq/FedEM) | 
+| Ditto: Fair and robust federated learning through personalization  | ICML | [pdf](https://arxiv.org/pdf/2012.04221), [code](https://github.com/litian96/ditto) | 
 | Personalized Federated Learning using Hypernetworks  | ICML | [pdf](https://arxiv.org/pdf/2103.04628), [code](https://github.com/AvivSham/pFedHN) | 
-| Personalized Federated Learning with First Order Model Optimization  | ICLR | [pdf](https://arxiv.org/pdf/2012.08565), [code](https://github.com/NVlabs/FedFomo) | 
 | Exploiting Shared Representations for Personalized Federated Learning  | ICML | [pdf](https://arxiv.org/pdf/2102.07078.pdf), [code](https://github.com/lgcollins/FedRep) | 
+| Personalized Federated Learning with First Order Model Optimization  | ICLR | [pdf](https://arxiv.org/pdf/2012.08565), [code](https://github.com/NVlabs/FedFomo) | 
+| FedBN: Federated Learning on Non-IID Features via Local Batch Normalization  | ICLR | [pdf](https://arxiv.org/pdf/2102.07623), [code](https://github.com/med-air/FedBN) | 
 
 
 ### 2020

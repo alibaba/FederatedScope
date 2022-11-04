@@ -9,9 +9,10 @@ federate:
   total_round_num: 400
 data:
   root: data/
-  loader: graphsaint-rw
-  batch_size: 256
   type: dblp_conf
+dataloader:
+  type: graphsaint-rw
+  batch_size: 256
 model:
   type: sage
   hidden: 1024

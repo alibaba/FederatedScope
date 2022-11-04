@@ -12,6 +12,8 @@ data:
   root: data/
   type: hiv
   splitter: scaffold
+dataloader:
+  type: pyg
 model:
   type: gcn
   hidden: 64

@@ -1,4 +1,7 @@
 import logging
+
+import numpy as np
+
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
@@ -16,7 +19,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
     Extract the input shape from the given data, which can be used to build
     the data. Users can also use `data.input_shape` to specify the shape
     Arguments:
-        data (object): the data used for local training or evaluation
+        data (`ClientData`): the data used for local training or evaluation
         The expected data format:
         1): {train/val/test: {x:ndarray, y:ndarray}}}
         2): {train/val/test: DataLoader}
@@ -31,7 +34,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
             'gcn', 'sage', 'gpr', 'gat', 'gin', 'mpnn'
     ] or model_config.type.startswith('gnn_'):
         num_label = data['num_label'] if 'num_label' in data else None
-        num_edge_features = data[
+        num_edge_features = data['data'][
             'num_edge_features'] if model_config.type == 'mpnn' else None
         if model_config.task.startswith('graph'):
             # graph-level task
@@ -39,12 +42,14 @@ def get_shape_from_data(data, model_config, backend='torch'):
             return (data_representative.x.shape, num_label, num_edge_features)
         else:
             # node/link-level task
-            return (data.x.shape, num_label, num_edge_features)
+            return (data['data'].x.shape, num_label, num_edge_features)
 
     if isinstance(data, dict):
         keys = list(data.keys())
         if 'test' in keys:
             key_representative = 'test'
+        elif 'val' in keys:
+            key_representative = 'val'
         elif 'train' in keys:
             key_representative = 'train'
         elif 'data' in keys:

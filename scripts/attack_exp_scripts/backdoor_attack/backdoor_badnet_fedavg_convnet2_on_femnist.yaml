@@ -16,11 +16,11 @@ data:
   type: femnist
   # form: dataloader
   splits: [0.6,0.2,0.2]
-  batch_size: 32
   subsample: 0.05
-  num_workers: 0
   # transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
-  transform: [['ToTensor']]
+  transform: [ [ 'ToTensor' ] ]
+dataloader:
+  batch_size: 32
 model:
   type: convnet2
   hidden: 2048

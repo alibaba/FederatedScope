@@ -52,7 +52,7 @@ class RandomSplitter(BaseTransform, BaseSplitter):
 
         self.drop_edge = drop_edge
 
-    def __call__(self, data):
+    def __call__(self, data, **kwargs):
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,

@@ -53,7 +53,7 @@ class GenFeatures:
             Chem.rdchem.BondStereo.STEREOTRANS,
         ]
 
-    def __call__(self, data):
+    def __call__(self, data, **kwargs):
         mol = Chem.MolFromSmiles(data.smiles)
 
         xs = []

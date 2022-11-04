@@ -1,15 +1,8 @@
-from calendar import c
 import logging
 from typing import Type
-import torch
 import numpy as np
 
 from federatedscope.core.trainers import GeneralTorchTrainer
-from federatedscope.core.auxiliaries.transform_builder import get_transform
-from federatedscope.attack.auxiliary.backdoor_utils import normalize
-from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
-from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
-from federatedscope.core.auxiliaries.ReIterator import ReIterator
 
 logger = logging.getLogger(__name__)
 

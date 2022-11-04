@@ -22,7 +22,7 @@ class LouvainSplitter(BaseTransform, BaseSplitter):
         self.delta = delta
         BaseSplitter.__init__(self, client_num)
 
-    def __call__(self, data):
+    def __call__(self, data, **kwargs):
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,

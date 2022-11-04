@@ -144,5 +144,5 @@ class FedGenTrainer(LocalGenTrainer):
     @torch.no_grad()
     def embedding(self):
         model = self.ctx.model.to(self.ctx.device)
-        data = self.ctx.data.to(self.ctx.device)
+        data = self.ctx.data['data'].to(self.ctx.device)
         return model.encoder_model(data).to('cpu')
