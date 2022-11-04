@@ -3,8 +3,15 @@ This list is constantly being updated. Feel free to contribute!
 
 
 ### 2022
-| Title | Venue | Link | 
-| --- | --- | --- | 
+| Title | Venue | Link |
+| --- | --- | --- |
+| FedPrompt: Communication-Efficient and Privacy Preserving Prompt Tuning in Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2208.12268.pdf) |
+| Fair NLP Models with Differentially Private Text Encoders | arXiv | [pdf](https://arxiv.org/pdf/2205.06135.pdf), [code](https://github.com/saist1993/DPNLP) |
+| FedQAS: Privacy-aware Machine Reading Comprehension with Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2202.04742.pdf), [code](https://github.com/aitmlouk/FEDn-client-FedQAS-tf) |
+| Backdoor Attacks in Federated Learning by Rare Embeddings and Gradient Ensembling | EMNLP | [pdf](https://arxiv.org/pdf/2204.14017.pdf) |
+| Dim-Krum: Backdoor-Resistant Federated Learning for NLP with Dimension-wise Krum-Based Aggregation | EMNLP Findings | [pdf](https://arxiv.org/pdf/2210.06894.pdf) |
+| Federated Continual Learning for Text Classification via Selective Inter-client Transfer | EMNLP Findings | [pdf](https://arxiv.org/pdf/2210.06101.pdf), [code](https://github.com/RaiPranav/FCL-FedSeIT) |
+| Recovering Private Text in Federated Learning of Language Models | NeurIPS | [pdf](https://openreview.net/pdf?id=dqgzfhHd2-), [code](https://github.com/Princeton-SysML/FILM) |
 | Federated Learning with Noisy User Feedback | NAACL | [pdf](https://aclanthology.org/2022.naacl-main.196.pdf) |
 | Training Mixed-Domain Translation Models via Federated Learning | NAACL | [pdf](https://aclanthology.org/2022.naacl-main.186.pdf) |
 | Pretrained Models for Multilingual Federated Learning| NAACL | [pdf](https://arxiv.org/pdf/2206.02291.pdf), [code](https://github.com/orionw/Multilingual-Federated-Learning) |
@@ -21,8 +28,8 @@ This list is constantly being updated. Feel free to contribute!
 
 
 ### 2021
-| Title | Venue | Link | 
-| --- | --- | --- | 
+| Title | Venue | Link |
+| --- | --- | --- |
 | FedMatch: Federated Learning Over Heterogeneous Question Answering Data | CIKM | [pdf](https://dl.acm.org/doi/pdf/10.1145/3459637.3482345), [code](https://github.com/Chriskuei/FedMatch) |
 | Federated Chinese Word Segmentation with Global Character Associations | ACL Findings | [pdf](https://aclanthology.org/2021.findings-acl.376.pdf), [code](https://github.com/cuhksz-nlp/GCASeg) |
 | Improving Federated Learning for Aspect-based Sentiment Analysis via Topic Memories | EMNLP | [pdf](https://aclanthology.org/2021.emnlp-main.321.pdf), [code](https://github.com/cuhksz-nlp/ASA-TM) |
@@ -32,8 +39,8 @@ This list is constantly being updated. Feel free to contribute!
 
 
 ### 2020
-| Title | Venue | Link | 
-| --- | --- | --- | 
+| Title | Venue | Link |
+| --- | --- | --- |
 | FedED: Federated Learning via Ensemble Distillation for Medical Relation Extraction | EMNLP | [pdf](https://aclanthology.org/2020.emnlp-main.165.pdf) |
 | Empirical Studies of Institutional Federated Learning For Natural Language Processing | EMNLP Findings | [pdf](https://aclanthology.org/2020.findings-emnlp.55.pdf) |
 | Federated Learning for Spoken Language Understanding | COLING | [pdf](https://aclanthology.org/2020.coling-main.310.pdf) |
@@ -43,8 +50,8 @@ This list is constantly being updated. Feel free to contribute!
 
 
 ### 2019
-| Title | Venue | Link | 
-| --- | --- | --- | 
+| Title | Venue | Link |
+| --- | --- | --- |
 | Federated Learning of N-gram Language Models | CoNLL | [pdf](https://arxiv.org/pdf/1910.03432.pdf) |
 | Learning Private Neural Language Modeling with Attentive Aggregation | IJCNN | [pdf](https://arxiv.org/pdf/1812.07108.pdf) |
 | Federated Learning Of Out-Of-Vocabulary Words | arXiv | [pdf](https://arxiv.org/pdf/1903.10635.pdf) |
@@ -52,7 +59,7 @@ This list is constantly being updated. Feel free to contribute!
 
 
 ### 2018
-| Title | Venue | Link |  
-| --- | --- | --- | 
+| Title | Venue | Link |
+| --- | --- | --- |
 | Federated Learning for Mobile Keyboard Prediction | arXiv | [pdf](https://arxiv.org/pdf/1811.03604.pdf) |
 | Applied Federated Learning: Improving Google Keyboard Query Suggestions | arXiv | [pdf](https://arxiv.org/pdf/1812.02903.pdf) |
