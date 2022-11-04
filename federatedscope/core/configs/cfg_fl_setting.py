@@ -193,4 +193,5 @@ def assert_fl_setting_cfg(cfg):
                        'applying parallel training (i.e., process_num <= 1), '
                        'thus cfg.federate.parallel is modified to False')
 
+
 register_config("fl_setting", extend_fl_setting_cfg)

@@ -28,9 +28,16 @@ logger = logging.getLogger(__name__)
 
 class GeneralTorchTrainer(Trainer):
     def get_model_para(self):
-        return self._param_filter(
-            self.ctx.model.state_dict() if self.cfg.federate.
-            share_local_model else self.ctx.model.cpu().state_dict())
+        if self.cfg.federate.share_local_model:
+            if not self.cfg.federate.parallel:
+                return self._param_filter(self.ctx.model.state_dict())
+            else:
+                param = self.ctx.model.state_dict()
+                for k, v in param.items():
+                    param[k] = v.cpu()
+                return self._param_filter(param)
+        else:
+            return self.ctx.model.cpu().state_dict()
 
     def parse_data(self, data):
         """Populate "${split}_data", "${split}_loader" and "num_${

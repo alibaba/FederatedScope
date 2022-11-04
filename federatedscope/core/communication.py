@@ -12,6 +12,7 @@ from federatedscope.core.message import Message
 
 logger = logging.getLogger(__name__)
 
+
 class StandaloneCommManager(object):
     """
     The communicator used for standalone mode
@@ -21,12 +22,12 @@ class StandaloneCommManager(object):
         self.neighbors = dict()
         self.monitor = monitor  # used to track the communication related
         # metrics
-        self.id2comm = id2comm # the mapping table from worker ID to
+        self.id2comm = id2comm  # the mapping table from worker ID to
         # communication queue index (used for multiple queues). If is2comm is
         # None, all the workers share one communication queue
         if self.id2comm is not None:
-            self.comm2id = {k:[] for k in range(len(self.comm_queue))}
-            [self.comm2id[v].append(k) for k,v in self.id2comm.items()]
+            self.comm2id = {k: [] for k in range(len(self.comm_queue))}
+            [self.comm2id[v].append(k) for k, v in self.id2comm.items()]
 
     def receive(self):
         # we don't need receive() in standalone
@@ -51,7 +52,8 @@ class StandaloneCommManager(object):
     def send(self, message):
         # All the workers share one comm_queue
         if self.id2comm is None:
-            self.comm_queue.append(message) if isinstance(self.comm_queue, deque) else self.comm_queue.put(message)
+            self.comm_queue.append(message) if isinstance(
+                self.comm_queue, deque) else self.comm_queue.put(message)
         # Send the message to the responding comm_queue
         else:
             receiver = message.receiver
@@ -59,7 +61,8 @@ class StandaloneCommManager(object):
                 receiver = [receiver]
             for idx, each_comm in enumerate(self.comm_queue):
                 for each_receiver in receiver:
-                    if each_receiver in self.neighbors and each_receiver in self.comm2id[idx]:
+                    if each_receiver in self.neighbors and \
+                            each_receiver in self.comm2id[idx]:
                         each_comm.put(message)
                         break
 

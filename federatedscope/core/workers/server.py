@@ -5,10 +5,11 @@ import sys
 
 import numpy as np
 import pickle
+import time
 
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
-from federatedscope.core.communication import StandaloneServerCommManager, \
+from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
@@ -62,7 +63,7 @@ class Server(Worker):
             self._cfg.early_stop.improve_indicator_mode,
             self._cfg.early_stop.the_smaller_the_better)
 
-        if self._cfg.federate.share_local_model:
+        if self._cfg.federate.share_local_model and False:
             # put the model to the specified device
             model.to(device)
         # Build aggregator
@@ -173,11 +174,11 @@ class Server(Worker):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
-            channels = kwargs['channels']
-            self.comm_manager = StandaloneServerCommManager(
-                                                    client_num=self.client_num,
-                                                    channels=channels,
-                                                    monitor=self._monitor)
+            comm_queue = kwargs.get('comm_queue', None)
+            id2comm = kwargs.get('id2comm', None)
+            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+                                                      monitor=self._monitor,
+                                                      id2comm=id2comm)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
@@ -314,8 +315,16 @@ class Server(Worker):
         # round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
             if not check_eval_result:
+                print(
+                    'before aggregation',
+                    time.strftime('%Y-%m-%d %H:%M:%S',
+                                  time.localtime(time.time())))
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
+                print(
+                    'after aggregation',
+                    time.strftime('%Y-%m-%d %H:%M:%S',
+                                  time.localtime(time.time())))
 
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
@@ -330,6 +339,9 @@ class Server(Worker):
                     logger.info(
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
+                    print('time cost: {:.2f}'.format(time.time() -
+                                                     self.init_time))
+                    self.init_time = time.time()
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
                     self.msg_buffer['train'][self.state] = dict()
@@ -338,6 +350,8 @@ class Server(Worker):
                     self._start_new_training_round(aggregated_num)
                 else:
                     # Final Evaluate
+                    print('time cost: {:.2f}'.format(time.time() -
+                                                     self.ori_time))
                     logger.info('Server: Training is finished! Starting '
                                 'evaluation.')
                     self.eval()
@@ -658,6 +672,10 @@ class Server(Worker):
         else:
             model_para = {} if skip_broadcast else self.model.state_dict()
 
+        # if self._cfg.federate.parallel:
+        #    for k,v in model_para.items():
+        #        model_para[k] = v.cpu()
+
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
@@ -795,6 +813,11 @@ class Server(Worker):
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.
                 format(self.state))
+            print(
+                time.strftime('%Y-%m-%d %H:%M:%S',
+                              time.localtime(time.time())))
+            self.init_time = time.time()
+            self.ori_time = time.time()
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
 
@@ -894,6 +917,10 @@ class Server(Worker):
         timestamp = message.timestamp
         content = message.content
         self.sampler.change_state(sender, 'idle')
+
+        # if self._cfg.federate.parallel:
+        #    for k,v in content[1].items():
+        #        content[1][k] = v.to(self.device)
 
         # update the currency timestamp according to the received message
         assert timestamp >= self.cur_timestamp  # for test

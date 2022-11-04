@@ -4,7 +4,7 @@ import sys
 import pickle
 
 from federatedscope.core.message import Message
-from federatedscope.core.communication import StandaloneClientCommManager, \
+from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.workers import Worker
@@ -47,6 +47,7 @@ class Client(Worker):
                  **kwargs):
 
         super(Client, self).__init__(ID, state, config, model, strategy)
+        self.device = device
 
         # the unseen_client indicates that whether this client contributes to
         # FL process by training on its local data and uploading the local
@@ -117,8 +118,8 @@ class Client(Worker):
         # Initialize communication manager
         self.server_id = server_id
         if self.mode == 'standalone':
-            client2server_channel = kwargs['client2server_channel']
-            self.comm_manager = StandaloneClientCommManager(send_channel=client2server_channel,
+            comm_queue = kwargs['comm_queue']
+            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
                                                       monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
@@ -285,6 +286,8 @@ class Client(Worker):
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
             # and synchronized with the received model
+            for k, v in content.items():
+                content[k] = v.to(self.device)
             self.trainer.update(content,
                                 strict=self._cfg.federate.share_local_model)
             self.state = round
