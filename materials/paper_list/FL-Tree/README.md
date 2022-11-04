@@ -1,4 +1,4 @@
-## Federated Learning for Tree
+## Federated Learning for Tree-based Models
 This list is constantly being updated. Feel free to contribute!
 
 ### 2022
