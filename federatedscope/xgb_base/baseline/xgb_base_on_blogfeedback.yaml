@@ -30,7 +30,7 @@ model:
 data:
   root: data/
   type: blogfeedback
-  batch_size: 4000
+  batch_size: 8000
   splits: [1.0, 0.0]
 
 

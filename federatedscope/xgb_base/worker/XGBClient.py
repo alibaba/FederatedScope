@@ -72,6 +72,9 @@ class XGBClient(Client):
         # self.ss = AdditiveSecretSharing(shared_party_num=self.num_of_parties)
         # self.ns = Node_split()
         # self.fs = Feature_sort()
+        # the following two lines are the tow alogs, where
+        #   the first corresponding to sending the whole feature order
+        #   the second corresponding to sending the bins of feature order
         # self.fs = Feature_sort_base(self)
         self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
         self.ts = Test_base(self)
@@ -129,7 +132,6 @@ class XGBClient(Client):
                         if each != self.server_id
                     ],
                     content=self.batch_index))
-            # self.preparation()
             self.fs.preparation()
 
     # other clients receive the data-sample information
@@ -137,7 +139,6 @@ class XGBClient(Client):
     def callback_func_for_data_sample(self, message: Message):
         self.batch_index = message.content
         self.x = self.sample_data(index=self.batch_index)
-        # self.preparation()
         self.fs.preparation()
 
     def _gain(self, grad, hess):

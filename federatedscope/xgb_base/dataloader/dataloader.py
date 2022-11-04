@@ -10,18 +10,16 @@ from federatedscope.xgb_base.dataset.blog_feedback import BlogFeedback
 
 def load_xgb_base_data(config=None):
     """
-    To generate the synthetic data for vertical FL
+    To get data for FL xgboost
 
     Arguments:
         config: configuration
-        generate (bool): whether to generate the synthetic data
-    :returns: The synthetic data, the modified config
+    :returns: data, the modified config
     :rtype: dict
     """
     splits = config.data.splits
     path = config.data.root
     name = config.data.type.lower()
-    dataset = None
 
     if name == 'givemesomecredit':
         dataset = GiveMeSomeCredit(root=path,

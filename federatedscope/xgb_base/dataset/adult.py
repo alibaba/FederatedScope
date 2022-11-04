@@ -1,14 +1,9 @@
-import zipfile
-import os
 import logging
+import os
 import os.path as osp
-import pandas as pd
-import glob
-import collections
-import numpy as np
 
-import torch
-from torch_geometric.data import InMemoryDataset, Data, download_url
+import numpy as np
+import pandas as pd
 from torchvision.datasets.utils import download_and_extract_archive
 
 logger = logging.getLogger(__name__)
@@ -39,7 +34,7 @@ class Adult:
         self._get_data()
 
     base_folder = 'adult'
-    url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/adult/'
+    url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com/adult.zip'
     raw_file = ['adult.data', 'adult.test']
 
     def _get_data(self):
@@ -48,15 +43,14 @@ class Adult:
         test_file = osp.join(fpath, 'adult.test')
         train_data = self._read_raw(train_file)
         test_data = self._read_raw(test_file)
-        train_data, test_data = self.process(train_data, test_data)
+        train_data, test_data = self._process(train_data, test_data)
         self._partition_data(train_data, test_data)
 
     def _read_raw(self, file_path):
         data = pd.read_csv(file_path, header=None)
         return data
 
-    def process(self, train_set, test_set):
-        """https://cloud.tencent.com/developer/article/1338337"""
+    def _process(self, train_set, test_set):
         col_labels = [
             'age', 'workclass', 'fnlwgt', 'education', 'education_num',
             'marital_status', 'occupation', 'relationship', 'race', 'sex',
@@ -118,10 +112,10 @@ class Adult:
     def download(self):
         for file in self.raw_file:
             if self._check_existence(file):
-                logger.info(file + " already downloaded and verified")
+                logger.info(file + " files already exist")
             # print("Files already downloaded and verified")
             else:
-                download_and_extract_archive(f'{self.url}/{file}',
+                download_and_extract_archive(self.url,
                                              os.path.join(
                                                  self.root, self.base_folder),
-                                             filename=file)
+                                             filename=self.url.split('/')[-1])

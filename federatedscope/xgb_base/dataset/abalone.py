@@ -1,13 +1,8 @@
+import logging
 import os
 import os.path as osp
-import numpy as np
-import logging
 
 import pandas as pd
-import torch
-from federatedscope.core.auxiliaries.utils import save_local_data, download_url
-from sklearn.model_selection import train_test_split
-
 from torchvision.datasets.utils import download_and_extract_archive
 
 logger = logging.getLogger(__name__)
@@ -47,7 +42,7 @@ class Abalone:
         self._partition_data()
 
     base_folder = 'abalone'
-    url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/'
+    url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com/abalone.zip'
     raw_file = 'abalone.data'
 
     def _get_data(self):
@@ -61,11 +56,9 @@ class Abalone:
 
     def _read_raw(self, file_path):
         data = pd.read_csv(file_path, header=None)
-        # data = data.values
         return data
 
     def _process(self, data):
-        print(data[0])
         data[0] = data[0].replace({'F': 2, 'M': 1, 'I': 0})
         data = data.values
         return data
@@ -76,12 +69,11 @@ class Abalone:
 
     def download(self):
         if self._check_existence():
-            logger.info("Files already downloaded and verified")
-            # print("Files already downloaded and verified")
+            logger.info("Files already exist")
             return
-        download_and_extract_archive(f'{self.url}/{self.raw_file}',
+        download_and_extract_archive(self.url,
                                      os.path.join(self.root, self.base_folder),
-                                     filename=self.raw_file)
+                                     filename=self.url.split('/')[-1])
 
     def _partition_data(self):
 

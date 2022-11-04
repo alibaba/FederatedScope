@@ -43,15 +43,17 @@ class GiveMeSomeCredit:
         self._partition_data()
 
     base_folder = 'givemesomecredit'
-    url = '......'
+    url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com/cs-training.zip'
     raw_file = 'cs-training.csv'
 
     def _get_data(self):
         fpath = os.path.join(self.root, self.base_folder)
-        file = osp.join(fpath, 'cs-training.csv')
+        file = osp.join(fpath, self.raw_file)
         data = self._read_raw(file)
         data = data[:, 1:]
 
+        # the following codes are used to choose balanced data
+        # they may be removed later
         # '''
         sample_size = 150000
 
@@ -87,8 +89,7 @@ class GiveMeSomeCredit:
 
     def download(self):
         if self._check_existence():
-            logger.info("Files already downloaded and verified")
-            # print("Files already downloaded and verified")
+            logger.info("Files already exist")
             return
         download_and_extract_archive(self.url,
                                      os.path.join(self.root, self.base_folder),
