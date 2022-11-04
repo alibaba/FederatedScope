@@ -14,7 +14,7 @@ from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.configs.config import global_cfg, CfgNode
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.fed_runner import get_runner
 
 if os.environ.get('https_proxy'):
     del os.environ['https_proxy']
@@ -32,8 +32,8 @@ if __name__ == '__main__':
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file
-    client_cfg = CfgNode.load_cfg(open(args.client_cfg_file,
-                                       'r')) if args.client_cfg_file else None
+    client_cfgs = CfgNode.load_cfg(open(args.client_cfg_file,
+                                        'r')) if args.client_cfg_file else None
 
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global
@@ -43,9 +43,9 @@ if __name__ == '__main__':
 
     init_cfg.freeze()
 
-    runner = FedRunner(data=data,
-                       server_class=get_server_cls(init_cfg),
-                       client_class=get_client_cls(init_cfg),
-                       config=init_cfg.clone(),
-                       client_config=client_cfg)
+    runner = get_runner(data=data,
+                        server_class=get_server_cls(init_cfg),
+                        client_class=get_client_cls(init_cfg),
+                        config=init_cfg.clone(),
+                        client_configs=client_cfgs)
     _ = runner.run()

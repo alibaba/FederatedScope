@@ -2,6 +2,7 @@ import grpc
 from concurrent import futures
 import logging
 import math
+from collections import deque
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.proto import gRPC_comm_manager_pb2, \
@@ -11,50 +12,22 @@ from federatedscope.core.message import Message
 
 logger = logging.getLogger(__name__)
 
-# class StandaloneCommManager(object):
-#     """
-#     The communicator used for standalone mode
-#     """
-#     def __init__(self, comm_queue, monitor=None):
-#         self.comm_queue = comm_queue
-#         self.neighbors = dict()
-#         self.monitor = monitor  # used to track the communication related
-#         # metrics
 
-#     def receive(self):
-#         # we don't need receive() in standalone
-#         pass
-
-#     def add_neighbors(self, neighbor_id, address=None):
-#         self.neighbors[neighbor_id] = address
-
-#     def get_neighbors(self, neighbor_id=None):
-#         address = dict()
-#         if neighbor_id:
-#             if isinstance(neighbor_id, list):
-#                 for each_neighbor in neighbor_id:
-#                     address[each_neighbor] = self.get_neighbors(each_neighbor)
-#                 return address
-#             else:
-#                 return self.neighbors[neighbor_id]
-#         else:
-#             # Get all neighbors
-#             return self.neighbors
-
-#     def send(self, message):
-#         self.comm_queue.append(message)
-#         download_bytes, upload_bytes = message.count_bytes()
-#         self.monitor.track_upload_bytes(upload_bytes)
-
-class StandaloneClientCommManager(object):
+class StandaloneCommManager(object):
     """
     The communicator used for standalone mode
     """
-    def __init__(self, send_channel, monitor=None):
-        self.send_channel = send_channel
+    def __init__(self, comm_queue, monitor=None, id2comm=None):
+        self.comm_queue = comm_queue
         self.neighbors = dict()
         self.monitor = monitor  # used to track the communication related
         # metrics
+        self.id2comm = id2comm  # the mapping table from worker ID to
+        # communication queue index (used for multiple queues). If is2comm is
+        # None, all the workers share one communication queue
+        if self.id2comm is not None:
+            self.comm2id = {k: [] for k in range(len(self.comm_queue))}
+            [self.comm2id[v].append(k) for k, v in self.id2comm.items()]
 
     def receive(self):
         # we don't need receive() in standalone
@@ -77,61 +50,24 @@ class StandaloneClientCommManager(object):
             return self.neighbors
 
     def send(self, message):
-        logger.info(f"client send message {message.msg_type}")
-        self.send_channel.put(message)
-        download_bytes, upload_bytes = message.count_bytes()
-        self.monitor.track_upload_bytes(upload_bytes)
-
-
-class StandaloneServerCommManager(object):
-    """
-    The communicator used for standalone mode
-    """
-    def __init__(self, client_num, channels, monitor=None):
-        self.client_num = client_num
-        self.process_num = len(channels)
-        self.part_size = math.ceil(self.client_num / self.process_num)
-        self.send_channel = channels
-        self.neighbors = dict()
-        self.monitor = monitor  # used to track the communication related
-        # metrics
-
-    def receive(self):
-        # we don't need receive() in standalone
-        pass
-
-    def add_neighbors(self, neighbor_id, address=None):
-        self.neighbors[neighbor_id] = address
-
-    def get_neighbors(self, neighbor_id=None):
-        address = dict()
-        if neighbor_id:
-            if isinstance(neighbor_id, list):
-                for each_neighbor in neighbor_id:
-                    address[each_neighbor] = self.get_neighbors(each_neighbor)
-                return address
-            else:
-                return self.neighbors[neighbor_id]
+        # All the workers share one comm_queue
+        if self.id2comm is None:
+            self.comm_queue.append(message) if isinstance(
+                self.comm_queue, deque) else self.comm_queue.put(message)
+        # Send the message to the responding comm_queue
         else:
-            # Get all neighbors
-            return self.neighbors
-
-    def send(self, message):
-        download_bytes, upload_bytes = message.count_bytes()
-        receiver = message.receiver
-        if receiver is not None:
+            receiver = message.receiver
             if not isinstance(receiver, list):
                 receiver = [receiver]
-            # TODO: opt
-            for process_id in range(0, self.process_num):
+            for idx, each_comm in enumerate(self.comm_queue):
                 for each_receiver in receiver:
-                    if each_receiver in self.neighbors and (each_receiver - 1) // self.part_size == process_id:
-                        logger.info(f"server send message to {each_receiver} in client runner {process_id}")
-                        self.send_channel[process_id].put(message)
-                        self.monitor.track_upload_bytes(upload_bytes)
+                    if each_receiver in self.neighbors and \
+                            each_receiver in self.comm2id[idx]:
+                        each_comm.put(message)
                         break
-        else:
-            logger.error(f"wrong message type in standalone mode")
+
+        download_bytes, upload_bytes = message.count_bytes()
+        self.monitor.track_upload_bytes(upload_bytes)
 
 
 class gRPCCommManager(object):
