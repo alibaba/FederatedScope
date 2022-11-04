@@ -2,9 +2,10 @@
 # Federated Database
 
 # 2022
-| Title    | Venue | Link                                        |
-| -------- |-------|---------------------------------------------|
- | Federated Boosted Decision Trees with Differential Privacy | arxiv | [pdf](https://arxiv.org/pdf/2210.02910.pdf) |
+| Title                                                      | Venue | Link                                                  |
+|------------------------------------------------------------|-------|-------------------------------------------------------|
+|OpBoost: A Vertical Federated Tree Boosting Framework Based on Order-Preserving Desensitization| arxiv   | [pdf](https://arxiv.org/pdf/2210.01318.pdf), [code](https://github.com/alibaba-edu/mpc4j/tree/main/mpc4j-sml-opboost) |
+ | Federated Boosted Decision Trees with Differential Privacy | arxiv | [pdf](https://arxiv.org/pdf/2210.02910.pdf)           |
  
 # 2021
 | Title | Venue                                                  | Link | 
