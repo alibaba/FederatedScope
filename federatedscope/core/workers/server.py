@@ -63,7 +63,8 @@ class Server(Worker):
             self._cfg.early_stop.improve_indicator_mode,
             self._cfg.early_stop.the_smaller_the_better)
 
-        if self._cfg.federate.share_local_model and False:
+        if self._cfg.federate.share_local_model \
+                and not self._cfg.federate.parallel:
             # put the model to the specified device
             model.to(device)
         # Build aggregator
