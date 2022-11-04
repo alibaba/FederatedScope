@@ -77,6 +77,7 @@ class Trainer(BaseTrainer):
     @cfg.setter
     def cfg(self, new_cfg):
         self._cfg = new_cfg
+        self.ctx.cfg = new_cfg
         self._setup_data_related_var_in_ctx(self.ctx)
 
     def parse_data(self, data):

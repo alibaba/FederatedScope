@@ -4,7 +4,8 @@ from federatedscope.core.splitters import BaseSplitter
 
 class IIDSplitter(BaseSplitter):
     """
-    This splitter split dataset randomly .
+    This splitter splits dataset following the independent and identically \
+    distribution.
 
     Args:
         client_num: the dataset will be split into ``client_num`` pieces

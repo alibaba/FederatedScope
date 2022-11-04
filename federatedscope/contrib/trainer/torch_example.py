@@ -83,7 +83,6 @@ class MyTorchTrainer(BaseTrainer):
 
     def update(self, model_parameters, strict=False):
         self.model.load_state_dict(model_parameters, strict)
-        return self.get_model_para()
 
     def get_model_para(self):
         return self.model.cpu().state_dict()

@@ -13,7 +13,7 @@ class BaseDataTranslator:
     ``StandaloneDataDict``, which is the input data of runner.
 
     Notes:
-        Translator is consist of several stages:
+        The ``Translator`` is consist of several stages:
 
         Dataset -> ML split (``split_train_val_test()``) -> \
         FL split (``split_to_client()``) -> ``StandaloneDataDict``
