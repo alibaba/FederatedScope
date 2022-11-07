@@ -17,7 +17,7 @@ MFDATA_CLASS_DICT = {
 }
 
 
-def load_mf_dataset(config=None):
+def load_mf_dataset(config=None, client_cfgs=None):
     """Return the dataset of matrix factorization
 
     Format:
@@ -46,26 +46,15 @@ def load_mf_dataset(config=None):
         raise NotImplementedError("Dataset {} is not implemented.".format(
             config.data.type))
 
-    data_local_dict = collections.defaultdict(dict)
-    for id_client, data in dataset.data.items():
-        data_local_dict[id_client]["train"] = MFDataLoader(
-            data["train"],
-            shuffle=config.data.shuffle,
-            batch_size=config.data.batch_size,
-            drop_last=config.data.drop_last,
-            theta=config.sgdmf.theta)
-        data_local_dict[id_client]["test"] = MFDataLoader(
-            data["test"],
-            shuffle=False,
-            batch_size=config.data.batch_size,
-            drop_last=config.data.drop_last,
-            theta=config.sgdmf.theta)
+    data_dict = collections.defaultdict(dict)
+    for client_idx, data in dataset.data.items():
+        data_dict[client_idx] = data
 
     # Modify config
     config.merge_from_list(['model.num_user', dataset.n_user])
     config.merge_from_list(['model.num_item', dataset.n_item])
 
-    return data_local_dict, config
+    return data_dict, config
 
 
 class MFDataLoader(object):

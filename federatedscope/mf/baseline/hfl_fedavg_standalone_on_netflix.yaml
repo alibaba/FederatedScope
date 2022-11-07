@@ -11,8 +11,9 @@ federate:
 data:
   root: data/
   type: HFLNetflix
+dataloader:
   batch_size: 32
-  num_workers: 0
+  type: mf
 model:
   type: HMFNet
   hidden: 10

@@ -14,6 +14,6 @@ train.local_update_steps:
   type: int
   lower: 1
   upper: 4
-data.batch_size:
+dataloader.batch_size:
   type: cate
   choices: [16, 32, 64]

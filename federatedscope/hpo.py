@@ -26,7 +26,7 @@ if __name__ == '__main__':
     init_cfg.merge_from_file(args.cfg_file)
     init_cfg.merge_from_list(args.opts)
 
-    update_logger(init_cfg)
+    update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
     assert not args.client_cfg_file, 'No support for client-wise config in ' \

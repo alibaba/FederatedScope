@@ -12,6 +12,8 @@ data:
   root: data/
   type: graph_multi_domain_mix
   pre_transform: ['Constant', {'value':1.0, 'cat':False}]
+dataloader:
+  type: pyg
 model:
   type: gin
   hidden: 64

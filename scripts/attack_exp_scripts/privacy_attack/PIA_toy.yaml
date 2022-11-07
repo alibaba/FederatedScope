@@ -10,9 +10,9 @@ data:
   root: data/
   type: toy
   splits: [0.6,0.2,0.2]
-  batch_size: 1
   subsample: 0.0001
-  num_workers: 0
+dataloader:
+  batch_size: 1
 model:
   type: lr
   hidden: 2048
