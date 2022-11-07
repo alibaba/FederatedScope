@@ -362,7 +362,7 @@ class PCFedNLPServer(FedNLPServer):
 
     def _load_synth_data(self):
         if self._cfg.data.debug:
-            synth_dir = 'cache/synthetic/'
+            synth_dir = 'cache_debug/synthetic/'
         else:
             synth_dir = os.path.join(self._cfg.data.cache_dir, 'synthetic')
         synth_prim_weight = self._cfg.data.synth_prim_weight

@@ -49,13 +49,12 @@ def extend_cfg(cfg, cfg_client):
     cfg.model.pad_token_id = tokenizer.pad_token_id
 
     if cfg.data.debug:
-        if cfg.federate.total_round_num > 5:
-            cfg.federate.total_round_num = 5
-        if cfg.train.local_update_steps > 5:
-            cfg.train.local_update_steps = 5
+        if cfg.federate.total_round_num > 2:
+            cfg.federate.total_round_num = 2
+        if cfg.train.local_update_steps > 2:
+            cfg.train.local_update_steps = 2
+        cfg.federate.hfl_load_from = ''
         cfg.federate.save_to = ''
-        if cfg.data.num_contrast > 20:
-            cfg.data.num_contrast = 20
         cfg.data.cache_dir = ''
 
     # client_config

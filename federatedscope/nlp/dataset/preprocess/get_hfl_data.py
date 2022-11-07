@@ -158,7 +158,8 @@ class HFLSynthDataProcessor(object):
     def __init__(self, config, datasets):
         self.cfg = config
         self.pretrain_dir = config.federate.hfl_load_from
-        self.cache_dir = config.data.cache_dir
+        self.cache_dir = 'cache_debug' if \
+            config.data.debug else config.data.cache_dir
         self.save_dir = os.path.join(self.cache_dir, 'synthetic')
         self.batch_size = config.data.synth_batch_size
         self.datasets = datasets

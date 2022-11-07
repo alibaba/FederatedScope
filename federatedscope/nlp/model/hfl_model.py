@@ -351,10 +351,14 @@ class PCFedNLPModel(nn.Module):
         if in_contrast_prepare:  # return dec_hidden_states & dec_out
             self.eval()
             with torch.no_grad():
-                example_indices = torch.stack([
+                example_indices = [
                     k for k in example_indices
                     if k.item() in contrast_monitor.synth_tokens
-                ])
+                ]
+                if len(example_indices) == 0:
+                    return ModelOutput(example_indices=example_indices)
+
+                example_indices = torch.stack(example_indices)
                 synth_input_ids = torch.stack([
                     contrast_monitor.synth_tokens[k.item()]
                     for k in example_indices

@@ -975,10 +975,12 @@ class PCFedNLPTrainer(PFedNLPTrainer):
             ctx.batch_size = CtxVar(0, LIFECYCLE.BATCH)
             dec_out, dec_hidden, example_indices = \
                 outputs.logits, outputs.hidden_states, outputs.example_indices
-            for ex, out in zip(example_indices, dec_out.detach().cpu()):
-                ctx.contrast_monitor.update_dec_out(out, k=ex.item())
-            for ex, hids in zip(example_indices, dec_hidden.detach().cpu()):
-                ctx.contrast_monitor.update_dec_hidden(hids, k=ex.item())
+            if len(example_indices) > 0:
+                for ex, out in zip(example_indices, dec_out.detach().cpu()):
+                    ctx.contrast_monitor.update_dec_out(out, k=ex.item())
+                for ex, hids in zip(example_indices,
+                                    dec_hidden.detach().cpu()):
+                    ctx.contrast_monitor.update_dec_hidden(hids, k=ex.item())
         else:
             ctx.loss_agg.update(ctx.loss_batch.detach().item(), ctx.batch_size)
             if ctx.get('regular_loss_batch', None) is not None:
