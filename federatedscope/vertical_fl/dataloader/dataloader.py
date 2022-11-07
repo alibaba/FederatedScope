@@ -1,5 +1,9 @@
 import numpy as np
 
+from federatedscope.vertical_fl.dataset.abalone import Abalone
+from federatedscope.vertical_fl.dataset.give_me_some_credit\
+    import GiveMeSomeCredit
+
 
 def load_vertical_data(config=None, generate=False):
     """
@@ -12,45 +16,73 @@ def load_vertical_data(config=None, generate=False):
     :rtype: dict
     """
 
-    if generate:
-        # generate toy data for running a vertical FL example
-        INSTANCE_NUM = 1000
-        TRAIN_SPLIT = 0.9
+    splits = config.data.splits
+    path = config.data.root
+    name = config.data.type.lower()
 
-        total_dims = np.sum(config.vertical.dims)
-        theta = np.random.uniform(low=-1.0, high=1.0, size=(total_dims, 1))
-        x = np.random.choice([-1.0, 1.0, -2.0, 2.0, -3.0, 3.0],
-                             size=(INSTANCE_NUM, total_dims))
-        y = np.asarray([
-            1.0 if x >= 0 else -1.0
-            for x in np.reshape(np.matmul(x, theta), -1)
-        ])
-
-        train_num = int(TRAIN_SPLIT * INSTANCE_NUM)
-        test_data = {'theta': theta, 'x': x[train_num:], 'y': y[train_num:]}
-        data = dict()
-
-        # For Server
-        data[0] = dict()
-        data[0]['train'] = None
-        data[0]['val'] = None
-        data[0]['test'] = test_data
-
-        # For Client #1
-        data[1] = dict()
-        data[1]['train'] = {
-            'x': x[:train_num, :config.vertical.dims[0]],
-            'y': y[:train_num]
-        }
-        data[1]['val'] = None
-        data[1]['test'] = test_data
-
-        # For Client #2
-        data[2] = dict()
-        data[2]['train'] = {'x': x[:train_num, config.vertical.dims[0]:]}
-        data[2]['val'] = None
-        data[2]['test'] = test_data
-
+    if config.data.type == 'abalone':
+        dataset = Abalone(root=path,
+                          name=name,
+                          num_of_clients=config.federate.client_num,
+                          feature_partition=config.vertical.dims,
+                          tr_frac=splits[0],
+                          download=True,
+                          seed=1234)
+    elif config.data.type == 'givemesomecredit':
+        dataset = GiveMeSomeCredit(root=path,
+                                   name=name,
+                                   num_of_clients=config.federate.client_num,
+                                   feature_partition=config.vertical.dims,
+                                   tr_frac=splits[0],
+                                   download=True,
+                                   seed=1234)
+        data = dataset.data
         return data, config
+
     else:
-        raise ValueError('You must provide the data file')
+        if generate:
+            # generate toy data for running a vertical FL example
+            INSTANCE_NUM = 1000
+            TRAIN_SPLIT = 0.9
+
+            total_dims = np.sum(config.vertical.dims)
+            theta = np.random.uniform(low=-1.0, high=1.0, size=(total_dims, 1))
+            x = np.random.choice([-1.0, 1.0, -2.0, 2.0, -3.0, 3.0],
+                                 size=(INSTANCE_NUM, total_dims))
+            y = np.asarray([
+                1.0 if x >= 0 else -1.0
+                for x in np.reshape(np.matmul(x, theta), -1)
+            ])
+
+            train_num = int(TRAIN_SPLIT * INSTANCE_NUM)
+            test_data = {
+                'theta': theta,
+                'x': x[train_num:],
+                'y': y[train_num:]
+            }
+            data = dict()
+
+            # For Server
+            data[0] = dict()
+            data[0]['train'] = None
+            data[0]['val'] = None
+            data[0]['test'] = test_data
+
+            # For Client #1
+            data[1] = dict()
+            data[1]['train'] = {
+                'x': x[:train_num, :config.vertical.dims[0]],
+                'y': y[:train_num]
+            }
+            data[1]['val'] = None
+            data[1]['test'] = test_data
+
+            # For Client #2
+            data[2] = dict()
+            data[2]['train'] = {'x': x[:train_num, config.vertical.dims[0]:]}
+            data[2]['val'] = None
+            data[2]['test'] = test_data
+
+            return data, config
+        else:
+            raise ValueError('You must provide the data file')

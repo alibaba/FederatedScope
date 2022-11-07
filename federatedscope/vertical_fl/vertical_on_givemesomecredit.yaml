@@ -1,24 +1,35 @@
 use_gpu: False
+
+device: 0
+
+backend: torch
+
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 30
+  total_round_num: 10
 model:
   type: lr
   use_bias: False
-train:
-  optimizer:
-    lr: 0.05
+
 data:
-  type: vertical_fl_data
-  batch_size: 50
+  root: data/
+  type: givemesomecredit
+  batch_size: 20000
+  splits: [0.8, 0.2]
+
 dataloader:
   type: raw
+#dataloader:
+ # batch_size: 2000
+
+trainer:
+  type: none    
 vertical:
   use: True
   key_size: 256
-trainer:
-  type: none
+  dims: [5, 10]
+
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss
