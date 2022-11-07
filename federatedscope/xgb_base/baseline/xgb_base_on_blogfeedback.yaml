@@ -34,9 +34,9 @@ data:
   splits: [1.0, 0.0]
 
 
-#dataloader:
+dataloader:
   # Type of sampler
-#  type: pyg
+  type: raw
   # Use fullbatch training, batch_size should be `1`
 #  batch_size: 1
 

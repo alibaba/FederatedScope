@@ -18,7 +18,9 @@ data:
   splits: [0.8, 0.2]
 
   
-#dataloader:
+dataloader:
+  # Type of sampler
+  type: raw
  # batch_size: 2000
 
 criterion:
