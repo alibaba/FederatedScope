@@ -11,9 +11,10 @@ except ImportError:
 
 try:
     from federatedscope.contrib.optimizer import *
+    from federatedscope.differential_privacy.optimizers import *
 except ImportError as error:
     logger.warning(
-        f'{error} in `federatedscope.contrib.optimizer`, some modules are not '
+        f'{error} in `federatedscope.contrib.optimizer` or `federatedscope.differential_privacy.optimizers`, some modules are not '
         f'available.')
 
 
@@ -28,12 +29,6 @@ def get_optimizer(model, type, lr, **kwargs):
         del tmp_kwargs['__cfg_check_funcs__']
     if 'is_ready_for_run' in tmp_kwargs:
         del tmp_kwargs['is_ready_for_run']
-
-    for func in register.optimizer_dict.values():
-        optimizer = func(model, type, lr, **tmp_kwargs)
-        if optimizer is not None:
-            return optimizer
-
     if isinstance(type, str):
         if hasattr(torch.optim, type):
             if isinstance(model, torch.nn.Module):
@@ -42,6 +37,12 @@ def get_optimizer(model, type, lr, **kwargs):
             else:
                 return getattr(torch.optim, type)(model, lr, **tmp_kwargs)
         else:
+            # registered optimizers
+            for func in register.optimizer_dict.values():
+                optimizer = func(type)
+                if optimizer is not None:
+                    return optimizer(model.parameters(), lr, **tmp_kwargs)
+
             raise NotImplementedError(
                 'Optimizer {} not implement'.format(type))
     else:

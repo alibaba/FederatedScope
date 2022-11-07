@@ -1,5 +1,5 @@
 from federatedscope.register import regularizer_dict
-from federatedscope.core.regularizer.proximal_regularizer import *
+from federatedscope.core.regularizer import *
 try:
     from torch.nn import Module
 except ImportError:

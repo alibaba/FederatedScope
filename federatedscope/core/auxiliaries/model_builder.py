@@ -154,6 +154,12 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in ['vmfnet', 'hmfnet']:
         from federatedscope.mf.model.model_builder import get_mfnet
         model = get_mfnet(model_config, input_shape)
+    elif model_config.type.lower() == 'fmlinearregression':
+        from federatedscope.differential_privacy.model.fm_linear_regression import FMLinearRegression
+        model = FMLinearRegression(in_channels=input_shape[-1], epsilon=0.5)
+    elif model_config.type.lower() == 'fmlogisticregression':
+        from federatedscope.differential_privacy.model.fm_logistic_regression import FMLogisticRegression
+        model = FMLogisticRegression(in_channels=input_shape[-1], epsilon=0.5)
     else:
         raise ValueError('Model {} is not provided'.format(model_config.type))
 
