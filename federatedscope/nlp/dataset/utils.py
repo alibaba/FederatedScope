@@ -8,6 +8,7 @@ import re
 import numpy as np
 import json
 from collections import Counter
+import nltk
 from nltk.tokenize import sent_tokenize
 from torch.utils.data.dataset import Dataset
 from transformers.models.bert import BertTokenizerFast
@@ -96,6 +97,7 @@ def label_to_index(labels):
 
 
 def split_sent(examples, eoq='[unused2]', tokenize=True):
+    nltk.download('punkt')
     new_examples = []
     for e in examples:
         if tokenize:

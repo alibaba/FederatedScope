@@ -17,50 +17,44 @@ class NLPTest(unittest.TestCase):
 
     def test_isolated(self):
         cfg_alg = CfgNode.load_cfg(
-            open('scripts/nlp_exp_scripts/isolated/config_isolated.yaml', 'r'))
+            open('federatedscope/nlp/baseline/config_isolated.yaml', 'r'))
         cfg_client = CfgNode.load_cfg(
-            open(
-                'scripts/nlp_exp_scripts/isolated/config_client_isolated.yaml',
-                'r'))
+            open('federatedscope/nlp/baseline/config_client_isolated.yaml',
+                 'r'))
         cfg_alg.outdir = 'exp/fedavg/'
         self.fed_runner(cfg_alg, cfg_client)
 
     def test_fednlp(self):
         cfg_alg = CfgNode.load_cfg(
-            open('scripts/nlp_exp_scripts/fednlp/config_fednlp.yaml', 'r'))
+            open('federatedscope/nlp/baseline/config_fednlp.yaml', 'r'))
         cfg_client = CfgNode.load_cfg(
-            open('scripts/nlp_exp_scripts/fednlp/config_client_fednlp.yaml',
-                 'r'))
+            open('federatedscope/nlp/baseline/config_client_fednlp.yaml', 'r'))
         cfg_alg.outdir = 'exp/fednlp/'
         self.fed_runner(cfg_alg, cfg_client)
 
     def test_pfednlp(self):
         # pretrain
         cfg_alg = CfgNode.load_cfg(
-            open(
-                'scripts/nlp_exp_scripts/pfednlp/pretrain/config_pretrain.yaml',
-                'r'))
+            open('federatedscope/nlp/baseline/config_pfednlp_pretrain.yaml',
+                 'r'))
         cfg_alg.outdir = 'exp/pfednlp/pretrain/'
         self.fed_runner(cfg_alg)
 
         # train
         cfg_alg = CfgNode.load_cfg(
-            open('scripts/nlp_exp_scripts/pfednlp/train/config_pfednlp.yaml',
-                 'r'))
+            open('federatedscope/nlp/baseline/config_pfednlp.yaml', 'r'))
         cfg_client = CfgNode.load_cfg(
-            open(
-                'scripts/nlp_exp_scripts/pfednlp/train/config_client_pfednlp'
-                '.yaml', 'r'))
+            open('federatedscope/nlp/baseline/config_client_pfednlp.yaml',
+                 'r'))
         cfg_alg.outdir = 'exp/pfednlp/train/'
         self.fed_runner(cfg_alg, cfg_client)
 
     def test_pcfednlp(self):
         cfg_alg = CfgNode.load_cfg(
-            open('scripts/nlp_exp_scripts/pcfednlp/config_pcfednlp.yaml', 'r'))
+            open('federatedscope/nlp/baseline/config_pcfednlp.yaml', 'r'))
         cfg_client = CfgNode.load_cfg(
-            open(
-                'scripts/nlp_exp_scripts/pcfednlp/config_client_pcfednlp.yaml',
-                'r'))
+            open('federatedscope/nlp/baseline/config_client_pcfednlp.yaml',
+                 'r'))
         cfg_alg.outdir = 'exp/pcfednlp/'
         self.fed_runner(cfg_alg, cfg_client)
 
@@ -69,6 +63,7 @@ class NLPTest(unittest.TestCase):
         init_cfg.merge_from_other_cfg(cfg_alg)
         init_cfg.data.debug = True
         init_cfg.data.batch_size = 1
+        init_cfg.data.root = 'test_data/'
         init_cfg.data.datasets = ['imdb', 'agnews', 'squad', 'newsqa']
         init_cfg.data.num_grouped_clients = [1, 3, 3, 2]
         init_cfg.federate.client_num = 9
