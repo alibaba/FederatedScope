@@ -36,6 +36,8 @@ class XGBTest(unittest.TestCase):
 
         cfg.dataloader.type = 'raw'
 
+        cfg.criterion.type = 'CrossEntropyLoss'
+
         cfg.xgb_base.use = True
         cfg.xgb_base.key_size = 256
 
