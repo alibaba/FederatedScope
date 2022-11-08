@@ -48,7 +48,9 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             config=config,
             beta=config.personalization.beta)
     elif aggregator_type == 'no_communication':
-        return NoCommunicationAggregator()
+        return NoCommunicationAggregator(model=model,
+                                         device=device,
+                                         config=config)
     else:
         raise NotImplementedError(
             "Aggregator {} is not implemented.".format(aggregator_type))

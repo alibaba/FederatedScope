@@ -75,10 +75,14 @@ def get_shape_from_data(data, model_config, backend='torch'):
         import torch
         if issubclass(type(data_representative), torch.utils.data.DataLoader):
             x, _ = next(iter(data_representative))
+            if isinstance(x, list):
+                return x[0].shape
             return x.shape
         else:
             try:
                 x, _ = data_representative
+                if isinstance(x, list):
+                    return x[0].shape
                 return x.shape
             except:
                 raise TypeError('Unsupported data type.')
@@ -140,6 +144,15 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11', 'lr']:
         from federatedscope.cv.model import get_cnn
         model = get_cnn(model_config, input_shape)
+    elif model_config.type.lower() in [
+            'simclr', 'simclr_linear', "supervised_local", "supervised_fedavg"
+    ]:
+        from federatedscope.cl.model import get_simclr
+        model = get_simclr(model_config, input_shape)
+        if model_config.type.lower().endswith('linear'):
+            for name, value in model.named_parameters():
+                if not name.startswith('linear'):
+                    value.requires_grad = False
     elif model_config.type.lower() in ['lstm']:
         from federatedscope.nlp.model import get_rnn
         model = get_rnn(model_config, input_shape)
