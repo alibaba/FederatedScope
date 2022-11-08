@@ -15,9 +15,6 @@ train:
   optimizer:
     lr: 0.5
 
-grad:
-  grad_clip: 5.0
-
 data:
   root: data/
   type: adult

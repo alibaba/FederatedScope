@@ -96,7 +96,6 @@ class Adult:
         x, y = train_set[:, :-1], train_set[:, -1]
         test_x, test_y = test_set[:, :-1], test_set[:, -1]
 
-        print(x)
         x = self.standardization(x)
         for i in range(len(y)):
             if y[i] == 0:
@@ -105,7 +104,6 @@ class Adult:
             if test_y[i] == 0:
                 test_y[i] = -1
 
-        print(x)
         test_x = self.standardization(test_x)
 
         test_data = {'x': test_x, 'y': test_y}

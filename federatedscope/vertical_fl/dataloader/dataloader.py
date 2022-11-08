@@ -1,6 +1,5 @@
 import numpy as np
 
-from federatedscope.vertical_fl.dataset.abalone import Abalone
 from federatedscope.vertical_fl.dataset.adult import Adult
 from federatedscope.vertical_fl.dataset.give_me_some_credit\
     import GiveMeSomeCredit
@@ -21,17 +20,7 @@ def load_vertical_data(config=None, generate=False):
     path = config.data.root
     name = config.data.type.lower()
 
-    if config.data.type == 'abalone':
-        dataset = Abalone(root=path,
-                          name=name,
-                          num_of_clients=config.federate.client_num,
-                          feature_partition=config.vertical.dims,
-                          tr_frac=splits[0],
-                          download=True,
-                          seed=1234)
-        data = dataset.data
-        return data, config
-    elif name == 'adult':
+    if name == 'adult':
         dataset = Adult(root=path,
                         name=name,
                         num_of_clients=config.federate.client_num,
