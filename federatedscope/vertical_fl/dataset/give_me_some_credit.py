@@ -55,7 +55,7 @@ class GiveMeSomeCredit:
         # the following codes are used to choose balanced data
         # they may be removed later
         # '''
-        sample_size = 100000
+        sample_size = 2000
 
         def balance_sample(sample_size, y):
             y_ones_idx = (y == 1).nonzero()[0]
@@ -95,15 +95,38 @@ class GiveMeSomeCredit:
                                      os.path.join(self.root, self.base_folder),
                                      filename=self.url.split('/')[-1])
 
+    # standardization
+    def normalization(self, data):
+        _range = np.max(data) - np.min(data)
+        return (data - np.min(data)) / _range
+
+    # normalization
+    def standardization(self, data):
+        mu = np.mean(data, axis=0)
+        sigma = np.std(data, axis=0)
+        return (data - mu) / sigma
+
     def _partition_data(self):
 
         x = self.data_dict['train'][:, 1:]
         y = self.data_dict['train'][:, 0]
+        '''
+        x == self.standardization(x)
+        for i in range(len(y)):
+            if y[i] == 0:
+                y[i] = -1
+        for i in range(len(self.data_dict['test'][:, 0])):
+            if self.data_dict['test'][:, 0][i] == 0:
+                self.data_dict['test'][:, 0][i] = -1
 
-        test_data = {
-            'x': self.data_dict['test'][:, 1:],
-            'y': self.data_dict['test'][:, 0]
-        }
+        test_x = self.standardization(self.data_dict['test'][:, 1:])
+        for i in range(len(test_x)):
+            test_x[i][-1] = 0
+        '''
+        test_x = self.data_dict['test'][:, 1:]
+        test_data = {'x': test_x, 'y': self.data_dict['test'][:, 0]}
+
+        print(test_data['x'])
 
         self.data = dict()
         for i in range(self.num_of_clients + 1):

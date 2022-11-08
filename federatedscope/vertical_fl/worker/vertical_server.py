@@ -120,6 +120,7 @@ class vFLServer(Server):
     def evaluate(self):
         test_x = self.data['test']['x']
         test_y = self.data['test']['y']
+        # print(test_x)
         loss = np.mean(
             np.log(1 + np.exp(-test_y * np.matmul(test_x, self.theta))))
         acc = np.mean((test_y * np.matmul(test_x, self.theta)) > 0)

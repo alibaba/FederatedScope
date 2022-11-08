@@ -11,11 +11,14 @@ federate:
 model:
   type: lr
   use_bias: False
+train:
+  optimizer:
+    lr: 0.01
 
 data:
   root: data/
   type: givemesomecredit
-  batch_size: 20000
+  batch_size: 10
   splits: [0.8, 0.2]
 
 dataloader:

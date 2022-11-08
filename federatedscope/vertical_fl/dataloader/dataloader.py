@@ -1,6 +1,7 @@
 import numpy as np
 
 from federatedscope.vertical_fl.dataset.abalone import Abalone
+from federatedscope.vertical_fl.dataset.adult import Adult
 from federatedscope.vertical_fl.dataset.give_me_some_credit\
     import GiveMeSomeCredit
 
@@ -28,6 +29,18 @@ def load_vertical_data(config=None, generate=False):
                           tr_frac=splits[0],
                           download=True,
                           seed=1234)
+        data = dataset.data
+        return data, config
+    elif name == 'adult':
+        dataset = Adult(root=path,
+                        name=name,
+                        num_of_clients=config.federate.client_num,
+                        feature_partition=config.vertical.dims,
+                        tr_frac=splits[0],
+                        download=True,
+                        seed=1234)
+        data = dataset.data
+        return data, config
     elif config.data.type == 'givemesomecredit':
         dataset = GiveMeSomeCredit(root=path,
                                    name=name,
@@ -70,16 +83,16 @@ def load_vertical_data(config=None, generate=False):
 
             # For Client #1
             data[1] = dict()
-            data[1]['train'] = {
-                'x': x[:train_num, :config.vertical.dims[0]],
-                'y': y[:train_num]
-            }
+            data[1]['train'] = {'x': x[:train_num, :config.vertical.dims[0]]}
             data[1]['val'] = None
             data[1]['test'] = test_data
 
             # For Client #2
             data[2] = dict()
-            data[2]['train'] = {'x': x[:train_num, config.vertical.dims[0]:]}
+            data[2]['train'] = {
+                'x': x[:train_num, config.vertical.dims[0]:],
+                'y': y[:train_num]
+            }
             data[2]['val'] = None
             data[2]['test'] = test_data
 

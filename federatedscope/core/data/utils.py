@@ -66,7 +66,7 @@ def load_dataset(config):
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         dataset, modified_config = load_vertical_data(config, generate=True)
 
-    elif config.data.type.lower() in ['abalone', 'givemesomecredit']:
+    elif config.data.type.lower() in ['abalone', 'givemesomecredit', 'adult']:
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         dataset, modified_config = load_vertical_data(config, generate=False)
 

@@ -7,29 +7,36 @@ backend: torch
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 10
+  total_round_num: 50
 model:
   type: lr
   use_bias: False
 train:
   optimizer:
-    lr: 0.05
+    lr: 0.5
+
+grad:
+  grad_clip: 5.0
+
 data:
   root: data/
-  type: abalone
-  batch_size: 4000
-  splits: [0.8, 0.2]
+  type: adult
+  batch_size: 50
+  splits: [1.0, 0.0]
 
+  
 dataloader:
   type: raw
  # batch_size: 2000
 
+criterion:
+  type: CrossEntropyLoss
 trainer:
-  type: none    
+  type: none
 vertical:
   use: True
   key_size: 256
-  dims: [4, 8]
+  dims: [7, 14]
 
 eval:
   freq: 5
