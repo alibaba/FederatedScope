@@ -58,7 +58,7 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
             except:
                 logger.warning(
                     "current flop count implementation is for general "
-                    "NodeFullBatchTrainer case: "
+                    "GraphMiniBatchTrainer case: "
                     "1) the ctx.model takes only batch = ctx.data_batch as "
                     "input."
                     "Please check the forward format or implement your own "

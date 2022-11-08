@@ -1,8 +1,6 @@
 import os
 import sys
 
-import yaml
-
 DEV_MODE = False  # simplify the federatedscope re-setup everytime we change
 # the source codes of federatedscope
 if DEV_MODE:
@@ -11,8 +9,8 @@ if DEV_MODE:
 
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
-from federatedscope.core.cmd_args import parse_args
-from federatedscope.core.configs.config import global_cfg
+from federatedscope.core.cmd_args import parse_args, parse_client_cfg
+from federatedscope.core.configs.config import global_cfg, CfgNode
 from federatedscope.autotune import get_scheduler
 
 if os.environ.get('https_proxy'):
@@ -23,22 +21,24 @@ if os.environ.get('http_proxy'):
 if __name__ == '__main__':
     init_cfg = global_cfg.clone()
     args = parse_args()
-    init_cfg.merge_from_file(args.cfg_file)
-    init_cfg.merge_from_list(args.opts)
+    if args.cfg_file:
+        init_cfg.merge_from_file(args.cfg_file)
+    cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
+    init_cfg.merge_from_list(cfg_opt)
 
     update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
-    assert not args.client_cfg_file, 'No support for client-wise config in ' \
-                                     'HPO mode.'
+    # load clients' cfg file
+    if args.client_cfg_file:
+        client_cfgs = CfgNode.load_cfg(open(args.client_cfg_file, 'r'))
+        # client_cfgs.set_new_allowed(True)
+        client_cfgs.merge_from_list(client_cfg_opt)
+    else:
+        client_cfgs = None
 
-    # with open(args.cfg_file, 'r') as ips:
-    #     config = yaml.load(ips, Loader=yaml.FullLoader)
-    # det_config, tbd_config = split_raw_config(config)
-    # global_cfg.merge_from_list(config2cmdargs(det_config))
-    # global_cfg.merge_from_list(args.opts)
+    scheduler = get_scheduler(init_cfg, client_cfgs)
 
-    scheduler = get_scheduler(init_cfg)
     if init_cfg.hpo.scheduler in ['sha', 'wrap_sha']:
         _ = scheduler.optimize()
     elif init_cfg.hpo.scheduler in [
@@ -46,12 +46,12 @@ if __name__ == '__main__':
             'wrap_bohb'
     ]:
         from federatedscope.autotune.hpbandster import run_hpbandster
-        run_hpbandster(init_cfg, scheduler)
+        run_hpbandster(init_cfg, scheduler, client_cfgs)
     elif init_cfg.hpo.scheduler in [
             'bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf'
     ]:
         from federatedscope.autotune.smac import run_smac
-        run_smac(init_cfg, scheduler)
+        run_smac(init_cfg, scheduler, client_cfgs)
     else:
         raise ValueError(f'No scheduler named {init_cfg.hpo.scheduler}')
 
