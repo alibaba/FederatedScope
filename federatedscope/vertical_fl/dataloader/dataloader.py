@@ -28,7 +28,6 @@ def load_vertical_data(config=None, generate=False):
                         seed=1234)
         data = dataset.data
         return data, config
-
     else:
         if generate:
             # generate toy data for running a vertical FL example
