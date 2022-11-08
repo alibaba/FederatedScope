@@ -17,14 +17,13 @@ train:
 
 data:
   root: data/
-  type: adult
-  batch_size: 50
+  type: adult_fl
   splits: [1.0, 0.0]
 
   
 dataloader:
   type: raw
- # batch_size: 2000
+  batch_size: 50
 
 criterion:
   type: CrossEntropyLoss

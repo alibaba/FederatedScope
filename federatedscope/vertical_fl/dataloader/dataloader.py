@@ -1,8 +1,6 @@
 import numpy as np
 
 from federatedscope.vertical_fl.dataset.adult import Adult
-from federatedscope.vertical_fl.dataset.give_me_some_credit\
-    import GiveMeSomeCredit
 
 
 def load_vertical_data(config=None, generate=False):
@@ -20,7 +18,7 @@ def load_vertical_data(config=None, generate=False):
     path = config.data.root
     name = config.data.type.lower()
 
-    if name == 'adult':
+    if name == 'adult_fl':
         dataset = Adult(root=path,
                         name=name,
                         num_of_clients=config.federate.client_num,
