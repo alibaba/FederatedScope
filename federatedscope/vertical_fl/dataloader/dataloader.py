@@ -30,16 +30,6 @@ def load_vertical_data(config=None, generate=False):
                         seed=1234)
         data = dataset.data
         return data, config
-    elif config.data.type == 'givemesomecredit':
-        dataset = GiveMeSomeCredit(root=path,
-                                   name=name,
-                                   num_of_clients=config.federate.client_num,
-                                   feature_partition=config.vertical.dims,
-                                   tr_frac=splits[0],
-                                   download=True,
-                                   seed=1234)
-        data = dataset.data
-        return data, config
 
     else:
         if generate:
