@@ -28,11 +28,11 @@ class XGBTest(unittest.TestCase):
         cfg.train.optimizer.bin_num = 100
         cfg.train.optimizer.lambda_ = 0.1
         cfg.train.optimizer.gamma = 0
-        cfg.train.optimizer.num_of_trees = 2
+        cfg.train.optimizer.num_of_trees = 4
         cfg.train.optimizer.max_tree_depth = 3
 
         cfg.data.type = 'givemesomecredit'
-        cfg.data.size = 50
+        cfg.data.size = 2000
 
         cfg.dataloader.type = 'raw'
 

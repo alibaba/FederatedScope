@@ -48,6 +48,8 @@ class XGBServer(Server):
         ]
 
         self.register_handlers('test', self.callback_func_for_test)
+        self.register_handlers('test_result',
+                               self.callback_func_for_test_result)
 
     def trigger_for_start(self):
         if self.check_client_join_in():
@@ -81,3 +83,17 @@ class XGBServer(Server):
                     receiver=self.num_of_parties,
                     state=self.state,
                     content=test_y))
+
+    def callback_func_for_test_result(self, message: Message):
+        metrics = message.content
+        self._monitor.update_best_result(self.best_results,
+                                         metrics,
+                                         results_type='server_global_eval',
+                                         round_wise_update_key=self._cfg.eval.
+                                         best_res_update_round_wise_key)
+        formatted_logs = self._monitor.format_eval_res(
+            metrics,
+            rnd=self.state,
+            role='Server #',
+            forms=self._cfg.eval.report)
+        logger.info(formatted_logs)

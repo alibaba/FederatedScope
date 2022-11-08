@@ -2,7 +2,9 @@ import time
 
 import numpy as np
 import pandas as pd
+import logging
 
+logger = logging.getLogger(__name__)
 from federatedscope.core.message import Message
 
 
@@ -40,7 +42,21 @@ class Test_base():
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 == self.client.num_of_trees:
                 metric = self.client.ls.metric(self.test_y, self.test_z)
+                loss = self.client.ls.loss(self.test_y, self.test_z)
+                metrics = {
+                    'test_loss': loss,
+                    'test_acc': metric[1],
+                    'test_total': len(self.test_y)
+                }
                 print('Test accuracy: {}'.format(metric))
+
+                self.client.comm_manager.send(
+                    Message(msg_type='test_result',
+                            sender=self.client.ID,
+                            state=self.client.state,
+                            receiver=self.client.server_id,
+                            content=metrics))
+
             else:
                 self.test_for_root(tree_num + 1)
         elif self.client.tree_list[tree_num][node_num].weight:

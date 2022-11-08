@@ -66,7 +66,5 @@ xgb_base:
 
 # Evaluation related options
 eval:
-  # Frequency of evaluation
-  freq: 1
-  # Evaluation metrics, accuracy and number of correct items
-  metrics: ['acc', 'correct']
+  freq: 5
+  best_res_update_round_wise_key: test_loss

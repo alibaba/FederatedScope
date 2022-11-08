@@ -3,7 +3,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 
 
-class TwoClassification():
+class TwoClassification:
     """
     y = {+1, -1}
     L = 𝑦ln(𝑝)+(1−𝑦)ln(1−𝑝)
@@ -16,17 +16,25 @@ class TwoClassification():
         hess = prob * (1.0 - prob)
         return grad, hess
 
+    def loss(self, y, y_pred):
+        y_pred = 1.0 / (1.0 + np.exp(-y_pred))
+        res = np.sum(-y * np.log(y_pred)) / len(y)
+        return res
+
     def metric(self, y, y_pred):
         yy = 1.0 / (1.0 + np.exp(-y_pred))
         yy[yy >= 0.5] = 1.
         yy[yy < 0.5] = 0
         acc = np.sum(yy == y) / len(y)
-        return 'acc', '{:.2%}'.format(acc)
+        return 'acc', acc
 
 
-class Regression_by_mae():
+class Regression_by_mae:
     def metric(self, y, y_pred):
         return 'mae', np.mean(np.abs(y - y_pred))
+
+    def loss(self, y, y_pred):
+        return np.mean(np.abs(y - y_pred))
 
     def get_grad_and_hess(y, y_pred):
         x = y_pred - y
@@ -35,9 +43,12 @@ class Regression_by_mae():
         return grad, hess
 
 
-class Regression_by_mse():
+class Regression_by_mse:
     def metric(self, y, y_pred):
         return 'mse', np.mean((y - y_pred)**2)
+
+    def loss(self, y, y_pred):
+        return np.mean((y - y_pred)**2)
 
     def get_grad_and_hess(self, y, y_pred):
         x = y_pred - y
