@@ -6,7 +6,6 @@ master/flearn/utils/language_utils.py
 
 import re
 import numpy as np
-import json
 from collections import Counter
 import nltk
 from nltk.tokenize import sent_tokenize
@@ -97,7 +96,11 @@ def label_to_index(labels):
 
 
 def split_sent(examples, eoq='[unused2]', tokenize=True):
-    nltk.download('punkt')
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt')
+
     new_examples = []
     for e in examples:
         if tokenize:

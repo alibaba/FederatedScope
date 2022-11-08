@@ -18,11 +18,8 @@ class YAMLTest(unittest.TestCase):
             'isolated_gin_minibatch_on_cikmcup_per_client.yaml',
             'federatedscope/gfl/baseline/'
             'fedavg_gin_minibatch_on_cikmcup_per_client.yaml',
-            'federatedscope/nlp/baseline/config_client_isolated.yaml',
-            'federatedscope/nlp/baseline/config_client_fednlp.yaml',
-            'federatedscope/nlp/baseline/config_client_pfednlp.yaml',
-            'federatedscope/nlp/baseline/config_client_pcfednlp.yaml',
         ]
+        self.exclude_str = ['config.yaml', 'config_client']
         self.root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.exclude_all = [
             os.path.join(self.root, f) for f in self.exclude_all
@@ -47,6 +44,13 @@ class YAMLTest(unittest.TestCase):
             for f in filenames:
                 yaml_file = os.path.join(dirpath, f)
                 if yaml_file in self.exclude_file:
+                    continue
+                exclude = False
+                for s in self.exclude_str:
+                    if s in yaml_file:
+                        exclude = True
+                        break
+                if exclude:
                     continue
                 try:
                     init_cfg.merge_from_file(yaml_file)
