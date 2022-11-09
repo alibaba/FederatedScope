@@ -129,3 +129,38 @@ class GroupSampler(Sampler):
             self.change_state(item, 'working')
 
         return sampled_clients
+
+class ResponsivenessRealtedSampler(Sampler):
+    """
+    To sample the clients based on their responsiveness (or other
+    client information of the clients)
+    """"
+
+    def __init__(self, client_num, client_info):
+        super(ResponsivenessRealtedSampler, self).__init__(client_num)
+        self.update_client_info(client_info)
+
+    def update_client_info(self, client_info):
+        """
+        To update the client information
+        """
+        self.client_info = np.asarray(
+            [1.0] + [np.sqrt(x) for x in client_info
+                     ])  # client_info[0] is preversed for the server
+        assert len(self.client_info) == len(
+            self.client_state
+        ), "The first dimension of client_info is mismatched with client_num"
+
+    def sample(self, size):
+        """
+        To sample clients
+        """
+        idle_clients = np.nonzero(self.client_state)[0]
+        client_info = self.client_info[idle_clients]
+        client_info = client_info/np.sum(client_info, keepdims=True)
+        sampled_clients = np.random.choice(idle_clients,
+                                           p=client_info,
+                                           size=size,
+                                           replace=False).tolist()
+        self.change_state(sampled_clients, 'working')
+        return sampled_clients
