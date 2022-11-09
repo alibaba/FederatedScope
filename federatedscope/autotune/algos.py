@@ -57,7 +57,7 @@ class TrialExecutor(threading.Thread):
                                 server_class=get_server_cls(self._trial_cfg),
                                 client_class=get_client_cls(self._trial_cfg),
                                 config=self._trial_cfg.clone(),
-                                client_config=client_cfgs)
+                                client_config=self._client_cfgs)
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]
