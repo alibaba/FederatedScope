@@ -133,7 +133,7 @@ def parse_logs(file_list):
     plt.close()
 
 
-def eval_in_fs(cfg, config, budget):
+def eval_in_fs(cfg, config, budget, client_cfgs=None):
     import ConfigSpace as CS
     from federatedscope.core.auxiliaries.utils import setup_seed
     from federatedscope.core.auxiliaries.data_builder import get_data
@@ -170,7 +170,8 @@ def eval_in_fs(cfg, config, budget):
     Fed_runner = get_runner(data=data,
                             server_class=get_server_cls(trial_cfg),
                             client_class=get_client_cls(trial_cfg),
-                            config=trial_cfg.clone())
+                            config=trial_cfg.clone(),
+                            client_config=client_cfgs)
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
     return results[key1][key2]

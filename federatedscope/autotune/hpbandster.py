@@ -8,7 +8,6 @@ import ConfigSpace as CS
 import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
-from hpbandster.optimizers.iterations import SuccessiveHalving
 
 from federatedscope.autotune.utils import eval_in_fs
 
@@ -54,7 +53,13 @@ class MyHyperBand(HyperBand):
 
 
 class MyWorker(Worker):
-    def __init__(self, cfg, ss, sleep_interval=0, *args, **kwargs):
+    def __init__(self,
+                 cfg,
+                 ss,
+                 sleep_interval=0,
+                 client_cfgs=None,
+                 *args,
+                 **kwargs):
         super(MyWorker, self).__init__(**kwargs)
         self.sleep_interval = sleep_interval
         self.cfg = cfg
@@ -63,7 +68,7 @@ class MyWorker(Worker):
         self._perfs = []
 
     def compute(self, config, budget, **kwargs):
-        res = eval_in_fs(self.cfg, config, int(budget))
+        res = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs)
         config = dict(config)
         config['federate.total_round_num'] = budget
         self._init_configs.append(config)
@@ -87,7 +92,7 @@ class MyWorker(Worker):
         return results
 
 
-def run_hpbandster(cfg, scheduler):
+def run_hpbandster(cfg, scheduler, client_cfgs=None):
     config_space = scheduler._search_space
     if cfg.hpo.scheduler.startswith('wrap_'):
         ss = CS.ConfigurationSpace()
@@ -100,7 +105,8 @@ def run_hpbandster(cfg, scheduler):
                  cfg=cfg,
                  nameserver='127.0.0.1',
                  nameserver_port=ns_port,
-                 run_id=cfg.hpo.scheduler)
+                 run_id=cfg.hpo.scheduler,
+                 client_cfgs=client_cfgs)
     w.run(background=True)
     opt_kwargs = {
         'configspace': config_space,

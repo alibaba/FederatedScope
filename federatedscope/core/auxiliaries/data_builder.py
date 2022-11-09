@@ -21,7 +21,7 @@ except ImportError as error:
 TRANS_DATA_MAP = {
     'BaseDataTranslator': [
         '.*?@.*?', 'hiv', 'proteins', 'imdb-binary', 'bbbp', 'tox21', 'bace',
-        'sider', 'clintox', 'esol', 'freesolv', 'lipo'
+        'sider', 'clintox', 'esol', 'freesolv', 'lipo', 'cifar4cl', 'cifar4lp'
     ],
     'DummyDataTranslator': [
         'toy', 'quadratic', 'femnist', 'celeba', 'shakespeare', 'twitter',

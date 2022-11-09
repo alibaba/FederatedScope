@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 try:
     from torch import nn
     from federatedscope.nlp.loss import *
+    from federatedscope.cl.loss import *
 except ImportError:
     nn = None
 
