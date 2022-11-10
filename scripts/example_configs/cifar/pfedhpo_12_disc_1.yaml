@@ -1,11 +1,13 @@
 use_gpu: True
 device: 1
-outdir: exp/fedex_cifar_baseline_step1
+outdir: exp/pfedhpo_disc_rff_UL_cifar12
 seed: 12345
+early_stop:
+  patience: 100000
 federate:
   mode: standalone
   client_num: 10
-  total_round_num: 500
+  total_round_num: 4000
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
@@ -43,19 +45,14 @@ eval:
   freq: 1
   metrics: ['acc', 'correct']
 hpo:
-  scheduler: wrap_sha
+  scheduler: pfedhpo
   num_workers: 0
-  init_cand_num: 27
-  ss: 'scripts/example_configs/cifar/ss.yaml'
-  table:
-    num: 27
-  sha:
-    budgets: [ 71,  69, 291]
-  fedex:
-    sched: 'aggressive'
+  pfedhpo:
     use: True
-    diff: False
-    eta0: -1.0
-    gamma: 0.0
+    discrete: True
+    train_fl: False
+    train_anchor: False
+    target_fl_total_round: 500
+    ss: 'scripts/example_configs/cifar/ss.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: exp/fedex_cifar_baseline_step1/working
+  working_folder: exp/pfedhpo_disc_rff_UL_cifar12/working

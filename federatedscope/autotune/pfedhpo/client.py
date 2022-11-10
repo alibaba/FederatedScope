@@ -7,6 +7,7 @@ import torchvision
 from torchvision.models.feature_extraction import create_feature_extractor
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Client
+from federatedscope.autotune.pfedhpo.utils import *
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +31,51 @@ class pFedHPOClient(Client):
             data, model, device, strategy, is_unseen_client, *args, **kwargs)
 
         if self._cfg.hpo.pfedhpo.train_fl and self._cfg.hpo.pfedhpo.train_anchor:
-            _model = torchvision.models.resnet18(pretrained=True)
-            feat_extractor = create_feature_extractor(_model, {'avgpool': 'feat'})
 
-            feats = []
-            for _, d in enumerate(data['train']):
-                out = feat_extractor(d[0])
-                feats.append(out['feat'])
+            # feats = []
+            # _model = torchvision.models.resnet18(pretrained=True)
+            # feat_extractor = create_feature_extractor(_model, {'avgpool': 'feat'})
+            # for _, d in enumerate(data['train']):
+            #     _d = d[0]
+            #     if len(_d.shape) == 4:
+            #         if _d.shape[0] == 1:
+            #             _d = torch.cat([_d]*2, dim=0)
+            #         if _d.shape[1] == 1:
+            #             _d = torch.cat([_d]*3, dim=1)
+            #         if _d.shape[-1] < 32:
+            #             _d = torch.nn.functional.interpolate(_d, size=32, mode='nearest')
+            #         try:
+            #             out = feat_extractor(_d)
+            #         except:
+            #             import pdb;pdb.set_trace()
+            #         feats.append(out['feat'])
+            #
+            #     else:
+            #         import pdb;pdb.set_trace()
+            #         raise NotImplementedError
+            # feats = torch.cat(feats).mean(0).squeeze()
 
-            feats = torch.cat(feats).mean(0).squeeze()
+
+            mmd_type = 'sphere'
+            d_enc = 32*32*3
+            d_rff = 10
+            rff_sigma = [127,]
+            rff_sigma = [float(sig) for sig in rff_sigma]
+            embs = []
+            for sig in rff_sigma:
+                if mmd_type == 'sphere':
+                    w_freq = weights_sphere(d_rff, d_enc, sig, device, seed=1234)
+                else:
+                    w_freq = weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234)
+
+                emb = noisy_dataset_embedding(
+                    data['train'], w_freq, d_rff, device,
+                    n_labels=10, noise_factor=1.0,
+                    mmd_type=mmd_type, sum_frequency=25)
+                embs.append(emb)
+            feats = torch.cat(embs).reshape(-1)
+
+
             torch.save(feats, os.path.join(self._cfg.hpo.working_folder, 'client_%d_encoding.pt' % self.ID))
 
     def _apply_hyperparams(self, hyperparams):

@@ -70,6 +70,7 @@ def extend_hpo_cfg(cfg):
     # pfedhpo
     cfg.hpo.pfedhpo = CN()
     cfg.hpo.pfedhpo.use = False
+    cfg.hpo.pfedhpo.discrete = False
     cfg.hpo.pfedhpo.train_fl = False
     cfg.hpo.pfedhpo.train_anchor = False
     cfg.hpo.pfedhpo.ss = ''

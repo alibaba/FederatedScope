@@ -1,39 +1,34 @@
 use_gpu: True
-device: 1
-outdir: exp/pfedhpo_cifar12_1
+device: 2
+outdir: exp/pfedhpo_cifar12_femnist_1
 seed: 12345
 early_stop:
   patience: 100000
 federate:
   mode: standalone
-  client_num: 10
-  total_round_num: 2000
+  total_round_num: 4000
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
   use_diff: True
 data:
   root: data/
-  type: 'CIFAR10@torchvision'
+  type: femnist
+  splits: [0.6,0.2,0.2]
+  batch_size: 16
   subsample: 0.05
-  splits: [ 0.8,0.2,0.0 ]
-  batch_size: 32
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
   num_workers: 0
-  transform: [ [ 'ToTensor' ], [ 'Normalize', { 'mean': [ 0.1307 ], 'std': [ 0.3081 ] } ] ]
-  args: [ { 'download': True } ]
-  splitter: 'lda'
-  splitter_args: [ { 'alpha': 1.0 } ]
 model:
   type: convnet2
-  hidden: 128
-  out_channels: 10
-  dropout: 0.0
+  hidden: 2048
+  out_channels: 62
+  dropout: 0.5
 train:
   batch_or_epoch: epoch
   local_update_steps: 1
   optimizer:
-    type: SGD
-    lr: 0.1
+    lr: 0.01
     weight_decay: 0.0
 grad:
   grad_clip: 5.0
@@ -43,7 +38,8 @@ trainer:
   type: cvtrainer
 eval:
   freq: 1
-  metrics: ['acc', 'correct']
+  metrics: ['acc', 'correct', 'f1']
+  split: ['test', 'val', 'train']
 hpo:
   scheduler: pfedhpo
   num_workers: 0
@@ -51,7 +47,7 @@ hpo:
     use: True
     train_fl: False
     train_anchor: False
-    target_fl_total_round: 500
+    target_fl_total_round: 800
     ss: 'scripts/example_configs/cifar/ss.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: exp/pfedhpo_cifar12_1/working
+  working_folder: exp/pfedhpo_cifar12_femnist_1/working

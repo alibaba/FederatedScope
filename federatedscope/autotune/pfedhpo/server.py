@@ -81,29 +81,48 @@ class pFedHPOServer(Server):
                 self._trace['mle'] = ckpt['mle']
 
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
-
+        self.discrete = self._cfg.hpo.pfedhpo.discrete
         # prepare search space and bounds
         self._ss = parse_search_space(self._cfg.hpo.pfedhpo.ss)
         self.dim = len(self._ss)
         self.bounds = np.asarray([(0., 1.) for _ in self._ss])
         self.pbounds = {}
-        for k, v in self._ss.items():
-            if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
-                raise ValueError("Unsupported hyper type {}".format(type(v)))
-            else:
-                if v.log:
-                    l, u = np.log10(v.lower), np.log10(v.upper)
+
+        if not self.discrete:
+            for k, v in self._ss.items():
+                if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
+                    raise ValueError("Unsupported hyper type {}".format(type(v)))
                 else:
-                    l, u = v.lower, v.upper
-                self.pbounds[k] = (l, u)
+                    if v.log:
+                        l, u = np.log10(v.lower), np.log10(v.upper)
+                    else:
+                        l, u = v.lower, v.upper
+                    self.pbounds[k] = (l, u)
+        else:
+            for k, v in self._ss.items():
+                if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
+                    raise ValueError("Unsupported hyper type {}".format(type(v)))
+                else:
+                    if v.log:
+                        l, u = np.log10(v.lower), np.log10(v.upper)
+                    else:
+                        l, u = v.lower, v.upper
+                    N_samp = 10
+                    samp = []
+                    for i in range(N_samp):
+                        samp.append((u - l) / N_samp * i + l)
+                    self.pbounds[k] = samp
 
         # prepare hyper-net
         self.client2idx = None
 
-        self.var = 0.01
-        dist = MultivariateNormal(loc=torch.zeros(len(self.pbounds)),
-            covariance_matrix=torch.eye(len(self.pbounds)) * self.var)
-        self.logprob_max = dist.log_prob(dist.sample() * 0)
+        if not self.discrete:
+            self.var = 0.01
+            dist = MultivariateNormal(loc=torch.zeros(len(self.pbounds)),
+                covariance_matrix=torch.eye(len(self.pbounds)) * self.var)
+            self.logprob_max = dist.log_prob(dist.sample() * 0)
+        else:
+            self.logprob_max = 1.
 
         # encoding_tensor = F.one_hot(torch.arange(0, client_num)).float()
 
@@ -115,21 +134,32 @@ class pFedHPOServer(Server):
                 encoding_tensor.append(t)
         encoding_tensor = torch.stack(encoding_tensor)
 
+        if not self.discrete:
+            self.HyperNet = HyperNet(encoding=encoding_tensor,
+                                     num_params=len(self.pbounds),
+                                     n_clients=client_num,
+                                     device=self._cfg.device,
+                                     var=self.var).to(self._cfg.device)
+        else:
+            self.HyperNet = DisHyperNet(encoding=encoding_tensor,
+                                     cands=self.pbounds,
+                                     n_clients=client_num,
+                                     device=self._cfg.device,
+                                     ).to(self._cfg.device)
 
-        self.HyperNet = HyperNet(encoding=encoding_tensor,
-                                 num_params=len(self.pbounds),
-                                 n_clients=client_num,
-                                 device=self._cfg.device,
-                                 var=self.var).to(self._cfg.device)
         self.saved_models = [None] * self._cfg.hpo.pfedhpo.target_fl_total_round
+        # self.opt_params = list(self.HyperNet.EncNet.parameters()) + list(self.HyperNet.meanNet.parameters())
 
-        self.opt_params = list(self.HyperNet.EncNet.parameters()) + list(self.HyperNet.meanNet.parameters())
         # self.opt_params = self.HyperNet.parameters()
+        self.opt_params = self.HyperNet.EncNet.parameters()
 
-        self.opt = torch.optim.Adam(self.opt_params,
-                                   lr=0.01,
-                                   # betas=(0.7, 0.7)
-                                   )
+
+        self.opt = torch.optim.Adam(
+            [{'params': self.HyperNet.EncNet.parameters(), 'lr': 0.001, 'weight_decay': 1e-4},
+             {'params': self.HyperNet.encoding, 'lr': 0.001,
+              'weight_decay': 1e-4
+              }
+             ])
 
         with open(os.path.join(self._cfg.hpo.working_folder,
                                'anchor_eval_results.json'), 'r') as f:
@@ -163,7 +193,7 @@ class pFedHPOServer(Server):
         if msg_type == 'model_para':
             # random sample start round and load saved global model
             self.start_round = np.random.randint(1,
-                self._cfg.hpo.pfedhpo.target_fl_total_round // 2)
+                self._cfg.hpo.pfedhpo.target_fl_total_round)
             logger.info('==> Sampled start round: %d'%self.start_round)
             ckpt_path = os.path.join(self._cfg.hpo.working_folder,
                 'temp_model_round_%d.pt' % self.start_round)
@@ -182,12 +212,49 @@ class pFedHPOServer(Server):
                 client2idx[k] = i
             self.client2idx = client2idx
 
-        param_raw, self.logprob, self.entropy = self.HyperNet()
-        xs = param_raw.detach().cpu().numpy()
+        if not self.discrete:
+            var_max = 2.0
+            var_min = 0.1
+            var = var_max + (var_min - var_max) / (0.5 * self.total_round_num) * self.state
+            if var < 0.1:
+                var = 0.1
+            self.HyperNet.var = var
+            param_raw, self.logprob, self.entropy = self.HyperNet()
+            xs = param_raw.detach().cpu().numpy()
+        else:
+            logits, self.enc_loss = self.HyperNet()
+            self.logprob = [None] * len(self.receiver)
+            self.p_idx = {}
+            for k in self.pbounds.keys():
+                self.p_idx[k] = [None] * len(self.receiver)
 
         # sample the hyper-parameter config specific to the clients
+        self.sampled = False
         for rcv_idx in self.receiver:
-            sampled_cfg = x2conf(xs[self.client2idx[rcv_idx]], self.pbounds, self._ss)
+            if not self.discrete:
+                sampled_cfg = x2conf(xs[self.client2idx[rcv_idx]], self.pbounds, self._ss)
+            else:
+                client_logprob = 0.
+                sampled_cfg = {}
+
+                for i, (k, v) in zip(range(len(self.pbounds)), self.pbounds.items()):
+                    probs = logits[i][self.client2idx[rcv_idx]]
+                    m = torch.distributions.Categorical(probs)
+
+                    idx = m.sample()
+                    p = v[idx.item()]
+                    if self._ss[k].log:
+                        p = 10 ** p
+                    if 'int' in str(type(self._ss[k])).lower():
+                        sampled_cfg[k] = int(p)
+                    else:
+                        sampled_cfg[k] = float(p)
+
+                    log_prob = m.log_prob(idx)
+                    client_logprob += log_prob
+                    self.p_idx[k][self.client2idx[rcv_idx]] = idx
+
+                self.logprob[self.client2idx[rcv_idx]] = client_logprob / len(self.pbounds)
 
             content = {
                 'model_param': model_para,
@@ -200,8 +267,11 @@ class pFedHPOServer(Server):
                         state=self.state,
                         content=content))
         if self._cfg.federate.online_aggr:
-            for idx in range(self.model_num):
-                self.aggregators[idx].reset()
+            try:
+                for idx in range(self.model_num):
+                    self.aggregators[idx].reset()
+            except:
+                pass
 
         if filter_unseen_clients:
             # restore the state of the unseen clients within sampler
@@ -217,7 +287,10 @@ class pFedHPOServer(Server):
         self.msg_buffer['train'][round][sender] = content
 
         if self._cfg.federate.online_aggr:
-            self.aggregator.inc(tuple(content[0:2]))
+            try:
+                self.aggregator.inc(tuple(content[0:2]))
+            except:
+                pass
 
         return self.check_and_move_on()
 
@@ -244,48 +317,57 @@ class pFedHPOServer(Server):
         anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
         res_end = self.history_results[key1][key2][-1]
 
-        if 'cifar13' in str(self._cfg.hpo.working_folder):
-            reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
-            losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max))
+        if not self.discrete:
+            if 'cifar13' in str(self._cfg.hpo.working_folder):
+                reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
+                losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max))
+            # elif 'cifar17' in str(self._cfg.hpo.working_folder):
+            #     reward = np.maximum(0, res_end - anchor_res_start)
+            #     losses = (1.0 - reward) / anchor_res_start * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max))
+            elif 'cifar12' in str(self._cfg.hpo.working_folder):
+                reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
+                losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
+            # elif 'cifar14' in str(self._cfg.hpo.working_folder):
+            #     reward = np.maximum(0, res_end - anchor_res_start)
+            #     losses = (1.0 - reward) / anchor_res_start * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
 
-        elif 'cifar17' in str(self._cfg.hpo.working_folder):
-            reward = np.maximum(0, res_end - anchor_res_start)
-            losses = (1.0 - reward) / anchor_res_start * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max))
+            # elif 'cifar15' in str(self._cfg.hpo.working_folder):
+            #     reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
+            #     losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
 
-        elif 'cifar12' in str(self._cfg.hpo.working_folder):
-            reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
-            losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
-
-        elif 'cifar14' in str(self._cfg.hpo.working_folder):
-            reward = np.maximum(0, res_end - anchor_res_start)
-            losses = (1.0 - reward) / anchor_res_start * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
-
-        elif 'cifar15' in str(self._cfg.hpo.working_folder):
-            reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
-            losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
-
-        elif 'cifar16' in str(self._cfg.hpo.working_folder):
-            reward = np.maximum(0, res_end - anchor_res_start)
-            losses = ((1.0 - reward) / anchor_res_start) **0.5 * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
-
-        elif 'cifar20' in str(self._cfg.hpo.working_folder):
-            reward = np.maximum(0, res_end - anchor_res_start) ** 0.5 * anchor_res_start
-            losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
+            # elif 'cifar16' in str(self._cfg.hpo.working_folder):
+            #     reward = np.maximum(0, res_end - anchor_res_start)
+            #     losses = ((1.0 - reward) / anchor_res_start) **0.5 * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
+            elif 'cifar20' in str(self._cfg.hpo.working_folder):
+                reward = np.maximum(0, res_end - anchor_res_start) ** 0.5 * anchor_res_start
+                losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
+            else:
+                raise NotImplementedError
 
         else:
-            raise NotImplementedError
+            reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
+            self.logprob = torch.stack(self.logprob, dim=-1)
+            losses = F.relu(- reward * self.logprob *100)
+
 
         self.opt.zero_grad()
         loss = losses.mean()
+        # if self.discrete:
+        #     loss += self.enc_loss
         loss.backward()
-        # nn.utils.clip_grad_norm_(self.opt_params, max_norm=10, norm_type=2)
+        nn.utils.clip_grad_norm_(self.opt_params, max_norm=10, norm_type=2)
         self.opt.step()
 
         for cid in self.fb.keys():
             idx = self.client2idx[cid]
-            self.tb_writer.add_scalar('logprob_%d'%cid, self.logprob[idx], self.state)
             self.tb_writer.add_scalar('loss_%d'%cid, losses[idx], self.state)
-            # self.tb_writer.add_scalar('entropy_%d'%cid, self.entropy[idx], self.state)
+            if not self.discrete:
+                self.tb_writer.add_scalar('logprob_%d'%cid, self.logprob[idx], self.state)
+                self.tb_writer.add_scalar('entropy_%d'%cid, self.entropy[idx], self.state)
+            else:
+                self.tb_writer.add_scalar('logprob_%d'%cid, self.logprob[idx], self.state)
+                for k in self.pbounds.keys():
+                    self.tb_writer.add_scalar('%s_%d'%(k,cid), self.p_idx[k][idx], self.state)
         self.tb_writer.add_scalar('loss', loss, self.state)
 
 

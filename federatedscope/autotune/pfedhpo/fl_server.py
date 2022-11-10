@@ -80,21 +80,37 @@ class pFedHPOFLServer(Server):
                 self._trace['mle'] = ckpt['mle']
 
         self.train_anchor = self._cfg.hpo.pfedhpo.train_anchor
+        self.discrete = self._cfg.hpo.pfedhpo.discrete
 
         # prepare search space and bounds
         self._ss = parse_search_space(self._cfg.hpo.pfedhpo.ss)
         self.dim = len(self._ss)
         self.bounds = np.asarray([(0., 1.) for _ in self._ss])
         self.pbounds = {}
-        for k, v in self._ss.items():
-            if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
-                raise ValueError("Unsupported hyper type {}".format(type(v)))
-            else:
-                if v.log:
-                    l, u = np.log10(v.lower), np.log10(v.upper)
+        if not self.discrete:
+            for k, v in self._ss.items():
+                if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
+                    raise ValueError("Unsupported hyper type {}".format(type(v)))
                 else:
-                    l, u = v.lower, v.upper
-                self.pbounds[k] = (l, u)
+                    if v.log:
+                        l, u = np.log10(v.lower), np.log10(v.upper)
+                    else:
+                        l, u = v.lower, v.upper
+                    self.pbounds[k] = (l, u)
+        else:
+            for k, v in self._ss.items():
+                if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
+                    raise ValueError("Unsupported hyper type {}".format(type(v)))
+                else:
+                    if v.log:
+                        l, u = np.log10(v.lower), np.log10(v.upper)
+                    else:
+                        l, u = v.lower, v.upper
+                    N_samp = 10
+                    samp = []
+                    for i in range(N_samp):
+                        samp.append((u - l) / N_samp * i + l)
+                    self.pbounds[k] = samp
 
         # prepare hyper-net
         self.client2idx = None
@@ -102,17 +118,26 @@ class pFedHPOFLServer(Server):
         if not self.train_anchor:
             hyper_enc = torch.load(os.path.join(self._cfg.hpo.working_folder,
                                                 'hyperNet_encoding.pt'))
-            # self.client_encoding = hyper_enc['encoding'].to(self._cfg.device)
-            self.HyperNet = HyperNet(encoding=torch.ones(client_num, 512),
-                                     num_params=len(self.pbounds),
-                                     n_clients=client_num,
-                                     device=self._cfg.device,
-                                     var=0.01).to(self._cfg.device)
+            self.client_encoding = torch.ones(client_num, 100)
+            if not self.discrete:
+                self.HyperNet = HyperNet(encoding=self.client_encoding,
+                                         num_params=len(self.pbounds),
+                                         n_clients=client_num,
+                                         device=self._cfg.device,
+                                         var=0.01).to(self._cfg.device)
+            else:
+                self.HyperNet = DisHyperNet(encoding=self.client_encoding,
+                                            cands=self.pbounds,
+                                            n_clients=client_num,
+                                            device=self._cfg.device,
+                                            ).to(self._cfg.device)
 
             self.HyperNet.load_state_dict(hyper_enc['hyperNet'])
             self.HyperNet.eval()
-            self.raw_params = self.HyperNet()[0].detach().cpu().numpy()
-
+            if not self.discrete:
+                self.raw_params = self.HyperNet()[0].detach().cpu().numpy()
+            else:
+                self.logits = self.HyperNet()[0]
 
     def callback_funcs_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
@@ -124,7 +149,10 @@ class pFedHPOFLServer(Server):
         self.msg_buffer['train'][round][sender] = content
 
         if self._cfg.federate.online_aggr:
-            self.aggregator.inc(tuple(content[0:2]))
+            try:
+                self.aggregator.inc(tuple(content[0:2]))
+            except:
+                pass
 
         return self.check_and_move_on()
 
@@ -192,7 +220,21 @@ class pFedHPOFLServer(Server):
             if self.train_anchor:
                 sampled_cfg = None
             else:
-                sampled_cfg = x2conf(self.raw_params[self.client2idx[rcv_idx]], self.pbounds, self._ss)
+                if not self.discrete:
+                    sampled_cfg = x2conf(self.raw_params[self.client2idx[rcv_idx]], self.pbounds, self._ss)
+                else:
+                    sampled_cfg = {}
+
+                    for i, (k, v) in zip(range(len(self.pbounds)), self.pbounds.items()):
+                        probs = self.logits[i][self.client2idx[rcv_idx]]
+                        p = v[torch.argmax(probs).item()]
+
+                        if self._ss[k].log:
+                            p = 10 ** p
+                        if 'int' in str(type(self._ss[k])).lower():
+                            sampled_cfg[k] = int(p)
+                        else:
+                            sampled_cfg[k] = float(p)
 
             content = {
                 'model_param': model_para,
@@ -206,8 +248,11 @@ class pFedHPOFLServer(Server):
                         content=content))
 
         if self._cfg.federate.online_aggr:
-            for idx in range(self.model_num):
-                self.aggregators[idx].reset()
+            try:
+                for idx in range(self.model_num):
+                    self.aggregators[idx].reset()
+            except:
+                pass
 
         if filter_unseen_clients:
             # restore the state of the unseen clients within sampler

@@ -124,7 +124,7 @@ def get_schedule(
 
 args = parse()
 
-args.total = 4000
+args.total = 3000
 args.elim = 3
 args.rate = 3
 args.rounds = 500

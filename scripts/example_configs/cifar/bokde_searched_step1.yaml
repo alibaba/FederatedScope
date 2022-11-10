@@ -1,7 +1,9 @@
 use_gpu: True
-device: 1
-outdir: exp/fedex_cifar_baseline_step1
+device: 3
+outdir: exp/boked_eval
 seed: 12345
+early_stop:
+  patience: 100000
 federate:
   mode: standalone
   client_num: 10
@@ -25,14 +27,14 @@ model:
   type: convnet2
   hidden: 128
   out_channels: 10
-  dropout: 0.0
+  dropout: 0.380421
 train:
   batch_or_epoch: epoch
   local_update_steps: 1
   optimizer:
     type: SGD
-    lr: 0.1
-    weight_decay: 0.0
+    lr: 0.027992
+    weight_decay: 0.001881
 grad:
   grad_clip: 5.0
 criterion:
@@ -42,20 +44,4 @@ trainer:
 eval:
   freq: 1
   metrics: ['acc', 'correct']
-hpo:
-  scheduler: wrap_sha
-  num_workers: 0
-  init_cand_num: 27
-  ss: 'scripts/example_configs/cifar/ss.yaml'
-  table:
-    num: 27
-  sha:
-    budgets: [ 71,  69, 291]
-  fedex:
-    sched: 'aggressive'
-    use: True
-    diff: False
-    eta0: -1.0
-    gamma: 0.0
-  metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: exp/fedex_cifar_baseline_step1/working
+
