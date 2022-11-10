@@ -1,0 +1,5 @@
+train.optimizer.lr:
+  type: float
+  lower: 0.01
+  upper: 1.0
+  log: True
