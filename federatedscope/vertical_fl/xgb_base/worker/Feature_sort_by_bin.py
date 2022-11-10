@@ -8,6 +8,12 @@ from federatedscope.core.message import Message
 
 
 class Feature_sort_by_bin:
+    """
+        This class contains the bin algorithm for xgboost, i.e.,
+        the clients who do not hold labels will first get their orders
+        of all features, and then partition each order to several bins,
+        in each bin, they can do some permutation to protect their privacy.
+        """
     def __init__(self, obj, bin_num=100):
         self.client = obj
         self.total_feature_order_dict = dict()

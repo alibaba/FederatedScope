@@ -9,10 +9,10 @@ class TwoClassification:
     L = -yln(p)-(1-y)ln(1-p)
     """
     def metric(self, y, y_pred):
-        yy = 1.0 / (1.0 + np.exp(-y_pred))
-        yy[yy >= 0.5] = 1.
-        yy[yy < 0.5] = 0
-        acc = np.sum(yy == y) / len(y)
+        pred_prob = 1.0 / (1.0 + np.exp(-y_pred))
+        pred_prob[pred_prob >= 0.5] = 1.
+        pred_prob[pred_prob < 0.5] = 0
+        acc = np.sum(pred_prob == y) / len(y)
         return 'acc', acc
 
     def loss(self, y, y_pred):

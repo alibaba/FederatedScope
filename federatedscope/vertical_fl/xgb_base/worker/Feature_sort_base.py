@@ -7,6 +7,11 @@ from federatedscope.core.message import Message
 
 
 class Feature_sort_base:
+    """
+    This class contains the basic algorithm for xgboost, i.e.,
+    the clients who do not hold labels will send their orders of all features
+    to label-owner
+    """
     def __init__(self, obj):
         self.client = obj
         self.total_feature_order_dict = dict()

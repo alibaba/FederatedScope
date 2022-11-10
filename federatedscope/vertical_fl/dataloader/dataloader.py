@@ -17,6 +17,7 @@ def load_vertical_data(config=None, generate=False):
     splits = config.data.splits
     path = config.data.root
     name = config.data.type.lower()
+    # TODO: merge the following later
     if config.vertical.use:
         feature_partition = config.vertical.dims
         algo = 'lr'

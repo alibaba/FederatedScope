@@ -13,7 +13,6 @@ data:
   splits: [1.0, 0.0]
 dataloader:
   type: raw
- # batch_size: 2000
 criterion:
   type: CrossEntropyLoss
 trainer:

@@ -76,7 +76,7 @@ class XGBClient(Client):
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order
         #   the second one corresponding to sending the bins of feature order
-        if config.model.use_bin:
+        if config.xgb_base.use_bin:
             self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
         else:
             self.fs = Feature_sort_base(self)
