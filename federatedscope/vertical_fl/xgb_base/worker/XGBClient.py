@@ -193,11 +193,7 @@ class XGBClient(Client):
             self.z = 0
             metric = self.ls.metric(self.y, self.y_hat)
 
-            print('Train accuracy: {}'.format(metric))
-
             if tree_num + 1 == self.num_of_trees:
-                print("train over")
-
                 self.comm_manager.send(
                     Message(msg_type='test',
                             sender=self.ID,
