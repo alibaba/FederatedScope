@@ -16,7 +16,7 @@ from federatedscope.vertical_fl.xgb_base.worker.Feature_sort_by_bin\
 from federatedscope.vertical_fl.xgb_base.worker.Test_base import Test_base
 
 from federatedscope.vertical_fl.xgb_base.worker.Loss_function \
-    import TwoClassification, Regression_by_mse, Regression_by_mae
+    import TwoClassificationloss, Regression_by_mseloss, Regression_by_maeloss
 
 logger = logging.getLogger(__name__)
 
@@ -84,9 +84,9 @@ class XGBClient(Client):
         self.ts = Test_base(self)
 
         if config.criterion.type == 'CrossEntropyLoss':
-            self.ls = TwoClassification()
+            self.ls = TwoClassificationloss()
         elif config.criterion.type == 'Regression':
-            self.ls = Regression_by_mse()
+            self.ls = Regression_by_mseloss()
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('data_sample',

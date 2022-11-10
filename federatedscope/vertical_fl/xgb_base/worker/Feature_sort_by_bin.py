@@ -29,7 +29,7 @@ class Feature_sort_by_bin:
             for j in range(self.bin_num):
                 self.feature_order_list_of_dict[i][j] = ordered_list[i][
                     j * bin_size:(j + 1) * bin_size]
-                # here should add some perturbation in each set
+                # TODO: add some perturbation in each set
 
     def preparation(self):
         self.client.register_handlers('feature_order',
@@ -104,8 +104,7 @@ class Feature_sort_by_bin:
                 self.total_feature_order_list_of_dict[i],
                 self.client.tree_list[tree_num][node_num].hess)
 
-        # label owner
-
+    # label owner
     def compute_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             self.client.prediction(tree_num)

@@ -3,7 +3,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 
 
-class TwoClassification:
+class TwoClassificationloss:
     """
     y = {1, 0}
     L = -yln(p)-(1-y)ln(1-p)
@@ -29,7 +29,7 @@ class TwoClassification:
         return grad, hess
 
 
-class Regression_by_mae:
+class Regression_by_maeloss:
     def metric(self, y, y_pred):
         return 'mae', np.mean(np.abs(y - y_pred))
 
@@ -43,7 +43,7 @@ class Regression_by_mae:
         return grad, hess
 
 
-class Regression_by_mse:
+class Regression_by_mseloss:
     def metric(self, y, y_pred):
         return 'mse', np.mean((y - y_pred)**2)
 
