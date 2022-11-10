@@ -123,7 +123,7 @@ class Adult:
         x, y = train_set[:, :-1], train_set[:, -1]
         test_x, test_y = test_set[:, :-1], test_set[:, -1]
 
-        # change the labels from 0 to -1 to fit the model: vertical_fl
+        # change the labels from 0 to -1 to fit the 'lr' model
         if self.model == 'lr':
             for i in range(len(y)):
                 if y[i] == 0:
