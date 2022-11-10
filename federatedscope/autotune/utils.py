@@ -3,22 +3,72 @@ import pandas as pd
 import ConfigSpace as CS
 
 
+def parse_condition_param(condition, ss):
+    """
+    Parse conditions param to generate ``ConfigSpace.conditions``
+
+    Condition parameters: EqualsCondition, NotEqualsCondition, \
+    LessThanCondition, GreaterThanCondition, InCondition
+
+    Args:
+        condition (dict): configspace condition dict, which is supposed to
+        have four keys for
+        ss (CS.ConfigurationSpace): configspace
+
+    Returns:
+        ConfigSpace.conditions: the conditions for configspace
+    """
+    str_func_mapping = {
+        'equal': CS.EqualsCondition,
+        'not_equal': CS.NotEqualsCondition,
+        'less': CS.LessThanCondition,
+        'greater': CS.GreaterThanCondition,
+        'in': CS.InCondition,
+        'and': CS.AndConjunction,
+        'or': CS.OrConjunction,
+    }
+    cond_type = condition['type']
+    print(cond_type)
+    assert cond_type in str_func_mapping.keys(), f'the param condition ' \
+                                                 f'should be in' \
+                                                 f' {str_func_mapping.keys()}.'
+
+    if cond_type in ['and', 'in']:
+        return str_func_mapping[cond_type](
+            parse_condition_param(condition['child'], ss),
+            parse_condition_param(condition['parent'], ss),
+        )
+    else:
+        return str_func_mapping[cond_type](
+            child=ss[condition['child']],
+            parent=ss[condition['parent']],
+            value=condition['value'],
+        )
+
+
 def parse_search_space(config_path):
-    """Parse yaml format configuration to generate search space
+    """
+    Parse yaml format configuration to generate search space
+
     Arguments:
         config_path (str): the path of the yaml file.
-    :returns: the search space.
-    :rtype: ConfigSpace object
+    Return:
+        ConfigSpace object: the search space.
+
     """
 
     ss = CS.ConfigurationSpace()
+    conditions = []
 
     with open(config_path, 'r') as ips:
         raw_ss_config = yaml.load(ips, Loader=yaml.FullLoader)
 
-    for k in raw_ss_config.keys():
-        name = k
-        v = raw_ss_config[k]
+    # Add hyperparameters
+    for name in raw_ss_config.keys():
+        if name.startswith('condition'):
+            # Deal with condition later
+            continue
+        v = raw_ss_config[name]
         hyper_type = v['type']
         del v['type']
         v['name'] = name
@@ -32,6 +82,13 @@ def parse_search_space(config_path):
         else:
             raise ValueError("Unsupported hyper type {}".format(hyper_type))
         ss.add_hyperparameter(hyper_config)
+
+    # Add conditions
+    for name in raw_ss_config.keys():
+        if name.startswith('condition'):
+            conditions.append(parse_condition_param(raw_ss_config[name], ss))
+    ss.add_conditions(conditions)
+    print(ss)
 
     return ss
 

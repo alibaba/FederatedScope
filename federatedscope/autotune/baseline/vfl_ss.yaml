@@ -3,3 +3,12 @@ train.optimizer.lr:
   lower: 0.01
   upper: 1.0
   log: True
+model.type:
+  type: cate
+  choices: [lr]
+condition1:
+  type: equal
+  child: train.optimizer.lr
+  parent: model.type
+  value: lr
+
