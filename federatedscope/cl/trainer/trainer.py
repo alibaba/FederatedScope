@@ -1,15 +1,9 @@
-from federatedscope.core.auxiliaries.enums import MODE
-from federatedscope.register import register_trainer
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
-from federatedscope.core.trainers import GeneralTorchTrainer
-from federatedscope.core.trainers.context import Context
-from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
-from federatedscope.core.auxiliaries import utils
 import torch
-import numpy as np
-import copy
+from federatedscope.register import register_trainer
+from federatedscope.core.trainers import GeneralTorchTrainer
+from federatedscope.core.trainers.context import CtxVar
+from federatedscope.core.trainers.enums import LIFECYCLE, MODE
+from federatedscope.core.auxiliaries import utils
 
 
 class CLTrainer(GeneralTorchTrainer):
