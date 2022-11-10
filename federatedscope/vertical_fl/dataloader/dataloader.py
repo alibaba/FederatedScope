@@ -17,7 +17,13 @@ def load_vertical_data(config=None, generate=False):
     splits = config.data.splits
     path = config.data.root
     name = config.data.type.lower()
-    model = config.model.type
+    if config.vertical.use:
+        feature_partition = config.vertical.dims
+        algo = 'lr'
+    elif config.xgb_base.use:
+        feature_partition = config.xgb_base.dims
+        algo = 'xgb'
+
     if config.data.args:
         args = config.data.args[0]
     else:
@@ -27,12 +33,12 @@ def load_vertical_data(config=None, generate=False):
         dataset = Adult(root=path,
                         name=name,
                         num_of_clients=config.federate.client_num,
-                        feature_partition=config.vertical.dims,
+                        feature_partition=feature_partition,
                         tr_frac=splits[0],
                         download=True,
                         seed=1234,
                         args=args,
-                        model=model)
+                        algo=algo)
         data = dataset.data
         return data, config
     elif generate:
