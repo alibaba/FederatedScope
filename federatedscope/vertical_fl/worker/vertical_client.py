@@ -64,7 +64,6 @@ class vFLClient(Client):
         if self.own_label:
             index, input_x, input_y = self.sample_data()
             self.batch_index = index
-
             u_A = 0.25 * np.matmul(input_x, self.theta) - 0.5 * input_y
             en_u_A = [self.public_key.encrypt(x) for x in u_A]
 

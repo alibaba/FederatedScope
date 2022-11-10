@@ -10,12 +10,41 @@ logger = logging.getLogger(__name__)
 
 
 class Adult:
+    """
+    Adult Data Set
+    (https://archive.ics.uci.edu/ml/datasets/adult)
+    Fields
+    The dataset contains 16 columns
+    The first column contains user IDs and the last column contains the incomes
+    Target filed: Income
+    -- The income is divide into two classes: <=50K and >50K
+    Number of attributes: 14
+    -- These are the demographics and other features to describe a person
+
+    Arguments:
+        root (str): root path
+        name (str): name of dataset, ‘adult’ or ‘xxx’
+        num_of_clients(int): number of clients
+        feature_partition(list): the number of features
+                                    partitioned to each client
+        tr_frac (float): train set proportion for each task; default=0.8
+        args (dict): set Ture or False to decide whether
+                     to normalize or standardize the data or not,
+                     e.g., {'normalization': False, 'standardization': False}
+        download (bool): indicator to download dataset
+        seed: a random seed
+    """
+    base_folder = 'adult'
+    url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com/adult.zip'
+    raw_file = ['adult.data', 'adult.test']
+
     def __init__(self,
                  root,
                  name,
                  num_of_clients,
                  feature_partition,
-                 tr_frac=0.9,
+                 args,
+                 tr_frac=0.8,
                  download=True,
                  seed=123):
         super(Adult, self).__init__()
@@ -25,17 +54,13 @@ class Adult:
         self.tr_frac = tr_frac
         self.feature_partition = feature_partition
         self.seed = seed
+        self.args = args
         self.data_dict = {}
         self.data = {}
 
         if download:
             self.download()
-
         self._get_data()
-
-    base_folder = 'adult'
-    url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com/adult.zip'
-    raw_file = ['adult.data', 'adult.test']
 
     def _get_data(self):
         fpath = os.path.join(self.root, self.base_folder)
@@ -57,7 +82,6 @@ class Adult:
             'capital_gain', 'capital_loss', 'hours_per_week', 'native_country',
             'wage_class'
         ]
-        # test_set = test_set.drop
 
         train_set.columns = col_labels
         test_set.columns = col_labels
@@ -79,12 +103,12 @@ class Adult:
         test_set = combined_set[train_set.shape[0]:]
         return train_set, test_set
 
-    # standardization
+    # normalization
     def normalization(self, data):
         _range = np.max(data) - np.min(data)
         return (data - np.min(data)) / _range
 
-    # normalization
+    # standardization
     def standardization(self, data):
         mu = np.mean(data, axis=0)
         sigma = np.std(data, axis=0)
@@ -96,7 +120,7 @@ class Adult:
         x, y = train_set[:, :-1], train_set[:, -1]
         test_x, test_y = test_set[:, :-1], test_set[:, -1]
 
-        x = self.standardization(x)
+        # change the labels from 0 to -1 to fit the model: vertical_fl
         for i in range(len(y)):
             if y[i] == 0:
                 y[i] = -1
@@ -104,7 +128,13 @@ class Adult:
             if test_y[i] == 0:
                 test_y[i] = -1
 
-        test_x = self.standardization(test_x)
+        if self.args['normalization']:
+            x = self.normalization(x)
+            test_x = self.normalization(test_x)
+
+        if self.args['standardization']:
+            x = self.standardization(x)
+            test_x = self.standardization(test_x)
 
         test_data = {'x': test_x, 'y': test_y}
 
@@ -135,7 +165,6 @@ class Adult:
         for file in self.raw_file:
             if self._check_existence(file):
                 logger.info(file + " files already exist")
-            # print("Files already downloaded and verified")
             else:
                 download_and_extract_archive(self.url,
                                              os.path.join(
