@@ -343,7 +343,8 @@ def load_external_data(config=None):
         raise NotImplementedError
 
     def load_huggingface_datasets_data(name, splits=None, config=None):
-        from datasets import load_dataset, load_from_disk
+        import datasets
+        from datasets import load_from_disk
 
         if config.data.args:
             raw_args = config.data.args[0]
@@ -351,7 +352,7 @@ def load_external_data(config=None):
             raw_args = {}
         assert 'max_len' in raw_args, "Miss key 'max_len' in " \
                                       "`config.data.args`."
-        filtered_args = filter_dict(load_dataset, raw_args)
+        filtered_args = filter_dict(datasets.load_dataset, raw_args)
         logger.info("Begin to load huggingface dataset")
         if "hg_cache_dir" in raw_args:
             hugging_face_path = raw_args["hg_cache_dir"]
@@ -367,9 +368,9 @@ def load_external_data(config=None):
                               f"{load_path}, we faced the exception: \n "
                               f"{str(e)}")
         else:
-            dataset = load_dataset(path=config.data.root,
-                                   name=name,
-                                   **filtered_args)
+            dataset = datasets.load_dataset(path=config.data.root,
+                                            name=name,
+                                            **filtered_args)
         if config.model.type.endswith('transformers'):
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
             from transformers import AutoTokenizer
@@ -464,7 +465,7 @@ def load_external_data(config=None):
 
         task = openml.tasks.get_task(int(tid))
         did = task.dataset_id
-        dataset = load_dataset(did)
+        dataset = openml.datasets.get_dataset(did)
         data, targets, _, _ = dataset.get_data(
             dataset_format="array", target=dataset.default_target_attribute)
 
