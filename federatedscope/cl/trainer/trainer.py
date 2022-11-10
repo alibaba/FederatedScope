@@ -3,7 +3,7 @@ from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE, MODE
-from federatedscope.core.auxiliaries import utils
+from federatedscope.core.trainers.utils import move_to
 
 
 class CLTrainer(GeneralTorchTrainer):
@@ -35,7 +35,7 @@ class CLTrainer(GeneralTorchTrainer):
         return [self.z1, self.z2]
 
     def _hook_on_batch_forward(self, ctx):
-        x, label = [utils.move_to(_, ctx.device) for _ in ctx.data_batch]
+        x, label = [move_to(_, ctx.device) for _ in ctx.data_batch]
         x1, x2 = x[0], x[1]
         if ctx.cur_mode in [MODE.TRAIN]:
             self.batches_aug_data_1 = x1
