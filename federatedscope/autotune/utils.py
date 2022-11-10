@@ -28,7 +28,6 @@ def parse_condition_param(condition, ss):
         'or': CS.OrConjunction,
     }
     cond_type = condition['type']
-    print(cond_type)
     assert cond_type in str_func_mapping.keys(), f'the param condition ' \
                                                  f'should be in' \
                                                  f' {str_func_mapping.keys()}.'
@@ -88,8 +87,6 @@ def parse_search_space(config_path):
         if name.startswith('condition'):
             conditions.append(parse_condition_param(raw_ss_config[name], ss))
     ss.add_conditions(conditions)
-    print(ss)
-
     return ss
 
 
