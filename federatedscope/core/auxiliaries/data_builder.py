@@ -28,7 +28,7 @@ TRANS_DATA_MAP = {
         'subreddit', 'synthetic', 'ciao', 'epinions', '.*?vertical_fl_data.*?',
         '.*?movielens.*?', '.*?cikmcup.*?', 'graph_multi_domain.*?', 'cora',
         'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?', 'fb15k-237',
-        'wn18'
+        'wn18', 'adult'
     ],  # Dummy for FL dataset
 }
 DATA_TRANS_MAP = RegexInverseMap(TRANS_DATA_MAP, None)

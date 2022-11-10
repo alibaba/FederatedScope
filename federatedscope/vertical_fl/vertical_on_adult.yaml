@@ -1,4 +1,6 @@
 use_gpu: False
+device: 0
+backend: torch
 federate:
   mode: standalone
   client_num: 2
@@ -8,17 +10,23 @@ model:
   use_bias: False
 train:
   optimizer:
-    lr: 0.05
+    lr: 0.5
 data:
-  type: vertical_fl_data
+  root: data/
+  type: adult
+  splits: [1.0, 0.0]
+  args: [{normalization: False, standardization: True}]
 dataloader:
   type: raw
   batch_size: 50
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: none
 vertical:
   use: True
   key_size: 256
-trainer:
-  type: none
+  dims: [7, 14]
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss

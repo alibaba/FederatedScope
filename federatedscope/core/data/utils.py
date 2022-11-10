@@ -68,6 +68,9 @@ def load_dataset(config):
     elif config.data.type.lower() == 'vertical_fl_data':
         from federatedscope.vertical_fl.dataloader import load_vertical_data
         dataset, modified_config = load_vertical_data(config, generate=True)
+    elif config.data.type.lower() in ['adult']:
+        from federatedscope.vertical_fl.dataloader import load_vertical_data
+        dataset, modified_config = load_vertical_data(config, generate=False)
     elif 'movielens' in config.data.type.lower(
     ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
