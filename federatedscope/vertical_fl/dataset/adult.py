@@ -31,6 +31,7 @@ class Adult:
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
+        model(str): the running model, 'lr' or 'xgb'
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -44,6 +45,7 @@ class Adult:
                  num_of_clients,
                  feature_partition,
                  args,
+                 model=None,
                  tr_frac=0.8,
                  download=True,
                  seed=123):
@@ -55,6 +57,7 @@ class Adult:
         self.feature_partition = feature_partition
         self.seed = seed
         self.args = args
+        self.model = model
         self.data_dict = {}
         self.data = {}
 
@@ -121,12 +124,13 @@ class Adult:
         test_x, test_y = test_set[:, :-1], test_set[:, -1]
 
         # change the labels from 0 to -1 to fit the model: vertical_fl
-        for i in range(len(y)):
-            if y[i] == 0:
-                y[i] = -1
-        for i in range(len(test_y)):
-            if test_y[i] == 0:
-                test_y[i] = -1
+        if self.model == 'lr':
+            for i in range(len(y)):
+                if y[i] == 0:
+                    y[i] = -1
+            for i in range(len(test_y)):
+                if test_y[i] == 0:
+                    test_y[i] = -1
 
         if self.args['normalization']:
             x = self.normalization(x)

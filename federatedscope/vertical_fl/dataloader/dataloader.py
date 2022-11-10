@@ -17,22 +17,22 @@ def load_vertical_data(config=None, generate=False):
     splits = config.data.splits
     path = config.data.root
     name = config.data.type.lower()
+    model = config.model.type
     if config.data.args:
         args = config.data.args[0]
     else:
         args = {'normalization': False, 'standardization': False}
 
     if name == 'adult':
-        dataset = Adult(
-            root=path,
-            name=name,
-            num_of_clients=config.federate.client_num,
-            feature_partition=config.vertical.dims,
-            tr_frac=splits[0],
-            download=True,
-            seed=1234,
-            args=args,
-        )
+        dataset = Adult(root=path,
+                        name=name,
+                        num_of_clients=config.federate.client_num,
+                        feature_partition=config.vertical.dims,
+                        tr_frac=splits[0],
+                        download=True,
+                        seed=1234,
+                        args=args,
+                        model=model)
         data = dataset.data
         return data, config
     elif generate:
