@@ -6,7 +6,6 @@ federate:
   client_num: 2
 model:
   type: lr
-  use_bin: False
 data:
   root: data/
   type: adult
@@ -28,6 +27,7 @@ train:
     max_tree_depth: 3
 xgb_base:
   use: True
+  use_bin: False
   dims: [7, 14]
 eval:
   freq: 5

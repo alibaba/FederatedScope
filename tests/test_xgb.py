@@ -23,7 +23,6 @@ class XGBTest(unittest.TestCase):
         cfg.federate.client_num = 2
 
         cfg.model.type = 'lr'
-        cfg.model.use_bin = False
 
         cfg.train.optimizer.bin_num = 1000
         cfg.train.optimizer.lambda_ = 1
@@ -39,6 +38,7 @@ class XGBTest(unittest.TestCase):
         cfg.criterion.type = 'CrossEntropyLoss'
 
         cfg.xgb_base.use = True
+        cfg.xgb_base.use_bin = False
 
         cfg.trainer.type = 'none'
         cfg.eval.freq = 5
