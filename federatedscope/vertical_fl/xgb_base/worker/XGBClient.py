@@ -169,7 +169,6 @@ class XGBClient(Client):
         sum_of_h = np.sum(self.tree_list[tree_num][node_num].hess)
         weight = -sum_of_g / (sum_of_h + self.lambda_)
         self.tree_list[tree_num][node_num].weight = weight
-        print(tree_num, node_num, weight)
         self.tree_list[tree_num][node_num].status = 'off'
         tmp = [node_num]
         while tmp:

@@ -48,7 +48,6 @@ class Test_base:
                     'test_acc': metric[1],
                     'test_total': len(self.test_y)
                 }
-                print('Test accuracy: {}'.format(metric))
 
                 self.client.comm_manager.send(
                     Message(msg_type='test_result',

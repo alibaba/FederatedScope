@@ -77,7 +77,6 @@ class Feature_sort_base:
                         split_ref['value_idx'] = value_idx
 
             if best_gain > 0:
-                print(best_gain, split_ref)
                 split_feature = self.total_feature_order_list[
                     split_ref['feature_idx']]
                 left_child_idx = np.zeros(len(self.client.y))

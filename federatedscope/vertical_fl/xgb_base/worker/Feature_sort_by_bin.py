@@ -135,8 +135,6 @@ class Feature_sort_by_bin:
                         split_ref['bin_idx'] = bin_idx
 
             if best_gain > 0:
-                print(best_gain, split_ref)
-
                 split_feature = self.total_feature_order_list_of_dict[
                     split_ref['feature_idx']]
                 bin_idx = split_ref['bin_idx']
