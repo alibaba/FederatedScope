@@ -28,6 +28,10 @@ def get_client_cls(cfg):
         from federatedscope.vertical_fl.worker import vFLClient
         return vFLClient
 
+    if cfg.xgb_base.use:
+        from federatedscope.vertical_fl.xgb_base.worker import XGBClient
+        return XGBClient
+
     if cfg.federate.method.lower() in constants.CLIENTS_TYPE:
         client_type = constants.CLIENTS_TYPE[cfg.federate.method.lower()]
     else:
@@ -91,6 +95,10 @@ def get_server_cls(cfg):
     if cfg.vertical.use:
         from federatedscope.vertical_fl.worker import vFLServer
         return vFLServer
+
+    if cfg.xgb_base.use:
+        from federatedscope.vertical_fl.xgb_base.worker import XGBServer
+        return XGBServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:
         server_type = constants.SERVER_TYPE[cfg.federate.method.lower()]
