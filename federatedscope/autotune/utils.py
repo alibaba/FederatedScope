@@ -124,12 +124,20 @@ def config2str(config):
 
 
 def summarize_hpo_results(configs, perfs, white_list=None, desc=False):
-    cols = [k for k in configs[0] if (white_list is None or k in white_list)
-            ] + ['performance']
-    d = [[
-        trial_cfg[k]
-        for k in trial_cfg if (white_list is None or k in white_list)
-    ] + [result] for trial_cfg, result in zip(configs, perfs)]
+    if white_list is not None:
+        cols = list(white_list) + ['performance']
+    else:
+        cols = [k for k in configs[0]] + ['performance']
+
+    d = []
+    for trial_cfg, result in zip(configs, perfs):
+        if white_list is not None:
+            d.append([
+                trial_cfg[k] if k in trial_cfg.keys() else None
+                for k in white_list
+            ] + [result])
+        else:
+            d.append([trial_cfg[k] for k in trial_cfg] + [result])
     d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
     df = pd.DataFrame(d, columns=cols)
     pd.set_option('display.max_colwidth', None)

@@ -1,7 +1,6 @@
 import os
 import logging
 from copy import deepcopy
-from contextlib import redirect_stdout
 import threading
 import math
 
@@ -196,7 +195,6 @@ class ModelFreeBase(Scheduler):
 
     def optimize(self):
         perfs = self._evaluate(self._init_configs)
-
         results = summarize_hpo_results(self._init_configs,
                                         perfs,
                                         white_list=set(
