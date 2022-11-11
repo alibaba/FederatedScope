@@ -14,8 +14,7 @@ class Adult:
     Adult Data Set
     (https://archive.ics.uci.edu/ml/datasets/adult)
     Fields
-    The dataset contains 16 columns
-    The first column contains user IDs and the last column contains the incomes
+    The dataset contains 15 columns
     Target filed: Income
     -- The income is divide into two classes: <=50K and >50K
     Number of attributes: 14
@@ -45,7 +44,7 @@ class Adult:
                  num_of_clients,
                  feature_partition,
                  args,
-                 model=None,
+                 algo=None,
                  tr_frac=0.8,
                  download=True,
                  seed=123):
@@ -57,7 +56,7 @@ class Adult:
         self.feature_partition = feature_partition
         self.seed = seed
         self.args = args
-        self.model = model
+        self.algo = algo
         self.data_dict = {}
         self.data = {}
 
@@ -124,7 +123,7 @@ class Adult:
         test_x, test_y = test_set[:, :-1], test_set[:, -1]
 
         # change the labels from 0 to -1 to fit the 'lr' model
-        if self.model == 'lr':
+        if self.algo == 'lr':
             for i in range(len(y)):
                 if y[i] == 0:
                     y[i] = -1
