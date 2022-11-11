@@ -91,12 +91,12 @@ def parse_search_space(config_path):
 
 
 def config2cmdargs(config):
-    '''
+    """
     Arguments:
         config (dict): key is cfg node name, value is the specified value.
     Returns:
         results (list): cmd args
-    '''
+    """
 
     results = []
     for k, v in config.items():
@@ -106,13 +106,13 @@ def config2cmdargs(config):
 
 
 def config2str(config):
-    '''
+    """
     Arguments:
         config (dict): key is cfg node name, value is the choice of
         hyper-parameter.
     Returns:
         name (str): the string representation of this config
-    '''
+    """
 
     vals = []
     for k in config:
@@ -152,9 +152,9 @@ def parse_logs(file_list):
     FONTSIZE = 40
     MARKSIZE = 25
 
-    def process(file):
+    def process(file_path):
         history = []
-        with open(file, 'r') as F:
+        with open(file_path, 'r') as F:
             for line in F:
                 try:
                     state, line = line.split('INFO: ')
@@ -202,7 +202,6 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     from federatedscope.core.auxiliaries.worker_builder import \
         get_client_cls, get_server_cls
     from federatedscope.core.fed_runner import FedRunner
-    from federatedscope.autotune.utils import config2cmdargs
     from os.path import join as osp
 
     if isinstance(config, CS.Configuration):
@@ -233,7 +232,7 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
                            server_class=get_server_cls(trial_cfg),
                            client_class=get_client_cls(trial_cfg),
                            config=trial_cfg.clone(),
-                           client_config=client_cfgs)
+                           client_configs=client_cfgs)
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
     return results[key1][key2]
