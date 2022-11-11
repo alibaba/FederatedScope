@@ -3,6 +3,7 @@ import logging
 import sys
 import pickle
 
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
@@ -207,12 +208,12 @@ class Client(BaseClient):
             # A fragment of the shared secret
             state, content, timestamp = message.state, message.content, \
                                         message.timestamp
-            self.msg_buffer['train'][state].append(content)
+            self.msg_buffer[STAGE.TRAIN][state].append(content)
 
-            if len(self.msg_buffer['train']
+            if len(self.msg_buffer[STAGE.TRAIN]
                    [state]) == self._cfg.federate.client_num:
                 # Check whether the received fragments are enough
-                model_list = self.msg_buffer['train'][state]
+                model_list = self.msg_buffer[STAGE.TRAIN][state]
                 sample_size, first_aggregate_model_para = model_list[0]
                 single_model_case = True
                 if isinstance(first_aggregate_model_para, list):
@@ -337,7 +338,7 @@ class Client(BaseClient):
                     single_model_case else \
                     [model_para_list[frame_idx] for model_para_list in
                      model_para_list_all]
-                self.msg_buffer['train'][self.state] = [(sample_size,
+                self.msg_buffer[STAGE.TRAIN][self.state] = [(sample_size,
                                                          content_frame)]
             else:
                 if self._cfg.asyn.use:

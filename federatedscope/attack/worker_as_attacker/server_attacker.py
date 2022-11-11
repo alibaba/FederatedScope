@@ -1,3 +1,4 @@
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 
@@ -244,15 +245,15 @@ class PassiveServer(Server):
     def run_reconstruct(self, state_list=None, sender_list=None):
 
         if state_list is None:
-            state_list = self.msg_buffer['train'].keys()
+            state_list = self.msg_buffer[STAGE.TRAIN].keys()
 
         # After FL running, using gradient based reconstruction method to
         # recover client's private training data
         for state in state_list:
             if sender_list is None:
-                sender_list = self.msg_buffer['train'][state].keys()
+                sender_list = self.msg_buffer[STAGE.TRAIN][state].keys()
             for sender in sender_list:
-                content = self.msg_buffer['train'][state][sender]
+                content = self.msg_buffer[STAGE.TRAIN][state][sender]
                 self._reconstruct(model_para=content[1],
                                   batch_size=content[0],
                                   state=state,
@@ -264,9 +265,9 @@ class PassiveServer(Server):
 
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
-        if round not in self.msg_buffer['train']:
-            self.msg_buffer['train'][round] = dict()
-        self.msg_buffer['train'][round][sender] = content
+        if round not in self.msg_buffer[STAGE.TRAIN]:
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
+        self.msg_buffer[STAGE.TRAIN][round][sender] = content
 
         # run reconstruction before the clear of self.msg_buffer
 
@@ -284,7 +285,7 @@ class PassiveServer(Server):
                         name='image_state_{}_client_{}.png'.format(
                             message.state, message.sender))
 
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
 
 class PassivePIAServer(Server):
@@ -342,9 +343,9 @@ class PassivePIAServer(Server):
 
         round, sender, content = message.state, message.sender, message.content
         self.sampler.change_state(sender, 'idle')
-        if round not in self.msg_buffer['train']:
-            self.msg_buffer['train'][round] = dict()
-        self.msg_buffer['train'][round][sender] = content
+        if round not in self.msg_buffer[STAGE.TRAIN]:
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
+        self.msg_buffer[STAGE.TRAIN][round][sender] = content
 
         # collect the updates
         self.pia_attacker.collect_updates(
@@ -359,7 +360,7 @@ class PassivePIAServer(Server):
             # TODO: put this line to `check_and_move_on`
             # currently, no way to know the latest `sender`
             self.aggregator.inc(content)
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
         if self.state == self.total_round_num:
             self.pia_attacker.train_property_classifier()

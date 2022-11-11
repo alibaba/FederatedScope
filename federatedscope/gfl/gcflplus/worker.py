@@ -3,6 +3,7 @@ import logging
 import copy
 import numpy as np
 
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.workers.client import Client
@@ -44,7 +45,7 @@ class GCFLPlusServer(Server):
         max_norm = -np.inf
         cluster_dWs = []
         for key in cluster:
-            content = self.msg_buffer['train'][self.state][key]
+            content = self.msg_buffer[STAGE.TRAIN][self.state][key]
             _, model_para, client_dw, _ = content
             dW = {}
             for k in model_para.keys():
@@ -71,7 +72,7 @@ class GCFLPlusServer(Server):
 
             if not check_eval_result:  # in the training process
                 # Get all the message
-                train_msg_buffer = self.msg_buffer['train'][self.state]
+                train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
                 for model_idx in range(self.model_num):
                     model = self.models[model_idx]
                     aggregator = self.aggregators[model_idx]
@@ -135,7 +136,7 @@ class GCFLPlusServer(Server):
                     for cluster in self.cluster_indices:
                         msg_list = list()
                         for key in cluster:
-                            content = self.msg_buffer['train'][self.state -
+                            content = self.msg_buffer[STAGE.TRAIN][self.state -
                                                                1][key]
                             train_data_size, model_para, client_dw,  \
                                 convGradsNorm = content
@@ -161,7 +162,7 @@ class GCFLPlusServer(Server):
                         f'----------- Starting a new traininground(Round '
                         f'#{self.state}) -------------')
                     # Clean the msg_buffer
-                    self.msg_buffer['train'][self.state - 1].clear()
+                    self.msg_buffer[STAGE.TRAIN][self.state - 1].clear()
 
                 else:
                     # Final Evaluate

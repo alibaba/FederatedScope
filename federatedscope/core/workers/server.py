@@ -15,6 +15,7 @@ from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
     merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
 
@@ -233,9 +234,10 @@ class Server(BaseServer):
                     logger.info('Time out at the training round #{}'.format(
                         self.state))
                     move_on_flag_eval = self.check_and_move_on(
-                        min_received_num=min_received_num,
-                        check_eval_result=True)
+                        stage=STAGE.EVAL,
+                        min_received_num=min_received_num)
                     move_on_flag = self.check_and_move_on(
+                        stage=STAGE.TRAIN,
                         min_received_num=min_received_num)
                     if not move_on_flag and not move_on_flag_eval:
                         num_failure += 1
@@ -253,8 +255,8 @@ class Server(BaseServer):
                             f'Round #{self.state}) for {num_failure} time '
                             f'-------------')
                         # TODO: Clean the msg_buffer
-                        if self.state in self.msg_buffer['train']:
-                            self.msg_buffer['train'][self.state].clear()
+                        if self.state in self.msg_buffer[STAGE.TRAIN]:
+                            self.msg_buffer[STAGE.TRAIN][self.state].clear()
 
                         self.broadcast_model_para(
                             msg_type='model_para',
@@ -266,7 +268,7 @@ class Server(BaseServer):
         self.terminate(msg_type='finish')
 
     def check_and_move_on(self,
-                          check_eval_result=False,
+                          stage,
                           min_received_num=None):
         """
         To check the message_buffer. When enough messages are receiving,
@@ -274,8 +276,8 @@ class Server(BaseServer):
         the next training round) would be triggered.
 
         Arguments:
-            check_eval_result (bool): If True, check the message buffer for
-            evaluation; and check the message buffer for training otherwise.
+            stage (str): The type of checked message buffer, chosen from MSGBUFFER.TRAIN, MSGBUFFER.EVAL and MSGBUFFER.CONSULT
+            min_received_num (int): The minimum number of received messages
         """
         if min_received_num is None:
             if self._cfg.asyn.use:
@@ -284,7 +286,7 @@ class Server(BaseServer):
                 min_received_num = self._cfg.federate.sample_client_num
         assert min_received_num <= self.sample_client_num
 
-        if check_eval_result and self._cfg.federate.mode.lower(
+        if stage == STAGE.EVAL and self._cfg.federate.mode.lower(
         ) == "standalone":
             # in evaluation stage and standalone simulation mode, we assume
             # strong synchronization that receives responses from all clients
@@ -292,8 +294,8 @@ class Server(BaseServer):
 
         move_on_flag = True  # To record whether moving to a new training
         # round or finishing the evaluation
-        if self.check_buffer(self.state, min_received_num, check_eval_result):
-            if not check_eval_result:
+        if self.check_buffer(self.state, min_received_num, stage):
+            if stage == STAGE.TRAIN:
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
 
@@ -311,8 +313,8 @@ class Server(BaseServer):
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
                     # Clean the msg_buffer
-                    self.msg_buffer['train'][self.state - 1].clear()
-                    self.msg_buffer['train'][self.state] = dict()
+                    self.msg_buffer[STAGE.TRAIN][self.state - 1].clear()
+                    self.msg_buffer[STAGE.TRAIN][self.state] = dict()
                     self.staled_msg_buffer.clear()
                     # Start a new training round
                     self._start_new_training_round(aggregated_num)
@@ -322,9 +324,12 @@ class Server(BaseServer):
                                 'evaluation.')
                     self.eval()
 
-            else:
+            elif stage == STAGE.EVAL:
                 # Receiving enough feedback in the evaluation process
                 self._merge_and_format_eval_results()
+            else:
+                # TODO: consultation
+                pass
 
         else:
             move_on_flag = False
@@ -375,8 +380,8 @@ class Server(BaseServer):
 
         # Clean the clients evaluation msg buffer
         if not self._cfg.federate.make_global_eval:
-            round = max(self.msg_buffer['eval'].keys())
-            self.msg_buffer['eval'][round].clear()
+            round = max(self.msg_buffer[STAGE.EVAL].keys())
+            self.msg_buffer[STAGE.EVAL][round].clear()
 
         if self.state == self.total_round_num:
             # break out the loop for distributed mode
@@ -386,7 +391,7 @@ class Server(BaseServer):
         """
         Perform federated aggregation and update the global model
         """
-        train_msg_buffer = self.msg_buffer['train'][self.state]
+        train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
         for model_idx in range(self.model_num):
             model = self.models[model_idx]
             aggregator = self.aggregators[model_idx]
@@ -505,8 +510,8 @@ class Server(BaseServer):
 
         :return:
         """
-        round = max(self.msg_buffer['eval'].keys())
-        eval_msg_buffer = self.msg_buffer['eval'][round]
+        round = max(self.msg_buffer[STAGE.EVAL].keys())
+        eval_msg_buffer = self.msg_buffer[STAGE.EVAL][round]
 
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
@@ -527,8 +532,8 @@ class Server(BaseServer):
         :returns: the formatted merged results
         """
 
-        round = max(self.msg_buffer['eval'].keys())
-        eval_msg_buffer = self.msg_buffer['eval'][round]
+        round = max(self.msg_buffer[STAGE.EVAL].keys())
+        eval_msg_buffer = self.msg_buffer[STAGE.EVAL][round]
         eval_res_participated_clients = []
         eval_res_unseen_clients = []
         for client_id in eval_msg_buffer:
@@ -670,33 +675,21 @@ class Server(BaseServer):
     def check_buffer(self,
                      cur_round,
                      min_received_num,
-                     check_eval_result=False):
-        """
-        To check the message buffer
+                     buffer_type):
+        """Check if the message buffer receives enough messages
 
         Arguments:
-        cur_round (int): The current round number
-        min_received_num (int): The minimal number of the receiving messages
-        check_eval_result (bool): To check training results for evaluation
-        results
-        :returns: Whether enough messages have been received or not
-        :rtype: bool
+            cur_round (int): The current round number
+            min_received_num (int): The minimal number of the receiving messages
+            buffer_type (str): Which field to check, chosen from MSGBUFFER.TRAIN, MSGBUFFER.EVAL and MSGBUFFER.CONSULT
+
+        Return:
+            Whether enough messages have been received or not
         """
+        buffer = self.msg_buffer.get(buffer_type, dict())
 
-        if check_eval_result:
-            if 'eval' not in self.msg_buffer.keys() or len(
-                    self.msg_buffer['eval'].keys()) == 0:
-                return False
-
-            buffer = self.msg_buffer['eval']
-            cur_round = max(buffer.keys())
-            cur_buffer = buffer[cur_round]
-            return len(cur_buffer) >= min_received_num
-        else:
-            if cur_round not in self.msg_buffer['train']:
-                cur_buffer = dict()
-            else:
-                cur_buffer = self.msg_buffer['train'][cur_round]
+        if buffer_type == STAGE.TRAIN:
+            cur_buffer = buffer.get(cur_round, dict())
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
                 if self.cur_timestamp >= self.deadline_for_cur_round and len(
                         cur_buffer) + len(self.staled_msg_buffer) == 0:
@@ -719,6 +712,18 @@ class Server(BaseServer):
             else:
                 return len(cur_buffer)+len(self.staled_msg_buffer) >= \
                        min_received_num
+
+        elif buffer_type == STAGE.EVAL:
+            # Evaluation won't block the training process
+            cur_buffer = buffer.get(max(buffer.keys()), dict())
+            return len(cur_buffer) >= min_received_num
+
+        elif buffer_type == STAGE.CONSULT:
+            cur_buffer = buffer.get(cur_round, dict())
+            return len(cur_buffer) >= min_received_num
+
+        else:
+            raise NotImplementedError(f'Type of message buffer {buffer_type} is not implemented.')
 
     def check_client_join_in(self):
         """
@@ -791,7 +796,7 @@ class Server(BaseServer):
             return False
 
         self.cur_timestamp = self.deadline_for_cur_round
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
         return True
 
     def terminate(self, msg_type='finish'):
@@ -880,10 +885,10 @@ class Server(BaseServer):
         self.cur_timestamp = timestamp
 
         if round == self.state:
-            if round not in self.msg_buffer['train']:
-                self.msg_buffer['train'][round] = dict()
+            if round not in self.msg_buffer[STAGE.TRAIN]:
+                self.msg_buffer[STAGE.TRAIN][round] = dict()
             # Save the messages in this round
-            self.msg_buffer['train'][round][sender] = content
+            self.msg_buffer[STAGE.TRAIN][round][sender] = content
         elif round >= self.state - self.staleness_toleration:
             # Save the staled messages
             self.staled_msg_buffer.append((round, sender, content))
@@ -895,7 +900,7 @@ class Server(BaseServer):
         if self._cfg.federate.online_aggr:
             self.aggregator.inc(content)
 
-        move_on_flag = self.check_and_move_on()
+        move_on_flag = self.check_and_move_on(stage=STAGE.TRAIN)
         if self._cfg.asyn.use and self._cfg.asyn.broadcast_manner == \
                 'after_receiving':
             self.broadcast_model_para(msg_type='model_para',
@@ -964,9 +969,9 @@ class Server(BaseServer):
         sender = message.sender
         content = message.content
 
-        if round not in self.msg_buffer['eval'].keys():
-            self.msg_buffer['eval'][round] = dict()
+        if round not in self.msg_buffer[STAGE.EVAL].keys():
+            self.msg_buffer[STAGE.EVAL][round] = dict()
 
-        self.msg_buffer['eval'][round][sender] = content
+        self.msg_buffer[STAGE.EVAL][round][sender] = content
 
-        return self.check_and_move_on(check_eval_result=True)
+        return self.check_and_move_on(stage=STAGE.EVAL)

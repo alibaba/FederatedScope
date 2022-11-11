@@ -4,6 +4,7 @@ import copy
 
 from torch_geometric.loader import NeighborSampler
 
+from federatedscope.core.auxiliaries.enums import STAGE
 from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.workers.client import Client
@@ -107,39 +108,39 @@ class FedSagePlusServer(Server):
         round, _, content = message.state, message.sender, message.content
         gen_grad, ID = content
         # For a new round
-        if round not in self.msg_buffer['train'].keys():
-            self.msg_buffer['train'][round] = dict()
+        if round not in self.msg_buffer[STAGE.TRAIN].keys():
+            self.msg_buffer[STAGE.TRAIN][round] = dict()
         self.grad_cnt += 1
         # Sum up all grad from other client
-        if ID not in self.msg_buffer['train'][round]:
-            self.msg_buffer['train'][round][ID] = dict()
+        if ID not in self.msg_buffer[STAGE.TRAIN][round]:
+            self.msg_buffer[STAGE.TRAIN][round][ID] = dict()
             for key in gen_grad.keys():
-                self.msg_buffer['train'][round][ID][key] = torch.FloatTensor(
+                self.msg_buffer[STAGE.TRAIN][round][ID][key] = torch.FloatTensor(
                     gen_grad[key].cpu())
         else:
             for key in gen_grad.keys():
-                self.msg_buffer['train'][round][ID][key] += torch.FloatTensor(
+                self.msg_buffer[STAGE.TRAIN][round][ID][key] += torch.FloatTensor(
                     gen_grad[key].cpu())
-        self.check_and_move_on()
+        self.check_and_move_on(stage=STAGE.TRAIN)
 
-    def check_and_move_on(self, check_eval_result=False):
+    def check_and_move_on(self, stage, **kwargs):
         client_IDs = [i for i in range(1, self.client_num + 1)]
 
-        if check_eval_result:
+        if stage == STAGE.EVAL or stage == STAGE.CONSULT:
             # all clients are participating in evaluation
             minimal_number = self.client_num
-        else:
+        elif stage == STAGE.TRAIN:
             # sampled clients are participating in training
             minimal_number = self.sample_client_num
 
         # Transmit model and embedding to get gradient back
         if self.check_buffer(
-                self.state, self.client_num
+                self.state, self.client_num, STAGE.TRAIN
         ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
                 % 2 == 0:
             # FedGen: we should wait for all messages
-            for sender in self.msg_buffer['train'][self.state]:
-                content = self.msg_buffer['train'][self.state][sender]
+            for sender in self.msg_buffer[STAGE.TRAIN][self.state]:
+                content = self.msg_buffer[STAGE.TRAIN][self.state][sender]
                 gen_para, embedding, label = content
                 receiver_IDs = client_IDs[:sender - 1] + client_IDs[sender:]
                 self.comm_manager.send(
@@ -154,12 +155,12 @@ class FedSagePlusServer(Server):
 
         # Sum up gradient client-wisely and send back
         if self.check_buffer(
-                self.state, self.client_num
+                self.state, self.client_num, STAGE.TRAIN
         ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
                 % 2 == 1 and self.grad_cnt == self.client_num * (
                 self.client_num - 1):
-            for ID in self.msg_buffer['train'][self.state]:
-                grad = self.msg_buffer['train'][self.state][ID]
+            for ID in self.msg_buffer[STAGE.TRAIN][self.state]:
+                grad = self.msg_buffer[STAGE.TRAIN][self.state][ID]
                 self.comm_manager.send(
                     Message(msg_type='gradient',
                             sender=self.ID,
@@ -171,7 +172,7 @@ class FedSagePlusServer(Server):
             self.state += 1
 
         if self.check_buffer(
-                self.state, self.client_num
+                self.state, self.client_num, STAGE.TRAIN
         ) and self.state == self._cfg.fedsageplus.fedgen_epoch:
             self.state += 1
             # Setup Clf_trainer for each client
@@ -182,12 +183,12 @@ class FedSagePlusServer(Server):
                         state=self.state))
 
         if self.check_buffer(
-                self.state, minimal_number, check_eval_result
+                self.state, minimal_number, stage
         ) and self.state >= self._cfg.fedsageplus.fedgen_epoch:
 
-            if not check_eval_result:  # in the training process
+            if stage == STAGE.TRAIN:  # in the training process
                 # Get all the message
-                train_msg_buffer = self.msg_buffer['train'][self.state]
+                train_msg_buffer = self.msg_buffer[STAGE.TRAIN][self.state]
                 msg_list = list()
                 for client_id in train_msg_buffer:
                     msg_list.append(train_msg_buffer[client_id])
@@ -232,12 +233,15 @@ class FedSagePlusServer(Server):
                                 'evaluation.')
                     self.eval()
 
-            else:  # in the evaluation process
+            elif stage == STAGE.EVAL:  # in the evaluation process
                 # Get all the message & aggregate
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
+            else:
+                # TODO: consult stage
+                pass
 
 
 class FedSagePlusClient(Client):
