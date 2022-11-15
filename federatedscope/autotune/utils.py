@@ -266,7 +266,6 @@ def config_bool2int(config):
     for key, value in new_dict.items():
         if isinstance(new_dict[key], bool):
             new_dict[key] = int(value)
-    print(new_dict)
     return new_dict
 
 
