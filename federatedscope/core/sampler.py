@@ -130,12 +130,12 @@ class GroupSampler(Sampler):
 
         return sampled_clients
 
+
 class ResponsivenessRealtedSampler(Sampler):
     """
     To sample the clients based on their responsiveness (or other
     client information of the clients)
-    """"
-
+    """
     def __init__(self, client_num, client_info):
         super(ResponsivenessRealtedSampler, self).__init__(client_num)
         self.update_client_info(client_info)
@@ -157,7 +157,7 @@ class ResponsivenessRealtedSampler(Sampler):
         """
         idle_clients = np.nonzero(self.client_state)[0]
         client_info = self.client_info[idle_clients]
-        client_info = client_info/np.sum(client_info, keepdims=True)
+        client_info = client_info / np.sum(client_info, keepdims=True)
         sampled_clients = np.random.choice(idle_clients,
                                            p=client_info,
                                            size=size,
