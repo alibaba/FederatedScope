@@ -260,12 +260,22 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     return results[key1][key2]
 
 
+def config_bool2int(config):
+    import copy
+    new_dict = copy.deepcopy(config)
+    for key, value in new_dict.items():
+        if isinstance(new_dict[key], bool):
+            new_dict[key] = int(value)
+    print(new_dict)
+    return new_dict
+
+
 def log2wandb(trial, config, perf):
     try:
         import wandb
         log_res = {
             'Trial_index': trial,
-            'Config': config,
+            'Config': config_bool2int(config),
             'Loss': perf,
         }
         wandb.log(log_res)
