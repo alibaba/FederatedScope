@@ -26,6 +26,11 @@ if __name__ == '__main__':
     cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
     init_cfg.merge_from_list(cfg_opt)
 
+    # Update Exp_name for hpo
+    if init_cfg.expname == '':
+        from federatedscope.autotune.utils import generate_hpo_exp_name
+        init_cfg.expname = generate_hpo_exp_name(init_cfg)
+
     update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 

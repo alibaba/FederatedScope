@@ -6,6 +6,10 @@ import ConfigSpace as CS
 logger = logging.getLogger(__name__)
 
 
+def generate_hpo_exp_name(cfg):
+    return f'{cfg.hpo.scheduler}_{cfg.hpo.sha.budgets}_{cfg.hpo.metric}'
+
+
 def parse_condition_param(condition, ss):
     """
     Parse conditions param to generate ``ConfigSpace.conditions``
@@ -126,7 +130,11 @@ def config2str(config):
     return name
 
 
-def summarize_hpo_results(configs, perfs, white_list=None, desc=False):
+def summarize_hpo_results(configs,
+                          perfs,
+                          white_list=None,
+                          desc=False,
+                          use_wandb=False):
     if white_list is not None:
         cols = list(white_list) + ['performance']
     else:
@@ -145,6 +153,17 @@ def summarize_hpo_results(configs, perfs, white_list=None, desc=False):
     df = pd.DataFrame(d, columns=cols)
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.max_columns', None)
+
+    if use_wandb:
+        try:
+            import wandb
+            table = wandb.Table(dataframe=df)
+            wandb.log({'Trial Configuration': table})
+        except ImportError:
+            logger.error(
+                "cfg.wandb.use=True but not install the wandb package")
+            exit()
+
     return df
 
 
@@ -245,9 +264,9 @@ def log2wandb(trial, config, perf):
     try:
         import wandb
         log_res = {
-            'trial': trial,
-            'config': config,
-            'perf': perf,
+            'Trial_index': trial,
+            'Config': config,
+            'Loss': perf,
         }
         wandb.log(log_res)
     except ImportError:

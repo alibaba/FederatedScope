@@ -201,7 +201,8 @@ class ModelFreeBase(Scheduler):
                                         perfs,
                                         white_list=set(
                                             self._search_space.keys()),
-                                        desc=self._cfg.hpo.larger_better)
+                                        desc=self._cfg.hpo.larger_better,
+                                        use_wandb=self._cfg.wandb.use)
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
@@ -263,7 +264,8 @@ class IterativeScheduler(ModelFreeBase):
                 current_configs,
                 current_perfs,
                 white_list=set(self._search_space.keys()),
-                desc=self._cfg.hpo.larger_better)
+                desc=self._cfg.hpo.larger_better,
+                use_wandb=self._cfg.wandb.use)
             self._stage += 1
             logger.info(
                 "========================== Stage{} =========================="

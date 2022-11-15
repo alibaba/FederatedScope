@@ -9,7 +9,7 @@ import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 
-from federatedscope.autotune.utils import eval_in_fs
+from federatedscope.autotune.utils import eval_in_fs, log2wandb
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -63,6 +63,7 @@ class MyWorker(Worker):
         super(MyWorker, self).__init__(**kwargs)
         self.sleep_interval = sleep_interval
         self.cfg = cfg
+        self.client_cfgs = client_cfgs
         self._ss = ss
         self._init_configs = []
         self._perfs = []
@@ -76,6 +77,8 @@ class MyWorker(Worker):
         time.sleep(self.sleep_interval)
         logger.info(f'Evaluate the {len(self._perfs)-1}-th config '
                     f'{config}, and get performance {res}')
+        if self.cfg.wandb.use:
+            log2wandb(len(self._perfs) - 1, config, res)
         return {'loss': float(res), 'info': res}
 
     def summarize(self):
@@ -83,7 +86,8 @@ class MyWorker(Worker):
         results = summarize_hpo_results(self._init_configs,
                                         self._perfs,
                                         white_list=set(self._ss.keys()),
-                                        desc=self.cfg.hpo.larger_better)
+                                        desc=self.cfg.hpo.larger_better,
+                                        use_wandb=self.cfg.wandb.use)
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
