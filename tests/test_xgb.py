@@ -29,7 +29,7 @@ class XGBTest(unittest.TestCase):
         cfg.train.optimizer.gamma = 0
         cfg.train.optimizer.num_of_trees = 4
         cfg.train.optimizer.max_tree_depth = 3
-        
+         
         cfg.data.root = 'test_data/' 
         cfg.data.type = 'adult'
         cfg.data.size = 2000
