@@ -10,8 +10,9 @@ This list is constantly being updated. Feel free to contribute!
 ### 2021
 | Title | Venue                                                  | Link                                                                                          | 
 | --- |--------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+|Fed-EINI: An Efficient and Interpretable Inference Framework for Decision Tree Ensembles in Vertical Federated Learning|IEEE International Conference on Big Data| [pdf](https://arxiv.org/pdf/2105.09540.pdf)                                                                                       |
  | Large-Scale Secure XGB for Vertical Federated Learning | CIKM                                                   | [pdf](https://arxiv.org/pdf/2005.08479.pdf), [code](https://github.com/secretflow/secretflow) |
- | SecureBoost: A Lossless Federated Learning Framework | IEEE Intelligent Systems                               | [pdf](https://arxiv.org/pdf/1901.08755.pdf), [code](https://github.com/FederatedAI/FATE)                                         |
+ | SecureBoost: A Lossless Federated Learning Framework | IEEE Intelligent Systems                               | [pdf](https://arxiv.org/pdf/1901.08755.pdf), [code](https://github.com/FederatedAI/FATE)      |
  | An Efficient Learning Framework For Federated XGBoost Using Secret Sharing And Distributed Optimization | ACM Transactions on Intelligent Systems and Technology | [pdf](https://arxiv.org/pdf/2105.05717.pdf)                                                   |
 
 ### 2020 
