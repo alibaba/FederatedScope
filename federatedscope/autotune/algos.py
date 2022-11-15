@@ -14,7 +14,7 @@ from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.fed_runner import FedRunner
 from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results
+    config2cmdargs, config2str, summarize_hpo_results, log2wandb
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +176,7 @@ class ModelFreeBase(Scheduler):
                     completed_trial_results = thread_results[i]
                     cfg_idx = completed_trial_results['cfg_idx']
                     perfs[cfg_idx] = completed_trial_results['perf']
+                    # TODO: Support num_worker in WandB
                     logger.info(
                         "Evaluate the {}-th config {} and get performance {}".
                         format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
@@ -190,7 +191,8 @@ class ModelFreeBase(Scheduler):
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))
-
+                if self._cfg.wandb.use:
+                    log2wandb(i, config, perfs[i])
         return perfs
 
     def optimize(self):

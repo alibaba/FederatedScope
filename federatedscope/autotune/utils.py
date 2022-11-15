@@ -1,6 +1,9 @@
 import yaml
+import logging
 import pandas as pd
 import ConfigSpace as CS
+
+logger = logging.getLogger(__name__)
 
 
 def parse_condition_param(condition, ss):
@@ -236,3 +239,17 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
     return results[key1][key2]
+
+
+def log2wandb(trial, config, perf):
+    try:
+        import wandb
+        log_res = {
+            'trial': trial,
+            'config': config,
+            'perf': perf,
+        }
+        wandb.log(log_res)
+    except ImportError:
+        logger.error("cfg.wandb.use=True but not install the wandb package")
+        exit()

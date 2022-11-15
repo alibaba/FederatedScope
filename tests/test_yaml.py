@@ -38,24 +38,28 @@ class YAMLTest(unittest.TestCase):
                 cont = False
                 continue
             filenames = [f for f in filenames if f.endswith('.yaml')]
+            error_file = []
             for f in filenames:
                 yaml_file = os.path.join(dirpath, f)
-                if yaml_file in self.exclude_file:
+                # Ignore `ss` search space and yaml file in `exclude_file`
+                if yaml_file in self.exclude_file or 'ss' in yaml_file:
                     continue
                 try:
                     init_cfg.merge_from_file(yaml_file)
                 except KeyError as error:
+                    error_file.append(yaml_file.removeprefix(self.root))
                     logger.error(
                         f"KeyError: {error} in file: {yaml_file.removeprefix(self.root)}"
                     )
                     sign = True
                 except ValueError as error:
+                    error_file.append(yaml_file.removeprefix(self.root))
                     logger.error(
                         f"ValueError: {error} in file: {yaml_file.removeprefix(self.root)}"
                     )
                     sign = True
                 init_cfg = global_cfg.clone()
-        self.assertIs(sign, False, "Yaml check failed.")
+        self.assertIs(sign, False, f'Yaml check failed in {error_file}.')
 
 
 if __name__ == '__main__':
