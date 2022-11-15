@@ -27,4 +27,5 @@ def assert_aggregation_cfg(cfg):
         logging.warning('Although krum aggregtion rule is applied, we found '
                         'that cfg.aggregation.byzantine_node_num == 0')
 
+
 register_config("aggregation", extend_aggregation_cfg)

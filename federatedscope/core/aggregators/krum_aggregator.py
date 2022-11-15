@@ -15,7 +15,8 @@ class KrumAggregator(ClientsAvgAggregator):
         super(KrumAggregator, self).__init__(model, device, config)
         self.byzantine_node_num = config.aggregation.byzantine_node_num
         self.krum_agg_num = config.aggregation.krum.agg_num
-        assert 2*self.byzantine_node_num + 2 < config.federate.client_num , "it should be satisfy that 2*byzantine_node_num + 2 < client_num"
+        assert 2 * self.byzantine_node_num + 2 < config.federate.client_num, \
+            "it should be satisfied that 2*byzantine_node_num + 2 < client_num"
 
     def aggregate(self, agg_info):
         """
@@ -68,10 +69,12 @@ class KrumAggregator(ClientsAvgAggregator):
                 if index_a == index_b:
                     distance_matrix[index_a, index_b] = float('inf')
                 else:
-                    distance_matrix[index_a, index_b] = distance_matrix[index_b, index_a] = self._calculate_distance(models[index_a], models[index_b])
+                    distance_matrix[index_a, index_b] = distance_matrix[
+                        index_b, index_a] = self._calculate_distance(
+                            models[index_a], models[index_b])
 
         sorted_distance = torch.sort(distance_matrix)[0]
-        krum_scores = torch.sum(sorted_distance[:,:closest_num], axis=-1)
+        krum_scores = torch.sum(sorted_distance[:, :closest_num], axis=-1)
         return krum_scores
 
     def _para_avg_with_krum(self, models, agg_num=1):
