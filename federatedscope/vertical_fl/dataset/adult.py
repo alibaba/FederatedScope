@@ -15,6 +15,8 @@ class Adult:
     (https://archive.ics.uci.edu/ml/datasets/adult)
     Fields
     The dataset contains 15 columns
+    Training set: 'adult.data', 32561 instances
+    Testing set: 'adult.test', 16281 instances
     Target filed: Income
     -- The income is divide into two classes: <=50K and >50K
     Number of attributes: 14
@@ -30,7 +32,7 @@ class Adult:
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        model(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr' or 'xgb'
         download (bool): indicator to download dataset
         seed: a random seed
     """
