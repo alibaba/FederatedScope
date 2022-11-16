@@ -64,7 +64,6 @@ def extend_training_cfg(cfg):
     cfg.early_stop.delta = 0.0
     # Early stop when no improve to last `patience` round, in ['mean', 'best']
     cfg.early_stop.improve_indicator_mode = 'best'
-    cfg.early_stop.the_smaller_the_better = True
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_training_cfg)

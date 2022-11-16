@@ -18,6 +18,19 @@ except ImportError as error:
 
 
 def get_optimizer(model, type, lr, **kwargs):
+    """
+    This function returns an instantiated optimizer to optimize the model.
+
+    Args:
+        model: model to be optimized
+        type: type of optimizer, see \
+          https://pytorch.org/docs/stable/optim.html
+        lr: learning rate
+        **kwargs: kwargs dict
+
+    Returns:
+        An instantiated optimizer
+    """
     if torch is None:
         return None
     # in case of users have not called the cfg.freeze()

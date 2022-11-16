@@ -12,7 +12,7 @@ from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.autotune.utils import parse_search_space, \
     config2cmdargs, config2str, summarize_hpo_results, log2wandb
 
@@ -24,11 +24,11 @@ def make_trial(trial_cfg, client_cfgs=None):
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    Fed_runner = FedRunner(data=data,
-                           server_class=get_server_cls(trial_cfg),
-                           client_class=get_client_cls(trial_cfg),
-                           config=trial_cfg.clone(),
-                           client_configs=client_cfgs)
+    Fed_runner = get_runner(data=data,
+                            server_class=get_server_cls(trial_cfg),
+                            client_class=get_client_cls(trial_cfg),
+                            config=trial_cfg.clone(),
+                            client_configs=client_cfgs)
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
     return results[key1][key2], results
@@ -52,11 +52,11 @@ class TrialExecutor(threading.Thread):
         data, modified_config = get_data(config=self._trial_cfg.clone())
         self._trial_cfg.merge_from_other_cfg(modified_config)
         self._trial_cfg.freeze()
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(self._trial_cfg),
-                               client_class=get_client_cls(self._trial_cfg),
-                               config=self._trial_cfg.clone(),
-                               client_configs=self._client_cfgs)
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(self._trial_cfg),
+                                client_class=get_client_cls(self._trial_cfg),
+                                config=self._trial_cfg.clone(),
+                                client_configs=self._client_cfgs)
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]
