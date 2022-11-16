@@ -123,6 +123,8 @@ class XGBClient(Client):
         ]
         if self.own_label:
             self.batch_index, self.x, self.y = self.sample_data()
+            logger.info(f'----------- Starting a new training round (Round '
+                        f'#{self.state}) -------------')
             # init y_hat
             self.y_hat = np.random.uniform(low=0.0, high=1.0, size=len(self.y))
             # self.y_hat = np.zeros(len(self.y))
