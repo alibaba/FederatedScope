@@ -17,6 +17,21 @@ except ImportError as error:
 
 
 def get_scheduler(optimizer, type, **kwargs):
+    """
+    This function builds an instance of scheduler.
+
+    Args:
+        optimizer: optimizer to be scheduled
+        type: type of scheduler
+        **kwargs: kwargs dict
+
+    Returns:
+        An instantiated scheduler.
+
+    Note:
+        Please follow ``contrib.scheduler.example`` to implement your own \
+        scheduler.
+    """
     for func in register.scheduler_dict.values():
         scheduler = func(optimizer, type)
         if scheduler is not None:
@@ -29,6 +44,6 @@ def get_scheduler(optimizer, type, **kwargs):
             return getattr(torch.optim.lr_scheduler, type)(optimizer, **kwargs)
         else:
             raise NotImplementedError(
-                'Scheduler {} not implement'.format(type))
+                'Scheduler {} not implement'.format(scheduler_type))
     else:
         raise TypeError()

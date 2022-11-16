@@ -2,10 +2,14 @@
 
 ### 2022
 
-| Title                                                        | Venue | Link                                                         |
-| ------------------------------------------------------------ | ----- | ------------------------------------------------------------ |
-| FederatedScope-GNN: Towards a Unified, Comprehensive and Efficient Package for Federated Graph Learning | KDD   | [pdf](https://dl.acm.org/doi/abs/10.1145/3534678.3539112), [code](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) |
-| Federated Graph Representation Learning using Self-Supervision | CIKM workshop | [pdf](https://arxiv.org/pdf/2210.15120.pdf) |
+| Title                                                        | Venue         | Link                                                         |
+| ------------------------------------------------------------ | ------------- | ------------------------------------------------------------ |
+| FederatedScope-GNN: Towards a Unified, Comprehensive and Efficient Package for Federated Graph Learning | KDD           | [pdf](https://dl.acm.org/doi/abs/10.1145/3534678.3539112), [code](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/gfl) |
+| Federated Graph Representation Learning using Self-Supervision | CIKM workshop | [pdf](https://arxiv.org/pdf/2210.15120.pdf)                  |
+| FedWalk: Communication Efficient Federated Unsupervised Node Embedding with Differential Privacy | KDD           | [pdf](https://arxiv.org/pdf/2205.15896v2.pdf)                |
+| Deep Neural Network Fusion via Graph Matching with Applications to Model Ensemble and Federated Learning | ICML          | [pdf](https://proceedings.mlr.press/v162/liu22k/liu22k.pdf)  |
+| Personalized Federated Learning With a Graph                 | IJCAI         | [pdf](https://www.ijcai.org/proceedings/2022/0357.pdf)       |
+| Vertically Federated Graph Neural Network for Privacy-Preserving Node Classification | IJCAI         | [pdf](https://www.ijcai.org/proceedings/2022/0272.pdf)       |
 
 ### 2021
 

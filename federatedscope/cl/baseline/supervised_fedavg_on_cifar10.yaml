@@ -1,0 +1,37 @@
+use_gpu: True
+device: 0
+federate:
+  mode: standalone
+  total_round_num: 100
+  client_num: 5
+  sample_client_rate: 1.0
+  share_local_model: True
+  online_aggr: True
+  method: FedAvg
+  save_to: '../test_supervised.ckpt'
+data:
+  root: 'data'
+  type: 'Cifar4LP'
+  batch_size: 256
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.1}]
+  num_workers: 4
+model:
+  type: 'supervised_fedavg'
+train:
+  local_update_steps: 3
+  batch_or_epoch: 'epoch'
+  optimizer:
+    lr: 0.03
+    momentum: 0.9
+    weight_decay: 0.0
+early_stop:
+  patience: 0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: general
+eval:
+  freq: 10
+  metrics: ['acc']
+  split: ['val', 'test']

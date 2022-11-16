@@ -9,8 +9,14 @@ logger = logging.getLogger(__name__)
 
 class BaseDataTranslator:
     """
-    Perform process:
-        Dataset -> ML split -> FL split -> Data (passed to FedRunner)
+    Translator is a tool to convert a centralized dataset to \
+    ``StandaloneDataDict``, which is the input data of runner.
+
+    Notes:
+        The ``Translator`` is consist of several stages:
+
+        Dataset -> ML split (``split_train_val_test()``) -> \
+        FL split (``split_to_client()``) -> ``StandaloneDataDict``
 
     """
     def __init__(self, global_cfg, client_cfgs=None):
@@ -27,7 +33,6 @@ class BaseDataTranslator:
 
     def __call__(self, dataset):
         """
-
         Args:
             dataset: `torch.utils.data.Dataset`, `List` of (feature, label)
                 or split dataset tuple of (train, val, test) or Tuple of
@@ -47,8 +52,8 @@ class BaseDataTranslator:
         Perform ML split and FL split.
 
         Returns:
-            dict of `ClientData` with client_idx as key.
-
+            dict of ``ClientData`` with client_idx as key to build \
+            ``StandaloneDataDict``
         """
         train, val, test = self.split_train_val_test(dataset)
         datadict = self.split_to_client(train, val, test)
@@ -59,8 +64,7 @@ class BaseDataTranslator:
         Split dataset to train, val, test if not provided.
 
         Returns:
-            split_data (List): List of split dataset, [train, val, test]
-
+             List: List of split dataset, like ``[train, val, test]``
         """
         splits = self.global_cfg.data.splits
         if isinstance(dataset, tuple):
@@ -83,11 +87,10 @@ class BaseDataTranslator:
 
     def split_to_client(self, train, val, test):
         """
-        Split dataset to clients and build `ClientData`.
+        Split dataset to clients and build ``ClientData``.
 
         Returns:
-            data_dict (dict): dict of `ClientData` with client_idx as key.
-
+            dict: dict of ``ClientData`` with ``client_idx`` as key.
         """
 
         # Initialization

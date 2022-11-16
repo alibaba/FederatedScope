@@ -1,4 +1,4 @@
-name: pre-commit
+name: Pre-commit (Required)
 
 on: [push, pull_request]
 
@@ -6,6 +6,7 @@ jobs:
   run:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: True
       matrix:
         os: [ubuntu-latest]
     env:

@@ -3,16 +3,16 @@ import federatedscope.register as register
 
 
 def get_transform(config, package):
-    r"""
+    """
+    This function is to build transforms applying to dataset.
 
     Args:
-        config: `CN` from `federatedscope/core/configs/config.py`
-        package: one of package from ['torchvision', 'torch_geometric',
-        'torchtext', 'torchaudio']
+        config: ``CN`` from ``federatedscope/core/configs/config.py``
+        package: one of package from \
+        ``['torchvision', 'torch_geometric', 'torchtext', 'torchaudio']``
 
     Returns:
-        dict of transform functions.
-
+        Dict of transform functions.
     """
     transform_funcs = {}
     for name in ['transform', 'target_transform', 'pre_transform']:

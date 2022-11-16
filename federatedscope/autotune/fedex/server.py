@@ -10,7 +10,7 @@ from scipy.special import logsumexp
 
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Server
-from federatedscope.core.auxiliaries.utils import merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 
 logger = logging.getLogger(__name__)
 
@@ -377,8 +377,8 @@ class FedExServer(Server):
             else:  # in the evaluation process
                 # Get all the message & aggregate
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
-                self.history_results = merge_dict(self.history_results,
-                                                  formatted_eval_res)
+                self.history_results = merge_dict_of_results(
+                    self.history_results, formatted_eval_res)
                 self.check_and_save()
         else:
             move_on_flag = False

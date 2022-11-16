@@ -5,6 +5,15 @@ from federatedscope.core.splitters.utils import \
 
 
 class LDASplitter(BaseSplitter):
+    """
+    This splitter split dataset with LDA.
+
+    Args:
+        client_num: the dataset will be split into ``client_num`` pieces
+        alpha (float): Partition hyperparameter in LDA, smaller alpha \
+            generates more extreme heterogeneous scenario see \
+            ``np.random.dirichlet``
+    """
     def __init__(self, client_num, alpha=0.5):
         self.alpha = alpha
         super(LDASplitter, self).__init__(client_num)

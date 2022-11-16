@@ -1,18 +1,48 @@
 import numpy as np
 
+from federatedscope.vertical_fl.dataset.adult import Adult
+
 
 def load_vertical_data(config=None, generate=False):
     """
-    To generate the synthetic data for vertical FL
+    To load data for vertical FL
 
     Arguments:
         config: configuration
         generate (bool): whether to generate the synthetic data
-    :returns: The synthetic data, the modified config
+    :returns: The data, the modified config
     :rtype: dict
     """
 
-    if generate:
+    splits = config.data.splits
+    path = config.data.root
+    name = config.data.type.lower()
+    # TODO: merge the following later
+    if config.vertical.use:
+        feature_partition = config.vertical.dims
+        algo = 'lr'
+    elif config.xgb_base.use:
+        feature_partition = config.xgb_base.dims
+        algo = 'xgb'
+
+    if config.data.args:
+        args = config.data.args[0]
+    else:
+        args = {'normalization': False, 'standardization': False}
+
+    if name == 'adult':
+        dataset = Adult(root=path,
+                        name=name,
+                        num_of_clients=config.federate.client_num,
+                        feature_partition=feature_partition,
+                        tr_frac=splits[0],
+                        download=True,
+                        seed=1234,
+                        args=args,
+                        algo=algo)
+        data = dataset.data
+        return data, config
+    elif generate:
         # generate toy data for running a vertical FL example
         INSTANCE_NUM = 1000
         TRAIN_SPLIT = 0.9
@@ -38,16 +68,16 @@ def load_vertical_data(config=None, generate=False):
 
         # For Client #1
         data[1] = dict()
-        data[1]['train'] = {
-            'x': x[:train_num, :config.vertical.dims[0]],
-            'y': y[:train_num]
-        }
+        data[1]['train'] = {'x': x[:train_num, :config.vertical.dims[0]]}
         data[1]['val'] = None
         data[1]['test'] = test_data
 
         # For Client #2
         data[2] = dict()
-        data[2]['train'] = {'x': x[:train_num, config.vertical.dims[0]:]}
+        data[2]['train'] = {
+            'x': x[:train_num, config.vertical.dims[0]:],
+            'y': y[:train_num]
+        }
         data[2]['val'] = None
         data[2]['test'] = test_data
 
