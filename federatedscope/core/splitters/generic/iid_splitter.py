@@ -3,6 +3,13 @@ from federatedscope.core.splitters import BaseSplitter
 
 
 class IIDSplitter(BaseSplitter):
+    """
+    This splitter splits dataset following the independent and identically \
+    distribution.
+
+    Args:
+        client_num: the dataset will be split into ``client_num`` pieces
+    """
     def __init__(self, client_num):
         super(IIDSplitter, self).__init__(client_num)
 

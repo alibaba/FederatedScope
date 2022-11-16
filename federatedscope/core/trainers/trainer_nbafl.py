@@ -1,4 +1,4 @@
-from federatedscope.core.auxiliaries.utils import get_random
+from federatedscope.core.trainers.utils import get_random
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from typing import Type
 from copy import deepcopy
@@ -24,23 +24,23 @@ def wrap_nbafl_trainer(
     init_nbafl_ctx(base_trainer)
 
     # ---------------- action-level plug-in -----------------------
-    base_trainer.register_hook_in_train(new_hook=record_initialization,
+    base_trainer.register_hook_in_train(new_hook=_hook_record_initialization,
                                         trigger='on_fit_start',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=record_initialization,
+    base_trainer.register_hook_in_eval(new_hook=_hook_record_initialization,
                                        trigger='on_fit_start',
                                        insert_pos=-1)
 
-    base_trainer.register_hook_in_train(new_hook=del_initialization,
+    base_trainer.register_hook_in_train(new_hook=_hook_del_initialization,
                                         trigger='on_fit_end',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=del_initialization,
+    base_trainer.register_hook_in_eval(new_hook=_hook_del_initialization,
                                        trigger='on_fit_end',
                                        insert_pos=-1)
 
-    base_trainer.register_hook_in_train(new_hook=inject_noise_in_upload,
+    base_trainer.register_hook_in_train(new_hook=_hook_inject_noise_in_upload,
                                         trigger='on_fit_end',
                                         insert_pos=-1)
     return base_trainer
@@ -78,24 +78,48 @@ def init_nbafl_ctx(base_trainer):
 
 
 # Trainer
-def record_initialization(ctx):
-    """Record the initialized weights within local updates
+def _hook_record_initialization(ctx):
+    """
+    Record the initialized weights within local updates
 
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.weight_init``                 Copy from `ctx.model`
+        ==================================  ===========================
     """
     ctx.weight_init = deepcopy(
         [_.data.detach() for _ in ctx.model.parameters()])
 
 
-def del_initialization(ctx):
-    """Clear the variable to avoid memory leakage
+def _hook_del_initialization(ctx):
+    """
+    Clear the variable to avoid memory leakage
 
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.weight_init``                 Set to `None`
+        ==================================  ===========================
     """
     ctx.weight_init = None
 
 
-def inject_noise_in_upload(ctx):
-    """Inject noise into weights before the client upload them to server
+def _hook_inject_noise_in_upload(ctx):
+    """
+    Inject noise into weights before the client upload them to server
 
+    Note:
+      The modified attributes and according operations are shown below:
+        ==================================  ===========================
+        Attribute                           Operation
+        ==================================  ===========================
+        ``ctx.model``                       Inject noise to parameters
+        ==================================  ===========================
     """
     for p in ctx.model.parameters():
         noise = get_random("Normal", p.shape, {

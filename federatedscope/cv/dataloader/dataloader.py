@@ -3,14 +3,20 @@ from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def load_cv_dataset(config=None):
-    r"""
-    return {
-                'client_id': {
-                    'train': DataLoader(),
-                    'test': DataLoader(),
-                    'val': DataLoader()
-                }
-            }
+    """
+    Return the dataset of ``femnist`` or ``celeba``.
+
+    Args:
+        config: configurations for FL, see ``federatedscope.core.configs``
+
+    Returns:
+        FL dataset dict, with ``client_id`` as key.
+
+    Note:
+      ``load_cv_dataset()`` will return a dict as shown below:
+        ```
+        {'client_id': {'train': dataset, 'test': dataset, 'val': dataset}}
+        ```
     """
     splits = config.data.splits
 

@@ -5,10 +5,9 @@ from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 
 
 class FedOptAggregator(ClientsAvgAggregator):
-    """Implementation of FedOpt refer to `Adaptive Federated Optimization` [
-    Reddi et al., 2021]
-        (https://openreview.net/forum?id=LkFG3lB13U5)
-
+    """
+    Implementation of FedOpt refer to `Adaptive Federated Optimization` \
+    [Reddi et al., 2021](https://openreview.net/forum?id=LkFG3lB13U5)
     """
     def __init__(self, config, model, device='cpu'):
         super(FedOptAggregator, self).__init__(model, device, config)
@@ -16,6 +15,9 @@ class FedOptAggregator(ClientsAvgAggregator):
                                        **config.fedopt.optimizer)
 
     def aggregate(self, agg_info):
+        """
+        To preform FedOpt aggregation.
+        """
         new_model = super().aggregate(agg_info)
 
         model = self.model.cpu().state_dict()
