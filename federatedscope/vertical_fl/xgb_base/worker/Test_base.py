@@ -41,13 +41,19 @@ class Test_base:
     def test_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 == self.client.num_of_trees:
-                metric = self.client.ls.metric(self.test_y, self.test_z)
                 loss = self.client.ls.loss(self.test_y, self.test_z)
-                metrics = {
-                    'test_loss': loss,
-                    'test_acc': metric[1],
-                    'test_total': len(self.test_y)
-                }
+                if self.client.criterion_type == 'CrossEntropyLoss':
+                    metric = self.client.ls.metric(self.test_y, self.test_z)
+                    metrics = {
+                        'test_loss': loss,
+                        'test_acc': metric[1],
+                        'test_total': len(self.test_y)
+                    }
+                else:
+                    metrics = {
+                        'test_loss': loss,
+                        'test_total': len(self.test_y)
+                    }
 
                 self.client.comm_manager.send(
                     Message(msg_type='test_result',

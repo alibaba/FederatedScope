@@ -83,9 +83,10 @@ class XGBClient(Client):
 
         self.ts = Test_base(self)
 
-        if config.criterion.type == 'CrossEntropyLoss':
+        self.criterion_type = config.criterion.type
+        if self.criterion_type == 'CrossEntropyLoss':
             self.ls = TwoClassificationloss()
-        elif config.criterion.type == 'Regression':
+        elif self.criterion_type == 'Regression':
             self.ls = Regression_by_mseloss()
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
