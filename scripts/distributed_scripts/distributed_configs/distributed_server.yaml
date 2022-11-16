@@ -10,7 +10,7 @@ distribute:
   server_host: '127.0.0.1'
   server_port: 50051
   role: 'server'
-  data_file: 'toy_data/server_data'
+  data_idx: 0
 trainer:
   type: 'general'
 eval:

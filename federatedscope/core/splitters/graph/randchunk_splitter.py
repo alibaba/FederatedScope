@@ -5,19 +5,16 @@ from federatedscope.core.splitters import BaseSplitter
 
 
 class RandChunkSplitter(BaseTransform, BaseSplitter):
+    """
+    Split graph-level dataset via random chunk strategy.
+
+    Arguments:
+        dataset (List or PyG.dataset): The graph-level datasets.
+    """
     def __init__(self, client_num):
         BaseSplitter.__init__(self, client_num)
 
     def __call__(self, dataset, **kwargs):
-        r"""Split dataset via random chunk.
-
-        Arguments:
-            dataset (List or PyG.dataset): The datasets.
-
-        Returns:
-            data_list (List(List(PyG.data))): Splited dataset via random
-            chunk split.
-        """
         data_list = []
         dataset = [ds for ds in dataset]
         num_graph = len(dataset)

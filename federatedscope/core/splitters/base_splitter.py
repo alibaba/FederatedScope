@@ -3,13 +3,14 @@ import inspect
 
 
 class BaseSplitter(abc.ABC):
-    def __init__(self, client_num):
-        """
-        This is an abstract base class for all splitter.
+    """
+    This is an abstract base class for all splitter, which is not \
+    implemented with ``__call__()``.
 
-        Args:
-            client_num: Divide the dataset into `client_num` pieces.
-        """
+    Attributes:
+        client_num: Divide the dataset into ``client_num`` pieces.
+    """
+    def __init__(self, client_num):
         self.client_num = client_num
 
     @abc.abstractmethod

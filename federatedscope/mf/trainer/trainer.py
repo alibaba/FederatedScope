@@ -1,7 +1,7 @@
 import numpy
 from wandb.wandb_torch import torch
 
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
@@ -24,7 +24,6 @@ class MFTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
         modes
-
         """
         init_dict = dict()
         if isinstance(data, dict):

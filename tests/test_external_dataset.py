@@ -5,7 +5,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -27,6 +27,8 @@ class ExternalDatasetTest(unittest.TestCase):
         cfg.train.batch_or_epoch = 'epoch'
         cfg.federate.client_num = 5
         cfg.federate.sample_client_rate = 0.2
+        cfg.federate.share_local_model = True
+        cfg.federate.online_aggr = True
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'MNIST@torchvision'
@@ -67,10 +69,12 @@ class ExternalDatasetTest(unittest.TestCase):
 
         cfg.federate.mode = 'standalone'
         cfg.train.local_update_steps = 1
-        cfg.federate.total_round_num = 20
+        cfg.federate.total_round_num = 10
         cfg.train.batch_or_epoch = 'epoch'
         cfg.federate.client_num = 5
         cfg.federate.sample_client_rate = 0.2
+        cfg.federate.share_local_model = True
+        cfg.federate.online_aggr = True
 
         cfg.data.root = 'test_data/'
         cfg.data.args = [{'max_len': 100}]
@@ -107,10 +111,10 @@ class ExternalDatasetTest(unittest.TestCase):
         init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
@@ -129,17 +133,17 @@ class ExternalDatasetTest(unittest.TestCase):
         init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertGreater(
             test_best_results["client_summarized_weighted_avg"]['test_acc'],
-            0.65)
+            0.6)
 
 
 if __name__ == '__main__':
