@@ -133,8 +133,8 @@ class GroupSampler(Sampler):
 
 class ResponsivenessRealtedSampler(Sampler):
     """
-    To sample the clients based on their responsiveness (or other
-    client information of the clients)
+    To sample the clients based on their responsiveness (or other information
+    of clients)
     """
     def __init__(self, client_num, client_info):
         super(ResponsivenessRealtedSampler, self).__init__(client_num)
