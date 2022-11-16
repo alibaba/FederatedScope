@@ -27,7 +27,6 @@ class KrumAggregator(ClientsAvgAggregator):
         :returns: the aggregated results
         :rtype: dict
         """
-
         models = agg_info["client_feedback"]
         avg_model = self._para_avg_with_krum(models, agg_num=self.krum_agg_num)
 
