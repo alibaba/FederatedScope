@@ -158,7 +158,7 @@ def summarize_hpo_results(configs,
         try:
             import wandb
             table = wandb.Table(dataframe=df)
-            wandb.log({'Trial Configuration': table})
+            wandb.log({'ConfigurationRank': table})
         except ImportError:
             logger.error(
                 "cfg.wandb.use=True but not install the wandb package")
@@ -257,7 +257,7 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
                            client_configs=client_cfgs)
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2]
+    return results[key1][key2], results
 
 
 def config_bool2int(config):
@@ -269,13 +269,14 @@ def config_bool2int(config):
     return new_dict
 
 
-def log2wandb(trial, config, perf):
+def log2wandb(trial, config, results, trial_cfg):
     try:
         import wandb
+        key1, key2 = trial_cfg.hpo.metric.split('.')
         log_res = {
             'Trial_index': trial,
             'Config': config_bool2int(config),
-            'Loss': perf,
+            trial_cfg.hpo.metric: results[key1][key2],
         }
         wandb.log(log_res)
     except ImportError:

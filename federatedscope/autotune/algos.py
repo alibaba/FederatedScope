@@ -31,7 +31,7 @@ def make_trial(trial_cfg, client_cfgs=None):
                            client_configs=client_cfgs)
     results = Fed_runner.run()
     key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2]
+    return results[key1][key2], results
 
 
 class TrialExecutor(threading.Thread):
@@ -187,12 +187,12 @@ class ModelFreeBase(Scheduler):
             for i, config in enumerate(configs):
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
-                perfs[i] = make_trial(trial_cfg, self._client_cfgs)
+                perfs[i], results = make_trial(trial_cfg, self._client_cfgs)
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))
                 if self._cfg.wandb.use:
-                    log2wandb(i, config, perfs[i])
+                    log2wandb(i, config, results, trial_cfg)
         return perfs
 
     def optimize(self):

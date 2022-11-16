@@ -69,7 +69,8 @@ class MyWorker(Worker):
         self._perfs = []
 
     def compute(self, config, budget, **kwargs):
-        res = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs)
+        res, results = eval_in_fs(self.cfg, config, int(budget),
+                                  self.client_cfgs)
         config = dict(config)
         config['federate.total_round_num'] = budget
         self._init_configs.append(config)
@@ -78,7 +79,7 @@ class MyWorker(Worker):
         logger.info(f'Evaluate the {len(self._perfs)-1}-th config '
                     f'{config}, and get performance {res}')
         if self.cfg.wandb.use:
-            log2wandb(len(self._perfs) - 1, config, res)
+            log2wandb(len(self._perfs) - 1, config, results, self.cfg)
         return {'loss': float(res), 'info': res}
 
     def summarize(self):

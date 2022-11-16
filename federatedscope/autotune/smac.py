@@ -16,7 +16,7 @@ def run_smac(cfg, scheduler, client_cfgs=None):
 
     def optimization_function_wrapper(config):
         budget = cfg.hpo.sha.budgets[-1]
-        res = eval_in_fs(cfg, config, budget, client_cfgs)
+        res, results = eval_in_fs(cfg, config, budget, client_cfgs)
         config = dict(config)
         config['federate.total_round_num'] = budget
         init_configs.append(config)
@@ -24,7 +24,7 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         logger.info(f'Evaluate the {len(perfs)-1}-th config '
                     f'{config}, and get performance {res}')
         if cfg.wandb.use:
-            log2wandb(len(perfs) - 1, config, res)
+            log2wandb(len(perfs) - 1, config, results, cfg)
         return res
 
     def summarize():
