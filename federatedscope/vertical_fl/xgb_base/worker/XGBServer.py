@@ -46,7 +46,7 @@ class XGBServer(Server):
             Tree(self.max_tree_depth).tree for _ in range(self.num_of_trees)
         ]
 
-        self.register_handlers('test', self.callback_func_for_test)
+        # self.register_handlers('test', self.callback_func_for_test)
         self.register_handlers('test_result',
                                self.callback_func_for_test_result)
 
@@ -64,6 +64,7 @@ class XGBServer(Server):
                     content=(self.lambda_, self.gamma, self.num_of_trees,
                              self.max_tree_depth)))
 
+    '''
     def callback_func_for_test(self, message: Message):
         test_x = self.data['test']['x']
         test_y = self.data['test']['y']
@@ -82,6 +83,7 @@ class XGBServer(Server):
                     receiver=self.num_of_parties,
                     state=self.state,
                     content=test_y))
+    '''
 
     def callback_func_for_test_result(self, message: Message):
         metrics = message.content

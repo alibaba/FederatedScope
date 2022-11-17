@@ -11,18 +11,18 @@ from federatedscope.core.message import Message
 class Test_base:
     def __init__(self, obj):
         self.client = obj
-        self.client.register_handlers('test_data',
-                                      self.callback_func_for_test_data)
-        self.client.register_handlers('test_value',
-                                      self.callback_func_for_test_value)
+        # self.client.register_handlers('test_data',
+        #                               self.callback_func_for_test_data)
+        # self.client.register_handlers('test_value',
+        #                                self.callback_func_for_test_value)
         self.client.register_handlers(
             'split_lr_for_test_data',
             self.callback_func_for_split_lr_for_test_data)
         self.client.register_handlers('LR', self.callback_func_for_LR)
 
+    '''
     def callback_func_for_test_value(self, message: Message):
         self.test_y = message.content
-
     def callback_func_for_test_data(self, message: Message):
         self.test_x = message.content
 
@@ -31,28 +31,31 @@ class Test_base:
 
             tree_num = 0
             self.test_for_root(tree_num)
+    '''
 
     def test_for_root(self, tree_num):
         node_num = 0
         self.client.tree_list[tree_num][node_num].indicator = np.ones(
-            self.test_x.shape[0])
+            self.client.test_x.shape[0])
         self.test_for_node(tree_num, node_num)
 
     def test_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 == self.client.num_of_trees:
-                loss = self.client.ls.loss(self.test_y, self.test_z)
+                loss = self.client.ls.loss(self.client.test_y,
+                                           self.client.test_z)
                 if self.client.criterion_type == 'CrossEntropyLoss':
-                    metric = self.client.ls.metric(self.test_y, self.test_z)
+                    metric = self.client.ls.metric(self.client.test_y,
+                                                   self.client.test_z)
                     metrics = {
                         'test_loss': loss,
                         'test_acc': metric[1],
-                        'test_total': len(self.test_y)
+                        'test_total': len(self.client.test_y)
                     }
                 else:
                     metrics = {
                         'test_loss': loss,
-                        'test_total': len(self.test_y)
+                        'test_total': len(self.client.test_y)
                     }
 
                 self.client.comm_manager.send(
@@ -65,7 +68,7 @@ class Test_base:
             else:
                 self.test_for_root(tree_num + 1)
         elif self.client.tree_list[tree_num][node_num].weight:
-            self.test_z += self.client.tree_list[tree_num][
+            self.client.test_z += self.client.tree_list[tree_num][
                 node_num].indicator * self.client.tree_list[tree_num][
                     node_num].weight
             self.test_for_node(tree_num, node_num + 1)
@@ -84,7 +87,7 @@ class Test_base:
         tree_num, node_num = message.content
         feature_idx = self.client.tree_list[tree_num][node_num].feature_idx
         feature_value = self.client.tree_list[tree_num][node_num].feature_value
-        L, R = self.client.split_for_lr(self.test_x[:, feature_idx],
+        L, R = self.client.split_for_lr(self.client.test_x[:, feature_idx],
                                         feature_value)
         self.client.comm_manager.send(
             Message(msg_type='LR',

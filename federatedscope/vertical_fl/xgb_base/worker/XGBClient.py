@@ -48,6 +48,11 @@ class XGBClient(Client):
 
         self.data = data
         self.own_label = ('y' in self.data['train'])
+
+        self.test_x = self.data['test']['x']
+        if self.own_label:
+            self.test_y = self.data['test']['y']
+
         self.y_hat = None
         self.y = None
         self.num_of_parties = config.federate.client_num
@@ -197,12 +202,18 @@ class XGBClient(Client):
             metric = self.ls.metric(self.y, self.y_hat)
 
             if tree_num + 1 == self.num_of_trees:
+                self.test_z = np.zeros(self.test_x.shape[0])
+
+                tree_num = 0
+                self.ts.test_for_root(tree_num)
+                '''
                 self.comm_manager.send(
                     Message(msg_type='test',
                             sender=self.ID,
                             state=self.state,
                             receiver=self.server_id,
                             content=None))
+                '''
             else:
                 self.state += 1
                 logger.info(
