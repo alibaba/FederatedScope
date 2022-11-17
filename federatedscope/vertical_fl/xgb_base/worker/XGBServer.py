@@ -45,10 +45,13 @@ class XGBServer(Server):
         self.tree_list = [
             Tree(self.max_tree_depth).tree for _ in range(self.num_of_trees)
         ]
+        self.feature_importance_dict = dict()
 
         self.register_handlers('test', self.callback_func_for_test)
         self.register_handlers('test_result',
                                self.callback_func_for_test_result)
+        self.register_handlers('feature_importance',
+                               self.callback_func_for_feature_importance)
 
     def trigger_for_start(self):
         if self.check_client_join_in():
@@ -63,6 +66,14 @@ class XGBServer(Server):
                     state=self.state,
                     content=(self.lambda_, self.gamma, self.num_of_trees,
                              self.max_tree_depth)))
+
+    def callback_func_for_feature_importance(self, message: Message):
+        feature_importance = message.content
+        self.feature_importance_dict[message.sender] = feature_importance
+        if len(self.feature_importance_dict) == self.num_of_parties:
+            self.feature_importance_dict = dict(
+                sorted(self.feature_importance_dict.items(),
+                       key=lambda x: x[0]))
 
     def callback_func_for_test(self, message: Message):
         test_x = self.data['test']['x']
@@ -87,12 +98,14 @@ class XGBServer(Server):
         metrics = message.content
         self._monitor.update_best_result(self.best_results,
                                          metrics,
-                                         results_type='server_global_eval',
-                                         round_wise_update_key=self._cfg.eval.
-                                         best_res_update_round_wise_key)
+                                         results_type='server_global_eval')
+        self._monitor.diagnosis(self.best_results,
+                                self.feature_importance_dict,
+                                results_type='feature_importance')
         formatted_logs = self._monitor.format_eval_res(
             metrics,
             rnd=self.state,
             role='Server #',
             forms=self._cfg.eval.report)
+        formatted_logs['feature_importance'] = self.feature_importance_dict
         logger.info(formatted_logs)

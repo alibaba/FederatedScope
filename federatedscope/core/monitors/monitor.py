@@ -699,3 +699,6 @@ class Monitor(object):
                     logger.error(
                         "cfg.wandb.use=True but not install the wandb package")
                     exit()
+
+    def diagnosis(self, best_results, new_results, results_type):
+        best_results[results_type] = new_results
