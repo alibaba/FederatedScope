@@ -128,13 +128,20 @@ class BlogFeedback:
         test_data['x'] = self.data_dict['test'][:, :self.feature_partition[-1]]
         test_data['y'] = self.data_dict['test'][:, self.feature_partition[-1]]
 
+        test_x = test_data['x']
+        test_y = test_data['y']
+
         self.data = dict()
         for i in range(self.num_of_clients + 1):
             self.data[i] = dict()
             if i == 0:
                 self.data[0]['train'] = None
+                self.data[0]['test'] = test_data
             elif i == 1:
                 self.data[1]['train'] = {'x': x[:, :self.feature_partition[0]]}
+                self.data[1]['test'] = {
+                    'x': test_x[:, :self.feature_partition[0]]
+                }
             else:
                 self.data[i]['train'] = {
                     'x': x[:,
@@ -142,7 +149,12 @@ class BlogFeedback:
                                                   2]:self.feature_partition[i -
                                                                             1]]
                 }
+                self.data[i]['test'] = {
+                    'x': test_x[:, self.feature_partition[i - 2]:self.
+                                feature_partition[i - 1]]
+                }
             self.data[i]['val'] = None
-            self.data[i]['test'] = test_data
+            # self.data[i]['test'] = test_data
 
         self.data[self.num_of_clients]['train']['y'] = y[:]
+        self.data[self.num_of_clients]['test']['y'] = test_y[:]
