@@ -57,7 +57,7 @@ class KrumAggregator(ClientsAvgAggregator):
 
     def _calculate_score(self, models):
         """
-        Calculate the Krum scores
+        Calculate Krum scores
         """
         model_num = len(models)
         closest_num = model_num - self.byzantine_node_num - 2
