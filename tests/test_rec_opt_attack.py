@@ -23,11 +23,11 @@ class RECTest(unittest.TestCase):
 
         cfg.federate.mode = 'standalone'
         cfg.train.local_update_steps = 1
-        cfg.federate.total_round_num = 20
-        cfg.federate.sample_client_num = 5
-        cfg.federate.client_num = 10
+        cfg.federate.total_round_num = 1
+        cfg.federate.sample_client_num = 1
+        cfg.federate.client_num = 1
 
-        cfg.data.root = 'test_data/'
+        cfg.data.root = 'data/'
         cfg.data.type = 'femnist'
         cfg.data.splits = [0.6, 0.2, 0.2]
         cfg.data.batch_size = 1
@@ -43,6 +43,7 @@ class RECTest(unittest.TestCase):
         cfg.model.type = 'convnet2'
         cfg.model.hidden = 2048
         cfg.model.out_channels = 62
+        cfg.model.dropout = 0
 
         cfg.train.optimizer.lr = 0.001
         cfg.train.optimizer.weight_decay = 0.0
@@ -55,7 +56,7 @@ class RECTest(unittest.TestCase):
         cfg.attack.reconstruct_lr = 0.1
         cfg.attack.reconstruct_optim = 'Adam'
         cfg.attack.info_diff_type = 'l2'
-        cfg.attack.max_ite = 40
+        cfg.attack.max_ite = 500
 
         return backup_cfg
 
@@ -86,6 +87,11 @@ class RECTest(unittest.TestCase):
         self.assertLess(
             test_best_results["client_summarized_weighted_avg"]['test_loss'],
             600)
+        for round in test_best_results['DLG_loss'].keys():
+            for client_id in test_best_results['DLG_loss'][round].keys():
+                self.assertLess(test_best_results['DLG_loss'][round][client_id], 10)
+
+
 
 
 if __name__ == '__main__':
