@@ -4,8 +4,9 @@ from federatedscope.core.aggregators import ClientsAvgAggregator
 
 
 class AsynClientsAvgAggregator(ClientsAvgAggregator):
-    """The aggregator used in asynchronous training, which discounts the
-        staled model updates
+    """
+    The aggregator used in asynchronous training, which discounts the \
+    staled model updates
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(AsynClientsAvgAggregator, self).__init__(model, device, config)
@@ -15,9 +16,10 @@ class AsynClientsAvgAggregator(ClientsAvgAggregator):
         To preform aggregation
 
         Arguments:
-        agg_info (dict): the feedbacks from clients
-        :returns: the aggregated results
-        :rtype: dict
+            agg_info (dict): the feedbacks from clients
+
+        Returns:
+            dict: the aggregated results
         """
 
         models = agg_info["client_feedback"]
@@ -39,16 +41,19 @@ class AsynClientsAvgAggregator(ClientsAvgAggregator):
 
     def discount_func(self, staleness):
         """
-        Served as an example, we discount the model update with staleness \tau
-        as: (1.0/((1.0+\tau)**factor)),
-        which has been used in previous studies such as FedAsync (Asynchronous
-        Federated Optimization) and FedBuff
+        Served as an example, we discount the model update with staleness tau \
+        as: ``(1.0/((1.0+\tau)**factor))``, \
+        which has been used in previous studies such as FedAsync ( \
+        Asynchronous Federated Optimization) and FedBuff \
         (Federated Learning with Buffered Asynchronous Aggregation).
         """
         return (1.0 /
                 ((1.0 + staleness)**self.cfg.asyn.staleness_discount_factor))
 
     def _para_weighted_avg(self, models, recover_fun=None, staleness=None):
+        """
+        Calculates the weighted average of models.
+        """
         training_set_size = 0
         for i in range(len(models)):
             sample_size, _ = models[i]

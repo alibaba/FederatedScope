@@ -50,19 +50,17 @@ def gen_scaffold_split(dataset, client_num=5):
 
 
 class ScaffoldSplitter(BaseSplitter):
+    """
+    Split molecular via scaffold. This splitter will sort all moleculars, and \
+    split them into several parts.
+
+    Arguments:
+        client_num (int): Split data into client_num of pieces.
+    """
     def __init__(self, client_num):
         super(ScaffoldSplitter, self).__init__(client_num)
 
     def __call__(self, dataset, **kwargs):
-        r"""Split dataset with smiles string into scaffold split
-
-        Arguments:
-            dataset (List or PyG.dataset): The molecular datasets.
-
-        Returns:
-            data_list (List(List(PyG.data))): Splited dataset via scaffold
-            split.
-        """
         dataset = [ds for ds in dataset]
         idx_slice = gen_scaffold_split(dataset)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]

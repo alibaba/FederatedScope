@@ -3,10 +3,14 @@ import inspect
 import logging
 import os
 import re
-from collections import defaultdict
+import ssl
+import urllib.request
 
 import numpy as np
+import os.path as osp
+
 from random import shuffle
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +34,16 @@ class RegexInverseMap:
 
 
 def load_dataset(config):
+    """
+    Loads the dataset for the given config from branches
+
+    Args:
+        config: configurations for FL, see ``federatedscope.core.configs``
+
+    Note:
+        See https://federatedscope.io/docs/datazoo/ for all available data.
+    """
+
     if config.data.type.lower() == 'toy':
         from federatedscope.tabular.dataloader.toy import load_toy_data
         dataset, modified_config = load_toy_data(config)
@@ -90,26 +104,17 @@ def load_dataset(config):
 
 
 def load_external_data(config=None):
-    r""" Based on the configuration file, this function imports external
-    datasets and applies train/valid/test splits and split by some specific
-    `splitter` into the standard FederatedScope input data format.
+    """
+    Based on the configuration file, this function imports external \
+    datasets and applies train/valid/test.
 
     Args:
         config: `CN` from `federatedscope/core/configs/config.py`
 
     Returns:
-        data_local_dict: dict of split dataloader.
-                        Format:
-                            {
-                                'client_id': {
-                                    'train': DataLoader(),
-                                    'test': DataLoader(),
-                                    'val': DataLoader()
-                                }
-                            }
-        modified_config: `CN` from `federatedscope/core/configs/config.py`,
+        (data, modified_config): tuple of ML split dataset, \
+        and `CN` from `federatedscope/core/configs/config.py`, \
         which might be modified in the function.
-
     """
 
     import torch
@@ -511,6 +516,17 @@ def load_external_data(config=None):
 
 
 def convert_data_mode(data, config):
+    """
+    Convert ``StandaloneDataDict`` to ``ClientData`` in ``distributed`` mode.
+
+    Args:
+        data: ``StandaloneDataDict``
+        config: configuration of FL course, see `federatedscope.core.configs`
+
+    Returns:
+        ``StandaloneDataDict`` in ``standalone`` mode, or ``ClientData`` in \
+        ``distributed`` mode.
+    """
     if config.federate.mode.lower() == 'standalone':
         return data
     else:
@@ -529,12 +545,31 @@ def convert_data_mode(data, config):
 
 
 def get_func_args(func):
+    """
+    Get the set of arguments that the function expects.
+
+    Args:
+        func: function to be analysis
+
+    Returns:
+        Arguments  that the function expects
+    """
     sign = inspect.signature(func).parameters.values()
     sign = set([val.name for val in sign])
     return sign
 
 
 def filter_dict(func, kwarg):
+    """
+    Filters out the common keys of kwarg that are not in kwarg.
+
+    Args:
+        func: function to be filtered
+        kwarg: dict to filter
+
+    Returns:
+        Filtered dict of arguments of the function.
+    """
     sign = get_func_args(func)
     common_args = sign.intersection(kwarg.keys())
     filtered_dict = {key: kwarg[key] for key in common_args}
@@ -543,12 +578,16 @@ def filter_dict(func, kwarg):
 
 def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
     """
-        Merge data from client 1 to `merged_max_data_id` contained in given
-        `all_data`.
-    :param all_data:
-    :param merged_max_data_id:
-    :param specified_dataset_name:
-    :return:
+    Merge data from client 1 to ``merged_max_data_id`` contained in given \
+    ``all_data``.
+
+    Args:
+        all_data: ``StandaloneDataDict``
+        merged_max_data_id: max merged data index
+        specified_dataset_name: split name to be merged
+
+    Returns:
+        Merged data.
     """
     import torch.utils.data
     from federatedscope.core.data.wrap_dataset import WrapDataset
@@ -586,9 +625,9 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                   torch.utils.data.DataLoader):
         if isinstance(all_data[id_contain_all_dataset_key][data_name].dataset,
                       WrapDataset):
-            data_elem_names = list(all_data[id_contain_all_dataset_key]
-                                   [data_name].dataset.dataset.keys())  #
             # e.g., x, y
+            data_elem_names = list(all_data[id_contain_all_dataset_key]
+                                   [data_name].dataset.dataset.keys())
             merged_data = {name: defaultdict(list) for name in dataset_names}
             for data_id in range(1, merged_max_data_id + 1):
                 for d_name in dataset_names:
@@ -602,19 +641,21 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                 for elem_name in data_elem_names:
                     merged_data[d_name][elem_name] = np.concatenate(
                         merged_data[d_name][elem_name])
-            for name in all_data[id_contain_all_dataset_key]:
-                all_data[id_contain_all_dataset_key][
-                    name].dataset.dataset = merged_data[name]
+                merged_data[d_name] = WrapDataset(merged_data[d_name])
         else:
-            merged_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
+            client_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
             for data_id in range(1, merged_max_data_id + 1):
                 if data_id == id_contain_all_dataset_key:
                     continue
                 for d_name in dataset_names:
                     if d_name not in all_data[data_id]:
                         continue
-                    merged_data[d_name].dataset.extend(
+                    client_data[d_name].dataset.extend(
                         all_data[data_id][d_name].dataset)
+            merged_data = {
+                key: client_data[key].dataset
+                for key in client_data
+            }
     else:
         raise NotImplementedError(
             "Un-supported type when merging data across different clients."
@@ -624,3 +665,68 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
             " 1): {data_id: {train: {x:ndarray, y:ndarray}} }"
             " 2): {data_id: {train: DataLoader }")
     return merged_data
+
+
+def save_local_data(dir_path,
+                    train_data=None,
+                    train_targets=None,
+                    test_data=None,
+                    test_targets=None,
+                    val_data=None,
+                    val_targets=None):
+    r"""
+    Save data to disk. Source: \
+    https://github.com/omarfoq/FedEM/blob/main/data/femnist/generate_data.py
+
+    Args:
+        train_data: x of train data
+        train_targets: y of train data
+        test_data: x of test data
+        test_targets: y of test data
+        val_data: x of validation data
+        val_targets:y of validation data
+
+    Note:
+        save ``(`train_data`, `train_targets`)`` in ``{dir_path}/train.pt``, \
+        ``(`val_data`, `val_targets`)`` in ``{dir_path}/val.pt`` \
+        and ``(`test_data`, `test_targets`)`` in ``{dir_path}/test.pt``
+    """
+    import torch
+    if (train_data is not None) and (train_targets is not None):
+        torch.save((train_data, train_targets), osp.join(dir_path, "train.pt"))
+
+    if (test_data is not None) and (test_targets is not None):
+        torch.save((test_data, test_targets), osp.join(dir_path, "test.pt"))
+
+    if (val_data is not None) and (val_targets is not None):
+        torch.save((val_data, val_targets), osp.join(dir_path, "val.pt"))
+
+
+def download_url(url: str, folder='folder'):
+    """
+    Downloads the content of an url to a folder. Modified from \
+    https://github.com/pyg-team/pytorch_geometric/tree/master/torch_geometric
+
+    Args:
+        url (string): The url of target file.
+        folder (string): The target folder.
+
+    Returns:
+        string: File path of downloaded files.
+    """
+
+    file = url.rpartition('/')[2]
+    file = file if file[0] == '?' else file.split('?')[0]
+    path = osp.join(folder, file)
+    if osp.exists(path):
+        logger.info(f'File {file} exists, use existing file.')
+        return path
+
+    logger.info(f'Downloading {url}')
+    os.makedirs(folder, exist_ok=True)
+    ctx = ssl._create_unverified_context()
+    data = urllib.request.urlopen(url, context=ctx)
+    with open(path, 'wb') as f:
+        f.write(data.read())
+
+    return path

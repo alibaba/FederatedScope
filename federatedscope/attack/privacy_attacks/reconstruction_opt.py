@@ -113,6 +113,7 @@ class DLG(object):
             if (ite + 1 == self.max_ite) or ite % 20 == 0:
                 logger.info('Ite: {}, gradient difference: {:.4f}'.format(
                     ite, info_diff))
+                self.dlg_recover_loss = info_diff.detach().to('cpu')
         return dummy_data.detach(), label.detach()
 
     def get_original_gradient_from_para(self, model, original_info,
