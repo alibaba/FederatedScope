@@ -27,7 +27,7 @@ class RECTest(unittest.TestCase):
         cfg.federate.sample_client_num = 1
         cfg.federate.client_num = 1
 
-        cfg.data.root = 'data/'
+        cfg.data.root = 'test_data/'
         cfg.data.type = 'femnist'
         cfg.data.splits = [0.6, 0.2, 0.2]
         cfg.data.batch_size = 1
@@ -89,9 +89,8 @@ class RECTest(unittest.TestCase):
             600)
         for round in test_best_results['DLG_loss'].keys():
             for client_id in test_best_results['DLG_loss'][round].keys():
-                self.assertLess(test_best_results['DLG_loss'][round][client_id], 10)
-
-
+                self.assertLess(
+                    test_best_results['DLG_loss'][round][client_id], 10)
 
 
 if __name__ == '__main__':
