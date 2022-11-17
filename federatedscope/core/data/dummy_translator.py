@@ -4,10 +4,18 @@ from federatedscope.core.data.base_data import ClientData
 
 class DummyDataTranslator(BaseDataTranslator):
     """
-    DummyDataTranslator convert FL dataset to DataLoader.
-    Do not perform FL split.
+    ``DummyDataTranslator`` convert datadict to ``StandaloneDataDict``. \
+    Compared to ``core.data.base_translator.BaseDataTranslator``, it do not \
+    perform FL split.
     """
     def split(self, dataset):
+        """
+        Perform ML split
+
+        Returns:
+            dict of ``ClientData`` with client_idx as key to build \
+            ``StandaloneDataDict``
+        """
         if not isinstance(dataset, dict):
             raise TypeError(f'Not support data type {type(dataset)}')
         datadict = {}

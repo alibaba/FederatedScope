@@ -15,13 +15,26 @@ def get_dataloader(dataset, config, split='train'):
     Args:
         dataset: dataset from which to load the data.
         config: configs containing batch_size, shuffle, etc.
-        split: current split (default: 'train'), if split is 'test', shuffle
-            will be `False`. And in PyG, 'test' split will use
-            `NeighborSampler` by default.
+        split: current split (default: ``train``), if split is ``test``, \
+        ``cfg.dataloader.shuffle`` will be ``False``. And in PyG, ``test`` \
+        split will use ``NeighborSampler`` by default.
 
     Returns:
-        dataloader: Instance of specific DataLoader configured by config.
+        Instance of specific ``DataLoader`` configured by config.
 
+    Note:
+      The key-value pairs of ``dataloader.type`` and ``DataLoader``:
+        ========================  ===============================
+        ``dataloader.type``       Source
+        ========================  ===============================
+        ``raw``                   No DataLoader
+        ``base``                  ``torch.utils.data.DataLoader``
+        ``pyg``                   ``torch_geometric.loader.DataLoader``
+        ``graphsaint-rw``             \
+        ``torch_geometric.loader.GraphSAINTRandomWalkSampler``
+        ``neighbor``              ``torch_geometric.loader.NeighborSampler``
+        ``mf``                    ``federatedscope.mf.dataloader.MFDataLoader``
+        ========================  ===============================
     """
     # DataLoader builder only support torch backend now.
     if config.backend != 'torch':

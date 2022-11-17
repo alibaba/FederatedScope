@@ -6,8 +6,6 @@ from federatedscope.core.data.wrap_dataset import WrapDataset
 
 
 def load_toy_data(config=None):
-    generate = config.federate.mode.lower() == 'standalone'
-
     def _generate_data(client_num=5,
                        instance_num=1000,
                        feature_num=5,
@@ -104,13 +102,8 @@ def load_toy_data(config=None):
 
         return data
 
-    if generate:
-        data = _generate_data(client_num=config.federate.client_num,
-                              save_data=config.data.save_data)
-    else:
-        with open(config.distribute.data_file, 'rb') as f:
-            data = pickle.load(f)
-        data = {config.distribute.data_idx: data}
+    data = _generate_data(client_num=config.federate.client_num,
+                          save_data=config.data.save_data)
     for client_id in data.keys():
         data[client_id] = {
             k: WrapDataset(v)

@@ -1,16 +1,12 @@
-from re import M
 import torch
 from PIL import Image
 import numpy as np
-from torchvision.datasets import MNIST, EMNIST, CIFAR10
-from torchvision.datasets import DatasetFolder
 from torchvision import transforms
 from federatedscope.core.auxiliaries.transform_builder import get_transform
 from federatedscope.attack.auxiliary.backdoor_utils import selectTrigger
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from federatedscope.attack.auxiliary.backdoor_utils import normalize
-from federatedscope.core.auxiliaries.enums import MODE
-import matplotlib
+from federatedscope.core.trainers.enums import MODE
 import pickle
 import logging
 import os

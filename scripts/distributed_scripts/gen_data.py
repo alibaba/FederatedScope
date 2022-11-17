@@ -8,7 +8,7 @@ def generate_data(client_num=3,
                   feature_num=5,
                   save_data=True):
     """
-    Generate data in FedRunner format
+    Generate data in Runner format
     Args:
         client_num:
         instance_num:

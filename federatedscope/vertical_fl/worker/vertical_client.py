@@ -64,7 +64,6 @@ class vFLClient(Client):
         if self.own_label:
             index, input_x, input_y = self.sample_data()
             self.batch_index = index
-
             u_A = 0.25 * np.matmul(input_x, self.theta) - 0.5 * input_y
             en_u_A = [self.public_key.encrypt(x) for x in u_A]
 
@@ -101,7 +100,7 @@ class vFLClient(Client):
         en_u, en_v_B = message.content
         input_x = self.sample_data(index=self.batch_index)
         en_v_A = en_u * input_x
-        en_v = np.concatenate([en_v_A, en_v_B], axis=-1)
+        en_v = np.concatenate([en_v_B, en_v_A], axis=-1)
 
         self.comm_manager.send(
             Message(msg_type='encryped_gradient',

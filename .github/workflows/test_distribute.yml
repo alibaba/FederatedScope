@@ -1,0 +1,42 @@
+name: UnitTests for Distributed Mode
+
+on: [push, pull_request]
+
+jobs:
+  run:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.9']
+        torch-version: ['1.10.1']
+        torchvision-version: ['0.11.2']
+        torchaudio-version: ['0.10.1']
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: '3.9'
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@master
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install PyTorch ${{ matrix.torch-version }}+cpu
+      run: |
+        pip install numpy typing-extensions dataclasses
+        pip install torch==${{ matrix.torch-version}}+cpu torchvision==${{matrix.torchvision-version}}+cpu torchaudio==${{matrix.torchaudio-version}}+cpu -f https://download.pytorch.org/whl/torch_stable.html
+    - name: Install FS
+      run: |
+        pip install -e .[test]
+    - name: Test Distributed (LR on toy)
+      run: |
+        python scripts/distributed_scripts/gen_data.py
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml &
+        sleep 2
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml &
+        sleep 2
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml &
+        sleep 2
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml
+        [ $? -eq 1 ] && exit 1 || echo "Passed"
