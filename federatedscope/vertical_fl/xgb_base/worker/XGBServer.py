@@ -107,5 +107,4 @@ class XGBServer(Server):
             rnd=self.state,
             role='Server #',
             forms=self._cfg.eval.report)
-        formatted_logs['feature_importance'] = self.feature_importance_dict
         logger.info(formatted_logs)
