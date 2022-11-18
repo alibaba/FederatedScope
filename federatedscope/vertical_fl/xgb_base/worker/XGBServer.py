@@ -86,13 +86,13 @@ class XGBServer(Server):
     '''
 
     def callback_func_for_test_result(self, message: Message):
-        metrics = message.content
+        tree_num, metrics = message.content
         self._monitor.update_best_result(self.best_results,
                                          metrics,
                                          results_type='server_global_eval')
         formatted_logs = self._monitor.format_eval_res(
             metrics,
-            rnd=self.state,
+            rnd=tree_num,
             role='Server #',
             forms=self._cfg.eval.report)
         logger.info(formatted_logs)
