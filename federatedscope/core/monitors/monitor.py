@@ -703,6 +703,6 @@ class Monitor(object):
     def add_items_to_best_result(self, best_results, new_results,
                                  results_type):
         """
-        Add a new key: value item (result-type: new_result) to best_result
+        Add a new key: value item (results-type: new_results) to best_result
         """
         best_results[results_type] = new_results
