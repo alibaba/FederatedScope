@@ -130,6 +130,7 @@ class Feature_sort_base:
         tree_num, node_num, split_ref = message.content
         feature_idx = split_ref['feature_idx'] - self.client.feature_list[
             self.client.ID - 1]
+        self.client.feature_importance[feature_idx] += 1
         value_idx = split_ref['value_idx']
         # feature_value = sorted(self.client.x[:, feature_idx])[value_idx]
         feature_value = self.client.x[:, feature_idx][

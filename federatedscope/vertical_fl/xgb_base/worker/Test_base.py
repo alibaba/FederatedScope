@@ -59,6 +59,8 @@ class Test_base:
     def test_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 < self.client.num_of_trees:
+                # TODO: need feedback during training
+                '''
                 if (tree_num + 1) % self.client._cfg.eval.freq == 0:
                     metrics = self.evaluation()
 
@@ -68,6 +70,7 @@ class Test_base:
                                 state=self.client.state,
                                 receiver=self.client.server_id,
                                 content=(tree_num, metrics)))
+                '''
                 self.client.state += 1
                 logger.info(
                     f'----------- Starting a new training round (Round '
@@ -78,13 +81,29 @@ class Test_base:
 
             else:
                 metrics = self.evaluation()
-
                 self.client.comm_manager.send(
                     Message(msg_type='test_result',
                             sender=self.client.ID,
                             state=self.client.state,
                             receiver=self.client.server_id,
                             content=(tree_num, metrics)))
+
+                self.client.comm_manager.send(
+                    Message(msg_type='send_feature_importance',
+                            sender=self.client.ID,
+                            state=self.client.state,
+                            receiver=[
+                                each for each in list(
+                                    self.client.comm_manager.neighbors.keys())
+                                if each != self.client.server_id
+                            ],
+                            content=None))
+                self.client.comm_manager.send(
+                    Message(msg_type='feature_importance',
+                            sender=self.client.ID,
+                            state=self.client.state,
+                            receiver=self.client.server_id,
+                            content=self.client.feature_importance))
 
             # else:
             #    self.test_for_root(tree_num + 1)
