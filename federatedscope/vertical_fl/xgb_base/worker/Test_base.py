@@ -59,7 +59,7 @@ class Test_base:
     def test_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 < self.client.num_of_trees:
-                # TODO: need feedback during training
+                # TODO: add feedback during training
                 '''
                 if (tree_num + 1) % self.client._cfg.eval.freq == 0:
                     metrics = self.evaluation()

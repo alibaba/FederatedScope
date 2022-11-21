@@ -87,26 +87,7 @@ class XGBServer(Server):
                 rnd=self.tree_num,
                 role='Server #',
                 forms=self._cfg.eval.report)
-            print(self.best_results)
             logger.info(formatted_logs)
 
     def callback_func_for_test_result(self, message: Message):
-        tree_num, metrics = message.content
-        if tree_num == self.num_of_trees - 1:
-            self.tree_num = tree_num
-            self.metrics = metrics
-            return
-        else:
-            self._monitor.update_best_result(self.best_results,
-                                             metrics,
-                                             results_type='server_global_eval')
-            self._monitor.add_items_to_best_result(
-                self.best_results,
-                self.feature_importance_dict,
-                results_type='feature_importance')
-            formatted_logs = self._monitor.format_eval_res(
-                metrics,
-                rnd=tree_num,
-                role='Server #',
-                forms=self._cfg.eval.report)
-            logger.info(formatted_logs)
+        self.tree_num, self.metrics = message.content
