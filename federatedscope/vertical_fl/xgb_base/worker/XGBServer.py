@@ -99,9 +99,10 @@ class XGBServer(Server):
         self._monitor.update_best_result(self.best_results,
                                          metrics,
                                          results_type='server_global_eval')
-        self._monitor.diagnosis(self.best_results,
-                                self.feature_importance_dict,
-                                results_type='feature_importance')
+        self._monitor.add_items_to_best_result(
+            self.best_results,
+            self.feature_importance_dict,
+            results_type='feature_importance')
         formatted_logs = self._monitor.format_eval_res(
             metrics,
             rnd=self.state,
