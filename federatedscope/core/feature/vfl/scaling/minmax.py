@@ -3,12 +3,12 @@ import numpy as np
 
 def wrap_min_max_scaling(worker):
     """
-    This function is to min-max scale vfl tabular data.
+    This function is to perform min-max scale vfl tabular data.
     Args:
         worker: ``federatedscope.core.workers.Worker`` to be wrapped
 
     Returns:
-        Wrapped worker with min-max scaled data
+        Wrap worker with min-max scaled data
     """
     feat_min, feat_max = [], []
     for split in ['train_data', 'val_data', 'test_data']:
