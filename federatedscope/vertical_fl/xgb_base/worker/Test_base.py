@@ -11,27 +11,10 @@ from federatedscope.core.message import Message
 class Test_base:
     def __init__(self, obj):
         self.client = obj
-        # self.client.register_handlers('test_data',
-        #                               self.callback_func_for_test_data)
-        # self.client.register_handlers('test_value',
-        #                                self.callback_func_for_test_value)
         self.client.register_handlers(
             'split_lr_for_test_data',
             self.callback_func_for_split_lr_for_test_data)
         self.client.register_handlers('LR', self.callback_func_for_LR)
-
-    '''
-    def callback_func_for_test_value(self, message: Message):
-        self.test_y = message.content
-    def callback_func_for_test_data(self, message: Message):
-        self.test_x = message.content
-
-        if self.client.own_label:
-            self.test_z = np.zeros(self.test_x.shape[0])
-
-            tree_num = 0
-            self.test_for_root(tree_num)
-    '''
 
     def evaluation(self):
         loss = self.client.ls.loss(self.client.test_y, self.client.test_z)

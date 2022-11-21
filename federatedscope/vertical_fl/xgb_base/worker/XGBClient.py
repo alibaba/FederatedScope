@@ -78,8 +78,6 @@ class XGBClient(Client):
         self.feature_order = [0] * self.my_num_of_feature
 
         self.feature_importance = [0] * self.my_num_of_feature
-        # self.ss = AdditiveSecretSharing(shared_party_num=self.num_of_parties)
-        # self.ns = Node_split()
         # self.fs = Feature_sort()
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order

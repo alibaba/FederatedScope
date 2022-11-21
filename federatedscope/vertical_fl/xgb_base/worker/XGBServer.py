@@ -47,7 +47,6 @@ class XGBServer(Server):
         ]
         self.feature_importance_dict = dict()
 
-        # self.register_handlers('test', self.callback_func_for_test)
         self.register_handlers('test_result',
                                self.callback_func_for_test_result)
         self.register_handlers('feature_importance',
