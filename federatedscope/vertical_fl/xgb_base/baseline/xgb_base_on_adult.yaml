@@ -26,7 +26,7 @@ train:
     max_tree_depth: 3
 xgb_base:
   use: True
-  use_bin: False
+  use_bin: True
   dims: [7, 14]
 eval:
   freq: 5

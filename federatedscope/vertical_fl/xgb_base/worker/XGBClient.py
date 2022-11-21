@@ -70,6 +70,7 @@ class XGBClient(Client):
 
         self.feature_order = [0] * self.my_num_of_feature
 
+        self.feature_importance = [0] * self.my_num_of_feature
         # self.ss = AdditiveSecretSharing(shared_party_num=self.num_of_parties)
         # self.ns = Node_split()
         # self.fs = Feature_sort()
@@ -91,9 +92,10 @@ class XGBClient(Client):
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('data_sample',
                                self.callback_func_for_data_sample)
-
         self.register_handlers('compute_next_node',
                                self.callback_func_for_compute_next_node)
+        self.register_handlers('send_feature_importance',
+                               self.callback_func_for_send_feature_importance)
 
     # save the order of values in each feature
     def order_feature(self, data):
@@ -125,6 +127,8 @@ class XGBClient(Client):
             # init y_hat
             self.y_hat = np.random.uniform(low=0.0, high=1.0, size=len(self.y))
             # self.y_hat = np.zeros(len(self.y))
+            logger.info(f'----------- Starting a new training round (Round '
+                        f'#{self.state}) -------------')
             self.comm_manager.send(
                 Message(
                     msg_type='data_sample',
@@ -200,6 +204,23 @@ class XGBClient(Client):
                             state=self.state,
                             receiver=self.server_id,
                             content=None))
+                self.comm_manager.send(
+                    Message(msg_type='send_feature_importance',
+                            sender=self.ID,
+                            state=self.state,
+                            receiver=[
+                                each for each in list(
+                                    self.comm_manager.neighbors.keys())
+                                if each != self.server_id
+                            ],
+                            content=None))
+                self.comm_manager.send(
+                    Message(msg_type='feature_importance',
+                            sender=self.ID,
+                            state=self.state,
+                            receiver=self.server_id,
+                            content=self.feature_importance))
+
             else:
                 self.state += 1
                 logger.info(
@@ -214,3 +235,11 @@ class XGBClient(Client):
                     node_num].weight * self.tree_list[tree_num][
                         node_num].indicator
             self.compute_weight(tree_num, node_num + 1)
+
+    def callback_func_for_send_feature_importance(self, message: Message):
+        self.comm_manager.send(
+            Message(msg_type='feature_importance',
+                    sender=self.ID,
+                    state=self.state,
+                    receiver=self.server_id,
+                    content=self.feature_importance))
