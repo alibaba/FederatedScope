@@ -59,5 +59,3 @@ if __name__ == '__main__':
         run_smac(init_cfg, scheduler, client_cfgs)
     else:
         raise ValueError(f'No scheduler named {init_cfg.hpo.scheduler}')
-
-    # logger.info(results)

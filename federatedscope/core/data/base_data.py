@@ -149,9 +149,9 @@ class ClientData(dict):
     """
     def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
         self.client_cfg = None
-        self.train = train
-        self.val = val
-        self.test = test
+        self.train_data = train
+        self.val_data = val
+        self.test_data = test
         self.setup(client_cfg)
         if kwargs is not None:
             for key in kwargs:
@@ -175,11 +175,12 @@ class ClientData(dict):
                 return False
 
         self.client_cfg = new_client_cfg
-        if self.train is not None:
-            self['train'] = get_dataloader(self.train, self.client_cfg,
+        if self.train_data is not None:
+            self['train'] = get_dataloader(self.train_data, self.client_cfg,
                                            'train')
-        if self.val is not None:
-            self['val'] = get_dataloader(self.val, self.client_cfg, 'val')
-        if self.test is not None:
-            self['test'] = get_dataloader(self.test, self.client_cfg, 'test')
+        if self.val_data is not None:
+            self['val'] = get_dataloader(self.val_data, self.client_cfg, 'val')
+        if self.test_data is not None:
+            self['test'] = get_dataloader(self.test_data, self.client_cfg,
+                                          'test')
         return True

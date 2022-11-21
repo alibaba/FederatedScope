@@ -55,6 +55,10 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.min_curv = 0.02
     cfg.data.quadratic.max_curv = 12.5
 
+    # feature engineer
+    cfg.feat_engr = CN()
+    cfg.feat_engr.type = ''
+
     # --------------- outdated configs ---------------
     # TODO: delete this code block
     cfg.data.loader = ''
