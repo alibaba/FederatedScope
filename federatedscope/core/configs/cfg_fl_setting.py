@@ -79,6 +79,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.xgb_base = CN()
     cfg.xgb_base.use = False
     cfg.xgb_base.use_bin = False
+    cfg.xgb_base.use_random_noise = True
     cfg.xgb_base.dims = [5, 10]
 
     # --------------- register corresponding check function ----------

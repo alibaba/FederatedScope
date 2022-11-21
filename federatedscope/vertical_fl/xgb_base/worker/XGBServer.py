@@ -64,27 +64,6 @@ class XGBServer(Server):
                     content=(self.lambda_, self.gamma, self.num_of_trees,
                              self.max_tree_depth)))
 
-    '''
-    def callback_func_for_test(self, message: Message):
-        test_x = self.data['test']['x']
-        test_y = self.data['test']['y']
-        for i in range(self.num_of_parties):
-            test_data = test_x[:,
-                               self.feature_list[i]:self.feature_list[i + 1]]
-            self.comm_manager.send(
-                Message(msg_type='test_data',
-                        sender=self.ID,
-                        receiver=i + 1,
-                        state=self.state,
-                        content=test_data))
-        self.comm_manager.send(
-            Message(msg_type='test_value',
-                    sender=self.ID,
-                    receiver=self.num_of_parties,
-                    state=self.state,
-                    content=test_y))
-    '''
-
     def callback_func_for_test_result(self, message: Message):
         tree_num, metrics = message.content
         self._monitor.update_best_result(self.best_results,

@@ -5,6 +5,7 @@ import pandas as pd
 import collections
 
 from federatedscope.core.message import Message
+from federatedscope.vertical_fl.xgb_base.utils.RandomNoise import random_noise
 
 
 class Feature_sort_by_bin:
@@ -14,9 +15,10 @@ class Feature_sort_by_bin:
         of all features, and then partition each order to several bins,
         in each bin, they can do some permutation to protect their privacy.
         """
-    def __init__(self, obj, bin_num=100):
+    def __init__(self, obj, epsilon=2, bin_num=100):
         self.client = obj
         self.total_feature_order_dict = dict()
+        self.epsilon = epsilon
         self.bin_num = bin_num
         self.total_feature_order_list_of_dict = dict()
         self.feature_order_list_of_dict = [
@@ -29,7 +31,19 @@ class Feature_sort_by_bin:
             for j in range(self.bin_num):
                 self.feature_order_list_of_dict[i][j] = ordered_list[i][
                     j * bin_size:(j + 1) * bin_size]
-                # TODO: add some perturbation in each set
+                # perturb the order of each list
+                self.feature_order_list_of_dict[i][j] = np.random.permutation(
+                    self.feature_order_list_of_dict[i][j])
+        if self.client.use_random_noise:
+            rn = random_noise(self.epsilon, self.bin_num)
+            self.feature_order_list_of_dict_noised =\
+                rn.add_perm_noised_to_list_of_dict(
+                    self.feature_order_list_of_dict,
+                    epsilon=self.epsilon,
+                    bin_num=self.bin_num)
+        else:
+            self.feature_order_list_of_dict_noised =\
+                self.feature_order_list_of_dict
 
     def preparation(self):
         self.client.register_handlers('feature_order',
@@ -45,7 +59,7 @@ class Feature_sort_by_bin:
                         sender=self.client.ID,
                         state=self.client.state,
                         receiver=self.client.num_of_parties,
-                        content=self.feature_order_list_of_dict))
+                        content=self.feature_order_list_of_dict_noised))
 
     # label owner
     def callback_func_for_feature_order(self, message: Message):

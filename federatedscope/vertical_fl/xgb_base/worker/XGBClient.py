@@ -85,6 +85,7 @@ class XGBClient(Client):
         #   the second one corresponding to sending the bins of feature order
         if config.xgb_base.use_bin:
             self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
+            self.use_random_noise = config.xgb_base.use_random_noise
         else:
             self.fs = Feature_sort_base(self)
 
@@ -201,34 +202,8 @@ class XGBClient(Client):
             else:
                 self.y_hat += self.z
             self.z = 0
-            metric = self.ls.metric(self.y, self.y_hat)
-
-            # if tree_num + 1 == self.num_of_trees:
-            #    return
 
             self.ts.test_for_root(tree_num)
-            '''
-                tree_num = 0
-                self.ts.test_for_root(tree_num)
-                self.comm_manager.send(
-                    Message(msg_type='test',
-                            sender=self.ID,
-                            state=self.state,
-                            receiver=self.server_id,
-                            content=None))
-            else:
-            '''
-            '''
-            self.state += 1
-            logger.info(
-                f'----------- Starting a new training round (Round '
-                f'#{self.state}) -------------')
-            tree_num += 1
-
-            # if tree_num % self._cfg.eval.freq == 0:
-            # to build the next tree
-            self.fs.compute_for_root(tree_num)
-            '''
         else:
             if self.tree_list[tree_num][node_num].weight:
                 self.z += self.tree_list[tree_num][

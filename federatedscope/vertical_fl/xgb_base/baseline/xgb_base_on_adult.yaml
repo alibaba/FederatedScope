@@ -28,6 +28,7 @@ xgb_base:
   use: True
   use_bin: True
   dims: [7, 14]
+  use_random_noise: True
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
