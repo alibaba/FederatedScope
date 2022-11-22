@@ -24,6 +24,6 @@ def wrap_min_max_scaling(worker):
         if hasattr(worker.data, split):
             split_data = getattr(worker.data, split)
             if split_data is not None and 'x' in split_data:
-                split_data['x'] = (split_data['x'] - feat_min) / (feat_max -
-                                                                  feat_min)
+                split_data['x'] = \
+                    (split_data['x'] - feat_min) / (feat_max - feat_min)
     return worker

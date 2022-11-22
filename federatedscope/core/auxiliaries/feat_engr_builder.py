@@ -22,7 +22,9 @@ def get_feat_engr_wrapper(config):
             wrap_min_max_scaling
         return wrap_min_max_scaling, wrap_min_max_scaling
     elif config.feat_engr.type == 'vfl_instance_norm':
-        ...
+        from federatedscope.core.feature.vfl.scaling.instance_norm import \
+            wrap_instance_norm_for_client, wrap_instance_norm_for_server
+        return wrap_instance_norm_for_client, wrap_instance_norm_for_server
     else:
         logger.warning(f'Feature engineering method {config.feat_engr.type} '
                        f'not provide!')
