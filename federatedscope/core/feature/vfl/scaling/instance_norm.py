@@ -30,6 +30,9 @@ def wrap_instance_norm_for_server(worker):
                         timestamp=self.cur_timestamp))
 
     def callback_func_for_instance_mean(self, message: Message):
+        """
+        The handling function for aggregating instance_norm from all clients.
+        """
         stat = message.content
         sender = message.sender
         self.msg_buffer['instance_mean'][sender] = stat
@@ -53,6 +56,9 @@ def wrap_instance_norm_for_server(worker):
                         content=instance_mean))
 
     def callback_func_for_instance_var(self, message: Message):
+        """
+        The handling function for aggregating instance_var from all clients.
+        """
         stat = message.content
         sender = message.sender
         self.msg_buffer['instance_var'][sender] = stat
