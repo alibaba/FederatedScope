@@ -166,7 +166,6 @@ class Adult:
                                 feature_partition[i - 1]]
                 }
             self.data[i]['val'] = None
-            # self.data[i]['test'] = test_data
 
         self.data[self.num_of_clients]['train']['y'] = y[:]
         self.data[self.num_of_clients]['test']['y'] = test_y[:]

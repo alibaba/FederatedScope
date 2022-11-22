@@ -53,7 +53,7 @@ class XGBClient(Client):
         if self.own_label:
             self.test_y = self.data['test']['y']
 
-        self.test_z = np.zeros(self.test_x.shape[0])
+        self.test_result = np.zeros(self.test_x.shape[0])
 
         self.y_hat = None
         self.y = None

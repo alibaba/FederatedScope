@@ -8,7 +8,7 @@ model:
   type: lr
 data:
   root: data/
-  type: blogfeedback
+  type: blog
   batch_size: 8000
   splits: [1.0, 0.0]
 dataloader:

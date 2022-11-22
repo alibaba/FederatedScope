@@ -1,44 +1,25 @@
-import glob
 import logging
 import os
 import os.path as osp
 
 import numpy as np
 import pandas as pd
-
 from torchvision.datasets.utils import download_and_extract_archive
 
 logger = logging.getLogger(__name__)
 
 
-class BlogFeedback:
+class Credit:
     """
-    BlogFeedback Data Set
-    (https://archive.ics.uci.edu/ml/datasets/BlogFeedback)
-
-    Data Set Information:
-    This data originates from blog posts. The raw HTML-documents
-    of the blog posts were crawled and processed.
-    The prediction task associated with the data is the prediction
-    of the number of comments in the upcoming 24 hours. In order
-    to simulate this situation, we choose a basetime (in the past)
-    and select the blog posts that were published at most
-    72 hours before the selected base date/time. Then, we calculate
-    all the features of the selected blog posts from the information
-    that was available at the basetime, therefore each instance
-    corresponds to a blog post. The target is the number of
-    comments that the blog post received in the next 24 hours
-    relative to the basetime.
-
-    Number of Instances: 60021
-    Number of Attributes: 281, the last one is the number of comments
-                          in the next 24 hours
-    Training set: 'blogData_train.csv', 52397 instances
-    Testing set: 'blogData_test*.csv', 60 files, 7624 instances totally
+    Give Me Some Credit Data Set
+    (https://www.kaggle.com/competitions/GiveMeSomeCredit)
+    Data Set: cs-training.csv, 150000 instances and 12 attributes
+    The first attribute is the user ID which we do not need, the second
+    attribute is the label, determining whether a loan should be granted.
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘adult’ or ‘xxx’
+        name (str): name of dataset, ‘credit’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -50,9 +31,9 @@ class BlogFeedback:
         download (bool): indicator to download dataset
         seed: a random seed
     """
-    base_folder = 'blogfeedback'
-    url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com/BlogFeedback.zip'
-    raw_file = 'BlogFeedback.zip'
+    base_folder = 'givemesomecredit'
+    url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com/cs-training.zip'
+    raw_file = 'cs-training.csv'
 
     def __init__(self,
                  root,
@@ -64,12 +45,12 @@ class BlogFeedback:
                  tr_frac=0.8,
                  download=True,
                  seed=123):
-        super(BlogFeedback, self).__init__()
+        super(Credit, self).__init__()
         self.root = root
         self.name = name
         self.num_of_clients = num_of_clients
-        self.tr_frac = tr_frac
         self.feature_partition = feature_partition
+        self.tr_frac = tr_frac
         self.seed = seed
         self.args = args
         self.algo = algo
@@ -87,25 +68,38 @@ class BlogFeedback:
 
     def _get_data(self):
         fpath = os.path.join(self.root, self.base_folder)
-        train_file = osp.join(fpath, 'blogData_train.csv')
-        train_data = self._read_raw(train_file)
-        test_files = glob.glob(osp.join(fpath, "blogData_test*.csv"))
-        test_files.sort()
+        file = osp.join(fpath, self.raw_file)
+        data = self._read_raw(file)
+        data = data[:, 1:]
 
-        flag = 0
-        for f in test_files:
-            f_data = self._read_raw(f)
-            if flag == 0:
-                test_data = f_data
-                flag = 1
-            else:
-                test_data = np.concatenate((test_data, f_data), axis=0)
+        # the following codes are used to choose balanced data
+        # they may be removed later
+        # '''
+        sample_size = 150000
 
-        self.data_dict['train'] = train_data
-        self.data_dict['test'] = test_data
+        def balance_sample(sample_size, y):
+            y_ones_idx = (y == 1).nonzero()[0]
+            y_ones_idx = np.random.choice(y_ones_idx,
+                                          size=int(sample_size / 2))
+            y_zeros_idx = (y == 0).nonzero()[0]
+            y_zeros_idx = np.random.choice(y_zeros_idx,
+                                           size=int(sample_size / 2))
+
+            y_index = np.concatenate([y_zeros_idx, y_ones_idx], axis=0)
+            np.random.shuffle(y_index)
+            return y_index
+
+        sample_idx = balance_sample(sample_size, data[:, 0])
+        data = data[sample_idx]
+        # '''
+
+        train_num = int(self.tr_frac * len(data))
+
+        self.data_dict['train'] = data[:train_num]
+        self.data_dict['test'] = data[train_num:]
 
     def _read_raw(self, file_path):
-        data = pd.read_csv(file_path, header=None, usecols=list(range(281)))
+        data = pd.read_csv(file_path)
         data = data.values
         return data
 
@@ -122,12 +116,14 @@ class BlogFeedback:
                                      filename=self.url.split('/')[-1])
 
     def _partition_data(self):
-        x = self.data_dict['train'][:, :self.feature_partition[-1]]
-        y = self.data_dict['train'][:, self.feature_partition[-1]]
-        test_data = dict()
-        test_data['x'] = self.data_dict['test'][:, :self.feature_partition[-1]]
-        test_data['y'] = self.data_dict['test'][:, self.feature_partition[-1]]
 
+        x = self.data_dict['train'][:, 1:]
+        y = self.data_dict['train'][:, 0]
+
+        test_data = {
+            'x': self.data_dict['test'][:, 1:],
+            'y': self.data_dict['test'][:, 0]
+        }
         test_x = test_data['x']
         test_y = test_data['y']
 
@@ -154,7 +150,6 @@ class BlogFeedback:
                                 feature_partition[i - 1]]
                 }
             self.data[i]['val'] = None
-            # self.data[i]['test'] = test_data
 
-        self.data[self.num_of_clients]['train']['y'] = y[:]
+        self.data[self.num_of_clients]['train']['y'] = y
         self.data[self.num_of_clients]['test']['y'] = test_y[:]

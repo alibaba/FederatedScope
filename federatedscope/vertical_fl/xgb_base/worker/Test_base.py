@@ -17,10 +17,10 @@ class Test_base:
         self.client.register_handlers('LR', self.callback_func_for_LR)
 
     def evaluation(self):
-        loss = self.client.ls.loss(self.client.test_y, self.client.test_z)
+        loss = self.client.ls.loss(self.client.test_y, self.client.test_result)
         if self.client.criterion_type == 'CrossEntropyLoss':
             metric = self.client.ls.metric(self.client.test_y,
-                                           self.client.test_z)
+                                           self.client.test_result)
             metrics = {
                 'test_loss': loss,
                 'test_acc': metric[1],
@@ -43,23 +43,11 @@ class Test_base:
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 < self.client.num_of_trees:
                 # TODO: add feedback during training
-                '''
-                if (tree_num + 1) % self.client._cfg.eval.freq == 0:
-                    metrics = self.evaluation()
-
-                    self.client.comm_manager.send(
-                        Message(msg_type='test_result',
-                                sender=self.client.ID,
-                                state=self.client.state,
-                                receiver=self.client.server_id,
-                                content=(tree_num, metrics)))
-                '''
                 self.client.state += 1
                 logger.info(
                     f'----------- Starting a new training round (Round '
                     f'#{self.client.state}) -------------')
-                # if tree_num % self._cfg.eval.freq == 0:
-                # to build the next tree
+                # build the next tree
                 self.client.fs.compute_for_root(tree_num + 1)
 
             else:
@@ -87,11 +75,8 @@ class Test_base:
                             state=self.client.state,
                             receiver=self.client.server_id,
                             content=self.client.feature_importance))
-
-            # else:
-            #    self.test_for_root(tree_num + 1)
         elif self.client.tree_list[tree_num][node_num].weight:
-            self.client.test_z += self.client.tree_list[tree_num][
+            self.client.test_result += self.client.tree_list[tree_num][
                 node_num].indicator * self.client.tree_list[tree_num][
                     node_num].weight
             self.test_for_node(tree_num, node_num + 1)
