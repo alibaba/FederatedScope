@@ -48,6 +48,13 @@ class XGBClient(Client):
 
         self.data = data
         self.own_label = ('y' in self.data['train'])
+
+        self.test_x = self.data['test']['x']
+        if self.own_label:
+            self.test_y = self.data['test']['y']
+
+        self.test_result = np.zeros(self.test_x.shape[0])
+
         self.y_hat = None
         self.y = None
         self.num_of_parties = config.federate.client_num
@@ -71,8 +78,6 @@ class XGBClient(Client):
         self.feature_order = [0] * self.my_num_of_feature
 
         self.feature_importance = [0] * self.my_num_of_feature
-        # self.ss = AdditiveSecretSharing(shared_party_num=self.num_of_parties)
-        # self.ns = Node_split()
         # self.fs = Feature_sort()
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order
@@ -84,9 +89,10 @@ class XGBClient(Client):
 
         self.ts = Test_base(self)
 
-        if config.criterion.type == 'CrossEntropyLoss':
+        self.criterion_type = config.criterion.type
+        if self.criterion_type == 'CrossEntropyLoss':
             self.ls = TwoClassificationloss()
-        elif config.criterion.type == 'Regression':
+        elif self.criterion_type == 'Regression':
             self.ls = Regression_by_mseloss()
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
@@ -195,40 +201,8 @@ class XGBClient(Client):
             else:
                 self.y_hat += self.z
             self.z = 0
-            metric = self.ls.metric(self.y, self.y_hat)
 
-            if tree_num + 1 == self.num_of_trees:
-                self.comm_manager.send(
-                    Message(msg_type='test',
-                            sender=self.ID,
-                            state=self.state,
-                            receiver=self.server_id,
-                            content=None))
-                self.comm_manager.send(
-                    Message(msg_type='send_feature_importance',
-                            sender=self.ID,
-                            state=self.state,
-                            receiver=[
-                                each for each in list(
-                                    self.comm_manager.neighbors.keys())
-                                if each != self.server_id
-                            ],
-                            content=None))
-                self.comm_manager.send(
-                    Message(msg_type='feature_importance',
-                            sender=self.ID,
-                            state=self.state,
-                            receiver=self.server_id,
-                            content=self.feature_importance))
-
-            else:
-                self.state += 1
-                logger.info(
-                    f'----------- Starting a new training round (Round '
-                    f'#{self.state}) -------------')
-                tree_num += 1
-                # to build the next tree
-                self.fs.compute_for_root(tree_num)
+            self.ts.test_for_root(tree_num)
         else:
             if self.tree_list[tree_num][node_num].weight:
                 self.z += self.tree_list[tree_num][

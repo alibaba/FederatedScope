@@ -47,7 +47,6 @@ class XGBServer(Server):
         ]
         self.feature_importance_dict = dict()
 
-        self.register_handlers('test', self.callback_func_for_test)
         self.register_handlers('test_result',
                                self.callback_func_for_test_result)
         self.register_handlers('feature_importance',
@@ -67,6 +66,7 @@ class XGBServer(Server):
                     content=(self.lambda_, self.gamma, self.num_of_trees,
                              self.max_tree_depth)))
 
+    # TODO: merge the following two callback funcs
     def callback_func_for_feature_importance(self, message: Message):
         feature_importance = message.content
         self.feature_importance_dict[message.sender] = feature_importance
@@ -74,38 +74,19 @@ class XGBServer(Server):
             self.feature_importance_dict = dict(
                 sorted(self.feature_importance_dict.items(),
                        key=lambda x: x[0]))
-
-    def callback_func_for_test(self, message: Message):
-        test_x = self.data['test']['x']
-        test_y = self.data['test']['y']
-        for i in range(self.num_of_parties):
-            test_data = test_x[:,
-                               self.feature_list[i]:self.feature_list[i + 1]]
-            self.comm_manager.send(
-                Message(msg_type='test_data',
-                        sender=self.ID,
-                        receiver=i + 1,
-                        state=self.state,
-                        content=test_data))
-        self.comm_manager.send(
-            Message(msg_type='test_value',
-                    sender=self.ID,
-                    receiver=self.num_of_parties,
-                    state=self.state,
-                    content=test_y))
+            self._monitor.update_best_result(self.best_results,
+                                             self.metrics,
+                                             results_type='server_global_eval')
+            self._monitor.add_items_to_best_result(
+                self.best_results,
+                self.feature_importance_dict,
+                results_type='feature_importance')
+            formatted_logs = self._monitor.format_eval_res(
+                self.metrics,
+                rnd=self.tree_num,
+                role='Server #',
+                forms=self._cfg.eval.report)
+            logger.info(formatted_logs)
 
     def callback_func_for_test_result(self, message: Message):
-        metrics = message.content
-        self._monitor.update_best_result(self.best_results,
-                                         metrics,
-                                         results_type='server_global_eval')
-        self._monitor.add_items_to_best_result(
-            self.best_results,
-            self.feature_importance_dict,
-            results_type='feature_importance')
-        formatted_logs = self._monitor.format_eval_res(
-            metrics,
-            rnd=self.state,
-            role='Server #',
-            forms=self._cfg.eval.report)
-        logger.info(formatted_logs)
+        self.tree_num, self.metrics = message.content
