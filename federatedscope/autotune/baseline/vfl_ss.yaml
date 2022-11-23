@@ -7,17 +7,19 @@ train.optimizer.num_of_trees:
   type: int
   lower: 3
   upper: 5
-xgb_base.use:
+vertical.use:
   type: cate
   choices: [True, False]
+feat_engr.type:
+  type: cate
+  choices: ['', 'vfl_min_max_scaling', 'vfl_instance_norm']
 condition1:
   type: equal
   child: train.optimizer.num_of_trees
-  parent: xgb_base.use
-  value: True
+  parent: vertical.use
+  value: False
 condition2:
   type: equal
   child: train.optimizer.lr
-  parent: xgb_base.use
-  value: False
-
+  parent: vertical.use
+  value: True

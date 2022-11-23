@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from federatedscope.core.message import Message
+from federatedscope.vertical_fl.worker.vertical_server import vFLServer
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,8 @@ def wrap_instance_norm_for_server(worker):
     """
     def trigger_for_start(self):
         if self.check_client_join_in():
+            if isinstance(self, vFLServer):
+                self.broadcast_public_keys()
             self.broadcast_client_address()
             # Ask for instance statistic
             self.msg_buffer['instance_mean'] = {}
