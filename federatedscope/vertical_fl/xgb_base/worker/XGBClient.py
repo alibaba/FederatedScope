@@ -48,6 +48,13 @@ class XGBClient(Client):
 
         self.data = data
         self.own_label = ('y' in self.data['train'])
+
+        self.test_x = self.data['test']['x']
+        if self.own_label:
+            self.test_y = self.data['test']['y']
+
+        self.test_result = np.zeros(self.test_x.shape[0])
+
         self.y_hat = None
         self.y = None
         self.num_of_parties = config.federate.client_num
@@ -70,8 +77,7 @@ class XGBClient(Client):
 
         self.feature_order = [0] * self.my_num_of_feature
 
-        # self.ss = AdditiveSecretSharing(shared_party_num=self.num_of_parties)
-        # self.ns = Node_split()
+        self.feature_importance = [0] * self.my_num_of_feature
         # self.fs = Feature_sort()
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order
@@ -83,17 +89,19 @@ class XGBClient(Client):
 
         self.ts = Test_base(self)
 
-        if config.criterion.type == 'CrossEntropyLoss':
+        self.criterion_type = config.criterion.type
+        if self.criterion_type == 'CrossEntropyLoss':
             self.ls = TwoClassificationloss()
-        elif config.criterion.type == 'Regression':
+        elif self.criterion_type == 'Regression':
             self.ls = Regression_by_mseloss()
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('data_sample',
                                self.callback_func_for_data_sample)
-
         self.register_handlers('compute_next_node',
                                self.callback_func_for_compute_next_node)
+        self.register_handlers('send_feature_importance',
+                               self.callback_func_for_send_feature_importance)
 
     # save the order of values in each feature
     def order_feature(self, data):
@@ -125,6 +133,8 @@ class XGBClient(Client):
             # init y_hat
             self.y_hat = np.random.uniform(low=0.0, high=1.0, size=len(self.y))
             # self.y_hat = np.zeros(len(self.y))
+            logger.info(f'----------- Starting a new training round (Round '
+                        f'#{self.state}) -------------')
             self.comm_manager.send(
                 Message(
                     msg_type='data_sample',
@@ -191,26 +201,19 @@ class XGBClient(Client):
             else:
                 self.y_hat += self.z
             self.z = 0
-            metric = self.ls.metric(self.y, self.y_hat)
 
-            if tree_num + 1 == self.num_of_trees:
-                self.comm_manager.send(
-                    Message(msg_type='test',
-                            sender=self.ID,
-                            state=self.state,
-                            receiver=self.server_id,
-                            content=None))
-            else:
-                self.state += 1
-                logger.info(
-                    f'----------- Starting a new training round (Round '
-                    f'#{self.state}) -------------')
-                tree_num += 1
-                # to build the next tree
-                self.fs.compute_for_root(tree_num)
+            self.ts.test_for_root(tree_num)
         else:
             if self.tree_list[tree_num][node_num].weight:
                 self.z += self.tree_list[tree_num][
                     node_num].weight * self.tree_list[tree_num][
                         node_num].indicator
             self.compute_weight(tree_num, node_num + 1)
+
+    def callback_func_for_send_feature_importance(self, message: Message):
+        self.comm_manager.send(
+            Message(msg_type='feature_importance',
+                    sender=self.ID,
+                    state=self.state,
+                    receiver=self.server_id,
+                    content=self.feature_importance))

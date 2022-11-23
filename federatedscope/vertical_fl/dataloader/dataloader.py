@@ -1,6 +1,10 @@
 import numpy as np
 
 from federatedscope.vertical_fl.dataset.adult import Adult
+from federatedscope.vertical_fl.dataset.abalone import Abalone
+from federatedscope.vertical_fl.dataset.credit \
+    import Credit
+from federatedscope.vertical_fl.dataset.blog import Blog
 
 
 def load_vertical_data(config=None, generate=False):
@@ -24,6 +28,8 @@ def load_vertical_data(config=None, generate=False):
     elif config.xgb_base.use:
         feature_partition = config.xgb_base.dims
         algo = 'xgb'
+    else:
+        raise ValueError('You must provide the data partition')
 
     if config.data.args:
         args = config.data.args[0]
@@ -40,6 +46,54 @@ def load_vertical_data(config=None, generate=False):
                         seed=1234,
                         args=args,
                         algo=algo)
+        data = dataset.data
+        return data, config
+    elif name == 'credit':
+        dataset = Credit(root=path,
+                         name=name,
+                         num_of_clients=config.federate.client_num,
+                         feature_partition=feature_partition,
+                         tr_frac=splits[0],
+                         download=True,
+                         seed=1234,
+                         args=args,
+                         algo=algo)
+        data = dataset.data
+        return data, config
+    elif name == 'adult':
+        dataset = Adult(root=path,
+                        name=name,
+                        num_of_clients=config.federate.client_num,
+                        feature_partition=feature_partition,
+                        tr_frac=splits[0],
+                        download=True,
+                        seed=1234,
+                        args=args,
+                        algo=algo)
+        data = dataset.data
+        return data, config
+    elif name == 'abalone':
+        dataset = Abalone(root=path,
+                          name=name,
+                          num_of_clients=config.federate.client_num,
+                          feature_partition=feature_partition,
+                          tr_frac=splits[0],
+                          download=True,
+                          seed=1234,
+                          args=args,
+                          algo=algo)
+        data = dataset.data
+        return data, config
+    elif name == 'blog':
+        dataset = Blog(root=path,
+                       name=name,
+                       num_of_clients=config.federate.client_num,
+                       feature_partition=feature_partition,
+                       tr_frac=splits[0],
+                       download=True,
+                       seed=1234,
+                       args=args,
+                       algo=algo)
         data = dataset.data
         return data, config
     elif generate:

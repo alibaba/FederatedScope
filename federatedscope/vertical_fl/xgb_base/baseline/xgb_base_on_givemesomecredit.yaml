@@ -8,11 +8,11 @@ model:
   type: lr
 data:
   root: data/
-  type: adult
-  splits: [1.0, 0.0]
+  type: credit
+  batch_size: 2000
+  splits: [0.8, 0.2]
 dataloader:
   type: raw
-  batch_size: 2000
 criterion:
   type: CrossEntropyLoss
 trainer:
@@ -27,7 +27,7 @@ train:
 xgb_base:
   use: True
   use_bin: True
-  dims: [7, 14]
+  dims: [5, 10]
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
