@@ -81,6 +81,14 @@ def extend_fl_setting_cfg(cfg):
     cfg.xgb_base.use_bin = False
     cfg.xgb_base.dims = [5, 10]
 
+    # ---------------------------------------------------------------------- #
+    # Vertical FL for xgboost related options
+    # ---------------------------------------------------------------------- #
+    cfg.xgb_gh = CN()
+    cfg.xgb_gh.use = False
+    cfg.xgb_gh.use_bin = False
+    cfg.xgb_gh.dims = [5, 10]
+
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
 

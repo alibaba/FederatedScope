@@ -28,8 +28,11 @@ def load_vertical_data(config=None, generate=False):
     elif config.xgb_base.use:
         feature_partition = config.xgb_base.dims
         algo = 'xgb'
+    elif config.xgb_gh.use:
+        feature_partition = config.xgb_gh.dims
+        algo = 'xgb_gh'
     else:
-        raise ValueError('You must provide the data partition')
+        raise ValueError('You must provide the algorithm in config file')
 
     if config.data.args:
         args = config.data.args[0]
