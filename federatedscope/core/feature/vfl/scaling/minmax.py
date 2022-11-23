@@ -1,4 +1,7 @@
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def wrap_min_max_scaling(worker):
@@ -10,6 +13,8 @@ def wrap_min_max_scaling(worker):
     Returns:
         Wrap worker with min-max scaled data
     """
+    # No communicate needed
+    logger.info('Start to execute min-max scaling .')
     feat_min, feat_max = [], []
     for split in ['train_data', 'val_data', 'test_data']:
         if hasattr(worker.data, split):

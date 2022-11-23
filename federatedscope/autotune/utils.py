@@ -262,6 +262,7 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
 
 
 def config_bool2int(config):
+    # TODO: refactor bool/str to int
     import copy
     new_dict = copy.deepcopy(config)
     for key, value in new_dict.items():

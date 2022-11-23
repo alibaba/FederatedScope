@@ -46,6 +46,7 @@ class vFLServer(Server):
         if self.check_client_join_in():
             self.broadcast_public_keys()
             self.broadcast_client_address()
+            self.trigger_for_feat_engr()
             self.broadcast_model_para()
 
     def broadcast_public_keys(self):

@@ -3,7 +3,6 @@ import logging
 import numpy as np
 
 from federatedscope.core.message import Message
-from federatedscope.vertical_fl.worker.vertical_server import vFLServer
 
 logger = logging.getLogger(__name__)
 
@@ -17,20 +16,17 @@ def wrap_instance_norm_for_server(worker):
     Returns:
         Wrap vfl server with instance norm.
     """
-    def trigger_for_start(self):
-        if self.check_client_join_in():
-            if isinstance(self, vFLServer):
-                self.broadcast_public_keys()
-            self.broadcast_client_address()
-            # Ask for instance statistic
-            self.msg_buffer['instance_mean'] = {}
-            self.msg_buffer['instance_var'] = {}
-            logger.info('Start to execute instance norm.')
-            self.comm_manager.send(
-                Message(msg_type='ask_for_instance_mean',
-                        sender=self.ID,
-                        receiver=list(self.comm_manager.neighbors.keys()),
-                        timestamp=self.cur_timestamp))
+    def trigger_for_feat_engr(self):
+        # message buffer for data statistic
+        self.msg_buffer['instance_mean'] = {}
+        self.msg_buffer['instance_var'] = {}
+        # Ask for instance statistic
+        logger.info('Start to execute instance norm.')
+        self.comm_manager.send(
+            Message(msg_type='ask_for_instance_mean',
+                    sender=self.ID,
+                    receiver=list(self.comm_manager.neighbors.keys()),
+                    timestamp=self.cur_timestamp))
 
     def callback_func_for_instance_mean(self, message: Message):
         """
@@ -84,11 +80,9 @@ def wrap_instance_norm_for_server(worker):
                         timestamp=self.cur_timestamp,
                         content=instance_var))
 
-            # Start to train
-            self.broadcast_model_para()
-
     # Bind method to instance
-    worker.trigger_for_start = types.MethodType(trigger_for_start, worker)
+    worker.trigger_for_feat_engr = types.MethodType(trigger_for_feat_engr,
+                                                    worker)
     worker.callback_func_for_instance_mean = types.MethodType(
         callback_func_for_instance_mean, worker)
     worker.callback_func_for_instance_var = types.MethodType(
