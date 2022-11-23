@@ -15,6 +15,8 @@ class Adult:
     (https://archive.ics.uci.edu/ml/datasets/adult)
     Fields
     The dataset contains 15 columns
+    Training set: 'adult.data', 32561 instances
+    Testing set: 'adult.test', 16281 instances
     Target filed: Income
     -- The income is divide into two classes: <=50K and >50K
     Number of attributes: 14
@@ -30,7 +32,7 @@ class Adult:
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        model(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr' or 'xgb'
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -146,8 +148,12 @@ class Adult:
             self.data[i] = dict()
             if i == 0:
                 self.data[0]['train'] = None
+                self.data[0]['test'] = test_data
             elif i == 1:
                 self.data[1]['train'] = {'x': x[:, :self.feature_partition[0]]}
+                self.data[1]['test'] = {
+                    'x': test_x[:, :self.feature_partition[0]]
+                }
             else:
                 self.data[i]['train'] = {
                     'x': x[:,
@@ -155,10 +161,14 @@ class Adult:
                                                   2]:self.feature_partition[i -
                                                                             1]]
                 }
+                self.data[i]['test'] = {
+                    'x': test_x[:, self.feature_partition[i - 2]:self.
+                                feature_partition[i - 1]]
+                }
             self.data[i]['val'] = None
-            self.data[i]['test'] = test_data
 
         self.data[self.num_of_clients]['train']['y'] = y[:]
+        self.data[self.num_of_clients]['test']['y'] = test_y[:]
 
     def _check_existence(self, file):
         fpath = os.path.join(self.root, self.base_folder, file)
