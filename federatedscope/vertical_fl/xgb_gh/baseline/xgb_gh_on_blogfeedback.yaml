@@ -24,6 +24,7 @@ train:
     gamma: 0
     num_of_trees: 9
     max_tree_depth: 3
+    learning_rate: 0.5
 xgb_gh:
   use: True
   use_bin: True

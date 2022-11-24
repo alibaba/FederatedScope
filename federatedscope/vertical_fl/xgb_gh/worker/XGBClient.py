@@ -45,6 +45,7 @@ class XGBClient(Client):
         self.gamma = None
         self.num_of_trees = None
         self.max_tree_depth = None
+        self.lr = config.train.optimizer.learning_rate
 
         self.bin_num = config.train.optimizer.bin_num
         self.batch_size = config.data.batch_size
@@ -188,7 +189,7 @@ class XGBClient(Client):
     def set_weight(self, tree_num, node_num):
         sum_of_g = np.sum(self.tree_list[tree_num][node_num].grad)
         sum_of_h = np.sum(self.tree_list[tree_num][node_num].hess)
-        weight = -sum_of_g / (sum_of_h + self.lambda_)
+        weight = -sum_of_g / (sum_of_h + self.lambda_) * self.lr
         self.tree_list[tree_num][node_num].weight = weight
         self.tree_list[tree_num][node_num].status = 'off'
         tmp = [node_num]
