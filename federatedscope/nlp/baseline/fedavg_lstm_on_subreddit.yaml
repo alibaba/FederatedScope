@@ -9,8 +9,9 @@ federate:
 data:
   root: data/
   type: subreddit
-  batch_size: 5
   subsample: 1.0
+dataloader:
+  batch_size: 5
 model:
   type: lstm
   in_channels: 10000

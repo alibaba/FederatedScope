@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from sklearn.model_selection import train_test_split
 
-from federatedscope.core.auxiliaries.utils import save_local_data, download_url
+from federatedscope.core.data.utils import save_local_data, download_url
 from federatedscope.cv.dataset.leaf import LEAF
 
 IMAGE_SIZE = {'femnist': (28, 28), 'celeba': (84, 84, 3)}

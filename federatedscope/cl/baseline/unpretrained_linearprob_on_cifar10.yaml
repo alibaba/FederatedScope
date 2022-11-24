@@ -1,0 +1,34 @@
+use_gpu: True
+device: 2
+federate:
+  mode: standalone
+  total_round_num: 50
+  client_num: 5
+  sample_client_rate: 1.0
+  method: local
+data:
+  root: 'data'
+  type: 'Cifar4LP'
+  batch_size: 256
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.5}]
+  num_workers: 4
+model:
+  type: 'SimCLR_linear'
+train:
+  local_update_steps: 1
+  batch_or_epoch: 'epoch'
+  optimizer:
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 0.0
+early_stop:
+  patience: 0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: general
+eval:
+  freq: 2
+  metrics: ['acc']
+  split: ['val', 'test']

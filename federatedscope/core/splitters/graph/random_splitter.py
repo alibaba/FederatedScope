@@ -12,18 +12,17 @@ EPSILON = 1e-5
 
 
 class RandomSplitter(BaseTransform, BaseSplitter):
-    r"""
+    """
     Split Data into small data via random sampling.
 
     Args:
         client_num (int): Split data into client_num of pieces.
-        sampling_rate (str): Samples of the unique nodes for each client,
-        eg. '0.2,0.2,0.2'.
-        overlapping_rate(float): Additional samples of overlapping data,
-        eg. '0.4'
-        drop_edge(float): Drop edges (drop_edge / client_num) for each
-        client whthin overlapping part.
-
+        sampling_rate (str): Samples of the unique nodes for each client, \
+            eg. ``'0.2,0.2,0.2'``
+        overlapping_rate(float): Additional samples of overlapping data, \
+            eg. ``'0.4'``
+        drop_edge(float): Drop edges (drop_edge / client_num) for each \
+            client within overlapping part.
     """
     def __init__(self,
                  client_num,
@@ -52,7 +51,7 @@ class RandomSplitter(BaseTransform, BaseSplitter):
 
         self.drop_edge = drop_edge
 
-    def __call__(self, data):
+    def __call__(self, data, **kwargs):
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,

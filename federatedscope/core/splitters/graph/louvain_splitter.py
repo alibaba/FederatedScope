@@ -10,19 +10,18 @@ from federatedscope.core.splitters import BaseSplitter
 
 
 class LouvainSplitter(BaseTransform, BaseSplitter):
-    r"""
+    """
     Split Data into small data via louvain algorithm.
 
     Args:
-        client_num (int): Split data into client_num of pieces.
-        delta (int): The gap between the number of nodes on the each client.
-
+        client_num (int): Split data into ``client_num`` of pieces.
+        delta (int): The gap between the number of nodes on each client.
     """
     def __init__(self, client_num, delta=20):
         self.delta = delta
         BaseSplitter.__init__(self, client_num)
 
-    def __call__(self, data):
+    def __call__(self, data, **kwargs):
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,

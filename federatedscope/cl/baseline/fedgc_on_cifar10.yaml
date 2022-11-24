@@ -1,0 +1,38 @@
+use_gpu: True
+seed: 1
+device: 2
+federate:
+  mode: standalone
+  total_round_num: 10
+  client_num: 5
+  share_local_model: False
+  online_aggr: True
+  sample_client_rate: 1.0
+  method: fedgc
+  save_to: 'test.ckpt'
+data:
+  root: 'data'
+  type: 'Cifar4CL'
+  batch_size: 512
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.1}]
+  num_workers: 4
+model:
+  type: 'SimCLR'
+train:
+  local_update_steps: 5
+  batch_or_epoch: 'batch'
+  optimizer:
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 0.0001
+early_stop:
+  patience: 0
+criterion:
+  type: 'NT_xentloss'
+trainer:
+  type: 'cltrainer'
+eval:
+  freq: 5
+  metrics: ['loss']
+  split: ['val', 'test']

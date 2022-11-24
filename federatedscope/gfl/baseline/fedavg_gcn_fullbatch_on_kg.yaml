@@ -13,6 +13,8 @@ data:
   type: wn18
   splitter: rel_type
   pre_transform: ['Constant', {'value':1.0, 'cat':False}]
+dataloader:
+  type: pyg
 model:
   type: gcn
   hidden: 64

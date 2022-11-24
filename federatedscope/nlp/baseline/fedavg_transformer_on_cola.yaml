@@ -20,10 +20,8 @@ data:
   args: [{'load_disk_dir': 'huggingface/datasets/glue/cola',
           'hg_cache_dir': 'huggingface', 'max_len': 128,
           'val_as_dummy_test': True, 'part_train_dummy_val': 0.2} ]
-  batch_size: 64
   splitter: 'lda'
   splitter_args: [ { 'alpha': 0.4, 'min_size': 1} ]
-  num_workers: 0
 model:
   type: 'google/bert_uncased_L-2_H-128_A-2@transformers'
   task: 'SequenceClassification'

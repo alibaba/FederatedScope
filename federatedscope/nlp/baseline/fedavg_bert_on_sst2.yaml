@@ -11,10 +11,10 @@ data:
   root: 'glue'
   type: 'sst2@huggingface_datasets'
   args: [{'max_len': 512}]
-  batch_size: 128
   splitter: 'lda'
   splitter_args: [{'alpha': 0.5}]
-  num_workers: 0
+dataloader:
+  batch_size: 128
 model:
   type: 'google/bert_uncased_L-2_H-128_A-2@transformers'
   task: 'SequenceClassification'

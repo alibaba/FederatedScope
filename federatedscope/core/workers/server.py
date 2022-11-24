@@ -10,22 +10,22 @@ from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
-from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
-from federatedscope.core.auxiliaries.utils import merge_dict, Timeout, \
-    merge_param_dict
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
+    Timeout, merge_param_dict
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
+from federatedscope.core.workers.base_server import BaseServer
 
 logger = logging.getLogger(__name__)
 
 
-class Server(Worker):
+class Server(BaseServer):
     """
-    The Server class, which describes the behaviors of server in an FL course.
-    The behaviors are described by the handled functions (named as
-    callback_funcs_for_xxx).
+    The Server class, which describes the behaviors of server in an FL \
+    course. The behaviors are described by the handled functions (named as \
+    ``callback_funcs_for_xxx``).
 
     Arguments:
         ID: The unique ID of the server, which is set to 0 by default
@@ -36,7 +36,28 @@ class Server(Worker):
         client_num: The (expected) client num to start the FL course
         total_round_num: The total number of the training round
         device: The device to run local training and evaluation
-        strategy: redundant attribute
+
+    Attributes:
+        ID: ID of worker
+        state: the training round index
+        model: the model maintained locally
+        cfg: the configuration of FL course, \
+            see ``federatedscope.core.configs``
+        mode: the run mode for FL, ``distributed`` or ``standalone``
+        monitor: monite FL course and record metrics, \
+            see ``federatedscope.core.monitors.monitor.Monitor``
+        trainer: instantiated trainer, see ``federatedscope.core.trainers``
+        best_results: best results ever seen
+        history_results: all evaluation results
+        early_stopper: determine when to early stop, \
+            see ``federatedscope.core.monitors.early_stopper.EarlyStopper``
+        aggregators: a protocol for aggregate all clients' model(s), see \
+            ``federatedscope.core.aggregators``
+        sample_client_num: number of client aggregated in each round
+        msg_buffer: dict buffer for storing message
+        staled_msg_buffer: list buffer for storing staled message
+        comm_manager: manager for communication, \
+            see ``federatedscope.core.communication``
     """
     def __init__(self,
                  ID=-1,
@@ -50,14 +71,13 @@ class Server(Worker):
                  strategy=None,
                  unseen_clients_id=None,
                  **kwargs):
+        super(Server, self).__init__(ID, state, config, model, strategy)
         # Register message handlers
-        self.msg_handlers = dict()
-        self.msg_handlers_str = dict()
         self._register_default_handlers()
 
+        # Un-configured worker
         if config is None:
             return
-        super(Server, self).__init__(ID, state, config, model, strategy)
 
         self.data = data
         self.device = device
@@ -66,7 +86,7 @@ class Server(Worker):
         self.early_stopper = EarlyStopper(
             self._cfg.early_stop.patience, self._cfg.early_stop.delta,
             self._cfg.early_stop.improve_indicator_mode,
-            self._cfg.early_stop.the_smaller_the_better)
+            self._monitor.the_larger_the_better)
 
         if self._cfg.federate.share_local_model:
             # put the model to the specified device
@@ -208,32 +228,9 @@ class Server(Worker):
     def register_noise_injector(self, func):
         self._noise_injector = func
 
-    def register_handlers(self, msg_type, callback_func, send_msg=[None]):
-        """
-        To bind a message type with a handling function.
-
-        Arguments:
-            msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received
-            message
-        """
-        self.msg_handlers[msg_type] = callback_func
-        self.msg_handlers_str[msg_type] = (callback_func.__name__, send_msg)
-
-    def _register_default_handlers(self):
-        self.register_handlers('join_in', self.callback_funcs_for_join_in, [
-            'assign_client_id', 'ask_for_join_in_info', 'address', 'model_para'
-        ])
-        self.register_handlers('join_in_info', self.callback_funcs_for_join_in,
-                               ['address', 'model_para'])
-        self.register_handlers('model_para', self.callback_funcs_model_para,
-                               ['model_para', 'evaluate', 'finish'])
-        self.register_handlers('metrics', self.callback_funcs_for_metrics,
-                               ['converged'])
-
     def run(self):
         """
-        To start the FL course, listen and handle messages (for distributed
+        To start the FL course, listen and handle messages (for distributed \
         mode).
         """
 
@@ -295,13 +292,16 @@ class Server(Worker):
                           check_eval_result=False,
                           min_received_num=None):
         """
-        To check the message_buffer. When enough messages are receiving,
-        some events (such as perform aggregation, evaluation, and move to
+        To check the message_buffer. When enough messages are receiving, \
+        some events (such as perform aggregation, evaluation, and move to \
         the next training round) would be triggered.
 
         Arguments:
-            check_eval_result (bool): If True, check the message buffer for
-            evaluation; and check the message buffer for training otherwise.
+            check_eval_result (bool): If True, check the message buffer for \
+                evaluation; and check the message buffer for training \
+                otherwise.
+            min_received_num: number of minimal received message, used for \
+                async mode
         """
         if min_received_num is None:
             if self._cfg.asyn.use:
@@ -359,7 +359,8 @@ class Server(Worker):
 
     def check_and_save(self):
         """
-        To save the results and save model after each evaluation.
+        To save the results and save model after each evaluation, and check \
+        whether to early stop.
         """
 
         # early stopping
@@ -499,8 +500,8 @@ class Server(Worker):
         # Get all the message & aggregate
         formatted_eval_res = \
             self.merge_eval_results_from_all_clients()
-        self.history_results = merge_dict(self.history_results,
-                                          formatted_eval_res)
+        self.history_results = merge_dict_of_results(self.history_results,
+                                                     formatted_eval_res)
         if self.mode == 'standalone' and \
                 self._monitor.wandb_online_track and \
                 self._monitor.use_wandb:
@@ -526,13 +527,11 @@ class Server(Worker):
 
     def save_client_eval_results(self):
         """
-            save the evaluation results of each client when the fl course
-            early stopped or terminated
-
-        :return:
+        save the evaluation results of each client when the fl course \
+        early stopped or terminated
         """
-        round = max(self.msg_buffer['eval'].keys())
-        eval_msg_buffer = self.msg_buffer['eval'][round]
+        rnd = max(self.msg_buffer['eval'].keys())
+        eval_msg_buffer = self.msg_buffer['eval'][rnd]
 
         with open(os.path.join(self._cfg.outdir, "eval_results.log"),
                   "a") as outfile:
@@ -547,12 +546,12 @@ class Server(Worker):
 
     def merge_eval_results_from_all_clients(self):
         """
-            Merge evaluation results from all clients, update best,
-            log the merged results and save them into eval_results.log
+        Merge evaluation results from all clients, update best, \
+        log the merged results and save them into eval_results.log
 
-        :returns: the formatted merged results
+        Returns:
+            the formatted merged results
         """
-
         round = max(self.msg_buffer['eval'].keys())
         eval_msg_buffer = self.msg_buffer['eval'][round]
         eval_res_participated_clients = []
@@ -598,9 +597,7 @@ class Server(Worker):
                     self.best_results,
                     metrics_all_clients,
                     results_type="unseen_client_best_individual"
-                    if merge_type == "unseen" else "client_best_individual",
-                    round_wise_update_key=self._cfg.eval.
-                    best_res_update_round_wise_key)
+                    if merge_type == "unseen" else "client_best_individual")
                 self._monitor.save_formatted_results(formatted_logs)
                 for form in self._cfg.eval.report:
                     if form != "raw":
@@ -611,9 +608,7 @@ class Server(Worker):
                             formatted_logs[f"Results_{metric_name}"],
                             results_type=f"unseen_client_summarized_{form}"
                             if merge_type == "unseen" else
-                            f"client_summarized_{form}",
-                            round_wise_update_key=self._cfg.eval.
-                            best_res_update_round_wise_key)
+                            f"client_summarized_{form}")
 
         return formatted_logs_all_set
 
@@ -626,14 +621,14 @@ class Server(Worker):
 
         Arguments:
             msg_type: 'model_para' or other user defined msg_type
-            sample_client_num: the number of sampled clients in the broadcast
-                behavior. And sample_client_num = -1 denotes to broadcast to
-                all the clients.
-            filter_unseen_clients: whether filter out the unseen clients that
-                do not contribute to FL process by training on their local
-                data and uploading their local model update. The splitting is
-                useful to check participation generalization gap in [ICLR'22,
-                What Do We Mean by Generalization in Federated Learning?]
+            sample_client_num: the number of sampled clients in the broadcast \
+                behavior. And ``sample_client_num = -1`` denotes to \
+                broadcast to all the clients.
+            filter_unseen_clients: whether filter out the unseen clients that \
+                do not contribute to FL process by training on their local \
+                data and uploading their local model update. The splitting is \
+                useful to check participation generalization gap in [ICLR'22, \
+                What Do We Mean by Generalization in Federated Learning?] \
                 You may want to set it to be False when in evaluation stage
         """
         if filter_unseen_clients:
@@ -681,7 +676,7 @@ class Server(Worker):
 
     def broadcast_client_address(self):
         """
-        To broadcast the communication addresses of clients (used for
+        To broadcast the communication addresses of clients (used for \
         additive secret sharing)
         """
 
@@ -701,12 +696,14 @@ class Server(Worker):
         To check the message buffer
 
         Arguments:
-        cur_round (int): The current round number
-        min_received_num (int): The minimal number of the receiving messages
-        check_eval_result (bool): To check training results for evaluation
-        results
-        :returns: Whether enough messages have been received or not
-        :rtype: bool
+            cur_round (int): The current round number
+            min_received_num (int): The minimal number of the receiving \
+                messages
+            check_eval_result (bool): To check training results for \
+                evaluation results
+
+        Returns
+            bool: Whether enough messages have been received or not
         """
 
         if check_eval_result:
@@ -772,8 +769,15 @@ class Server(Worker):
                     for client_index in np.arange(1, self.client_num + 1)
                 ]
             else:
-                model_size = sys.getsizeof(pickle.dumps(
-                    self.model)) / 1024.0 * 8.
+                if self._cfg.backend == 'torch':
+                    model_size = sys.getsizeof(pickle.dumps(
+                        self.model)) / 1024.0 * 8.
+                else:
+                    # TODO: calculate model size for TF Model
+                    model_size = 1.0
+                    logger.warning(f'The calculation of model size in backend:'
+                                   f'{self._cfg.backend} is not provided.')
+
                 client_resource = [
                     model_size / float(x['communication']) +
                     float(x['computation']) / 1000.
@@ -799,7 +803,7 @@ class Server(Worker):
 
     def trigger_for_time_up(self, check_timestamp=None):
         """
-        The handler for time up: modify the currency timestamp
+        The handler for time up: modify the currency timestamp \
         and check the trigger condition
         """
         if self.is_finish:
@@ -835,7 +839,7 @@ class Server(Worker):
 
     def eval(self):
         """
-        To conduct evaluation. When cfg.federate.make_global_eval=True,
+        To conduct evaluation. When ``cfg.federate.make_global_eval=True``, \
         a global evaluation is conducted by the server.
         """
 
@@ -860,11 +864,9 @@ class Server(Worker):
                 self._monitor.update_best_result(
                     self.best_results,
                     formatted_eval_res['Results_raw'],
-                    results_type="server_global_eval",
-                    round_wise_update_key=self._cfg.eval.
-                    best_res_update_round_wise_key)
-                self.history_results = merge_dict(self.history_results,
-                                                  formatted_eval_res)
+                    results_type="server_global_eval")
+                self.history_results = merge_dict_of_results(
+                    self.history_results, formatted_eval_res)
                 self._monitor.save_formatted_results(formatted_eval_res)
                 logger.info(formatted_eval_res)
             self.check_and_save()
@@ -875,15 +877,13 @@ class Server(Worker):
 
     def callback_funcs_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters, which triggers
-            check_and_move_on (perform aggregation when enough feedback has
-            been received).
-        This handling function is widely used in various FL courses.
+        The handling function for receiving model parameters, which triggers \
+        ``check_and_move_on`` (perform aggregation when enough feedback has \
+        been received). This handling function is widely used in various FL \
+        courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver,
-                state, and content. More detail can be found in
-                federatedscope.core.message
+            message: The received message.
         """
         if self.is_finish:
             return 'finish'
@@ -924,10 +924,10 @@ class Server(Worker):
 
     def callback_funcs_for_join_in(self, message: Message):
         """
-        The handling function for receiving the join in information. The
-        server might request for some information (such as num_of_samples)
-        if necessary, assign IDs for the servers.
-        If all the clients have joined in, the training process will be
+        The handling function for receiving the join in information. The \
+        server might request for some information (such as \
+        ``num_of_samples``) if necessary, assign IDs for the servers. \
+        If all the clients have joined in, the training process will be \
         triggered.
 
         Arguments:
@@ -971,22 +971,22 @@ class Server(Worker):
 
     def callback_funcs_for_metrics(self, message: Message):
         """
-        The handling function for receiving the evaluation results,
-        which triggers check_and_move_on
-            (perform aggregation when enough feedback has been received).
+        The handling function for receiving the evaluation results, \
+        which triggers ``check_and_move_on`` (perform aggregation when \
+        enough feedback has been received).
 
         Arguments:
             message: The received message
         """
 
-        round = message.state
+        rnd = message.state
         sender = message.sender
         content = message.content
 
-        if round not in self.msg_buffer['eval'].keys():
-            self.msg_buffer['eval'][round] = dict()
+        if rnd not in self.msg_buffer['eval'].keys():
+            self.msg_buffer['eval'][rnd] = dict()
 
-        self.msg_buffer['eval'][round][sender] = content
+        self.msg_buffer['eval'][rnd][sender] = content
 
         return self.check_and_move_on(check_eval_result=True)
 

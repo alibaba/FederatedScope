@@ -98,7 +98,7 @@ casts = [(tuple, list), (list, tuple), (int, float), (float, int)]
 
 class CfgNode(dict):
     """
-    CfgNode represents an internal node in the configuration tree. It's a
+    CfgNode represents an internal node in the configuration tree. It's a \
     simple dict-like container that allows for attribute-based access to keys.
     """
 
@@ -157,8 +157,8 @@ class CfgNode(dict):
         Any dict-like objects inside dict will be treated as a new CfgNode.
 
         Args:
-            dic (dict):
-            key_list (list[str]): a list of names which index this CfgNode
+            dic (dict): ``dict`` to be converted
+            key_list (list[str]): a list of names which index this CfgNode \
             from the root. Currently only used for logging purposes.
         """
         dic = copy.deepcopy(dic)
@@ -256,8 +256,9 @@ class CfgNode(dict):
         _merge_a_into_b(cfg_other, self, self, [])
 
     def merge_from_list(self, cfg_list):
-        """Merge config (keys, values) in a list (e.g., from command line) into
-        this CfgNode. For example, `cfg_list = ['FOO.BAR', 0.5]`.
+        """
+        Merge config (keys, values) in a list (e.g., from command line) \
+        into this CfgNode. For example, ``cfg_list = ['FOO.BAR', 0.5]``.
         """
         _assert_with_logging(
             len(cfg_list) % 2 == 0,
@@ -297,7 +298,8 @@ class CfgNode(dict):
         return self.__dict__[CfgNode.IMMUTABLE]
 
     def _immutable(self, is_immutable):
-        """Set immutability to is_immutable and recursively apply the setting
+        """
+        Set immutability to is_immutable and recursively apply the setting \
         to all nested CfgNodes.
         """
         self.__dict__[CfgNode.IMMUTABLE] = is_immutable
@@ -314,8 +316,9 @@ class CfgNode(dict):
         return copy.deepcopy(self)
 
     def register_deprecated_key(self, key):
-        """Register key (e.g. `FOO.BAR`) a deprecated option.
-        When merging deprecated keys a warning is generated and the key is
+        """
+        Register key (e.g. `FOO.BAR`) a deprecated option. \
+        When merging deprecated keys a warning is generated and the key is \
         ignored.
         """
         _assert_with_logging(
@@ -325,9 +328,10 @@ class CfgNode(dict):
         self.__dict__[CfgNode.DEPRECATED_KEYS].add(key)
 
     def register_renamed_key(self, old_name, new_name, message=None):
-        """Register a key as having been renamed from `old_name` to `new_name`.
-        When merging a renamed key, an exception is thrown alerting to user to
-        the fact that the key has been renamed.
+        """
+        Register a key as having been renamed from ``old_name`` \
+        to `new_name`. When merging a renamed key, an exception is thrown \
+        alerting to user to the fact that the key has been renamed.
         """
         _assert_with_logging(
             old_name not in self.__dict__[CfgNode.RENAMED_KEYS],
@@ -367,7 +371,7 @@ class CfgNode(dict):
 
     def set_new_allowed(self, is_new_allowed):
         """
-        Set this config (and recursively its subconfigs) to allow merging
+        Set this config (and recursively its subconfigs) to allow merging \
         new keys from other configs.
         """
         self.__dict__[CfgNode.NEW_ALLOWED] = is_new_allowed
@@ -443,12 +447,12 @@ class CfgNode(dict):
     @classmethod
     def _decode_cfg_value(cls, value):
         """
-        Decodes a raw config value (e.g., from a yaml config files or command
+        Decodes a raw config value (e.g., from a yaml config files or command \
         line argument) into a Python object.
 
-        If the value is a dict, it will be interpreted as a new CfgNode.
-        If the value is a str, it will be evaluated as literals.
-        Otherwise it is returned as-is.
+        (1) If the value is a dict, it will be interpreted as a new CfgNode.
+        (2) If the value is a str, it will be evaluated as literals.
+        (3) Otherwise it is returned as-is.
         """
         # Configs parsed from raw yaml will contain dictionary keys that need
         # to be converted to CfgNode objects
@@ -491,9 +495,9 @@ def _valid_type(value, allow_cfg_node=False):
 
 def _merge_a_into_b(a, b, root, key_list):
     """
-        [Modified from yacs, to allow int <-> float conversation]
+    [Modified from yacs, to allow int <-> float conversation]
 
-    Merge config dictionary a into config dictionary b, clobbering the
+    Merge config dictionary a into config dictionary b, clobbering the \
     options in b whenever they are also specified in a.
     """
     _assert_with_logging(
@@ -537,11 +541,11 @@ def _merge_a_into_b(a, b, root, key_list):
 
 def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
     """
-        [Modified from yacs, to allow int <-> float conversation]
+    [Modified from yacs, to allow int <-> float conversation]
 
-    Checks that `replacement`, which is intended to replace `original` is of
-    the right type. The type is correct if it matches exactly or is one of a
-    few cases in which the type can be easily coerced.
+    Checks that ``replacement``, which is intended to replace \
+    ``original`` is of the right type. The type is correct if it matches \
+    exactly or is one of a few cases in which the type can be easily coerced.
     """
     original_type = type(original)
     replacement_type = type(replacement)

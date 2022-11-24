@@ -10,7 +10,7 @@ def _setup_logger():
 
     logging_fmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(" \
                   "message)s"
-    logger = logging.getLogger("fedhpob")
+    logger = logging.getLogger("fedhpobench")
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(logging_fmt))
     logger.addHandler(handler)

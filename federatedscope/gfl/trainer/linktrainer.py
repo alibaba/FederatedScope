@@ -1,10 +1,9 @@
 import torch
 
 from torch.utils.data import DataLoader
-from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
@@ -39,27 +38,30 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
         modes
-
         """
         init_dict = dict()
-        if isinstance(data, Data):
+        if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
-                edges = data.edge_index.T[data[MODE2MASK[mode]]]
+                graph_data = data['data']
+                edges = graph_data.edge_index.T[graph_data[MODE2MASK[mode]]]
                 # Use an index loader
-                index_loader = DataLoader(range(edges.size(0)),
-                                          self.cfg.data.batch_size,
-                                          shuffle=self.cfg.data.shuffle
-                                          if mode == 'train' else False,
-                                          drop_last=self.cfg.data.drop_last
-                                          if mode == 'train' else False)
+                index_loader = DataLoader(
+                    range(edges.size(0)),
+                    self.cfg.dataloader.batch_size,
+                    shuffle=self.cfg.dataloader.shuffle
+                    if mode == 'train' else False,
+                    drop_last=self.cfg.dataloader.drop_last
+                    if mode == 'train' else False)
                 init_dict["{}_loader".format(mode)] = index_loader
                 init_dict["num_{}_data".format(mode)] = edges.size(0)
                 init_dict["{}_data".format(mode)] = None
         else:
-            raise TypeError("Type of data should be PyG data.")
+            raise TypeError("Type of data should be dict.")
         return init_dict
 
     def _hook_on_epoch_start_data2device(self, ctx):
+        if isinstance(ctx.data, dict):
+            ctx.data = ctx.data['data']
         ctx.data = ctx.data.to(ctx.device)
         # For handling different dict key
         if "input_edge_index" in ctx.data:
@@ -136,7 +138,6 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
         modes
-
         """
         init_dict = dict()
         if isinstance(data, dict):
@@ -159,7 +160,7 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
                                 data.get(mode)
                             ]
                             init_dict["num_{}_data".format(
-                                mode)] = self.cfg.data.batch_size
+                                mode)] = self.cfg.dataloader.batch_size
                     else:
                         raise TypeError("Type {} is not supported.".format(
                             type(data.get(mode))))
@@ -187,7 +188,7 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
             pred = []
 
             for perm in DataLoader(range(edges.size(0)),
-                                   self.cfg.data.batch_size):
+                                   self.cfg.dataloader.batch_size):
                 edge = edges[perm].T
                 pred += [ctx.model.link_predictor(h, edge).squeeze()]
             pred = torch.cat(pred, dim=0)

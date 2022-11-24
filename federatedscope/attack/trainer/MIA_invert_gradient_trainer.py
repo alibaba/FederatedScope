@@ -4,7 +4,7 @@ from typing import Type
 import torch
 
 from federatedscope.core.trainers import GeneralTorchTrainer
-from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
+from federatedscope.core.data.wrap_dataset import WrapDataset
 from federatedscope.attack.auxiliary.MIA_get_target_data import get_target_data
 
 logger = logging.getLogger(__name__)

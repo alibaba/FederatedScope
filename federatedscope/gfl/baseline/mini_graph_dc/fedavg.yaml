@@ -1,0 +1,33 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 100
+  improve_indicator_mode: mean
+federate:
+  mode: 'standalone'
+  make_global_eval: False
+  total_round_num: 400
+  share_local_model: False
+data:
+  root: data/
+  type: mini-graph-dc
+dataloader:
+  type: pyg
+model:
+  task: graph
+  type: gin
+  hidden: 64
+personalization:
+  local_param: ['encoder_atom', 'encoder', 'clf']
+train:
+  batch_or_epoch: epoch
+  local_update_steps: 1
+  optimizer:
+    type: SGD
+trainer:
+  type: graphminibatch_trainer
+eval:
+  freq: 1
+  metrics: ['acc', 'correct']
+  count_flops: False
+  split: ['train', 'val', 'test']

@@ -1,16 +1,12 @@
-from re import M
 import torch
 from PIL import Image
 import numpy as np
-from torchvision.datasets import MNIST, EMNIST, CIFAR10
-from torchvision.datasets import DatasetFolder
 from torchvision import transforms
 from federatedscope.core.auxiliaries.transform_builder import get_transform
 from federatedscope.attack.auxiliary.backdoor_utils import selectTrigger
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from federatedscope.attack.auxiliary.backdoor_utils import normalize
-from federatedscope.core.auxiliaries.enums import MODE
-import matplotlib
+from federatedscope.core.trainers.enums import MODE
 import pickle
 import logging
 import os
@@ -50,9 +46,9 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
                 poison_testset.append((transforms_funcs(sample), label))
             data['poison_' + mode] = DataLoader(
                 poison_testset,
-                batch_size=ctx.data.batch_size,
+                batch_size=ctx.dataloader.batch_size,
                 shuffle=False,
-                num_workers=ctx.data.num_workers)
+                num_workers=ctx.dataloader.num_workers)
 
     elif "CIFAR10" in ctx.data.type:
         target_label = int(ctx.attack.target_label_ind)
@@ -91,9 +87,9 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
                 poison_testset.append((transforms_funcs(sample), label))
             data['poison_' + mode] = DataLoader(
                 poison_testset,
-                batch_size=ctx.data.batch_size,
+                batch_size=ctx.dataloader.batch_size,
                 shuffle=False,
-                num_workers=ctx.data.num_workers)
+                num_workers=ctx.dataloader.num_workers)
 
     else:
         raise RuntimeError(
@@ -213,9 +209,9 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
             poisoned_dataset[iii] = (transforms_funcs(sample), label)
 
         data[mode] = DataLoader(poisoned_dataset,
-                                batch_size=ctx.data.batch_size,
+                                batch_size=ctx.dataloader.batch_size,
                                 shuffle=True,
-                                num_workers=ctx.data.num_workers)
+                                num_workers=ctx.dataloader.num_workers)
 
     if mode == MODE.TEST or mode == MODE.VAL:
         poisoned_dataset = addTrigger(data[mode].dataset,
@@ -234,10 +230,11 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
             # (channel, height, width) = sample.shape #(c,h,w)
             poisoned_dataset[iii] = (transforms_funcs(sample), label)
 
-        data['poison_' + mode] = DataLoader(poisoned_dataset,
-                                            batch_size=ctx.data.batch_size,
-                                            shuffle=False,
-                                            num_workers=ctx.data.num_workers)
+        data['poison_' + mode] = DataLoader(
+            poisoned_dataset,
+            batch_size=ctx.dataloader.batch_size,
+            shuffle=False,
+            num_workers=ctx.dataloader.num_workers)
 
     return data
 

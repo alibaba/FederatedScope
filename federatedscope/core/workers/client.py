@@ -7,20 +7,20 @@ from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
     gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
-from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
-from federatedscope.core.auxiliaries.utils import merge_dict, \
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
     calculate_time_cost
+from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
 
 
-class Client(Worker):
+class Client(BaseClient):
     """
-    The Client class, which describes the behaviors of client in an FL course.
-    The behaviors are described by the handling functions (named as
-    callback_funcs_for_xxx)
+    The Client class, which describes the behaviors of client in an FL \
+    course. The behaviors are described by the handling functions (named as \
+    ``callback_funcs_for_xxx``)
 
     Arguments:
         ID: The unique ID of the client, which is assigned by the server
@@ -31,7 +31,25 @@ class Client(Worker):
         data: The data owned by the client
         model: The model maintained locally
         device: The device to run local training and evaluation
-        strategy: redundant attribute
+
+    Attributes:
+        ID: ID of worker
+        state: the training round index
+        model: the model maintained locally
+        cfg: the configuration of FL course, \
+            see ``federatedscope.core.configs``
+        mode: the run mode for FL, ``distributed`` or ``standalone``
+        monitor: monite FL course and record metrics, \
+            see ``federatedscope.core.monitors.monitor.Monitor``
+        trainer: instantiated trainer, see ``federatedscope.core.trainers``
+        best_results: best results ever seen
+        history_results: all evaluation results
+        early_stopper: determine when to early stop, \
+            see ``federatedscope.core.monitors.early_stopper.EarlyStopper``
+        ss_manager: secret sharing manager
+        msg_buffer: dict buffer for storing message
+        comm_manager: manager for communication, \
+            see ``federatedscope.core.communication``
     """
     def __init__(self,
                  ID=-1,
@@ -45,14 +63,13 @@ class Client(Worker):
                  is_unseen_client=False,
                  *args,
                  **kwargs):
+        super(Client, self).__init__(ID, state, config, model, strategy)
         # Register message handlers
-        self.msg_handlers = dict()
-        self.msg_handlers_str = dict()
         self._register_default_handlers()
 
+        # Un-configured worker
         if config is None:
             return
-        super(Client, self).__init__(ID, state, config, model, strategy)
 
         # the unseen_client indicates that whether this client contributes to
         # FL process by training on its local data and uploading the local
@@ -89,7 +106,7 @@ class Client(Worker):
         self.early_stopper = EarlyStopper(
             patience, self._cfg.early_stop.delta,
             self._cfg.early_stop.improve_indicator_mode,
-            self._cfg.early_stop.the_smaller_the_better)
+            self._monitor.the_larger_the_better)
 
         # Secret Sharing Manager and message buffer
         self.ss_manager = AdditiveSecretSharing(
@@ -106,8 +123,15 @@ class Client(Worker):
         else:
             self.comp_speed = None
             self.comm_bandwidth = None
-        self.model_size = sys.getsizeof(pickle.dumps(
-            self.model)) / 1024.0 * 8.  # kbits
+
+        if self._cfg.backend == 'torch':
+            self.model_size = sys.getsizeof(pickle.dumps(
+                self.model)) / 1024.0 * 8.  # kbits
+        else:
+            # TODO: calculate model size for TF Model
+            self.model_size = 1.0
+            logger.warning(f'The calculation of model size in backend:'
+                           f'{self._cfg.backend} is not provided.')
 
         # Initialize communication manager
         self.server_id = server_id
@@ -163,39 +187,9 @@ class Client(Worker):
         else:
             return model_deltas[0]
 
-    def register_handlers(self, msg_type, callback_func, send_msg=[None]):
-        """
-        To bind a message type with a handling function.
-
-        Arguments:
-            msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received
-            message
-        """
-        self.msg_handlers[msg_type] = callback_func
-        self.msg_handlers_str[msg_type] = (callback_func.__name__, send_msg)
-
-    def _register_default_handlers(self):
-        self.register_handlers('assign_client_id',
-                               self.callback_funcs_for_assign_id, [None])
-        self.register_handlers('ask_for_join_in_info',
-                               self.callback_funcs_for_join_in_info,
-                               ['join_in_info'])
-        self.register_handlers('address', self.callback_funcs_for_address)
-        self.register_handlers('model_para',
-                               self.callback_funcs_for_model_para,
-                               ['model_para', 'ss_model_para'])
-        self.register_handlers('ss_model_para',
-                               self.callback_funcs_for_model_para,
-                               ['ss_model_para', 'model_para'])
-        self.register_handlers('evaluate', self.callback_funcs_for_evaluate,
-                               ['metrics'])
-        self.register_handlers('finish', self.callback_funcs_for_finish)
-        self.register_handlers('converged', self.callback_funcs_for_converged)
-
     def join_in(self):
         """
-        To send 'join_in' message to the server for joining in the FL course.
+        To send ``join_in`` message to the server for joining in the FL course.
         """
         self.comm_manager.send(
             Message(msg_type='join_in',
@@ -206,7 +200,7 @@ class Client(Worker):
 
     def run(self):
         """
-        To listen to the message and handle them accordingly (used for
+        To listen to the message and handle them accordingly (used for \
         distributed mode)
         """
         while True:
@@ -219,14 +213,12 @@ class Client(Worker):
 
     def callback_funcs_for_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters,
-        which triggers the local training process.
+        The handling function for receiving model parameters, \
+        which triggers the local training process. \
         This handling function is widely used in various FL courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver,
-            state, and content.
-                More detail can be found in federatedscope.core.message
+            message: The received message
         """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
@@ -387,9 +379,9 @@ class Client(Worker):
 
     def callback_funcs_for_assign_id(self, message: Message):
         """
-        The handling function for receiving the client_ID assigned by the
-        server (during the joining process),
-        which is used in the distributed mode.
+        The handling function for receiving the client_ID assigned by the \
+        server (during the joining process), which is used in the \
+        distributed mode.
 
         Arguments:
             message: The received message
@@ -401,8 +393,9 @@ class Client(Worker):
 
     def callback_funcs_for_join_in_info(self, message: Message):
         """
-        The handling function for receiving the request of join in information
-        (such as batch_size, num_of_samples) during the joining process.
+        The handling function for receiving the request of join in \
+        information (such as ``batch_size``, ``num_of_samples``) during \
+        the joining process.
 
         Arguments:
             message: The received message
@@ -414,14 +407,13 @@ class Client(Worker):
             if requirement.lower() == 'num_sample':
                 if self._cfg.train.batch_or_epoch == 'batch':
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self._cfg.data.batch_size
+                                 self._cfg.dataloader.batch_size
                 else:
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self.trainer.ctx.num_train_batch
+                                 len(self.data['train'])
                 join_in_info['num_sample'] = num_sample
                 if self._cfg.trainer.type == 'nodefullbatch_trainer':
-                    join_in_info['num_sample'] = \
-                        self.trainer.ctx.data.x.shape[0]
+                    join_in_info['num_sample'] = self.data['data'].x.shape[0]
             elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \
@@ -442,7 +434,7 @@ class Client(Worker):
 
     def callback_funcs_for_address(self, message: Message):
         """
-        The handling function for receiving other clients' IP addresses,
+        The handling function for receiving other clients' IP addresses, \
         which is used for constructing a complex topology
 
         Arguments:
@@ -494,13 +486,10 @@ class Client(Worker):
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)
-            self._monitor.update_best_result(
-                self.best_results,
-                formatted_eval_res['Results_raw'],
-                results_type=f"client #{self.ID}",
-                round_wise_update_key=self._cfg.eval.
-                best_res_update_round_wise_key)
-            self.history_results = merge_dict(
+            self._monitor.update_best_result(self.best_results,
+                                             formatted_eval_res['Results_raw'],
+                                             results_type=f"client #{self.ID}")
+            self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check(self.history_results[
                 self._cfg.eval.best_res_update_round_wise_key])
@@ -515,7 +504,7 @@ class Client(Worker):
 
     def callback_funcs_for_finish(self, message: Message):
         """
-        The handling function for receiving the signal of finishing the FL
+        The handling function for receiving the signal of finishing the FL \
         course.
 
         Arguments:
@@ -533,13 +522,12 @@ class Client(Worker):
 
     def callback_funcs_for_converged(self, message: Message):
         """
-        The handling function for receiving the signal that the FL course
+        The handling function for receiving the signal that the FL course \
         converged
 
         Arguments:
             message: The received message
         """
-
         self._monitor.global_converged()
 
     @classmethod
