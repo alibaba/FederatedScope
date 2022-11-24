@@ -27,6 +27,8 @@ train:
 xgb_gh:
   use: True
   use_bin: True
+  use_encryption: True
+  key_size: 256
   dims: [10, 20]
 eval:
   freq: 3

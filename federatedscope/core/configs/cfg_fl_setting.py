@@ -86,6 +86,8 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.xgb_gh = CN()
     cfg.xgb_gh.use = False
+    cfg.xgb_gh.use_encryption = False
+    cfg.xgb_gh.key_size = 256
     cfg.xgb_gh.use_bin = False
     cfg.xgb_gh.dims = [5, 10]
 

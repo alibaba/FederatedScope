@@ -5,21 +5,25 @@ import numpy as np
 from federatedscope.core.message import Message
 
 
-class Feature_sort_by_bin:
+class Feature_sort_by_encryption:
     """
         This class contains the bin algorithm for xgboost, i.e.,
         the clients who do not hold labels will first get their orders
         of all features, and then partition each order to several bins.
-        When receive g and h from label-owner, they can compute local
-        best gain efficiently.
+        When receive encrypted g and h from label-owner, they can compute
+        best gain candidates, and sends back to label-owner, who will decrypt
+        then to get the best gain.
         """
     def __init__(self, obj, bin_num=100):
         self.client = obj
+        self.total_feature_order_dict = dict()
         self.bin_num = bin_num
+        self.total_feature_order_list_of_dict = dict()
         self.feature_order_list_of_dict = [
             dict() for _ in range(self.client.my_num_of_feature)
         ]
-        self.gain_dict = dict()
+        self.part_sum_dict_g = dict()
+        self.part_sum_dict_h = dict()
 
     def order_partition_to_bin(self, ordered_list):
         bin_size = int(np.ceil(self.client.batch_size / self.bin_num))
@@ -29,9 +33,9 @@ class Feature_sort_by_bin:
                     j * bin_size:(j + 1) * bin_size]
 
     def preparation(self):
-        self.client.register_handlers('gh', self.callback_func_for_gh)
-        self.client.register_handlers('local_best_gain',
-                                      self.callback_func_for_local_best_gain)
+        self.client.register_handlers('en_gh', self.callback_func_for_en_gh)
+        self.client.register_handlers('en_part_sum_gh',
+                                      self.callback_func_for_en_part_sum_gh)
         self.client.register_handlers('split', self.callback_func_for_split)
         self.client.register_handlers('split_LR',
                                       self.callback_func_for_split_LR)
@@ -65,8 +69,10 @@ class Feature_sort_by_bin:
         else:
             g = self.client.tree_list[tree_num][node_num].grad
             h = self.client.tree_list[tree_num][node_num].hess
+            en_g = [self.client.public_key.encrypt(x) for x in g]
+            en_h = [self.client.public_key.encrypt(x) for x in h]
             self.client.comm_manager.send(
-                Message(msg_type='gh',
+                Message(msg_type='en_gh',
                         sender=self.client.ID,
                         state=self.client.state,
                         receiver=[
@@ -74,68 +80,84 @@ class Feature_sort_by_bin:
                                 self.client.comm_manager.neighbors.keys())
                             if each != self.client.server_id
                         ],
-                        content=(tree_num, node_num, g, h)))
-            self.compute_local_best_gain(tree_num, node_num, g, h)
+                        content=(tree_num, node_num, en_g, en_h)))
+            self.compute_en_part_sum_gh(tree_num, node_num, en_g, en_h)
 
-    def callback_func_for_gh(self, message: Message):
-        tree_num, node_num, g, h = message.content
-        self.compute_local_best_gain(tree_num, node_num, g, h)
+    def callback_func_for_en_gh(self, message: Message):
+        tree_num, node_num, en_g, en_h = message.content
+        self.compute_en_part_sum_gh(tree_num, node_num, en_g, en_h)
 
-    def compute_local_best_gain(self, tree_num, node_num, g, h):
-        self.order_act_on_gh(g, h)
-        self.ordered_part_sum_g = self.partition_to_bin(self.ordered_list_g)
-        self.ordered_part_sum_h = self.partition_to_bin(self.ordered_list_h)
-        best_gain = 0
-        self.split_ref = {'feature_idx': None, 'bin_idx': None}
-
-        for feature_idx in range(self.client.my_num_of_feature):
-            for bin_idx in range(self.bin_num):
-                left_grad = np.sum(
-                    self.ordered_part_sum_g[feature_idx][:bin_idx])
-                right_grad = np.sum(
-                    self.ordered_part_sum_g[feature_idx]) - left_grad
-                left_hess = np.sum(
-                    self.ordered_part_sum_h[feature_idx][:bin_idx])
-                right_hess = np.sum(
-                    self.ordered_part_sum_h[feature_idx]) - left_hess
-                gain = self.client.cal_gain(left_grad, right_grad, left_hess,
-                                            right_hess)
-
-                if gain > best_gain:
-                    best_gain = gain
-                    self.split_ref['feature_idx'] = feature_idx
-                    self.split_ref['bin_idx'] = bin_idx
+    def compute_en_part_sum_gh(self, tree_num, node_num, en_g, en_h):
+        self.order_act_on_gh(en_g, en_h)
+        self.ordered_part_sum_en_g = self.partition_to_bin(self.ordered_list_g)
+        self.ordered_part_sum_en_h = self.partition_to_bin(self.ordered_list_h)
         self.client.comm_manager.send(
-            Message(msg_type='local_best_gain',
+            Message(msg_type='en_part_sum_gh',
                     sender=self.client.ID,
                     state=self.client.state,
                     receiver=self.client.num_of_parties,
-                    content=(tree_num, node_num, best_gain)))
+                    content=(tree_num, node_num, self.ordered_part_sum_en_g,
+                             self.ordered_part_sum_en_h)))
 
     # label owner
-    def callback_func_for_local_best_gain(self, message: Message):
-        tree_num, node_num, local_best_gain = message.content
-        self.gain_dict[message.sender - 1] = local_best_gain
-        if len(self.gain_dict) == self.client.num_of_parties:
-            client_idx = max(self.gain_dict, key=self.gain_dict.get)
-            if self.gain_dict[client_idx] == 0:
+    def callback_func_for_en_part_sum_gh(self, message: Message):
+        tree_num, node_num, ordered_part_sum_en_g, ordered_part_sum_en_h\
+            = message.content
+        ordered_part_sum_g = ordered_part_sum_en_g
+        ordered_part_sum_h = ordered_part_sum_en_h
+        for i in range(len(ordered_part_sum_en_g)):
+            ordered_part_sum_g[i] = [
+                self.client.private_key.decrypt(x)
+                for x in ordered_part_sum_en_g[i]
+            ]
+            ordered_part_sum_h[i] = [
+                self.client.private_key.decrypt(x)
+                for x in ordered_part_sum_en_h[i]
+            ]
+        self.part_sum_dict_g[message.sender - 1] = ordered_part_sum_g
+        self.part_sum_dict_h[message.sender - 1] = ordered_part_sum_h
+
+        if len(self.part_sum_dict_g) == self.client.num_of_parties:
+            best_gain = 0
+            split_ref = {'feature_idx': None, 'bin_idx': None}
+            split_key = None
+            for key in self.part_sum_dict_g.keys():
+                for feature_idx in range(self.client.feature_partition[key]):
+                    for bin_idx in range(self.bin_num):
+                        left_grad = np.sum(
+                            self.part_sum_dict_g[key][feature_idx][:bin_idx])
+                        right_grad = np.sum(
+                            self.part_sum_dict_g[key][feature_idx]) - left_grad
+                        left_hess = np.sum(
+                            self.part_sum_dict_h[key][feature_idx][:bin_idx])
+                        right_hess = np.sum(
+                            self.part_sum_dict_h[key][feature_idx]) - left_hess
+                        gain = self.client.cal_gain(left_grad, right_grad,
+                                                    left_hess, right_hess)
+
+                        if gain > best_gain:
+                            best_gain = gain
+                            split_ref['feature_idx'] = feature_idx
+                            split_ref['bin_idx'] = bin_idx
+                            split_key = key
+            self.part_sum_dict_g = dict()
+            self.part_sum_dict_h = dict()
+            if best_gain == 0:
                 self.client.set_weight(tree_num, node_num)
             else:
                 self.client.tree_list[tree_num][
-                    node_num].member = client_idx + 1
+                    node_num].member = split_key + 1
                 self.client.comm_manager.send(
                     Message(msg_type='split',
                             sender=self.client.ID,
                             state=self.client.state,
-                            receiver=client_idx + 1,
-                            content=(tree_num, node_num)))
-            self.gain_dict = dict()
+                            receiver=split_key + 1,
+                            content=(tree_num, node_num, split_ref)))
 
     def callback_func_for_split(self, message: Message):
-        tree_num, node_num = message.content
-
-        feature_idx = self.split_ref['feature_idx']
-        bin_idx = self.split_ref['bin_idx']
+        tree_num, node_num, split_ref = message.content
+        feature_idx = split_ref['feature_idx']
+        bin_idx = split_ref['bin_idx']
 
         left_child_idx = np.zeros(len(self.client.x))
         for i in range(bin_idx):

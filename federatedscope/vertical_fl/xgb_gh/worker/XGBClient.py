@@ -8,11 +8,14 @@ from federatedscope.vertical_fl.xgb_gh.worker.Tree import Tree
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.dataloader.utils import batch_iter
+from federatedscope.vertical_fl.Paillier import abstract_paillier
 
 from federatedscope.vertical_fl.xgb_gh.worker.Feature_sort_base\
     import Feature_sort_base
 from federatedscope.vertical_fl.xgb_gh.worker.Feature_sort_by_bin\
     import Feature_sort_by_bin
+from federatedscope.vertical_fl.xgb_gh.worker.Feature_sort_by_encryption\
+    import Feature_sort_by_encryption
 from federatedscope.vertical_fl.xgb_gh.worker.Test_base import Test_base
 
 from federatedscope.vertical_fl.xgb_gh.worker.Loss_function \
@@ -45,6 +48,12 @@ class XGBClient(Client):
 
         self.bin_num = config.train.optimizer.bin_num
         self.batch_size = config.data.batch_size
+
+        if config.xgb_gh.use_encryption:
+            cfg_key_size = config.xgb_gh.key_size
+            self.public_key, self.private_key = \
+                abstract_paillier.\
+                generate_paillier_keypair(n_length=cfg_key_size)
 
         self.data = data
         self.own_label = ('y' in self.data['train'])
@@ -82,7 +91,9 @@ class XGBClient(Client):
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order
         #   the second one corresponding to sending the bins of feature order
-        if config.xgb_gh.use_bin:
+        if config.xgb_gh.use_encryption:
+            self.fs = Feature_sort_by_encryption(self, bin_num=self.bin_num)
+        elif config.xgb_gh.use_bin:
             self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
         else:
             self.fs = Feature_sort_base(self)
