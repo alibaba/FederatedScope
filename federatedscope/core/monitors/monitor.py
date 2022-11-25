@@ -649,36 +649,53 @@ class Monitor(object):
                         f"={self.round_wise_update_key}, "
                         f"the keys of results are {list(new_results.keys())}")
 
-                for key in sorted_keys:
-                    cur_result = new_results[key]
-                    if update_best_this_round or (
-                            not self.the_larger_the_better):
-                        # The smaller the better
+                # the first key must be the `round_wise_update_key`,
+                # `update_best_this_round` should be set while evaluating the
+                # first key, so we can check whether `update_best_this_round`
+                # firstly
+
+                cur_result = new_results[self.round_wise_update_key]
+
+                if self.the_larger_the_better:
+                    # The larger, the better
+                    if results_type in [
+                            "client_best_individual",
+                            "unseen_client_best_individual"
+                    ]:
+                        cur_result = max(cur_result)
+                    if key not in best_result or cur_result > best_result[key]:
+                        best_result[key] = cur_result
+                        update_best_this_round = True
+                else:
+                    # The smaller, the better
+                    if results_type in [
+                            "client_best_individual",
+                            "unseen_client_best_individual"
+                    ]:
+                        cur_result = min(cur_result)
+                    if key not in best_result or cur_result < best_result[key]:
+                        best_result[key] = cur_result
+                        update_best_this_round = True
+
+                # update other metrics only if update_best_this_round is True
+                if update_best_this_round:
+                    for key in sorted_keys[1:]:
+                        cur_result = new_results[key]
                         if results_type in [
                                 "client_best_individual",
                                 "unseen_client_best_individual"
                         ]:
-                            cur_result = min(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result < \
-                                best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    elif update_best_this_round or self.the_larger_the_better:
-                        # The larger the better
-                        if results_type in [
-                                "client_best_individual",
-                                "unseen_client_best_individual"
-                        ]:
-                            cur_result = max(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result > \
-                                best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    else:
-                        # unconcerned metric
-                        pass
+                            # Obtain the whether the larger the better
+                            for mode in ['train', 'val', 'test']:
+
+                                if mode in key:
+                                    _key = key.split(f'{mode}_')[1]
+                                    if self.metric_calculator.eval_metric[
+                                            _key][1]:
+                                        cur_result = max(cur_result)
+                                    else:
+                                        cur_result = min(cur_result)
+                        best_result[key] = cur_result
 
         if update_best_this_round:
             line = f"Find new best result: {best_results}"
