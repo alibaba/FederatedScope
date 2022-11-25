@@ -687,7 +687,6 @@ class Monitor(object):
                         ]:
                             # Obtain the whether the larger the better
                             for mode in ['train', 'val', 'test']:
-
                                 if mode in key:
                                     _key = key.split(f'{mode}_')[1]
                                     if self.metric_calculator.eval_metric[
