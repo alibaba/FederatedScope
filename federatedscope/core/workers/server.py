@@ -71,8 +71,13 @@ class Server(BaseServer):
                  strategy=None,
                  unseen_clients_id=None,
                  **kwargs):
-
         super(Server, self).__init__(ID, state, config, model, strategy)
+        # Register message handlers
+        self._register_default_handlers()
+
+        # Un-configured worker
+        if config is None:
+            return
 
         self.data = data
         self.device = device
@@ -185,9 +190,6 @@ class Server(BaseServer):
             if 'resource_info' in kwargs else None
         self.client_resource_info = kwargs['client_resource_info'] \
             if 'client_resource_info' in kwargs else None
-
-        # Register message handlers
-        self._register_default_handlers()
 
         # Initialize communication manager and message buffer
         self.msg_buffer = {'train': dict(), 'eval': dict()}
@@ -996,3 +998,7 @@ class Server(BaseServer):
         self.msg_buffer['eval'][rnd][sender] = content
 
         return self.check_and_move_on(check_eval_result=True)
+
+    @classmethod
+    def get_msg_handler_dict(cls):
+        return cls().msg_handlers_str

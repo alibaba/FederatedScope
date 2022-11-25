@@ -15,7 +15,7 @@ minimal_requires = [
 
 test_requires = ['pytest', 'pytest-cov']
 
-dev_requires = test_requires + ['pre-commit']
+dev_requires = test_requires + ['pre-commit', 'networkx', 'matplotlib']
 
 org_requires = ['paramiko==2.11.0', 'celery[redis]', 'cmd2']
 
