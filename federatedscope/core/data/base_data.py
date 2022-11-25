@@ -145,7 +145,7 @@ class ClientData(dict):
         test: test dataset, which will be converted to ``Dataloader``
 
     Note:
-        Key ``data`` in ``ClientData`` is the raw dataset.
+        Key ``{split}_data`` in ``ClientData`` is the raw dataset.
     """
     def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
         self.client_cfg = None
@@ -168,7 +168,7 @@ class ClientData(dict):
         Returns:
             Bool: Status for indicating whether the client_cfg is updated
         """
-        # if `batch_size` or `shuffle` change, reinstantiate DataLoader
+        # if `batch_size` or `shuffle` change, re-instantiate DataLoader
         if self.client_cfg is not None:
             if dict(self.client_cfg.dataloader) == dict(
                     new_client_cfg.dataloader):

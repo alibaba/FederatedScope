@@ -43,11 +43,11 @@ eval:
 hpo:
   scheduler: hb
   num_workers: 0
-  init_cand_num: 81
+  init_cand_num: 27
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
   sha:
-    budgets: [ 9, 81 ]
+    budgets: [ 3, 27 ]
     elim_rate: 3
-    iter: 12
+    iter: 3
   metric: 'server_global_eval.test_loss'
-  working_folder: sha_femnist_avg
+  working_folder: hb_femnist_avg

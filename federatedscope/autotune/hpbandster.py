@@ -69,8 +69,9 @@ class MyWorker(Worker):
         self._perfs = []
 
     def compute(self, config, budget, **kwargs):
-        res, results = eval_in_fs(self.cfg, config, int(budget),
-                                  self.client_cfgs)
+        results = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs)
+        key1, key2 = self.cfg.hpo.metric.split('.')
+        res = results[key1][key2]
         config = dict(config)
         config['federate.total_round_num'] = budget
         self._init_configs.append(config)

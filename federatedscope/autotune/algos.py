@@ -24,14 +24,13 @@ def make_trial(trial_cfg, client_cfgs=None):
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    Fed_runner = get_runner(data=data,
+    fed_runner = get_runner(data=data,
                             server_class=get_server_cls(trial_cfg),
                             client_class=get_client_cls(trial_cfg),
                             config=trial_cfg.clone(),
                             client_configs=client_cfgs)
-    results = Fed_runner.run()
-    key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2], results
+    results = fed_runner.run()
+    return results
 
 
 class TrialExecutor(threading.Thread):
@@ -187,7 +186,9 @@ class ModelFreeBase(Scheduler):
             for i, config in enumerate(configs):
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
-                perfs[i], results = make_trial(trial_cfg, self._client_cfgs)
+                results = make_trial(trial_cfg, self._client_cfgs)
+                key1, key2 = trial_cfg.hpo.metric.split('.')
+                perfs[i] = results[key1][key2]
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))

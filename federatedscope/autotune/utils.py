@@ -155,14 +155,9 @@ def summarize_hpo_results(configs,
     pd.set_option('display.max_columns', None)
 
     if use_wandb:
-        try:
-            import wandb
-            table = wandb.Table(dataframe=df)
-            wandb.log({'ConfigurationRank': table})
-        except ImportError:
-            logger.error(
-                "cfg.wandb.use=True but not install the wandb package")
-            exit()
+        import wandb
+        table = wandb.Table(dataframe=df)
+        wandb.log({'ConfigurationRank': table})
 
     return df
 
@@ -218,6 +213,17 @@ def parse_logs(file_list):
 
 
 def eval_in_fs(cfg, config, budget, client_cfgs=None):
+    """
+
+    Args:
+        cfg: fs cfg
+        config: sampled trial CS.Configuration
+        budget: budget round for this trial
+        client_cfgs: client-wise cfg
+
+    Returns:
+        The best results returned from FedRunner
+    """
     import ConfigSpace as CS
     from federatedscope.core.auxiliaries.utils import setup_seed
     from federatedscope.core.auxiliaries.data_builder import get_data
@@ -251,14 +257,14 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    Fed_runner = get_runner(data=data,
+    fed_runner = get_runner(data=data,
                             server_class=get_server_cls(trial_cfg),
                             client_class=get_client_cls(trial_cfg),
                             config=trial_cfg.clone(),
                             client_configs=client_cfgs)
-    results = Fed_runner.run()
-    key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2], results
+    results = fed_runner.run()
+
+    return results
 
 
 def config_bool2int(config):
@@ -272,15 +278,11 @@ def config_bool2int(config):
 
 
 def log2wandb(trial, config, results, trial_cfg):
-    try:
-        import wandb
-        key1, key2 = trial_cfg.hpo.metric.split('.')
-        log_res = {
-            'Trial_index': trial,
-            'Config': config_bool2int(config),
-            trial_cfg.hpo.metric: results[key1][key2],
-        }
-        wandb.log(log_res)
-    except ImportError:
-        logger.error("cfg.wandb.use=True but not install the wandb package")
-        exit()
+    import wandb
+    key1, key2 = trial_cfg.hpo.metric.split('.')
+    log_res = {
+        'Trial_index': trial,
+        'Config': config_bool2int(config),
+        trial_cfg.hpo.metric: results[key1][key2],
+    }
+    wandb.log(log_res)
