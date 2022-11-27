@@ -41,6 +41,7 @@ def load_heteromolecule_dataset(config=None):
             dataset.append(tmp_dataset)
         for dname in MoleculeNet_names:
             tmp_dataset = MoleculeNet(path, dname, **transforms_funcs)
+            
             if dname in ['FreeSolv', 'BACE']:
                 for i in len(tmp_dataset):
                     smiles = dataset[i].smiles
