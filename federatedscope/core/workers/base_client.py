@@ -5,11 +5,10 @@ from federatedscope.core.workers.base_worker import Worker
 class BaseClient(Worker):
     def __init__(self, ID, state, config, model, strategy):
         super(BaseClient, self).__init__(ID, state, config, model, strategy)
-        # TODO: move to worker
         self.msg_handlers = dict()
+        self.msg_handlers_str = dict()
 
-    # TODO: move to worker
-    def register_handlers(self, msg_type, callback_func):
+    def register_handlers(self, msg_type, callback_func, send_msg=[None]):
         """
         To bind a message type with a handling function.
 
@@ -19,6 +18,7 @@ class BaseClient(Worker):
                 message
         """
         self.msg_handlers[msg_type] = callback_func
+        self.msg_handlers_str[msg_type] = (callback_func.__name__, send_msg)
 
     def _register_default_handlers(self):
         """
@@ -43,17 +43,24 @@ class BaseClient(Worker):
             ============================ ==================================
         """
         self.register_handlers('assign_client_id',
-                               self.callback_funcs_for_assign_id)
+                               self.callback_funcs_for_assign_id, [None])
         self.register_handlers('ask_for_join_in_info',
-                               self.callback_funcs_for_join_in_info)
-        self.register_handlers('address', self.callback_funcs_for_address)
+                               self.callback_funcs_for_join_in_info,
+                               ['join_in_info'])
+        self.register_handlers('address', self.callback_funcs_for_address,
+                               [None])
         self.register_handlers('model_para',
-                               self.callback_funcs_for_model_para)
+                               self.callback_funcs_for_model_para,
+                               ['model_para', 'ss_model_para'])
         self.register_handlers('ss_model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('evaluate', self.callback_funcs_for_evaluate)
-        self.register_handlers('finish', self.callback_funcs_for_finish)
-        self.register_handlers('converged', self.callback_funcs_for_converged)
+                               self.callback_funcs_for_model_para,
+                               ['ss_model_para', 'model_para'])
+        self.register_handlers('evaluate', self.callback_funcs_for_evaluate,
+                               ['metrics'])
+        self.register_handlers('finish', self.callback_funcs_for_finish,
+                               [None])
+        self.register_handlers('converged', self.callback_funcs_for_converged,
+                               [None])
 
     @abc.abstractmethod
     def run(self):

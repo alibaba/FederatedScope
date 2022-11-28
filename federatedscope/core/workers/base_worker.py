@@ -25,8 +25,9 @@ class Worker(object):
         self._model = model
         self._cfg = config
         self._strategy = strategy
-        self._mode = self._cfg.federate.mode.lower()
-        self._monitor = Monitor(config, monitored_object=self)
+        if self._cfg is not None:
+            self._mode = self._cfg.federate.mode.lower()
+            self._monitor = Monitor(config, monitored_object=self)
 
     @property
     def ID(self):

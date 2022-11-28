@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   run:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       matrix:
         os: [ubuntu-latest]
