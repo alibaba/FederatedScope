@@ -16,16 +16,16 @@ This list is constantly being updated. Feel free to contribute!
  | An Efficient Learning Framework For Federated XGBoost Using Secret Sharing And Distributed Optimization                 | ACM Transactions on Intelligent Systems and Technology | [pdf](https://arxiv.org/pdf/2105.05717.pdf)                                                   |
 
 ### 2020 
-| Title                                                                  | Venue | Link                                                | 
+| Title                                                                  | Venue | Link                                                |
 |------------------------------------------------------------------------|-------|-----------------------------------------------------|
 | Mitigating Leakage in Federated Learning with Trusted Hardware         | arxiv | [pdf](https://arxiv.org/pdf/2011.04948.pdf)         |
-| Practical federated gradient boosting decision trees                   | AAAI  | [pdf](https://arxiv.org/pdf/1911.04206.pdf)         | 
+| Practical federated gradient boosting decision trees                   | AAAI  | [pdf](https://arxiv.org/pdf/1911.04206.pdf)         |
 | FederBoost: Private federated learning for GBDT                        | arxiv | [pdf](https://arxiv.org/pdf/2011.02796.pdf)         |
 | Privacy Preserving Vertical Federated Learning for Tree-based Models   | VLDB  | [pdf](http://www.vldb.org/pvldb/vol13/p2090-wu.pdf) |
 | Adaptive histogram-based gradient boosted trees for federated learning | arxiv | [pdf](https://arxiv.org/pdf/2012.06670.pdf)         |
 
 ### 2019
-| Title                                           | Venue                                     | Link                                        | 
+| Title                                           | Venue                                     | Link                                        |
 |-------------------------------------------------|-------------------------------------------|---------------------------------------------|
 | SecureGBM: Secure Multi-Party Gradient Boosting | IEEE International Conference on Big Data | [pdf](https://arxiv.org/pdf/1911.11997.pdf) |
 
