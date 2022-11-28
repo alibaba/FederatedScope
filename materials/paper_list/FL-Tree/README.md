@@ -29,7 +29,7 @@ This list is constantly being updated. Feel free to contribute!
 | Title                                           | Venue                                     | Link                                        |
 |-------------------------------------------------|-------------------------------------------|---------------------------------------------|
 | SecureGBM: Secure Multi-Party Gradient Boosting | IEEE International Conference on Big Data | [pdf](https://arxiv.org/pdf/1911.11997.pdf) |
-| Federated Forest                                | IEEE Transactions on Big Data             | https://arxiv.org/pdf/1905.10053.pdf        |
+| Federated Forest                                | IEEE Transactions on Big Data             | [pdf](https://arxiv.org/pdf/1905.10053.pdf) |
 
 ### 2018
 | Title                                                             | Venue                           | Link                                        |
