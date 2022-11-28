@@ -11,20 +11,19 @@ from federatedscope.core.message import Message
 class Test_base:
     def __init__(self, obj):
         self.client = obj
-        # self.client.register_handlers('test_data',
-        #                               self.callback_func_for_test_data)
-        # self.client.register_handlers('test_value',
-        #                                self.callback_func_for_test_value)
+
         self.client.register_handlers(
             'split_lr_for_test_data',
             self.callback_func_for_split_lr_for_test_data)
         self.client.register_handlers('LR', self.callback_func_for_LR)
 
     def evaluation(self):
-        loss = self.client.ls.loss(self.client.test_y, self.client.test_z)
+
+        loss = self.client.ls.loss(self.client.test_y, self.client.test_result)
         if self.client.criterion_type == 'CrossEntropyLoss':
             metric = self.client.ls.metric(self.client.test_y,
-                                           self.client.test_z)
+                                           self.client.test_result)
+
             metrics = {
                 'test_loss': loss,
                 'test_acc': metric[1],
@@ -46,26 +45,18 @@ class Test_base:
     def test_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 < self.client.num_of_trees:
-                if (tree_num + 1) % self.client._cfg.eval.freq == 0:
-                    metrics = self.evaluation()
 
-                    self.client.comm_manager.send(
-                        Message(msg_type='test_result',
-                                sender=self.client.ID,
-                                state=self.client.state,
-                                receiver=self.client.server_id,
-                                content=(tree_num, metrics)))
+                # TODO: add feedback during training
                 self.client.state += 1
                 logger.info(
                     f'----------- Starting a new training round (Round '
                     f'#{self.client.state}) -------------')
-                # if tree_num % self._cfg.eval.freq == 0:
-                # to build the next tree
+
+                # build the next tree
                 self.client.fs.compute_for_root(tree_num + 1)
 
             else:
                 metrics = self.evaluation()
-
                 self.client.comm_manager.send(
                     Message(msg_type='test_result',
                             sender=self.client.ID,
@@ -73,10 +64,24 @@ class Test_base:
                             receiver=self.client.server_id,
                             content=(tree_num, metrics)))
 
-            # else:
-            #    self.test_for_root(tree_num + 1)
+                self.client.comm_manager.send(
+                    Message(msg_type='send_feature_importance',
+                            sender=self.client.ID,
+                            state=self.client.state,
+                            receiver=[
+                                each for each in list(
+                                    self.client.comm_manager.neighbors.keys())
+                                if each != self.client.server_id
+                            ],
+                            content=None))
+                self.client.comm_manager.send(
+                    Message(msg_type='feature_importance',
+                            sender=self.client.ID,
+                            state=self.client.state,
+                            receiver=self.client.server_id,
+                            content=self.client.feature_importance))
         elif self.client.tree_list[tree_num][node_num].weight:
-            self.client.test_z += self.client.tree_list[tree_num][
+            self.client.test_result += self.client.tree_list[tree_num][
                 node_num].indicator * self.client.tree_list[tree_num][
                     node_num].weight
             self.test_for_node(tree_num, node_num + 1)

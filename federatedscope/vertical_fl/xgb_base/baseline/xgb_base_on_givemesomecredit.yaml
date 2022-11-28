@@ -8,7 +8,7 @@ model:
   type: lr
 data:
   root: data/
-  type: givemesomecredit
+  type: credit
   batch_size: 2000
   splits: [0.8, 0.2]
 dataloader:
@@ -27,6 +27,8 @@ train:
 xgb_base:
   use: True
   use_bin: True
+  use_random_noise: True
+  epsilon: 10
   dims: [5, 10]
 eval:
   freq: 3

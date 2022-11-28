@@ -36,7 +36,7 @@ class Abalone:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘adult’ or ‘xxx’
+        name (str): name of dataset, ‘abalone’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -148,7 +148,6 @@ class Abalone:
                                 feature_partition[i - 1]]
                 }
             self.data[i]['val'] = None
-            # self.data[i]['test'] = test_data
 
         self.data[self.num_of_clients]['train']['y'] = y[:]
         self.data[self.num_of_clients]['test']['y'] = test_y[:]

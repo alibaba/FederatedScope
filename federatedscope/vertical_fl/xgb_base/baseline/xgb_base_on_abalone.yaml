@@ -27,6 +27,8 @@ train:
 xgb_base:
   use: True
   use_bin: True
+  use_random_noise: True
+  epsilon: 5
   dims: [4, 8]
 eval:
   freq: 5

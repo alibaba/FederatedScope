@@ -219,6 +219,7 @@ class Feature_sort_by_bin:
         feature_idx = split_ref['feature_idx'] - self.client.feature_list[
             self.client.ID - 1]
         bin_idx = split_ref['bin_idx']
+        self.client.feature_importance[feature_idx] += 1
         # feature_value = sorted(self.x[:, feature_idx])[value_idx]
         if bin_idx == 0:
             feature_value = self._min(

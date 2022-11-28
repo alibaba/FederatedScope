@@ -45,10 +45,12 @@ class XGBServer(Server):
         self.tree_list = [
             Tree(self.max_tree_depth).tree for _ in range(self.num_of_trees)
         ]
+        self.feature_importance_dict = dict()
 
-        # self.register_handlers('test', self.callback_func_for_test)
         self.register_handlers('test_result',
                                self.callback_func_for_test_result)
+        self.register_handlers('feature_importance',
+                               self.callback_func_for_feature_importance)
 
     def trigger_for_start(self):
         if self.check_client_join_in():
@@ -64,14 +66,27 @@ class XGBServer(Server):
                     content=(self.lambda_, self.gamma, self.num_of_trees,
                              self.max_tree_depth)))
 
+    # TODO: merge the following two callback funcs
+    def callback_func_for_feature_importance(self, message: Message):
+        feature_importance = message.content
+        self.feature_importance_dict[message.sender] = feature_importance
+        if len(self.feature_importance_dict) == self.num_of_parties:
+            self.feature_importance_dict = dict(
+                sorted(self.feature_importance_dict.items(),
+                       key=lambda x: x[0]))
+            self._monitor.update_best_result(self.best_results,
+                                             self.metrics,
+                                             results_type='server_global_eval')
+            self._monitor.add_items_to_best_result(
+                self.best_results,
+                self.feature_importance_dict,
+                results_type='feature_importance')
+            formatted_logs = self._monitor.format_eval_res(
+                self.metrics,
+                rnd=self.tree_num,
+                role='Server #',
+                forms=self._cfg.eval.report)
+            logger.info(formatted_logs)
+
     def callback_func_for_test_result(self, message: Message):
-        tree_num, metrics = message.content
-        self._monitor.update_best_result(self.best_results,
-                                         metrics,
-                                         results_type='server_global_eval')
-        formatted_logs = self._monitor.format_eval_res(
-            metrics,
-            rnd=tree_num,
-            role='Server #',
-            forms=self._cfg.eval.report)
-        logger.info(formatted_logs)
+        self.tree_num, self.metrics = message.content

@@ -8,7 +8,7 @@ model:
   type: lr
 data:
   root: data/
-  type: blogfeedback
+  type: blog
   batch_size: 8000
   splits: [1.0, 0.0]
 dataloader:
@@ -19,14 +19,16 @@ trainer:
   type: none
 train:
   optimizer:
-    bin_num: 1000
+    bin_num: 500
     lambda_: 10
     gamma: 0
-    num_of_trees: 9
+    num_of_trees: 5
     max_tree_depth: 3
 xgb_base:
   use: True
-  use_bin: True
+  use_bin: False
+  use_random_noise: True
+  epsilon: 2
   dims: [10, 20]
 eval:
   freq: 3
