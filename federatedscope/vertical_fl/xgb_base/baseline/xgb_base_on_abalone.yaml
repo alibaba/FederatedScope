@@ -20,7 +20,7 @@ trainer:
 train:
   optimizer:
     bin_num: 1000
-    lambda_: 0.1
+    lambda_: 1
     gamma: 0
     num_of_trees: 10
     max_tree_depth: 3
@@ -28,7 +28,7 @@ xgb_base:
   use: True
   use_bin: True
   use_random_noise: True
-  epsilon: 5
+  epsilon: 8
   dims: [4, 8]
 eval:
   freq: 5

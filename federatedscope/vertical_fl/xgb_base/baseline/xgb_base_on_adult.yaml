@@ -20,7 +20,7 @@ trainer:
 train:
   optimizer:
     bin_num: 100
-    lambda_: 0.1
+    lambda_: 1
     gamma: 0
     num_of_trees: 10
     max_tree_depth: 3

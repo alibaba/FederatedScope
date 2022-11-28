@@ -19,16 +19,16 @@ trainer:
   type: none
 train:
   optimizer:
-    bin_num: 500
-    lambda_: 10
+    bin_num: 1000
+    lambda_: 1
     gamma: 0
     num_of_trees: 5
     max_tree_depth: 3
 xgb_base:
   use: True
-  use_bin: False
+  use_bin: True
   use_random_noise: True
-  epsilon: 2
+  epsilon: 14
   dims: [10, 20]
 eval:
   freq: 3

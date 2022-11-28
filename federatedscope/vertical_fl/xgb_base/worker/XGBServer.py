@@ -86,6 +86,7 @@ class XGBServer(Server):
                 rnd=self.tree_num,
                 role='Server #',
                 forms=self._cfg.eval.report)
+            formatted_logs['feature_importance'] = self.feature_importance_dict
             logger.info(formatted_logs)
 
     def callback_func_for_test_result(self, message: Message):

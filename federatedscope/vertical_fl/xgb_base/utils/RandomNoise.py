@@ -2,14 +2,24 @@ import numpy as np
 
 
 class random_noise:
+    """
+    Add random noises to the feature order to protect privacy.
+    For more details, please see
+        FederBoost: Private Federated Learning for GBDT
+        (https://arxiv.org/pdf/2011.02796.pdf)
+    """
     def __init__(self, epsilon=2, seed=123):
         self.epsilon = epsilon
         self.seed = seed
 
     def add_perm_noises_to_dict(self, old_dict, epsilon, bin_num):
         """
-        Add dp noises to a dict whose items are lists
-        :param old_dict: dict
+        Add dp noises to a dict whose items are lists(i.e., bins).
+        For each item in a list,
+            with prob. p = e^epsilon / (e^epsilon + bin_num - 1),
+                it stays in the bin
+            with prob. 1-p, it moves to another bin picked uniformly at random
+        :param old_dict: dict whose values are lists
         :param epsilon: float
         :param bin_num: int
         :return: dict
@@ -37,6 +47,13 @@ class random_noise:
         return new_dict
 
     def add_perm_noised_to_list_of_dict(self, old_list, epsilon, bin_num):
+        """
+        For each item in the list, do the above function
+        :param old_list: list whose values are dict
+        :param epsilon: float
+        :param bin_num: int
+        :return: list
+        """
         length = len(old_list)
         new_list = list()
         for i in range(length):
