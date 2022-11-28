@@ -5,7 +5,7 @@ import pandas as pd
 import collections
 
 from federatedscope.core.message import Message
-from federatedscope.vertical_fl.xgb_base.utils.RandomNoise import random_noise
+from federatedscope.vertical_fl.xgb_base.utils.Random_noise import Random_noise
 
 
 class Feature_sort_by_bin:
@@ -35,7 +35,7 @@ class Feature_sort_by_bin:
                 self.feature_order_list_of_dict[i][j] = np.random.permutation(
                     self.feature_order_list_of_dict[i][j])
         if self.client.use_random_noise:
-            rn = random_noise(self.epsilon, self.bin_num)
+            rn = Random_noise(self.epsilon, self.bin_num)
             self.feature_order_list_of_dict_noised =\
                 rn.add_perm_noised_to_list_of_dict(
                     self.feature_order_list_of_dict,

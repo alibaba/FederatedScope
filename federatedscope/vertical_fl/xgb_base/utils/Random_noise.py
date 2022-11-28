@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class random_noise:
+class Random_noise:
     """
     Add random noises to the feature order to protect privacy.
     For more details, please see
