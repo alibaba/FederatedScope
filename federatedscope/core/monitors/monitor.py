@@ -654,7 +654,6 @@ class Monitor(object):
                 # `update_best_this_round` should be set while evaluating the
                 # first key, so we can check whether `update_best_this_round`
                 # firstly
-
                 cur_result = new_results[found_round_wise_update_key]
 
                 if self.the_larger_the_better:
@@ -664,8 +663,10 @@ class Monitor(object):
                             "unseen_client_best_individual"
                     ]:
                         cur_result = max(cur_result)
-                    if key not in best_result or cur_result > best_result[key]:
-                        best_result[key] = cur_result
+                    if found_round_wise_update_key not in best_result or\
+                            cur_result > best_result[
+                            found_round_wise_update_key]:
+                        best_result[found_round_wise_update_key] = cur_result
                         update_best_this_round = True
                 else:
                     # The smaller, the better
@@ -674,8 +675,10 @@ class Monitor(object):
                             "unseen_client_best_individual"
                     ]:
                         cur_result = min(cur_result)
-                    if key not in best_result or cur_result < best_result[key]:
-                        best_result[key] = cur_result
+                    if found_round_wise_update_key not in best_result or \
+                            cur_result < best_result[
+                            found_round_wise_update_key]:
+                        best_result[found_round_wise_update_key] = cur_result
                         update_best_this_round = True
 
                 # update other metrics only if update_best_this_round is True
