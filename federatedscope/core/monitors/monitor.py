@@ -635,9 +635,10 @@ class Monitor(object):
                 found_round_wise_update_key = False
                 sorted_keys = []
                 for key in new_results:
+                    # TODO: fix `in` condition
                     if self.round_wise_update_key in key:
                         sorted_keys.insert(0, key)
-                        found_round_wise_update_key = True
+                        found_round_wise_update_key = key
                     else:
                         sorted_keys.append(key)
                 if not found_round_wise_update_key:
@@ -654,7 +655,7 @@ class Monitor(object):
                 # first key, so we can check whether `update_best_this_round`
                 # firstly
 
-                cur_result = new_results[self.round_wise_update_key]
+                cur_result = new_results[found_round_wise_update_key]
 
                 if self.the_larger_the_better:
                     # The larger, the better
