@@ -16,7 +16,6 @@ class AutotuneTest(unittest.TestCase):
         case_cfg = global_cfg.clone()
         case_cfg.merge_from_file(
             'federatedscope/autotune/baseline/fedhpo_vfl.yaml')
-
         setup_seed(case_cfg.seed)
         update_logger(case_cfg)
 
