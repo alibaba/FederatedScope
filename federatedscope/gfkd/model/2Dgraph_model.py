@@ -41,10 +41,10 @@ class GNN_Net(GNN_Net_Graph):
             else:
                 raise TypeError('Unsupported data type!')
         else:
-            if isinstance(data, Batch):
+            if isinstance(data, Batch):# position is as attr in x
                 x, edge_index, batch, pos = data.x, data.edge_index, data.batch
-            elif isinstance(data, tuple):
-                x, edge_index, batch = data
+            elif isinstance(data, tuple):# position
+                x, edge_index, batch, pos = data.x, data.edge_index, data.batch, data.pos
             else:
                 raise TypeError('Unsupported data type!')
 
