@@ -1,8 +1,8 @@
-DEFAULT_KEYSIZE = 3072
+DEFAULT_KEY_SIZE = 3072
 
 
 class DummyEncryptKeypair(object):
-    def __init__(self, n_length=DEFAULT_KEYSIZE):
+    def __init__(self, n_length=DEFAULT_KEY_SIZE):
         self.n_length = n_length
 
     @staticmethod
