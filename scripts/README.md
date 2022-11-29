@@ -23,7 +23,7 @@ Then you can launch the participants (i.e., `python federatedscope/main.py --cfg
 
 Also, users can run distribute mode with other provided datasets and models. Take training ConvNet on FEMNIST as an example:
 ```shell script
-bash distributed_scripts/run_distributed_conv_femnist.sh 
+bash distributed_scripts/run_distributed_conv_femnist.sh
 ```
 
 ### Federated Learning in Computer Vision (FL-CV)

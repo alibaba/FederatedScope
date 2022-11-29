@@ -40,7 +40,7 @@ def extend_data_cfg(cfg):
     cfg.dataloader.shuffle = True
     cfg.dataloader.num_workers = 0
     cfg.dataloader.drop_last = False
-    cfg.dataloader.pin_memory = True
+    cfg.dataloader.pin_memory = False
     # GFL: graphsaint DataLoader
     cfg.dataloader.walk_length = 2
     cfg.dataloader.num_steps = 30
