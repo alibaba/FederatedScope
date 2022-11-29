@@ -41,13 +41,13 @@ eval:
   freq: 5
   best_res_update_round_wise_key: test_loss
 hpo:
-  scheduler: bo_gp
+  scheduler: sha
   num_workers: 0
-  init_cand_num: 27
+  init_cand_num: 9
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
   sha:
-    budgets: [ 9, 9 ]
+    budgets: [ 3, 9 ]
     elim_rate: 3
-    iter: 3
+    iter: 1
   metric: 'server_global_eval.test_loss'
-  working_folder: hb_femnist_avg
+  working_folder: sha
