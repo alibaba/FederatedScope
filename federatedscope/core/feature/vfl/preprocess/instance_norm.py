@@ -7,7 +7,7 @@ from federatedscope.core.message import Message
 logger = logging.getLogger(__name__)
 
 
-def wrap_instance_norm_for_server(worker):
+def wrap_instance_norm_server(worker):
     """
     This function is to perform instance norm vfl tabular data for server.
     Args:
@@ -96,7 +96,7 @@ def wrap_instance_norm_for_server(worker):
     return worker
 
 
-def wrap_instance_norm_for_client(worker):
+def wrap_instance_norm_client(worker):
     """
     This function is to perform instance norm vfl tabular data for client.
     Args:

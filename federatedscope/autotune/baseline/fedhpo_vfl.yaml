@@ -26,6 +26,8 @@ data:
   type: adult
   splits: [1.0, 0.0]
   args: [{normalization: False, standardization: True}]
+feat_engr:
+  scenario: vfl
 dataloader:
   type: raw
   batch_size: 50

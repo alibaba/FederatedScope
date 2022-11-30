@@ -58,6 +58,15 @@ def extend_data_cfg(cfg):
     # feature engineer
     cfg.feat_engr = CN()
     cfg.feat_engr.type = ''
+    cfg.feat_engr.scenario = 'hfl'
+
+    cfg.feat_engr.secure = CN()
+    cfg.feat_engr.secure.type = 'encrypt'
+
+    cfg.feat_engr.secure.encrypt = CN()
+    cfg.feat_engr.secure.encrypt.type = 'dummy'
+
+    cfg.feat_engr.secure.dp = CN()  # under dev
 
     # --------------- outdated configs ---------------
     # TODO: delete this code block

@@ -12,7 +12,7 @@ vertical.use:
   choices: [True, False]
 feat_engr.type:
   type: cate
-  choices: ['', 'vfl_min_max_scaling', 'vfl_instance_norm']
+  choices: ['', 'min_max_norm', 'instance_norm']
 condition1:
   type: equal
   child: train.optimizer.num_of_trees

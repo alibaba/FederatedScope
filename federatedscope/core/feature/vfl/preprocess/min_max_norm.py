@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def wrap_min_max_scaling(worker):
+def min_max_norm(worker):
     """
     This function is to perform min-max scale vfl tabular data.
     Args:
@@ -32,3 +32,11 @@ def wrap_min_max_scaling(worker):
                 split_data['x'] = \
                     (split_data['x'] - feat_min) / (feat_max - feat_min)
     return worker
+
+
+def min_max_norm_client(worker):
+    return min_max_norm(worker)
+
+
+def min_max_norm_server(worker):
+    return min_max_norm(worker)
