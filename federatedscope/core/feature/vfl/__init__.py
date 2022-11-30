@@ -1,9 +1,19 @@
 from federatedscope.core.feature.vfl.preprocess.instance_norm import \
     wrap_instance_norm_client, wrap_instance_norm_server
 from federatedscope.core.feature.vfl.preprocess.min_max_norm import \
-    min_max_norm_client, min_max_norm_server
+    wrap_min_max_norm_client, wrap_min_max_norm_server
+from federatedscope.core.feature.vfl.preprocess.log_transform import \
+    wrap_log_transform_client, wrap_log_transform_server
+from federatedscope.core.feature.vfl.preprocess.standardization import \
+    wrap_standardization_client, wrap_standardization_server
 
 __all__ = [
-    'wrap_instance_norm_client', 'wrap_instance_norm_server',
-    'min_max_norm_client', 'min_max_norm_server'
+    'wrap_instance_norm_client',
+    'wrap_instance_norm_server',
+    'wrap_min_max_norm_client',
+    'wrap_min_max_norm_server',
+    'wrap_log_transform_client',
+    'wrap_log_transform_server',
+    'wrap_standardization_client',
+    'wrap_standardization_server',
 ]
