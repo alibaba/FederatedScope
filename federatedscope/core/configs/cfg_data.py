@@ -59,6 +59,7 @@ def extend_data_cfg(cfg):
     cfg.feat_engr = CN()
     cfg.feat_engr.type = ''
     cfg.feat_engr.scenario = 'hfl'
+    cfg.feat_engr.num_bins = 5
 
     cfg.feat_engr.secure = CN()
     cfg.feat_engr.secure.type = 'encrypt'

@@ -1,4 +1,7 @@
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def merge_splits_feat(data):
@@ -15,3 +18,24 @@ def merge_splits_feat(data):
     if merged_feat is None:
         raise ValueError('Not support data type for merged feature.')
     return merged_feat
+
+
+def vfl_binning(feat, num_bins, strategy='uniform'):
+    num_features = feat.shape[1]
+    bin_edges = np.zeros(num_features, dtype=object)
+
+    for i in range(num_features):
+        col = feat[:, i]
+        col_min, col_max = np.min(col), np.max(col)
+        if col_min == col_max:
+            logger.warning(
+                f"Feature {i} is constant and will be replaced with 0.")
+            bin_edges[i] = np.array([-np.inf, np.inf])
+            continue
+        if strategy == "uniform":
+            bin_edges[i] = np.linspace(col_min, col_max, num_bins[i] + 1)
+        elif strategy == "quantile":
+            quantiles = np.linspace(0, 100, num_bins[i] + 1)
+            bin_edges[i] = np.asarray(np.percentile(col, quantiles))
+
+    return bin_edges
