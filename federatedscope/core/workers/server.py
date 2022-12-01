@@ -796,19 +796,22 @@ class Server(BaseServer):
                                                self._cfg.asyn.time_budget
 
             # start feature engineering
-            self.trigger_for_feat_engr()
+            self.trigger_for_feat_engr(
+                self.broadcast_model_para, {
+                    'msg_type': 'model_para',
+                    'sample_client_num': self.sample_client_num
+                })
 
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.
                 format(self.state))
-            self.broadcast_model_para(msg_type='model_para',
-                                      sample_client_num=self.sample_client_num)
 
-    def trigger_for_feat_engr(self):
+    def trigger_for_feat_engr(self, trigger_train_func,
+                              kwargs_for_trigger_train_func):
         """
         Interface for feature engineering, the default operation is none
         """
-        pass
+        trigger_train_func(**kwargs_for_trigger_train_func)
 
     def trigger_for_time_up(self, check_timestamp=None):
         """

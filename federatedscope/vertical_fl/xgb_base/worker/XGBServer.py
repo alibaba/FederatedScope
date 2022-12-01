@@ -55,8 +55,7 @@ class XGBServer(Server):
     def trigger_for_start(self):
         if self.check_client_join_in():
             self.broadcast_client_address()
-            self.trigger_for_feat_engr()
-            self.broadcast_model_para()
+            self.trigger_for_feat_engr(self.broadcast_model_para)
 
     def broadcast_model_para(self):
         self.comm_manager.send(

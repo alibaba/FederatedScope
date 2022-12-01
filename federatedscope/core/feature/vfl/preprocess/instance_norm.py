@@ -16,7 +16,14 @@ def wrap_instance_norm_server(worker):
     Returns:
         Wrap vfl server with instance norm.
     """
-    def trigger_for_feat_engr(self):
+    def trigger_for_feat_engr(self,
+                              trigger_train_func,
+                              kwargs_for_trigger_train_func={}):
+        # broadcast_model_para_func after feature engineering finishing
+        self.trigger_train_func = trigger_train_func
+        self.kwargs_for_trigger_train_func = \
+            kwargs_for_trigger_train_func
+
         # message buffer for data statistic
         self.msg_buffer['instance_mean'] = {}
         self.msg_buffer['instance_var'] = {}
@@ -79,6 +86,8 @@ def wrap_instance_norm_server(worker):
                         receiver=list(self.comm_manager.neighbors.keys()),
                         timestamp=self.cur_timestamp,
                         content=instance_var))
+
+            self.trigger_train_func(**self.kwargs_for_trigger_train_func)
 
     # Bind method to instance
     worker.trigger_for_feat_engr = types.MethodType(trigger_for_feat_engr,
