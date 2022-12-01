@@ -23,8 +23,6 @@ def merge_splits_feat(data):
                 else:
                     merged_feat = \
                         np.concatenate((merged_feat, split_data['x']), axis=0)
-    if merged_feat is None:
-        raise ValueError('Not support data type for merged feature.')
     return merged_feat
 
 

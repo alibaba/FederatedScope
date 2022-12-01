@@ -21,9 +21,10 @@ def wrap_quantile_binning(worker):
     merged_feat = merge_splits_feat(worker.data)
 
     # Get bin edges
-    num_features = merged_feat.shape[1]
-    num_bins = [worker._cfg.feat_engr.num_bins] * num_features
-    bin_edges = vfl_binning(merged_feat, num_bins, 'quantile')
+    if merged_feat is not None:
+        num_features = merged_feat.shape[1]
+        num_bins = [worker._cfg.feat_engr.num_bins] * num_features
+        bin_edges = vfl_binning(merged_feat, num_bins, 'quantile')
 
     # Transform
     for split in ['train_data', 'val_data', 'test_data']:
