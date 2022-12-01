@@ -5,6 +5,14 @@ logger = logging.getLogger(__name__)
 
 
 def merge_splits_feat(data):
+    """
+
+    Args:
+        data: ``federatedscope.core.data.ClientData`` with Tabular format.
+
+    Returns:
+        Merged data feature/x.
+    """
     merged_feat = None
     for split in ['train_data', 'val_data', 'test_data']:
         if hasattr(data, split):
@@ -21,6 +29,16 @@ def merge_splits_feat(data):
 
 
 def vfl_binning(feat, num_bins, strategy='uniform'):
+    """
+
+    Args:
+        feat: feature to be binned, which must be 2D numpy.array
+        num_bins: list for bins
+        strategy: binning strategy, ``'uniform'`` or ``'quantile'``
+
+    Returns:
+        Bin edges for binning
+    """
     num_features = feat.shape[1]
     bin_edges = np.zeros(num_features, dtype=object)
 
@@ -29,12 +47,12 @@ def vfl_binning(feat, num_bins, strategy='uniform'):
         col_min, col_max = np.min(col), np.max(col)
         if col_min == col_max:
             logger.warning(
-                f"Feature {i} is constant and will be replaced with 0.")
+                f'Feature {i} is constant and will be replaced with 0.')
             bin_edges[i] = np.array([-np.inf, np.inf])
             continue
-        if strategy == "uniform":
+        if strategy == 'uniform':
             bin_edges[i] = np.linspace(col_min, col_max, num_bins[i] + 1)
-        elif strategy == "quantile":
+        elif strategy == 'quantile':
             quantiles = np.linspace(0, 100, num_bins[i] + 1)
             bin_edges[i] = np.asarray(np.percentile(col, quantiles))
 
