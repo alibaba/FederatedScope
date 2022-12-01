@@ -806,8 +806,9 @@ class Server(BaseServer):
                 '----------- Starting training (Round #{:d}) -------------'.
                 format(self.state))
 
-    def trigger_for_feat_engr(self, trigger_train_func,
-                              kwargs_for_trigger_train_func):
+    def trigger_for_feat_engr(self,
+                              trigger_train_func,
+                              kwargs_for_trigger_train_func={}):
         """
         Interface for feature engineering, the default operation is none
         """
