@@ -28,6 +28,7 @@ def wrap_standardization(worker):
             split_data = getattr(worker.data, split)
             if split_data is not None and 'x' in split_data:
                 split_data['x'] = (split_data['x'] - feat_mean) / feat_std
+    worker._init_data_related_var()
     return worker
 
 

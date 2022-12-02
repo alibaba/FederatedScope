@@ -34,6 +34,7 @@ def wrap_min_max_norm(worker):
             if split_data is not None and 'x' in split_data:
                 split_data['x'] = \
                     (split_data['x'] - feat_min) / (feat_max - feat_min)
+    worker._init_data_related_var()
     return worker
 
 

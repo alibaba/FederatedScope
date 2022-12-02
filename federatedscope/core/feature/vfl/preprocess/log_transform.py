@@ -20,7 +20,7 @@ def wrap_log_transform(worker):
             split_data = getattr(worker.data, split)
             if split_data is not None and 'x' in split_data:
                 split_data['x'] = np.log(split_data['x'])
-
+    worker._init_data_related_var()
     return worker
 
 

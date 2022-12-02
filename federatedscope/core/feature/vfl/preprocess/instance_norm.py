@@ -86,7 +86,7 @@ def wrap_instance_norm_server(worker):
                         receiver=list(self.comm_manager.neighbors.keys()),
                         timestamp=self.cur_timestamp,
                         content=instance_var))
-
+            self._init_data_related_var()
             self.trigger_train_func(**self.kwargs_for_trigger_train_func)
 
     # Bind method to instance
@@ -177,6 +177,7 @@ def wrap_instance_norm_client(worker):
                         (split_data['x'].T - self.global_mean[split]) /
                         (feat_var[split]**0.5)).T
         logger.info('Instance norm finished.')
+        self._init_data_related_var()
 
     # Bind method to instance
     worker.callback_func_for_ask_for_mean = types.MethodType(

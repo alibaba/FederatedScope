@@ -35,7 +35,7 @@ def wrap_uniform_binning(worker):
                     split_data['x'][:, i] = \
                         np.searchsorted(bin_edges[i][1:-1],
                                         split_data['x'][:, i], side="right")
-
+    worker._init_data_related_var()
     return worker
 
 

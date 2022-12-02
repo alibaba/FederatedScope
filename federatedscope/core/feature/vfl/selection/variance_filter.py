@@ -32,6 +32,7 @@ def wrap_variance_filter(worker):
             if split_data is not None and 'x' in split_data:
                 split_data['x'] = \
                     np.delete(split_data['x'], filtered_col, axis=1)
+    worker._init_data_related_var()
     return worker
 
 
