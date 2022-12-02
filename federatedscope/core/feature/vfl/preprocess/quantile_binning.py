@@ -18,7 +18,7 @@ def wrap_quantile_binning(worker):
     logger.info('Start to execute quantile binning.')
 
     # Merge train & val & test
-    merged_feat = merge_splits_feat(worker.data)
+    merged_feat, _ = merge_splits_feat(worker.data)
 
     # Get bin edges
     if merged_feat is not None:

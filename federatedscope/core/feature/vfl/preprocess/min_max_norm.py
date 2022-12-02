@@ -18,7 +18,7 @@ def wrap_min_max_norm(worker):
     logger.info('Start to execute min-max scaling.')
 
     # Merge train & val & test
-    merged_feat = merge_splits_feat(worker.data)
+    merged_feat, _ = merge_splits_feat(worker.data)
 
     feat_min = np.min(merged_feat, axis=0)
     feat_max = np.max(merged_feat, axis=0)

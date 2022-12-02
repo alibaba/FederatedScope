@@ -18,7 +18,7 @@ def wrap_standardization(worker):
     logger.info('Start to execute standardization.')
 
     # Merge train & val & test
-    merged_feat = merge_splits_feat(worker.data)
+    merged_feat, _ = merge_splits_feat(worker.data)
 
     feat_mean = np.mean(merged_feat, axis=0)
     feat_std = np.std(merged_feat, axis=0)

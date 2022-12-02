@@ -14,6 +14,7 @@ def merge_splits_feat(data):
         Merged data feature/x.
     """
     merged_feat = None
+    merged_y = None
     for split in ['train_data', 'val_data', 'test_data']:
         if hasattr(data, split):
             split_data = getattr(data, split)
@@ -23,7 +24,13 @@ def merge_splits_feat(data):
                 else:
                     merged_feat = \
                         np.concatenate((merged_feat, split_data['x']), axis=0)
-    return merged_feat
+            if split_data is not None and 'y' in split_data:
+                if merged_y is None:
+                    merged_y = split_data['y']
+                else:
+                    merged_y = \
+                        np.concatenate((merged_y, split_data['y']), axis=0)
+    return merged_feat, merged_y
 
 
 def vfl_binning(feat, num_bins, strategy='uniform'):
@@ -55,3 +62,19 @@ def vfl_binning(feat, num_bins, strategy='uniform'):
             bin_edges[i] = np.asarray(np.percentile(col, quantiles))
 
     return bin_edges
+
+
+def secure_builder(cfg):
+    if cfg.feat_engr.secure.type == 'encrypt':
+        if cfg.feat_engr.secure.encrypt.type == 'dummy':
+            from federatedscope.core.secure.encrypt.dummy_encrypt import \
+                DummyEncryptKeypair
+            keypair_generator = DummyEncryptKeypair(
+                cfg.feat_engr.secure.key_size)
+        else:
+            raise NotImplementedError(f'Not implemented encrypt method'
+                                      f' {cfg.feat_engr.secure.encrypt.type}.')
+        return keypair_generator
+    else:
+        raise NotImplementedError(f'Not implemented secure method'
+                                  f' {cfg.feat_engr.secure.type}.')

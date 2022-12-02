@@ -12,6 +12,8 @@ from federatedscope.core.feature.vfl.preprocess.quantile_binning import \
     wrap_quantile_binning_client, wrap_quantile_binning_server
 from federatedscope.core.feature.vfl.selection.variance_filter import \
     wrap_variance_filter_client, wrap_variance_filter_server
+from federatedscope.core.feature.vfl.selection.correlation_filter import \
+    wrap_correlation_filter_client, wrap_correlation_filter_server
 
 __all__ = [
     'wrap_instance_norm_client', 'wrap_instance_norm_server',
@@ -20,5 +22,6 @@ __all__ = [
     'wrap_standardization_client', 'wrap_standardization_server',
     'wrap_uniform_binning_client', 'wrap_uniform_binning_server',
     'wrap_quantile_binning_client', 'wrap_quantile_binning_server',
-    'wrap_variance_filter_client', 'wrap_variance_filter_server'
+    'wrap_variance_filter_client', 'wrap_variance_filter_server',
+    'wrap_correlation_filter_client', 'wrap_correlation_filter_server'
 ]

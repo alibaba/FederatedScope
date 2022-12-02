@@ -50,7 +50,7 @@ class DummyEncryptNumber(object):
     def __add__(self, other):
         if isinstance(other, DummyEncryptNumber):
             return DummyEncryptNumber(self.public_key,
-                                      self.ciphertext + self.ciphertext)
+                                      self.ciphertext + other.ciphertext)
         return DummyEncryptNumber(self.public_key, self.ciphertext + other)
 
     def __mul__(self, other):

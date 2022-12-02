@@ -20,7 +20,6 @@ train:
 xgb_base:
   use: True
   use_bin: False
-  dims: [7, 14]
 data:
   root: data/
   type: adult
@@ -35,10 +34,10 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: none
+vertical_dims: [7, 14]
 vertical:
   use: False
   key_size: 256
-  dims: [7, 14]
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss
