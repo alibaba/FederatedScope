@@ -26,6 +26,7 @@ class MyTorchTrainer(BaseTrainer):
         self.criterion = torch.nn.CrossEntropyLoss()
 
     def train(self):
+        import torch
         self.optimizer = torch.optim.SGD(self.model.parameters(),
                                          lr=0.001,
                                          momentum=0.9,
