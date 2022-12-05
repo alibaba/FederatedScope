@@ -122,7 +122,7 @@ def get_data(config, client_cfgs=None):
     # Load dataset from source files
     dataset, modified_config = load_dataset(config)
 
-    # Perform translator to non-FL dataset
+    # Apply translator to non-FL dataset to transform it into its federated counterpart
     translator = getattr(import_module('federatedscope.core.data'),
                          DATA_TRANS_MAP[config.data.type.lower()])(
                              modified_config, client_cfgs)

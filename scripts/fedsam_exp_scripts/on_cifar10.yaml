@@ -1,0 +1,32 @@
+use_gpu: True
+device: 1
+early_stop:
+  patience: 5
+seed: 123
+federate:
+  mode: standalone
+  total_round_num: 10000
+  client_num: 100
+  make_global_eval: True
+data:
+  root: data/
+  type: 'CIFAR10@torchvision'
+  splits: [1.0,0.0,0.0]
+  num_workers: 0
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  args: [{'download': True}]
+  splitter: 'fedsam_cifar10_splitter'
+  splitter_args: [{'alpha': 0.05}]
+dataloader:
+  batch_size: 64
+model:
+  type: fedsam_conv2
+  out_channels: 10
+  dropout: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: sam_trainer
+eval:
+  freq: 5
+  metrics: ['acc', 'correct']
