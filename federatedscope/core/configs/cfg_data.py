@@ -61,6 +61,7 @@ def extend_data_cfg(cfg):
     cfg.feat_engr.scenario = 'hfl'
     cfg.feat_engr.num_bins = 5  # Used for binning
     cfg.feat_engr.selec_threshold = 0.05  # Used for feature selection
+    cfg.feat_engr.selec_woe_binning = 'quantile'
 
     cfg.feat_engr.secure = CN()
     cfg.feat_engr.secure.type = 'encrypt'
