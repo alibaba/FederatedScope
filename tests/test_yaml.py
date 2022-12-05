@@ -29,6 +29,7 @@ class YAMLTest(unittest.TestCase):
     def test_yaml(self):
         init_cfg = global_cfg.clone()
         sign, cont = False, False
+        error_file = []
         for dirpath, _, filenames in os.walk(self.root):
             for prefix in self.exclude_all:
                 if dirpath.startswith(prefix):
@@ -38,7 +39,6 @@ class YAMLTest(unittest.TestCase):
                 cont = False
                 continue
             filenames = [f for f in filenames if f.endswith('.yaml')]
-            error_file = []
             for f in filenames:
                 yaml_file = os.path.join(dirpath, f)
                 # Ignore `ss` search space and yaml file in `exclude_file`

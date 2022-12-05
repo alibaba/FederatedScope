@@ -67,7 +67,7 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     # Vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
-    cfg.vertical_dims = [5, 10]
+    cfg.vertical_dims = [5, 10]  # Avoid to be removed when `use` is False
     cfg.vertical = CN()
     cfg.vertical.use = False
     cfg.vertical.encryption = 'paillier'

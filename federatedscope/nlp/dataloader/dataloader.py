@@ -35,7 +35,7 @@ def load_nlp_dataset(config=None):
                            val_frac=splits[1],
                            seed=config.seed,
                            **transforms_funcs)
-    if name == 'twitter':
+    elif name == 'twitter':
         dataset = LEAF_TWITTER(root=path,
                                name='twitter',
                                s_frac=config.data.subsample,
