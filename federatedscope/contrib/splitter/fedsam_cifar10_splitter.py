@@ -27,16 +27,29 @@ class FedSAM_CIFAR10_Splitter(BaseSplitter):
         label = np.array([y for x, y in dataset])
         alpha_str = f'{self.alpha:.2f}'
         if len(label) == 50000:
-            filename = 'data/fedsam_cifar10/data/{}/federated_{}_alpha_{}.json'.format('train', 'train', alpha_str)
+            filename = \
+                'data/fedsam_cifar10/data/{}/federated_{}_alpha_{' \
+                '}.json'.format('train', 'train', alpha_str)
         elif len(label) == 10000:
             filename = 'data/fedsam_cifar10/data/test/test.json'
         with open(filename, 'r') as ips:
             content = json.load(ips)
             idx_slice = []
+
             def get_idx(name_list):
-                return [int(re.findall('img_\d+_label', fn)[0][4:-6]) for fn in name_list]
-            for uid in range(self.client_num):
-                idx_slice.append(get_idx(content['user_data'][str(uid)]['x']))
+                return [
+                    int(re.findall('img_\d+_label', fn)[0][4:-6])
+                    for fn in name_list
+                ]
+
+            if len(label) == 50000:
+                for uid in range(self.client_num):
+                    idx_slice.append(
+                        get_idx(content['user_data'][str(uid)]['x']))
+            elif len(label) == 10000:
+                idx_slice.append(get_idx(content['user_data'][str(100)]['x']))
+                idx_slice = np.array_split(np.array(idx_slice[0]),
+                                           self.client_num)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
 
