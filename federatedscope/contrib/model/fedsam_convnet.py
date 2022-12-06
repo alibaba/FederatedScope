@@ -17,26 +17,17 @@ class Conv2Model(nn.Module):
 
         self.layer1 = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=64, kernel_size=5),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
-        )
+            nn.ReLU(), nn.MaxPool2d(kernel_size=2))
 
         self.layer2 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=5),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
-        )
+            nn.ReLU(), nn.MaxPool2d(kernel_size=2))
 
-        self.classifier = nn.Sequential(
-            nn.Linear(64*5*5, 384),
-            nn.ReLU(),
-            nn.Linear(384, 192),
-            nn.ReLU(),
-            nn.Linear(192, self.num_classes)
-        )
+        self.classifier = nn.Sequential(nn.Linear(64 * 5 * 5, 384), nn.ReLU(),
+                                        nn.Linear(384, 192), nn.ReLU(),
+                                        nn.Linear(192, self.num_classes))
 
         self.size = self.model_size()
-
 
     def forward(self, x):
         x = self.layer1(x)

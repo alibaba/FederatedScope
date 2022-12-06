@@ -92,16 +92,17 @@ class SAMTrainer(BaseTrainer):
                                     lr=0.001,
                                     momentum=0.9,
                                     weight_decay=1e-4)
-        #self.optimizer = SAM(self.basic_optimizer, self.model, rho=0.5, eta=0.01)
+        # self.optimizer = SAM(self.basic_optimizer, self.model, rho=0.5,
+        # eta=0.01)
 
         # _hook_on_fit_start_init
         self.model.to(self.device)
         self.model.train()
 
-        #total_loss = num_samples = 0
+        # total_loss = num_samples = 0
         #
         # _hook_on_batch_start_init
-        #for x, y in self.data['train']:
+        # for x, y in self.data['train']:
         #    # _hook_on_batch_forward
         #    x, y = x.to(self.device), y.to(self.device)
         #    outputs = self.model(x)
@@ -127,7 +128,7 @@ class SAMTrainer(BaseTrainer):
         minimizer = SAM(optimizer, self.model)
         running_loss = 0.0
         num_samples = 0
-        #for inputs, targets in self.trainloader:
+        # for inputs, targets in self.trainloader:
         for inputs, targets in self.data['train']:
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
@@ -150,6 +151,9 @@ class SAMTrainer(BaseTrainer):
         return num_samples, running_loss
 
     def evaluate(self, target_data_split_name='test'):
+        if target_data_split_name != 'test':
+            return {}
+
         with torch.no_grad():
             criterion = torch.nn.CrossEntropyLoss().to(self.device)
 
