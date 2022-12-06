@@ -1,12 +1,12 @@
 use_gpu: True
-device: 1
+device: 0
 early_stop:
-  patience: 5
-seed: 123
+  patience: 0
 federate:
   mode: standalone
   total_round_num: 10000
   client_num: 100
+  sample_client_num: 5
   make_global_eval: True
   merge_test_data: True
 data:
@@ -28,7 +28,16 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: sam_trainer
+  sam:
+    adaptive: False
+    rho: 0.1
+    eta: 0.0
+train:
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0004
+    momentum: 0.0
 eval:
-  freq: 5
+  freq: 100
   metrics: ['acc', 'correct']
   best_res_update_round_wise_key: test_loss

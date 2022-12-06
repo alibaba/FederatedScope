@@ -4,6 +4,7 @@ from collections import defaultdict
 import torch
 
 from federatedscope.core.trainers import BaseTrainer
+from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 
 
 class ASAM(object):
@@ -82,16 +83,20 @@ class SAMTrainer(BaseTrainer):
         self.data = data
         # Device name
         self.device = device
-        # kwargs
+        # configs 
         self.kwargs = kwargs
+        self.config = kwargs['config']
+        self.optim_config = self.config.train.optimizer
+        self.sam_config = self.config.trainer.sam
 
     def train(self):
         # Criterion & Optimizer
         criterion = torch.nn.CrossEntropyLoss().to(self.device)
-        optimizer = torch.optim.SGD(self.model.parameters(),
-                                    lr=0.001,
-                                    momentum=0.9,
-                                    weight_decay=1e-4)
+        #optimizer = torch.optim.SGD(self.model.parameters(),
+        #                            lr=0.001,
+        #                            momentum=0.9,
+        #                            weight_decay=1e-4)
+        optimizer = get_optimizer(self.model, **self.optim_config)
         # self.optimizer = SAM(self.basic_optimizer, self.model, rho=0.5,
         # eta=0.01)
 
@@ -125,7 +130,10 @@ class SAMTrainer(BaseTrainer):
                 num_samples)}
 
     def run_epoch(self, optimizer, criterion):
-        minimizer = SAM(optimizer, self.model)
+        if self.sam_config.adaptive:
+            minimizer = ASAM(optimizer, self.model, rho=self.sam_config.rho, eta=self.sam_config.eta)
+        else:
+            minimizer = SAM(optimizer, self.model, rho=self.sam_config.rho, eta=self.sam_config.eta)
         running_loss = 0.0
         num_samples = 0
         # for inputs, targets in self.trainloader:
