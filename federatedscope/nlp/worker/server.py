@@ -8,7 +8,7 @@ import torch
 import numpy as np
 from federatedscope.core.message import Message
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
-from federatedscope.core.auxiliaries.utils import merge_dict, merge_param_dict
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 from federatedscope.core.workers import Server
 from federatedscope.nlp.trainer.utils import ContrastiveMonitor
 
@@ -203,8 +203,8 @@ class FedNLPServer(Server):
                     role='Server #',
                     forms=self._cfg.eval.report,
                     return_raw=self._cfg.federate.make_global_eval)
-                self.history_results = merge_dict(self.history_results,
-                                                  formatted_eval_res)
+                self.history_results = merge_dict_of_results(
+                    self.history_results, formatted_eval_res)
                 self._monitor.save_formatted_results(formatted_eval_res)
                 logger.info(formatted_eval_res)
             self.check_and_save()

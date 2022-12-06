@@ -145,6 +145,7 @@ yaml.add_constructor(u'!disc', disc_constructor)
 # if __name__=="__main__":
 #    obj = Continuous(0.0, 0.01)
 #    print(obj.grid(1), obj.grid(2), obj.grid(3))
+#
 #    for _ in range(3):
 #        print(obj.sample())
 #    cfg.merge_from_list(['hpo.log_scale', 'True'])

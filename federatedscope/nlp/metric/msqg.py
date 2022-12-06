@@ -22,7 +22,8 @@ def load_msqg_metrics(ctx, **kwargs):
 
 def call_msqg_metric(types):
     if 'msqg' in types:
-        return 'msqg', load_msqg_metrics
+        the_larger_the_better = True
+        return 'msqg', load_msqg_metrics, the_larger_the_better
 
 
 register_metric('msqg', call_msqg_metric)

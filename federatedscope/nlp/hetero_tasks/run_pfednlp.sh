@@ -1,6 +1,6 @@
 set -e
 
-cd ..
+cd ../../..
 
 echo "Run pfednlp."
 

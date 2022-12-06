@@ -1,6 +1,6 @@
 import logging
 from federatedscope.core.message import Message
-from federatedscope.core.auxiliaries.utils import merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 from federatedscope.core.workers import Client
 from federatedscope.nlp.trainer.utils import ContrastiveMonitor
 
@@ -174,7 +174,7 @@ class FedNLPClient(Client):
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)
-            self.history_results = merge_dict(
+            self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
 
         self.comm_manager.send(
@@ -274,7 +274,7 @@ class PFedNLPClient(FedNLPClient):
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)
-            self.history_results = merge_dict(
+            self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
 
         self.comm_manager.send(
@@ -390,7 +390,7 @@ class PCFedNLPClient(FedNLPClient):
                 role='Client #{}'.format(self.ID),
                 forms='raw',
                 return_raw=True)
-            self.history_results = merge_dict(
+            self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
 
         self.comm_manager.send(

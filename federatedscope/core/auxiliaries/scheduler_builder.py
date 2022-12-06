@@ -18,6 +18,21 @@ except ImportError as error:
 
 
 def get_scheduler(optimizer, type, **kwargs):
+    """
+    This function builds an instance of scheduler.
+
+    Args:
+        optimizer: optimizer to be scheduled
+        type: type of scheduler
+        **kwargs: kwargs dict
+
+    Returns:
+        An instantiated scheduler.
+
+    Note:
+        Please follow ``contrib.scheduler.example`` to implement your own \
+        scheduler.
+    """
     for func in register.scheduler_dict.values():
         scheduler = func(optimizer, type, **kwargs)
         if scheduler is not None:

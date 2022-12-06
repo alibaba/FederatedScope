@@ -5,8 +5,8 @@ early_stop:
 seed: 12345
 federate:
   mode: standalone
-  total_round_num: 1000
-  sample_client_num: 10
+  total_round_num: 1
+  sample_client_num: 5
   client_num: 10
 data:
   root: data/
@@ -20,6 +20,7 @@ model:
   type: convnet2
   hidden: 2048
   out_channels: 62
+  dropout: 0
 train:
   local_update_steps: 1
   optimizer:
@@ -34,7 +35,7 @@ eval:
   metrics: ['acc', 'correct']
 attack:
   attack_method: DLG
-  max_ite: 1500
+  max_ite: 500
   reconstruct_lr: 0.1
 
 

@@ -40,7 +40,7 @@ def extend_data_cfg(cfg):
     cfg.dataloader.shuffle = True
     cfg.dataloader.num_workers = 0
     cfg.dataloader.drop_last = False
-    cfg.dataloader.pin_memory = True
+    cfg.dataloader.pin_memory = False
     # GFL: graphsaint DataLoader
     cfg.dataloader.walk_length = 2
     cfg.dataloader.num_steps = 30
@@ -109,35 +109,35 @@ def assert_data_cfg(cfg):
     # For compatibility with older versions of FS
     # TODO: delete this code block
     if cfg.data.loader != '':
-        logger.warning('config `cfg.data.loader` will be remove in the '
+        logger.warning('config `cfg.data.loader` will be removed in the '
                        'future, use `cfg.dataloader.type` instead.')
         cfg.dataloader.type = cfg.data.loader
     if cfg.data.batch_size != 64:
-        logger.warning('config `cfg.data.batch_size` will be remove in the '
+        logger.warning('config `cfg.data.batch_size` will be removed in the '
                        'future, use `cfg.dataloader.batch_size` instead.')
         cfg.dataloader.batch_size = cfg.data.batch_size
     if not cfg.data.shuffle:
-        logger.warning('config `cfg.data.shuffle` will be remove in the '
+        logger.warning('config `cfg.data.shuffle` will be removed in the '
                        'future, use `cfg.dataloader.shuffle` instead.')
         cfg.dataloader.shuffle = cfg.data.shuffle
     if cfg.data.num_workers != 0:
-        logger.warning('config `cfg.data.num_workers` will be remove in the '
+        logger.warning('config `cfg.data.num_workers` will be removed in the '
                        'future, use `cfg.dataloader.num_workers` instead.')
         cfg.dataloader.num_workers = cfg.data.num_workers
     if cfg.data.drop_last:
-        logger.warning('config `cfg.data.drop_last` will be remove in the '
+        logger.warning('config `cfg.data.drop_last` will be removed in the '
                        'future, use `cfg.dataloader.drop_last` instead.')
         cfg.dataloader.drop_last = cfg.data.drop_last
     if cfg.data.walk_length != 2:
-        logger.warning('config `cfg.data.walk_length` will be remove in the '
+        logger.warning('config `cfg.data.walk_length` will be removed in the '
                        'future, use `cfg.dataloader.walk_length` instead.')
         cfg.dataloader.walk_length = cfg.data.walk_length
     if cfg.data.num_steps != 30:
-        logger.warning('config `cfg.data.num_steps` will be remove in the '
+        logger.warning('config `cfg.data.num_steps` will be removed in the '
                        'future, use `cfg.dataloader.num_steps` instead.')
         cfg.dataloader.num_steps = cfg.data.num_steps
     if cfg.data.sizes != [10, 5]:
-        logger.warning('config `cfg.data.sizes` will be remove in the '
+        logger.warning('config `cfg.data.sizes` will be removed in the '
                        'future, use `cfg.dataloader.sizes` instead.')
         cfg.dataloader.sizes = cfg.data.sizes
     # --------------------------------------------------------------------

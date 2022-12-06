@@ -12,12 +12,12 @@ class YAMLTest(unittest.TestCase):
     def setUp(self):
         self.exclude_all = ['benchmark', 'scripts']
         self.exclude_file = [
-            '.pre-commit-config.yaml',
-            'meta.yaml',
+            '.pre-commit-config.yaml', 'meta.yaml',
             'federatedscope/gfl/baseline/'
             'isolated_gin_minibatch_on_cikmcup_per_client.yaml',
             'federatedscope/gfl/baseline/'
             'fedavg_gin_minibatch_on_cikmcup_per_client.yaml',
+            'federatedscope/gfl/baseline/mini_graph_dc/fedavg_per_client.yaml'
         ]
         self.exclude_str = ['config.yaml', 'config_client']
         self.root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

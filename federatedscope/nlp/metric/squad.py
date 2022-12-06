@@ -528,7 +528,8 @@ def load_squad_metrics(ctx, **kwargs):
 
 def call_squad_metric(types):
     if 'squad' in types:
-        return 'squad', load_squad_metrics
+        the_larger_the_better = True
+        return 'squad', load_squad_metrics, the_larger_the_better
 
 
 register_metric('squad', call_squad_metric)

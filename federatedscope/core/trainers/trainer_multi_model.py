@@ -121,22 +121,21 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
 
     def register_multiple_model_hooks(self):
         """
-            By default, all internal models adopt the same hook_set.
-            ========================= Extension =============================
-            Users can override this function to register customized hooks
-            for different internal models.
+        By default, all internal models adopt the same hook_set.
 
-            Note:
-                for sequential mode, users can append interact_hook on
-                begin/end triggers such as
-                    " -> (on_fit_end, _interact_to_other_models) -> "
+        Extension
+          Users can override this function to register customized hooks \
+        for different internal models.
 
-                for parallel mode, users can append interact_hook on any
-                trigger they want such as
-                    " -> (on_xxx_point, _interact_to_other_models) -> "
-
-            self.ctx, we must tell the running hooks which data_loader to
-            call and which num_samples to count
+        Note:
+          - for sequential mode, users can append interact_hook on \
+            begin/end triggers such as \
+            " -> (on_fit_end, _interact_to_other_models) -> "
+          - for parallel mode, users can append interact_hook on any \
+            trigger they want such as \
+                " -> (on_xxx_point, _interact_to_other_models) -> "
+          - we must tell the running hooks which data_loader to \
+          call and which num_samples to count
         """
 
         self.hooks_in_train_multiple_models.extend([
@@ -217,9 +216,9 @@ class GeneralMultiModelTrainer(GeneralTorchTrainer):
 
         Note:
             Considering evaluation could be in ```hooks_set[
-            "on_epoch_end"]```, there could be two data loaders in
-        self.ctx, we must tell the running hooks which data_loader to call
-        and which num_samples to count
+            "on_epoch_end"]```, there could be two data loaders in \
+            self.ctx, we must tell the running hooks which data_loader to \
+            call and which num_samples to count
 
         """
         num_samples_model = list()

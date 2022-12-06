@@ -2,6 +2,7 @@ import logging
 import importlib
 
 import federatedscope.register as register
+from federatedscope.core.trainers import Trainer
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,8 @@ TRAINER_CLASS_DICT = {
     "fedvattrainer": "FedVATTrainer",
     "fedfocaltrainer": "FedFocalTrainer",
     "mftrainer": "MFTrainer",
+    "cltrainer": "CLTrainer",
+    "lptrainer": "LPTrainer",
     "fednlp_trainer": "FedNLPTrainer",
     "pfednlp_trainer": "PFedNLPTrainer",
     "pcfednlp_trainer": "PCFedNLPTrainer",
@@ -38,6 +41,75 @@ def get_trainer(model=None,
                 only_for_eval=False,
                 is_attacker=False,
                 monitor=None):
+    """
+    This function builds an instance of trainer.
+
+    Arguments:
+        model: model used in FL course
+        data: data used in FL course
+        device: where to train model (``cpu`` or ``gpu``)
+        config: configurations for FL, see ``federatedscope.core.configs``
+        only_for_eval: ``True`` or ``False``, if ``True``, ``train`` \
+        routine will be removed in this trainer
+        is_attacker: ``True`` or ``False`` to determine whether this client \
+        is an attacker
+        monitor: an instance of ``federatedscope.core.monitors.Monitor`` to \
+        observe the evaluation and system metrics
+
+    Returns:
+        An instance of trainer.
+
+    Note:
+      The key-value pairs of ``cfg.trainer.type`` and trainers:
+        ==================================  ===========================
+        Trainer Type                        Source
+        ==================================  ===========================
+        ``general``                         \
+        ``core.trainers.GeneralTorchTrainer`` and \
+        ``core.trainers.GeneralTFTrainer``
+        ``cvtrainer``                       ``cv.trainer.trainer.CVTrainer``
+        ``nlptrainer``                      ``nlp.trainer.trainer.NLPTrainer``
+        ``graphminibatch_trainer``          \
+        ``gfl.trainer.graphtrainer.GraphMiniBatchTrainer``
+        ``linkfullbatch_trainer``           \
+        ``gfl.trainer.linktrainer.LinkFullBatchTrainer``
+        ``linkminibatch_trainer``           \
+        ``gfl.trainer.linktrainer.LinkMiniBatchTrainer``
+        ``nodefullbatch_trainer``           \
+        ``gfl.trainer.nodetrainer.NodeFullBatchTrainer``
+        ``nodeminibatch_trainer``           \
+        ``gfl.trainer.nodetrainer.NodeMiniBatchTrainer``
+        ``flitplustrainer``                 \
+        ``gfl.flitplus.trainer.FLITPlusTrainer``
+        ``flittrainer``                     \
+        ``gfl.flitplus.trainer.FLITTrainer``
+        ``fedvattrainer``                   \
+        ``gfl.flitplus.trainer.FedVATTrainer``
+        ``fedfocaltrainer``                 \
+        ``gfl.flitplus.trainer.FedFocalTrainer``
+        ``mftrainer``                       \
+        ``federatedscope.mf.trainer.MFTrainer``
+        ``mytorchtrainer``                  \
+        ``contrib.trainer.torch_example.MyTorchTrainer``
+        ==================================  ===========================
+      Wrapper functions are shown below:
+        ==================================  ===========================
+        Wrapper Functions                   Source
+        ==================================  ===========================
+        ``nbafl``                           \
+        ``core.trainers.wrap_nbafl_trainer``
+        ``sgdmf``                           ``mf.trainer.wrap_MFTrainer``
+        ``pfedme``                          \
+        ``core.trainers.wrap_pFedMeTrainer``
+        ``ditto``                           ``core.trainers.wrap_DittoTrainer``
+        ``fedem``                           ``core.trainers.FedEMTrainer``
+        ``fedprox``                         \
+        ``core.trainers.wrap_fedprox_trainer``
+        ``attack``                          \
+        ``attack.trainer.wrap_benignTrainer`` and \
+        ``attack.auxiliary.attack_trainer_builder.wrap_attacker_trainer``
+        ==================================  ===========================
+    """
     if config.trainer.type == 'general':
         if config.backend == 'torch':
             from federatedscope.core.trainers import GeneralTorchTrainer
@@ -48,8 +120,7 @@ def get_trainer(model=None,
                                           only_for_eval=only_for_eval,
                                           monitor=monitor)
         elif config.backend == 'tensorflow':
-            from federatedscope.core.trainers.tf_trainer import \
-                GeneralTFTrainer
+            from federatedscope.core.trainers import GeneralTFTrainer
             trainer = GeneralTFTrainer(model=model,
                                        data=data,
                                        device=device,
@@ -65,6 +136,8 @@ def get_trainer(model=None,
             dict_path = "federatedscope.cv.trainer.trainer"
         elif config.trainer.type.lower() in ['nlptrainer']:
             dict_path = "federatedscope.nlp.trainer.trainer"
+        elif config.trainer.type.lower() in ['cltrainer', 'lptrainer']:
+            dict_path = "federatedscope.cl.trainer.trainer"
         elif config.trainer.type.lower() in [
                 'graphminibatch_trainer',
         ]:
@@ -114,6 +187,14 @@ def get_trainer(model=None,
         if trainer is None:
             raise ValueError('Trainer {} is not provided'.format(
                 config.trainer.type))
+
+    if not isinstance(trainer, Trainer):
+        logger.warning(f'Hook-like plug-in functions cannot be enabled when '
+                       f'using {trainer}. If you want use our wrapper '
+                       f'functions for your trainer please consider '
+                       f'inheriting from '
+                       f'`federatedscope.core.trainers.Trainer` instead.')
+        return trainer
 
     # differential privacy plug-in
     if config.nbafl.use:

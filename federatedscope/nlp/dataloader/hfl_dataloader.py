@@ -49,6 +49,11 @@ def extend_cfg(cfg, cfg_client):
     cfg.model.pad_token_id = tokenizer.pad_token_id
 
     if cfg.data.debug:
+        # if cfg.federate.client_num > 6:
+        #     cfg.federate.client_num = 6
+        #     cfg.data.datasets = ['imdb', 'agnews', 'squad', 'newsqa',
+        #                          'cnndm', 'msqg']
+        #     cfg.data.num_grouped_clients = [1, 1, 1, 1, 1, 1]
         if cfg.federate.total_round_num > 2:
             cfg.federate.total_round_num = 2
         if cfg.train.local_update_steps > 2:

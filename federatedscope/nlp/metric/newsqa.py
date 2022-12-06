@@ -18,7 +18,8 @@ def load_newsqa_metrics(ctx, **kwargs):
 
 def call_newsqa_metric(types):
     if 'newsqa' in types:
-        return 'newsqa', load_newsqa_metrics
+        the_larger_the_better = True
+        return 'newsqa', load_newsqa_metrics, the_larger_the_better
 
 
 register_metric('newsqa', call_newsqa_metric)

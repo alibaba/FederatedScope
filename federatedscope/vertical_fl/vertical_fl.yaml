@@ -11,6 +11,8 @@ train:
     lr: 0.05
 data:
   type: vertical_fl_data
+dataloader:
+  type: raw
   batch_size: 50
 vertical:
   use: True

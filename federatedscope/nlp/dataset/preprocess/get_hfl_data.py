@@ -10,7 +10,7 @@ import copy
 import torch
 import numpy as np
 from tqdm import tqdm
-from federatedscope.core.auxiliaries.utils import download_url
+from federatedscope.core.data.utils import download_url
 from federatedscope.nlp.model.hfl_model import PFedNLPModel
 
 HFL_DATA = ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']

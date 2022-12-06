@@ -4,7 +4,7 @@ from federatedscope.core.monitors import Monitor
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class GraphMiniBatchTrainer(GeneralTorchTrainer):
             except:
                 logger.warning(
                     "current flop count implementation is for general "
-                    "NodeFullBatchTrainer case: "
+                    "GraphMiniBatchTrainer case: "
                     "1) the ctx.model takes only batch = ctx.data_batch as "
                     "input."
                     "Please check the forward format or implement your own "

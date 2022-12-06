@@ -17,7 +17,8 @@ def load_cnndm_metrics(ctx, **kwargs):
 
 def call_cnndm_metric(types):
     if 'cnndm' in types:
-        return 'cnndm', load_cnndm_metrics
+        the_larger_the_better = True
+        return 'cnndm', load_cnndm_metrics, the_larger_the_better
 
 
 register_metric('cnndm', call_cnndm_metric)

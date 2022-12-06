@@ -41,7 +41,7 @@ class MetricCalculator(object):
     def eval(self, ctx):
         results = {}
         y_true, y_pred = self._check_and_parse(ctx)
-        for metric, func in self.eval_metric.items():
+        for metric, (func, _) in self.eval_metric.items():
             if ctx.cur_split == 'val' and \
                     metric not in {'loss', 'avg_loss', 'total'}:
                 continue
@@ -119,16 +119,46 @@ def eval_f1_score(y_true, y_pred, **kwargs):
     return f1_score(y_true, y_pred, average='macro')
 
 
-def eval_rmse(y_true, y_pred, **kwargs):
-    rmse_list = []
+def eval_hits(y_true, y_prob, metric, **kwargs):
+    n = int(metric.split('@')[1])
+    hits_list = []
+    for i in range(y_true.shape[1]):
+        idx = np.argsort(-y_prob[:, :, i], axis=1)
+        pred_rank = idx.argsort(axis=1)
+        # Obtain the label rank
+        arg = np.arange(0, pred_rank.shape[0])
+        rank = pred_rank[arg, y_true[:, i]] + 1
+        hits_num = (rank <= n).sum().item()
+        hits_list.append(float(hits_num) / len(rank))
+
+    return sum(hits_list) / len(hits_list)
+
+
+def eval_roc_auc(y_true, y_prob, **kwargs):
+    rocauc_list = []
 
     for i in range(y_true.shape[1]):
-        # ignore nan values
-        is_labeled = y_true[:, i] == y_true[:, i]
-        rmse_list.append(
-            np.sqrt(((y_true[is_labeled] - y_pred[is_labeled])**2).mean()))
+        # AUC is only defined when there is at least one positive data.
+        if np.sum(y_true[:, i] == 1) > 0 and np.sum(y_true[:, i] == 0) > 0:
+            # ignore nan values
+            is_labeled = y_true[:, i] == y_true[:, i]
+            y_true_one_hot = np.eye(y_prob.shape[1])[y_true[is_labeled, i]]
+            rocauc_list.append(
+                roc_auc_score(y_true_one_hot,
+                              softmax(y_prob[is_labeled, :, i], axis=-1)))
+    if len(rocauc_list) == 0:
+        logger.warning('No positively labeled data available.')
+        return 0.5
 
-    return sum(rmse_list) / len(rmse_list)
+    return sum(rocauc_list) / len(rocauc_list)
+
+
+def eval_rmse(y_true, y_prob, **kwargs):
+    return np.sqrt(np.mean(np.power(y_true - y_prob, 2)))
+
+
+def eval_mse(y_true, y_prob, **kwargs):
+    return np.mean(np.power(y_true - y_prob, 2))
 
 
 def eval_loss(ctx, **kwargs):
@@ -147,14 +177,37 @@ def eval_regular(ctx, **kwargs):
     return ctx.loss_regular_total
 
 
+def eval_imp_ratio(ctx, y_true, y_prob, y_pred, **kwargs):
+    if not hasattr(ctx.cfg.eval, 'base') or ctx.cfg.eval.base <= 0:
+        logger.info(
+            "To use the metric `imp_rato`, please set `eval.base` as the "
+            "basic performance and it must be greater than zero.")
+        return 0.
+
+    base = ctx.cfg.eval.base
+    task = ctx.cfg.model.task.lower()
+    if 'regression' in task:
+        perform = eval_mse(y_true, y_prob)
+    elif 'classification' in task:
+        perform = 1 - eval_acc(y_true, y_pred)
+    return (base - perform) / base * 100.
+
+
+# SUPPORT_METRICS dict, key: `metric_name`, value: (eval_func,
+# the_larger_the_better)
 SUPPORT_METRICS = {
-    'loss': eval_loss,
-    'avg_loss': eval_avg_loss,
-    'total': eval_total,
-    'correct': eval_correct,
-    'acc': eval_acc,
-    'ap': eval_ap,
-    'f1': eval_f1_score,
-    'rmse': eval_rmse,
-    'loss_regular': eval_regular,
+    'loss': (eval_loss, False),
+    'avg_loss': (eval_avg_loss, False),
+    'total': (eval_total, False),
+    'correct': (eval_correct, True),
+    'acc': (eval_acc, True),
+    'ap': (eval_ap, True),
+    'f1': (eval_f1_score, True),
+    'roc_auc': (eval_roc_auc, True),
+    'rmse': (eval_rmse, False),
+    'mse': (eval_mse, False),
+    'loss_regular': (eval_regular, False),
+    'imp_ratio': (eval_imp_ratio, True),
+    'std': (None, False),
+    **dict.fromkeys([f'hits@{n}' for n in range(1, 101)], (eval_hits, True))
 }

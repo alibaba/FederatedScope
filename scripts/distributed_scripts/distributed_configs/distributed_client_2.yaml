@@ -12,7 +12,7 @@ distribute:
   client_host: '127.0.0.1'
   client_port: 50053
   role: 'client'
-  data_file: 'toy_data/client_2_data'
+  data_idx: 1
 trainer:
   type: 'general'
 eval:

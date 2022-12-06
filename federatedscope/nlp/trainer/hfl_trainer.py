@@ -9,10 +9,12 @@ import codecs
 from tqdm import tqdm
 from collections import OrderedDict
 from torch.utils.data import DataLoader
+from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import lifecycle, CtxVar
-from federatedscope.core.auxiliaries.enums import LIFECYCLE, MODE
-from federatedscope.core.auxiliaries.utils import filter_by_specified_keywords
+from federatedscope.core.trainers.enums import LIFECYCLE, MODE
+from federatedscope.core.trainers.utils import filter_by_specified_keywords
 from federatedscope.nlp.monitor.metric_calculator import MetricCalculator, \
     eval_acc
 from federatedscope.nlp.trainer.utils import AverageMeter, ContrastiveMonitor
@@ -87,6 +89,20 @@ class FedNLPTrainer(GeneralTorchTrainer):
             raise TypeError('Type of data should be dict.')
         return init_dict
 
+    def setup_optimizer_and_scheduler(self, ctx):
+        total_steps = getattr(ctx, f'num_total_{ctx.cur_mode}_batch',
+                              None) // ctx.cfg.grad.grad_accum_count * \
+                      ctx.cfg.federate.total_round_num
+        warmup_steps = int(ctx.cfg[ctx.cur_mode].scheduler.warmup_ratio *
+                           total_steps)
+        optimizer = get_optimizer(ctx.model, **ctx.cfg[ctx.cur_mode].optimizer)
+        scheduler = get_scheduler(optimizer,
+                                  **ctx.cfg.train.scheduler,
+                                  total_steps=total_steps,
+                                  warmup_steps=warmup_steps)
+
+        return optimizer, scheduler
+
     def _load_model(self, ctx):
         load_path = ctx.cfg.federate.hfl_load_from
         global_ckpt_path = osp.join(load_path, 'global_model.pt')
@@ -156,7 +172,7 @@ class FedNLPTrainer(GeneralTorchTrainer):
     @lifecycle(LIFECYCLE.BATCH)
     def _run_batch(self, hooks_set):
         for batch_i in tqdm(range(
-                self.ctx.get(f"num_{self.ctx.cur_split}_batch")),
+                getattr(self.ctx, f"num_{self.ctx.cur_split}_batch", None)),
                             disable=self.ctx.cur_split != "test"):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
@@ -174,18 +190,22 @@ class FedNLPTrainer(GeneralTorchTrainer):
 
             # Break in the final epoch
             if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and \
-                self.ctx.cur_epoch_i == self.ctx.get(
-                    f'num_{self.ctx.cur_mode}_epoch') - 1:
-                if batch_i >= self.ctx.get(
-                        f'num_{self.ctx.cur_mode}_batch_last_epoch') - 1:
+                self.ctx.cur_epoch_i == getattr(
+                    self.ctx, f'num_{self.ctx.cur_mode}_epoch', None) - 1:
+                if batch_i >= getattr(
+                        self.ctx, f'num_{self.ctx.cur_mode}_batch_last_epoch',
+                        None) - 1:
                     break
 
     def _hook_on_fit_start_init(self, ctx):
         ctx.model.to(ctx.device)
 
         if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
-            ctx.optimizer = ctx.get(f'{ctx.cur_mode}_optimizer')
-            ctx.scheduler = ctx.get(f'{ctx.cur_mode}_scheduler')
+            ctx.optimizer = ctx.get(f'{ctx.cur_mode}_optimizer', None)
+            ctx.scheduler = ctx.get(f'{ctx.cur_mode}_scheduler', None)
+            if ctx.optimizer is None or ctx.scheduler is None:
+                ctx.optimizer, ctx.scheduler = \
+                    self.setup_optimizer_and_scheduler(ctx)
             if ctx.cfg.federate.hfl_load_from and self.load_ckpt:
                 self._load_model(ctx)
                 self.load_ckpt = False
@@ -334,10 +354,10 @@ class FedNLPTrainer(GeneralTorchTrainer):
             ctx.optimizer.zero_grad()
             ctx.accum_steps = CtxVar(0, LIFECYCLE.ROUTINE)
 
-        total_epoch = ctx.get(f'num_{ctx.cur_mode}_epoch')
-        total_batch = ctx.get(f'num_{ctx.cur_mode}_batch') if \
-            ctx.cur_epoch_i + 1 < total_epoch else ctx.get(
-            f'num_{ctx.cur_mode}_batch_last_epoch')
+        total_epoch = getattr(ctx, f'num_{ctx.cur_mode}_epoch', None)
+        total_batch = getattr(ctx, f'num_{ctx.cur_mode}_batch', None) if \
+            ctx.cur_epoch_i + 1 < total_epoch else \
+            getattr(ctx, f'num_{ctx.cur_mode}_batch_last_epoch', None)
         if ctx.accum_steps == 0:
             if cur_step > 1 and (cur_step % ctx.cfg.trainer.disp_freq == 0
                                  or ctx.cur_batch_i + 1 == total_batch):
@@ -631,10 +651,10 @@ class PFedNLPTrainer(FedNLPTrainer):
             ctx.optimizer.zero_grad()
             ctx.accum_steps = CtxVar(0, LIFECYCLE.ROUTINE)
 
-        total_epoch = ctx.get(f'num_{ctx.cur_mode}_epoch')
-        total_batch = ctx.get(f'num_{ctx.cur_mode}_batch') if \
-            ctx.cur_epoch_i + 1 < total_epoch else ctx.get(
-            f'num_{ctx.cur_mode}_batch_last_epoch')
+        total_epoch = getattr(ctx, f'num_{ctx.cur_mode}_epoch', None)
+        total_batch = getattr(ctx, f'num_{ctx.cur_mode}_batch', None) if \
+            ctx.cur_epoch_i + 1 < total_epoch else \
+            getattr(ctx, f'num_{ctx.cur_mode}_batch_last_epoch', None)
         if ctx.accum_steps == 0:
             if cur_step > 1 and (cur_step % ctx.cfg.trainer.disp_freq == 0
                                  or ctx.cur_batch_i + 1 == total_batch):
@@ -734,7 +754,7 @@ class PCFedNLPTrainer(PFedNLPTrainer):
     @lifecycle(LIFECYCLE.BATCH)
     def _run_batch(self, hooks_set):
         for batch_i in tqdm(range(
-                self.ctx.get(f"num_{self.ctx.cur_split}_batch")),
+                getattr(self.ctx, f"num_{self.ctx.cur_split}_batch", None)),
                             disable=not (self._in_contrast_prepare
                                          or self.ctx.cur_split == "test")):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
@@ -753,10 +773,12 @@ class PCFedNLPTrainer(PFedNLPTrainer):
 
             # Break in the final epoch
             if self.ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] and \
-                self.ctx.cur_epoch_i == self.ctx.get(
-                    f'num_{self.ctx.cur_mode}_epoch') - 1:
-                if batch_i >= self.ctx.get(
-                        f'num_{self.ctx.cur_mode}_batch_last_epoch') - 1:
+                self.ctx.cur_epoch_i == getattr(
+                    self.ctx, f'num_{self.ctx.cur_mode}_epoch', None) - 1:
+                if batch_i >= \
+                        getattr(self.ctx,
+                                f'num_{self.ctx.cur_mode}_batch_last_epoch',
+                                None) - 1:
                     break
 
     def train(self, target_data_split_name='train', hooks_set=None):
