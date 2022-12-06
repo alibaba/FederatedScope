@@ -66,6 +66,8 @@ class BaseDataTranslator:
         Returns:
              List: List of split dataset, like ``[train, val, test]``
         """
+        from torch.utils.data import Dataset, Subset
+
         splits = self.global_cfg.data.splits
         if isinstance(dataset, tuple):
             # No need to split train/val/test for tuple dataset.
@@ -78,11 +80,17 @@ class BaseDataTranslator:
         train_size = int(splits[0] * len(dataset))
         val_size = int(splits[1] * len(dataset))
 
-        train_dataset = [dataset[x] for x in index[:train_size]]
-        val_dataset = [
-            dataset[x] for x in index[train_size:train_size + val_size]
-        ]
-        test_dataset = [dataset[x] for x in index[train_size + val_size:]]
+        if isinstance(dataset, Dataset):
+            train_dataset = Subset(dataset, index[:train_size])
+            val_dataset = Subset(dataset,
+                                 index[train_size:train_size + val_size])
+            test_dataset = Subset(dataset, index[train_size + val_size:])
+        else:
+            train_dataset = [dataset[x] for x in index[:train_size]]
+            val_dataset = [
+                dataset[x] for x in index[train_size:train_size + val_size]
+            ]
+            test_dataset = [dataset[x] for x in index[train_size + val_size:]]
         return train_dataset, val_dataset, test_dataset
 
     def split_to_client(self, train, val, test):
