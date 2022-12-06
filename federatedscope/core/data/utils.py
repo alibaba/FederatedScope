@@ -665,21 +665,17 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                         merged_data[d_name][elem_name])
                 merged_data[d_name] = WrapDataset(merged_data[d_name])
         else:
-            client_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
+            client_data = {
+                key: []
+                for key in all_data[id_contain_all_dataset_key].keys()
+            }
             for data_id in range(1, merged_max_data_id + 1):
-                if data_id == id_contain_all_dataset_key:
-                    continue
                 for d_name in dataset_names:
                     if d_name not in all_data[data_id]:
                         continue
-                    if isinstance(client_data[d_name], list):
+                    else:
                         client_data[d_name].append(
                             all_data[data_id][d_name].dataset)
-                    else:
-                        client_data[d_name] = [
-                            client_data[d_name].dataset,
-                            all_data[data_id][d_name].dataset
-                        ]
             merged_data = {
                 key: torch.utils.data.ConcatDataset(client_data[key])
                 for key in dataset_names
