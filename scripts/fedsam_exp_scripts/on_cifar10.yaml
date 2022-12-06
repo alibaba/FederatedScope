@@ -8,6 +8,7 @@ federate:
   total_round_num: 10000
   client_num: 100
   make_global_eval: True
+  merge_test_data: True
 data:
   root: data/
   type: 'CIFAR10@torchvision'
@@ -30,3 +31,4 @@ trainer:
 eval:
   freq: 5
   metrics: ['acc', 'correct']
+  best_res_update_round_wise_key: test_loss
