@@ -66,7 +66,8 @@ def load_mini_graph_dt(config, client_cfgs=None):
                     for graph in dataset:
                         graph = featurizer(graph)
                         ds.append(
-                            Data(edge_index=graph.edge_index, x=graph.x,
+                            Data(edge_index=graph.edge_index,
+                                 x=graph.x,
                                  y=graph.y))
                     dataset = ds
                     if name in ['BACE', 'BBBP']:
@@ -87,13 +88,12 @@ def load_mini_graph_dt(config, client_cfgs=None):
                 # We fix train/val/test
                 index = np.random.permutation(np.arange(len(dataset)))
                 train_idx = index[:int(len(dataset) * self.splits[0])]
-                valid_idx = index[int(len(dataset) * self.splits[0]
-                                      ):int(
+                valid_idx = index[int(len(dataset) * self.splits[0]):int(
                     len(dataset) * sum(self.splits[:2]))]
                 test_idx = index[int(len(dataset) * sum(self.splits[:2])):]
 
-                if not os.path.isdir(
-                        os.path.join(self.processed_dir, str(idx))):
+                if not os.path.isdir(os.path.join(self.processed_dir,
+                                                  str(idx))):
                     os.makedirs(os.path.join(self.processed_dir, str(idx)))
 
                 train_path = os.path.join(self.processed_dir, str(idx),
@@ -142,6 +142,7 @@ def load_mini_graph_dt(config, client_cfgs=None):
                     'num_samples': 1113,
                 },
             }
+
     dataset = MiniGraphDCDataset(config.data.root)
     # Convert to dict
     datadict = {
