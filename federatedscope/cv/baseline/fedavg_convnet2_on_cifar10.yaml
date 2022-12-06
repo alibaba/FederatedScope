@@ -8,6 +8,8 @@ federate:
   client_num: 5
   total_round_num: 300
   sample_client_rate: 0.2
+  make_global_eval: True
+  merge_test_data: True
 data:
   root: data/
   type: 'CIFAR10@torchvision'
