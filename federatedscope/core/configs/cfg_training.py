@@ -57,7 +57,7 @@ def extend_training_cfg(cfg):
     # patience (int): How long to wait after last time the monitored metric
     # improved.
     # Note that the actual_checking_round = patience * cfg.eval.freq
-    # To disable the early stop, set the early_stop.patience a integer <=0
+    # To disable the early stop, set the early_stop.patience to 0
     cfg.early_stop.patience = 5
     # delta (float): Minimum change in the monitored metric to indicate an
     # improvement.
