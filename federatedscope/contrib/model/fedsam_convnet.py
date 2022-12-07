@@ -1,5 +1,8 @@
-'''The implementation of ASAM and SAM are borrowed from https://github.com/debcaldarola/fedsam
-Caldarola, D., Caputo, B., & Ciccone, M. Improving Generalization in Federated Learning by Seeking Flat Minima, European Conference on Computer Vision (ECCV) 2022.
+'''The implementation of ASAM and SAM are borrowed from
+    https://github.com/debcaldarola/fedsam
+   Caldarola, D., Caputo, B., & Ciccone, M.
+   Improving Generalization in Federated Learning by Seeking Flat Minima,
+   European Conference on Computer Vision (ECCV) 2022.
 '''
 import os
 import re
@@ -11,6 +14,7 @@ import torch.nn as nn
 from PIL import Image
 
 from federatedscope.register import register_model
+
 
 class Conv2Model(nn.Module):
     def __init__(self, num_classes):

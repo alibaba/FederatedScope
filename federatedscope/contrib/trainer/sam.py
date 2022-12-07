@@ -1,5 +1,8 @@
-'''The implementation of ASAM and SAM are borrowed from https://github.com/debcaldarola/fedsam
-Caldarola, D., Caputo, B., & Ciccone, M. Improving Generalization in Federated Learning by Seeking Flat Minima, European Conference on Computer Vision (ECCV) 2022.
+'''The implementation of ASAM and SAM are borrowed from
+    https://github.com/debcaldarola/fedsam
+   Caldarola, D., Caputo, B., & Ciccone, M.
+   Improving Generalization in Federated Learning by Seeking Flat Minima,
+   European Conference on Computer Vision (ECCV) 2022.
 '''
 from collections import defaultdict
 import torch
@@ -84,7 +87,7 @@ class SAMTrainer(BaseTrainer):
         self.data = data
         # Device name
         self.device = device
-        # configs 
+        # configs
         self.kwargs = kwargs
         self.config = kwargs['config']
         self.optim_config = self.config.train.optimizer
@@ -93,35 +96,11 @@ class SAMTrainer(BaseTrainer):
     def train(self):
         # Criterion & Optimizer
         criterion = torch.nn.CrossEntropyLoss().to(self.device)
-        #optimizer = torch.optim.SGD(self.model.parameters(),
-        #                            lr=0.001,
-        #                            momentum=0.9,
-        #                            weight_decay=1e-4)
         optimizer = get_optimizer(self.model, **self.optim_config)
-        # self.optimizer = SAM(self.basic_optimizer, self.model, rho=0.5,
-        # eta=0.01)
 
         # _hook_on_fit_start_init
         self.model.to(self.device)
         self.model.train()
-
-        # total_loss = num_samples = 0
-        #
-        # _hook_on_batch_start_init
-        # for x, y in self.data['train']:
-        #    # _hook_on_batch_forward
-        #    x, y = x.to(self.device), y.to(self.device)
-        #    outputs = self.model(x)
-        #    loss = self.criterion(outputs, y)
-
-        #    # _hook_on_batch_backward
-        #    self.optimizer.zero_grad()
-        #    loss.backward()
-        #    self.optimizer.step()
-
-        #    # _hook_on_batch_end
-        #    total_loss += loss.item() * y.shape[0]
-        #    num_samples += y.shape[0]
 
         num_samples, total_loss = self.run_epoch(optimizer, criterion)
 
@@ -132,9 +111,15 @@ class SAMTrainer(BaseTrainer):
 
     def run_epoch(self, optimizer, criterion):
         if self.sam_config.adaptive:
-            minimizer = ASAM(optimizer, self.model, rho=self.sam_config.rho, eta=self.sam_config.eta)
+            minimizer = ASAM(optimizer,
+                             self.model,
+                             rho=self.sam_config.rho,
+                             eta=self.sam_config.eta)
         else:
-            minimizer = SAM(optimizer, self.model, rho=self.sam_config.rho, eta=self.sam_config.eta)
+            minimizer = SAM(optimizer,
+                            self.model,
+                            rho=self.sam_config.rho,
+                            eta=self.sam_config.eta)
         running_loss = 0.0
         num_samples = 0
         # for inputs, targets in self.trainloader:
@@ -184,7 +169,8 @@ class SAMTrainer(BaseTrainer):
 
             # _hook_on_fit_end
             return {
-                f'{target_data_split_name}_acc': float(num_corrects) / float(num_samples),
+                f'{target_data_split_name}_acc': float(num_corrects) /
+                float(num_samples),
                 f'{target_data_split_name}_loss': total_loss,
                 f'{target_data_split_name}_total': num_samples,
                 f'{target_data_split_name}_avg_loss': total_loss /
