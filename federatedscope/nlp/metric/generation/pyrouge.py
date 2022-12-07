@@ -14,8 +14,11 @@ try:
 except ImportError:
     from ConfigParser import ConfigParser
 
-from pyrouge.utils import log
-from pyrouge.utils.file_utils import verify_dir
+try:
+    from pyrouge.utils import log
+    from pyrouge.utils.file_utils import verify_dir
+except ModuleNotFoundError:
+    pass
 
 REMAP = {
     "-lrb-": "(",
