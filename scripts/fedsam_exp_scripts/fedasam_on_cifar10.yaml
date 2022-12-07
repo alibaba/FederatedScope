@@ -30,9 +30,9 @@ criterion:
 trainer:
   type: sam_trainer
   sam:
-    adaptive: False
-    rho: 0.1
-    eta: 0.0
+    adaptive: True
+    rho: 0.7
+    eta: 0.2
 train:
   batch_or_epoch: 'epoch'
   optimizer:

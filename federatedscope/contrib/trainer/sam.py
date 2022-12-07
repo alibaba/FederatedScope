@@ -152,7 +152,7 @@ class SAMTrainer(BaseTrainer):
             minimizer.descent_step()
 
             with torch.no_grad():
-                running_loss += loss.item()
+                running_loss += targets.shape[0] * loss.item()
 
             num_samples += targets.shape[0]
 
@@ -167,20 +167,23 @@ class SAMTrainer(BaseTrainer):
 
             self.model.to(self.device)
             self.model.eval()
-            total_loss = num_samples = 0
+            total_loss = num_samples = num_corrects = 0
             # _hook_on_batch_start_init
             for x, y in self.data[target_data_split_name]:
                 # _hook_on_batch_forward
                 x, y = x.to(self.device), y.to(self.device)
                 pred = self.model(x)
                 loss = criterion(pred, y)
+                cor = torch.sum(torch.argmax(pred, dim=-1).eq(y))
 
                 # _hook_on_batch_end
                 total_loss += loss.item() * y.shape[0]
                 num_samples += y.shape[0]
+                num_corrects += cor.item()
 
             # _hook_on_fit_end
             return {
+                f'{target_data_split_name}_acc': float(num_corrects) / float(num_samples),
                 f'{target_data_split_name}_loss': total_loss,
                 f'{target_data_split_name}_total': num_samples,
                 f'{target_data_split_name}_avg_loss': total_loss /
