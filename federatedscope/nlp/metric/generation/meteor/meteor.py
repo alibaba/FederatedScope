@@ -11,7 +11,8 @@ import tempfile
 # Assumes meteor-1.5.jar is in the same directory as meteor.py. Change as
 # needed.
 # METEOR_JAR = 'meteor-1.5.jar'
-METEOR_JAR = 'federatedscope/nlp/metric/generation/meteor/meteor-1.5.jar'
+METEOR_JAR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          'meteor-1.5.jar')
 
 # java -Xmx2G -jar  core/evaluation/meteor/meteor-1.5.jar pred reference -l
 # en -norm

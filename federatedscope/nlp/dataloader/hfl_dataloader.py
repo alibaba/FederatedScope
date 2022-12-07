@@ -30,6 +30,21 @@ def extend_cfg(cfg, cfg_client):
         save_dir = cfg.federate.save_to
         os.makedirs(save_dir, exist_ok=True)
 
+    if cfg.data.debug:
+        if cfg.federate.client_num > 6:
+            cfg.federate.client_num = 6
+            cfg.data.datasets = [
+                'imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg'
+            ]
+            cfg.data.num_grouped_clients = [1, 1, 1, 1, 1, 1]
+        if cfg.federate.total_round_num > 2:
+            cfg.federate.total_round_num = 2
+        if cfg.train.local_update_steps > 2:
+            cfg.train.local_update_steps = 2
+        cfg.federate.hfl_load_from = ''
+        cfg.federate.save_to = ''
+        cfg.data.cache_dir = ''
+
     if cfg.model.task == 'pretrain':
         downstream_tasks = []
         for group_id, num_clients in enumerate(cfg.data.num_grouped_clients):
@@ -47,20 +62,6 @@ def extend_cfg(cfg, cfg_client):
     cfg.model.eos_token_id = tokenizer.eos_token_id
     cfg.model.eoq_token_id = tokenizer.eoq_token_id
     cfg.model.pad_token_id = tokenizer.pad_token_id
-
-    if cfg.data.debug:
-        # if cfg.federate.client_num > 6:
-        #     cfg.federate.client_num = 6
-        #     cfg.data.datasets = ['imdb', 'agnews', 'squad', 'newsqa',
-        #                          'cnndm', 'msqg']
-        #     cfg.data.num_grouped_clients = [1, 1, 1, 1, 1, 1]
-        if cfg.federate.total_round_num > 2:
-            cfg.federate.total_round_num = 2
-        if cfg.train.local_update_steps > 2:
-            cfg.train.local_update_steps = 2
-        cfg.federate.hfl_load_from = ''
-        cfg.federate.save_to = ''
-        cfg.data.cache_dir = ''
 
     # client_config
     if cfg_client is not None:

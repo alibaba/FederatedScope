@@ -29,6 +29,17 @@ jobs:
     - name: Install FS
       run: |
         pip install -e .[test]
+    - name: Install NLTK
+      run: |
+        pip install nltk
+    - name: Install ROUGE
+      run: |
+        git clone https://github.com/bheinzerling/pyrouge
+        cd pyrouge
+        pip install -e .
+        git clone https://github.com/andersjo/pyrouge.git rouge
+        pyrouge_set_rouge_path $(realpath rouge/tools/ROUGE-1.5.5/)
+        python -m pyrouge.test
     - name: Test Distributed (LR on toy)
       run: |
         python scripts/distributed_scripts/gen_data.py

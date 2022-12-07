@@ -18,7 +18,7 @@ from transformers.models.bert import BertTokenizerFast
 ALL_LETTERS = "\n !\"&'(),-.0123456789:;>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[" \
               "]abcdefghijklmnopqrstuvwxyz}"
 NUM_LETTERS = len(ALL_LETTERS)
-NUM_DEBUG = 20
+NUM_DEBUG = 5
 
 
 def _one_hot(index, size):

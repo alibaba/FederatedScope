@@ -32,15 +32,14 @@ class NLPTest(unittest.TestCase):
         cfg_alg.outdir = 'exp/fednlp/'
         self.fed_runner(cfg_alg, cfg_client)
 
-    def test_pfednlp(self):
-        # pretrain
+    def test_pfednlp_pretrain(self):
         cfg_alg = CfgNode.load_cfg(
             open('federatedscope/nlp/baseline/config_pfednlp_pretrain.yaml',
                  'r'))
         cfg_alg.outdir = 'exp/pfednlp/pretrain/'
         self.fed_runner(cfg_alg)
 
-        # train
+    def test_pfednlp(self):
         cfg_alg = CfgNode.load_cfg(
             open('federatedscope/nlp/baseline/config_pfednlp.yaml', 'r'))
         cfg_client = CfgNode.load_cfg(
@@ -64,9 +63,6 @@ class NLPTest(unittest.TestCase):
         init_cfg.data.debug = True
         init_cfg.data.batch_size = 1
         init_cfg.data.root = 'test_data/'
-        init_cfg.data.datasets = ['imdb', 'agnews', 'squad', 'newsqa']
-        init_cfg.data.num_grouped_clients = [1, 3, 3, 2]
-        init_cfg.federate.client_num = 9
         setup_seed(init_cfg.seed)
         update_logger(init_cfg, True)
 
