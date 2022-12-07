@@ -25,10 +25,6 @@ def extend_cfg(cfg, cfg_client):
     cfg.eval.result_path = cfg.outdir
     cfg.eval.temp_dir = os.path.join(cfg.outdir, 'temp')
     os.makedirs(cfg.eval.temp_dir, exist_ok=True)
-    if cfg.federate.save_to:
-        cfg.federate.save_to = os.path.join(cfg.outdir, cfg.federate.save_to)
-        save_dir = cfg.federate.save_to
-        os.makedirs(save_dir, exist_ok=True)
 
     if cfg.data.debug:
         if cfg.federate.client_num > 6:
@@ -44,6 +40,12 @@ def extend_cfg(cfg, cfg_client):
         cfg.federate.hfl_load_from = ''
         cfg.federate.save_to = ''
         cfg.data.cache_dir = ''
+        cfg.data.batch_size = 1
+
+    if cfg.federate.save_to:
+        cfg.federate.save_to = os.path.join(cfg.outdir, cfg.federate.save_to)
+        save_dir = cfg.federate.save_to
+        os.makedirs(save_dir, exist_ok=True)
 
     if cfg.model.task == 'pretrain':
         downstream_tasks = []
@@ -77,8 +79,10 @@ def extend_cfg(cfg, cfg_client):
         client_start_id = 1
         for group_id, num_clients in enumerate(num_grouped_clients):
             group_cfg = cfg_client['client_group_{}'.format(group_id + 1)]
-            if cfg.data.debug and group_cfg.train.local_update_steps > 5:
-                group_cfg.train.local_update_steps = 5
+            if cfg.data.debug:
+                if group_cfg.train.local_update_steps > 5:
+                    group_cfg.train.local_update_steps = 5
+                group_cfg.data.batch_size = 1
             for client_id in range(client_start_id,
                                    client_start_id + num_clients):
                 cfg_client['client_{}'.format(client_id)] = group_cfg
