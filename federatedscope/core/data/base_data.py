@@ -145,13 +145,14 @@ class ClientData(dict):
         test: test dataset, which will be converted to ``Dataloader``
 
     Note:
-        Key ``data`` in ``ClientData`` is the raw dataset.
+        Key ``{split}_data`` in ``ClientData`` is the raw dataset.
+        Key ``{split}`` in ``ClientData`` is the dataloader.
     """
     def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
         self.client_cfg = None
-        self.train = train
-        self.val = val
-        self.test = test
+        self.train_data = train
+        self.val_data = val
+        self.test_data = test
         self.setup(client_cfg)
         if kwargs is not None:
             for key in kwargs:
@@ -168,18 +169,22 @@ class ClientData(dict):
         Returns:
             Bool: Status for indicating whether the client_cfg is updated
         """
-        # if `batch_size` or `shuffle` change, reinstantiate DataLoader
+        # if `batch_size` or `shuffle` change, re-instantiate DataLoader
         if self.client_cfg is not None:
             if dict(self.client_cfg.dataloader) == dict(
                     new_client_cfg.dataloader):
                 return False
 
         self.client_cfg = new_client_cfg
-        if self.train is not None:
-            self['train'] = get_dataloader(self.train, self.client_cfg,
-                                           'train')
-        if self.val is not None:
-            self['val'] = get_dataloader(self.val, self.client_cfg, 'val')
-        if self.test is not None:
-            self['test'] = get_dataloader(self.test, self.client_cfg, 'test')
+        if self.train_data is not None:
+            if len(self.train_data) > 0:
+                self['train'] = get_dataloader(self.train, self.client_cfg,
+                                               'train')
+        if self.val_data is not None:
+            if len(self.val_data) > 0:
+                self['val'] = get_dataloader(self.val, self.client_cfg, 'val')
+        if self.test_data is not None:
+            if len(self.test_data) > 0:
+                self['test'] = get_dataloader(self.test, self.client_cfg,
+                                              'test')
         return True
