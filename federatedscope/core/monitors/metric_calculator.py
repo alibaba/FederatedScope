@@ -342,3 +342,18 @@ def calc_blocal_dissim(last_model, local_updated_models):
         b_local_dissimilarity[k] = np.sqrt(
             avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
     return b_local_dissimilarity
+
+
+def calc_l2_dissim(last_model, local_updated_models):
+    l2_dissimilarity = dict()
+    l2_dissimilarity['raw'] = []
+    for tp in local_updated_models:
+        grads = dict()
+        for key, w in tp[1].items():
+            grad = w - last_model[key]
+            grads[key] = grad
+        grad_norm = \
+            torch.norm(torch.cat([v.flatten() for v in grads.values()])).item()
+        l2_dissimilarity['raw'].append(grad_norm)
+    l2_dissimilarity['mean'] = np.mean(l2_dissimilarity['raw'])
+    return l2_dissimilarity
