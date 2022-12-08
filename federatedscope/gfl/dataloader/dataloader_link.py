@@ -22,7 +22,7 @@ def load_linklevel_dataset(config=None):
     splitter = get_splitter(config)
 
     # Transforms
-    transforms_funcs = get_transform(config, 'torch_geometric')
+    transforms_funcs, _, _ = get_transform(config, 'torch_geometric')
 
     if name in ['epinions', 'ciao']:
         from federatedscope.gfl.dataset.recsys import RecSys

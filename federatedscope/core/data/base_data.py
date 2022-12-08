@@ -1,4 +1,7 @@
 import logging
+
+from scipy.sparse.csc import csc_matrix
+
 from federatedscope.core.data.utils import merge_data
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 
@@ -146,7 +149,10 @@ class ClientData(dict):
 
     Note:
         Key ``{split}_data`` in ``ClientData`` is the raw dataset.
+        Key ``{split}`` in ``ClientData`` is the dataloader.
     """
+    SPLIT_NAMES = ['train', 'val', 'test']
+
     def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
         self.client_cfg = None
         self.train_data = train
@@ -175,12 +181,19 @@ class ClientData(dict):
                 return False
 
         self.client_cfg = new_client_cfg
-        if self.train_data is not None:
-            self['train'] = get_dataloader(self.train_data, self.client_cfg,
-                                           'train')
-        if self.val_data is not None:
-            self['val'] = get_dataloader(self.val_data, self.client_cfg, 'val')
-        if self.test_data is not None:
-            self['test'] = get_dataloader(self.test_data, self.client_cfg,
-                                          'test')
+
+        for split_data, split_name in zip(
+            [self.train_data, self.val_data, self.test_data],
+                self.SPLIT_NAMES):
+            if split_data is not None:
+                # csc_matrix does not have ``__len__`` attributes
+                if isinstance(split_data, csc_matrix):
+                    self[split_name] = get_dataloader(split_data,
+                                                      self.client_cfg,
+                                                      split_name)
+                elif len(split_data) > 0:
+                    self[split_name] = get_dataloader(split_data,
+                                                      self.client_cfg,
+                                                      split_name)
+
         return True

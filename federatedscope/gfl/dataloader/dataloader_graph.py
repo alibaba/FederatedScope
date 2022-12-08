@@ -22,7 +22,7 @@ def load_graphlevel_dataset(config=None):
     name = config.data.type.upper()
 
     # Transforms
-    transforms_funcs = get_transform(config, 'torch_geometric')
+    transforms_funcs, _, _ = get_transform(config, 'torch_geometric')
 
     if name in [
             'MUTAG', 'BZR', 'COX2', 'DHFR', 'PTC_MR', 'AIDS', 'NCI1',
