@@ -15,6 +15,11 @@ def extend_training_cfg(cfg):
     cfg.trainer.sam.rho = 1.0
     cfg.trainer.sam.eta = .0
 
+    cfg.trainer.local_entropy = CN()
+    cfg.trainer.local_entropy.gamma = 1e-3
+    cfg.trainer.local_entropy.eps = 1e-4
+    cfg.trainer.local_entropy.alpha = 0.9
+
     # ---------------------------------------------------------------------- #
     # Training related options
     # ---------------------------------------------------------------------- #
