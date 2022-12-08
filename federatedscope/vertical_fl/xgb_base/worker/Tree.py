@@ -10,6 +10,7 @@ class Node(object):
                  weight=None,
                  grad=None,
                  hess=None,
+                 label=None,
                  indicator=None):
         self.member = None
         self.status = status
@@ -19,6 +20,7 @@ class Node(object):
         self.weight = weight
         self.grad = grad
         self.hess = hess
+        self.label = label
         self.indicator = indicator
 
 
