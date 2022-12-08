@@ -59,7 +59,7 @@ class BaseDataTranslator:
         datadict = self.split_to_client(train, val, test)
         return datadict
 
-    def split_train_val_test(self, dataset):
+    def split_train_val_test(self, dataset, cfg=None):
         """
         Split dataset to train, val, test if not provided.
 
@@ -68,7 +68,10 @@ class BaseDataTranslator:
         """
         from torch.utils.data import Dataset, Subset
 
-        splits = self.global_cfg.data.splits
+        if cfg is not None:
+            splits = cfg.data.splits
+        else:
+            splits = self.global_cfg.data.splits
         if isinstance(dataset, tuple):
             # No need to split train/val/test for tuple dataset.
             error_msg = 'If dataset is tuple, it must contains ' \
