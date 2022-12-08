@@ -10,6 +10,11 @@ def extend_training_cfg(cfg):
 
     cfg.trainer.type = 'general'
 
+    cfg.trainer.sam = CN()
+    cfg.trainer.sam.adaptive = False
+    cfg.trainer.sam.rho = 1.0
+    cfg.trainer.sam.eta = .0
+
     # ---------------------------------------------------------------------- #
     # Training related options
     # ---------------------------------------------------------------------- #
