@@ -78,6 +78,7 @@ class LocalEntropyTrainer(BaseTrainer):
     def run_epoch(self, optimizer, criterion, current_global_model, mu):
         running_loss = 0.0
         num_samples = 0
+        thermal = self.local_entropy_config.gamma
         # for inputs, targets in self.trainloader:
         for inputs, targets in self.data['train']:
             inputs = inputs.to(self.device)
@@ -86,7 +87,7 @@ class LocalEntropyTrainer(BaseTrainer):
             # Descent Step
             outputs = self.model(inputs)
             ce_loss = criterion(outputs, targets)
-            loss = ce_loss + self.local_entropy_config.gamma * prox_term(self.model.state_dict(), current_global_model)
+            loss = ce_loss + thermal * prox_term(self.model.state_dict(), current_global_model)
             loss.backward()
             optimizer.step()
 
@@ -100,6 +101,7 @@ class LocalEntropyTrainer(BaseTrainer):
                 running_loss += targets.shape[0] * ce_loss.item()
 
             num_samples += targets.shape[0]
+            thermal *= 1.001
 
         return num_samples, running_loss
 

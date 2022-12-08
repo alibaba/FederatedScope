@@ -12,7 +12,7 @@ federate:
 fedopt:
   use: True
   optimizer:
-    lr: 0.001
+    lr: 0.0001
     weight_decay: 0.0
     momentum: 0.0
 data:
@@ -35,11 +35,15 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: local_entropy_trainer
+  local_entropy:
+    gamma: 0.0001
+    eps: 0.001
+    alpha: 0.75
 train:
   batch_or_epoch: 'epoch'
   optimizer:
-    lr: 0.01
-    weight_decay: 0.0004
+    lr: 0.1
+    weight_decay: 0.0
     momentum: 0.0
 eval:
   freq: 100
