@@ -178,13 +178,14 @@ class ClientData(dict):
         self.client_cfg = new_client_cfg
         if self.train_data is not None:
             if len(self.train_data) > 0:
-                self['train'] = get_dataloader(self.train, self.client_cfg,
-                                               'train')
+                self['train'] = get_dataloader(self.train_data,
+                                               self.client_cfg, 'train')
         if self.val_data is not None:
             if len(self.val_data) > 0:
-                self['val'] = get_dataloader(self.val, self.client_cfg, 'val')
+                self['val'] = get_dataloader(self.val_data, self.client_cfg,
+                                             'val')
         if self.test_data is not None:
             if len(self.test_data) > 0:
-                self['test'] = get_dataloader(self.test, self.client_cfg,
+                self['test'] = get_dataloader(self.test_data, self.client_cfg,
                                               'test')
         return True
