@@ -15,7 +15,6 @@ from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 
 def copy_params(src):
     tgt = dict()
-    #for name, t in src.state_dict().items():
     for name, t in src.named_parameters():
         if t.requires_grad:
             tgt[name] = t.detach().clone()
@@ -37,7 +36,7 @@ def add_noise(model, sigma):
 
 def moving_avg(cur, new, alpha):
     for k, v in cur.items():
-        v.data = (1-alpha) * v + alpha * new[k]
+        v.data = (1 - alpha) * v + alpha * new[k]
 
 
 class LocalEntropyTrainer(BaseTrainer):
@@ -65,7 +64,8 @@ class LocalEntropyTrainer(BaseTrainer):
         mu = copy_params(self.model)
         self.model.train()
 
-        num_samples, total_loss = self.run_epoch(optimizer, criterion, current_global_model, mu)
+        num_samples, total_loss = self.run_epoch(optimizer, criterion,
+                                                 current_global_model, mu)
         for name, param in self.model.named_parameters():
             if name in mu:
                 param.data = mu[name]
@@ -87,15 +87,20 @@ class LocalEntropyTrainer(BaseTrainer):
             # Descent Step
             outputs = self.model(inputs)
             ce_loss = criterion(outputs, targets)
-            loss = ce_loss + thermal * prox_term(self.model.state_dict(), current_global_model)
+            loss = ce_loss + thermal * prox_term(self.model.state_dict(),
+                                                 current_global_model)
             loss.backward()
             optimizer.step()
 
             # add noise for langevine dynamics
-            add_noise(self.model, math.sqrt(self.optim_config.lr) * self.local_entropy_config.eps)
+            add_noise(
+                self.model,
+                math.sqrt(self.optim_config.lr) *
+                self.local_entropy_config.eps)
 
             # acc local updates
-            moving_avg(mu, self.model.state_dict(), self.local_entropy_config.alpha)
+            moving_avg(mu, self.model.state_dict(),
+                       self.local_entropy_config.alpha)
 
             with torch.no_grad():
                 running_loss += targets.shape[0] * ce_loss.item()
