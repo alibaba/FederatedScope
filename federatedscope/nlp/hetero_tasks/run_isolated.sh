@@ -2,9 +2,12 @@ set -e
 
 cd ../../..
 
-echo "Run isolated."
+DEVICE=$1
+
+echo "Run Isolated."
 
 python federatedscope/main.py \
-  --cfg federatedscope/nlp/baseline/config_isolated.yaml \
-  --client_cfg federatedscope/nlp/baseline/config_client_isolated.yaml \
-  outdir exp/isolated/train/ \
+  --cfg federatedscope/nlp/hetero_tasks/baseline/config_isolated.yaml \
+  --client_cfg federatedscope/nlp/hetero_tasks/baseline/config_client_isolated.yaml \
+  outdir exp/isolated/ \
+  device $DEVICE \

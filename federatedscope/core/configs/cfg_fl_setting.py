@@ -42,9 +42,8 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.resource_info_file = ""  # the device information file to
     # record computation and communication ability
 
-    # fednlp
-    cfg.federate.hfl_method = ''
-    cfg.federate.hfl_load_from = ''
+    # atc
+    cfg.federate.atc_load_from = ''
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options

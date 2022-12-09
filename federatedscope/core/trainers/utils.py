@@ -75,6 +75,7 @@ def calculate_batch_epoch_num(steps, batch_or_epoch, num_data, batch_size,
         num_batch_last_epoch = num_batch_per_epoch
         num_total_batch = steps * num_batch_per_epoch
     else:
+        num_batch_per_epoch = min(num_batch_per_epoch, steps)
         num_epoch = math.ceil(steps / num_batch_per_epoch)
         num_batch_last_epoch = steps % num_batch_per_epoch or \
             num_batch_per_epoch

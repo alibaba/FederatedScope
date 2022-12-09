@@ -24,7 +24,7 @@ def extend_model_cfg(cfg):
     cfg.model.num_user = 0
     cfg.model.input_shape = ()  # A tuple, e.g., (in_channel, h, w)
 
-    # fednlp
+    # atc
     cfg.model.model_type = 'google/bert_uncased_L-2_H-128_A-2'
     cfg.model.bos_token = '[unused0]'
     cfg.model.eos_token = '[unused1]'
@@ -33,7 +33,6 @@ def extend_model_cfg(cfg):
     cfg.model.eos_token_id = -1
     cfg.model.eoq_token_id = -1
     cfg.model.pad_token_id = -1
-    cfg.model.pretrain_task = ''
     cfg.model.pretrain_tasks = []
     cfg.model.downstream_tasks = []
     cfg.model.num_labels = 1
@@ -46,7 +45,7 @@ def extend_model_cfg(cfg):
     cfg.model.n_best_size = 20
     cfg.model.max_answer_len = 30
     cfg.model.null_score_diff_threshold = 0.0
-    cfg.model.train_contrast = False
+    cfg.model.use_contrastive_loss = False
     cfg.model.contrast_topk = 100
     cfg.model.contrast_temp = 1.0
 

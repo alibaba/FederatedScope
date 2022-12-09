@@ -8,7 +8,6 @@ def extend_aggregator_cfg(cfg):
     cfg.aggregator.num_agg_topk = []
     cfg.aggregator.inside_weight = 1.0
     cfg.aggregator.outside_weight = 0.0
-    cfg.aggregator.proto_weight = 0.0
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_aggregator_cfg)

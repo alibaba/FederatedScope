@@ -1,6 +1,6 @@
 import logging
 import federatedscope.register as register
-from federatedscope.nlp.scheduler import *
+from federatedscope.nlp.hetero_tasks.scheduler import *
 
 logger = logging.getLogger(__name__)
 

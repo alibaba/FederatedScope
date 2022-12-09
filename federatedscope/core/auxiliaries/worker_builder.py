@@ -58,15 +58,9 @@ def get_client_cls(cfg):
         from federatedscope.vertical_fl.xgb_base.worker import XGBClient
         return XGBClient
 
-    if cfg.federate.hfl_method.lower() == 'fednlp':
-        from federatedscope.nlp.worker import FedNLPClient
-        return FedNLPClient
-    elif cfg.federate.hfl_method.lower() == 'pfednlp':
-        from federatedscope.nlp.worker import PFedNLPClient
-        return PFedNLPClient
-    elif cfg.federate.hfl_method.lower() == 'pcfednlp':
-        from federatedscope.nlp.worker import PCFedNLPClient
-        return PCFedNLPClient
+    if cfg.trainer.type.lower() == 'atc_trainer':
+        from federatedscope.nlp.hetero_tasks.worker import ATCClient
+        return ATCClient
 
     if cfg.federate.method.lower() in constants.CLIENTS_TYPE:
         client_type = constants.CLIENTS_TYPE[cfg.federate.method.lower()]
@@ -165,15 +159,9 @@ def get_server_cls(cfg):
         from federatedscope.vertical_fl.xgb_base.worker import XGBServer
         return XGBServer
 
-    if cfg.federate.hfl_method.lower() == 'fednlp':
-        from federatedscope.nlp.worker import FedNLPServer
-        return FedNLPServer
-    elif cfg.federate.hfl_method.lower() == 'pfednlp':
-        from federatedscope.nlp.worker import PFedNLPServer
-        return PFedNLPServer
-    elif cfg.federate.hfl_method.lower() == 'pcfednlp':
-        from federatedscope.nlp.worker import PCFedNLPServer
-        return PCFedNLPServer
+    if cfg.trainer.type.lower() == 'atc_trainer':
+        from federatedscope.nlp.hetero_tasks.worker import ATCServer
+        return ATCServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:
         server_type = constants.SERVER_TYPE[cfg.federate.method.lower()]

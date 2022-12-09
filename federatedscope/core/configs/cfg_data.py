@@ -55,7 +55,7 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.min_curv = 0.02
     cfg.data.quadratic.max_curv = 12.5
 
-    # fednlp
+    # atc
     cfg.data.datasets = []
     cfg.data.num_grouped_clients = []
     cfg.data.max_seq_len = 384
@@ -99,7 +99,7 @@ def assert_data_cfg(cfg):
         assert cfg.data.splitter, '`data.splitter` should not be empty when ' \
                                   'using external data'
 
-    # fednlp
+    # atc
     if len(cfg.data.num_grouped_clients) > 0:
         assert cfg.federate.client_num == sum(cfg.data.num_grouped_clients), \
             '`federate.client_num` should be equal to ' \

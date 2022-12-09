@@ -22,7 +22,7 @@ def extend_evaluation_cfg(cfg):
 
     cfg.eval.count_flops = False
 
-    # fednlp
+    # atc
     cfg.eval.result_path = ''
     cfg.eval.temp_dir = ''
 
