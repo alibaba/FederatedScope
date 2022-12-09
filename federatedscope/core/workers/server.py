@@ -655,11 +655,14 @@ class Server(BaseServer):
         else:
             model_para = {} if skip_broadcast else self.model.state_dict()
 
+        # We define the evaluation happens at the end of an epoch
+        rnd = self.state - 1 if msg_type == 'evaluate' else self.state
+
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
                     receiver=receiver,
-                    state=min(self.state, self.total_round_num),
+                    state=min(rnd, self.total_round_num),
                     timestamp=self.cur_timestamp,
                     content=model_para))
         if self._cfg.federate.online_aggr:
