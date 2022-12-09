@@ -47,6 +47,12 @@ jobs:
         rm WordNet-2.0.exc.db
         ./WordNet-2.0-Exceptions/buildExeptionDB.pl ./WordNet-2.0-Exceptions ./smart_common_words.txt ./WordNet-2.0.exc.db
         python -m pyrouge.test
+    - name: Download METEOR packages
+      run: |
+        wget -c http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz
+        tar -zxvf meteor-1.5.tar.gz
+        mv meteor-1.5/data/paraphrase-en.gz federatedscope/nlp/hetero_tasks/metric/generation/meteor/data/
+        mv meteor-1.5/meteor-1.5.jar federatedscope/nlp/hetero_tasks/metric/generation/meteor/
     - name: Test ATC
       run: |
         python federatedscope/main.py \
