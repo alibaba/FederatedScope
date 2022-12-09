@@ -104,7 +104,6 @@ class XGBClient(Client):
                                self.callback_func_for_compute_next_node)
         self.register_handlers('send_feature_importance',
                                self.callback_func_for_send_feature_importance)
-
         self.register_handlers('finish', self.callback_func_for_finish)
 
     # save the order of values in each feature
@@ -143,7 +142,6 @@ class XGBClient(Client):
             self.batch_index, self.x, self.y = self.sample_data()
             # init y_hat
             self.y_hat = np.random.uniform(low=0.0, high=1.0, size=len(self.y))
-            # self.y_hat = np.zeros(len(self.y))
             logger.info(f'---------- Building a new tree (Tree '
                         f'#{self.state}) -------------')
             self.comm_manager.send(

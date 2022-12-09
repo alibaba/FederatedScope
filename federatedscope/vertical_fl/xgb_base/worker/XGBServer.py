@@ -95,6 +95,7 @@ class XGBServer(Server):
                             self.comm_manager.get_neighbors().keys()),
                         state=self.state,
                         content='None'))
+            # jump out running
             self.state = self.total_round_num + 1
 
     def callback_func_for_test_result(self, message: Message):

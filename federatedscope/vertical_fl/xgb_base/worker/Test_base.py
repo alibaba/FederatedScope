@@ -43,7 +43,6 @@ class Test_base:
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 < self.client.num_of_trees:
                 # TODO: add feedback during training
-                # self.client.state += 1
                 logger.info(f'----------- Building a new tree (Tree '
                             f'#{tree_num + 1}) -------------')
                 # build the next tree
