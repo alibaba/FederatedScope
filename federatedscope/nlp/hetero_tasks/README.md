@@ -1,4 +1,4 @@
-# 1. Environment
+## 1. Environment
 ```bash
 # Install NLTK and Transformers
 pip install nltk
@@ -19,26 +19,27 @@ python -m pyrouge.test
 # Download METEOR packages
 wget -c http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz
 tar -zxvf meteor-1.5.tar.gz
+mkdir ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_tasks/metric/generation/meteor/data/
 mv meteor-1.5/data/paraphrase-en.gz ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_tasks/metric/generation/meteor/data/
 mv meteor-1.5/meteor-1.5.jar ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_tasks/metric/generation/meteor/
 ```
 
-# 2. Run \textsc{Isolated} baseline
+## 2. Run Isolated baseline
 ```bash
 bash run_isolated.sh $DEVICE
 ```
 
-# 3. Run \textsc{FedAvg} baseline
+## 3. Run FedAvg baseline
 ```bash
 bash run_fedavg.sh $DEVICE
 ```
 
-# 4. Run ATC \textsc{Assign} stage
+## 4. Run ATC Assign stage
 ```bash
 bash run_pretrain.sh $DEVICE
 ```
 
-# 5. Run ATC \textsc{Contrast} stage
+## 5. Run ATC Contrast stage
 ```bash
 bash run_atc.sh $DEVICE
 ```
