@@ -129,6 +129,8 @@ class XGBClient(Client):
         self.lambda_, self.gamma, self.num_of_trees, self.max_tree_depth \
             = message.content
 
+        # client adds his own ID and address in his comm_manager.neighbors
+        # to send and receive messages from himself
         if self.federate_mode == 'distributed':
             self.comm_manager.add_neighbors(neighbor_id=self.ID,
                                             address={
