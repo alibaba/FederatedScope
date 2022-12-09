@@ -1,4 +1,4 @@
-name: UnitTests for NLP
+name: UnitTests for ATC
 
 on: [push, pull_request]
 
@@ -34,7 +34,7 @@ jobs:
         pip install nltk
     - name: Install Transformers
       run: |
-        pip install transformers
+        pip install transformers==4.21.0
     - name: Install ROUGE
       run: |
         git clone https://github.com/bheinzerling/pyrouge

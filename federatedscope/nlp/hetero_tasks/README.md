@@ -2,7 +2,7 @@
 ```bash
 # Install NLTK and Transformers
 pip install nltk
-pip install transformers
+pip install transformers==4.21.0
 
 # Install ROUGE
 git clone https://github.com/bheinzerling/pyrouge
