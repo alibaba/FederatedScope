@@ -54,8 +54,7 @@ jobs:
           --client_cfg federatedscope/nlp/hetero_tasks/baseline/config_client_isolated.yaml \
           outdir exp/isolated/ \
           data.debug True \
-          data.root test_data/ &
-        sleep 20
+          data.root test_data/ \
 
         python federatedscope/main.py \
           --cfg federatedscope/nlp/hetero_tasks/baseline/config_fedavg.yaml \

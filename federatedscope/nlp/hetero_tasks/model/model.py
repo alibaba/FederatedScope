@@ -2,8 +2,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.nn import CrossEntropyLoss
-from transformers.models.bert.modeling_bert import BertLMPredictionHead
-from transformers.models.encoder_decoder import EncoderDecoderModel
 from federatedscope.register import register_model
 from federatedscope.nlp.hetero_tasks.loss.label_smooth_loss import \
     LabelSmoothingLoss
@@ -43,6 +41,8 @@ class ContrastiveHead(nn.Module):
 class ATCModel(nn.Module):
     def __init__(self, config):
         super().__init__()
+        from transformers.models.encoder_decoder import EncoderDecoderModel
+        from transformers.models.bert.modeling_bert import BertLMPredictionHead
 
         self.model = EncoderDecoderModel.from_encoder_decoder_pretrained(
             config.model_type, config.model_type)

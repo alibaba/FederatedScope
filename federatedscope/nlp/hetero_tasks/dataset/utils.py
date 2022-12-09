@@ -1,12 +1,12 @@
-import nltk
-from nltk.tokenize import sent_tokenize
 from torch.utils.data.dataset import Dataset
-from transformers.models.bert import BertTokenizerFast
 
 NUM_DEBUG = 20
 
 
 def split_sent(examples, eoq='[unused2]', tokenize=True):
+    import nltk
+    from nltk.tokenize import sent_tokenize
+
     try:
         nltk.data.find('tokenizers/punkt')
     except LookupError:
@@ -38,6 +38,8 @@ class DictDataset(Dataset):
 
 
 def setup_tokenizer(config):
+    from transformers.models.bert import BertTokenizerFast
+
     bos_token, eos_token, eoq_token = \
         config.model.bos_token, config.model.eos_token, config.model.eoq_token
     try:

@@ -3,7 +3,6 @@ import collections
 import string
 import re
 import logging
-from transformers import BasicTokenizer
 from federatedscope.register import register_metric
 
 logger = logging.getLogger(__name__)
@@ -238,6 +237,8 @@ def get_final_text(pred_text, orig_text):
     # between `pred_text` and `orig_text` to get a character-to-character
     # alignment. This can fail in certain cases in which case we just return
     # `orig_text`.
+
+    from transformers import BasicTokenizer
 
     def _strip_spaces(text):
         ns_chars = []
