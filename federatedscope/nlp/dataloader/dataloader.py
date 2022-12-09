@@ -25,7 +25,7 @@ def load_nlp_dataset(config=None):
 
     path = config.data.root
     name = config.data.type.lower()
-    transforms_funcs = get_transform(config, 'torchtext')
+    transforms_funcs, _, _ = get_transform(config, 'torchtext')
 
     if name in ['shakespeare', 'subreddit']:
         dataset = LEAF_NLP(root=path,
@@ -35,7 +35,7 @@ def load_nlp_dataset(config=None):
                            val_frac=splits[1],
                            seed=config.seed,
                            **transforms_funcs)
-    if name == 'twitter':
+    elif name == 'twitter':
         dataset = LEAF_TWITTER(root=path,
                                name='twitter',
                                s_frac=config.data.subsample,

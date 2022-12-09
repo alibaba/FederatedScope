@@ -1,7 +1,15 @@
 import logging
+
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
+
+try:
+    from federatedscope.contrib.splitter import *
+except ImportError as error:
+    logger.warning(
+        f'{error} in `federatedscope.contrib.splitter`, some modules are not '
+        f'available.')
 
 
 def get_splitter(config):
@@ -37,7 +45,7 @@ def get_splitter(config):
         kwargs = {}
 
     for func in register.splitter_dict.values():
-        splitter = func(client_num, **kwargs)
+        splitter = func(config.data.splitter, client_num, **kwargs)
         if splitter is not None:
             return splitter
     # Delay import

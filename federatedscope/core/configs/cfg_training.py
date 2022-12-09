@@ -10,6 +10,16 @@ def extend_training_cfg(cfg):
 
     cfg.trainer.type = 'general'
 
+    cfg.trainer.sam = CN()
+    cfg.trainer.sam.adaptive = False
+    cfg.trainer.sam.rho = 1.0
+    cfg.trainer.sam.eta = .0
+
+    cfg.trainer.local_entropy = CN()
+    cfg.trainer.local_entropy.gamma = 1e-4
+    cfg.trainer.local_entropy.eps = 1e-3
+    cfg.trainer.local_entropy.alpha = 0.75
+
     # atc
     cfg.trainer.disp_freq = 50
     cfg.trainer.val_freq = 100000000  # eval freq across batches
@@ -68,7 +78,7 @@ def extend_training_cfg(cfg):
     # patience (int): How long to wait after last time the monitored metric
     # improved.
     # Note that the actual_checking_round = patience * cfg.eval.freq
-    # To disable the early stop, set the early_stop.patience a integer <=0
+    # To disable the early stop, set the early_stop.patience to 0
     cfg.early_stop.patience = 5
     # delta (float): Minimum change in the monitored metric to indicate an
     # improvement.

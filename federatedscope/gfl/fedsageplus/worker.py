@@ -193,12 +193,9 @@ class FedSagePlusServer(Server):
                     msg_list.append(train_msg_buffer[client_id])
 
                 # Trigger the monitor here (for training)
-                if 'dissim' in self._cfg.eval.monitoring:
-                    B_val = self._monitor.calc_blocal_dissim(
-                        self.model.load_state_dict(), msg_list)
-                    formatted_logs = self._monitor.format_eval_res(
-                        B_val, rnd=self.state, role='Server #')
-                    logger.info(formatted_logs)
+                self._monitor.calc_model_metric(self.model.state_dict(),
+                                                msg_list,
+                                                rnd=self.state)
 
                 # Aggregate
                 agg_info = {
