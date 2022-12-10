@@ -43,6 +43,7 @@ def extend_fl_setting_cfg(cfg):
     # record computation and communication ability
 
     # atc
+    cfg.federate.atc_vanilla = False
     cfg.federate.atc_load_from = ''
 
     # ---------------------------------------------------------------------- #

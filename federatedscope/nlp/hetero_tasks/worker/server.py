@@ -47,8 +47,10 @@ class ATCServer(Server):
             if config.model.pretrain_tasks else None
             for _ in range(self.client_num)
         ]
-        self.aggregator.update_models(self.models)
-        self.aggregator.update_neighbors(self.comm_manager.neighbors)
+        self.atc_vanilla = config.federate.atc_vanilla
+        if not self.atc_vanilla:
+            self.aggregator.update_models(self.models)
+            self.aggregator.update_neighbors(self.comm_manager.neighbors)
 
         self.use_contrastive_loss = self._cfg.model.use_contrastive_loss
         if self.use_contrastive_loss:
@@ -107,17 +109,27 @@ class ATCServer(Server):
 
         # Aggregate
         aggregated_num = len(msg_list)
-        agg_info = {
-            'client_feedback': msg_list,
-            'recover_fun': self.recover_fun
-        }
-        avg_models, tasks = self.aggregator.aggregate(agg_info)
-        self.tasks = tasks
-
-        if avg_models is not None and 'model_para' in avg_models:
+        if self.atc_vanilla:
+            agg_info = {
+                'client_feedback': [[x['sample_size'], x['model_para']]
+                                    for x in msg_list],
+                'recover_fun': self.recover_fun,
+            }
+            avg_models = self.aggregator.aggregate(agg_info)
+            tasks = [None for _ in range(self.client_num)]
             for i in range(self.client_num):
-                self.models[i].load_state_dict(avg_models['model_para'][i],
-                                               strict=False)
+                self.models[i].load_state_dict(avg_models, strict=False)
+        else:
+            agg_info = {
+                'client_feedback': msg_list,
+                'recover_fun': self.recover_fun,
+            }
+            avg_models, tasks = self.aggregator.aggregate(agg_info)
+            if avg_models is not None and 'model_para' in avg_models:
+                for i in range(self.client_num):
+                    self.models[i].load_state_dict(avg_models['model_para'][i],
+                                                   strict=False)
+        self.tasks = tasks
 
         if self.use_contrastive_loss:
             if self._cfg.model.task != 'pretrain' and \
@@ -204,7 +216,8 @@ class ATCServer(Server):
                     return move_on_flag
 
                 self.state += 1
-                self.aggregator.update_round(self.state)
+                if not self.atc_vanilla:
+                    self.aggregator.update_round(self.state)
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
                         self.total_round_num:
                     #  Evaluate

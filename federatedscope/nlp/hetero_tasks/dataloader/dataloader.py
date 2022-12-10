@@ -29,12 +29,12 @@ def extend_cfg(cfg, cfg_client):
     os.makedirs(cfg.eval.temp_dir, exist_ok=True)
 
     if cfg.data.debug:
-        if cfg.federate.client_num > 10:
-            cfg.federate.client_num = 10
+        if cfg.federate.client_num > 6:
+            cfg.federate.client_num = 6
             cfg.data.datasets = [
                 'imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg'
             ]
-            cfg.data.num_grouped_clients = [2, 2, 2, 2, 1, 1]
+            cfg.data.num_grouped_clients = [1, 1, 1, 1, 1, 1]
         if cfg.federate.total_round_num > 2:
             cfg.federate.total_round_num = 2
         if cfg.train.local_update_steps > 2:

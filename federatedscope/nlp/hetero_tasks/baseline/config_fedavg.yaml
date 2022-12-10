@@ -7,6 +7,7 @@ federate:
   method: fedavg
   total_round_num: 100
   client_num: 18
+  atc_vanilla: True
 data:
   type: atc_data
   root: datasets/

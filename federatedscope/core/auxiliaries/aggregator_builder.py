@@ -69,7 +69,8 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             'Aggregator for method {} is not implemented. Will use default one'
             .format(method))
 
-    if config.trainer.type.lower() == 'atc_trainer':
+    if config.trainer.type.lower() == 'atc_trainer' and \
+            not config.federate.atc_vanilla:
         return ATCAggregator(model=model, config=config, device=device)
 
     if config.fedopt.use or aggregator_type == 'fedopt':

@@ -68,15 +68,13 @@ jobs:
           --client_cfg federatedscope/nlp/hetero_tasks/baseline/config_client_fedavg.yaml \
           outdir exp/fedavg/ \
           data.debug True \
-          data.root test_data/ &
-        sleep 2
+          data.root test_data/ \
 
         python federatedscope/main.py \
           --cfg federatedscope/nlp/hetero_tasks/baseline/config_pretrain.yaml \
           outdir exp/atc/pretrain/ \
           data.debug True \
-          data.root test_data/ &
-        sleep 2
+          data.root test_data/ \
 
         python federatedscope/main.py \
           --cfg federatedscope/nlp/hetero_tasks/baseline/config_atc.yaml \
