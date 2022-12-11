@@ -87,4 +87,4 @@ jobs:
           data.debug True \
           data.root test_data/ \
 
-        echo "Passed"
+        [ $? -eq 1 ] && exit 1 || echo "Passed"
