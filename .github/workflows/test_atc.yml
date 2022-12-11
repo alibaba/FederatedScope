@@ -63,6 +63,7 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
+
         [ $? -eq 1 ] && exit 1
 
         python federatedscope/main.py \
@@ -72,6 +73,7 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
+
         [ $? -eq 1 ] && exit 1
 
         python federatedscope/main.py \
@@ -80,6 +82,7 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
+
         [ $? -eq 1 ] && exit 1
 
         python federatedscope/main.py \
@@ -89,4 +92,5 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
+
         [ $? -eq 1 ] && exit 1 || echo "Passed"
