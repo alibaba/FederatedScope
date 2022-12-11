@@ -60,9 +60,9 @@ class ATCTrainer(GeneralTorchTrainer):
     def update_stat(self, ID):
         self.ID = ID
         if self.task in {'cnndm', 'msqg'}:
-            pred_dir = os.path.join(self._cfg.eval.result_path, 'pred')
-            src_dir = os.path.join(self._cfg.eval.result_path, 'src')
-            tgt_dir = os.path.join(self._cfg.eval.result_path, 'tgt')
+            pred_dir = os.path.join(self.cfg.eval.result_path, 'pred')
+            src_dir = os.path.join(self.cfg.eval.result_path, 'src')
+            tgt_dir = os.path.join(self.cfg.eval.result_path, 'tgt')
             self.ctx.pred_path = os.path.join(pred_dir, '%d.txt' % ID)
             self.ctx.src_path = os.path.join(src_dir, '%d.txt' % ID)
             self.ctx.tgt_path = os.path.join(tgt_dir, '%d.txt' % ID)
@@ -92,7 +92,7 @@ class ATCTrainer(GeneralTorchTrainer):
         init_dict = dict()
         if isinstance(data, dict):
             all_split = ['train', 'val', 'test'] if not \
-                self._cfg.model.use_contrastive_loss else \
+                self.cfg.model.use_contrastive_loss else \
                 ['train_raw', 'train_contrast', 'val', 'test']
             for split in all_split:
                 init_dict['{}_data'.format(split)] = None
@@ -111,7 +111,7 @@ class ATCTrainer(GeneralTorchTrainer):
                         init_dict['{}_examples'.format(split)] = \
                             data.get(split)['examples']
 
-                        if self._cfg.model.use_contrastive_loss and \
+                        if self.cfg.model.use_contrastive_loss and \
                                 split == 'train_raw':
                             init_dict['train_data'] = None
                             init_dict['train_loader'] = \

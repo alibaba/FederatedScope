@@ -63,6 +63,7 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
+        [ $? -eq 1 ] && exit 1
 
         python federatedscope/main.py \
           --cfg federatedscope/nlp/hetero_tasks/baseline/config_fedavg.yaml \
@@ -71,6 +72,7 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
+        [ $? -eq 1 ] && exit 1
 
         python federatedscope/main.py \
           --cfg federatedscope/nlp/hetero_tasks/baseline/config_pretrain.yaml \
@@ -78,6 +80,7 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
+        [ $? -eq 1 ] && exit 1
 
         python federatedscope/main.py \
           --cfg federatedscope/nlp/hetero_tasks/baseline/config_atc.yaml \
@@ -86,5 +89,4 @@ jobs:
           use_gpu False \
           data.debug True \
           data.root test_data/ \
-
         [ $? -eq 1 ] && exit 1 || echo "Passed"

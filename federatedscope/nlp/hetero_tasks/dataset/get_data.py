@@ -11,6 +11,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from federatedscope.core.data.utils import download_url
+from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.nlp.hetero_tasks.model.model import ATCModel
 
 ATC_DATA = ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
@@ -157,6 +158,9 @@ class ATCDataProcessor(object):
 class ATCSynthDataProcessor(object):
     def __init__(self, config, datasets):
         self.cfg = config
+        self.device = GPUManager(
+            gpu_available=self.cfg.use_gpu,
+            specified_device=self.cfg.device).auto_choice()
         self.pretrain_dir = config.federate.atc_load_from
         self.cache_dir = 'cache_debug' if \
             config.data.debug else config.data.cache_dir
@@ -172,7 +176,6 @@ class ATCSynthDataProcessor(object):
         if os.path.exists(self.save_dir):
             return
 
-        device = self.cfg.device
         max_sz, max_len = 1e8, 0
         for client_id in range(1, self.num_clients + 1):
             dataset = self.datasets[client_id]['train_contrast'][
@@ -193,7 +196,7 @@ class ATCSynthDataProcessor(object):
                 'dataloader']
             model = self.models[client_id]
             model.eval()
-            model.to(device)
+            model.to(self.device)
             enc_hid = []
             for batch_i, data_batch in tqdm(enumerate(dataloader),
                                             total=len(dataloader)):
@@ -201,9 +204,9 @@ class ATCSynthDataProcessor(object):
                 token_type_ids = data_batch['token_type_ids']
                 attention_mask = data_batch['attention_mask']
                 enc_out = model.model.encoder(
-                    input_ids=token_ids.to(device),
-                    attention_mask=attention_mask.to(device),
-                    token_type_ids=token_type_ids.to(device),
+                    input_ids=token_ids.to(self.device),
+                    attention_mask=attention_mask.to(self.device),
+                    token_type_ids=token_type_ids.to(self.device),
                 )
                 enc_hid.append(enc_out.last_hidden_state.detach().cpu())
 
@@ -231,11 +234,11 @@ class ATCSynthDataProcessor(object):
         avg_hids = (all_hids * all_weights[:, :, None, None]).sum(0)
 
         logger.info('Generating synthetic input tokens')
-        lm_head = self._get_avg_lm_head().to(device)
+        lm_head = self._get_avg_lm_head().to(self.device)
         with torch.no_grad():
             pred_toks = torch.cat([
                 lm_head(avg_hids[i:i + self.batch_size].to(
-                    device)).detach().cpu().argmax(dim=-1)
+                    self.device)).detach().cpu().argmax(dim=-1)
                 for i in tqdm(range(0, avg_hids.size(0), self.batch_size))
             ])
 
