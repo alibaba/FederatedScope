@@ -49,6 +49,9 @@ def get_client_cls(cfg):
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExClient
         return FedExClient
+    if cfg.hpo.fts.use:
+        from federatedscope.autotune.fts import FTSClient
+        return FTSClient
 
     if cfg.vertical.use:
         from federatedscope.vertical_fl.worker import vFLClient
@@ -132,6 +135,9 @@ def get_server_cls(cfg):
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExServer
         return FedExServer
+    if cfg.hpo.fts.use:
+        from federatedscope.autotune.fts import FTSServer
+        return FTSServer
 
     if cfg.attack.attack_method.lower() in ['dlg', 'ig']:
         from federatedscope.attack.worker_as_attacker.server_attacker import\
