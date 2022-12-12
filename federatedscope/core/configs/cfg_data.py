@@ -64,7 +64,7 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.min_curv = 0.02
     cfg.data.quadratic.max_curv = 12.5
 
-    # feature engineer
+    # feature engineering
     cfg.feat_engr = CN()
     cfg.feat_engr.type = ''
     cfg.feat_engr.scenario = 'hfl'
