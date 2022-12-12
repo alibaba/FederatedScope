@@ -1,6 +1,5 @@
 import zipfile
 import os
-import torch
 
 import numpy as np
 import os.path as osp

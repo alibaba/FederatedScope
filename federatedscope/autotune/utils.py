@@ -140,7 +140,6 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     from federatedscope.core.auxiliaries.worker_builder import \
         get_client_cls, get_server_cls
     from federatedscope.core.auxiliaries.runner_builder import get_runner
-    from federatedscope.autotune.utils import config2cmdargs
     from os.path import join as osp
 
     if isinstance(config, CS.Configuration):

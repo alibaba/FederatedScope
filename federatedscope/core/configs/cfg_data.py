@@ -18,12 +18,6 @@ def extend_data_cfg(cfg):
     cfg.data.args = []  # args for external dataset, eg. [{'download': True}]
     cfg.data.splitter = ''
     cfg.data.splitter_args = []  # args for splitter, eg. [{'alpha': 0.5}]
-    cfg.data.transform = [
-    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [
-    # 0.1307], 'std': [0.3081]}]]
-    cfg.data.target_transform = []  # target_transform for y, use as above
-    cfg.data.pre_transform = [
-    ]  # pre_transform for `torch_geometric` dataset, use as above
     cfg.data.server_holds_all = False  # whether the server (workers with
     # idx 0) holds all data, useful in global training/evaluation case
     cfg.data.subsample = 1.0
@@ -33,6 +27,21 @@ def extend_data_cfg(cfg):
     # consistent during splitting
     cfg.data.cSBM_phi = [0.5, 0.5, 0.5]
 
+    cfg.data.transform = [
+    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [
+    # 0.1307], 'std': [0.3081]}]]
+    cfg.data.target_transform = []  # target_transform for y, use as above
+    cfg.data.pre_transform = [
+    ]  # pre_transform for `torch_geometric` dataset, use as above
+
+    # If not provided, use `cfg.data.transform` for all splits
+    cfg.data.val_transform = []
+    cfg.data.val_target_transform = []
+    cfg.data.val_pre_transform = []
+    cfg.data.test_transform = []
+    cfg.data.test_target_transform = []
+    cfg.data.test_pre_transform = []
+
     # DataLoader related args
     cfg.dataloader = CN()
     cfg.dataloader.type = 'base'
@@ -40,7 +49,7 @@ def extend_data_cfg(cfg):
     cfg.dataloader.shuffle = True
     cfg.dataloader.num_workers = 0
     cfg.dataloader.drop_last = False
-    cfg.dataloader.pin_memory = True
+    cfg.dataloader.pin_memory = False
     # GFL: graphsaint DataLoader
     cfg.dataloader.walk_length = 2
     cfg.dataloader.num_steps = 30

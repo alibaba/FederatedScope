@@ -19,10 +19,25 @@ def get_transform(config, package):
         if config.data[name]:
             transform_funcs[name] = config.data[name]
 
+    val_transform_funcs = {}
+    for name in ['val_transform', 'val_target_transform', 'val_pre_transform']:
+        suf_name = name.split('val_')[1]
+        if config.data[name]:
+            val_transform_funcs[suf_name] = config.data[name]
+
+    test_transform_funcs = {}
+    for name in [
+            'test_transform', 'test_target_transform', 'test_pre_transform'
+    ]:
+        suf_name = name.split('test_')[1]
+        if config.data[name]:
+            test_transform_funcs[suf_name] = config.data[name]
+
     # Transform are all None, do not import package and return dict with
     # None value
-    if not transform_funcs:
-        return transform_funcs
+    if len(transform_funcs) and len(val_transform_funcs) and len(
+            test_transform_funcs):
+        return {}, {}, {}
 
     transforms = getattr(import_module(package), 'transforms')
 
@@ -49,6 +64,20 @@ def get_transform(config, package):
                 return transform
 
     # return composed transform or return list of transform
-    for key in transform_funcs:
-        transform_funcs[key] = convert(config.data[key])
-    return transform_funcs
+    if transform_funcs:
+        for key in transform_funcs:
+            transform_funcs[key] = convert(config.data[key])
+
+    if val_transform_funcs:
+        for key in val_transform_funcs:
+            val_transform_funcs[key] = convert(config.data[key])
+    else:
+        val_transform_funcs = transform_funcs
+
+    if test_transform_funcs:
+        for key in test_transform_funcs:
+            test_transform_funcs[key] = convert(config.data[key])
+    else:
+        test_transform_funcs = transform_funcs
+
+    return transform_funcs, val_transform_funcs, test_transform_funcs

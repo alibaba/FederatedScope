@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def load_poisoned_dataset_edgeset(data, ctx, mode):
 
-    transforms_funcs = get_transform(ctx, 'torchvision')['transform']
+    transforms_funcs, _, _ = get_transform(ctx, 'torchvision')['transform']
     load_path = ctx.attack.edge_path
     if "femnist" in ctx.data.type:
         if mode == MODE.TRAIN:
@@ -180,7 +180,7 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
     trigger_type = ctx.attack.trigger_type
     label_type = ctx.attack.label_type
     target_label = int(ctx.attack.target_label_ind)
-    transforms_funcs = get_transform(ctx, 'torchvision')['transform']
+    transforms_funcs = get_transform(ctx, 'torchvision')[0]['transform']
 
     if "femnist" in ctx.data.type or "CIFAR10" in ctx.data.type:
         inject_portion_train = ctx.attack.poison_ratio
