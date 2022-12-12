@@ -9,7 +9,7 @@ model:
 data:
   root: data/
   type: blog
-  batch_size: 1000
+  batch_size: 500
   splits: [1.0, 0.0]
 dataloader:
   type: raw
@@ -19,10 +19,10 @@ trainer:
   type: none
 train:
   optimizer:
-    bin_num: 1000
+    bin_num: 200
     lambda_: 10
     gamma: 0
-    num_of_trees: 9
+    num_of_trees: 10
     max_tree_depth: 3
 random_forest:
   use: True

@@ -9,7 +9,7 @@ model:
 data:
   root: data/
   type: credit
-  batch_size: 200
+  batch_size:  200
   splits: [0.8, 0.2]
 dataloader:
   type: raw
@@ -22,7 +22,7 @@ train:
     bin_num: 100
     lambda_: 0.1
     gamma: 0
-    num_of_trees: 8
+    num_of_trees: 2
     max_tree_depth: 3
 random_forest:
   use: True

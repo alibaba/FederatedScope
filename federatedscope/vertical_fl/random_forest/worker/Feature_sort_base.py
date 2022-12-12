@@ -8,9 +8,9 @@ from federatedscope.core.message import Message
 
 class Feature_sort_base:
     """
-    This class contains the basic algorithm for xgboost, i.e.,
+    This class contains the basic algorithm for vertical random forest, i.e.,
     the clients who do not hold labels will send their orders of all features
-    to label-owner
+    to label owner
     """
     def __init__(self, obj):
         self.client = obj
@@ -55,7 +55,7 @@ class Feature_sort_base:
         self.client.tree_list[tree_num][node_num].label = self.client.y
         self.client.tree_list[tree_num][node_num].indicator = np.ones(
             len(self.client.y))
-        self.order_act_on_label(tree_num, 0)
+        self.order_act_on_label(tree_num, node_num)
         self.compute_for_node(tree_num, node_num)
 
     # label owner
@@ -68,25 +68,47 @@ class Feature_sort_base:
             self.client.set_weight(tree_num, node_num)
         else:
             # self.order_act_on_label(tree_num, node_num)
-            best_gini = 1
             split_ref = {'feature_idx': None, 'value_idx': None}
+            flag = 0
+            if self.client.criterion_type == 'CrossEntropyLoss':
+                best_gini = 1
+                for feature_idx in range(self.client.total_num_of_feature):
+                    for value_idx in range(self.client.x.shape[0]):
+                        left = np.concatenate(
+                            (np.ones(value_idx),
+                             np.zeros(self.client.x.shape[0] - value_idx)))
+                        gini = self.client.cal_gini(
+                            left, self.client.tree_list[tree_num]
+                            [node_num].indicator,
+                            self.total_ordered_label_list[feature_idx])
+                        if gini < best_gini:
+                            best_gini = gini
+                            split_ref['feature_idx'] = feature_idx
+                            split_ref['value_idx'] = value_idx
 
-            for feature_idx in range(self.client.total_num_of_feature):
-                for value_idx in range(self.client.x.shape[0]):
-                    left = np.concatenate(
-                        (np.ones(value_idx),
-                         np.zeros(self.client.x.shape[0] - value_idx)))
-                    gini = self.client.cal_gini(
-                        left,
-                        self.client.tree_list[tree_num][node_num].indicator,
-                        self.total_ordered_label_list[feature_idx])
-                    if gini < best_gini:
-                        best_gini = gini
-                        split_ref['feature_idx'] = feature_idx
-                        split_ref['value_idx'] = value_idx
-
-            if 0 < best_gini < 1:
-                print(tree_num, node_num, best_gini, split_ref)
+                if 0 < best_gini < 1:
+                    print(tree_num, node_num, best_gini, split_ref)
+                    flag = 1
+            elif self.client.criterion_type == 'Regression':
+                best_measure = float('inf')
+                for feature_idx in range(self.client.total_num_of_feature):
+                    for value_idx in range(self.client.x.shape[0]):
+                        left = np.concatenate(
+                            (np.ones(value_idx),
+                             np.zeros(self.client.x.shape[0] - value_idx)))
+                        measure = self.client.sse(
+                            left, self.client.tree_list[tree_num]
+                            [node_num].indicator,
+                            self.total_ordered_label_list[feature_idx])
+                        if measure < best_measure:
+                            best_measure = measure
+                            split_ref['feature_idx'] = feature_idx
+                            split_ref['value_idx'] = value_idx
+                if best_measure < float('inf'):
+                    print(tree_num, node_num, best_measure, split_ref)
+                    flag = 1
+            if flag == 1:
+                flag = 0
                 split_feature = self.total_feature_order_list[
                     split_ref['feature_idx']]
                 left_child_idx = np.zeros(len(self.client.y))

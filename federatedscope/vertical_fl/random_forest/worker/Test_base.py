@@ -30,7 +30,7 @@ class Test_base:
                 'test_acc': acc,
                 'test_total': len(self.client.test_y)
             }
-        else:
+        elif self.client.criterion_type == 'Regression':
             loss = np.mean((self.client.test_y - test_mean)**2)
             metrics = {
                 'test_loss': loss,
@@ -51,7 +51,7 @@ class Test_base:
                 self.client.state += 1
 
                 # build the next tree
-                self.client.start_new_train_round()
+                self.client.build_new_tree()
 
             else:
 

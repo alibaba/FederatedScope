@@ -1,13 +1,13 @@
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.xgb_base.worker.Tree import Tree
-from federatedscope.vertical_fl.random_forest.worker.Feature_sort_by_bin\
+from federatedscope.vertical_fl.random_forest.worker.Feature_sort_by_bin \
     import Feature_sort_by_bin
-from federatedscope.vertical_fl.random_forest.worker.Feature_sort_base\
+from federatedscope.vertical_fl.random_forest.worker.Feature_sort_base \
     import Feature_sort_base
 from federatedscope.vertical_fl.dataloader.utils import batch_iter
 from federatedscope.vertical_fl.random_forest.worker.Test_base import Test_base
-from federatedscope.vertical_fl.random_forest.worker.Loss_function\
+from federatedscope.vertical_fl.random_forest.worker.Loss_function \
     import TwoClassificationloss, Regression_by_mseloss
 
 from federatedscope.vertical_fl.Paillier import abstract_paillier
@@ -98,11 +98,11 @@ class vRFClient(Client):
         self.tree_list = [
             Tree(self.max_tree_depth).tree for _ in range(self.num_of_trees)
         ]
-        self.start_new_train_round()
+        self.build_new_tree()
 
-    def start_new_train_round(self):
+    def build_new_tree(self):
         if self.own_label:
-            logger.info(f'----------- Starting a new training round (Round '
+            logger.info(f'----------- Building a new tree (Tree '
                         f'#{self.state}) -------------')
             self.batch_index, self.x, self.y = self.sample_data()
             self.comm_manager.send(
@@ -169,7 +169,7 @@ class vRFClient(Client):
 
     def cal_gini(self, left, iv, y):
         left = left * iv
-        right = [iv[i] - left[i] for i in range(len(left))]
+        right = iv - left
         left_y = left * y
         right_y = right * y
         if sum(left_y) == 0 or sum(right_y) == 0:
@@ -192,7 +192,14 @@ class vRFClient(Client):
             else:
                 self.tree_list[tree_num][node_num].weight = 0
         elif self.criterion_type == 'Regression':
-            self.tree_list[tree_num][node_num].weight = np.mean(real_y)
+            if len(real_y) == 0:
+                self.tree_list[tree_num][node_num].weight = 0
+            else:
+                self.tree_list[tree_num][node_num].weight = np.mean(real_y)
+            self.tree_list[tree_num][node_num].label -=\
+                self.tree_list[tree_num][node_num].weight \
+                * self.tree_list[tree_num][node_num].indicator
+
         self.tree_list[tree_num][node_num].status = 'off'
         tmp = [node_num]
         while tmp:
@@ -203,3 +210,19 @@ class vRFClient(Client):
                 tmp.append(2 * x + 1)
                 tmp.append(2 * x + 2)
         self.fs.compute_for_node(tree_num, node_num + 1)
+
+    def sse(self, left, iv, y):
+        real_y = iv * y
+        left = left * iv
+        right = iv - left
+        if not left.any() or not right.any():
+            return float('inf')
+        else:
+            # print(sum(left))
+            # print(sum(right))
+            # print("===")
+            left_avg = np.sum(left * real_y) / np.sum(left) * left
+            right_avg = np.sum(right * real_y) / np.sum(right) * right
+            # print(np.sum((real_y - left_avg - right_avg) ** 2))
+            # input()
+            return np.sum((real_y - left_avg - right_avg)**2)
