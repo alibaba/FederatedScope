@@ -221,10 +221,11 @@ def eval_roc_auc(y_true, y_prob, **kwargs):
         if np.sum(y_true[:, i] == 1) > 0 and np.sum(y_true[:, i] == 0) > 0:
             # ignore nan values
             is_labeled = y_true[:, i] == y_true[:, i]
-            y_true_one_hot = np.eye(y_prob.shape[1])[y_true[is_labeled, i]]
+            # TODO: handle missing label classes
             rocauc_list.append(
-                roc_auc_score(y_true_one_hot,
-                              softmax(y_prob[is_labeled, :, i], axis=-1)))
+                roc_auc_score(y_true[is_labeled, i],
+                              softmax(y_prob[is_labeled, :, i], axis=-1),
+                              multi_class='ovr'))
     if len(rocauc_list) == 0:
         logger.warning('No positively labeled data available.')
         return 0.5

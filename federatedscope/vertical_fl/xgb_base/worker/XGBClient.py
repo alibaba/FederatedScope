@@ -44,6 +44,8 @@ class XGBClient(Client):
         self.max_tree_depth = None
         self.vertical_dims = self._cfg.vertical_dims
 
+        self.federate_mode = config.federate.mode
+
         self.bin_num = config.train.optimizer.bin_num
         self.batch_size = config.data.batch_size
 
@@ -58,6 +60,7 @@ class XGBClient(Client):
                                self.callback_func_for_compute_next_node)
         self.register_handlers('send_feature_importance',
                                self.callback_func_for_send_feature_importance)
+        self.register_handlers('finish', self.callback_func_for_finish)
 
     def _init_data_related_var(self):
         self.test_x = self.data['test']['x']
@@ -128,6 +131,15 @@ class XGBClient(Client):
     def callback_func_for_model_para(self, message: Message):
         self.lambda_, self.gamma, self.num_of_trees, self.max_tree_depth \
             = message.content
+
+        # client adds his own ID and address in his comm_manager.neighbors
+        # to send and receive messages from himself
+        if self.federate_mode == 'distributed':
+            self.comm_manager.add_neighbors(neighbor_id=self.ID,
+                                            address={
+                                                'host': self.comm_manager.host,
+                                                'port': self.comm_manager.port
+                                            })
         self.tree_list = [
             Tree(self.max_tree_depth).tree for _ in range(self.num_of_trees)
         ]
@@ -135,8 +147,7 @@ class XGBClient(Client):
             self.batch_index, self.x, self.y = self.sample_data()
             # init y_hat
             self.y_hat = np.random.uniform(low=0.0, high=1.0, size=len(self.y))
-            # self.y_hat = np.zeros(len(self.y))
-            logger.info(f'----------- Starting a new training round (Round '
+            logger.info(f'---------- Building a new tree (Tree '
                         f'#{self.state}) -------------')
             self.comm_manager.send(
                 Message(
@@ -220,3 +231,6 @@ class XGBClient(Client):
                     state=self.state,
                     receiver=self.server_id,
                     content=self.feature_importance))
+
+    def callback_func_for_finish(self, message: Message):
+        pass

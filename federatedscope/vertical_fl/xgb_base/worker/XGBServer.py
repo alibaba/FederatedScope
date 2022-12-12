@@ -87,7 +87,17 @@ class XGBServer(Server):
                 rnd=self.tree_num,
                 role='Server #',
                 forms=self._cfg.eval.report)
+            formatted_logs['feature_importance'] = self.feature_importance_dict
             logger.info(formatted_logs)
+            self.comm_manager.send(
+                Message(msg_type='finish',
+                        sender=self.ID,
+                        receiver=list(
+                            self.comm_manager.get_neighbors().keys()),
+                        state=self.state,
+                        content='None'))
+            # jump out running
+            self.state = self.total_round_num + 1
 
     def callback_func_for_test_result(self, message: Message):
         self.tree_num, self.metrics = message.content
