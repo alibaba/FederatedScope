@@ -1,0 +1,21 @@
+train.optimizer.lr:
+  type: float
+  lower: 1e-2
+  upper: 1e0
+  log: True
+train.optimizer.weight_decay:
+  type: float
+  lower: 1e-5
+  upper: 1e-1
+  log: True
+model.dropout:
+  type: float
+  lower: 0.0
+  upper: 0.5
+train.local_update_steps:
+  type: int
+  lower: 1
+  upper: 5
+#data.batch_size:
+#  type: cate
+#  choices: [16, 32, 64, 128]

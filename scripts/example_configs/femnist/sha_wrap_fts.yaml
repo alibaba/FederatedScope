@@ -1,0 +1,67 @@
+use_gpu: True
+device: 1
+outdir: exp/sha_wrap_fts
+early_stop:
+  patience: 100
+seed: 12345
+federate:
+  mode: standalone
+  total_round_num: 500
+  sample_client_rate: 1.0
+  share_local_model: True
+  online_aggr: True
+  use_diff: True
+  client_num: 5
+data:
+  root: data/
+  type: femnist
+  splits: [0.6,0.2,0.2]
+  batch_size: 16
+  subsample: 0.05
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  num_workers: 0
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 62
+  dropout: 0.5
+train:
+  batch_or_epoch: epoch
+  local_update_steps: 1
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
+grad:
+  grad_clip: 5.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  freq: 1
+  metrics: ['acc', 'correct', 'f1']
+  split: ['test', 'val', 'train']
+hpo:
+  scheduler: sha
+  num_workers: 0
+  init_cand_num: 81
+  ss: 'scripts/example_configs/femnist/hpo_ss_fts.yaml'
+  sha:
+    budgets: [2, 3]
+  fts:
+    use: True
+    diff: False
+    local_bo_epochs: 50
+    local_bo_max_iter: 30
+    fed_bo_max_iter: 50
+    ls: 1.0
+    var: 0.01
+    g_var: 1e-6
+    v_kernel: 1.0
+    obs_noise: 1e-4
+    M_target: 200
+    gp_opt_schedule: 3
+    allow_load_existing_info: True
+    ss: 'scripts/example_configs/femnist/avg/ss_fts.yaml'
+  metric: 'client_summarized_weighted_avg.val_avg_loss'
+  working_folder: exp/sha_wrap_fts/working

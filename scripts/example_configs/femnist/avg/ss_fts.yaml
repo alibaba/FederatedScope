@@ -1,0 +1,17 @@
+train.optimizer.lr:
+  type: float
+  lower: 0.005
+  upper: 0.5
+  log: True
+train.optimizer.weight_decay:
+  type: float
+  lower: 0.0
+  upper: 1.0
+model.dropout:
+  type: float
+  lower: 0.0
+  upper: 0.5
+#data.batch_size:
+#  type: int
+#  lower: 16
+#  upper: 64
