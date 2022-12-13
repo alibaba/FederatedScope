@@ -30,16 +30,8 @@ class XGBServer(Server):
         self.max_tree_depth = config.train.optimizer.max_tree_depth
 
         self.num_of_parties = config.federate.client_num
-
-        self.batch_size = config.data.batch_size
-
-        self.feature_list = [0] + config.xgb_base.dims
-        self.feature_partition = [
-            self.feature_list[i + 1] - self.feature_list[i]
-            for i in range(len(self.feature_list) - 1)
-        ]
-        self.total_num_of_feature = self.feature_list[-1]
-
+        self.vertical_dims = self._cfg.vertical_dims
+        self._init_data_related_var()
         self.data = data
 
         self.tree_list = [
@@ -52,10 +44,19 @@ class XGBServer(Server):
         self.register_handlers('feature_importance',
                                self.callback_func_for_feature_importance)
 
+    def _init_data_related_var(self):
+        self.batch_size = self._cfg.data.batch_size
+        self.feature_list = [0] + self.vertical_dims
+        self.feature_partition = [
+            self.feature_list[i + 1] - self.feature_list[i]
+            for i in range(len(self.feature_list) - 1)
+        ]
+        self.total_num_of_feature = self.feature_list[-1]
+
     def trigger_for_start(self):
         if self.check_client_join_in():
             self.broadcast_client_address()
-            self.broadcast_model_para()
+            self.trigger_for_feat_engr(self.broadcast_model_para)
 
     def broadcast_model_para(self):
         self.comm_manager.send(
