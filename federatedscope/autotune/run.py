@@ -1,4 +1,13 @@
 def run_scheduler(scheduler, cfg, client_cfgs=None):
+    """
+    This function is to optimize FedHPO problem by scheduler. The method is
+    decided by  `cfg.hpo.scheduler`.
+    Args:
+        scheduler: Scheduler for conducting serval FS runs, \
+            see ``federatedscope.autotune.algos.Scheduler``
+        cfg: The configurations of the FL course.
+        client_cfgs: The clients' configurations.
+    """
     if cfg.hpo.scheduler in ['sha', 'wrap_sha']:
         _ = scheduler.optimize()
     elif cfg.hpo.scheduler in [

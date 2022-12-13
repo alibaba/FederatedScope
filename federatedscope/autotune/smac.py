@@ -15,6 +15,14 @@ def run_smac(cfg, scheduler, client_cfgs=None):
     perfs = []
 
     def optimization_function_wrapper(config):
+        """
+        Used as an evaluation function for SMAC optimizer.
+        Args:
+            config: configurations of FS run.
+
+        Returns:
+            Best results of server of specific FS run.
+        """
         budget = cfg.hpo.sha.budgets[-1]
         results = eval_in_fs(cfg, config, budget, client_cfgs)
         key1, key2 = cfg.hpo.metric.split('.')

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def wrap_instance_norm_server(worker):
     """
-    This function is to perform instance norm vfl tabular data for server.
+    This function is to perform instance norm on vfl tabular data for server.
     Args:
         worker: ``federatedscope.core.workers.Worker`` to be wrapped
 
