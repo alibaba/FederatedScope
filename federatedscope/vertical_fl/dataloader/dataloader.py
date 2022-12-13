@@ -28,6 +28,9 @@ def load_vertical_data(config=None, generate=False):
     elif config.xgb_base.use:
         feature_partition = config.xgb_base.dims
         algo = 'xgb'
+    elif config.gbdt.use:
+        feature_partition = config.gbdt.dims
+        algo = 'gbdt'
     else:
         raise ValueError('You must provide the data partition')
 

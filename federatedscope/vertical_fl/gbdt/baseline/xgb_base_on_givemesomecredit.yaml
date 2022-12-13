@@ -1,0 +1,34 @@
+use_gpu: False
+device: 0
+backend: torch
+federate:
+  mode: standalone
+  client_num: 2
+model:
+  type: lr
+data:
+  root: data/
+  type: credit
+  batch_size: 2000
+  splits: [0.8, 0.2]
+dataloader:
+  type: raw
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: none    
+train:
+  optimizer:
+    learning_rate: 0.1
+    bin_num: 100
+    lambda_: 0.1
+    gamma: 0
+    num_of_trees: 3
+    max_tree_depth: 3
+gbdt:
+  use: True
+  use_bin: False
+  dims: [5, 10]
+eval:
+  freq: 3
+  best_res_update_round_wise_key: test_loss
