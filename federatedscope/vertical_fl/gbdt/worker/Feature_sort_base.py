@@ -83,8 +83,12 @@ class Feature_sort_base:
             best_se = float('inf')
             split_ref = {'feature_idx': None, 'value_idx': None}
 
+            nonzeor_idx = np.nonzero(
+                self.client.tree_list[tree_num][node_num].indicator)[0]
             for feature_idx in range(self.client.total_num_of_feature):
-                for value_idx in range(1, self.client.x.shape[0] - 1):
+                for value_idx in range(nonzeor_idx[0] + 1,
+                                       nonzeor_idx[-1] - 1):
+                    # for value_idx in range(1, self.client.x.shape[0]-1):
                     left = np.concatenate(
                         (np.ones(value_idx),
                          np.zeros(self.client.x.shape[0] - value_idx)))
