@@ -60,6 +60,8 @@ class Feature_sort_base:
 
     # label owner
     def compute_for_node(self, tree_num, node_num):
+        # if node_num < 2 ** self.client.max_tree_depth - 1:
+        #    print(self.client.tree_list[tree_num][node_num].indicator)
         if node_num >= 2**self.client.max_tree_depth - 1:
             self.client.prediction(tree_num)
         elif self.client.tree_list[tree_num][node_num].status == 'off':
@@ -73,7 +75,10 @@ class Feature_sort_base:
             if self.client.criterion_type == 'CrossEntropyLoss':
                 best_gini = 1
                 for feature_idx in range(self.client.total_num_of_feature):
-                    for value_idx in range(self.client.x.shape[0]):
+                    # for value_idx in range(self.client.x.shape[0]):
+                    nonzero_idx = np.nonzero(
+                        self.client.tree_list[tree_num][node_num].indicator)[0]
+                    for value_idx in range(nonzero_idx[0], nonzero_idx[-1]):
                         left = np.concatenate(
                             (np.ones(value_idx),
                              np.zeros(self.client.x.shape[0] - value_idx)))
@@ -91,24 +96,27 @@ class Feature_sort_base:
                     flag = 1
             elif self.client.criterion_type == 'Regression':
                 best_measure = float('inf')
+                self.order_act_on_label(tree_num, node_num)
                 for feature_idx in range(self.client.total_num_of_feature):
                     for value_idx in range(self.client.x.shape[0]):
                         left = np.concatenate(
                             (np.ones(value_idx),
                              np.zeros(self.client.x.shape[0] - value_idx)))
-                        measure = self.client.sse(
+                        measure_vc = self.client.sse(
                             left, self.client.tree_list[tree_num]
                             [node_num].indicator,
                             self.total_ordered_label_list[feature_idx])
+                        measure = np.sum(measure_vc**2)
                         if measure < best_measure:
                             best_measure = measure
                             split_ref['feature_idx'] = feature_idx
                             split_ref['value_idx'] = value_idx
+                            self.client.tree_list[tree_num][
+                                node_num].label = measure_vc
                 if best_measure < float('inf'):
                     print(tree_num, node_num, best_measure, split_ref)
                     flag = 1
             if flag == 1:
-                flag = 0
                 split_feature = self.total_feature_order_list[
                     split_ref['feature_idx']]
                 left_child_idx = np.zeros(len(self.client.y))
@@ -156,7 +164,7 @@ class Feature_sort_base:
         # feature_value = sorted(self.client.x[:, feature_idx])[value_idx]
         feature_value = self.client.x[:, feature_idx][
             self.client.feature_order[feature_idx][value_idx]]
-        print(self.client.ID, "split info", feature_idx, feature_value)
+        print(self.client.ID, 'f_idx:', feature_idx, 'f_val:', feature_value)
 
         self.client.tree_list[tree_num][node_num].feature_idx = feature_idx
         self.client.tree_list[tree_num][node_num].feature_value = feature_value

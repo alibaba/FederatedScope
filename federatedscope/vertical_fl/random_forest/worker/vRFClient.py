@@ -161,7 +161,7 @@ class vRFClient(Client):
         return left_index, right_index
 
     def _gini(self, iv, y):
-        total_num = sum(iv)
+        total_num = np.sum(iv)
         positive_num = np.dot(iv, y)
         negative_num = total_num - positive_num
         return 1 - (positive_num / total_num)**2 - (negative_num /
@@ -196,9 +196,6 @@ class vRFClient(Client):
                 self.tree_list[tree_num][node_num].weight = 0
             else:
                 self.tree_list[tree_num][node_num].weight = np.mean(real_y)
-            self.tree_list[tree_num][node_num].label -=\
-                self.tree_list[tree_num][node_num].weight \
-                * self.tree_list[tree_num][node_num].indicator
 
         self.tree_list[tree_num][node_num].status = 'off'
         tmp = [node_num]
@@ -225,4 +222,5 @@ class vRFClient(Client):
             right_avg = np.sum(right * real_y) / np.sum(right) * right
             # print(np.sum((real_y - left_avg - right_avg) ** 2))
             # input()
-            return np.sum((real_y - left_avg - right_avg)**2)
+            return real_y - left_avg - right_avg
+            # return np.sum((real_y - left_avg - right_avg)**2)

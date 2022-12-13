@@ -22,12 +22,12 @@ train:
     bin_num: 200
     lambda_: 10
     gamma: 0
-    num_of_trees: 10
+    num_of_trees: 5
     max_tree_depth: 3
 random_forest:
   use: True
   use_bin: False
-  dims: [10, 20]
+  dims: [29, 54]
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
