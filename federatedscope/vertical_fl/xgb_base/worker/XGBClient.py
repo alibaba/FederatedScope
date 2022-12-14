@@ -192,7 +192,7 @@ class XGBClient(Client):
     def set_weight(self, tree_num, node_num):
         sum_of_g = np.sum(self.tree_list[tree_num][node_num].grad)
         sum_of_h = np.sum(self.tree_list[tree_num][node_num].hess)
-        weight = -sum_of_g / (sum_of_h + self.lambda_) * self.lr
+        weight = -sum_of_g / (sum_of_h + self.lambda_)
         self.tree_list[tree_num][node_num].weight = weight
         self.tree_list[tree_num][node_num].status = 'off'
         tmp = [node_num]
@@ -222,7 +222,7 @@ class XGBClient(Client):
             if self.tree_list[tree_num][node_num].weight:
                 self.z += self.tree_list[tree_num][
                     node_num].weight * self.tree_list[tree_num][
-                        node_num].indicator
+                        node_num].indicator * self.lr
             self.compute_weight(tree_num, node_num + 1)
 
     def callback_func_for_send_feature_importance(self, message: Message):
