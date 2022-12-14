@@ -1,6 +1,6 @@
 import os
 import shlex
-import logging
+import datetime
 import paramiko
 
 from collections.abc import MutableMapping
@@ -9,9 +9,6 @@ from federatedscope.core.cmd_args import parse_args
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.organizer.cfg_client import env_name, root_path, fs_version
-
-logger = logging.getLogger('federatedscope')
-logger.setLevel(logging.INFO)
 
 
 class SSHManager(object):
@@ -58,7 +55,7 @@ class SSHManager(object):
         # Check conda
         conda, _ = self._exec_cmd('which conda')
         if conda is None:
-            logger.exception('No conda, please install conda first.')
+            format_print('Exception: No conda, please install conda first.')
             # TODO: Install conda here
             return False
 
@@ -67,13 +64,13 @@ class SSHManager(object):
                                      f'python -c "import federatedscope; '
                                      f'print(federatedscope.__version__)"')
         if err:
-            logger.error(err)
+            format_print(f'Error: {err}')
             # TODO: Install FS env here
             return False
         elif output != fs_version:
-            logger.warning(f'The installed FS version is {output}, however'
-                           f' {fs_version} is required.')
-        logger.info(f'Conda environment found, named {env_name}.')
+            format_print(f'The installed FS version is {output}, however'
+                         f' {fs_version} is required.')
+        format_print(f'Conda environment found, named {env_name}.')
         return True
 
     def _check_source(self):
@@ -85,9 +82,9 @@ class SSHManager(object):
                                    f'echo "Not found"')
         if output == 'Not found':
             # TODO: git clone here
-            logger.exception(f'Repo not find in {fs_path}.')
+            format_print(f'Exception: Repo not find in {fs_path}.')
             return False
-        logger.info(f'FS repo Found in {root_path}.')
+        format_print(f'FS repo Found in {root_path}.')
         return True
 
     def _check_task_status(self):
@@ -97,7 +94,7 @@ class SSHManager(object):
         pass
 
     def setup_fs(self):
-        logger.info("Checking environment, please wait...")
+        format_print("Checking environment, please wait...")
         if not self._check_conda():
             raise Exception('The environment is not configured properly.')
         if not self._check_source():
@@ -158,3 +155,7 @@ def config2cmdargs(config):
             results.append(key)
             results.append(value)
     return results
+
+
+def format_print(s):
+    print(f"[{str(datetime.datetime.now()).split('.')[0]}] - {s}")
