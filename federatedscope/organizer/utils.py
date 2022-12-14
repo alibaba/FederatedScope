@@ -145,12 +145,12 @@ def flatten_dict(d, parent_key='', sep='.'):
 
 
 def config2cmdargs(config):
-    '''
+    """
     Arguments:
         config (dict): key is cfg node name, value is the specified value.
     Returns:
         results (list): cmd args
-    '''
+    """
 
     results = []
     for key, value in config.items():
