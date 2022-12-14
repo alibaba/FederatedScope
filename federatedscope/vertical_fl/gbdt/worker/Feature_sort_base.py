@@ -52,7 +52,7 @@ class Feature_sort_base:
     # label owner
     def compute_for_root(self, tree_num):
         # compute residuals for a new tree
-        if self.client.criterion_type == 'TwoCrossEntropy':
+        if self.client.criterion_type == 'CrossEntropyLoss':
             label = self.client.y - 1 / (1 + np.exp(-self.client.y_hat))
         elif self.client.criterion_type == 'Regression':
             label = self.client.y - self.client.y_hat

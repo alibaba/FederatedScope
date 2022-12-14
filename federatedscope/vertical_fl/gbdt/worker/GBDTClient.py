@@ -70,7 +70,7 @@ class GBDTClient(Client):
 
         self.z = 0
 
-        self.feature_list = [0] + config.gbdt.dims
+        self.feature_list = [0] + config.vertical_dims
         self.feature_partition = [
             self.feature_list[i] - self.feature_list[i - 1]
             for i in range(1, len(self.feature_list))
@@ -193,7 +193,7 @@ class GBDTClient(Client):
         self.fs.compute_for_node(tree_num, node_num + 1)
 
     def set_weight(self, tree_num, node_num):
-        if self.criterion_type == 'TwoCrossEntropy':
+        if self.criterion_type == 'CrossEntropyLoss':
             enumerator = 0
             denominator = 0
             for i in range(len(self.tree_list[tree_num][node_num].indicator)):

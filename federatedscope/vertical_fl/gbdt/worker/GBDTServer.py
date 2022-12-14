@@ -33,7 +33,7 @@ class GBDTServer(Server):
 
         self.batch_size = config.data.batch_size
 
-        self.feature_list = [0] + config.gbdt.dims
+        self.feature_list = [0] + config.vertical_dims
         self.feature_partition = [
             self.feature_list[i + 1] - self.feature_list[i]
             for i in range(len(self.feature_list) - 1)

@@ -23,12 +23,12 @@ train:
     bin_num: 1000
     lambda_: 10
     gamma: 0
-    num_of_trees: 5
+    num_of_trees: 10
     max_tree_depth: 3
+vertical_dims: [10, 20]
 gbdt:
   use: True
   use_bin: False
-  dims: [10, 20]
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

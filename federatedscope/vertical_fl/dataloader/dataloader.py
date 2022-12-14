@@ -22,14 +22,12 @@ def load_vertical_data(config=None, generate=False):
     path = config.data.root
     name = config.data.type.lower()
     # TODO: merge the following later
+    feature_partition = config.vertical_dims
     if config.vertical.use:
-        feature_partition = config.vertical_dims
         algo = 'lr'
     elif config.xgb_base.use:
-        feature_partition = config.vertical_dims
         algo = 'xgb'
     elif config.gbdt.use:
-        feature_partition = config.gbdt.dims
         algo = 'gbdt'
     else:
         raise ValueError('You must provide the data partition')

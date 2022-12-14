@@ -86,7 +86,6 @@ def extend_fl_setting_cfg(cfg):
     cfg.gbdt = CN()
     cfg.gbdt.use = False
     cfg.gbdt.use_bin = False
-    cfg.gbdt.dims = [5, 10]
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
