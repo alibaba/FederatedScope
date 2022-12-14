@@ -52,7 +52,10 @@ class Feature_sort_base:
     # label owner
     def compute_for_root(self, tree_num):
         # compute residuals for a new tree
-        label = self.client.y - 1 / (1 + np.exp(-self.client.y_hat))
+        if self.client.criterion_type == 'TwoCrossEntropy':
+            label = self.client.y - 1 / (1 + np.exp(-self.client.y_hat))
+        elif self.client.criterion_type == 'Regression':
+            label = self.client.y - self.client.y_hat
         node_num = 0
         self.client.tree_list[tree_num][node_num].label = label
         self.client.tree_list[tree_num][node_num].indicator = np.ones(
@@ -83,11 +86,11 @@ class Feature_sort_base:
             best_se = float('inf')
             split_ref = {'feature_idx': None, 'value_idx': None}
 
-            nonzeor_idx = np.nonzero(
+            nonzero_idx = np.nonzero(
                 self.client.tree_list[tree_num][node_num].indicator)[0]
             for feature_idx in range(self.client.total_num_of_feature):
-                for value_idx in range(nonzeor_idx[0] + 1,
-                                       nonzeor_idx[-1] - 1):
+                for value_idx in range(nonzero_idx[0] + 1,
+                                       nonzero_idx[-1] - 1):
                     # for value_idx in range(1, self.client.x.shape[0]-1):
                     left = np.concatenate(
                         (np.ones(value_idx),

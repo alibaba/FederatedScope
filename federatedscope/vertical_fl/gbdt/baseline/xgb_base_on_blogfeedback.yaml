@@ -23,7 +23,7 @@ train:
     bin_num: 1000
     lambda_: 10
     gamma: 0
-    num_of_trees: 9
+    num_of_trees: 5
     max_tree_depth: 3
 gbdt:
   use: True

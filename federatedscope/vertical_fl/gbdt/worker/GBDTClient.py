@@ -144,8 +144,11 @@ class GBDTClient(Client):
         if self.own_label:
             self.batch_index, self.x, self.y = self.sample_data()
             # init y_hat
-            positive_rate = np.sum(self.y) / len(self.y)
-            self.f0 = np.log(positive_rate / (1 - positive_rate))
+            if self.criterion_type == 'CrossEntropyLoss':
+                positive_rate = np.sum(self.y) / len(self.y)
+                self.f0 = np.log(positive_rate / (1 - positive_rate))
+            elif self.criterion_type == 'Regression':
+                self.f0 = np.mean(self.y)
             self.y_hat = self.f0 * np.ones(len(self.y))
             self.test_result = self.f0 * np.ones(len(self.test_y))
             logger.info(f'---------- Building a new tree (Tree '
@@ -190,19 +193,28 @@ class GBDTClient(Client):
         self.fs.compute_for_node(tree_num, node_num + 1)
 
     def set_weight(self, tree_num, node_num):
-        enumerator = 0
-        denominator = 0
-        for i in range(len(self.tree_list[tree_num][node_num].indicator)):
-            if self.tree_list[tree_num][node_num].indicator[i] != 0:
-                enumerator += self.tree_list[tree_num][node_num].label[i]
-                denominator += (
-                    self.y[i] - self.tree_list[tree_num][node_num].label[i]
-                ) * (1 - self.y[i] +
-                     self.tree_list[tree_num][node_num].label[i])
-        if denominator == 0:
-            weight = 0
-        else:
-            weight = enumerator / denominator
+        if self.criterion_type == 'TwoCrossEntropy':
+            enumerator = 0
+            denominator = 0
+            for i in range(len(self.tree_list[tree_num][node_num].indicator)):
+                if self.tree_list[tree_num][node_num].indicator[i] != 0:
+                    enumerator += self.tree_list[tree_num][node_num].label[i]
+                    denominator += (
+                        self.y[i] - self.tree_list[tree_num][node_num].label[i]
+                    ) * (1 - self.y[i] +
+                         self.tree_list[tree_num][node_num].label[i])
+            if denominator == 0:
+                weight = 0
+            else:
+                weight = enumerator / denominator
+        elif self.criterion_type == 'Regression':
+            if sum(self.tree_list[tree_num][node_num].indicator) == 0:
+                weight = 0
+            else:
+                weight = np.sum(
+                    self.tree_list[tree_num][node_num].indicator *
+                    self.tree_list[tree_num][node_num].label) / np.sum(
+                        self.tree_list[tree_num][node_num].indicator)
         self.tree_list[tree_num][node_num].weight = weight
         self.tree_list[tree_num][node_num].status = 'off'
         print(tree_num, node_num, "weight", weight)
