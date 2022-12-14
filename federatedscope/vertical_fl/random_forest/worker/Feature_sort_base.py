@@ -92,12 +92,11 @@ class Feature_sort_base:
                             split_ref['feature_idx'] = feature_idx
                             split_ref['value_idx'] = value_idx
 
-                if 0 < best_gini < 1:
+                if best_gini < 1:
                     print(tree_num, node_num, best_gini, split_ref)
                     flag = 1
             elif self.client.criterion_type == 'Regression':
                 best_measure = float('inf')
-                self.order_act_on_label(tree_num, node_num)
                 for feature_idx in range(self.client.total_num_of_feature):
                     for value_idx in range(nonzero_idx[0],
                                            nonzero_idx[-1] + 1):
@@ -113,8 +112,6 @@ class Feature_sort_base:
                             best_measure = measure
                             split_ref['feature_idx'] = feature_idx
                             split_ref['value_idx'] = value_idx
-                            # self.client.tree_list[tree_num][
-                            #    node_num].label = measure_vc
                 if best_measure < float('inf'):
                     print(tree_num, node_num, best_measure, split_ref)
                     flag = 1
@@ -166,7 +163,7 @@ class Feature_sort_base:
         # feature_value = sorted(self.client.x[:, feature_idx])[value_idx]
         feature_value = self.client.x[:, feature_idx][
             self.client.feature_order[feature_idx][value_idx]]
-
+        # print(feature_idx, feature_value)
         self.client.tree_list[tree_num][node_num].feature_idx = feature_idx
         self.client.tree_list[tree_num][node_num].feature_value = feature_value
 

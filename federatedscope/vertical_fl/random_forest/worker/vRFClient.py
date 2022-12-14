@@ -34,7 +34,7 @@ class vRFClient(Client):
               self).__init__(ID, server_id, state, config, data, model, device,
                              strategy, *args, **kwargs)
 
-        self.vertical_dims = config.random_forest.dims
+        self.vertical_dims = config.vertical_dims
 
         self.bin_num = config.train.optimizer.bin_num
         self.batch_size = config.data.batch_size
@@ -155,6 +155,7 @@ class vRFClient(Client):
                     receiver=self.server_id,
                     content=self.feature_importance))
 
+    # for testing
     def split_for_lr(self, data, feature_value):
         left_index = [1 if x < feature_value else 0 for x in data]
         right_index = [1 if x >= feature_value else 0 for x in data]
@@ -172,7 +173,7 @@ class vRFClient(Client):
         right = iv - left
         left_y = left * y
         right_y = right * y
-        if sum(left_y) == 0 or sum(right_y) == 0:
+        if not left_y.any() or not right_y.any():
             return float('inf')
         left_gini = self._gini(left, left_y)
         right_gini = self._gini(right, right_y)
@@ -196,7 +197,8 @@ class vRFClient(Client):
                 self.tree_list[tree_num][node_num].weight = 0
             else:
                 self.tree_list[tree_num][node_num].weight = np.mean(real_y)
-
+        print(tree_num, node_num, "weight",
+              self.tree_list[tree_num][node_num].weight)
         self.tree_list[tree_num][node_num].status = 'off'
         tmp = [node_num]
         while tmp:
@@ -218,8 +220,8 @@ class vRFClient(Client):
             # print(sum(left))
             # print(sum(right))
             # print("===")
-            left_avg_value = np.sum(left * real_y) / np.sum(left)
-            right_avg_value = np.sum(right * real_y) / np.sum(right)
+            left_avg_value = np.dot(left, real_y) / np.sum(left)
+            right_avg_value = np.dot(right, real_y) / np.sum(right)
             # print(np.sum((real_y - left_avg - right_avg) ** 2))
             # input()
             # return real_y - left_avg - right_avg

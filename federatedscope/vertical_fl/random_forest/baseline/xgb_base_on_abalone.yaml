@@ -24,10 +24,10 @@ train:
     gamma: 0
     num_of_trees: 10
     max_tree_depth: 3
+vertical_dims: [4, 8]
 random_forest:
   use: True
   use_bin: False
-  dims: [4, 8]
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss
