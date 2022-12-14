@@ -1,5 +1,6 @@
 ## Configurations
 We summarize all the customizable configurations:
+- [config.py](#config)
 - [cfg_data.py](#data)
 - [cfg_model.py](#model)
 - [cfg_fl_algo.py](#federated-algorithms)
@@ -10,6 +11,23 @@ We summarize all the customizable configurations:
 - [cfg_differential_privacy.py](#differential-privacy)
 - [cfg_hpo.py](#auto-tuning-components)
 - [cfg_attack.py](#attack)
+
+### config
+The configurations related to environment of running experiment.
+
+| Name                   | (Type) Default Value | Description                                                  | Note |
+| ---------------------- | -------------------- | ------------------------------------------------------------ | ---- |
+| `backend`              | (string) 'torch'     | The backend for local training                               | -    |
+| `use_gpu`              | (bool) False         | Whether to use GPU                                           | -    |
+| `check_completeness`   | (bool) False         | Whether to check the completeness of msg_handler             | -    |
+| `verbose`              | (int) 1              | Whether to print verbose logging info                        | -    |
+| `print_decimal_digits` | (int) 6              | How many decimal places we print out using logger            | -    |
+| `device`               | (int) -1             | Specify the device for training                              | -    |
+| `seed`                 | (int) 0              | Random seed                                                  | -    |
+| `outdir`               | (string) ''          | The dir used to save log, exp_config, models, etc,.          | -    |
+| `expname`              | (string) ''          | Detailed exp name to distinguish different sub-exp           | -    |
+| `expname_tag`          | (string) ''          | Detailed exp tag to distinguish different sub-exp with the same expname | -    |
+
 
 ### Data
 The configurations related to the data/dataset are defined in `cfg_data.py`.

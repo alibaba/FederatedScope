@@ -4,6 +4,7 @@ import logging
 from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
+from federatedscope.core.auxiliaries.model_builder import get_model
 
 logger = logging.getLogger(__name__)
 
@@ -35,18 +36,24 @@ class vFLServer(Server):
         cfg_key_size = config.vertical.key_size
         self.public_key, self.private_key = \
             abstract_paillier.generate_paillier_keypair(n_length=cfg_key_size)
-        self.dims = [0] + config.vertical.dims
-        self.theta = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
+        self.vertical_dims = config.vertical_dims
+        self._init_data_related_var()
+
         self.lr = config.train.optimizer.lr
 
         self.register_handlers('encryped_gradient',
                                self.callback_funcs_for_encryped_gradient)
 
+    def _init_data_related_var(self):
+        self.dims = [0] + self.vertical_dims
+        self.model = get_model(self._cfg.model, self.data)
+        self.theta = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
+
     def trigger_for_start(self):
         if self.check_client_join_in():
             self.broadcast_public_keys()
             self.broadcast_client_address()
-            self.broadcast_model_para()
+            self.trigger_for_feat_engr(self.broadcast_model_para)
 
     def broadcast_public_keys(self):
         self.comm_manager.send(

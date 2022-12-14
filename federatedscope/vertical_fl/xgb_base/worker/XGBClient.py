@@ -42,6 +42,7 @@ class XGBClient(Client):
         self.gamma = None
         self.num_of_trees = None
         self.max_tree_depth = None
+        self.vertical_dims = self._cfg.vertical_dims
 
         self.federate_mode = config.federate.mode
 
@@ -50,7 +51,18 @@ class XGBClient(Client):
 
         self.data = data
         self.own_label = ('y' in self.data['train'])
+        self._init_data_related_var()
 
+        self.register_handlers('model_para', self.callback_func_for_model_para)
+        self.register_handlers('data_sample',
+                               self.callback_func_for_data_sample)
+        self.register_handlers('compute_next_node',
+                               self.callback_func_for_compute_next_node)
+        self.register_handlers('send_feature_importance',
+                               self.callback_func_for_send_feature_importance)
+        self.register_handlers('finish', self.callback_func_for_finish)
+
+    def _init_data_related_var(self):
         self.test_x = self.data['test']['x']
         if self.own_label:
             self.test_y = self.data['test']['y']
@@ -59,7 +71,7 @@ class XGBClient(Client):
 
         self.y_hat = None
         self.y = None
-        self.num_of_parties = config.federate.client_num
+        self.num_of_parties = self._cfg.federate.client_num
 
         self.dataloader = batch_iter(self.data['train'],
                                      self._cfg.data.batch_size,
@@ -69,7 +81,7 @@ class XGBClient(Client):
 
         self.z = 0
 
-        self.feature_list = [0] + config.xgb_base.dims
+        self.feature_list = [0] + self.vertical_dims
         self.feature_partition = [
             self.feature_list[i] - self.feature_list[i - 1]
             for i in range(1, len(self.feature_list))
@@ -84,27 +96,18 @@ class XGBClient(Client):
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order
         #   the second one corresponding to sending the bins of feature order
-        if config.xgb_base.use_bin:
+        if self._cfg.xgb_base.use_bin:
             self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
         else:
             self.fs = Feature_sort_base(self)
 
         self.ts = Test_base(self)
 
-        self.criterion_type = config.criterion.type
+        self.criterion_type = self._cfg.criterion.type
         if self.criterion_type == 'CrossEntropyLoss':
             self.ls = TwoClassificationloss()
         elif self.criterion_type == 'Regression':
             self.ls = Regression_by_mseloss()
-
-        self.register_handlers('model_para', self.callback_func_for_model_para)
-        self.register_handlers('data_sample',
-                               self.callback_func_for_data_sample)
-        self.register_handlers('compute_next_node',
-                               self.callback_func_for_compute_next_node)
-        self.register_handlers('send_feature_importance',
-                               self.callback_func_for_send_feature_importance)
-        self.register_handlers('finish', self.callback_func_for_finish)
 
     # save the order of values in each feature
     def order_feature(self, data):

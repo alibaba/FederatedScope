@@ -23,10 +23,10 @@ def load_vertical_data(config=None, generate=False):
     name = config.data.type.lower()
     # TODO: merge the following later
     if config.vertical.use:
-        feature_partition = config.vertical.dims
+        feature_partition = config.vertical_dims
         algo = 'lr'
     elif config.xgb_base.use:
-        feature_partition = config.xgb_base.dims
+        feature_partition = config.vertical_dims
         algo = 'xgb'
     elif config.gbdt.use:
         feature_partition = config.gbdt.dims
@@ -104,7 +104,7 @@ def load_vertical_data(config=None, generate=False):
         INSTANCE_NUM = 1000
         TRAIN_SPLIT = 0.9
 
-        total_dims = np.sum(config.vertical.dims)
+        total_dims = np.sum(config.vertical_dims)
         theta = np.random.uniform(low=-1.0, high=1.0, size=(total_dims, 1))
         x = np.random.choice([-1.0, 1.0, -2.0, 2.0, -3.0, 3.0],
                              size=(INSTANCE_NUM, total_dims))
@@ -125,14 +125,14 @@ def load_vertical_data(config=None, generate=False):
 
         # For Client #1
         data[1] = dict()
-        data[1]['train'] = {'x': x[:train_num, :config.vertical.dims[0]]}
+        data[1]['train'] = {'x': x[:train_num, :config.vertical_dims[0]]}
         data[1]['val'] = None
         data[1]['test'] = test_data
 
         # For Client #2
         data[2] = dict()
         data[2]['train'] = {
-            'x': x[:train_num, config.vertical.dims[0]:],
+            'x': x[:train_num, config.vertical_dims[0]:],
             'y': y[:train_num]
         }
         data[2]['val'] = None
