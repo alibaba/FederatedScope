@@ -311,7 +311,7 @@ def _hook_on_fit_end_free_cuda(ctx):
         Attribute                           Operation
         ==================================  ===========================
         ``ctx.global_model``                Move to ``cpu``
-        ``ctx.locol_model``                  Move to ``cpu``
+        ``ctx.locol_model``                 Move to ``cpu``
         ==================================  ===========================
     """
     ctx.global_model.to(torch.device("cpu"))

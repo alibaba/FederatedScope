@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class YAMLTest(unittest.TestCase):
     def setUp(self):
-        self.exclude_all = ['benchmark', 'scripts']
+        self.exclude_all = ['benchmark', 'scripts', 'federatedscope/autotune']
         self.exclude_file = [
             '.pre-commit-config.yaml', 'meta.yaml',
             'federatedscope/gfl/baseline/'
@@ -32,6 +32,7 @@ class YAMLTest(unittest.TestCase):
     def test_yaml(self):
         init_cfg = global_cfg.clone()
         sign, cont = False, False
+        error_file = []
         for dirpath, _, filenames in os.walk(self.root):
             for prefix in self.exclude_all:
                 if dirpath.startswith(prefix):
@@ -43,7 +44,8 @@ class YAMLTest(unittest.TestCase):
             filenames = [f for f in filenames if f.endswith('.yaml')]
             for f in filenames:
                 yaml_file = os.path.join(dirpath, f)
-                if yaml_file in self.exclude_file:
+                # Ignore `ss` search space and yaml file in `exclude_file`
+                if yaml_file in self.exclude_file or 'ss' in yaml_file:
                     continue
                 exclude = False
                 for s in self.exclude_str:
@@ -55,17 +57,19 @@ class YAMLTest(unittest.TestCase):
                 try:
                     init_cfg.merge_from_file(yaml_file)
                 except KeyError as error:
+                    error_file.append(yaml_file.removeprefix(self.root))
                     logger.error(
                         f"KeyError: {error} in file: {yaml_file.removeprefix(self.root)}"
                     )
                     sign = True
                 except ValueError as error:
+                    error_file.append(yaml_file.removeprefix(self.root))
                     logger.error(
                         f"ValueError: {error} in file: {yaml_file.removeprefix(self.root)}"
                     )
                     sign = True
                 init_cfg = global_cfg.clone()
-        self.assertIs(sign, False, "Yaml check failed.")
+        self.assertIs(sign, False, f'Yaml check failed in {error_file}.')
 
 
 if __name__ == '__main__':

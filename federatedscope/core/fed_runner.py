@@ -10,6 +10,8 @@ from federatedscope.core.workers import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
 from federatedscope.core.auxiliaries.utils import get_resource_info
+from federatedscope.core.auxiliaries.feat_engr_builder import \
+    get_feat_engr_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,8 @@ class BaseRunner(object):
                                       specified_device=self.cfg.device)
 
         self.unseen_clients_id = []
+        self.feat_engr_wrapper_client, self.feat_engr_wrapper_server = \
+            get_feat_engr_wrapper(config)
         if self.cfg.federate.unseen_clients_rate > 0:
             self.unseen_clients_id = np.random.choice(
                 np.arange(1, self.cfg.federate.client_num + 1),
@@ -160,7 +164,7 @@ class BaseRunner(object):
                 wrap_nbafl_server
             wrap_nbafl_server(server)
         logger.info('Server has been set up ... ')
-        return server
+        return self.feat_engr_wrapper_server(server)
 
     def _setup_client(self,
                       client_id=-1,
@@ -209,7 +213,7 @@ class BaseRunner(object):
         else:
             logger.info(f'Client {client_id} has been set up ... ')
 
-        return client
+        return self.feat_engr_wrapper_client(client)
 
     def check(self):
         """

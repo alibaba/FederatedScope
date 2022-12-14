@@ -78,6 +78,23 @@ def extend_data_cfg(cfg):
     cfg.data.num_contrast = 0
     cfg.data.debug = False
 
+    # feature engineering
+    cfg.feat_engr = CN()
+    cfg.feat_engr.type = ''
+    cfg.feat_engr.scenario = 'hfl'
+    cfg.feat_engr.num_bins = 5  # Used for binning
+    cfg.feat_engr.selec_threshold = 0.05  # Used for feature selection
+    cfg.feat_engr.selec_woe_binning = 'quantile'
+
+    cfg.feat_engr.secure = CN()
+    cfg.feat_engr.secure.type = 'encrypt'
+    cfg.feat_engr.secure.key_size = 3072
+
+    cfg.feat_engr.secure.encrypt = CN()
+    cfg.feat_engr.secure.encrypt.type = 'dummy'
+
+    cfg.feat_engr.secure.dp = CN()  # under dev
+
     # --------------- outdated configs ---------------
     # TODO: delete this code block
     cfg.data.loader = ''
