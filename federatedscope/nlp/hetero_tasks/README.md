@@ -1,4 +1,17 @@
-## 1. Environment
+## Collaborating Heterogeneous Natural Language Processing Tasks via Federated Learning
+The implementation of *Collaborating Heterogeneous Natural Language Processing Tasks via Federated Learning*.
+
+In this study, we further broaden the application scope of FL in NLP by proposing an *Assign-Then-Contrast* (denoted as **ATC**) framework, which enables clients with heterogeneous NLP tasks to construct an FL course and learn useful knowledge from each other.
+
+## Installation
+First of all, you need to install FederatedScope, please refer to [installation](https://github.com/alibaba/FederatedScope#step-1-installation).
+
+Besides, we need some additional requirements for NLP tasks, including:
+* NLTK
+* Transformers
+* ROUGE
+* METEOR
+
 ```bash
 # Install NLTK and Transformers
 pip install nltk
@@ -24,22 +37,34 @@ mv meteor-1.5/data/paraphrase-en.gz ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_t
 mv meteor-1.5/meteor-1.5.jar ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_tasks/metric/generation/meteor/
 ```
 
-## 2. Run Isolated baseline
+### Reproduction
+**Isolated Training**
 ```bash
 bash run_isolated.sh $DEVICE
 ```
 
-## 3. Run FedAvg baseline
+**FedAvg**
 ```bash
 bash run_fedavg.sh $DEVICE
 ```
 
-## 4. Run ATC Assign stage
+**ATC Assign training stage**
 ```bash
 bash run_pretrain.sh $DEVICE
 ```
 
-## 5. Run ATC Contrast stage
+**ATC Contrast training stage**
 ```bash
 bash run_atc.sh $DEVICE
+```
+
+### Publications
+If you find this repository useful for your research or development, please cite the following [paper](https://arxiv.org/abs/2212.05789):
+```
+@article{dong2022collaborating,
+  title = {Collaborating Heterogeneous Natural Language Processing Tasks via Federated Learning},
+  author = {Dong, Chenhe and Xie, Yuexiang and Ding, Bolin and Shen, Ying and Li, Yaliang},
+  journal={arXiv preprint arXiv:2212.05789},
+  year = {2022},
+}
 ```
