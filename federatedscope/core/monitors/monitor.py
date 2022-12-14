@@ -6,6 +6,7 @@ import gzip
 import shutil
 import datetime
 from collections import defaultdict
+from importlib import import_module
 
 import numpy as np
 
@@ -48,6 +49,7 @@ class Monitor(object):
     SUPPORTED_FORMS = ['weighted_avg', 'avg', 'fairness', 'raw']
 
     def __init__(self, cfg, monitored_object=None):
+        self.cfg = cfg
         self.log_res_best = {}
         self.outdir = cfg.outdir
         self.use_wandb = cfg.wandb.use
@@ -477,54 +479,32 @@ class Monitor(object):
         return round_formatted_results_raw if return_raw else \
             round_formatted_results
 
-    def calc_blocal_dissim(self, last_model, local_updated_models):
+    def calc_model_metric(self, last_model, local_updated_models, rnd):
         """
         Arguments:
             last_model (dict): the state of last round.
-            local_updated_models (list): each element is model.
+            local_updated_models (list): each element is (data_size, model).
 
         Returns:
-            dict: b_local_dissimilarity, the measurements proposed in \
-            "Tian Li, Anit Kumar Sahu, Manzil Zaheer, and et al. Federated \
-            Optimization in Heterogeneous Networks".
+            dict: model_metric_dict
         """
-        # for k, v in last_model.items():
-        #    print(k, v)
-        # for i, elem in enumerate(local_updated_models):
-        #    print(i, elem)
-        local_grads = []
-        weights = []
-        local_gnorms = []
-        for tp in local_updated_models:
-            weights.append(tp[0])
-            grads = dict()
-            gnorms = dict()
-            for k, v in tp[1].items():
-                grad = v - last_model[k]
-                grads[k] = grad
-                gnorms[k] = torch.sum(grad**2)
-            local_grads.append(grads)
-            local_gnorms.append(gnorms)
-        weights = np.asarray(weights)
-        weights = weights / np.sum(weights)
-        avg_gnorms = dict()
-        global_grads = dict()
-        for i in range(len(local_updated_models)):
-            gnorms = local_gnorms[i]
-            for k, v in gnorms.items():
-                if k not in avg_gnorms:
-                    avg_gnorms[k] = .0
-                avg_gnorms[k] += weights[i] * v
-            grads = local_grads[i]
-            for k, v in grads.items():
-                if k not in global_grads:
-                    global_grads[k] = torch.zeros_like(v)
-                global_grads[k] += weights[i] * v
-        b_local_dissimilarity = dict()
-        for k in avg_gnorms:
-            b_local_dissimilarity[k] = np.sqrt(
-                avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
-        return b_local_dissimilarity
+        model_metric_dict = {}
+        for metric in self.cfg.eval.monitoring:
+            func_name = f'calc_{metric}'
+            calc_metric = getattr(
+                import_module(
+                    'federatedscope.core.monitors.metric_calculator'),
+                func_name)
+            metric_value = calc_metric(last_model, local_updated_models)
+            model_metric_dict[f'train_{metric}'] = metric_value
+        formatted_log = {
+            'Role': 'Server #',
+            'Round': rnd,
+            'Results_model_metric': model_metric_dict
+        }
+        logger.info(formatted_log)
+
+        return model_metric_dict
 
     def convert_size(self, size_bytes):
         """
@@ -635,9 +615,10 @@ class Monitor(object):
                 found_round_wise_update_key = False
                 sorted_keys = []
                 for key in new_results:
+                    # TODO: fix `in` condition
                     if self.round_wise_update_key in key:
                         sorted_keys.insert(0, key)
-                        found_round_wise_update_key = True
+                        found_round_wise_update_key = key
                     else:
                         sorted_keys.append(key)
                 if not found_round_wise_update_key:
@@ -649,36 +630,55 @@ class Monitor(object):
                         f"={self.round_wise_update_key}, "
                         f"the keys of results are {list(new_results.keys())}")
 
-                for key in sorted_keys:
-                    cur_result = new_results[key]
-                    if update_best_this_round or (
-                            not self.the_larger_the_better):
-                        # The smaller the better
+                # the first key must be the `round_wise_update_key`,
+                # `update_best_this_round` should be set while evaluating the
+                # first key, so we can check whether `update_best_this_round`
+                # firstly
+                cur_result = new_results[found_round_wise_update_key]
+
+                if self.the_larger_the_better:
+                    # The larger, the better
+                    if results_type in [
+                            "client_best_individual",
+                            "unseen_client_best_individual"
+                    ]:
+                        cur_result = max(cur_result)
+                    if found_round_wise_update_key not in best_result or\
+                            cur_result > best_result[
+                            found_round_wise_update_key]:
+                        best_result[found_round_wise_update_key] = cur_result
+                        update_best_this_round = True
+                else:
+                    # The smaller, the better
+                    if results_type in [
+                            "client_best_individual",
+                            "unseen_client_best_individual"
+                    ]:
+                        cur_result = min(cur_result)
+                    if found_round_wise_update_key not in best_result or \
+                            cur_result < best_result[
+                            found_round_wise_update_key]:
+                        best_result[found_round_wise_update_key] = cur_result
+                        update_best_this_round = True
+
+                # update other metrics only if update_best_this_round is True
+                if update_best_this_round:
+                    for key in sorted_keys[1:]:
+                        cur_result = new_results[key]
                         if results_type in [
                                 "client_best_individual",
                                 "unseen_client_best_individual"
                         ]:
-                            cur_result = min(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result < \
-                                best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    elif update_best_this_round or self.the_larger_the_better:
-                        # The larger the better
-                        if results_type in [
-                                "client_best_individual",
-                                "unseen_client_best_individual"
-                        ]:
-                            cur_result = max(cur_result)
-                        if update_best_this_round or \
-                                key not in best_result or cur_result > \
-                                best_result[key]:
-                            best_result[key] = cur_result
-                            update_best_this_round = True
-                    else:
-                        # unconcerned metric
-                        pass
+                            # Obtain the whether the larger the better
+                            for mode in ['train', 'val', 'test']:
+                                if mode in key:
+                                    _key = key.split(f'{mode}_')[1]
+                                    if self.metric_calculator.eval_metric[
+                                            _key][1]:
+                                        cur_result = max(cur_result)
+                                    else:
+                                        cur_result = min(cur_result)
+                        best_result[key] = cur_result
 
         if update_best_this_round:
             line = f"Find new best result: {best_results}"

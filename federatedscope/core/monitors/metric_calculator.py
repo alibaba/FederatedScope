@@ -153,6 +153,7 @@ class MetricCalculator(object):
         return y_true, y_pred, y_prob
 
 
+# Metric for performance
 def eval_correct(y_true, y_pred, **kwargs):
     correct_list = []
 
@@ -220,10 +221,11 @@ def eval_roc_auc(y_true, y_prob, **kwargs):
         if np.sum(y_true[:, i] == 1) > 0 and np.sum(y_true[:, i] == 0) > 0:
             # ignore nan values
             is_labeled = y_true[:, i] == y_true[:, i]
-            y_true_one_hot = np.eye(y_prob.shape[1])[y_true[is_labeled, i]]
+            # TODO: handle missing label classes
             rocauc_list.append(
-                roc_auc_score(y_true_one_hot,
-                              softmax(y_prob[is_labeled, :, i], axis=-1)))
+                roc_auc_score(y_true[is_labeled, i],
+                              softmax(y_prob[is_labeled, :, i], axis=-1),
+                              multi_class='ovr'))
     if len(rocauc_list) == 0:
         logger.warning('No positively labeled data available.')
         return 0.5
@@ -289,3 +291,70 @@ SUPPORT_METRICS = {
     'std': (None, False),
     **dict.fromkeys([f'hits@{n}' for n in range(1, 101)], (eval_hits, True))
 }
+
+
+# Metric for model dissimilarity
+def calc_blocal_dissim(last_model, local_updated_models):
+    """
+    Arguments:
+        last_model (dict): the state of last round.
+        local_updated_models (list): each element is (data_size, model).
+
+    Returns:
+        dict: b_local_dissimilarity, the measurements proposed in \
+        "Tian Li, Anit Kumar Sahu, Manzil Zaheer, and et al. Federated \
+        Optimization in Heterogeneous Networks".
+    """
+    # for k, v in last_model.items():
+    #    print(k, v)
+    # for i, elem in enumerate(local_updated_models):
+    #    print(i, elem)
+    local_grads = []
+    weights = []
+    local_gnorms = []
+    for tp in local_updated_models:
+        weights.append(tp[0])
+        grads = dict()
+        gnorms = dict()
+        for k, v in tp[1].items():
+            grad = v - last_model[k]
+            grads[k] = grad
+            gnorms[k] = torch.sum(grad**2)
+        local_grads.append(grads)
+        local_gnorms.append(gnorms)
+    weights = np.asarray(weights)
+    weights = weights / np.sum(weights)
+    avg_gnorms = dict()
+    global_grads = dict()
+
+    for i in range(len(local_updated_models)):
+        gnorms = local_gnorms[i]
+        for k, v in gnorms.items():
+            if k not in avg_gnorms:
+                avg_gnorms[k] = .0
+            avg_gnorms[k] += weights[i] * v
+        grads = local_grads[i]
+        for k, v in grads.items():
+            if k not in global_grads:
+                global_grads[k] = torch.zeros_like(v, dtype=torch.float32)
+            global_grads[k] += weights[i] * v
+    b_local_dissimilarity = dict()
+    for k in avg_gnorms:
+        b_local_dissimilarity[k] = np.sqrt(
+            avg_gnorms[k].item() / torch.sum(global_grads[k]**2).item())
+    return b_local_dissimilarity
+
+
+def calc_l2_dissim(last_model, local_updated_models):
+    l2_dissimilarity = dict()
+    l2_dissimilarity['raw'] = []
+    for tp in local_updated_models:
+        grads = dict()
+        for key, w in tp[1].items():
+            grad = w - last_model[key]
+            grads[key] = grad
+        grad_norm = \
+            torch.norm(torch.cat([v.flatten() for v in grads.values()])).item()
+        l2_dissimilarity['raw'].append(grad_norm)
+    l2_dissimilarity['mean'] = np.mean(l2_dissimilarity['raw'])
+    return l2_dissimilarity

@@ -18,12 +18,6 @@ def extend_data_cfg(cfg):
     cfg.data.args = []  # args for external dataset, eg. [{'download': True}]
     cfg.data.splitter = ''
     cfg.data.splitter_args = []  # args for splitter, eg. [{'alpha': 0.5}]
-    cfg.data.transform = [
-    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [
-    # 0.1307], 'std': [0.3081]}]]
-    cfg.data.target_transform = []  # target_transform for y, use as above
-    cfg.data.pre_transform = [
-    ]  # pre_transform for `torch_geometric` dataset, use as above
     cfg.data.server_holds_all = False  # whether the server (workers with
     # idx 0) holds all data, useful in global training/evaluation case
     cfg.data.subsample = 1.0
@@ -33,6 +27,21 @@ def extend_data_cfg(cfg):
     # consistent during splitting
     cfg.data.cSBM_phi = [0.5, 0.5, 0.5]
 
+    cfg.data.transform = [
+    ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [
+    # 0.1307], 'std': [0.3081]}]]
+    cfg.data.target_transform = []  # target_transform for y, use as above
+    cfg.data.pre_transform = [
+    ]  # pre_transform for `torch_geometric` dataset, use as above
+
+    # If not provided, use `cfg.data.transform` for all splits
+    cfg.data.val_transform = []
+    cfg.data.val_target_transform = []
+    cfg.data.val_pre_transform = []
+    cfg.data.test_transform = []
+    cfg.data.test_target_transform = []
+    cfg.data.test_pre_transform = []
+
     # DataLoader related args
     cfg.dataloader = CN()
     cfg.dataloader.type = 'base'
@@ -40,7 +49,7 @@ def extend_data_cfg(cfg):
     cfg.dataloader.shuffle = True
     cfg.dataloader.num_workers = 0
     cfg.dataloader.drop_last = False
-    cfg.dataloader.pin_memory = True
+    cfg.dataloader.pin_memory = False
     # GFL: graphsaint DataLoader
     cfg.dataloader.walk_length = 2
     cfg.dataloader.num_steps = 30
@@ -54,6 +63,23 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.dim = 1
     cfg.data.quadratic.min_curv = 0.02
     cfg.data.quadratic.max_curv = 12.5
+
+    # feature engineering
+    cfg.feat_engr = CN()
+    cfg.feat_engr.type = ''
+    cfg.feat_engr.scenario = 'hfl'
+    cfg.feat_engr.num_bins = 5  # Used for binning
+    cfg.feat_engr.selec_threshold = 0.05  # Used for feature selection
+    cfg.feat_engr.selec_woe_binning = 'quantile'
+
+    cfg.feat_engr.secure = CN()
+    cfg.feat_engr.secure.type = 'encrypt'
+    cfg.feat_engr.secure.key_size = 3072
+
+    cfg.feat_engr.secure.encrypt = CN()
+    cfg.feat_engr.secure.encrypt.type = 'dummy'
+
+    cfg.feat_engr.secure.dp = CN()  # under dev
 
     # --------------- outdated configs ---------------
     # TODO: delete this code block

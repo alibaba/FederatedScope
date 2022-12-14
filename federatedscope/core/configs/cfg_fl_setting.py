@@ -67,10 +67,10 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     # Vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
+    cfg.vertical_dims = [5, 10]  # Avoid to be removed when `use` is False
     cfg.vertical = CN()
     cfg.vertical.use = False
     cfg.vertical.encryption = 'paillier'
-    cfg.vertical.dims = [5, 10]
     cfg.vertical.key_size = 3072
 
     # ---------------------------------------------------------------------- #
@@ -81,7 +81,6 @@ def extend_fl_setting_cfg(cfg):
     cfg.xgb_base.use_bin = False
     cfg.xgb_base.use_random_noise = False
     cfg.xgb_base.epsilon = 2
-    cfg.xgb_base.dims = [5, 10]
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)

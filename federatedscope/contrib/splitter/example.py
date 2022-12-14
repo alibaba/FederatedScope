@@ -17,8 +17,8 @@ class MySplitter(BaseSplitter):
         return data_list
 
 
-def call_my_splitter(client_num, **kwargs):
-    if type == 'mysplitter':
+def call_my_splitter(splitter_type, client_num, **kwargs):
+    if splitter_type == 'mysplitter':
         splitter = MySplitter(client_num, **kwargs)
         return splitter
 

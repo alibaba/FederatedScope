@@ -47,11 +47,8 @@ class Test_base:
             if tree_num + 1 < self.client.num_of_trees:
 
                 # TODO: add feedback during training
-                self.client.state += 1
-                logger.info(
-                    f'----------- Starting a new training round (Round '
-                    f'#{self.client.state}) -------------')
-
+                logger.info(f'----------- Building a new tree (Tree '
+                            f'#{tree_num + 1}) -------------')
                 # build the next tree
                 self.client.fs.compute_for_root(tree_num + 1)
 
@@ -72,8 +69,9 @@ class Test_base:
                                 each for each in list(
                                     self.client.comm_manager.neighbors.keys())
                                 if each != self.client.server_id
+                                and each != self.client.ID
                             ],
-                            content=None))
+                            content='None'))
                 self.client.comm_manager.send(
                     Message(msg_type='feature_importance',
                             sender=self.client.ID,

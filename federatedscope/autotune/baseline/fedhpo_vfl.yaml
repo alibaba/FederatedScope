@@ -1,6 +1,7 @@
 use_gpu: False
 device: 0
 backend: torch
+outdir: vFL_adult
 federate:
   mode: standalone
   client_num: 2
@@ -11,11 +12,21 @@ model:
 train:
   optimizer:
     lr: 0.5
+    bin_num: 100
+    lambda_: 0.1
+    gamma: 0
+    num_of_trees: 5
+    max_tree_depth: 3
+xgb_base:
+  use: True
+  use_bin: False
 data:
   root: data/
   type: adult
   splits: [1.0, 0.0]
   args: [{normalization: False, standardization: True}]
+feat_engr:
+  scenario: vfl
 dataloader:
   type: raw
   batch_size: 50
@@ -23,10 +34,21 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: none
+vertical_dims: [7, 14]
 vertical:
-  use: True
+  use: False
   key_size: 256
-  dims: [7, 14]
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss
+hpo:
+  scheduler: sha
+  num_workers: 0
+  init_cand_num: 9
+  ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
+  sha:
+    budgets: [ 3, 9 ]
+    elim_rate: 3
+    iter: 1
+  metric: 'server_global_eval.test_loss'
+  working_folder: sha

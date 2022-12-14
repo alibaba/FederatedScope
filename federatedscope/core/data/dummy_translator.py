@@ -33,7 +33,7 @@ class DummyDataTranslator(BaseDataTranslator):
             else:
                 # Do not have train/val/test
                 train, val, test = self.split_train_val_test(
-                    dataset[client_id])
+                    dataset[client_id], client_cfg)
                 tmp_dict = dict(train=train, val=val, test=test)
                 # Only for graph-level task, get number of graph labels
                 if client_cfg.model.task.startswith('graph') and \

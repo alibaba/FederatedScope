@@ -22,7 +22,8 @@ def load_cv_dataset(config=None):
 
     path = config.data.root
     name = config.data.type.lower()
-    transforms_funcs = get_transform(config, 'torchvision')
+    transforms_funcs, val_transforms_funcs, test_transforms_funcs = \
+        get_transform(config, 'torchvision')
 
     if name in ['femnist', 'celeba']:
         dataset = LEAF_CV(root=path,
