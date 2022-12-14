@@ -218,9 +218,10 @@ class vRFClient(Client):
             # print(sum(left))
             # print(sum(right))
             # print("===")
-            left_avg = np.sum(left * real_y) / np.sum(left) * left
-            right_avg = np.sum(right * real_y) / np.sum(right) * right
+            left_avg_value = np.sum(left * real_y) / np.sum(left)
+            right_avg_value = np.sum(right * real_y) / np.sum(right)
             # print(np.sum((real_y - left_avg - right_avg) ** 2))
             # input()
-            return real_y - left_avg - right_avg
-            # return np.sum((real_y - left_avg - right_avg)**2)
+            # return real_y - left_avg - right_avg
+            return np.sum(
+                (real_y - left_avg_value * left - right_avg_value * right)**2)

@@ -9,7 +9,7 @@ model:
 data:
   root: data/
   type: blog
-  batch_size: 500
+  batch_size: 2000
   splits: [1.0, 0.0]
 dataloader:
   type: raw
