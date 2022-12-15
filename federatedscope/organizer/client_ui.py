@@ -160,7 +160,7 @@ def check_value(value_dict):
 
 def FederatedScopeCloudOrganizer():
     # The main GUI of FederatedScopeCloudOrganizer
-    sg.theme('Gray Gray Gray')
+    sg.theme('Reddit')
     a = 0
 
     # ---------------------------------------------------------------------- #
