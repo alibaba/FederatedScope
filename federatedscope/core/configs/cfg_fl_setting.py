@@ -79,6 +79,9 @@ def extend_fl_setting_cfg(cfg):
     cfg.xgb_base = CN()
     cfg.xgb_base.use = False
     cfg.xgb_base.use_bin = False
+    cfg.opboost_noise = CN()
+    cfg.opboost_noise.use = False
+    cfg.opboost_noise.epsilon = 1
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)

@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 
 from federatedscope.core.message import Message
+from federatedscope.vertical_fl.xgb_base.utils.Opboost_noise \
+    import Opboost_noise
 
 
 class Feature_sort_base:
@@ -12,8 +14,9 @@ class Feature_sort_base:
     the clients who do not hold labels will send their orders of all features
     to label-owner
     """
-    def __init__(self, obj):
+    def __init__(self, obj, epsilon=1):
         self.client = obj
+        self.epsilon = epsilon
         self.total_feature_order_dict = dict()
         self.total_ordered_g_list = [0] * self.client.total_num_of_feature
         self.total_ordered_h_list = [0] * self.client.total_num_of_feature
@@ -24,13 +27,18 @@ class Feature_sort_base:
         self.client.register_handlers('split', self.callback_func_for_split)
 
         self.client.order_feature(self.client.x)
+        if self.client.opboost_noise:
+            op_rand = Opboost_noise(epsilon=self.epsilon)
+            self.feature_order_noised = op_rand.global_map(self.client.x)
+        else:
+            self.feature_order_noised = self.client.feature_order
         if not self.client.own_label:
             self.client.comm_manager.send(
                 Message(msg_type='feature_order',
                         sender=self.client.ID,
                         state=self.client.state,
                         receiver=self.client.num_of_parties,
-                        content=self.client.feature_order))
+                        content=self.feature_order_noised))
 
     # label owner
     def callback_func_for_feature_order(self, message: Message):

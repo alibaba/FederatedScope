@@ -9,7 +9,7 @@ model:
 data:
   root: data/
   type: credit
-  batch_size: 2000
+  batch_size: 10
   splits: [0.8, 0.2]
 dataloader:
   type: raw
@@ -27,7 +27,10 @@ train:
 vertical_dims: [5, 10]
 xgb_base:
   use: True
-  use_bin: True
+  use_bin: False
+opboost_noise:
+  use: True
+  epsilon: 1
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

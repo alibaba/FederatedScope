@@ -96,8 +96,12 @@ class XGBClient(Client):
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order
         #   the second one corresponding to sending the bins of feature order
+        self.opboost_noise = self._cfg.opboost_noise.use
         if self._cfg.xgb_base.use_bin:
             self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
+        elif self.opboost_noise:
+            self.epsilon = self._cfg.opboost_noise.epsilon
+            self.fs = Feature_sort_base(self, epsilon=self.epsilon)
         else:
             self.fs = Feature_sort_base(self)
 

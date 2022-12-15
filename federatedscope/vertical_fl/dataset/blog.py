@@ -106,6 +106,7 @@ class Blog:
 
     def _read_raw(self, file_path):
         data = pd.read_csv(file_path, header=None, usecols=list(range(281)))
+        data.dropna(axis=0, how='all')
         data = data.values
         return data
 

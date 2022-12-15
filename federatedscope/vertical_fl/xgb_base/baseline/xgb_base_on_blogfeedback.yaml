@@ -27,7 +27,10 @@ train:
 vertical_dims: [10, 20]
 xgb_base:
   use: True
-  use_bin: True
+  use_bin: False
+opboost_noise:
+  use: True
+  epsilon: 1
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
