@@ -28,7 +28,7 @@ train:
 vertical_dims: [7, 14]
 gbdt:
   use: True
-  use_bin: False
+  use_bin: True
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

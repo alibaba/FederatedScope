@@ -9,7 +9,7 @@ from federatedscope.core.message import Message
 
 class Feature_sort_by_bin:
     """
-        This class contains the bin algorithm for xgboost, i.e.,
+        This class contains the bin algorithm for gbdt, i.e.,
         the clients who do not hold labels will first get their orders
         of all features, and then partition each order to several bins,
         in each bin, they can do some permutation to protect their privacy.
@@ -69,40 +69,33 @@ class Feature_sort_by_bin:
 
     # label owner
     def compute_for_root(self, tree_num):
-        g, h = self.client.ls.get_grad_and_hess(self.client.y,
-                                                self.client.y_hat)
+        if self.client.criterion_type == 'CrossEntropyLoss':
+            label = self.client.y - 1 / (1 + np.exp(-self.client.y_hat))
+        elif self.client.criterion_type == 'Regression':
+            label = self.client.y - self.client.y_hat
         node_num = 0
-        self.client.tree_list[tree_num][node_num].grad = g
-        self.client.tree_list[tree_num][node_num].hess = h
+        self.client.tree_list[tree_num][node_num].label = label
         self.client.tree_list[tree_num][node_num].indicator = np.ones(
             len(self.client.y))
         self.compute_for_node(tree_num, node_num)
 
     def bin_act_on_list(self, bin, list):
-        length = len(bin)
-        res = np.zeros(length)
-        for i in range(length):
-            tmp = 0
-            for j in bin[i]:
-                tmp += list[j]
-            res[i] = tmp
+        length = len(list)
+        res = []
+        for i in range(len(bin)):
+            for j in range(len(bin[i])):
+                res.append(list[bin[i][j]])
         return res
 
-    def bin_act_on_gh(self, tree_num, node_num):
-        self.client.total_ordered_g_bin_list = [
-            0
-        ] * self.client.total_num_of_feature
-        self.client.total_ordered_h_bin_list = [
+    def bin_act_on_label(self, tree_num, node_num):
+        self.client.total_ordered_label_bin_list = [
             0
         ] * self.client.total_num_of_feature
 
         for i in range(self.client.total_num_of_feature):
-            self.client.total_ordered_g_bin_list[i] = self.bin_act_on_list(
+            self.client.total_ordered_label_bin_list[i] = self.bin_act_on_list(
                 self.total_feature_order_list_of_dict[i],
-                self.client.tree_list[tree_num][node_num].grad)
-            self.client.total_ordered_h_bin_list[i] = self.bin_act_on_list(
-                self.total_feature_order_list_of_dict[i],
-                self.client.tree_list[tree_num][node_num].hess)
+                self.client.tree_list[tree_num][node_num].label)
 
     # label owner
     def compute_for_node(self, tree_num, node_num):
@@ -113,33 +106,31 @@ class Feature_sort_by_bin:
         elif node_num >= 2**(self.client.max_tree_depth - 1) - 1:
             self.client.set_weight(tree_num, node_num)
         else:
-            self.bin_act_on_gh(tree_num, node_num)
-            best_gain = 0
+            self.bin_act_on_label(tree_num, node_num)
+            best_se = float('inf')
             split_ref = {'feature_idx': None, 'bin_idx': None}
-
             for feature_idx in range(self.client.total_num_of_feature):
+                one_num = 0
                 for bin_idx in range(self.bin_num):
-                    left_grad = np.sum(
-                        self.client.total_ordered_g_bin_list[feature_idx]
-                        [:bin_idx])
-                    right_grad = np.sum(
-                        self.client.total_ordered_g_bin_list[feature_idx]
-                    ) - left_grad
-                    left_hess = np.sum(
-                        self.client.total_ordered_h_bin_list[feature_idx]
-                        [:bin_idx])
-                    right_hess = np.sum(
-                        self.client.total_ordered_h_bin_list[feature_idx]
-                    ) - left_hess
-                    gain = self.client.cal_gain(left_grad, right_grad,
-                                                left_hess, right_hess)
-
-                    if gain > best_gain:
-                        best_gain = gain
+                    # for value_idx in range(1, self.client.x.shape[0]-1):
+                    one_num += len(
+                        self.total_feature_order_list_of_dict[feature_idx]
+                        [bin_idx])
+                    left = np.concatenate(
+                        (np.ones(one_num),
+                         np.zeros(self.client.x.shape[0] - one_num)))
+                    se = self.client.cal_se(
+                        left,
+                        self.client.tree_list[tree_num][node_num].indicator,
+                        self.client.total_ordered_label_bin_list[feature_idx])
+                    if se < best_se:
+                        best_se = se
                         split_ref['feature_idx'] = feature_idx
                         split_ref['bin_idx'] = bin_idx
 
-            if best_gain > 0:
+            if best_se < float('inf'):
+                print(tree_num, node_num, split_ref,
+                      self.client.tree_list[tree_num][node_num].label)
                 split_feature = self.total_feature_order_list_of_dict[
                     split_ref['feature_idx']]
                 bin_idx = split_ref['bin_idx']
@@ -152,20 +143,14 @@ class Feature_sort_by_bin:
                 right_child_idx = np.ones(len(self.client.y)) - left_child_idx
 
                 self.client.tree_list[tree_num][
-                    2 * node_num + 1].grad = self.client.tree_list[tree_num][
-                        node_num].grad * left_child_idx
-                self.client.tree_list[tree_num][
-                    2 * node_num + 1].hess = self.client.tree_list[tree_num][
-                        node_num].hess * left_child_idx
+                    2 * node_num + 1].label = self.client.tree_list[tree_num][
+                        node_num].label * left_child_idx
                 self.client.tree_list[tree_num][
                     2 * node_num + 1].indicator = self.client.tree_list[
                         tree_num][node_num].indicator * left_child_idx
                 self.client.tree_list[tree_num][
-                    2 * node_num + 2].grad = self.client.tree_list[tree_num][
-                        node_num].grad * right_child_idx
-                self.client.tree_list[tree_num][
-                    2 * node_num + 2].hess = self.client.tree_list[tree_num][
-                        node_num].hess * right_child_idx
+                    2 * node_num + 2].label = self.client.tree_list[tree_num][
+                        node_num].label * right_child_idx
                 self.client.tree_list[tree_num][
                     2 * node_num + 2].indicator = self.client.tree_list[
                         tree_num][node_num].indicator * right_child_idx
