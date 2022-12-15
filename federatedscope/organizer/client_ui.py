@@ -16,8 +16,8 @@ class UIEventHandler:
     def __init__(self):
         self.ecs_dict = dict()
         self.task_dict = dict()
-        organizer = Celery()
-        organizer.config_from_object('cfg_client')
+        self.organizer = Celery()
+        self.organizer.config_from_object('cfg_client')
 
     def handle_display_ecs(self, value):
         info = ""
@@ -45,22 +45,104 @@ class UIEventHandler:
         ...
 
     def handle_display_task(self, value):
-        ...
+        # TODO: add abort, check status, etc
+        for i in self.ecs_dict:
+            format_print(f'{self.ecs_dict[i].ip}:'
+                         f' {self.ecs_dict[i].tasks}')
 
     def handle_join_task(self, value):
-        ...
+        ip, task_id, yaml, opts = value['ip'], value['task_id'], \
+                                  value['yaml'], value['opts']
+        ecs, task = self.ecs_dict[ip], self.task_dict[task_id]
+        if task['cfg'] == '******':
+            # No access to the task.
+            raise ValueError('Please get access authority via `access_task` '
+                             'before joining.')
+        cfg = CN(task['cfg'])
+
+        # Convert necessary configurations
+        cfg['distribute']['server_host'] = server_ip
+        cfg['distribute']['client_host'] = ip
+        cfg['distribute']['role'] = 'client'
+
+        # Merge other opts and convert to command string
+        cfg.merge_from_file(yaml)
+        cfg.merge_from_list(opts)
+        cfg = config2cmdargs(flatten_dict(cfg))
+        command = ''
+        for i in cfg:
+            value = f'{i}'.replace(' ', '')
+            command += f' "{value}"'
+        command = command[1:]
+        pid = ecs.launch_task(command)
+        format_print(f'{ecs.ip}({pid}) launched,')
 
     def handle_create_task(self, value):
-        ...
+        yaml, opts, password = value['yaml'], value['opts'], value['password']
+
+        cfg = CN()
+        cfg.merge_from_file(yaml)
+        cfg.merge_from_list(opts)
+        cfg = config2cmdargs(flatten_dict(cfg))
+
+        command = ''
+        for i in cfg:
+            value = f'{i}'.replace(' ', '')
+            command += f' "{value}"'
+        command = command[1:]
+
+        result = self.organizer.send_task('server.create_room',
+                                          [command, password])
+        cnt = 0
+        while (not result.ready()) and cnt < TIMEOUT:
+            self.fancy_output('Waiting for response... (will re-try in 1s)')
+            time.sleep(1)
+            cnt += 1
+        self.fancy_output(result.get(timeout=1))
 
     def handle_update_task(self, value):
-        ...
+        format_print('Forget all saved room due to `update_room`.')
+        result = self.organizer.send_task('server.display_room')
+        cnt = 0
+        while (not result.ready()) and cnt < TIMEOUT:
+            self.fancy_output('Waiting for response... (will re-try in 1s)')
+            time.sleep(1)
+            cnt += 1
+        self.task_dict = result.get(timeout=1)
+        info = ""
+        for k, v in self.task_dict.items():
+            tmp = f"room_id: {k}, info: {v}\n"
+            info += tmp
+        format_print(info)
 
     def handle_access_task(self, value):
-        ...
+        task_id, psw, verbose = value['task_id'], value['password'], \
+                                value['vb']
+        result = self.organizer.send_task('server.view_room', [task_id, psw])
+        cnt = 0
+        while (not result.ready()) and cnt < TIMEOUT:
+            format_print('Waiting for response... (will re-try in 1s)')
+            time.sleep(1)
+            cnt += 1
+        info = result.get(timeout=1)
+        if isinstance(info, dict):
+            self.task_dict[task_id] = info
+            format_print(f'Room {task_id} has been updated to be join-able.')
+            if verbose == '1':
+                format_print(info)
+            elif verbose == '2':
+                format_print(self.task_dict)
+        else:
+            format_print(info)
 
     def handle_shut_down(self, value):
-        ...
+        result = self.organizer.send_task('server.shut_down')
+        cnt = 0
+        while (not result.ready()) and cnt < TIMEOUT:
+            format_print('Waiting for response... (will re-try in 1s)')
+            time.sleep(1)
+            cnt += 1
+        format_print(result.get(timeout=1))
 
 
 def check_value(value_dict):
@@ -164,12 +246,22 @@ def FederatedScopeCloudOrganizer():
         sg.Text('Fetch all FS tasks from remote server (will '
                 'forget all saved room).')
     ], [sg.Checkbox('Enabled', default=False, k='update_task')]]
-    access_task_layout = [[sg.Text('Obtain access to a spesific task.')],
-                          [
-                              sg.Checkbox('Enabled',
-                                          default=False,
-                                          k='access_task')
-                          ]]
+
+    # TODO: merge with join
+    access_task_layout = [
+        [sg.Text('Obtain access to a specific task.')],
+        [sg.Checkbox('Enabled', default=False, k='access_task')],
+        [
+            sg.T('TaskID', size=(8, 1)),
+            sg.Input('0', key='task_id', size=(35, 1))
+        ],
+        [
+            sg.T('Password', size=(8, 1)),
+            sg.Input('123456', password_char='*', key='password', size=(35, 1))
+        ],
+        [sg.T('Verbose', size=(8, 1)),
+         sg.Input('0', key='vb', size=(35, 1))]
+    ]
     task_group = sg.TabGroup([[
         sg.Tab('DisplayTask', display_task_layout),
         sg.Tab('JoinTask', join_task_layout),
