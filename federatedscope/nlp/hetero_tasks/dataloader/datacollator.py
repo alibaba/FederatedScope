@@ -64,7 +64,7 @@ class DataCollatorForMLM(object):
         }
 
 
-class DataCollatorForDenoisingTasks(object):
+class DataCollatorForDenoisingReconstrcution(object):
     """Data collator used denoising language modeling task in BART.
     The implementation is based on
     https://github.com/pytorch/fairseq/blob/
@@ -246,7 +246,7 @@ class DataCollatorForDenoisingTasks(object):
         return new_inputs, labels
 
 
-class DataCollatorForATC(object):
+class DataCollator(object):
     def __init__(self,
                  tokenizer,
                  mlm_probability=0.15,
@@ -254,7 +254,7 @@ class DataCollatorForATC(object):
                  poisson_lambda=3.0,
                  permutate_sentence_ratio=1.0):
         self.mlm_collator = DataCollatorForMLM(tokenizer, mlm_probability)
-        self.denoise_collator = DataCollatorForDenoisingTasks(
+        self.denoise_collator = DataCollatorForDenoisingReconstrcution(
             tokenizer, mask_ratio, poisson_lambda, permutate_sentence_ratio)
 
     def __call__(self, examples):

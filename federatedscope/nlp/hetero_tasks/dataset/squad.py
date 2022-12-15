@@ -138,7 +138,7 @@ def encode(tokenizer, text_a, text_b, max_seq_len, max_query_len,
                              overflow_token_ids)
 
 
-def create_squad_examples(data, split, debug=False):
+def get_squad_examples(data, split, debug=False):
     if debug:
         data = data[:NUM_DEBUG]
     examples = []
@@ -167,21 +167,21 @@ def create_squad_examples(data, split, debug=False):
     return examples
 
 
-def create_squad_dataset(data,
-                         split,
-                         tokenizer,
-                         max_seq_len,
-                         max_query_len,
-                         trunc_stride,
-                         cache_dir='',
-                         client_id=None,
-                         pretrain=False,
-                         debug=False,
-                         **kwargs):
+def process_squad_dataset(data,
+                          split,
+                          tokenizer,
+                          max_seq_len,
+                          max_query_len,
+                          trunc_stride,
+                          cache_dir='',
+                          client_id=None,
+                          pretrain=False,
+                          debug=False,
+                          **kwargs):
     if pretrain:
-        return create_squad_pretrain_dataset(data, split, tokenizer,
-                                             max_seq_len, cache_dir, client_id,
-                                             debug)
+        return process_squad_dataset_for_pretrain(data, split, tokenizer,
+                                                  max_seq_len, cache_dir, client_id,
+                                                  debug)
 
     save_dir = osp.join(cache_dir, 'train', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
@@ -191,7 +191,7 @@ def create_squad_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_squad_examples(data, split, debug)
+        examples = get_squad_examples(data, split, debug)
         unique_id = 1000000000
         encoded_inputs = []
         for example_idx, example in enumerate(examples):
@@ -340,13 +340,13 @@ def create_squad_dataset(data,
     return dataset, encoded_inputs, examples
 
 
-def create_squad_pretrain_dataset(data,
-                                  split,
-                                  tokenizer,
-                                  max_seq_len,
-                                  cache_dir='',
-                                  client_id=None,
-                                  debug=False):
+def process_squad_dataset_for_pretrain(data,
+                                       split,
+                                       tokenizer,
+                                       max_seq_len,
+                                       cache_dir='',
+                                       client_id=None,
+                                       debug=False):
     save_dir = osp.join(cache_dir, 'pretrain', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
     if osp.exists(cache_file):
@@ -355,7 +355,7 @@ def create_squad_pretrain_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_squad_examples(data, split, debug)
+        examples = get_squad_examples(data, split, debug)
         texts = split_sent([e.context for e in examples],
                            eoq=tokenizer.eoq_token)
         encoded_inputs = tokenizer(texts,

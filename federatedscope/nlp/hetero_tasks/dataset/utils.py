@@ -37,21 +37,21 @@ class DictDataset(Dataset):
         return list(self.inputs.values())[0].size(0)
 
 
-def setup_tokenizer(config):
+def setup_tokenizer(model_type, bos_token='[unused0]', eos_token='[unused1]', eoq_token='[unused3]'):
+    """
+    Get a tokenizer, the default bos/eos/eoq token is used for Bert
+    """
     from transformers.models.bert import BertTokenizerFast
-
-    bos_token, eos_token, eoq_token = \
-        config.model.bos_token, config.model.eos_token, config.model.eoq_token
     try:
         tokenizer = BertTokenizerFast.from_pretrained(
-            config.model.model_type,
+            model_type,
             additional_special_tokens=[bos_token, eos_token, eoq_token],
             skip_special_tokens=True,
             local_files_only=True,
         )
     except:
         tokenizer = BertTokenizerFast.from_pretrained(
-            config.model.model_type,
+            model_type,
             additional_special_tokens=[bos_token, eos_token, eoq_token],
             skip_special_tokens=True,
         )

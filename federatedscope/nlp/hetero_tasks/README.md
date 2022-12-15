@@ -64,7 +64,7 @@ If you find this repository useful for your research or development, please cite
 @article{dong2022collaborating,
   title = {Collaborating Heterogeneous Natural Language Processing Tasks via Federated Learning},
   author = {Dong, Chenhe and Xie, Yuexiang and Ding, Bolin and Shen, Ying and Li, Yaliang},
-  journal={arXiv preprint arXiv:2212.05789},
-  year = {2022},
+  journal = {arXiv preprint arXiv:2212.05789},
+  year = {2022}
 }
 ```

@@ -9,7 +9,7 @@ from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
 logger = logging.getLogger(__name__)
 
 
-def create_cnndm_examples(data, debug=False):
+def get_cnndm_examples(data, debug=False):
     if debug:
         data = data[:NUM_DEBUG]
     src_examples, tgt_examples = [], []
@@ -19,7 +19,7 @@ def create_cnndm_examples(data, debug=False):
     return src_examples, tgt_examples
 
 
-def create_cnndm_dataset(data,
+def process_cnndm_dataset(data,
                          split,
                          tokenizer,
                          max_src_len,
@@ -30,12 +30,12 @@ def create_cnndm_dataset(data,
                          debug=False,
                          **kwargs):
     if pretrain:
-        return create_cnndm_pretrain_dataset(data, split, tokenizer,
+        return process_cnndm_dataset_for_pretrain(data, split, tokenizer,
                                              max_src_len, raw_cache_dir,
                                              client_id, debug)
 
     cache_dir = osp.join(raw_cache_dir, 'train', str(client_id), split)
-    src_examples, tgt_examples = create_cnndm_examples(data, debug)
+    src_examples, tgt_examples = get_cnndm_examples(data, debug)
     if osp.exists(cache_dir):
         logger.info('Loading cache file from \'{}\''.format(cache_dir))
         token_ids = np.memmap(filename=osp.join(cache_dir, 'token_ids.memmap'),
@@ -129,7 +129,7 @@ def create_cnndm_dataset(data,
     return dataset, None, None
 
 
-def create_cnndm_pretrain_dataset(data,
+def process_cnndm_dataset_for_pretrain(data,
                                   split,
                                   tokenizer,
                                   max_src_len,
@@ -137,7 +137,7 @@ def create_cnndm_pretrain_dataset(data,
                                   client_id=None,
                                   debug=False):
     cache_dir = osp.join(raw_cache_dir, 'pretrain', str(client_id), split)
-    src_examples, tgt_examples = create_cnndm_examples(data, debug)
+    src_examples, tgt_examples = get_cnndm_examples(data, debug)
     if osp.exists(cache_dir):
         logger.info('Loading cache file from \'{}\''.format(cache_dir))
         token_ids = np.memmap(filename=osp.join(cache_dir, 'token_ids.memmap'),

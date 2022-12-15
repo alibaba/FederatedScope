@@ -8,7 +8,7 @@ from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
 logger = logging.getLogger(__name__)
 
 
-def create_imdb_examples(data, debug=False):
+def get_imdb_examples(data, debug=False):
     if debug:
         data = data[:NUM_DEBUG]
     examples = []
@@ -17,7 +17,7 @@ def create_imdb_examples(data, debug=False):
     return examples
 
 
-def create_imdb_dataset(data,
+def process_imdb_dataset(data,
                         split,
                         tokenizer,
                         max_seq_len,
@@ -27,7 +27,7 @@ def create_imdb_dataset(data,
                         debug=False,
                         **kwargs):
     if pretrain:
-        return create_imdb_pretrain_dataset(data, split, tokenizer,
+        return process_imdb_dataset_for_pretrain(data, split, tokenizer,
                                             max_seq_len, cache_dir, client_id,
                                             debug)
 
@@ -39,7 +39,7 @@ def create_imdb_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_imdb_examples(data, debug)
+        examples = get_imdb_examples(data, debug)
         texts = [ex[0] for ex in examples]
         encoded_inputs = tokenizer(texts,
                                    padding='max_length',
@@ -68,7 +68,7 @@ def create_imdb_dataset(data,
     return dataset, encoded_inputs, examples
 
 
-def create_imdb_pretrain_dataset(data,
+def process_imdb_dataset_for_pretrain(data,
                                  split,
                                  tokenizer,
                                  max_seq_len,
@@ -83,7 +83,7 @@ def create_imdb_pretrain_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_imdb_examples(data, debug)
+        examples = get_imdb_examples(data, debug)
         texts = [ex[0] for ex in examples]
         texts = split_sent(texts, eoq=tokenizer.eoq_token)
         encoded_inputs = tokenizer(texts,
