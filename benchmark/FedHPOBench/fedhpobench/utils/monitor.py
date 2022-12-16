@@ -5,7 +5,7 @@ import logging
 
 import numpy as np
 
-from fedhpob.utils.util import cfg2name
+from fedhpobench.utils.util import cfg2name
 
 logging.basicConfig(level=logging.WARNING)
 
