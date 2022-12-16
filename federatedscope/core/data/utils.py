@@ -121,8 +121,11 @@ def load_external_data(config=None):
     from federatedscope.core.auxiliaries.transform_builder import get_transform
 
     def load_torchvision_data(name, splits=None, config=None):
+        from torch.utils.data import Subset
+
         dataset_func = getattr(import_module('torchvision.datasets'), name)
-        transform_funcs = get_transform(config, 'torchvision')
+        transform_funcs, val_transform_funcs, test_transform_funcs = \
+            get_transform(config, 'torchvision')
         if config.data.args:
             raw_args = config.data.args[0]
         else:
@@ -143,14 +146,21 @@ def load_external_data(config=None):
             dataset_test = dataset_func(root=config.data.root,
                                         train=False,
                                         **filtered_args,
-                                        **transform_funcs)
+                                        **test_transform_funcs)
             if splits:
+                dataset_val = dataset_func(root=config.data.root,
+                                           train=True,
+                                           **filtered_args,
+                                           **val_transform_funcs)
+
+                index = [i for i in range(len(dataset_train))]
+                np.random.shuffle(index)
                 train_size = int(splits[0] * len(dataset_train))
-                val_size = len(dataset_train) - train_size
-                lengths = [train_size, val_size]
-                dataset_train, dataset_val = \
-                    torch.utils.data.dataset.random_split(dataset_train,
-                                                          lengths)
+                train_idx_slice, val_idx_slice = index[:train_size], \
+                    index[train_size:]
+
+                dataset_train = Subset(dataset_train, train_idx_slice)
+                dataset_val = Subset(dataset_val, val_idx_slice)
 
         elif 'split' in func_args:
             # Use raw split
@@ -161,11 +171,11 @@ def load_external_data(config=None):
             dataset_val = dataset_func(root=config.data.root,
                                        split='valid',
                                        **filtered_args,
-                                       **transform_funcs)
+                                       **val_transform_funcs)
             dataset_test = dataset_func(root=config.data.root,
                                         split='test',
                                         **filtered_args,
-                                        **transform_funcs)
+                                        **test_transform_funcs)
         elif 'classes' in func_args:
             # Use raw split
             dataset_train = dataset_func(root=config.data.root,
@@ -175,22 +185,36 @@ def load_external_data(config=None):
             dataset_val = dataset_func(root=config.data.root,
                                        classes='valid',
                                        **filtered_args,
-                                       **transform_funcs)
+                                       **val_transform_funcs)
             dataset_test = dataset_func(root=config.data.root,
                                         classes='test',
                                         **filtered_args,
-                                        **transform_funcs)
+                                        **test_transform_funcs)
         else:
             # Use config.data.splits
-            dataset = dataset_func(root=config.data.root,
-                                   **filtered_args,
-                                   **transform_funcs)
-            train_size = int(splits[0] * len(dataset))
-            val_size = int(splits[1] * len(dataset))
-            test_size = len(dataset) - train_size - val_size
-            lengths = [train_size, val_size, test_size]
-            dataset_train, dataset_val, dataset_test = \
-                torch.utils.data.dataset.random_split(dataset, lengths)
+            dataset_train = dataset_func(root=config.data.root,
+                                         **filtered_args,
+                                         **transform_funcs)
+            dataset_val = dataset_func(root=config.data.root,
+                                       **filtered_args,
+                                       **val_transform_funcs)
+            dataset_test = dataset_func(root=config.data.root,
+                                        **filtered_args,
+                                        **test_transform_funcs)
+
+            index = [i for i in range(len(dataset_train))]
+            np.random.shuffle(index)
+
+            train_size = int(splits[0] * len(dataset_train))
+            val_size = int(splits[1] * len(dataset_train))
+
+            train_idx_slice = index[:train_size]
+            val_idx_slice = index[train_size:train_size + val_size]
+            test_idx_slice = index[train_size + val_size:]
+
+            dataset_train = Subset(dataset_train, train_idx_slice)
+            dataset_val = Subset(dataset_val, val_idx_slice)
+            dataset_test = Subset(dataset_test, test_idx_slice)
 
         data_split_dict = {
             'train': dataset_train,
@@ -641,18 +665,20 @@ def merge_data(all_data, merged_max_data_id=None, specified_dataset_name=None):
                         merged_data[d_name][elem_name])
                 merged_data[d_name] = WrapDataset(merged_data[d_name])
         else:
-            client_data = copy.deepcopy(all_data[id_contain_all_dataset_key])
+            client_data = {
+                key: []
+                for key in all_data[id_contain_all_dataset_key].keys()
+            }
             for data_id in range(1, merged_max_data_id + 1):
-                if data_id == id_contain_all_dataset_key:
-                    continue
                 for d_name in dataset_names:
                     if d_name not in all_data[data_id]:
                         continue
-                    client_data[d_name].dataset.extend(
-                        all_data[data_id][d_name].dataset)
+                    else:
+                        client_data[d_name].append(
+                            all_data[data_id][d_name].dataset)
             merged_data = {
-                key: client_data[key].dataset
-                for key in client_data
+                key: torch.utils.data.ConcatDataset(client_data[key])
+                for key in dataset_names
             }
     else:
         raise NotImplementedError(

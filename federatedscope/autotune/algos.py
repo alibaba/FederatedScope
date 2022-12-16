@@ -1,7 +1,6 @@
 import os
 import logging
 from copy import deepcopy
-from contextlib import redirect_stdout
 import threading
 import math
 
@@ -15,7 +14,7 @@ from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results
+    config2cmdargs, config2str, summarize_hpo_results, log2wandb
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +24,13 @@ def make_trial(trial_cfg, client_cfgs=None):
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    Fed_runner = get_runner(data=data,
+    fed_runner = get_runner(data=data,
                             server_class=get_server_cls(trial_cfg),
                             client_class=get_client_cls(trial_cfg),
                             config=trial_cfg.clone(),
-                            client_config=client_cfgs)
-    results = Fed_runner.run()
-    key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2]
+                            client_configs=client_cfgs)
+    results = fed_runner.run()
+    return results
 
 
 class TrialExecutor(threading.Thread):
@@ -57,7 +55,7 @@ class TrialExecutor(threading.Thread):
                                 server_class=get_server_cls(self._trial_cfg),
                                 client_class=get_client_cls(self._trial_cfg),
                                 config=self._trial_cfg.clone(),
-                                client_config=self._client_cfgs)
+                                client_configs=self._client_cfgs)
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]
@@ -177,6 +175,7 @@ class ModelFreeBase(Scheduler):
                     completed_trial_results = thread_results[i]
                     cfg_idx = completed_trial_results['cfg_idx']
                     perfs[cfg_idx] = completed_trial_results['perf']
+                    # TODO: Support num_worker in WandB
                     logger.info(
                         "Evaluate the {}-th config {} and get performance {}".
                         format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
@@ -187,21 +186,24 @@ class ModelFreeBase(Scheduler):
             for i, config in enumerate(configs):
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
-                perfs[i] = make_trial(trial_cfg, self._client_cfgs)
+                results = make_trial(trial_cfg, self._client_cfgs)
+                key1, key2 = trial_cfg.hpo.metric.split('.')
+                perfs[i] = results[key1][key2]
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))
-
+                if self._cfg.wandb.use:
+                    log2wandb(i, config, results, trial_cfg)
         return perfs
 
     def optimize(self):
         perfs = self._evaluate(self._init_configs)
-
         results = summarize_hpo_results(self._init_configs,
                                         perfs,
                                         white_list=set(
                                             self._search_space.keys()),
-                                        desc=self._cfg.hpo.larger_better)
+                                        desc=self._cfg.hpo.larger_better,
+                                        use_wandb=self._cfg.wandb.use)
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
@@ -263,7 +265,8 @@ class IterativeScheduler(ModelFreeBase):
                 current_configs,
                 current_perfs,
                 white_list=set(self._search_space.keys()),
-                desc=self._cfg.hpo.larger_better)
+                desc=self._cfg.hpo.larger_better,
+                use_wandb=self._cfg.wandb.use)
             self._stage += 1
             logger.info(
                 "========================== Stage{} =========================="

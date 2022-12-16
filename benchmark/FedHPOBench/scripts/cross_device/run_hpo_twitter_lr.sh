@@ -31,7 +31,7 @@ do
             do
                 for k in {1..3}
                 do
-                    python federatedscope/main.py --cfg benchmark/FedHPOB/scripts/lr/twitter.yaml device $cudaid train.optimizer.lr $lr train.optimizer.weight_decay ${wds[$w]} train.local_update_steps ${steps[$s]} data.batch_size ${batch_sizes[$b]} federate.sample_client_rate ${sample_rates[$sr]} seed $k outdir lr/${out_dir}_${sample_rates[$sr]} expname lr${lr}_wd${wds[$w]}_dropout0_step${steps[$s]}_batch${batch_sizes[$b]}_seed${k}
+                    python federatedscope/main.py --cfg benchmark/FedHPOBench/scripts/lr/twitter.yaml device $cudaid train.optimizer.lr $lr train.optimizer.weight_decay ${wds[$w]} train.local_update_steps ${steps[$s]} data.batch_size ${batch_sizes[$b]} federate.sample_client_rate ${sample_rates[$sr]} seed $k outdir lr/${out_dir}_${sample_rates[$sr]} expname lr${lr}_wd${wds[$w]}_dropout0_step${steps[$s]}_batch${batch_sizes[$b]}_seed${k}
                 done
             done
         done

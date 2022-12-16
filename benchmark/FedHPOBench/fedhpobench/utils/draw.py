@@ -24,7 +24,7 @@ def logloader(file):
 
 
 def ecdf(model, data_list, algo, sample_client=None, key='test_acc'):
-    from fedhpob.benchmarks import TabularBenchmark
+    from fedhpobench.benchmarks import TabularBenchmark
 
     # Draw ECDF from target data_list
     plt.figure(figsize=(10, 7.5))
@@ -294,8 +294,8 @@ def landscape(model='cnn',
               sample_client=None,
               key='test_acc'):
     import plotly.graph_objects as go
-    from fedhpob.config import fhb_cfg
-    from fedhpob.benchmarks import TabularBenchmark
+    from fedhpobench.config import fhb_cfg
+    from fedhpobench.benchmarks import TabularBenchmark
 
     z = []
     benchmark = TabularBenchmark(model, dname, algo, device=-1)

@@ -7,7 +7,7 @@ device=$4
 algo=$5
 
 cd ../..
-cp fedhpob/utils/runner.py . || echo "File exists."
+cp fedhpobench/utils/runner.py . || echo "File exists."
 
 for k in {1..5}; do
   python runner.py --cfg scripts/exp/${dataset}.yaml benchmark.device ${device} benchmark.model ${model} benchmark.type ${mode} benchmark.data ${dataset} benchmark.algo ${algo} optimizer.type rs || echo "continue"

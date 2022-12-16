@@ -26,7 +26,7 @@ def load_nodelevel_dataset(config=None):
     # Splitter
     splitter = get_splitter(config)
     # Transforms
-    transforms_funcs = get_transform(config, 'torch_geometric')
+    transforms_funcs, _, _ = get_transform(config, 'torch_geometric')
     # Dataset
     if name in ["cora", "citeseer", "pubmed"]:
         num_split = {

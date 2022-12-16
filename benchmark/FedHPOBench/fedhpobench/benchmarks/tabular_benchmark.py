@@ -2,9 +2,9 @@ import datetime
 import logging
 import numpy as np
 
-from fedhpob.utils.util import dict2cfg
-from fedhpob.utils.tabular_dataloader import load_data
-from fedhpob.benchmarks.base_benchmark import BaseBenchmark
+from fedhpobench.utils.util import dict2cfg
+from fedhpobench.utils.tabular_dataloader import load_data
+from fedhpobench.benchmarks.base_benchmark import BaseBenchmark
 
 
 class TabularBenchmark(BaseBenchmark):
