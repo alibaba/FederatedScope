@@ -25,8 +25,13 @@ class Opboost_noise:
     def data_preprocess(self, data):
         data_min = np.min(data, axis=0)
         data_max = np.max(data, axis=0)
+        # avoid the case that data_max[i] == data_min[i],
+        #   which the denominator will eq 0
+        for i in range(data.shape[1]):
+            if data_max[i] == data_min[i]:
+                data_max[i] += 1
         processed_data = np.round(self.lower + (data - data_min) /
-                                  (data_max - data_min + 1e-7) *
+                                  (data_max - data_min) *
                                   (self.upper - self.lower))
         return processed_data
 
