@@ -145,7 +145,6 @@ class XGBClient(Client):
         ]
         if self.own_label:
             self.batch_index, self.x, self.y = self.sample_data()
-            print(len(self.batch_index))
             # init y_hat
             self.y_hat = np.random.uniform(low=0.0, high=1.0, size=len(self.y))
             logger.info(f'---------- Building a new tree (Tree '
