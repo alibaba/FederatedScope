@@ -21,8 +21,7 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [07-30-2022] We release FederatedScope v0.2.0! 
 - [06-17-2022] We release **pFL-Bench**, a comprehensive benchmark for personalized Federated Learning (pFL), containing 10+ datasets and 20+ baselines. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench), [pdf](https://arxiv.org/abs/2206.03655)]
-- [06-17-2022] We release **FedHPO-Bench**, a benchmark suite for studying 
-  federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOBench), [pdf](https://arxiv.org/abs/2206.03966)]
+- [06-17-2022] We release **FedHPO-Bench**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOBench), [pdf](https://arxiv.org/abs/2206.03966)]
 - [06-17-2022] We release **B-FHTL**, a benchmark suit for studying federated hetero-task learning. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/B-FHTL), [pdf](https://arxiv.org/abs/2206.03436)]
 - [06-13-2022] Our project was receiving an attack, which has been resolved. [More details](https://github.com/alibaba/FederatedScope/blob/master/doc/news/06-13-2022_Declaration_of_Emergency.txt).
 - [05-25-2022] Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!

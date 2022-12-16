@@ -134,8 +134,7 @@ If you find FedHPO-Bench useful for your research or development, please cite th
 
 ```tex
 @article{Wang2022FedHPOBAB,
-  title={FedHPO-Bench: A Benchmark Suite for Federated Hyperparameter 
-  Optimization},
+  title={FedHPO-Bench: A Benchmark Suite for Federated Hyperparameter Optimization},
   author={Zhen Wang and Weirui Kuang and Ce Zhang and Bolin Ding and Yaliang Li},
   journal={ArXiv},
   year={2022},
