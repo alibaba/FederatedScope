@@ -9,10 +9,10 @@ model:
 data:
   root: data/
   type: credit
-  batch_size: 10
   splits: [0.8, 0.2]
 dataloader:
   type: raw
+  batch_size: 2000
 criterion:
   type: CrossEntropyLoss
 trainer:
@@ -30,7 +30,14 @@ xgb_base:
   use_bin: False
 opboost_noise:
   use: True
-  epsilon: 1
+  # op_algo: 'global' or 'adj'
+  algo: 'adj'
+  #the following is used for global
+  epsilon: 2
+  # the following are used for adj
+  epsilon_prt: 2
+  epsilon_ner: 2
+  partition_num: 10
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

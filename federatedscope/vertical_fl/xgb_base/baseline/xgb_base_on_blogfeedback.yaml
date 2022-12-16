@@ -9,10 +9,10 @@ model:
 data:
   root: data/
   type: blog
-  batch_size: 8000
   splits: [1.0, 0.0]
 dataloader:
   type: raw
+  batch_size: 8000
 criterion:
   type: Regression
 trainer:
@@ -22,7 +22,7 @@ train:
     bin_num: 1000
     lambda_: 10
     gamma: 0
-    num_of_trees: 9
+    num_of_trees: 5
     max_tree_depth: 3
 vertical_dims: [10, 20]
 xgb_base:
@@ -30,7 +30,14 @@ xgb_base:
   use_bin: False
 opboost_noise:
   use: True
-  epsilon: 1
+  # op_algo: 'global' or 'adj'
+  algo: 'adj'
+  #the following is used for global
+  epsilon: 2
+  # the following are used for adj
+  epsilon_prt: 2
+  epsilon_ner: 2
+  partition_num: 10
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

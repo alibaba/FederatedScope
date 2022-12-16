@@ -47,7 +47,7 @@ class XGBClient(Client):
         self.federate_mode = config.federate.mode
 
         self.bin_num = config.train.optimizer.bin_num
-        self.batch_size = config.data.batch_size
+        self.batch_size = config.dataloader.batch_size
 
         self.data = data
         self.own_label = ('y' in self.data['train'])
@@ -74,7 +74,7 @@ class XGBClient(Client):
         self.num_of_parties = self._cfg.federate.client_num
 
         self.dataloader = batch_iter(self.data['train'],
-                                     self._cfg.data.batch_size,
+                                     self.batch_size,
                                      shuffled=True)
 
         self.feature_order = None
@@ -96,12 +96,19 @@ class XGBClient(Client):
         # the following two lines are the two alogs, where
         #   the first one corresponding to sending the whole feature order
         #   the second one corresponding to sending the bins of feature order
-        self.opboost_noise = self._cfg.opboost_noise.use
+        self.opboost_noise_use = self._cfg.opboost_noise.use
         if self._cfg.xgb_base.use_bin:
             self.fs = Feature_sort_by_bin(self, bin_num=self.bin_num)
-        elif self.opboost_noise:
+        elif self.opboost_noise_use:
+            self.opboost_algo = self._cfg.opboost_noise.algo
             self.epsilon = self._cfg.opboost_noise.epsilon
-            self.fs = Feature_sort_base(self, epsilon=self.epsilon)
+            self.epsilon_prt = self._cfg.opboost_noise.epsilon_prt
+            self.epsilon_ner = self._cfg.opboost_noise.epsilon_ner
+            self.opboost_partition_num = self._cfg.opboost_noise.partition_num
+            self.fs = Feature_sort_base(self,
+                                        epsilon=self.epsilon,
+                                        epsilon_prt=self.epsilon_prt,
+                                        epsilon_ner=self.epsilon_ner)
         else:
             self.fs = Feature_sort_base(self)
 

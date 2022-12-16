@@ -45,7 +45,7 @@ class XGBServer(Server):
                                self.callback_func_for_feature_importance)
 
     def _init_data_related_var(self):
-        self.batch_size = self._cfg.data.batch_size
+        self.batch_size = self._cfg.dataloader.batch_size
         self.feature_list = [0] + self.vertical_dims
         self.feature_partition = [
             self.feature_list[i + 1] - self.feature_list[i]

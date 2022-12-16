@@ -22,7 +22,7 @@ train:
     bin_num: 100
     lambda_: 0.1
     gamma: 0
-    num_of_trees: 10
+    num_of_trees: 5
     max_tree_depth: 3
 vertical_dims: [7, 14]
 xgb_base:
@@ -30,7 +30,14 @@ xgb_base:
   use_bin: False
 opboost_noise:
   use: True
+  # op_algo: 'global' or 'adj'
+  algo: 'adj'
+  #the following is used for global
   epsilon: 2
+  # the following are used for adj
+  epsilon_prt: 2
+  epsilon_ner: 2
+  partition_num: 10
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

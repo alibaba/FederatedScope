@@ -14,9 +14,17 @@ class Feature_sort_base:
     the clients who do not hold labels will send their orders of all features
     to label-owner
     """
-    def __init__(self, obj, epsilon=1):
+    def __init__(self,
+                 obj,
+                 epsilon=1,
+                 epsilon_prt=1,
+                 epsilon_ner=1,
+                 opboost_partition_num=10):
         self.client = obj
         self.epsilon = epsilon
+        self.epsilon_prt = epsilon_prt
+        self.epsilon_ner = epsilon_ner
+        self.opboost_partition_num = opboost_partition_num
         self.total_feature_order_dict = dict()
         self.total_ordered_g_list = [0] * self.client.total_num_of_feature
         self.total_ordered_h_list = [0] * self.client.total_num_of_feature
@@ -27,9 +35,17 @@ class Feature_sort_base:
         self.client.register_handlers('split', self.callback_func_for_split)
 
         self.client.order_feature(self.client.x)
-        if self.client.opboost_noise:
-            op_rand = Opboost_noise(epsilon=self.epsilon)
-            self.feature_order_noised = op_rand.global_map(self.client.x)
+        if self.client.opboost_noise_use:
+            op_rand = Opboost_noise()
+            if self.client.opboost_algo == 'global':
+                self.feature_order_noised = op_rand.global_order(
+                    self.client.x, epsilon=self.epsilon)
+            elif self.client.opboost_algo == 'adj':
+                self.feature_order_noised = op_rand.adj_order(
+                    self.client.x,
+                    epsilon_prt=self.epsilon_prt,
+                    epsilon_ner=self.epsilon_ner,
+                    partition_num=self.opboost_partition_num)
         else:
             self.feature_order_noised = self.client.feature_order
         if not self.client.own_label:
