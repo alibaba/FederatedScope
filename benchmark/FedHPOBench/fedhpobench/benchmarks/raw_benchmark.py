@@ -5,9 +5,9 @@ from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.fed_runner import FedRunner
 
-from fedhpob.benchmarks.base_benchmark import BaseBenchmark
-from fedhpob.utils.util import disable_fs_logger
-from fedhpob.utils.cost_model import merge_cfg
+from fedhpobench.benchmarks.base_benchmark import BaseBenchmark
+from fedhpobench.utils.util import disable_fs_logger
+from fedhpobench.utils.cost_model import merge_cfg
 
 
 class RawBenchmark(BaseBenchmark):

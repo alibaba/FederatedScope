@@ -33,7 +33,7 @@ We highly recommend running FedHPO-B with conda.
 
 ### Step 1. Installation
 
-We recommend installing FedHPOB directly using git by:
+We recommend installing FedHPOBench directly using git by:
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
@@ -62,8 +62,8 @@ Fortunately, we provide tools to automatically convert from tabular data to surr
 ### Step3. Start running
 
 ```python
-from fedhpob.config import fhb_cfg
-from fedhpob.benchmarks import TabularBenchmark
+from fedhpobench.config import fhb_cfg
+from fedhpobench.benchmarks import TabularBenchmark
 
 benchmark = TabularBenchmark('cnn', 'femnist', 'avg')
 
@@ -99,7 +99,7 @@ We take Figure 11 as an example.
 * Then draw the figure with tools we provide, the figures will be saved in `~/figures`.
 
   ```python
-  from fedhpob.utils.draw import rank_over_time
+  from fedhpobench.utils.draw import rank_over_time
   
   rank_over_time('exp_results', 'gcn', algo='avg', loss=False)
   ```

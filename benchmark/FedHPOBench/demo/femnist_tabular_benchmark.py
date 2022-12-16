@@ -24,7 +24,7 @@ class FEMNISTTabularFedHPOBench(BaseTabularFedHPOBench):
         Optimization",
         url: https://arxiv.org/pdf/2206.03966v4.pdf
         Source: https://github.com/alibaba/FederatedScope/tree/master
-        /benchmark/FedHPOB
+        /benchmark/FedHPOBench
         Parameters
         ----------
         data_path : str, Path
@@ -128,7 +128,7 @@ class FEMNISTTabularFedHPOBench(BaseTabularFedHPOBench):
                 'journal = {arXiv preprint arXiv:2206.03966},'
                 'year    = {2022}}', 'https://arxiv.org/pdf/2206.03966v4.pdf',
                 'https://github.com/alibaba/FederatedScope/tree/master'
-                '/benchmark/FedHPOB'
+                '/benchmark/FedHPOBench'
             ],
             'code': 'https://github.com/alibaba/FederatedScope/tree/master'
             '/benchmark/FedHPOBench',
