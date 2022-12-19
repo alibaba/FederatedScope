@@ -4,10 +4,10 @@ import time
 
 from celery import Celery
 
-from federatedscope.core.configs.config import CN, global_cfg
+from federatedscope.core.configs.config import global_cfg
 from federatedscope.organizer.cfg_client import server_ip
 from federatedscope.organizer.utils import SSHManager, config2cmdargs, \
-    flatten_dict, format_print
+    flatten_dict, OrganizerLogger
 
 TIMEOUT = 10
 MAX_INFO_LEN = 30
@@ -19,16 +19,17 @@ class UIEventHandler:
         self.task_dict = dict()
         self.organizer = Celery()
         self.organizer.config_from_object('cfg_client')
+        self.logger = OrganizerLogger()
 
     def handle_display_ecs(self, value):
         info = ""
         for k, v in self.ecs_dict.items():
             info += f"ecs: {k}, info: {v}\n"
         if info:
-            format_print(info)
+            self.logger.info(info)
         else:
-            format_print('No saved ECS, please add ECS via `AddECS` '
-                         'first!')
+            self.logger.error('No saved ECS, please add ECS via `AddECS` '
+                              'first!')
         return True
 
     def handle_add_ecs(self, value):
@@ -38,12 +39,12 @@ class UIEventHandler:
         if key in self.ecs_dict:
             raise ValueError(f"ECS `{key}` already exists.")
         self.ecs_dict[key] = SSHManager(ip, user, psw)
-        format_print(f"{self.ecs_dict[key]} added.")
+        self.logger.info(f"{self.ecs_dict[key]} added.")
 
     def handle_del_ecs(self, value):
         key = value['ip']
         del self.ecs_dict[key]
-        format_print(f"Delete {key}: {self.ecs_dict[key]}.")
+        self.logger.info(f"Delete {key}: {self.ecs_dict[key]}.")
         # TODO: Del all task
         ...
         return True
@@ -51,8 +52,8 @@ class UIEventHandler:
     def handle_display_task(self, value):
         # TODO: add abort, check status, etc
         for i in self.ecs_dict:
-            format_print(f'{self.ecs_dict[i].ip}:'
-                         f' {self.ecs_dict[i].tasks}')
+            self.logger.info(f'{self.ecs_dict[i].ip}:'
+                             f' {self.ecs_dict[i].tasks}')
         return True
 
     def handle_join_task(self, value):
@@ -62,7 +63,7 @@ class UIEventHandler:
                                   value['opts_join_task']
         ecs, task = self.ecs_dict[ip], self.task_dict[task_id]
         if task['cfg'] == '******':
-            # No access to the task.
+            # No access authority to the task.
             raise ValueError('Please get access authority via `access_task` '
                              'before joining.')
         cfg = global_cfg.clone()
@@ -73,7 +74,7 @@ class UIEventHandler:
         if yaml.endswith('.yaml'):
             cfg.merge_from_file(yaml)
         else:
-            format_print('[Warning] The file is none or invalid, ignored.')
+            self.logger.warning('The file is none or invalid, ignored.')
         cfg.merge_from_list(opts)
         cfg = config2cmdargs(flatten_dict(cfg))
 
@@ -88,7 +89,7 @@ class UIEventHandler:
             command += f' "{value}"'
         command = command[1:]
         pid = ecs.launch_task(command)
-        format_print(f'{ecs.ip}({pid}) launched,')
+        self.logger.info(f'{ecs.ip}({pid}) launched,')
         return True
 
     def handle_create_task(self, value):
@@ -97,11 +98,10 @@ class UIEventHandler:
                                value['password_create_task']
         opts = opts.split(' ')
         cfg = global_cfg.clone()
-        print(111, yaml)
         if yaml.endswith('.yaml'):
             cfg.merge_from_file(yaml)
         else:
-            format_print('[Warning] The file is none or invalid, ignored.')
+            self.logger.warning('The file is none or invalid, ignored.')
         cfg.merge_from_list(opts)
         cfg = config2cmdargs(flatten_dict(cfg))
 
@@ -114,29 +114,30 @@ class UIEventHandler:
                                           [command, password])
         cnt = 0
         while (not result.ready()) and cnt < TIMEOUT:
-            format_print('Waiting for response... (will re-try in 1s)')
+            self.logger.info('Waiting for response... (will re-try in 1s)')
             time.sleep(1)
             cnt += 1
-        format_print(result.get(timeout=1))
+        self.logger.info(result.get(timeout=1))
         return True
 
     def handle_update_task(self, value):
-        format_print('Forget all saved room due to `update_room`.')
+        self.logger.warning('Forget all saved room due to `update_room`.')
         result = self.organizer.send_task('server.display_room')
         cnt = 0
         while (not result.ready()) and cnt < TIMEOUT:
-            format_print('Waiting for response... (will re-try in 1s)')
+            self.logger.info('Waiting for response... (will re-try in 1s)')
             time.sleep(1)
             cnt += 1
         self.task_dict = result.get(timeout=1)
         if len(self.task_dict) == 0:
-            format_print('No task available now. Please create a new task.')
+            self.logger.info(
+                'No task available now. Please create a new task.')
             return False
         info = ""
         for k, v in self.task_dict.items():
             tmp = f"room_id: {k}, info: {v}\n"
             info += tmp
-        format_print(info)
+        self.logger.info(info)
         return True
 
     def handle_access_task(self, value):
@@ -146,29 +147,32 @@ class UIEventHandler:
         result = self.organizer.send_task('server.view_room', [task_id, psw])
         cnt = 0
         while (not result.ready()) and cnt < TIMEOUT:
-            format_print('Waiting for response... (will re-try in 1s)')
+            self.logger.info('Waiting for response... (will re-try in 1s)')
             time.sleep(1)
             cnt += 1
         info = result.get(timeout=1)
         if isinstance(info, dict):
             self.task_dict[task_id] = info
-            format_print(f'Task {task_id} has been updated to be join-able.')
+            self.logger.info(
+                f'Task {task_id} has been updated to be join-able.')
             if verbose == '1':
-                format_print(info)
+                self.logger.info(info)
             elif verbose == '2':
-                format_print(self.task_dict)
+                self.logger.info(self.task_dict)
+            else:
+                self.logger.info(f'Authority of task {task_id} get!')
         else:
-            format_print(info)
+            self.logger.info(info)
         return True
 
     def handle_shut_down(self, value):
         result = self.organizer.send_task('server.shut_down')
         cnt = 0
         while (not result.ready()) and cnt < TIMEOUT:
-            format_print('Waiting for response... (will re-try in 1s)')
+            self.logger.info('Waiting for response... (will re-try in 1s)')
             time.sleep(1)
             cnt += 1
-        format_print(result.get(timeout=1))
+        self.logger.info(result.get(timeout=1))
         return True
 
 
@@ -186,9 +190,9 @@ def check_value(value_dict):
 
 
 def FederatedScopeCloudOrganizer():
+    logger = OrganizerLogger()
     # The main GUI of FederatedScopeCloudOrganizer
     sg.theme('Reddit')
-    a = 0
 
     # ---------------------------------------------------------------------- #
     # ECS Manager related
@@ -355,7 +359,7 @@ def FederatedScopeCloudOrganizer():
             event, values = window.read()
             if event == 'RUN':
                 if not check_value(values):
-                    format_print('There are no executable commands or '
+                    logger.error('There are no executable commands or '
                                  'multiple commands. Please check the '
                                  'CheckBox.')
                     continue
@@ -365,12 +369,12 @@ def FederatedScopeCloudOrganizer():
                         if hasattr(handler, f'handle_{k}'):
                             getattr(handler, f'handle_{k}')(values)
                         else:
-                            format_print(f'No valid handle_{k}.')
+                            logger.error(f'No valid handle_{k}.')
 
             elif event == sg.WIN_CLOSED:  # always,  always give a way out!
                 break
         except Exception as error:
-            format_print(f"Exception: {error}")
+            logger.error(f"Exception: {error}")
 
     window.close()
 

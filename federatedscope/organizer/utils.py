@@ -18,6 +18,7 @@ class SSHManager(object):
         self.ssh, self.trans = None, None
         self.setup_fs()
         self.tasks = set()
+        self.logger = OrganizerLogger()
 
     def _connect(self):
         self.trans = paramiko.Transport((self.ip, self.ssh_port))
@@ -55,7 +56,8 @@ class SSHManager(object):
         # Check conda
         conda, _ = self._exec_cmd('which conda')
         if conda is None:
-            format_print('Exception: No conda, please install conda first.')
+            self.logger.error(
+                'Exception: No conda, please install conda first.')
             # TODO: Install conda here
             return False
 
@@ -64,13 +66,13 @@ class SSHManager(object):
                                      f'python -c "import federatedscope; '
                                      f'print(federatedscope.__version__)"')
         if err:
-            format_print(f'Error: {err}')
+            self.logger.error(f'Error: {err}')
             # TODO: Install FS env here
             return False
         elif output != fs_version:
-            format_print(f'The installed FS version is {output}, however'
-                         f' {fs_version} is required.')
-        format_print(f'Conda environment found, named {env_name}.')
+            self.logger.info(f'The installed FS version is {output}, however'
+                             f' {fs_version} is required.')
+        self.logger.info(f'Conda environment found, named {env_name}.')
         return True
 
     def _check_source(self):
@@ -82,9 +84,9 @@ class SSHManager(object):
                                    f'echo "Not found"')
         if output == 'Not found':
             # TODO: git clone here
-            format_print(f'Exception: Repo not find in {fs_path}.')
+            self.logger.error(f'Exception: Repo not find in {fs_path}.')
             return False
-        format_print(f'FS repo Found in {root_path}.')
+        self.logger.info(f'FS repo Found in {root_path}.')
         return True
 
     def _check_task_status(self):
@@ -94,7 +96,7 @@ class SSHManager(object):
         pass
 
     def setup_fs(self):
-        format_print("Checking environment, please wait...")
+        self.logger.info("Checking environment, please wait...")
         if not self._check_conda():
             raise Exception('The environment is not configured properly.')
         if not self._check_source():
@@ -107,6 +109,20 @@ class SSHManager(object):
                                           f'> /dev/null 2>&1 & echo $!')
         self.tasks.add(stdout)
         return stdout
+
+
+class OrganizerLogger:
+    def _get_time_stamp(self):
+        return f"[{str(datetime.datetime.now()).split('.')[0]}]"
+
+    def info(self, s):
+        print(f"{self._get_time_stamp()} - INFO: {s}.")
+
+    def warning(self, s):
+        print(f"{self._get_time_stamp()} - WARNING: {s}.")
+
+    def error(self, s):
+        print(f"{self._get_time_stamp()} - ERROR: {s}.")
 
 
 def anonymize(info, mask):
@@ -156,7 +172,3 @@ def config2cmdargs(config):
             results.append(key)
             results.append(value)
     return results
-
-
-def format_print(s):
-    print(f"[{str(datetime.datetime.now()).split('.')[0]}] - {s}")

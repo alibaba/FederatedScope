@@ -3,7 +3,8 @@ import pickle
 import subprocess
 from celery import Celery
 
-from federatedscope.organizer.utils import anonymize, args2yaml, config2cmdargs
+from federatedscope.organizer.utils import anonymize, args2yaml, \
+    flatten_dict, config2cmdargs
 
 
 # ---------------------------------------------------------------------- #
@@ -67,10 +68,10 @@ class Lobby(object):
         # TODO: we must convert arg line to yaml dict to avoid conflicts
         #  with port
         cfg = args2yaml(args)
-        # TODO: optimize metainfo
+        # TODO: optimize meta information
         meta_info = {
             'data.type': cfg.data.type,
-            'cfg': config2cmdargs(cfg),
+            'cfg': config2cmdargs(flatten_dict(cfg)),
             'psw': psw,
         }
         if room_id in room.keys():
