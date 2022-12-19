@@ -3,7 +3,7 @@ import pickle
 import subprocess
 from celery import Celery
 
-from federatedscope.organizer.utils import anonymize, args2yaml
+from federatedscope.organizer.utils import anonymize, args2yaml, config2cmdargs
 
 
 # ---------------------------------------------------------------------- #
@@ -17,14 +17,14 @@ class Lobby(object):
 
     def _save(self, key, value):
         """
-            Save object to Redis via pickle.
+        Save object to Redis via pickle.
         """
         pickled_object = pickle.dumps(value)
         self.r.set(key, pickled_object)
 
     def _load(self, key):
         """
-            Load object from Redis via pickle.
+        Load object from Redis via pickle.
         """
         try:
             value = pickle.loads(self.r.get(key))
@@ -34,7 +34,7 @@ class Lobby(object):
 
     def _set_up(self):
         """
-           Store all meta info in Redis.
+        Store all meta info in Redis.
         """
         self._save('blacklist', [])
         # key: room_id, value: configs of FS
@@ -42,7 +42,7 @@ class Lobby(object):
 
     def _check_room(self, room, room_id):
         """
-            Check the validity of the room.
+        Check the validity of the room.
         """
         if room_id in room.keys():
             return True
@@ -52,13 +52,13 @@ class Lobby(object):
 
     def _check_user(self):
         """
-            Check the validity of the user (whether in black list, etc).
+        Check the validity of the user (whether in black list, etc).
         """
         pass
 
     def create_room(self, args, psw=None):
         """
-            Create FS server session and store args in Redis.
+        Create FS server session and store args in Redis.
         """
         self._check_user()
         # Update room args in Redis
@@ -70,7 +70,7 @@ class Lobby(object):
         # TODO: optimize metainfo
         meta_info = {
             'data.type': cfg.data.type,
-            'cfg': cfg,
+            'cfg': config2cmdargs(cfg),
             'psw': psw,
         }
         if room_id in room.keys():
@@ -91,7 +91,7 @@ class Lobby(object):
 
     def display_room(self):
         """
-            Display all the joinable FS tasks.
+        Display all the joinable FS tasks.
         """
         self._check_user()
         mask_key = ['psw', 'cfg']
@@ -118,7 +118,7 @@ class Lobby(object):
 
     def shut_down(self):
         """
-            Shut down all rooms and kill all subprocesses.
+        Shut down all rooms and kill all subprocesses.
         """
         for p in self.pool:
             p.terminate()

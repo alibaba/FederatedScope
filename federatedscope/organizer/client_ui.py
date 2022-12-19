@@ -65,12 +65,9 @@ class UIEventHandler:
             # No access to the task.
             raise ValueError('Please get access authority via `access_task` '
                              'before joining.')
-        cfg = CN(task['cfg'])
-
-        # Convert necessary configurations
-        cfg['distribute']['server_host'] = server_ip
-        cfg['distribute']['client_host'] = ip
-        cfg['distribute']['role'] = 'client'
+        cfg = global_cfg.clone()
+        opts_cfg = task['cfg'].split(' ')
+        cfg.merge_from_list(opts_cfg)
 
         # Merge other opts and convert to command string
         if yaml.endswith('.yaml'):
@@ -79,6 +76,12 @@ class UIEventHandler:
             format_print('[Warning] The file is none or invalid, ignored.')
         cfg.merge_from_list(opts)
         cfg = config2cmdargs(flatten_dict(cfg))
+
+        # Convert necessary configurations
+        cfg['distribute']['server_host'] = server_ip
+        cfg['distribute']['client_host'] = ip
+        cfg['distribute']['role'] = 'client'
+
         command = ''
         for i in cfg:
             value = f'{i}'.replace(' ', '')
