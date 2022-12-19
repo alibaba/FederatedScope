@@ -13,7 +13,7 @@ from federatedscope.organizer.cfg_client import env_name, root_path, fs_version
 
 class OrganizerLogger:
     def _get_time_stamp(self):
-        return f"[{str(datetime.datetime.now()).split('.')[0]}]"
+        return f"[{str(datetime.now().strftime('_%Y%m%d%H%M%S'))}]"
 
     def info(self, s):
         print(f"{self._get_time_stamp()} - INFO: {s}")

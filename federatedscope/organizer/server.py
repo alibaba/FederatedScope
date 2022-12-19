@@ -2,6 +2,7 @@ import redis
 import pickle
 import subprocess
 from celery import Celery
+from datetime import datetime
 
 from federatedscope.organizer.utils import anonymize, args2yaml, \
     flatten_dict, config2cmdargs
@@ -12,7 +13,7 @@ from federatedscope.organizer.utils import anonymize, args2yaml, \
 # ---------------------------------------------------------------------- #
 class Lobby(object):
     def __init__(self, host='localhost', port=6379, db=0):
-        self.r = redis.StrictRedis(host=host, port=port, db=db)
+        self.database = redis.StrictRedis(host=host, port=port, db=db)
         self.pool = []
         self._set_up()
 
@@ -21,14 +22,14 @@ class Lobby(object):
         Save object to Redis via pickle.
         """
         pickled_object = pickle.dumps(value)
-        self.r.set(key, pickled_object)
+        self.database.set(key, pickled_object)
 
     def _load(self, key):
         """
         Load object from Redis via pickle.
         """
         try:
-            value = pickle.loads(self.r.get(key))
+            value = pickle.loads(self.database.get(key))
         except TypeError:
             value = None
         return value
@@ -73,6 +74,7 @@ class Lobby(object):
             'data.type': cfg.data.type,
             'cfg': config2cmdargs(flatten_dict(cfg)),
             'psw': psw,
+            'file_name': str(datetime.now().strftime('_%Y%m%d%H%M%S')) + '.out'
         }
         if room_id in room.keys():
             raise ValueError('Already existing room.')
@@ -80,9 +82,12 @@ class Lobby(object):
             room[room_id] = meta_info
         self._save('room', room)
 
+        # Out file
+
         # Launch FS
         input_args = args.split(' ')
-        cmd = ['python', '../../federatedscope/main.py'] + input_args
+        cmd = ['nohup', 'python', '../../federatedscope/main.py'] + \
+            input_args + ['>', meta_info['file_name']]
         p = subprocess.Popen(cmd,
                              stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL)
@@ -103,7 +108,7 @@ class Lobby(object):
 
     def view_room(self, room_id, psw=None):
         """
-            View one specific FS task.
+        View one specific FS task.
         """
         self._check_user()
         room = self._load('room')
@@ -163,6 +168,10 @@ def display_room():
 @organizer.task
 def view_room(room_id, psw=None):
     rtn_info = lobby.view_room(room_id, psw)
+    # TODO: Process out file, we only show url for wandb
+    with open(rtn_info['file_name']) as f:
+        lines = f.readlines()
+
     return rtn_info
 
 

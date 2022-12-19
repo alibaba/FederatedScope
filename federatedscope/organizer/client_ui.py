@@ -9,7 +9,7 @@ from federatedscope.organizer.cfg_client import server_ip
 from federatedscope.organizer.utils import SSHManager, config2cmdargs, \
     flatten_dict, OrganizerLogger
 
-TIMEOUT = 10
+TIMEOUT = 30
 MAX_INFO_LEN = 30
 
 
