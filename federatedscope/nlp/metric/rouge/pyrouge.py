@@ -1,3 +1,11 @@
+"""
+The implementations are adapted from
+https://github.com/nlpyang/PreSumm/blob/master/src/others/pyrouge.py
+
+The implementations of ROUGE-155 are adapted from
+https://github.com/bheinzerling/pyrouge/blob/master/pyrouge/Rouge155.py
+"""
+
 from __future__ import print_function, unicode_literals, division
 
 import os
@@ -55,6 +63,10 @@ class DirectoryProcessor:
 
 class Rouge155(object):
     """
+    The implementation of ROUGE refer to 'ROUGE: A package for automatic
+    evaluation of summaries' [Chin-Yew Lin, 2004]
+    (https://aclanthology.org/W04-1013.pdf)
+
     This is a wrapper for the ROUGE 1.5.5 summary evaluation package.
     This class is designed to simplify the evaluation process by:
 

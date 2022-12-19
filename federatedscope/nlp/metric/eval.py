@@ -1,19 +1,13 @@
-#!/usr/bin/env python
-__author__ = 'xinya'
-
-# Modified by:
-# Yu Chen <cheny39@rpi.edu>
-
-# Changelog:
-# Convert to python 3
-# Support verbose mode
-# Change output format
+"""
+The implementations are adapted from https://github.com/hugochan/
+RL-based-Graph2Seq-for-NQG/blob/master/src/core/evaluation/eval.py and
+https://github.com/tylin/coco-caption/blob/master/pycocoevalcap/eval.py
+"""
 
 from json import encoder
 from collections import defaultdict
-from .bleu.bleu import Bleu
-from .meteor.meteor import Meteor
-from .rouge.rouge import Rouge
+from federatedscope.nlp.metric.bleu import Bleu
+from federatedscope.nlp.metric.meteor import Meteor
 
 encoder.FLOAT_REPR = lambda o: format(o, '.4f')
 

@@ -1,8 +1,12 @@
+"""
+The implementations are adapted from
+https://github.com/nlpyang/PreSumm/blob/master/src/others/utils.py
+"""
 import os
 import re
 import shutil
 import time
-from federatedscope.nlp.hetero_tasks.metric.generation import pyrouge
+from federatedscope.nlp.metric.rouge import pyrouge
 
 REMAP = {
     "-lrb-": "(",

@@ -1,38 +1,18 @@
-#!/usr/bin/env python
-
-# bleu_scorer.py
-# David Chiang <chiang@isi.edu>
-
-# Copyright (c) 2004-2006 University of Maryland. All rights
-# reserved. Do not redistribute without permission from the
-# author. Not for commercial use.
-
-# Modified by:
-# Hao Fang <hfang@uw.edu>
-# Tsung-Yi Lin <tl483@cornell.edu>
-'''Provides:
-cook_refs(refs, n=4): Transform a list of reference sentences as strings
-into a form usable by cook_test().
-cook_test(test, refs, n=4): Transform a test sentence as a string
-(together with the cooked reference sentences)
-into a form usable by score_cooked().
-'''
-
-# Modified by:
-# Yu Chen <cheny39@rpi.edu>
-
-# Changelog:
-# Convert to python 3
+"""
+The implementations are adapted from https://github.com/tylin/coco-caption/
+blob/master/pycocoevalcap/bleu/bleu_scorer.py
+"""
 
 import copy
 import math
 from collections import defaultdict
 
-
 def precook(s, n=4, out=False):
-    """Takes a string as input and returns an object that can be given to
+    """
+    Takes a string as input and returns an object that can be given to
     either cook_refs or cook_test. This is optional: cook_refs and cook_test
-    can take string arguments as well."""
+    can take string arguments as well.
+    """
     words = s.split()
     counts = defaultdict(int)
     for k in range(1, n + 1):
@@ -42,10 +22,12 @@ def precook(s, n=4, out=False):
     return (len(words), counts)
 
 
-def cook_refs(refs, eff=None, n=4):  # lhuang: oracle will call with "average"
-    '''Takes a list of reference sentences for a single segment
+def cook_refs(refs, eff=None, n=4):
+    """
+    Takes a list of reference sentences for a single segment
     and returns an object that encapsulates everything that BLEU
-    needs to know about them.'''
+    needs to know about them.
+    """
 
     reflen = []
     maxcounts = {}
@@ -61,17 +43,14 @@ def cook_refs(refs, eff=None, n=4):  # lhuang: oracle will call with "average"
     elif eff == "average":
         reflen = float(sum(reflen)) / len(reflen)
 
-    # lhuang: N.B.: leave reflen computaiton to the very end!!
-
-    # lhuang: N.B.: in case of "closest", keep a list of reflens!! (bad
-    # design)
-
     return (reflen, maxcounts)
 
 
 def cook_test(test, refs, eff=None, n=4):
-    '''Takes a test sentence and returns an object that
-    encapsulates everything that BLEU needs to know about it.'''
+    """
+    Takes a test sentence and returns an object that
+    encapsulates everything that BLEU needs to know about it.
+    """
     reflen, refmaxcounts = refs
     testlen, counts = precook(test, n, True)
 
@@ -97,7 +76,8 @@ def cook_test(test, refs, eff=None, n=4):
 
 
 class BleuScorer(object):
-    """Bleu scorer.
+    """
+    Bleu scorer.
     """
 
     __slots__ = "n", "crefs", "ctest", "_score", "_ratio", "_testlen", \
@@ -124,8 +104,10 @@ class BleuScorer(object):
         self.special_reflen = special_reflen
 
     def cook_append(self, test, refs):
-        '''called by constructor and __iadd__ to avoid creating new
-        instances.'''
+        """
+        called by constructor and __iadd__ to avoid creating new
+        instances.
+        """
 
         if refs is not None:
             self.crefs.append(cook_refs(refs))

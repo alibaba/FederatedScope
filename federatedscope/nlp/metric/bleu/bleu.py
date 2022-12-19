@@ -1,17 +1,18 @@
-#!/usr/bin/env python
-#
-# File Name : bleu.py
-#
-# Description : Wrapper for BLEU scorer.
-#
-# Creation Date : 06-01-2015
-# Last Modified : Thu 19 Mar 2015 09:13:28 PM PDT
-# Authors : Hao Fang <hfang@uw.edu> and Tsung-Yi Lin <tl483@cornell.edu>
+"""
+The implementations are adapted from https://github.com/tylin/coco-caption/
+blob/master/pycocoevalcap/bleu/bleu.py
+"""
 
-from .bleu_scorer import BleuScorer
+from federatedscope.nlp.metric.bleu.bleu_scorer import BleuScorer
 
 
-class Bleu:
+class Bleu(object):
+    """
+    The implementation of BLEU refer to 'Bleu: a method for automatic
+    evaluation of machine translation.' [Papineni et al., 2002]
+    (https://aclanthology.org/P02-1040.pdf)
+    """
+
     def __init__(self, n=4):
         # default compute Blue score up to 4
         self._n = n

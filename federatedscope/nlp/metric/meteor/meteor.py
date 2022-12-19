@@ -1,7 +1,7 @@
-#!/usr/bin/env python
-
-# Python wrapper for METEOR implementation, by Xinlei Chen
-# Acknowledge Michael Denkowski for the generous discussion and help
+"""
+The implementations are adapted from https://github.com/tylin/coco-caption/
+blob/master/pycocoevalcap/meteor/meteor.py
+"""
 
 import os
 import sys
@@ -18,7 +18,14 @@ METEOR_JAR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 # en -norm
 
 
-class Meteor:
+class Meteor(object):
+    """
+    The implementation of Meteor refer to 'METEOR: An automatic metric for MT
+    evaluation with improved correlation with human judgments'
+    [Banerjee S, Lavie A., 2005]
+    (https://aclanthology.org/W05-0909.pdf)
+    """
+
     def __init__(self):
         self.meteor_cmd = ' '.join([
             'java', '-Xmx2G', '-jar', METEOR_JAR, '{pred}', '{reference}',
