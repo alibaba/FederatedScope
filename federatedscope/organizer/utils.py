@@ -11,14 +11,28 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.organizer.cfg_client import env_name, root_path, fs_version
 
 
+class OrganizerLogger:
+    def _get_time_stamp(self):
+        return f"[{str(datetime.datetime.now()).split('.')[0]}]"
+
+    def info(self, s):
+        print(f"{self._get_time_stamp()} - INFO: {s}")
+
+    def warning(self, s):
+        print(f"{self._get_time_stamp()} - WARNING: {s}")
+
+    def error(self, s):
+        print(f"{self._get_time_stamp()} - ERROR: {s}")
+
+
 class SSHManager(object):
     def __init__(self, ip, user, psw, ssh_port=22):
+        self.logger = OrganizerLogger()
         self.ip, self.user, self.psw = ip, user, psw
         self.ssh_port = ssh_port
         self.ssh, self.trans = None, None
         self.setup_fs()
         self.tasks = set()
-        self.logger = OrganizerLogger()
 
     def _connect(self):
         self.trans = paramiko.Transport((self.ip, self.ssh_port))
@@ -109,20 +123,6 @@ class SSHManager(object):
                                           f'> /dev/null 2>&1 & echo $!')
         self.tasks.add(stdout)
         return stdout
-
-
-class OrganizerLogger:
-    def _get_time_stamp(self):
-        return f"[{str(datetime.datetime.now()).split('.')[0]}]"
-
-    def info(self, s):
-        print(f"{self._get_time_stamp()} - INFO: {s}.")
-
-    def warning(self, s):
-        print(f"{self._get_time_stamp()} - WARNING: {s}.")
-
-    def error(self, s):
-        print(f"{self._get_time_stamp()} - ERROR: {s}.")
 
 
 def anonymize(info, mask):

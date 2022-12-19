@@ -15,7 +15,9 @@ MAX_INFO_LEN = 30
 
 class UIEventHandler:
     def __init__(self):
+        # TODO: make ecs_dict as ECS Manager
         self.ecs_dict = dict()
+        # TODO: make ecs_dict as Task Manager
         self.task_dict = dict()
         self.organizer = Celery()
         self.organizer.config_from_object('cfg_client')
@@ -62,27 +64,30 @@ class UIEventHandler:
                                   value['yaml_join_task'], \
                                   value['opts_join_task']
         ecs, task = self.ecs_dict[ip], self.task_dict[task_id]
+
         if task['cfg'] == '******':
             # No access authority to the task.
             raise ValueError('Please get access authority via `access_task` '
                              'before joining.')
+
         cfg = global_cfg.clone()
-        opts_cfg = task['cfg'].split(' ')
-        cfg.merge_from_list(opts_cfg)
+        task_cfg = task['cfg']
+        cfg.merge_from_list(task_cfg)
 
         # Merge other opts and convert to command string
         if yaml.endswith('.yaml'):
             cfg.merge_from_file(yaml)
         else:
-            self.logger.warning('The file is none or invalid, ignored.')
+            self.logger.warning('The yaml file is none or invalid, ignored.')
+        opts = opts.split(' ')
         cfg.merge_from_list(opts)
-        cfg = config2cmdargs(flatten_dict(cfg))
 
         # Convert necessary configurations
         cfg['distribute']['server_host'] = server_ip
         cfg['distribute']['client_host'] = ip
         cfg['distribute']['role'] = 'client'
 
+        cfg = config2cmdargs(flatten_dict(cfg))
         command = ''
         for i in cfg:
             value = f'{i}'.replace(' ', '')
@@ -101,7 +106,7 @@ class UIEventHandler:
         if yaml.endswith('.yaml'):
             cfg.merge_from_file(yaml)
         else:
-            self.logger.warning('The file is none or invalid, ignored.')
+            self.logger.warning('The yaml file is none or invalid, ignored.')
         cfg.merge_from_list(opts)
         cfg = config2cmdargs(flatten_dict(cfg))
 
@@ -152,6 +157,10 @@ class UIEventHandler:
             cnt += 1
         info = result.get(timeout=1)
         if isinstance(info, dict):
+            # Get authority,
+            # verbose 0: print no information
+            # verbose 1: print information of a specific room
+            # verbose 2: print information of all the rooms
             self.task_dict[task_id] = info
             self.logger.info(
                 f'Task {task_id} has been updated to be join-able.')
@@ -162,6 +171,7 @@ class UIEventHandler:
             else:
                 self.logger.info(f'Authority of task {task_id} get!')
         else:
+            # Authority denied
             self.logger.info(info)
         return True
 
@@ -362,6 +372,9 @@ def FederatedScopeCloudOrganizer():
                     logger.error('There are no executable commands or '
                                  'multiple commands. Please check the '
                                  'CheckBox.')
+                    for k, v in values.items():
+                        if v is True:
+                            logger.info(f'{k} is True.')
                     continue
 
                 for k, v in values.items():
