@@ -4,7 +4,7 @@ import time
 
 from celery import Celery
 
-from federatedscope.core.configs.config import CN
+from federatedscope.core.configs.config import CN, global_cfg
 from federatedscope.organizer.cfg_client import server_ip
 from federatedscope.organizer.utils import SSHManager, config2cmdargs, \
     flatten_dict, format_print
@@ -28,6 +28,7 @@ class UIEventHandler:
         else:
             format_print('No saved ECS, please add ECS via `AddECS` '
                          'first!')
+        return True
 
     def handle_add_ecs(self, value):
         ip, user, psw = value['ip'], value['user'], value['password']
@@ -43,12 +44,14 @@ class UIEventHandler:
         format_print(f"Delete {key}: {self.ecs_dict[key]}.")
         # TODO: Del all task
         ...
+        return True
 
     def handle_display_task(self, value):
         # TODO: add abort, check status, etc
         for i in self.ecs_dict:
             format_print(f'{self.ecs_dict[i].ip}:'
                          f' {self.ecs_dict[i].tasks}')
+        return True
 
     def handle_join_task(self, value):
         ip, task_id, yaml, opts = value['ip'], value['task_id'], \
@@ -66,7 +69,10 @@ class UIEventHandler:
         cfg['distribute']['role'] = 'client'
 
         # Merge other opts and convert to command string
-        cfg.merge_from_file(yaml)
+        if yaml.endswith('.yaml'):
+            cfg.merge_from_file(yaml)
+        else:
+            format_print('[Warning] The file is none or invalid, ignored.')
         cfg.merge_from_list(opts)
         cfg = config2cmdargs(flatten_dict(cfg))
         command = ''
@@ -76,12 +82,16 @@ class UIEventHandler:
         command = command[1:]
         pid = ecs.launch_task(command)
         format_print(f'{ecs.ip}({pid}) launched,')
+        return True
 
     def handle_create_task(self, value):
         yaml, opts, password = value['yaml'], value['opts'], value['password']
-
-        cfg = CN()
-        cfg.merge_from_file(yaml)
+        opts = opts.split(' ')
+        cfg = global_cfg.clone()
+        if yaml.endswith('.yaml'):
+            cfg.merge_from_file(yaml)
+        else:
+            format_print('[Warning] The file is none or invalid, ignored.')
         cfg.merge_from_list(opts)
         cfg = config2cmdargs(flatten_dict(cfg))
 
@@ -90,30 +100,34 @@ class UIEventHandler:
             value = f'{i}'.replace(' ', '')
             command += f' "{value}"'
         command = command[1:]
-
         result = self.organizer.send_task('server.create_room',
                                           [command, password])
         cnt = 0
         while (not result.ready()) and cnt < TIMEOUT:
-            self.fancy_output('Waiting for response... (will re-try in 1s)')
+            format_print('Waiting for response... (will re-try in 1s)')
             time.sleep(1)
             cnt += 1
-        self.fancy_output(result.get(timeout=1))
+        format_print(result.get(timeout=1))
+        return True
 
     def handle_update_task(self, value):
         format_print('Forget all saved room due to `update_room`.')
         result = self.organizer.send_task('server.display_room')
         cnt = 0
         while (not result.ready()) and cnt < TIMEOUT:
-            self.fancy_output('Waiting for response... (will re-try in 1s)')
+            format_print('Waiting for response... (will re-try in 1s)')
             time.sleep(1)
             cnt += 1
         self.task_dict = result.get(timeout=1)
+        if len(self.task_dict) == 0:
+            format_print('No task available now, please create new task.')
+            return False
         info = ""
         for k, v in self.task_dict.items():
             tmp = f"room_id: {k}, info: {v}\n"
             info += tmp
         format_print(info)
+        return True
 
     def handle_access_task(self, value):
         task_id, psw, verbose = value['task_id'], value['password'], \
@@ -134,6 +148,7 @@ class UIEventHandler:
                 format_print(self.task_dict)
         else:
             format_print(info)
+        return True
 
     def handle_shut_down(self, value):
         result = self.organizer.send_task('server.shut_down')
@@ -143,6 +158,7 @@ class UIEventHandler:
             time.sleep(1)
             cnt += 1
         format_print(result.get(timeout=1))
+        return True
 
 
 def check_value(value_dict):

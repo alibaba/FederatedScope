@@ -121,7 +121,8 @@ def anonymize(info, mask):
 def args2yaml(args):
     init_cfg = global_cfg.clone()
     args = parse_args(shlex.split(args))
-    init_cfg.merge_from_file(args.cfg_file)
+    if args.cfg_file:
+        init_cfg.merge_from_file(args.cfg_file)
     init_cfg.merge_from_list(args.opts)
     _, modified_cfg = get_data(config=init_cfg.clone())
     init_cfg.merge_from_other_cfg(modified_cfg)
@@ -151,7 +152,7 @@ def config2cmdargs(config):
 
     results = []
     for key, value in config.items():
-        if value:
+        if value and not key.startswith('__'):
             results.append(key)
             results.append(value)
     return results
