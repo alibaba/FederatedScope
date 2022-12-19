@@ -10,6 +10,7 @@ from federatedscope.organizer.utils import SSHManager, config2cmdargs, \
     flatten_dict, format_print
 
 TIMEOUT = 10
+MAX_INFO_LEN = 30
 
 
 class UIEventHandler:
@@ -126,7 +127,7 @@ class UIEventHandler:
             cnt += 1
         self.task_dict = result.get(timeout=1)
         if len(self.task_dict) == 0:
-            format_print('No task available now, please create new task.')
+            format_print('No task available now. Please create a new task.')
             return False
         info = ""
         for k, v in self.task_dict.items():
@@ -148,7 +149,7 @@ class UIEventHandler:
         info = result.get(timeout=1)
         if isinstance(info, dict):
             self.task_dict[task_id] = info
-            format_print(f'Room {task_id} has been updated to be join-able.')
+            format_print(f'Task {task_id} has been updated to be join-able.')
             if verbose == '1':
                 format_print(info)
             elif verbose == '2':

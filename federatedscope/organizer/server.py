@@ -66,13 +66,15 @@ class Lobby(object):
         room_id = str(len(room))
         # TODO: we must convert arg line to yaml dict to avoid conflicts
         #  with port
+        cfg = args2yaml(args)
+        # TODO: optimize metainfo
         meta_info = {
-            'command': args,
-            'cfg': args2yaml(args),
+            'data.type': cfg.data.type,
+            'cfg': cfg,
             'psw': psw,
         }
         if room_id in room.keys():
-            raise ValueError
+            raise ValueError('Already existing room.')
         else:
             room[room_id] = meta_info
         self._save('room', room)
