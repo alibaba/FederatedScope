@@ -31,7 +31,8 @@ class UIEventHandler:
         return True
 
     def handle_add_ecs(self, value):
-        ip, user, psw = value['ip'], value['user'], value['password']
+        ip, user, psw = value['ip_add_ecs'], value['user_add_ecs'], \
+                        value['password_add_ecs']
         key = f"{ip}"
         if key in self.ecs_dict:
             raise ValueError(f"ECS `{key}` already exists.")
@@ -54,8 +55,10 @@ class UIEventHandler:
         return True
 
     def handle_join_task(self, value):
-        ip, task_id, yaml, opts = value['ip'], value['task_id'], \
-                                  value['yaml'], value['opts']
+        ip, task_id, yaml, opts = value['ip_join_task'], \
+                                  value['task_id_join_task'], \
+                                  value['yaml_join_task'], \
+                                  value['opts_join_task']
         ecs, task = self.ecs_dict[ip], self.task_dict[task_id]
         if task['cfg'] == '******':
             # No access to the task.
@@ -85,9 +88,12 @@ class UIEventHandler:
         return True
 
     def handle_create_task(self, value):
-        yaml, opts, password = value['yaml'], value['opts'], value['password']
+        yaml, opts, password = value['yaml_create_task'], \
+                               value['opts_create_task'], \
+                               value['password_create_task']
         opts = opts.split(' ')
         cfg = global_cfg.clone()
+        print(111, yaml)
         if yaml.endswith('.yaml'):
             cfg.merge_from_file(yaml)
         else:
@@ -130,8 +136,9 @@ class UIEventHandler:
         return True
 
     def handle_access_task(self, value):
-        task_id, psw, verbose = value['task_id'], value['password'], \
-                                value['vb']
+        task_id, psw, verbose = value['task_id_access_task'], \
+                                value['password_access_task'], \
+                                value['vb_access_task']
         result = self.organizer.send_task('server.view_room', [task_id, psw])
         cnt = 0
         while (not result.ready()) and cnt < TIMEOUT:
@@ -190,23 +197,23 @@ def FederatedScopeCloudOrganizer():
                       [sg.Checkbox('Enabled', default=False, k='add_ecs')],
                       [
                           sg.T('IP Address', size=(8, 1)),
-                          sg.Input('172.X.X.X', key='ip', size=(35, 1))
+                          sg.Input('172.X.X.X', key='ip_add_ecs', size=(35, 1))
                       ],
                       [
                           sg.T('User Name', size=(8, 1)),
-                          sg.Input('root', key='user', size=(35, 1))
+                          sg.Input('root', key='user_add_ecs', size=(35, 1))
                       ],
                       [
                           sg.T('Password', size=(8, 1)),
                           sg.Input('123456',
                                    password_char='*',
-                                   key='password',
+                                   key='password_add_ecs',
                                    size=(35, 1))
                       ]]
     del_ecs_layout = [[sg.Text('Delete ECS from client control list.')],
                       [sg.Checkbox('Enabled', default=False, k='del_ecs')],
                       [sg.Text('IP Address'),
-                       sg.Input(key='ip')]]
+                       sg.Input(key='ip_del_ecs')]]
     ecs_group = sg.TabGroup([[
         sg.Tab('DisplayECS', display_ecs_layout),
         sg.Tab('AddECS', add_ecs_layout),
@@ -225,20 +232,26 @@ def FederatedScopeCloudOrganizer():
                         [sg.Checkbox('Enabled', default=False, k='join_task')],
                         [
                             sg.T('IP Address', size=(8, 1)),
-                            sg.Input('172.X.X.X', key='ip', size=(35, 1))
+                            sg.Input('172.X.X.X',
+                                     key='ip_join_task',
+                                     size=(35, 1))
                         ],
                         [
                             sg.T('Task ID', size=(8, 1)),
-                            sg.Input('0', key='task_id', size=(35, 1))
+                            sg.Input('0',
+                                     key='task_id_join_task',
+                                     size=(35, 1))
                         ],
                         [
                             sg.T('YAML file', size=(8, 1)),
-                            sg.Input('', key='yaml', size=(35, 1)),
+                            sg.Input('', key='yaml_join_task', size=(35, 1)),
                             sg.FilesBrowse()
                         ],
                         [
                             sg.T('Opts', size=(8, 1)),
-                            sg.Input('device 0', key='opts', size=(35, 1))
+                            sg.Input('device 0',
+                                     key='opts_join_task',
+                                     size=(35, 1))
                         ]]
     create_task_layout = [
         [sg.Text('Create FS task in server with specific '
@@ -246,16 +259,19 @@ def FederatedScopeCloudOrganizer():
         [sg.Checkbox('Enabled', default=False, k='create_task')],
         [
             sg.T('YAML file', size=(8, 1)),
-            sg.Input('', key='yaml', size=(35, 1)),
+            sg.Input('', key='yaml_create_task', size=(35, 1)),
             sg.FilesBrowse()
         ],
         [
             sg.T('Opts', size=(8, 1)),
-            sg.Input('device 0', key='opts', size=(35, 1))
+            sg.Input('device 0', key='opts_create_task', size=(35, 1))
         ],
         [
             sg.T('Password', size=(8, 1)),
-            sg.Input('123456', password_char='*', key='password', size=(35, 1))
+            sg.Input('123456',
+                     password_char='*',
+                     key='password_create_task',
+                     size=(35, 1))
         ],
     ]
     update_task_layout = [[
@@ -264,20 +280,29 @@ def FederatedScopeCloudOrganizer():
     ], [sg.Checkbox('Enabled', default=False, k='update_task')]]
 
     # TODO: merge with join
-    access_task_layout = [
-        [sg.Text('Obtain access to a specific task.')],
-        [sg.Checkbox('Enabled', default=False, k='access_task')],
-        [
-            sg.T('TaskID', size=(8, 1)),
-            sg.Input('0', key='task_id', size=(35, 1))
-        ],
-        [
-            sg.T('Password', size=(8, 1)),
-            sg.Input('123456', password_char='*', key='password', size=(35, 1))
-        ],
-        [sg.T('Verbose', size=(8, 1)),
-         sg.Input('0', key='vb', size=(35, 1))]
-    ]
+    access_task_layout = [[sg.Text('Obtain access to a specific task.')],
+                          [
+                              sg.Checkbox('Enabled',
+                                          default=False,
+                                          k='access_task')
+                          ],
+                          [
+                              sg.T('TaskID', size=(8, 1)),
+                              sg.Input('0',
+                                       key='task_id_access_task',
+                                       size=(35, 1))
+                          ],
+                          [
+                              sg.T('Password', size=(8, 1)),
+                              sg.Input('123456',
+                                       password_char='*',
+                                       key='password_access_task',
+                                       size=(35, 1))
+                          ],
+                          [
+                              sg.T('Verbose', size=(8, 1)),
+                              sg.Input('0', key='vb_access_task', size=(35, 1))
+                          ]]
     task_group = sg.TabGroup([[
         sg.Tab('DisplayTask', display_task_layout),
         sg.Tab('JoinTask', join_task_layout),
