@@ -24,7 +24,7 @@ for ((l = 0; l < ${#lrs[@]}; l++)); do
     for ((d = 0; d < ${#dps[@]}; d++)); do
       for ((s = 0; s < ${#steps[@]}; s++)); do
         for k in {1..3}; do
-          python federatedscope/main.py --cfg benchmark/FedHPOB/scripts/gcn/cora_dp.yaml device $cudaid train.optimizer.lr ${lrs[$l]} train.optimizer.weight_decay ${wds[$w]} model.dropout ${dps[$d]} train.local_update_steps ${steps[$s]} federate.sample_client_num $sample_num seed $k outdir ${out_dir}/${sample_num} expname lr${lrs[$l]}_wd${wds[$w]}_dropout${dps[$d]}_step${steps[$s]}_seed${k} >/dev/null 2>&1
+          python federatedscope/main.py --cfg benchmark/FedHPOBench/scripts/gcn/cora_dp.yaml device $cudaid train.optimizer.lr ${lrs[$l]} train.optimizer.weight_decay ${wds[$w]} model.dropout ${dps[$d]} train.local_update_steps ${steps[$s]} federate.sample_client_num $sample_num seed $k outdir ${out_dir}/${sample_num} expname lr${lrs[$l]}_wd${wds[$w]}_dropout${dps[$d]}_step${steps[$s]}_seed${k} >/dev/null 2>&1
         done
       done
     done

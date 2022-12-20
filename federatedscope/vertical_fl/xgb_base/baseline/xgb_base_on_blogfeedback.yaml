@@ -9,10 +9,10 @@ model:
 data:
   root: data/
   type: blog
-  batch_size: 8000
   splits: [1.0, 0.0]
 dataloader:
   type: raw
+  batch_size: 8000
 criterion:
   type: Regression
 trainer:

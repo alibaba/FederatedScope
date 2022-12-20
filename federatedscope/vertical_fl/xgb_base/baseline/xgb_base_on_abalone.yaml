@@ -9,10 +9,10 @@ model:
 data:
   root: data/
   type: abalone
-  batch_size: 4000
   splits: [0.8, 0.2]
 dataloader:
   type: raw
+  batch_size: 4000
 criterion:
   type: Regression
 trainer:
