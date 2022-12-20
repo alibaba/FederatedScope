@@ -47,7 +47,7 @@ class XGBClient(Client):
         self.federate_mode = config.federate.mode
 
         self.bin_num = config.train.optimizer.bin_num
-        self.batch_size = config.data.batch_size
+        self.batch_size = config.dataloader.batch_size
 
         self.data = data
         self.own_label = ('y' in self.data['train'])
@@ -74,7 +74,7 @@ class XGBClient(Client):
         self.num_of_parties = self._cfg.federate.client_num
 
         self.dataloader = batch_iter(self.data['train'],
-                                     self._cfg.data.batch_size,
+                                     self.batch_size,
                                      shuffled=True)
 
         self.feature_order = None
