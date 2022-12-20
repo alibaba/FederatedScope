@@ -48,7 +48,7 @@ class XGBClient(Client):
 
         self.bin_num = config.train.optimizer.bin_num
 
-        self.lr = config.train.optimizer.learning_rate
+        self.eta = config.train.optimizer.learning_rate
         self.batch_size = config.dataloader.batch_size
 
         self.data = data
@@ -223,7 +223,7 @@ class XGBClient(Client):
             if self.tree_list[tree_num][node_num].weight:
                 self.z += self.tree_list[tree_num][
                     node_num].weight * self.tree_list[tree_num][
-                        node_num].indicator * self.lr
+                        node_num].indicator * self.eta
             self.compute_weight(tree_num, node_num + 1)
 
     def callback_func_for_send_feature_importance(self, message: Message):
