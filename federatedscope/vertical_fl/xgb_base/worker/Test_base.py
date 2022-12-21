@@ -77,7 +77,7 @@ class Test_base:
         elif self.client.tree_list[tree_num][node_num].weight:
             self.client.test_result += self.client.tree_list[tree_num][
                 node_num].indicator * self.client.tree_list[tree_num][
-                    node_num].weight
+                    node_num].weight * self.client.eta
             self.test_for_node(tree_num, node_num + 1)
         elif self.client.tree_list[tree_num][node_num].member:
             self.client.comm_manager.send(
