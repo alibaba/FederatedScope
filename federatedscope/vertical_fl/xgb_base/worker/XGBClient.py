@@ -48,7 +48,7 @@ class XGBClient(Client):
 
         self.bin_num = config.train.optimizer.bin_num
 
-        self.eta = config.train.optimizer.learning_rate
+        self.eta = config.train.optimizer.eta
         self.batch_size = config.dataloader.batch_size
 
         self.data = data
