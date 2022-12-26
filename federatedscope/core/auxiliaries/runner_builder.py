@@ -1,4 +1,4 @@
-from federatedscope.core.fed_runner import StandaloneRunner, DistributedRunner
+from federatedscope.core.fed_runner import StandaloneRunner, DistributedRunner, StandaloneMultiProcessRunner, StandaloneMultiGPURunner
 
 
 def get_runner(data, server_class, client_class, config, client_configs=None):
@@ -18,18 +18,27 @@ def get_runner(data, server_class, client_class, config, client_configs=None):
 
     Note:
       The key-value pairs of built-in runner and source are shown below:
-        ===============================  ==============================
-        Mode                             Source
-        ===============================  ==============================
-        ``standalone``                   ``core.fed_runner.StandaloneRunner``
-        ``distributed``                  ``core.fed_runner.DistributedRunner``
-        ===============================  ==============================
+        ============================================  ===============================
+        Mode                                          Source
+        ============================================  ===============================
+        ``standalone``                                ``core.fed_runner.StandaloneRunner``
+        ``distributed``                               ``core.fed_runner.DistributedRunner``
+        ``standalone(multi_gpu=False,prcess_num>1)``  ``core.fed_runner.StandaloneMultiProcessRunner``
+        ``standalone(multi_gpu=True,process_num>1)``  ``core.fed_runner.StandaloneMultiGPURunner``
+        ============================================  ===============================
     """
 
     mode = config.federate.mode.lower()
+    multi_gpu = config.federate.multi_gpu
+    process_num = config.federate.process_num
 
     if mode == 'standalone':
-        runner_cls = StandaloneRunner
+        if process_num == 1:
+            runner_cls = StandaloneRunner
+        elif multi_gpu:
+            runner_cls = StandaloneMultiGPURunner
+        else:
+            runner_cls = StandaloneMultiProcessRunner
     elif mode == 'distributed':
         runner_cls = DistributedRunner
 

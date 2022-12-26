@@ -3,6 +3,9 @@ import logging
 
 from collections import deque
 import heapq
+import multiprocessing
+# multiprocessing.set_start_method('spawn', force=True)
+import time
 
 import numpy as np
 
@@ -277,6 +280,9 @@ class BaseRunner(object):
 
 class StandaloneRunner(BaseRunner):
     def _set_up(self):
+        """
+        To set up server and client for standalone mode.
+        """
         self.is_run_online = True if self.cfg.federate.online_aggr else False
         self.shared_comm_queue = deque()
 
@@ -486,8 +492,290 @@ class StandaloneRunner(BaseRunner):
                     break
 
 
+class StandaloneMultiProcessRunner(StandaloneRunner):
+    def _set_up(self):
+        """
+        To set up server and client for multiprocess training in standalone mode.
+        """
+
+        if self.cfg.backend == 'torch':
+            import torch
+            torch.set_num_threads(1)
+
+        assert self.cfg.federate.client_num != 0, \
+            "In standalone mode, self.cfg.federate.client_num should be " \
+            "non-zero. " \
+            "This is usually cased by using synthetic data and users not " \
+            "specify a non-zero value for client_num"
+
+        if self.cfg.federate.client_num < self.cfg.federate.process_num:
+            logger.warning('The process number is more than client number')
+            self.cfg.federate.process_num = self.cfg.federate.client_num
+
+        # sample resource information
+        if self.resource_info is not None:
+            if len(self.resource_info) < self.cfg.federate.client_num + 1:
+                replace = True
+                logger.warning(
+                    f"Because the provided the number of resource information "
+                    f"{len(self.resource_info)} is less than the number of "
+                    f"participants {self.cfg.federate.client_num + 1}, one "
+                    f"candidate might be selected multiple times.")
+            else:
+                replace = False
+            sampled_index = np.random.choice(
+                list(self.resource_info.keys()),
+                size=self.cfg.federate.client_num + 1,
+                replace=replace)
+            server_resource_info = self.resource_info[sampled_index[0]]
+            client_resource_info = [
+                self.resource_info[x] for x in sampled_index[1:]
+            ]
+        else:
+            server_resource_info = None
+            client_resource_info = None
+
+        self.manager = multiprocessing.Manager()
+        self.client2server_comm_queue = self.manager.Queue()
+        self.server2client_comm_queue = list()
+        for process_id in range(self.cfg.federate.process_num):
+            self.server2client_comm_queue.append(self.manager.Queue())
+
+        # Instantiate ClientRunner for parallel training
+        self.client_runners = list()
+        self.id2comm = dict()
+        client_num_per_process = \
+            self.cfg.federate.client_num // self.cfg.federate.process_num
+        for process_id in range(self.cfg.federate.process_num):
+            client_ids_start = process_id * client_num_per_process + 1
+            client_ids_end = client_ids_start + client_num_per_process \
+                if process_id != self.cfg.federate.process_num - 1 \
+                else self.cfg.federate.client_num + 1
+            runner_device = f'cuda:{process_id%8}'
+            client_runner = ClientRunner(
+                client_ids=range(client_ids_start, client_ids_end),
+                device=runner_device,
+                config=self.cfg,
+                data={
+                    k: v
+                    for k, v in self.data.items()
+                    if k in range(client_ids_start, client_ids_end)
+                },
+                client_class=self.client_class,
+                unseen_clients_id=self.unseen_clients_id,
+                receive_channel=self.server2client_comm_queue[process_id],
+                send_channel=self.client2server_comm_queue,
+                # TODO
+                client_resource_info=client_resource_info)
+            self.client_runners.append(client_runner)
+            for client_id in range(client_ids_start, client_ids_end):
+                self.id2comm[client_id] = process_id
+
+        self.server = self._setup_server(
+            resource_info=server_resource_info,
+            client_resource_info=client_resource_info)
+
+    def _get_server_args(self, resource_info=None, client_resource_info=None):
+        if self.server_id in self.data:
+            server_data = self.data[self.server_id]
+            model = get_model(self.cfg.model,
+                              server_data,
+                              backend=self.cfg.backend)
+        else:
+            server_data = None
+            data_representative = self.data[1]
+            model = get_model(
+                self.cfg.model, data_representative, backend=self.cfg.backend
+            )  # get the model according to client's data if the server
+            # does not own data
+        kw = {
+            'shared_comm_queue': self.server2client_comm_queue,
+            'id2comm': self.id2comm,
+            'resource_info': resource_info,
+            'client_resource_info': client_resource_info
+        }
+        return server_data, model, kw
+
+    def _get_client_args(self, client_id=-1, resource_info=None):
+        client_data = self.data[client_id]
+        kw = {
+            'shared_comm_queue': self.client2server_comm_queue,
+            'resource_info': resource_info
+        }
+        return client_data, kw
+
+    def run(self):
+        def _print_error(error):
+            logger.error(error)
+
+        logger.info('Multi-processes are starting for parallel training ...')
+        self.pool = multiprocessing.Pool(
+            processes=self.cfg.federate.process_num)
+        for client_runner in self.client_runners:
+            self.pool.apply_async(client_runner.run,
+                                  error_callback=_print_error)
+        self.pool.close()
+
+        # TODO: Can online aggregation work?
+        self._run_simulation()
+
+        self.pool.join()
+        self.server._monitor.finish_fed_runner(fl_mode=self.mode)
+
+        return self.server.best_results
+
+    def _handle_msg(self, msg, rcv=-1):
+        """
+        To simulate the message handling process (used only for the
+        standalone mode)
+        """
+        if rcv != -1:
+            # simulate broadcast one-by-one
+            self.client[rcv].msg_handlers[msg.msg_type](msg)
+            return
+
+        _, receiver = msg.sender, msg.receiver
+        download_bytes, upload_bytes = msg.count_bytes()
+        if not isinstance(receiver, list):
+            receiver = [receiver]
+        for each_receiver in receiver:
+            if each_receiver == 0:
+                self.server.msg_handlers[msg.msg_type](msg)
+                self.server._monitor.track_download_bytes(download_bytes)
+            else:
+                self.client[each_receiver].msg_handlers[msg.msg_type](msg)
+                self.client[each_receiver]._monitor.track_download_bytes(
+                    download_bytes)
+
+    def _run_simulation(self):
+        """
+        Run for standalone simulation (W/O online aggr)
+        """
+        server_msg_cache = list()
+        while True:
+            if not self.client2server_comm_queue.empty():
+                msg = self.client2server_comm_queue.get()
+                # For the server, move the received message to a
+                # cache for reordering the messages according to
+                # the timestamps
+                heapq.heappush(server_msg_cache, msg)
+            elif len(server_msg_cache) > 0:
+                msg = heapq.heappop(server_msg_cache)
+                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                        == 'time_up':
+                    # When the timestamp of the received message beyond
+                    # the deadline for the currency round, trigger the
+                    # time up event first and push the message back to
+                    # the cache
+                    if self.server.trigger_for_time_up(msg.timestamp):
+                        heapq.heappush(server_msg_cache, msg)
+                    else:
+                        self._handle_msg(msg)
+                else:
+                    self._handle_msg(msg)
+            else:
+                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                        == 'time_up':
+                    self.server.trigger_for_time_up()
+                    if self.client2server_comm_queue.empty() and \
+                            len(server_msg_cache) == 0:
+                        break
+                    else:
+                        # terminate when shared_comm_queue and
+                        # server_msg_cache are all empty
+                        time.sleep(0.01)
+                        # break
+
+class StandaloneMultiGPURunner(StandaloneRunner):
+    pass
+
+class ClientRunner(StandaloneMultiProcessRunner):
+    """Simulate a group of clients in standalone mode
+    """
+    def __init__(self,
+                 client_ids,
+                 device,
+                 config,
+                 data,
+                 client_class,
+                 unseen_clients_id,
+                 receive_channel,
+                 send_channel,
+                 client_resource_info=None,
+                 client_cfgs=None):
+
+        self.data = data
+        self.client_ids = client_ids
+        self.base_client_id = client_ids[0]
+        self.receive_channel = receive_channel
+        self.client2server_comm_queue = send_channel
+
+        self.client_group = dict()
+        self.shared_model = get_model(
+            config.model, data[self.base_client_id], backend=config.backend
+        ) if config.federate.share_local_model else None
+        server_id = 0
+
+        for client_id in client_ids:
+            client_data, kw = self._get_client_args(
+                client_id, client_resource_info[client_id]
+                if client_resource_info is not None else None)
+            client_specific_config = config.clone()
+            # TODO
+            if client_cfgs is not None:
+                client_specific_config.defrost()
+                client_specific_config.merge_from_other_cfg(
+                    client_cfgs.get('client_{}'.format(client_id)))
+                client_specific_config.freeze()
+            client_device = device
+
+            client = client_class(ID=client_id,
+                                  server_id=server_id,
+                                  config=client_specific_config,
+                                  data=client_data,
+                                  model=self.shared_model
+                                  or get_model(client_specific_config.model,
+                                               client_data,
+                                               backend=config.backend),
+                                  device=client_device,
+                                  is_unseen_client=client_id
+                                  in unseen_clients_id,
+                                  **kw)
+
+            logger.info(f'Client {client_id} has been set up ... ')
+            self.client_group[client_id] = client
+
+    def run(self):
+        for id, client in self.client_group.items():
+            client.join_in()
+        while True:
+            if not self.receive_channel.empty():
+                msg = self.receive_channel.get()
+                self._handle_msg(msg)
+
+    def _handle_msg(self, msg, rcv=-1):
+        if rcv != -1:
+            # simulate broadcast one-by-one
+            self.client_group[rcv].msg_handlers[msg.msg_type](msg)
+            return
+
+        _, receiver = msg.sender, msg.receiver
+        download_bytes, upload_bytes = msg.count_bytes()
+        if not isinstance(receiver, list):
+            receiver = [receiver]
+        for each_receiver in receiver:
+            if each_receiver in self.client_ids:
+                self.client_group[each_receiver].msg_handlers[msg.msg_type](
+                    msg)
+                self.client_group[each_receiver]._monitor.track_download_bytes(
+                    download_bytes)
+
+
 class DistributedRunner(BaseRunner):
     def _set_up(self):
+        """
+        To set up server or client for distributed mode.
+        """
         # sample resource information
         if self.resource_info is not None:
             sampled_index = np.random.choice(list(self.resource_info.keys()))
@@ -822,7 +1110,7 @@ class FedRunner(object):
                 )  # get the model according to client's data if the server
                 # does not own data
             kw = {
-                'shared_comm_queue': self.shared_comm_queue,
+                'comm_queue': self.shared_comm_queue,
                 'resource_info': resource_info,
                 'client_resource_info': client_resource_info
             }
@@ -873,7 +1161,7 @@ class FedRunner(object):
         if self.mode == 'standalone':
             client_data = self.data[client_id]
             kw = {
-                'shared_comm_queue': self.shared_comm_queue,
+                'comm_queue': self.shared_comm_queue,
                 'resource_info': resource_info
             }
         elif self.mode == 'distributed':

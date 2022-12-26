@@ -93,6 +93,7 @@ class Client(BaseClient):
                                    config=self._cfg,
                                    is_attacker=self.is_attacker,
                                    monitor=self._monitor)
+        self.device = device
 
         # For client-side evaluation
         self.best_results = dict()
@@ -211,6 +212,13 @@ class Client(BaseClient):
             if msg.msg_type == 'finish':
                 break
 
+    def run_standalone(self):
+        """
+        Run in standalone mode
+        """
+        self.join_in()
+        self.run()
+
     def callback_funcs_for_model_para(self, message: Message):
         """
         The handling function for receiving model parameters, \
@@ -270,6 +278,8 @@ class Client(BaseClient):
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
             # and synchronized with the received model
+            for k, v in content.items():
+                content[k] = v.to(self.device)
             self.trainer.update(content,
                                 strict=self._cfg.federate.share_local_model)
             self.state = round

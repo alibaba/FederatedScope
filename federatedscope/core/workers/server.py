@@ -5,6 +5,7 @@ import sys
 
 import numpy as np
 import pickle
+import time
 
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
@@ -88,7 +89,8 @@ class Server(BaseServer):
             self._cfg.early_stop.improve_indicator_mode,
             self._monitor.the_larger_the_better)
 
-        if self._cfg.federate.share_local_model:
+        if self._cfg.federate.share_local_model \
+                and not self._cfg.federate.process_num > 1:
             # put the model to the specified device
             model.to(device)
         # Build aggregator
@@ -195,9 +197,11 @@ class Server(BaseServer):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
-            comm_queue = kwargs['shared_comm_queue']
+            comm_queue = kwargs.get('shared_comm_queue', None)
+            id2comm = kwargs.get('id2comm', None)
             self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor)
+                                                      monitor=self._monitor,
+                                                      id2comm=id2comm)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
@@ -320,8 +324,16 @@ class Server(BaseServer):
         # round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
             if not check_eval_result:
+                print(
+                    'before aggregation',
+                    time.strftime('%Y-%m-%d %H:%M:%S',
+                                  time.localtime(time.time())))
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
+                print(
+                    'after aggregation',
+                    time.strftime('%Y-%m-%d %H:%M:%S',
+                                  time.localtime(time.time())))
 
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
@@ -336,6 +348,9 @@ class Server(BaseServer):
                     logger.info(
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
+                    print('time cost: {:.2f}'.format(time.time() -
+                                                     self.init_time))
+                    self.init_time = time.time()
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
                     self.msg_buffer['train'][self.state] = dict()
@@ -344,6 +359,8 @@ class Server(BaseServer):
                     self._start_new_training_round(aggregated_num)
                 else:
                     # Final Evaluate
+                    print('time cost: {:.2f}'.format(time.time() -
+                                                     self.ori_time))
                     logger.info('Server: Training is finished! Starting '
                                 'evaluation.')
                     self.eval()
@@ -804,6 +821,12 @@ class Server(BaseServer):
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.
                 format(self.state))
+            print(time.strftime('%Y-%m-%d %H:%M:%S',
+                              time.localtime(time.time())))
+            self.init_time = time.time()
+            self.ori_time = time.time()
+            self.broadcast_model_para(msg_type='model_para',
+                                      sample_client_num=self.sample_client_num)
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,

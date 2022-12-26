@@ -2,6 +2,7 @@ import logging
 
 from federatedscope.core.configs.config import CN
 from federatedscope.register import register_config
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,10 @@ def extend_fl_setting_cfg(cfg):
     # in each training round, ['uniform', 'group']
     cfg.federate.resource_info_file = ""  # the device information file to
     # record computation and communication ability
+
+    # The configurations for parallel in standalone
+    cfg.federate.process_num = 1
+    cfg.federate.multi_gpu = False
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options
@@ -186,5 +191,23 @@ def assert_fl_setting_cfg(cfg):
         logger.warning('Set cfg.federate.make_global_eval=True since '
                        'cfg.federate.merge_test_data=True')
 
+    if cfg.federate.process_num > 1 and cfg.federate.mode != 'standalone':
+        cfg.federate.process_num = 1
+        logger.warning('Parallel training can only be used in standalone mode'
+                       ', thus cfg.federate.process_num is modified to 1')
+    if cfg.federate.mode == 'standalone' and cfg.federate.process_num < 1:
+        cfg.federate.process_num = 1
+        logger.warning('We found that cfg.federate.process_num is invalid for '
+                       'standalone mode (i.e., process_num < 1), '
+                       'thus cfg.federate.process_num is modified to 1')
+    if cfg.federate.multi_gpu and not torch.cuda.is_available():
+        cfg.federate.multi_gpu = False
+        logger.warning('No GPU found for your device, set multi_gpu=False')
+    if cfg.federate.multi_gpu and torch.cuda.device_count() == 1:
+        cfg.federate.multi_gpu = False
+        logger.warning('Set cfg.federate.multi_gpu=False since there is only one gpu')
+    if cfg.federate.multi_gpu and torch.cuda.device_count() < cfg.federate.process_num:
+        cfg.federate.process_num = torch.cuda.device_count()
+        logger.warning(f'We found the number of gpu is insufficient for multi_gpu mode, thus cfg.federate.process_num={cfg.federate.process_num}')
 
 register_config("fl_setting", extend_fl_setting_cfg)
