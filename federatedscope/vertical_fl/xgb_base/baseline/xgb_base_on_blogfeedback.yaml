@@ -24,6 +24,8 @@ train:
     gamma: 0
     num_of_trees: 9
     max_tree_depth: 3
+    # learning rate for xgb model
+    eta: 1
 vertical_dims: [10, 20]
 xgb_base:
   use: True
