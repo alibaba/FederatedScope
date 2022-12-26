@@ -7,8 +7,8 @@ from smac.facade.smac_bb_facade import SMAC4BB
 from smac.facade.smac_hpo_facade import SMAC4HPO
 from smac.scenario.scenario import Scenario
 
-from fedhpob.config import fhb_cfg
-from fedhpob.utils.monitor import Monitor
+from fedhpobench.config import fhb_cfg
+from fedhpobench.utils.monitor import Monitor
 
 logging.basicConfig(level=logging.WARNING)
 

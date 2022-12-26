@@ -9,10 +9,10 @@ model:
 data:
   root: data/
   type: abalone
-  batch_size: 4000
   splits: [0.8, 0.2]
 dataloader:
   type: raw
+  batch_size: 4000
 criterion:
   type: Regression
 trainer:
@@ -24,6 +24,8 @@ train:
     gamma: 0
     num_of_trees: 10
     max_tree_depth: 3
+    # learning rate for xgb model
+    eta: 0.5
 vertical_dims: [4, 8]
 xgb_base:
   use: True
