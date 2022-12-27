@@ -5,7 +5,7 @@ import pickle
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    gRPCCommManager_for_listening, gRPCommManager_for_sending
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
@@ -145,8 +145,9 @@ class Client(BaseClient):
             port = kwargs['port']
             server_host = kwargs['server_host']
             server_port = kwargs['server_port']
-            self.comm_manager = gRPCCommManager(
+            self.comm_manager_for_listen = gRPCCommManager_for_listening(
                 host=host, port=port, client_num=self._cfg.federate.client_num)
+            self.comm_manager = gRPCommManager_for_sending()
             logger.info('Client: Listen to {}:{}...'.format(host, port))
             self.comm_manager.add_neighbors(neighbor_id=server_id,
                                             address={
@@ -154,8 +155,8 @@ class Client(BaseClient):
                                                 'port': server_port
                                             })
             self.local_address = {
-                'host': self.comm_manager.host,
-                'port': self.comm_manager.port
+                'host': self.comm_manager_for_listen.host,
+                'port': self.comm_manager_for_listen.port
             }
 
     def _gen_timestamp(self, init_timestamp, instance_number):
@@ -197,6 +198,7 @@ class Client(BaseClient):
                     receiver=[self.server_id],
                     timestamp=0,
                     content=self.local_address))
+        print('here!!!!')
 
     def run(self):
         """
@@ -204,7 +206,7 @@ class Client(BaseClient):
         distributed mode)
         """
         while True:
-            msg = self.comm_manager.receive()
+            msg = self.comm_manager_for_listen.receive()
             if self.state <= msg.state:
                 self.msg_handlers[msg.msg_type](msg)
 

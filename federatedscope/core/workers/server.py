@@ -9,7 +9,7 @@ import pickle
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    gRPCCommManager_for_listening, gRPCommManager_for_sending
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
@@ -201,9 +201,10 @@ class Server(BaseServer):
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
-            self.comm_manager = gRPCCommManager(host=host,
+            self.comm_manager_for_listening = gRPCCommManager_for_listening(host=host,
                                                 port=port,
                                                 client_num=client_num)
+            self.comm_manager = gRPCommManager_for_sending()
             logger.info('Server: Listen to {}:{}...'.format(host, port))
 
         # inject noise before broadcast
@@ -236,7 +237,7 @@ class Server(BaseServer):
 
         # Begin: Broadcast model parameters and start to FL train
         while self.join_in_client_num < self.client_num:
-            msg = self.comm_manager.receive()
+            msg = self.comm_manager_for_listening.receive()
             self.msg_handlers[msg.msg_type](msg)
 
         # Running: listen for message (updates from clients),
@@ -248,7 +249,7 @@ class Server(BaseServer):
         with Timeout(time_budget) as time_counter:
             while self.state <= self.total_round_num:
                 try:
-                    msg = self.comm_manager.receive()
+                    msg = self.comm_manager_for_listening.receive()
                     move_on_flag = self.msg_handlers[msg.msg_type](msg)
                     if move_on_flag:
                         time_counter.reset()
@@ -612,6 +613,7 @@ class Server(BaseServer):
                              msg_type='model_para',
                              sample_client_num=-1,
                              filter_unseen_clients=True):
+        print('before broadcasting')
         """
         To broadcast the message to all clients or sampled clients
 
@@ -672,6 +674,7 @@ class Server(BaseServer):
         if filter_unseen_clients:
             # restore the state of the unseen clients within sampler
             self.sampler.change_state(self.unseen_clients_id, 'seen')
+        print('after broadcasting')
 
     def broadcast_client_address(self):
         """
