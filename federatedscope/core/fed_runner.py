@@ -686,8 +686,6 @@ class StandaloneMultiProcessRunner(StandaloneRunner):
                         time.sleep(0.01)
                         # break
 
-class StandaloneMultiGPURunner(StandaloneRunner):
-    pass
 
 class ClientRunner(StandaloneMultiProcessRunner):
     """Simulate a group of clients in standalone mode
@@ -1288,3 +1286,9 @@ class FedRunner(object):
         except Exception as error:
             logger.warning(f'Completeness check failed for {error}!')
         return
+
+def setup_multigpu_runner():
+    pass
+
+class StandaloneMultiGPURunner(StandaloneRunner):
+    pass
