@@ -21,7 +21,6 @@ from federatedscope.core.workers import Server
 from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.autotune.pfedhpo.utils import *
 from federatedscope.autotune.utils import parse_search_space
-from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +100,10 @@ class pFedHPOServer(Server):
         else:
             for k, v in self._ss.items():
                 if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
-                    raise ValueError("Unsupported hyper type {}".format(type(v)))
+                    if hasattr(v, 'choices'):
+                        self.pbounds[k] = list(v.choices)
+                    else:
+                        raise ValueError("Unsupported hyper type {}".format(type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -156,9 +158,9 @@ class pFedHPOServer(Server):
 
         self.opt = torch.optim.Adam(
             [{'params': self.HyperNet.EncNet.parameters(), 'lr': 0.001, 'weight_decay': 1e-4},
-             {'params': self.HyperNet.encoding, 'lr': 0.001,
-              'weight_decay': 1e-4
-              }
+             # {'params': self.HyperNet.encoding, 'lr': 0.001,
+             #  'weight_decay': 1e-4
+             #  }
              ])
 
         with open(os.path.join(self._cfg.hpo.working_folder,
@@ -243,7 +245,7 @@ class pFedHPOServer(Server):
 
                     idx = m.sample()
                     p = v[idx.item()]
-                    if self._ss[k].log:
+                    if hasattr(self._ss[k], 'log') and self._ss[k].log:
                         p = 10 ** p
                     if 'int' in str(type(self._ss[k])).lower():
                         sampled_cfg[k] = int(p)
@@ -252,7 +254,7 @@ class pFedHPOServer(Server):
 
                     log_prob = m.log_prob(idx)
                     client_logprob += log_prob
-                    self.p_idx[k][self.client2idx[rcv_idx]] = idx
+                    self.p_idx[k][self.client2idx[rcv_idx]] = torch.argmax(probs)
 
                 self.logprob[self.client2idx[rcv_idx]] = client_logprob / len(self.pbounds)
 
@@ -318,31 +320,9 @@ class pFedHPOServer(Server):
         res_end = self.history_results[key1][key2][-1]
 
         if not self.discrete:
-            if 'cifar13' in str(self._cfg.hpo.working_folder):
-                reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
-                losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max))
-            # elif 'cifar17' in str(self._cfg.hpo.working_folder):
-            #     reward = np.maximum(0, res_end - anchor_res_start)
-            #     losses = (1.0 - reward) / anchor_res_start * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max))
-            elif 'cifar12' in str(self._cfg.hpo.working_folder):
-                reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
-                losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
-            # elif 'cifar14' in str(self._cfg.hpo.working_folder):
-            #     reward = np.maximum(0, res_end - anchor_res_start)
-            #     losses = (1.0 - reward) / anchor_res_start * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
 
-            # elif 'cifar15' in str(self._cfg.hpo.working_folder):
-            #     reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
-            #     losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
-
-            # elif 'cifar16' in str(self._cfg.hpo.working_folder):
-            #     reward = np.maximum(0, res_end - anchor_res_start)
-            #     losses = ((1.0 - reward) / anchor_res_start) **0.5 * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) **2
-            elif 'cifar20' in str(self._cfg.hpo.working_folder):
-                reward = np.maximum(0, res_end - anchor_res_start) ** 0.5 * anchor_res_start
-                losses = (1.0 - reward) * (1 - torch.exp(self.logprob) / torch.exp(self.logprob_max)) ** 2
-            else:
-                raise NotImplementedError
+            reward = np.maximum(0, res_end - anchor_res_start)
+            losses = - reward * self.logprob
 
         else:
             reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
@@ -369,6 +349,7 @@ class pFedHPOServer(Server):
                 for k in self.pbounds.keys():
                     self.tb_writer.add_scalar('%s_%d'%(k,cid), self.p_idx[k][idx], self.state)
         self.tb_writer.add_scalar('loss', loss, self.state)
+        self.tb_writer.add_scalar('reward', reward, self.state)
 
 
     def check_and_move_on(self,

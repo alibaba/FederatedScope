@@ -55,26 +55,44 @@ class pFedHPOClient(Client):
             #         raise NotImplementedError
             # feats = torch.cat(feats).mean(0).squeeze()
 
+            print(self._cfg.data.type)
+            if self._cfg.data.type == 'mini-graph-dc':
+                d_enc = 74
+                graph = True
+                n_label = 6
+                d_rff = 10
 
+            elif 'cifar' in str(self._cfg.data.type).lower():
+                d_enc = 32 * 32 * 3
+                graph = False
+                n_label = 10
+                d_rff = 6
+
+            elif 'femnist' in str(self._cfg.data.type).lower():
+                d_enc = 28 * 28
+                graph = False
+                n_label = 62
+                d_rff = 2
+
+            # elif 'cora' in str(self._cfg.data.type).lower():
+                # d_enc = 3
+                # graph = True
+                # n_label = 7
+
+            else:
+                raise NotImplementedError
             mmd_type = 'sphere'
-            d_enc = 32*32*3
-            d_rff = 10
             rff_sigma = [127,]
             rff_sigma = [float(sig) for sig in rff_sigma]
+
             embs = []
             for sig in rff_sigma:
-                if mmd_type == 'sphere':
-                    w_freq = weights_sphere(d_rff, d_enc, sig, device, seed=1234)
-                else:
-                    w_freq = weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234)
-
                 emb = noisy_dataset_embedding(
-                    data['train'], w_freq, d_rff, device,
-                    n_labels=10, noise_factor=1.0,
-                    mmd_type=mmd_type, sum_frequency=25)
+                    data['train'], d_enc, sig, d_rff, device,
+                    n_labels=n_label, noise_factor=0.1,
+                    mmd_type=mmd_type, sum_frequency=25, graph=graph)
                 embs.append(emb)
             feats = torch.cat(embs).reshape(-1)
-
 
             torch.save(feats, os.path.join(self._cfg.hpo.working_folder, 'client_%d_encoding.pt' % self.ID))
 

@@ -8,17 +8,10 @@ import pickle
 import torch.nn
 import yaml
 
-import numpy as np
-from numpy.linalg import norm
-from scipy.special import logsumexp
-from torch.nn import functional as F
-
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Server
-from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.autotune.pfedhpo.utils import *
 from federatedscope.autotune.utils import parse_search_space
-from federatedscope.core.auxiliaries.utils import logfile_2_wandb_dict, logline_2_wandb_dict
 from federatedscope.core.auxiliaries.utils import merge_dict, merge_param_dict
 
 logger = logging.getLogger(__name__)
@@ -100,7 +93,10 @@ class pFedHPOFLServer(Server):
         else:
             for k, v in self._ss.items():
                 if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
-                    raise ValueError("Unsupported hyper type {}".format(type(v)))
+                    if hasattr(v, 'choices'):
+                        self.pbounds[k] = list(v.choices)
+                    else:
+                        raise ValueError("Unsupported hyper type {}".format(type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -118,7 +114,16 @@ class pFedHPOFLServer(Server):
         if not self.train_anchor:
             hyper_enc = torch.load(os.path.join(self._cfg.hpo.working_folder,
                                                 'hyperNet_encoding.pt'))
-            self.client_encoding = torch.ones(client_num, 100)
+            if self._cfg.data.type == 'mini-graph-dc':
+                dim = 60
+            elif 'cifar' in str(self._cfg.data.type).lower():
+                dim = 60
+            elif 'femnist' in str(self._cfg.data.type).lower():
+                dim = 124
+            else:
+                raise NotImplementedError
+
+            self.client_encoding = torch.ones(client_num, dim)
             if not self.discrete:
                 self.HyperNet = HyperNet(encoding=self.client_encoding,
                                          num_params=len(self.pbounds),
@@ -229,7 +234,7 @@ class pFedHPOFLServer(Server):
                         probs = self.logits[i][self.client2idx[rcv_idx]]
                         p = v[torch.argmax(probs).item()]
 
-                        if self._ss[k].log:
+                        if hasattr(self._ss[k], 'log') and self._ss[k].log:
                             p = 10 ** p
                         if 'int' in str(type(self._ss[k])).lower():
                             sampled_cfg[k] = int(p)

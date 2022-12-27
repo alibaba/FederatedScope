@@ -264,10 +264,11 @@ def rff_rahimi_recht(x, rff_params):
   z = z * pt.sqrt(pt.tensor(2. / w.shape[0]).to(pt.float32))
   return z
 
-def weights_rahimi_recht(d_rff, d_enc, sig, device):
-  w_freq = pt.tensor(np.random.randn(d_rff, d_enc) / np.sqrt(sig)).to(pt.float32).to(device)
-  b_freq = pt.tensor(np.random.rand(d_rff) * (2 * np.pi * sig)).to(device)
-  return rff_param_tuple(w=w_freq, b=b_freq)
+def weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234):
+    np.random.seed(seed)
+    w_freq = pt.tensor(np.random.randn(d_rff, d_enc) / np.sqrt(sig)).to(pt.float32).to(device)
+    b_freq = pt.tensor(np.random.rand(d_rff) * (2 * np.pi * sig)).to(device)
+    return rff_param_tuple(w=w_freq, b=b_freq)
 
 def data_label_embedding(data, labels, rff_params, mmd_type,
                          labels_to_one_hot=False, n_labels=None, device=None, reduce='mean'):
@@ -282,63 +283,55 @@ def data_label_embedding(data, labels, rff_params, mmd_type,
   embedding = pt.einsum('ki,kj->kij', [data_embedding, labels])
   return pt.mean(embedding, 0) if reduce == 'mean' else pt.sum(embedding, 0)
 
-def get_rff_mmd_loss(d_enc, d_rff, rff_sigma, device, n_labels, noise_factor, batch_size, mmd_type):
-  assert d_rff % 2 == 0
 
-  if mmd_type == 'sphere':
-    w_freq = weights_sphere(d_rff, d_enc, rff_sigma, device)
-  else:
-    w_freq = weights_rahimi_recht(d_rff, d_enc, rff_sigma, device)
+def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff, device, n_labels, noise_factor, mmd_type, sum_frequency=25, graph=False):
+    emb_acc = []
+    n_data = 0
 
-  def rff_mmd_loss(data_enc, labels, gen_enc, gen_labels):
-    data_emb = data_label_embedding(data_enc, labels, w_freq, mmd_type, labels_to_one_hot=True,
-                                    n_labels=n_labels, device=device)
-    gen_emb = data_label_embedding(gen_enc, gen_labels, w_freq, mmd_type)
-    noise = pt.randn(d_rff, n_labels, device=device) * (2 * noise_factor / batch_size)
-    noisy_emb = data_emb + noise
-    return pt.sum((noisy_emb - gen_emb) ** 2)
+    if mmd_type == 'sphere':
+        w_freq = weights_sphere(d_rff, d_enc, sig, device, seed=1234)
+    else:
+        w_freq = weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234)
 
-  return rff_mmd_loss, w_freq
+    if graph:
+        for data in train_loader:
+            data, labels = data.x.to(device), data.y.to(device).reshape(-1)
 
-def get_single_sigma_losses(train_loader, d_enc, d_rff, rff_sigma, device, n_labels, noise_factor, mmd_type,
-                            pca_vecs=None):
-  assert d_rff % 2 == 0
-  # w_freq = pt.tensor(np.random.randn(d_rff // 2, d_enc) / np.sqrt(rff_sigma)).to(pt.float32).to(device)
-  minibatch_loss, w_freq = get_rff_mmd_loss(d_enc, d_rff, rff_sigma, device, n_labels, noise_factor,
-                                            train_loader.batch_size, mmd_type)
+            d_enc = data.shape[-1]
+            if mmd_type == 'sphere':
+                w_freq = weights_sphere(d_rff, d_enc, sig, device, seed=1234)
+            else:
+                w_freq = weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234)
 
-  noisy_emb = noisy_dataset_embedding(train_loader, w_freq, d_rff, device, n_labels, noise_factor, mmd_type,
-                                      pca_vecs=pca_vecs)
+            data = flat_data(data, labels, device, n_labels=n_labels, add_label=False)
+            emb_acc.append(data_label_embedding(
+                data, labels, w_freq, mmd_type,
+                labels_to_one_hot=True, n_labels=n_labels,
+                device=device, reduce='sum'))
+            n_data += data.shape[0]
 
-  def single_release_loss(gen_enc, gen_labels):
-    gen_emb = data_label_embedding(gen_enc, gen_labels, w_freq, mmd_type)
-    return pt.sum((noisy_emb - gen_emb) ** 2)
+            if len(emb_acc) > sum_frequency:
+                emb_acc = [pt.sum(pt.stack(emb_acc), 0)]
 
-  return single_release_loss, minibatch_loss, noisy_emb
+    else:
+        for data, labels in train_loader:
+            data, labels = data.to(device), labels.to(device)
+            data = flat_data(data, labels, device, n_labels=n_labels, add_label=False)
+            emb_acc.append(data_label_embedding(
+                data, labels, w_freq, mmd_type,
+                labels_to_one_hot=True, n_labels=n_labels,
+                device=device, reduce='sum'))
+            n_data += data.shape[0]
 
-def noisy_dataset_embedding(train_loader, w_freq, d_rff, device, n_labels, noise_factor, mmd_type, sum_frequency=25):
-  emb_acc = []
-  n_data = 0
+            if len(emb_acc) > sum_frequency:
+              emb_acc = [pt.sum(pt.stack(emb_acc), 0)]
 
-  for data, labels in train_loader:
-    data, labels = data.to(device), labels.to(device)
-    data = flat_data(data, labels, device, n_labels=n_labels, add_label=False)
-    emb_acc.append(data_label_embedding(
-        data, labels, w_freq, mmd_type,
-        labels_to_one_hot=True, n_labels=n_labels,
-        device=device, reduce='sum'))
-    # emb_acc.append(pt.sum(pt.einsum('ki,kj->kij', [rff_gauss(data, w_freq), one_hots]), 0))
-    n_data += data.shape[0]
-
-    if len(emb_acc) > sum_frequency:
-      emb_acc = [pt.sum(pt.stack(emb_acc), 0)]
-
-  print('done collecting batches, n_data', n_data)
-  emb_acc = pt.sum(pt.stack(emb_acc), 0) / n_data
-  print(pt.norm(emb_acc), emb_acc.shape)
-  noise = pt.randn(d_rff, n_labels, device=device) * (2 * noise_factor / n_data)
-  noisy_emb = emb_acc + noise
-  return noisy_emb
+    print('done collecting batches, n_data', n_data)
+    emb_acc = pt.sum(pt.stack(emb_acc), 0) / n_data
+    print(pt.norm(emb_acc), emb_acc.shape)
+    noise = pt.randn(d_rff, n_labels, device=device) * (2 * noise_factor / n_data)
+    noisy_emb = emb_acc + noise
+    return noisy_emb
 
 
 
