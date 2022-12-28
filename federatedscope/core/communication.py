@@ -6,7 +6,7 @@ from federatedscope.core.proto import gRPC_comm_manager_pb2, \
     gRPC_comm_manager_pb2_grpc
 from federatedscope.core.gRPC_server import gRPCComServeFunc
 from federatedscope.core.message import Message
-from multiprocessing import Pool
+from multiprocessing import Pool, Process
 import logging
 
 
@@ -56,7 +56,8 @@ def _dummy_initializer(receiver_address):
     global stub
     channel = grpc.insecure_channel(receiver_address,
                                     options=(('grpc.enable_http_proxy', 0),
-                                             ('grpc.enable_fork_support', 0)))
+                                             ('grpc.enable_fork_support', 0),
+                                             ('grpc.poll_strategy', 'poll')))
     import atexit
     atexit.register(_shutdown_worker)
 
@@ -133,12 +134,16 @@ class gRPCCommManager_for_listening(object):
              global_cfg.distribute.grpc_max_receive_message_length),
             ("grpc.enable_http_proxy",
              global_cfg.distribute.grpc_enable_http_proxy),
+            ("grpc.enable_fork_support", True),
+            ("grpc.poll_strategy", "poll"),
         ]
         self.server_funcs = gRPCComServeFunc()
-        self.grpc_server = self.serve(max_workers=client_num,
-                                      host=host,
-                                      port=port,
-                                      options=options)
+        #self.grpc_server = self.serve(max_workers=client_num,
+        #                              host=host,
+        #                              port=port,
+        #                              options=options)
+        p = Process(target=self.serve, args=(client_num, host, port, options,))
+        p.start()
         self.monitor = None  # used to track the communication related metrics
 
     def serve(self, max_workers, host, port, options):
@@ -153,12 +158,13 @@ class gRPCCommManager_for_listening(object):
             self.server_funcs, server)
         server.add_insecure_port("{}:{}".format(host, port))
         server.start()
+        server.wait_for_termination()
 
-        return server
+        #return server
 
 
     def receive(self):
         received_msg = self.server_funcs.receive()
-        message = Message()
-        message.parse(received_msg.msg)
-        return message
+        #message = Message()
+        #message.parse(received_msg.msg)
+        return received_msg
