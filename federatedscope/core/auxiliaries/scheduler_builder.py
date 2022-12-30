@@ -38,6 +38,29 @@ def get_scheduler(optimizer, type, **kwargs):
         if scheduler is not None:
             return scheduler
 
+    if type == 'warmup_step':
+        from torch.optim.lr_scheduler import LambdaLR
+        warmup_steps = kwargs['warmup_steps']
+        total_steps = kwargs['total_steps']
+
+        def lr_lambda(cur_step):
+            if cur_step < warmup_steps:
+                return float(cur_step) / float(max(1, warmup_steps))
+            return max(
+                0.0,
+                float(total_steps - cur_step) /
+                float(max(1, total_steps - warmup_steps)))
+
+        return LambdaLR(optimizer, lr_lambda)
+    elif type == 'warmup_noam':
+        from torch.optim.lr_scheduler import LambdaLR
+        warmup_steps = kwargs['warmup_steps']
+
+        def lr_lambda(cur_step):
+            return min(max(1, cur_step)**(-0.5), max(1, cur_step)*warmup_steps**(-1.5))
+
+        return LambdaLR(optimizer, lr_lambda)
+
     if torch is None or type == '':
         return None
     if isinstance(type, str):
