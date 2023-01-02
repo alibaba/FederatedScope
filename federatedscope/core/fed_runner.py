@@ -893,7 +893,7 @@ class FedRunner(object):
                 client_specific_config.defrost()
                 client_specific_config.merge_from_other_cfg(
                     self.client_cfgs.get('client_{}'.format(client_id)))
-                client_specific_config.freeze(inform=False)
+                client_specific_config.freeze()
             client_device = self._server_device if \
                 self.cfg.federate.share_local_model else \
                 self.gpu_manager.auto_choice()

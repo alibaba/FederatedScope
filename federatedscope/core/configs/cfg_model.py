@@ -25,7 +25,7 @@ def extend_model_cfg(cfg):
     cfg.model.input_shape = ()  # A tuple, e.g., (in_channel, h, w)
 
     # language model for hetero NLP tasks
-    cfg.model.stage = ''
+    cfg.model.stage = ''  # ['pretrain', 'contrastive']
     cfg.model.model_type = 'google/bert_uncased_L-2_H-128_A-2'
     cfg.model.pretrain_tasks = []
     cfg.model.downstream_tasks = []

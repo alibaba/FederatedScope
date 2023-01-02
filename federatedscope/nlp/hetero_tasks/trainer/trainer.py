@@ -14,8 +14,8 @@ from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import lifecycle, CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE, MODE
 from federatedscope.core.trainers.utils import filter_by_specified_keywords
-from federatedscope.nlp.hetero_tasks.monitor import MetricCalculator, \
-    eval_acc
+from federatedscope.core.monitors import MetricCalculator
+from federatedscope.core.monitors.metric_calculator import eval_acc
 from federatedscope.nlp.hetero_tasks.trainer.utils import AverageMeter, \
     ContrastiveMonitor
 from federatedscope.nlp.hetero_tasks.dataset.utils import setup_tokenizer

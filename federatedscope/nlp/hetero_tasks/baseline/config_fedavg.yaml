@@ -18,9 +18,6 @@ data:
 model:
   type: atc_model
   model_type: google/bert_uncased_L-2_H-128_A-2
-  bos_token: '[unused0]'
-  eos_token: '[unused1]'
-  eoq_token: '[unused2]'
 personalization:
   local_param: ['classifier', 'encoder.pooler', 'decoder']
 trainer:

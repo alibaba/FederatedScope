@@ -59,7 +59,6 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, \
             FedOptAggregator, NoCommunicationAggregator, \
             AsynClientsAvgAggregator
-        from federatedscope.nlp.hetero_tasks.aggregator import ATCAggregator
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
@@ -69,8 +68,9 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             'Aggregator for method {} is not implemented. Will use default one'
             .format(method))
 
-    if config.trainer.type.lower() == 'atc_trainer' and \
+    if config.model.task.lower() == 'hetero_nlp_tasks' and \
             not config.federate.atc_vanilla:
+        from federatedscope.nlp.hetero_tasks.aggregator import ATCAggregator
         return ATCAggregator(model=model, config=config, device=device)
 
     if config.fedopt.use or aggregator_type == 'fedopt':

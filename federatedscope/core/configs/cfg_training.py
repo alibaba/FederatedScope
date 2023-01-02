@@ -20,7 +20,7 @@ def extend_training_cfg(cfg):
     cfg.trainer.local_entropy.eps = 1e-3
     cfg.trainer.local_entropy.alpha = 0.75
 
-    # atc
+    # atc (TODO: merge later)
     cfg.trainer.disp_freq = 50
     cfg.trainer.val_freq = 100000000  # eval freq across batches
 

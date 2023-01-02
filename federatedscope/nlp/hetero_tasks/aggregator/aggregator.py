@@ -16,10 +16,8 @@ logger = logging.getLogger(__name__)
 class ATCAggregator(ClientsAvgAggregator):
     def __init__(self, model=None, config=None, device='cpu'):
         super().__init__(model=model, config=config, device=device)
-        self.config = config
         self.client_num = config.federate.client_num
         self.task = config.model.task
-        self.round = 0
 
         self.pretrain_tasks = config.model.pretrain_tasks
         self.num_agg_groups = config.aggregator.num_agg_groups
@@ -35,12 +33,6 @@ class ATCAggregator(ClientsAvgAggregator):
         self.use_contrastive_loss = config.model.use_contrastive_loss
         if self.use_contrastive_loss:
             self.contrast_monitor = None
-
-    def update_round(self, round):
-        self.round = round
-
-    def update_models(self, models):
-        self.models = models
 
     def update_neighbors(self, neighbors):
         self.neighbors = neighbors
@@ -165,7 +157,7 @@ class ATCAggregator(ClientsAvgAggregator):
 
     def _para_weighted_avg(self, models, recover_fun=None):
         tasks = [None for _ in range(self.client_num)]
-        if self.config.federate.method in ['local', 'global']:
+        if self.cfg.federate.method in ['local', 'global']:
             model_params = {
                 'model_para': [model['model_para'] for model in models]
             }

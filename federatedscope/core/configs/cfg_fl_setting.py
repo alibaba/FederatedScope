@@ -42,7 +42,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.resource_info_file = ""  # the device information file to
     # record computation and communication ability
 
-    # atc
+    # atc (TODO: merge later)
     cfg.federate.atc_vanilla = False
     cfg.federate.atc_load_from = ''
 
