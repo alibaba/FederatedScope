@@ -34,7 +34,6 @@ class ATCClient(Client):
         )
 
         self.use_contrastive_loss = self._cfg.model.use_contrastive_loss
-        self.trainer.update_stat(self.ID)
 
     def _copy_contrast_monitor(self, raw_monitor):
         monitor = ContrastiveMonitor()

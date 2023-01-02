@@ -24,15 +24,9 @@ def extend_model_cfg(cfg):
     cfg.model.num_user = 0
     cfg.model.input_shape = ()  # A tuple, e.g., (in_channel, h, w)
 
-    # atc
+    # language model for hetero NLP tasks
+    cfg.model.stage = ''
     cfg.model.model_type = 'google/bert_uncased_L-2_H-128_A-2'
-    cfg.model.bos_token = '[unused0]'
-    cfg.model.eos_token = '[unused1]'
-    cfg.model.eoq_token = '[unused2]'
-    cfg.model.bos_token_id = -1
-    cfg.model.eos_token_id = -1
-    cfg.model.eoq_token_id = -1
-    cfg.model.pad_token_id = -1
     cfg.model.pretrain_tasks = []
     cfg.model.downstream_tasks = []
     cfg.model.num_labels = 1

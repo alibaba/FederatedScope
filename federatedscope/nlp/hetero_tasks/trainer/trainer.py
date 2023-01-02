@@ -60,9 +60,9 @@ class ATCTrainer(GeneralTorchTrainer):
     def update_stat(self, ID):
         self.ID = ID
         if self.task in {'cnndm', 'msqg'}:
-            pred_dir = os.path.join(self.cfg.eval.result_path, 'pred')
-            src_dir = os.path.join(self.cfg.eval.result_path, 'src')
-            tgt_dir = os.path.join(self.cfg.eval.result_path, 'tgt')
+            pred_dir = os.path.join(self.cfg.outdir, 'pred')
+            src_dir = os.path.join(self.cfg.outdir, 'src')
+            tgt_dir = os.path.join(self.cfg.outdir, 'tgt')
             self.ctx.pred_path = os.path.join(pred_dir, '%d.txt' % ID)
             self.ctx.src_path = os.path.join(src_dir, '%d.txt' % ID)
             self.ctx.tgt_path = os.path.join(tgt_dir, '%d.txt' % ID)

@@ -2,7 +2,6 @@ import os
 import logging
 import copy
 from tqdm import tqdm
-from federatedscope.register import register_data
 
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 logger = logging.getLogger(__name__)
@@ -33,12 +32,12 @@ def modified_cfg(cfg, cfg_client):
         cfg.data.cache_dir = ''
         cfg.data.batch_size = 1
 
-    if cfg.model.task == 'pretrain':
+    if cfg.model.stage == 'pretrain':
         downstream_tasks = []
         for group_id, num_clients in enumerate(cfg.data.num_of_client_for_data):
             downstream_tasks += [cfg.data.hetero_data_name[group_id]] * num_clients
         cfg.model.downstream_tasks = downstream_tasks
-    elif cfg.model.task == 'contrastive':
+    elif cfg.model.stage == 'contrastive':
         num_agg_topk = []
         if len(cfg.aggregator.num_agg_topk) > 0:
             for group_id, num_clients in enumerate(
@@ -113,8 +112,8 @@ def load_heteroNLP_data(config, client_cfgs):
 
         def _preprocess(self, config, client_cfgs, data):
 
-            use_pretrain_task = config.model.task == 'pretrain'
-            use_contrastive = config.model.task == 'contrastive'
+            use_pretrain_task = config.model.stage == 'pretrain'
+            use_contrastive = config.model.stage == 'contrastive'
             tokenizer = setup_tokenizer(model_type=config.model.model_type)
             data_collator = DataCollator(tokenizer=tokenizer) \
                 if use_pretrain_task else None
@@ -268,11 +267,3 @@ def load_heteroNLP_data(config, client_cfgs):
 
     return translator(datadict), modified_config
 
-
-def call_heteroNLP_data(config, client_cfgs):
-    if config.data.type == 'heteroNLP_data':
-        data, modified_config = load_heteroNLP_data(config, client_cfgs)
-        return data, modified_config
-
-
-register_data('heteroNLP_data', call_heteroNLP_data)

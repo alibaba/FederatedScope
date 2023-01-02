@@ -2,8 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.nn import CrossEntropyLoss
-from federatedscope.register import register_model
-from federatedscope.nlp.hetero_tasks.loss.label_smooth_loss import \
+from federatedscope.nlp.loss.label_smooth_loss import \
     LabelSmoothingLoss
 
 
@@ -297,12 +296,3 @@ class ATCModel(nn.Module):
                            regular_loss=regular_loss,
                            contrastive_loss=contrastive_loss,
                            logits=logits)
-
-
-def call_atc_model(model_config, local_data):
-    if model_config.type == 'atc_model':
-        model = ATCModel(model_config)
-        return model
-
-
-register_model('atc_model', call_atc_model)

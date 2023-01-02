@@ -122,7 +122,7 @@ def get_data(config, client_cfgs=None):
             return data_and_config
 
     # Load dataset from source files
-    dataset, modified_config = load_dataset(config)
+    dataset, modified_config = load_dataset(config, client_cfgs)
 
     # Apply translator to non-FL dataset to transform it into its federated
     # counterpart
