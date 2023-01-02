@@ -48,7 +48,10 @@ class DictDataset(Dataset):
         return list(self.inputs.values())[0].size(0)
 
 
-def setup_tokenizer(model_type, bos_token='[unused0]', eos_token='[unused1]', eoq_token='[unused3]'):
+def setup_tokenizer(model_type,
+                    bos_token='[unused0]',
+                    eos_token='[unused1]',
+                    eoq_token='[unused3]'):
     """
     Get a tokenizer, the default bos/eos/eoq token is used for Bert
     """
@@ -74,6 +77,7 @@ def setup_tokenizer(model_type, bos_token='[unused0]', eos_token='[unused1]', eo
     tokenizer.eoq_token_id = tokenizer.vocab[eoq_token]
     return tokenizer
 
+
 def load_synth_data(data_config):
     """
     Load the synthetic data for contrastive learning
@@ -89,26 +93,24 @@ def load_synth_data(data_config):
         shapes = json.load(f)
     synth_feat_path = os.path.join(
         synth_dir, 'feature_{}.memmap'.format(synth_prim_weight))
-    synth_tok_path = os.path.join(
-        synth_dir, 'token_{}.memmap'.format(synth_prim_weight))
+    synth_tok_path = os.path.join(synth_dir,
+                                  'token_{}.memmap'.format(synth_prim_weight))
     synth_feats = np.memmap(filename=synth_feat_path,
                             shape=tuple(shapes['feature']),
                             mode='r',
                             dtype=np.float32)
     synth_toks = np.memmap(filename=synth_tok_path,
-                            shape=tuple(shapes['token']),
-                            mode='r',
-                            dtype=np.int64)
+                           shape=tuple(shapes['token']),
+                           mode='r',
+                           dtype=np.int64)
     num_contrast = data_config.num_contrast
     synth_feats = {
         k: v
-        for k, v in enumerate(
-            torch.from_numpy(synth_feats)[:num_contrast])
+        for k, v in enumerate(torch.from_numpy(synth_feats)[:num_contrast])
     }
     synth_toks = {
         k: v
         for k, v in enumerate(torch.from_numpy(synth_toks)[:num_contrast])
-
     }
 
     return synth_feats, synth_toks

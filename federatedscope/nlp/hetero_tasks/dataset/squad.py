@@ -180,8 +180,8 @@ def process_squad_dataset(data,
                           **kwargs):
     if pretrain:
         return process_squad_dataset_for_pretrain(data, split, tokenizer,
-                                                  max_seq_len, cache_dir, client_id,
-                                                  debug)
+                                                  max_seq_len, cache_dir,
+                                                  client_id, debug)
 
     save_dir = osp.join(cache_dir, 'train', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')

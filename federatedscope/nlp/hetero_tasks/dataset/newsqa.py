@@ -174,16 +174,16 @@ def get_newsqa_examples(data, split, debug=False):
 
 
 def process_newsqa_dataset(data,
-                          split,
-                          tokenizer,
-                          max_seq_len,
-                          max_query_len,
-                          trunc_stride,
-                          cache_dir='',
-                          client_id=None,
-                          pretrain=False,
-                          debug=False,
-                          **kwargs):
+                           split,
+                           tokenizer,
+                           max_seq_len,
+                           max_query_len,
+                           trunc_stride,
+                           cache_dir='',
+                           client_id=None,
+                           pretrain=False,
+                           debug=False,
+                           **kwargs):
     if pretrain:
         return process_newsqa_dataset_for_pretrain(data, split, tokenizer,
                                                    max_seq_len, cache_dir,

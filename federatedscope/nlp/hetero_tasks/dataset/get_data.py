@@ -16,24 +16,26 @@ from federatedscope.nlp.hetero_tasks.model.model import ATCModel
 
 logger = logging.getLogger(__name__)
 
+
 class HeteroNLPDataLoader(object):
     """
     Load hetero NLP task datasets (including multiple datasets), split them
     into train/val/test, and partition into several clients.
     """
-
     def __init__(self, data_dir, data_name, num_of_clients, split=[0.9, 0.1]):
         self.data_dir = data_dir
         self.data_name = data_name
         self.num_of_clients = num_of_clients
-        self.split = split # split for train:val
+        self.split = split  # split for train:val
         self.train_data = []
         self.val_data = []
         self.test_data = []
 
     def get_data(self):
-        for each_data, each_client_num in enumerate(zip(self.data_name, self.num_of_clients)):
-            train_and_val_data = self._load(each_data, 'train', each_client_num)
+        for each_data, each_client_num in enumerate(
+                zip(self.data_name, self.num_of_clients)):
+            train_and_val_data = self._load(each_data, 'train',
+                                            each_client_num)
             each_train_data = [
                 data[:int(self.split[0] * len(data))]
                 for data in train_and_val_data
@@ -47,7 +49,11 @@ class HeteroNLPDataLoader(object):
             self.val_data.extend(each_val_data)
             self.test_data.extend(each_test_data)
 
-        return {'train': self.train_data, 'val': self.val_data, 'test': self.test_data}
+        return {
+            'train': self.train_data,
+            'val': self.val_data,
+            'test': self.test_data
+        }
 
     def _load(self, dataset, split, num_of_client):
         data_dir = os.path.join(self.data_dir, dataset)
@@ -132,7 +138,8 @@ class HeteroNLPDataLoader(object):
             cur_data = data[data_idx:data_idx + num_split]
             data_idx += num_split
             splited_data.append(cur_data)
-        logger.info(f'Dataset {dataset ({split})} is splited into {[len(x) for x in splited_data]}')
+        logger.info(f'Dataset {dataset ({split})} is splited into '
+                    f'{[len(x) for x in splited_data]}')
 
         return splited_data
 
@@ -176,8 +183,8 @@ class SynthDataProcessor(object):
 
         max_sz, max_len = 1e8, 0
         for client_id in range(1, self.num_clients + 1):
-            dataset = self.datasets[client_id-1]['train_contrast'][
-                'dataloader'].dataset
+            dataset = self.datasets[client_id -
+                                    1]['train_contrast']['dataloader'].dataset
             max_sz = min(max_sz, len(dataset))
             max_len = max(max_len, len(dataset[0]['token_ids']))
         enc_hiddens = np.memmap(filename=os.path.join(self.cfg.outdir,
@@ -190,8 +197,8 @@ class SynthDataProcessor(object):
 
         logger.info('Generating synthetic encoder hidden states')
         for client_id in tqdm(range(1, self.num_clients + 1)):
-            dataloader = self.datasets[client_id-1]['train_contrast'][
-                'dataloader']
+            dataloader = self.datasets[client_id -
+                                       1]['train_contrast']['dataloader']
             model = self.models[client_id]
             model.eval()
             model.to(self.device)

@@ -20,19 +20,19 @@ def get_cnndm_examples(data, debug=False):
 
 
 def process_cnndm_dataset(data,
-                         split,
-                         tokenizer,
-                         max_src_len,
-                         max_tgt_len,
-                         raw_cache_dir='',
-                         client_id=None,
-                         pretrain=False,
-                         debug=False,
-                         **kwargs):
+                          split,
+                          tokenizer,
+                          max_src_len,
+                          max_tgt_len,
+                          raw_cache_dir='',
+                          client_id=None,
+                          pretrain=False,
+                          debug=False,
+                          **kwargs):
     if pretrain:
         return process_cnndm_dataset_for_pretrain(data, split, tokenizer,
-                                             max_src_len, raw_cache_dir,
-                                             client_id, debug)
+                                                  max_src_len, raw_cache_dir,
+                                                  client_id, debug)
 
     cache_dir = osp.join(raw_cache_dir, 'train', str(client_id), split)
     src_examples, tgt_examples = get_cnndm_examples(data, debug)
@@ -130,12 +130,12 @@ def process_cnndm_dataset(data,
 
 
 def process_cnndm_dataset_for_pretrain(data,
-                                  split,
-                                  tokenizer,
-                                  max_src_len,
-                                  raw_cache_dir='',
-                                  client_id=None,
-                                  debug=False):
+                                       split,
+                                       tokenizer,
+                                       max_src_len,
+                                       raw_cache_dir='',
+                                       client_id=None,
+                                       debug=False):
     cache_dir = osp.join(raw_cache_dir, 'pretrain', str(client_id), split)
     src_examples, tgt_examples = get_cnndm_examples(data, debug)
     if osp.exists(cache_dir):

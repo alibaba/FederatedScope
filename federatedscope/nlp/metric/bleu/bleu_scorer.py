@@ -7,6 +7,7 @@ import copy
 import math
 from collections import defaultdict
 
+
 def precook(s, n=4, out=False):
     """
     Takes a string as input and returns an object that can be given to

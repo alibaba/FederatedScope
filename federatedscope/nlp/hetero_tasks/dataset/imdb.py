@@ -18,18 +18,18 @@ def get_imdb_examples(data, debug=False):
 
 
 def process_imdb_dataset(data,
-                        split,
-                        tokenizer,
-                        max_seq_len,
-                        cache_dir='',
-                        client_id=None,
-                        pretrain=False,
-                        debug=False,
-                        **kwargs):
+                         split,
+                         tokenizer,
+                         max_seq_len,
+                         cache_dir='',
+                         client_id=None,
+                         pretrain=False,
+                         debug=False,
+                         **kwargs):
     if pretrain:
         return process_imdb_dataset_for_pretrain(data, split, tokenizer,
-                                            max_seq_len, cache_dir, client_id,
-                                            debug)
+                                                 max_seq_len, cache_dir,
+                                                 client_id, debug)
 
     save_dir = osp.join(cache_dir, 'train', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
@@ -69,12 +69,12 @@ def process_imdb_dataset(data,
 
 
 def process_imdb_dataset_for_pretrain(data,
-                                 split,
-                                 tokenizer,
-                                 max_seq_len,
-                                 cache_dir='',
-                                 client_id=None,
-                                 debug=False):
+                                      split,
+                                      tokenizer,
+                                      max_seq_len,
+                                      cache_dir='',
+                                      client_id=None,
+                                      debug=False):
     save_dir = osp.join(cache_dir, 'pretrain', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
     if osp.exists(cache_file):

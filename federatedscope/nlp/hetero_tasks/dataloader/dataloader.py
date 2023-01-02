@@ -34,8 +34,10 @@ def modified_cfg(cfg, cfg_client):
 
     if cfg.model.stage == 'pretrain':
         downstream_tasks = []
-        for group_id, num_clients in enumerate(cfg.data.num_of_client_for_data):
-            downstream_tasks += [cfg.data.hetero_data_name[group_id]] * num_clients
+        for group_id, num_clients in enumerate(
+                cfg.data.num_of_client_for_data):
+            downstream_tasks += [cfg.data.hetero_data_name[group_id]
+                                 ] * num_clients
         cfg.model.downstream_tasks = downstream_tasks
     elif cfg.model.stage == 'contrastive':
         num_agg_topk = []
@@ -49,7 +51,6 @@ def modified_cfg(cfg, cfg_client):
                     cfg.data.num_grouped_clients):
                 num_agg_topk += [cfg.federate.client_num] * num_clients
         cfg.aggregator.num_agg_topk = num_agg_topk
-
 
     # client_config
     if cfg_client is not None:
@@ -76,13 +77,16 @@ def modified_cfg(cfg, cfg_client):
 
     return cfg, cfg_client
 
+
 def load_heteroNLP_data(config, client_cfgs):
 
     from torch.utils.data import DataLoader
     from federatedscope.nlp.hetero_tasks.dataset.utils import setup_tokenizer
     from federatedscope.core.data import DummyDataTranslator
-    from federatedscope.nlp.hetero_tasks.dataset.get_data import HeteroNLPDataLoader, SynthDataProcessor
-    from federatedscope.nlp.hetero_tasks.dataloader.datacollator import DataCollator
+    from federatedscope.nlp.hetero_tasks.dataset.get_data import \
+        HeteroNLPDataLoader, SynthDataProcessor
+    from federatedscope.nlp.hetero_tasks.dataloader.datacollator import \
+        DataCollator
 
     class HeteroNLPDataset(object):
         NAME = 'hetero_nlp_tasks_dataset'
@@ -95,14 +99,17 @@ def load_heteroNLP_data(config, client_cfgs):
             self.data_name = list()
             for each_data in config.data.hetero_data_name:
                 if each_data not in self.ALL_DATA_NAME:
-                    logger.warning(f'We have not provided {each_data} in HeteroNLPDataset.')
+                    logger.warning(f'We have not provided {each_data} in '
+                                   f'HeteroNLPDataset.')
                 else:
                     self.data_name.append(each_data)
 
-            data = HeteroNLPDataLoader(data_dir=self.root, data_name=self.data_name, num_of_clients=self.num_of_clients).get_data()
+            data = HeteroNLPDataLoader(
+                data_dir=self.root,
+                data_name=self.data_name,
+                num_of_clients=self.num_of_clients).get_data()
 
             self.processed_data = self._preprocess(config, client_cfgs, data)
-
 
         def __getitem__(self, idx):
             return self.processed_data[idx]
@@ -117,12 +124,12 @@ def load_heteroNLP_data(config, client_cfgs):
             tokenizer = setup_tokenizer(model_type=config.model.model_type)
             data_collator = DataCollator(tokenizer=tokenizer) \
                 if use_pretrain_task else None
-            is_debug = config.data.is_debug # load a subset of data
+            is_debug = config.data.is_debug  # load a subset of data
 
             processed_data = list()
             for client_id in tqdm(range(1, config.federate.client_num + 1)):
-                applied_cfg = config if use_pretrain_task else \
-                client_cfgs['client_{}'.format(client_id)]
+                applied_cfg = config if use_pretrain_task \
+                    else client_cfgs['client_{}'.format(client_id)]
 
                 cur_task = applied_cfg.model.downstream_tasks[client_id - 1] \
                     if use_pretrain_task else applied_cfg.model.task
@@ -130,14 +137,15 @@ def load_heteroNLP_data(config, client_cfgs):
                 train_data, val_data, test_data = [
                     self._process_data(data=data[split][client_id - 1],
                                        data_name=cur_task,
-                                split=split,
-                                tokenizer=tokenizer,
-                                model_type=config.model.model_type,
-                                cache_dir=config.data.cache_dir,
-                                cfg=applied_cfg.data,
-                                client_id=client_id,
-                                pretrain=use_pretrain_task,
-                                is_debug=is_debug) for split in ['train', 'val', 'test']
+                                       split=split,
+                                       tokenizer=tokenizer,
+                                       model_type=config.model.model_type,
+                                       cache_dir=config.data.cache_dir,
+                                       cfg=applied_cfg.data,
+                                       client_id=client_id,
+                                       pretrain=use_pretrain_task,
+                                       is_debug=is_debug)
+                    for split in ['train', 'val', 'test']
                 ]
 
                 dataloader = {}
@@ -165,50 +173,53 @@ def load_heteroNLP_data(config, client_cfgs):
                 }
 
                 if not use_contrastive:
-                    dataloader['train'] ={
-                            'dataloader': DataLoader(
-                                dataset=train_data[0],
-                                batch_size=applied_cfg.data.batch_size,
-                                shuffle=config.data.shuffle,
-                                num_workers=config.data.num_workers,
-                                collate_fn=data_collator,
-                                pin_memory=config.use_gpu),
-                            'encoded': train_data[1],
-                            'examples': train_data[2]
-                        },
+                    dataloader['train'] = {
+                        'dataloader': DataLoader(
+                            dataset=train_data[0],
+                            batch_size=applied_cfg.data.batch_size,
+                            shuffle=config.data.shuffle,
+                            num_workers=config.data.num_workers,
+                            collate_fn=data_collator,
+                            pin_memory=config.use_gpu),
+                        'encoded': train_data[1],
+                        'examples': train_data[2]
+                    },
                 else:
                     dataloader['train_raw'] = {
-                            'dataloader': DataLoader(
-                                dataset=train_data[0],
-                                batch_size=applied_cfg.data.batch_size,
-                                shuffle=config.data.shuffle,
-                                num_workers=config.data.num_workers,
-                                collate_fn=data_collator,
-                                pin_memory=config.use_gpu),
-                            'encoded': train_data[1],
-                            'examples': train_data[2]
-                        }
+                        'dataloader': DataLoader(
+                            dataset=train_data[0],
+                            batch_size=applied_cfg.data.batch_size,
+                            shuffle=config.data.shuffle,
+                            num_workers=config.data.num_workers,
+                            collate_fn=data_collator,
+                            pin_memory=config.use_gpu),
+                        'encoded': train_data[1],
+                        'examples': train_data[2]
+                    }
                     dataloader['train_contrast'] = {
-                            'dataloader': DataLoader(
-                                dataset=train_data[0],
-                                batch_size=applied_cfg.data.batch_size,
-                                shuffle=False,
-                                num_workers=config.data.num_workers,
-                                collate_fn=data_collator,
-                                pin_memory=config.use_gpu),
-                            'encoded': train_data[1],
-                            'examples': train_data[2]
-                        }
+                        'dataloader': DataLoader(
+                            dataset=train_data[0],
+                            batch_size=applied_cfg.data.batch_size,
+                            shuffle=False,
+                            num_workers=config.data.num_workers,
+                            collate_fn=data_collator,
+                            pin_memory=config.use_gpu),
+                        'encoded': train_data[1],
+                        'examples': train_data[2]
+                    }
                 processed_data.append(dataloader)
 
             if use_contrastive:
-                logger.info('Preprocessing synthetic dataset for contrastive learning')
-                synth_data_processor = SynthDataProcessor(config, processed_data)
+                logger.info(
+                    'Preprocessing synthetic dataset for contrastive learning')
+                synth_data_processor = SynthDataProcessor(
+                    config, processed_data)
                 synth_data_processor.save_data()
 
             return processed_data, config
 
-        def _process_data(self, data, data_name, split, tokenizer, model_type, cache_dir, cfg, client_id, pretrain, is_debug):
+        def _process_data(self, data, data_name, split, tokenizer, model_type,
+                          cache_dir, cfg, client_id, pretrain, is_debug):
             if data_name == 'imdb':
                 from federatedscope.nlp.hetero_tasks.dataset.imdb import \
                     process_imdb_dataset
@@ -234,7 +245,8 @@ def load_heteroNLP_data(config, client_cfgs):
                     process_msqg_dataset
                 process_func = process_msqg_dataset
             else:
-                raise NotImplementedError(f'Not process function is provided for {data_name}')
+                raise NotImplementedError(
+                    f'Not process function is provided for {data_name}')
 
             max_seq_len = getattr(cfg, 'max_seq_len', None),
             max_query_len = getattr(cfg, 'max_query_len', None),
@@ -243,17 +255,17 @@ def load_heteroNLP_data(config, client_cfgs):
 
             return process_func(data=data,
                                 split=split,
-                                       tokenizer=tokenizer,
-                                       max_seq_len=max_seq_len,
-                                       max_query_len=max_query_len,
-                               trunc_stride=trunc_stride,
-                               max_src_len=max_seq_len,
-                               max_tgt_len=max_tgt_len,
-                               model_type=model_type,
-                               cache_dir=cache_dir,
-                               raw_cache_dir=cache_dir,
-                               client_id=client_id,
-                               pretrain=pretrain,
+                                tokenizer=tokenizer,
+                                max_seq_len=max_seq_len,
+                                max_query_len=max_query_len,
+                                trunc_stride=trunc_stride,
+                                max_src_len=max_seq_len,
+                                max_tgt_len=max_tgt_len,
+                                model_type=model_type,
+                                cache_dir=cache_dir,
+                                raw_cache_dir=cache_dir,
+                                client_id=client_id,
+                                pretrain=pretrain,
                                 is_debug=is_debug)
 
     modified_config, modified_client_cfgs = modified_cfg(config, client_cfgs)
@@ -266,4 +278,3 @@ def load_heteroNLP_data(config, client_cfgs):
     translator = DummyDataTranslator(modified_config, client_cfgs)
 
     return translator(datadict), modified_config
-

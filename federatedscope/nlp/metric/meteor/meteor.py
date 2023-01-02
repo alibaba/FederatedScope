@@ -25,7 +25,6 @@ class Meteor(object):
     [Banerjee S, Lavie A., 2005]
     (https://aclanthology.org/W05-0909.pdf)
     """
-
     def __init__(self):
         self.meteor_cmd = ' '.join([
             'java', '-Xmx2G', '-jar', METEOR_JAR, '{pred}', '{reference}',

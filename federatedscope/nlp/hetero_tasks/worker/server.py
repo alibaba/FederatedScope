@@ -106,7 +106,6 @@ class ATCServer(Server):
 
         return aggregated_num
 
-
     def broadcast_model_para(self,
                              msg_type='model_para',
                              sample_client_num=-1,

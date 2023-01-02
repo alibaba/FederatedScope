@@ -12,7 +12,6 @@ class Bleu(object):
     evaluation of machine translation.' [Papineni et al., 2002]
     (https://aclanthology.org/P02-1040.pdf)
     """
-
     def __init__(self, n=4):
         # default compute Blue score up to 4
         self._n = n

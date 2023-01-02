@@ -57,7 +57,9 @@ def get_scheduler(optimizer, type, **kwargs):
         warmup_steps = kwargs['warmup_steps']
 
         def lr_lambda(cur_step):
-            return min(max(1, cur_step)**(-0.5), max(1, cur_step)*warmup_steps**(-1.5))
+            return min(
+                max(1, cur_step)**(-0.5),
+                max(1, cur_step) * warmup_steps**(-1.5))
 
         return LambdaLR(optimizer, lr_lambda)
 

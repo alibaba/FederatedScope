@@ -65,8 +65,9 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.max_curv = 12.5
 
     # Hetero NLP tasks data (for ATC)
-    cfg.data.hetero_data_name = [] # multiple datasets
-    cfg.data.num_of_client_for_data = [] # each dataset can be splited into several clients
+    cfg.data.hetero_data_name = []  # multiple datasets
+    cfg.data.num_of_client_for_data = [
+    ]  # each dataset can be splited into several clients
     cfg.data.max_seq_len = 384
     cfg.data.max_tgt_len = 128
     cfg.data.max_query_len = 128
@@ -127,9 +128,11 @@ def assert_data_cfg(cfg):
 
     # hetero NLP taks data
     if len(cfg.data.num_of_client_for_data) > 0:
-        assert cfg.federate.client_num == sum(cfg.data.num_of_client_for_data), \
-            '`federate.client_num` should be equal to ' \
-            'sum of `data.num_of_client_for_data`'
+        assert cfg.federate.client_num == \
+               sum(cfg.data.num_of_client_for_data), '`federate.client_num` ' \
+                                                     'should be equal to sum '\
+                                                     'of `data.num_of_client'\
+                                                     '_for_data`'
 
     # --------------------------------------------------------------------
     # For compatibility with older versions of FS
