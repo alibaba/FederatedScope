@@ -1,4 +1,4 @@
-pyuse_gpu: False
+use_gpu: False
 device: 0
 backend: torch
 federate:

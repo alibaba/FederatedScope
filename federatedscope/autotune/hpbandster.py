@@ -10,7 +10,7 @@ from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 
 from federatedscope.autotune.utils import eval_in_fs, log2wandb, \
-    summarize_hpo_results, diagnosis2wandb
+    summarize_hpo_results
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -81,16 +81,14 @@ class MyWorker(Worker):
         logger.info(f'Evaluate the {len(self._perfs)-1}-th config '
                     f'{config}, and get performance {res}')
         if self.cfg.wandb.use:
-            log2wandb(len(self._perfs) - 1, config, results, self.cfg)
-        if self.cfg.hpo.diagnosis.use:
-            # diagnosis during running
             tmp_results = \
                 summarize_hpo_results(self._init_configs,
                                       self._perfs,
                                       white_list=set(
                                           self._ss.keys()),
                                       desc=self.cfg.hpo.larger_better)
-            diagnosis2wandb(self.cfg.hpo.diagnosis, tmp_results)
+            log2wandb(
+                len(self._perfs) - 1, config, results, self.cfg, tmp_results)
         return {'loss': float(res), 'info': res}
 
     def summarize(self):

@@ -1,5 +1,6 @@
 import yaml
 import logging
+import numpy as np
 import pandas as pd
 import ConfigSpace as CS
 
@@ -264,7 +265,6 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
 
 
 def config_bool2int(config):
-    # TODO: refactor bool/str to int
     import copy
     new_dict = copy.deepcopy(config)
     for key, value in new_dict.items():
@@ -273,46 +273,95 @@ def config_bool2int(config):
     return new_dict
 
 
-def log2wandb(trial, config, results, trial_cfg):
+def log2wandb(trial, config, results, trial_cfg, df):
     import wandb
+    # Base information
     key1, key2 = trial_cfg.hpo.metric.split('.')
     log_res = {
         'Trial_index': trial,
         'Config': config_bool2int(config),
         trial_cfg.hpo.metric: results[key1][key2],
     }
-    wandb.log(log_res)
 
+    # Diagnosis with 1d landscape
+    landscape_1d = {}
+    if trial_cfg.hpo.diagnosis.use:
+        import seaborn as sns
+        import matplotlib.pyplot as plt
 
-FONTSIZE = 30
-MARKSIZE = 25
+        FONTSIZE = 30
+        MARKSIZE = 200
 
+        col_name = df.columns
+        num_results = df.shape[0]
+        step = num_results
 
-def diagnosis2wandb(diagnosis_cfg, results):
-    import wandb
-    import seaborn as sns
-    import matplotlib.pyplot as plt
+        # Return when number of results are too less
+        if step < 0:
+            return
 
-    col_name = results.columns
-    num_results = results.shape[0]
-    step = num_results
+        # 1D landscape
+        for hyperparam in trial_cfg.hpo.diagnosis.landscape_1d:
+            if hyperparam not in col_name:
+                logger.warning(f'Invalid hyperparam name: {hyperparam}')
+                continue
+            else:
+                plt.figure(figsize=(20, 15))
+                sns.boxplot(x=df[hyperparam], y=df["performance"])
+                plt.title(f"{hyperparam} - 1d landscape", fontsize=FONTSIZE)
+                plt.xticks(rotation=15, fontsize=FONTSIZE)
+                plt.yticks(fontsize=FONTSIZE)
+                plt.xlabel("Choices", size=FONTSIZE)
+                plt.ylabel("Loss", size=FONTSIZE)
+                landscape_1d[f"{hyperparam}"] = wandb.Image(plt.gcf())
+                plt.close()
 
-    # Return when number of results are too less
-    if step < 0:
-        return
+    # PCA
+    if trial_cfg.hpo.diagnosis.use:
+        from sklearn import preprocessing
+        from sklearn.decomposition import PCA
+        from sklearn.gaussian_process import GaussianProcessRegressor
+        from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-    # 1D landscape
-    for hyperparam in diagnosis_cfg.landscape_1d:
-        if hyperparam not in col_name:
-            logger.warning(f'Invalid hyperparam name: {hyperparam}')
-            continue
-        else:
-            plt.figure(figsize=(20, 15))
-            sns.boxplot(x=results[hyperparam], y=results["performance"])
-            plt.title(f"{hyperparam} - 1d landscape", fontsize=FONTSIZE)
-            plt.xticks(rotation=15, fontsize=FONTSIZE)
-            plt.yticks(fontsize=FONTSIZE)
-            plt.xlabel("Choices", size=FONTSIZE)
-            plt.ylabel("Loss", size=FONTSIZE)
-            wandb.log({f"{hyperparam}": wandb.Image(plt.gcf())}, step=step)
-            plt.close()
+        X = df.iloc[:, :-1]
+
+        for col in X.columns.tolist():
+            X[col] = X[col].astype('category')
+            X[col] = X[col].cat.codes
+        X_std = preprocessing.scale(X)
+        pca = PCA(n_components=1)
+        pca.fit(X_std)
+        X_pca = pd.DataFrame(
+            pca.fit_transform(X_std)).rename(columns={0: 'component'})
+        Y = pd.DataFrame(df["performance"])
+        data_pca = pd.concat([X_pca, Y], axis=1)
+
+        kernel = C(0.1, (0.001, 0.1)) * RBF(0.5, (1e-4, 10))
+        reg = GaussianProcessRegressor(kernel=kernel,
+                                       n_restarts_optimizer=10,
+                                       alpha=0.1)
+        reg.fit([[x] for x in data_pca['component'].tolist()],
+                data_pca['performance'].tolist())
+        x_ticks = np.linspace(np.min(data_pca['component']),
+                              np.max(data_pca['component']), 100)
+        print([[x] for x in x_ticks])
+        ys = reg.predict([[x] for x in x_ticks])
+
+        plt.figure(figsize=(20, 15))
+        sns.scatterplot(data=data_pca,
+                        x='component',
+                        y='performance',
+                        s=MARKSIZE)
+        gp = pd.DataFrame(dict(x=x_ticks, y=ys))
+        sns.lineplot(data=gp, x='x', y='y')
+
+        plt.title("Gaussian", fontsize=FONTSIZE)
+        plt.xticks(fontsize=FONTSIZE)
+        plt.yticks(fontsize=FONTSIZE)
+        plt.xlabel("ConfigSpace", size=FONTSIZE)
+        plt.ylabel("Loss", size=FONTSIZE)
+        pca = wandb.Image(plt.gcf())
+        plt.savefig('test.png')
+        plt.close()
+
+        wandb.log({'pca': pca, **log_res, **landscape_1d})

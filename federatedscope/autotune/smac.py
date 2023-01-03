@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import ConfigSpace as CS
 from federatedscope.autotune.utils import eval_in_fs, log2wandb, \
-    summarize_hpo_results, diagnosis2wandb
+    summarize_hpo_results
 from smac.facade.smac_bb_facade import SMAC4BB
 from smac.facade.smac_hpo_facade import SMAC4HPO
 from smac.scenario.scenario import Scenario
@@ -36,16 +36,12 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         logger.info(f'Evaluate the {len(perfs)-1}-th config '
                     f'{config}, and get performance {res}')
         if cfg.wandb.use:
-            log2wandb(len(perfs) - 1, config, results, cfg)
-
-        if cfg.hpo.diagnosis.use:
-            # diagnosis during running
             tmp_results = \
                 summarize_hpo_results(init_configs,
                                       perfs,
                                       white_list=set(config_space.keys()),
                                       desc=cfg.hpo.larger_better)
-            diagnosis2wandb(cfg.hpo.diagnosis, tmp_results)
+            log2wandb(len(perfs) - 1, config, results, cfg, tmp_results)
         return res
 
     def summarize():
