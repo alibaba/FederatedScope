@@ -24,6 +24,7 @@ criterion:
 trainer:
   type: none
 vertical:
+  use: True
   dims: [7, 14]
   algo: 'lr'
   key_size: 256

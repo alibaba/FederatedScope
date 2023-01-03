@@ -15,6 +15,7 @@ dataloader:
   type: raw
   batch_size: 50
 vertical:
+  use: True
   key_size: 256
   algo: 'lr'
 trainer:

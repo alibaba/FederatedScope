@@ -27,6 +27,7 @@ train:
     # learning rate for xgb model
     eta: 0.5
 vertical:
+  use: True
   dims: [4, 8]
   algo: 'xgb'
   xgb_use_bin: True
