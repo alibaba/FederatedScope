@@ -287,6 +287,10 @@ def log2wandb(trial, config, results, trial_cfg):
     wandb.log(log_res)
 
 
+FONTSIZE = 30
+MARKSIZE = 25
+
+
 def diagnosis2wandb(diagnosis_cfg, results):
     import wandb
     import seaborn as sns
@@ -306,10 +310,12 @@ def diagnosis2wandb(diagnosis_cfg, results):
             logger.warning(f'Invalid hyperparam name: {hyperparam}')
             continue
         else:
-            plt.figure()
+            plt.figure(figsize=(20, 15))
             sns.boxplot(x=results[hyperparam], y=results["performance"])
-            plt.title(f"{hyperparam} - 1d landscape")
-            plt.xlabel("Choices")
-            plt.ylabel("Loss")
+            plt.title(f"{hyperparam} - 1d landscape", fontsize=FONTSIZE)
+            plt.xticks(rotation=15, fontsize=FONTSIZE)
+            plt.yticks(fontsize=FONTSIZE)
+            plt.xlabel("Choices", size=FONTSIZE)
+            plt.ylabel("Loss", size=FONTSIZE)
             wandb.log({f"{hyperparam}": wandb.Image(plt.gcf())}, step=step)
             plt.close()
