@@ -27,12 +27,6 @@ def load_vertical_data(config=None, generate=False):
 
     dataset_name = config.data.type.lower()
     # TODO: merge the following later
-    if config.vertical.use:
-        algo = 'lr'
-    elif config.xgb_base.use:
-        algo = 'xgb'
-    else:
-        raise ValueError('You must provide the data partition')
 
     if config.data.args:
         args = config.data.args[0]
@@ -45,10 +39,10 @@ def load_vertical_data(config=None, generate=False):
                                 num_of_clients=config.federate.client_num,
                                 feature_partition=config.vertical_dims,
                                 tr_frac=config.data.splits[0],
+                                algo=config.vertical.algo,
                                 download=True,
                                 seed=1234,
-                                args=args,
-                                algo=algo)
+                                args=args)
         data = dataset.data
         return data, config
     else:

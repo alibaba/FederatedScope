@@ -23,9 +23,9 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: none
-vertical_dims: [7, 14]
 vertical:
-  use: True
+  dims: [7, 14]
+  algo: 'lr'
   key_size: 256
 eval:
   freq: 5

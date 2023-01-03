@@ -67,18 +67,13 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     # Vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
-    cfg.vertical_dims = [5, 10]  # Avoid to be removed when `use` is False
     cfg.vertical = CN()
-    cfg.vertical.use = False
+    # cfg.vertical.use = False # TODO: we need it?
+    cfg.vertical.dims = [5, 10]
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
-
-    # ---------------------------------------------------------------------- #
-    # Vertical FL for xgboost related options
-    # ---------------------------------------------------------------------- #
-    cfg.xgb_base = CN()
-    cfg.xgb_base.use = False
-    cfg.xgb_base.use_bin = False
+    cfg.vertical.algo = 'lr'  # ['lr', 'xgb_base']
+    cfg.vertical.xgb_use_bin = False
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)

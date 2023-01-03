@@ -26,10 +26,10 @@ train:
     max_tree_depth: 3
     # learning rate for xgb model
     eta: 0.5
-vertical_dims: [7, 14]
-xgb_base:
-  use: True
-  use_bin: True
+vertical:
+  dims: [7, 14]
+  algo: 'xgb'
+  xgb_use_bin: True
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
