@@ -59,26 +59,6 @@ class pFedHPOServer(Server):
             ID, state, config, data, model, client_num,
             total_round_num, device, strategy, **kwargs)
 
-        if self._cfg.federate.restore_from != '':
-            if not os.path.exists(self._cfg.federate.restore_from):
-                logger.warning(f'Invalid `restore_from`:'
-                               f' {self._cfg.federate.restore_from}.')
-            else:
-                pi_ckpt_path = self._cfg.federate.restore_from[
-                               :self._cfg.federate.restore_from.rfind('.')] \
-                               + "_pfedhpo.yaml"
-                with open(pi_ckpt_path, 'r') as ips:
-                    ckpt = yaml.load(ips, Loader=yaml.FullLoader)
-                self._z = [np.asarray(z) for z in ckpt['z']]
-                self._theta = [np.exp(z) for z in self._z]
-                self._store = ckpt['store']
-                self._stop_exploration = ckpt['stop']
-                self._trace = dict()
-                self._trace['global'] = ckpt['global']
-                self._trace['refine'] = ckpt['refine']
-                self._trace['entropy'] = ckpt['entropy']
-                self._trace['mle'] = ckpt['mle']
-
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self.discrete = self._cfg.hpo.pfedhpo.discrete
         # prepare search space and bounds
@@ -225,10 +205,12 @@ class pFedHPOServer(Server):
             xs = param_raw.detach().cpu().numpy()
         else:
             logits, self.enc_loss = self.HyperNet()
-            self.logprob = [None] * len(self.receiver)
+            # self.logprob = [None] * len(self.receiver)
+            self.logprob = [None] * len(self.client2idx)
             self.p_idx = {}
             for k in self.pbounds.keys():
-                self.p_idx[k] = [None] * len(self.receiver)
+                # self.p_idx[k] = [None] * len(self.receiver)
+                self.p_idx[k] = [None] * len(self.client2idx)
 
         # sample the hyper-parameter config specific to the clients
         self.sampled = False
@@ -300,24 +282,12 @@ class pFedHPOServer(Server):
         key1 = 'Results_weighted_avg' # 'Results_avg', 'Results_fairness'
         key2 = 'val_acc' # 'test_acc', 'test_correct', 'test_loss', 'test_total', 'test_avg_loss', 'val_acc', 'val_correct', 'val_loss', 'val_total', 'val_avg_loss'
 
-        if self.anchor_res_smooth is None:
-            def moving_average(interval, windowsize):
-                interval = np.array(interval)
-                interval = interval.reshape(-1)
-                l = len(interval)
-                interval = np.concatenate([interval, interval[-windowsize:]])
-                print(interval.shape)
-                window = np.ones(int(windowsize)) / float(windowsize)
-                re = np.convolve(interval, window, 'same')
-                return re[:l]
-
-            _anchor_res = self.anchor_res[key1][key2]
-            self.anchor_res_smooth = moving_average(_anchor_res, windowsize=len(_anchor_res)//10)
-
-        scale = abs(self.anchor_res_smooth[self.start_round] - self.anchor_res_smooth[self.start_round - 1]) + 1e-6
-
-        anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
-        res_end = self.history_results[key1][key2][-1]
+        if 'twitter' in str(self._cfg.data.type).lower():
+            anchor_res_start = self.anchor_res['Results_raw']['test_acc'][self.start_round-1]
+            res_end = self.history_results['Results_weighted_avg']['test_acc'][-1]
+        else:
+            anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
+            res_end = self.history_results[key1][key2][-1]
 
         if not self.discrete:
 

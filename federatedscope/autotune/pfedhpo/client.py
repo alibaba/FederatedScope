@@ -32,30 +32,6 @@ class pFedHPOClient(Client):
 
         if self._cfg.hpo.pfedhpo.train_fl and self._cfg.hpo.pfedhpo.train_anchor:
 
-            # feats = []
-            # _model = torchvision.models.resnet18(pretrained=True)
-            # feat_extractor = create_feature_extractor(_model, {'avgpool': 'feat'})
-            # for _, d in enumerate(data['train']):
-            #     _d = d[0]
-            #     if len(_d.shape) == 4:
-            #         if _d.shape[0] == 1:
-            #             _d = torch.cat([_d]*2, dim=0)
-            #         if _d.shape[1] == 1:
-            #             _d = torch.cat([_d]*3, dim=1)
-            #         if _d.shape[-1] < 32:
-            #             _d = torch.nn.functional.interpolate(_d, size=32, mode='nearest')
-            #         try:
-            #             out = feat_extractor(_d)
-            #         except:
-            #             import pdb;pdb.set_trace()
-            #         feats.append(out['feat'])
-            #
-            #     else:
-            #         import pdb;pdb.set_trace()
-            #         raise NotImplementedError
-            # feats = torch.cat(feats).mean(0).squeeze()
-
-            print(self._cfg.data.type)
             if self._cfg.data.type == 'mini-graph-dc':
                 d_enc = 74
                 graph = True
@@ -74,13 +50,15 @@ class pFedHPOClient(Client):
                 n_label = 62
                 d_rff = 2
 
-            # elif 'cora' in str(self._cfg.data.type).lower():
-                # d_enc = 3
-                # graph = True
-                # n_label = 7
+            elif 'twitter' in str(self._cfg.data.type).lower():
+                d_enc = 400000
+                graph = False
+                n_label = 2
+                d_rff = 50
 
             else:
                 raise NotImplementedError
+
             mmd_type = 'sphere'
             rff_sigma = [127,]
             rff_sigma = [float(sig) for sig in rff_sigma]

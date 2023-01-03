@@ -52,26 +52,6 @@ class pFedHPOFLServer(Server):
             total_round_num, device, strategy, **kwargs)
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
 
-        if self._cfg.federate.restore_from != '':
-            if not os.path.exists(self._cfg.federate.restore_from):
-                logger.warning(f'Invalid `restore_from`:'
-                               f' {self._cfg.federate.restore_from}.')
-            else:
-                pi_ckpt_path = self._cfg.federate.restore_from[
-                               :self._cfg.federate.restore_from.rfind('.')] \
-                               + "_pfedhpo.yaml"
-                with open(pi_ckpt_path, 'r') as ips:
-                    ckpt = yaml.load(ips, Loader=yaml.FullLoader)
-                self._z = [np.asarray(z) for z in ckpt['z']]
-                self._theta = [np.exp(z) for z in self._z]
-                self._store = ckpt['store']
-                self._stop_exploration = ckpt['stop']
-                self._trace = dict()
-                self._trace['global'] = ckpt['global']
-                self._trace['refine'] = ckpt['refine']
-                self._trace['entropy'] = ckpt['entropy']
-                self._trace['mle'] = ckpt['mle']
-
         self.train_anchor = self._cfg.hpo.pfedhpo.train_anchor
         self.discrete = self._cfg.hpo.pfedhpo.discrete
 
@@ -120,6 +100,8 @@ class pFedHPOFLServer(Server):
                 dim = 60
             elif 'femnist' in str(self._cfg.data.type).lower():
                 dim = 124
+            elif 'twitter' in str(self._cfg.data.type).lower():
+                dim = 100
             else:
                 raise NotImplementedError
 
