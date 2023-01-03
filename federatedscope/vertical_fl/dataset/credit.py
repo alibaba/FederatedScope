@@ -37,7 +37,6 @@ class Credit:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
@@ -47,7 +46,6 @@ class Credit:
                  seed=123):
         super(Credit, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.feature_partition = feature_partition
         self.tr_frac = tr_frac

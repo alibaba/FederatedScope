@@ -42,7 +42,6 @@ class Adult:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
@@ -52,7 +51,6 @@ class Adult:
                  seed=123):
         super(Adult, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.tr_frac = tr_frac
         self.feature_partition = feature_partition

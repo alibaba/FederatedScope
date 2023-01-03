@@ -6,6 +6,13 @@ from federatedscope.vertical_fl.dataset.credit \
     import Credit
 from federatedscope.vertical_fl.dataset.blog import Blog
 
+VERTICAL_DATASET = {
+    'adult': Adult,
+    'credit': Credit,
+    'abalone': Abalone,
+    'blog': Blog,
+}
+
 
 def load_vertical_data(config=None, generate=False):
     """
@@ -18,15 +25,11 @@ def load_vertical_data(config=None, generate=False):
     :rtype: dict
     """
 
-    splits = config.data.splits
-    path = config.data.root
-    name = config.data.type.lower()
+    dataset_name = config.data.type.lower()
     # TODO: merge the following later
     if config.vertical.use:
-        feature_partition = config.vertical_dims
         algo = 'lr'
     elif config.xgb_base.use:
-        feature_partition = config.vertical_dims
         algo = 'xgb'
     else:
         raise ValueError('You must provide the data partition')
@@ -36,67 +39,19 @@ def load_vertical_data(config=None, generate=False):
     else:
         args = {'normalization': False, 'standardization': False}
 
-    if name == 'adult':
-        dataset = Adult(root=path,
-                        name=name,
-                        num_of_clients=config.federate.client_num,
-                        feature_partition=feature_partition,
-                        tr_frac=splits[0],
-                        download=True,
-                        seed=1234,
-                        args=args,
-                        algo=algo)
+    dataset_class = VERTICAL_DATASET[dataset_name]
+    if not generate:
+        dataset = dataset_class(root=config.data.root,
+                                num_of_clients=config.federate.client_num,
+                                feature_partition=config.vertical_dims,
+                                tr_frac=config.data.splits[0],
+                                download=True,
+                                seed=1234,
+                                args=args,
+                                algo=algo)
         data = dataset.data
         return data, config
-    elif name == 'credit':
-        dataset = Credit(root=path,
-                         name=name,
-                         num_of_clients=config.federate.client_num,
-                         feature_partition=feature_partition,
-                         tr_frac=splits[0],
-                         download=True,
-                         seed=1234,
-                         args=args,
-                         algo=algo)
-        data = dataset.data
-        return data, config
-    elif name == 'adult':
-        dataset = Adult(root=path,
-                        name=name,
-                        num_of_clients=config.federate.client_num,
-                        feature_partition=feature_partition,
-                        tr_frac=splits[0],
-                        download=True,
-                        seed=1234,
-                        args=args,
-                        algo=algo)
-        data = dataset.data
-        return data, config
-    elif name == 'abalone':
-        dataset = Abalone(root=path,
-                          name=name,
-                          num_of_clients=config.federate.client_num,
-                          feature_partition=feature_partition,
-                          tr_frac=splits[0],
-                          download=True,
-                          seed=1234,
-                          args=args,
-                          algo=algo)
-        data = dataset.data
-        return data, config
-    elif name == 'blog':
-        dataset = Blog(root=path,
-                       name=name,
-                       num_of_clients=config.federate.client_num,
-                       feature_partition=feature_partition,
-                       tr_frac=splits[0],
-                       download=True,
-                       seed=1234,
-                       args=args,
-                       algo=algo)
-        data = dataset.data
-        return data, config
-    elif generate:
+    else:
         # generate toy data for running a vertical FL example
         INSTANCE_NUM = 1000
         TRAIN_SPLIT = 0.9
@@ -136,5 +91,3 @@ def load_vertical_data(config=None, generate=False):
         data[2]['test'] = test_data
 
         return data, config
-    else:
-        raise ValueError('You must provide the data file')

@@ -54,7 +54,6 @@ class Abalone:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
@@ -63,7 +62,6 @@ class Abalone:
                  download=True,
                  seed=123):
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.feature_partition = feature_partition
         self.tr_frac = tr_frac
