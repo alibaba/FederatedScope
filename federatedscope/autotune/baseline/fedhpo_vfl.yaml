@@ -44,7 +44,7 @@ vertical:
   use: False
   key_size: 256
 eval:
-  freq: 5
+  freq: 1
   best_res_update_round_wise_key: test_loss
 hpo:
   scheduler: rs
@@ -52,7 +52,7 @@ hpo:
   init_cand_num: 25
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
   sha:
-    budgets: [ 9, 9 ]
+    budgets: [ 30, 30 ]
     elim_rate: 3
     iter: 25
   metric: 'server_global_eval.test_loss'
@@ -60,4 +60,4 @@ hpo:
   # Enable wandb
   diagnosis:
     use: True
-    landscape_1d: ['feat_engr.type']
+    landscape_1d: ['feat_engr.type', 'vertical.use']

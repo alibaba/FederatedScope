@@ -310,7 +310,8 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
                 trial_cfg[
                     'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
                         self._stage]
-                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
+                # trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[
+                # self._stage]
 
         return init_configs
 
@@ -335,7 +336,8 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
                 trial_cfg[
                     'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
                         self._stage]
-                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
+                # trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[
+                # self._stage]
 
         return next_population
 

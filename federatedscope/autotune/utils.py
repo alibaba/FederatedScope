@@ -248,10 +248,7 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     # specify the configuration of interest
     trial_cfg.merge_from_list(config2cmdargs(config))
     # specify the budget
-    trial_cfg.merge_from_list(
-        ["federate.total_round_num",
-         int(budget), "eval.freq",
-         int(budget)])
+    trial_cfg.merge_from_list(["federate.total_round_num", int(budget)])
     setup_seed(trial_cfg.seed)
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
