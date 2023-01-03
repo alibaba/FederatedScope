@@ -42,38 +42,15 @@ class Test_base:
     def test_for_node(self, tree_num, node_num):
         if node_num >= 2**self.client.max_tree_depth - 1:
             if tree_num + 1 < self.client.num_of_trees:
-                # TODO: add feedback during training
-                logger.info(f'----------- Building a new tree (Tree '
-                            f'#{tree_num + 1}) -------------')
-                # build the next tree
-                self.client.fs.compute_for_root(tree_num + 1)
-
+                if (tree_num + 1) % self.client._cfg.eval.freq == 0:
+                    self.feedback_results(tree_num)
+                else:
+                    logger.info(f'----------- Building a new tree (Tree '
+                                f'#{tree_num + 1}) -------------')
+                    # build the next tree
+                    self.client.fs.compute_for_root(tree_num + 1)
             else:
-                metrics = self.evaluation()
-                self.client.comm_manager.send(
-                    Message(msg_type='test_result',
-                            sender=self.client.ID,
-                            state=self.client.state,
-                            receiver=self.client.server_id,
-                            content=(tree_num, metrics)))
-
-                self.client.comm_manager.send(
-                    Message(msg_type='send_feature_importance',
-                            sender=self.client.ID,
-                            state=self.client.state,
-                            receiver=[
-                                each for each in list(
-                                    self.client.comm_manager.neighbors.keys())
-                                if each != self.client.server_id
-                                and each != self.client.ID
-                            ],
-                            content='None'))
-                self.client.comm_manager.send(
-                    Message(msg_type='feature_importance',
-                            sender=self.client.ID,
-                            state=self.client.state,
-                            receiver=self.client.server_id,
-                            content=self.client.feature_importance))
+                self.feedback_results(tree_num)
         elif self.client.tree_list[tree_num][node_num].weight:
             self.client.test_result += self.client.tree_list[tree_num][
                 node_num].indicator * self.client.tree_list[tree_num][
@@ -112,3 +89,29 @@ class Test_base:
                                         2].indicator = self.client.tree_list[
                                             tree_num][node_num].indicator * R
         self.test_for_node(tree_num, node_num + 1)
+
+    def feedback_results(self, tree_num):
+        metrics = self.evaluation()
+        self.client.comm_manager.send(
+            Message(msg_type='test_result',
+                    sender=self.client.ID,
+                    state=self.client.state,
+                    receiver=self.client.server_id,
+                    content=(tree_num, metrics)))
+        self.client.comm_manager.send(
+            Message(
+                msg_type='send_feature_importance',
+                sender=self.client.ID,
+                state=self.client.state,
+                receiver=[
+                    each
+                    for each in list(self.client.comm_manager.neighbors.keys())
+                    if each != self.client.server_id and each != self.client.ID
+                ],
+                content='None'))
+        self.client.comm_manager.send(
+            Message(msg_type='feature_importance',
+                    sender=self.client.ID,
+                    state=self.client.state,
+                    receiver=self.client.server_id,
+                    content=self.client.feature_importance))
