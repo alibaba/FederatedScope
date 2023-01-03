@@ -1,3 +1,8 @@
+# How to use:
+# python federatedscope/hpo.py --cfg \
+#  federatedscope/autotune/baseline/fedhpo_vfl.yaml wandb.use \
+#  True wandb.name_project vfl_demo wandb.name_user vfl_demo
+
 use_gpu: False
 device: 0
 backend: torch
@@ -52,6 +57,7 @@ hpo:
     iter: 25
   metric: 'server_global_eval.test_loss'
   working_folder: rs
+  # Enable wandb
   diagnosis:
     use: True
     landscape_1d: ['feat_engr.type']
