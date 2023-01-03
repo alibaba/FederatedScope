@@ -237,7 +237,7 @@ class XGBClient(Client):
 
     def callback_func_for_continue(self, message: Message):
         tree_num = message.content
-        logger.info(f'----------- Building a new tree (Tree '
+        logger.info(f'---------- Building a new tree (Tree '
                     f'#{tree_num + 1}) -------------')
         # build the next tree
         self.fs.compute_for_root(tree_num + 1)
