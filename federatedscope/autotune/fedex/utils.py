@@ -1,6 +1,8 @@
 from torch import nn
 from torch.nn.utils import spectral_norm
 
+from federatedscope.autotune.utils import arm2dict
+
 
 class EncNet(nn.Module):
 
@@ -79,7 +81,7 @@ if __name__=="__main__":
     clientwise_configs = dict()
     for i in range(prbs.shape[0]):
         arm_idx = prbs[i].argmax()
-        clientwise_configs['client{}'.format(i+1)] = arms['arm{}'.format(arm_idx)]
+        clientwise_configs['client_{}'.format(i+1)] = arm2dict(arms['arm{}'.format(arm_idx)])
     with open(args.save_path, 'w') as ops:
         yaml.Dumper.ignore_aliases = lambda *args : True
         yaml.dump(clientwise_configs, ops)
