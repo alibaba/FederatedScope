@@ -42,13 +42,16 @@ eval:
   freq: 5
   best_res_update_round_wise_key: test_loss
 hpo:
-  scheduler: sha
+  scheduler: rs
   num_workers: 0
-  init_cand_num: 9
+  init_cand_num: 25
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
   sha:
-    budgets: [ 3, 9 ]
+    budgets: [ 9, 9 ]
     elim_rate: 3
-    iter: 1
+    iter: 25
   metric: 'server_global_eval.test_loss'
-  working_folder: sha
+  working_folder: rs
+  diagnosis:
+    use: True
+    landscape_1d: ['feat_engr.type']

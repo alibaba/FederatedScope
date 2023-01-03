@@ -48,6 +48,12 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.table.num = 27
     cfg.hpo.table.idx = 0
 
+    # HPO Diagnosis
+    cfg.hpo.diagnosis = CN()
+    cfg.hpo.diagnosis.use = False
+    cfg.hpo.diagnosis.landscape_1d = []  # From one hyper_param, eg. [lr, wd]
+    cfg.hpo.diagnosis.landscape_2d = []  # From two hyper_param, eg. [(lr, wd)]
+
 
 def assert_hpo_cfg(cfg):
     # HPO related

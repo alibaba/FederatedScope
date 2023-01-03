@@ -161,6 +161,7 @@ def init_wandb(cfg):
                job_type=method_name,
                name=exp_name,
                notes=f"{method_name}, {exp_name}")
+    # wandb_url = wandb.run.get_url()
 
 
 def logfile_2_wandb_dict(exp_log_f, raw_out=True):

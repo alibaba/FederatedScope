@@ -14,7 +14,8 @@ from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results, log2wandb
+    config2cmdargs, config2str, summarize_hpo_results, log2wandb, \
+    diagnosis2wandb
 
 logger = logging.getLogger(__name__)
 
@@ -182,8 +183,10 @@ class ModelFreeBase(Scheduler):
                     thread_results[i].clear()
 
         else:
+            tmp_configs = []
             perfs = [None] * len(configs)
             for i, config in enumerate(configs):
+                tmp_configs.append(config)
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
                 results = make_trial(trial_cfg, self._client_cfgs)
@@ -194,6 +197,16 @@ class ModelFreeBase(Scheduler):
                     format(i, config, perfs[i]))
                 if self._cfg.wandb.use:
                     log2wandb(i, config, results, trial_cfg)
+
+                if self._cfg.hpo.diagnosis.use:
+                    # diagnosis during running
+                    tmp_results = \
+                        summarize_hpo_results(tmp_configs,
+                                              perfs,
+                                              white_list=set(
+                                                self._search_space.keys()),
+                                              desc=self._cfg.hpo.larger_better)
+                    diagnosis2wandb(self._cfg.hpo.diagnosis, tmp_results)
         return perfs
 
     def optimize(self):

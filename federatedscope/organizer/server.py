@@ -171,6 +171,7 @@ def view_room(room_id, psw=None):
     # TODO: Process out file, we only show url for wandb
     with open(rtn_info['file_name']) as f:
         lines = f.readlines()
+        # TODO: read info from line
 
     return rtn_info
 

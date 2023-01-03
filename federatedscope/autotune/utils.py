@@ -285,3 +285,53 @@ def log2wandb(trial, config, results, trial_cfg):
         trial_cfg.hpo.metric: results[key1][key2],
     }
     wandb.log(log_res)
+
+
+def diagnosis2wandb(diagnosis_cfg, results):
+    import wandb
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    # TODO: fix performance not recorded
+    MIN_NUM_RESULTS = 0
+    col_name = results.columns
+    num_results = results.shape[0]
+    step = num_results - MIN_NUM_RESULTS
+
+    # Return when number of results are too less
+    if step < 0:
+        return
+
+    # 1D landscape
+    for hyperparam in diagnosis_cfg.landscape_1d:
+        if hyperparam not in col_name:
+            logger.warning(f'Invalid hyperparam name: {hyperparam}')
+            continue
+        else:
+            # Obtain xs for plot
+            # xs = results[hyperparam].unique()
+            # ys = []
+            # for x in xs:
+            #     idx = np.where(results[hyperparam].values == x)
+            #     y = results.iloc[idx]['performance'].values
+            #     ys.append(y)
+
+            fig = plt.figure()
+            # plt.boxplot(ys, showmeans=True, labels=xs)
+            sns.boxplot(x=results[hyperparam], y=results["performance"])
+            plt.title(f"{hyperparam} - 1d landscape")
+            plt.xlabel("Choices")
+            plt.ylabel("Performance")
+            plt.savefig('test.png')
+            # plt.close()
+            wandb.log({f"{hyperparam}": wandb.Image(plt.gcf())}, step=step)
+            # wandb.log({f"{hyperparam}": fig}, step=step)
+
+    # 2D landscape
+    for hyperparam_x, hyperparam_y in diagnosis_cfg.landscape_2d:
+        if hyperparam_x not in col_name or hyperparam_y not in col_name:
+            logger.warning(
+                f'Invalid hyperparam name: {hyperparam_x} or {hyperparam_y}')
+            continue
+        else:
+            ...
