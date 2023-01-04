@@ -62,6 +62,7 @@ class XGBClient(Client):
                                self.callback_func_for_compute_next_node)
         self.register_handlers('send_feature_importance',
                                self.callback_func_for_send_feature_importance)
+        self.register_handlers('continue', self.callback_func_for_continue)
         self.register_handlers('finish', self.callback_func_for_finish)
 
     def _init_data_related_var(self):
@@ -233,6 +234,13 @@ class XGBClient(Client):
                     state=self.state,
                     receiver=self.server_id,
                     content=self.feature_importance))
+
+    def callback_func_for_continue(self, message: Message):
+        tree_num = message.content
+        logger.info(f'---------- Building a new tree (Tree '
+                    f'#{tree_num + 1}) -------------')
+        # build the next tree
+        self.fs.compute_for_root(tree_num + 1)
 
     def callback_func_for_finish(self, message: Message):
         pass
