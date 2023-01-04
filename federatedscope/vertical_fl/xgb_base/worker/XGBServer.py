@@ -45,7 +45,7 @@ class XGBServer(Server):
                                self.callback_func_for_feature_importance)
 
     def _init_data_related_var(self):
-        self.batch_size = self._cfg.data.batch_size
+        self.batch_size = self._cfg.dataloader.batch_size
         self.feature_list = [0] + self.vertical_dims
         self.feature_partition = [
             self.feature_list[i + 1] - self.feature_list[i]
@@ -88,16 +88,25 @@ class XGBServer(Server):
                 role='Server #',
                 forms=self._cfg.eval.report)
             formatted_logs['feature_importance'] = self.feature_importance_dict
+            self.feature_importance_dict = {}
             logger.info(formatted_logs)
-            self.comm_manager.send(
-                Message(msg_type='finish',
-                        sender=self.ID,
-                        receiver=list(
-                            self.comm_manager.get_neighbors().keys()),
-                        state=self.state,
-                        content='None'))
-            # jump out running
-            self.state = self.total_round_num + 1
+            if self.tree_num + 1 < self.num_of_trees:
+                self.comm_manager.send(
+                    Message(msg_type='continue',
+                            sender=self.ID,
+                            receiver=self.num_of_parties,
+                            state=self.state,
+                            content=self.tree_num))
+            else:
+                self.comm_manager.send(
+                    Message(msg_type='finish',
+                            sender=self.ID,
+                            receiver=list(
+                                self.comm_manager.get_neighbors().keys()),
+                            state=self.state,
+                            content='None'))
+                # jump out running
+                self.state = self.total_round_num + 1
 
     def callback_func_for_test_result(self, message: Message):
         self.tree_num, self.metrics = message.content

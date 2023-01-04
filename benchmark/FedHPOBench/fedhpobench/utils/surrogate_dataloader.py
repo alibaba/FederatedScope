@@ -7,7 +7,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_validate as sk_cross_validate
 from tqdm import tqdm
 
-from fedhpob.utils.tabular_dataloader import load_data
+from fedhpobench.utils.tabular_dataloader import load_data
 
 
 def sampling(X, Y, over_rate=1, down_rate=1.0, cvg_score=0.5):
