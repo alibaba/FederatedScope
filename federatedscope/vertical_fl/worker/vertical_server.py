@@ -5,7 +5,6 @@ from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
 from federatedscope.core.auxiliaries.model_builder import get_model
-from federatedscope.core.auxiliaries.logging import logline_2_wandb_dict
 
 logger = logging.getLogger(__name__)
 
