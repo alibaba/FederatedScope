@@ -316,7 +316,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
                 landscape_1d[f"{hyperparam}"] = wandb.Image(plt.gcf())
                 plt.close()
 
-    # PCA
+    # PCA of exploration
     if trial_cfg.hpo.diagnosis.use:
         from sklearn import preprocessing
         from sklearn.decomposition import PCA
@@ -334,10 +334,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
         X_pca = pd.DataFrame(
             pca.fit_transform(X_std)).rename(columns={0: 'component'})
         Y = pd.DataFrame(df["performance"])
-        color = [0] * (len(X) - 1) + [1]
         data_pca = pd.concat([X_pca, Y], axis=1)
-
-        data_pca.insert(loc=len(data_pca.columns), column='color', value=color)
 
         kernel = C(0.1, (0.001, 0.1)) * RBF(0.5, (1e-4, 10))
         reg = GaussianProcessRegressor(kernel=kernel,
@@ -353,7 +350,6 @@ def log2wandb(trial, config, results, trial_cfg, df):
         sns.scatterplot(data=data_pca,
                         x='component',
                         y='performance',
-                        hue='color',
                         s=MARKSIZE)
         gp = pd.DataFrame(dict(x=x_ticks, y=ys))
         sns.lineplot(data=gp, x='x', y='y')

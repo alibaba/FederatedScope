@@ -101,20 +101,15 @@ class vFLServer(Server):
                 role='Server #',
                 forms=self._cfg.eval.report)
             logger.info(formatted_logs)
-            # # Used for wandb
-            # if self._cfg.wandb.use:
-            #     try:
-            #         import wandb
-            #         # exp_stop_normal = False
-            #         # exp_stop_normal, log_res = logline_2_wandb_dict(
-            #         #     exp_stop_normal, formatted_logs, self.log_res_best,
-            #         #     raw_out=False)
-            #         wandb.log(metrics)
-            #     except ImportError:
-            #         logger.error(
-            #             "cfg.wandb.use=True but not install the wandb
-            #             package")
-            #         exit()
+            # Used for wandb
+            if self._cfg.wandb.use:
+                try:
+                    import wandb
+                    wandb.log(metrics)
+                except ImportError:
+                    logger.error("cfg.wandb.use=True "
+                                 "but not install the wandb package")
+                    exit()
 
         if self.state < self.total_round_num:
             # Move to next round of training
@@ -132,20 +127,15 @@ class vFLServer(Server):
                 role='Server #',
                 forms=self._cfg.eval.report)
             logger.info(formatted_logs)
-            # # Used for wandb
-            # if self._cfg.wandb.use:
-            #     try:
-            #         import wandb
-            #         # exp_stop_normal = False
-            #         # exp_stop_normal, log_res = logline_2_wandb_dict(
-            #         #     exp_stop_normal, formatted_logs, self.log_res_best,
-            #         #     raw_out=False)
-            #         wandb.log(metrics)
-            #     except ImportError:
-            #         logger.error(
-            #             "cfg.wandb.use=True but not install the wandb
-            #             package")
-            #         exit()
+            # Used for wandb
+            if self._cfg.wandb.use:
+                try:
+                    import wandb
+                    wandb.log(metrics)
+                except ImportError:
+                    logger.error("cfg.wandb.use=True but "
+                                 "not install the wandb package")
+                    exit()
 
     def evaluate(self):
         test_x = self.data['test']['x']

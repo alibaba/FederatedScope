@@ -90,6 +90,15 @@ class XGBServer(Server):
             formatted_logs['feature_importance'] = self.feature_importance_dict
             self.feature_importance_dict = {}
             logger.info(formatted_logs)
+            # Used for wandb
+            if self._cfg.wandb.use:
+                try:
+                    import wandb
+                    wandb.log(self.metrics)
+                except ImportError:
+                    logger.error("cfg.wandb.use=True "
+                                 "but not install the wandb package")
+                    exit()
             if self.tree_num + 1 < self.num_of_trees:
                 self.comm_manager.send(
                     Message(msg_type='continue',
