@@ -484,7 +484,7 @@ class Client(BaseClient):
                 metrics,
                 rnd=self.state,
                 role='Client #{}'.format(self.ID),
-                forms='raw',
+                forms=['raw'],
                 return_raw=True)
             self._monitor.update_best_result(self.best_results,
                                              formatted_eval_res['Results_raw'],
