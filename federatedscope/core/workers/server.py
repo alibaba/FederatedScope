@@ -10,7 +10,7 @@ import time
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    StandaloneDDPCommManager, gRPCCommManager
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
@@ -20,6 +20,7 @@ from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Server(BaseServer):
@@ -199,7 +200,12 @@ class Server(BaseServer):
         if self.mode == 'standalone':
             comm_queue = kwargs.get('shared_comm_queue', None)
             id2comm = kwargs.get('id2comm', None)
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+            if self._cfg.federate.multi_gpu:
+                self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
+                                                      monitor=self._monitor,
+                                                      id2comm=id2comm)
+            else:
+                self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
                                                       monitor=self._monitor,
                                                       id2comm=id2comm)
         elif self.mode == 'distributed':
@@ -810,13 +816,13 @@ class Server(BaseServer):
             if self._cfg.asyn.use and self._cfg.asyn.aggregator == 'time_up':
                 self.deadline_for_cur_round = self.cur_timestamp + \
                                                self._cfg.asyn.time_budget
-
-            # start feature engineering
-            self.trigger_for_feat_engr(
-                self.broadcast_model_para, {
-                    'msg_type': 'model_para',
-                    'sample_client_num': self.sample_client_num
-                })
+            if not self._cfg.federate.multi_gpu:
+                # start feature engineering
+                self.trigger_for_feat_engr(
+                    self.broadcast_model_para, {
+                        'msg_type': 'model_para',
+                        'sample_client_num': self.sample_client_num
+                    })
 
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.

@@ -1,13 +1,13 @@
-from federatedscope.core.fed_runner import StandaloneRunner, DistributedRunner, StandaloneMultiProcessRunner, StandaloneMultiGPURunner
+from federatedscope.core.fed_runner import StandaloneRunner, DistributedRunner, StandaloneMultiProcessRunner
+from federatedscope.core.auxiliaries.parallel_runner import StandaloneMultiGPURunner
+from federatedscope.core.auxiliaries.data_builder import get_data
 
 
-def get_runner(data, server_class, client_class, config, client_configs=None):
+def get_runner(server_class, client_class, config, client_configs=None):
     """
     Instantiate a runner based on a configuration file
 
     Args:
-        data: ``core.data.StandaloneDataDict`` in standalone mode, \
-            ``core.data.ClientData`` in distribute mode
         server_class: server class
         client_class: client class
         config: configurations for FL, see ``federatedscope.core.configs``
@@ -41,6 +41,16 @@ def get_runner(data, server_class, client_class, config, client_configs=None):
             runner_cls = StandaloneMultiProcessRunner
     elif mode == 'distributed':
         runner_cls = DistributedRunner
+    
+    data = None
+    # federated dataset might change the number of clients
+    # thus, we allow the creation procedure of dataset to modify the global
+    # cfg object
+    if runner_cls is not StandaloneMultiGPURunner:
+        data, modified_cfg = get_data(config=config.clone(),
+                                    client_cfgs=client_configs)
+        config.merge_from_other_cfg(modified_cfg)
+        config.freeze()
 
     return runner_cls(data=data,
                       server_class=server_class,

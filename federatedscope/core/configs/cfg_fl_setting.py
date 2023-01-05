@@ -46,6 +46,8 @@ def extend_fl_setting_cfg(cfg):
     # The configurations for parallel in standalone
     cfg.federate.process_num = 1
     cfg.federate.multi_gpu = False
+    cfg.federate.master_addr = '127.0.0.1'  # parameter of torch distributed
+    cfg.federate.master_port = 29500      # parameter of torch distributed
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options
@@ -200,14 +202,17 @@ def assert_fl_setting_cfg(cfg):
         logger.warning('We found that cfg.federate.process_num is invalid for '
                        'standalone mode (i.e., process_num < 1), '
                        'thus cfg.federate.process_num is modified to 1')
+    if cfg.federate.mode == 'distributed' and cfg.federate.multi_gpu:
+        cfg.federate.multi_gpu = False
+        logger.warning('Multi GPU training is only available in standalone mode')
     if cfg.federate.multi_gpu and not torch.cuda.is_available():
         cfg.federate.multi_gpu = False
         logger.warning('No GPU found for your device, set multi_gpu=False')
-    if cfg.federate.multi_gpu and torch.cuda.device_count() == 1:
-        cfg.federate.multi_gpu = False
-        logger.warning('Set cfg.federate.multi_gpu=False since there is only one gpu')
     if cfg.federate.multi_gpu and torch.cuda.device_count() < cfg.federate.process_num:
         cfg.federate.process_num = torch.cuda.device_count()
         logger.warning(f'We found the number of gpu is insufficient for multi_gpu mode, thus cfg.federate.process_num={cfg.federate.process_num}')
+    if cfg.federate.multi_gpu and torch.cuda.device_count() == 1:
+        cfg.federate.multi_gpu = False
+        logger.warning('Set cfg.federate.multi_gpu=False since there is only one gpu')
 
 register_config("fl_setting", extend_fl_setting_cfg)

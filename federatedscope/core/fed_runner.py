@@ -1286,9 +1286,3 @@ class FedRunner(object):
         except Exception as error:
             logger.warning(f'Completeness check failed for {error}!')
         return
-
-def setup_multigpu_runner():
-    pass
-
-class StandaloneMultiGPURunner(StandaloneRunner):
-    pass

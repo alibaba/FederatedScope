@@ -5,7 +5,7 @@ import pickle
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    StandaloneDDPCommManager, gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
@@ -14,6 +14,7 @@ from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
 from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Client(BaseClient):
@@ -138,7 +139,11 @@ class Client(BaseClient):
         self.server_id = server_id
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+            if self._cfg.federate.multi_gpu:
+                self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
+                                                             monitor=self._monitor)
+            else:
+                self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
                                                       monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
@@ -386,6 +391,7 @@ class Client(BaseClient):
                                 init_timestamp=timestamp,
                                 instance_number=sample_size),
                             content=(sample_size, shared_model_para)))
+                logger.info("Client {} send model para finish".format(self.ID))
 
     def callback_funcs_for_assign_id(self, message: Message):
         """

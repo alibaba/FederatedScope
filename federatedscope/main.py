@@ -40,17 +40,7 @@ if __name__ == '__main__':
     else:
         client_cfgs = None
 
-    # federated dataset might change the number of clients
-    # thus, we allow the creation procedure of dataset to modify the global
-    # cfg object
-    data, modified_cfg = get_data(config=init_cfg.clone(),
-                                  client_cfgs=client_cfgs)
-    init_cfg.merge_from_other_cfg(modified_cfg)
-
-    init_cfg.freeze()
-
-    runner = get_runner(data=data,
-                        server_class=get_server_cls(init_cfg),
+    runner = get_runner(server_class=get_server_cls(init_cfg),
                         client_class=get_client_cls(init_cfg),
                         config=init_cfg.clone(),
                         client_configs=client_cfgs)
