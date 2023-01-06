@@ -51,9 +51,9 @@ jobs:
       run: |
         wget -c http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz
         tar -zxvf meteor-1.5.tar.gz
-        mkdir federatedscope/nlp/hetero_tasks/metric/generation/meteor/data/
-        mv meteor-1.5/data/paraphrase-en.gz federatedscope/nlp/hetero_tasks/metric/generation/meteor/data/
-        mv meteor-1.5/meteor-1.5.jar federatedscope/nlp/hetero_tasks/metric/generation/meteor/
+        mkdir federatedscope/nlp/metric/meteor/data/
+        mv meteor-1.5/data/paraphrase-en.gz federatedscope/nlp/metric/meteor/data/
+        mv meteor-1.5/meteor-1.5.jar federatedscope/nlp/metric/meteor/
     - name: Test ATC
       run: |
         python federatedscope/main.py \
