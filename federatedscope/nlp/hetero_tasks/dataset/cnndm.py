@@ -4,13 +4,13 @@ import logging
 import torch
 import numpy as np
 from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
-    DictDataset, NUM_DEBUG
+    DatasetDict, NUM_DEBUG
 
 logger = logging.getLogger(__name__)
 
 
-def get_cnndm_examples(data, debug=False):
-    if debug:
+def get_cnndm_examples(data, is_debug=False):
+    if is_debug:
         data = data[:NUM_DEBUG]
     src_examples, tgt_examples = [], []
     for ex in data:
@@ -27,15 +27,15 @@ def process_cnndm_dataset(data,
                           raw_cache_dir='',
                           client_id=None,
                           pretrain=False,
-                          debug=False,
+                          is_debug=False,
                           **kwargs):
     if pretrain:
         return process_cnndm_dataset_for_pretrain(data, split, tokenizer,
                                                   max_src_len, raw_cache_dir,
-                                                  client_id, debug)
+                                                  client_id, is_debug)
 
     cache_dir = osp.join(raw_cache_dir, 'train', str(client_id), split)
-    src_examples, tgt_examples = get_cnndm_examples(data, debug)
+    src_examples, tgt_examples = get_cnndm_examples(data, is_debug)
     if osp.exists(cache_dir):
         logger.info('Loading cache file from \'{}\''.format(cache_dir))
         token_ids = np.memmap(filename=osp.join(cache_dir, 'token_ids.memmap'),
@@ -119,7 +119,7 @@ def process_cnndm_dataset(data,
             labels = tgt_encoded.input_ids
 
     example_indices = torch.arange(token_ids.size(0), dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': token_ids,
         'token_type_ids': token_type_ids,
         'attention_mask': attention_mask,
@@ -135,9 +135,9 @@ def process_cnndm_dataset_for_pretrain(data,
                                        max_src_len,
                                        raw_cache_dir='',
                                        client_id=None,
-                                       debug=False):
+                                       is_debug=False):
     cache_dir = osp.join(raw_cache_dir, 'pretrain', str(client_id), split)
-    src_examples, tgt_examples = get_cnndm_examples(data, debug)
+    src_examples, tgt_examples = get_cnndm_examples(data, is_debug)
     if osp.exists(cache_dir):
         logger.info('Loading cache file from \'{}\''.format(cache_dir))
         token_ids = np.memmap(filename=osp.join(cache_dir, 'token_ids.memmap'),
@@ -190,7 +190,7 @@ def process_cnndm_dataset_for_pretrain(data,
             attention_mask = src_encoded.attention_mask
 
     example_indices = torch.arange(token_ids.size(0), dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': token_ids,
         'attention_mask': attention_mask,
         'example_indices': example_indices

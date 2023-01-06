@@ -3,13 +3,13 @@ import os.path as osp
 import logging
 import torch
 from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
-    DictDataset, NUM_DEBUG
+    DatasetDict, NUM_DEBUG
 
 logger = logging.getLogger(__name__)
 
 
-def get_imdb_examples(data, debug=False):
-    if debug:
+def get_imdb_examples(data, is_debug=False):
+    if is_debug:
         data = data[:NUM_DEBUG]
     examples = []
     for ex in data:
@@ -24,12 +24,12 @@ def process_imdb_dataset(data,
                          cache_dir='',
                          client_id=None,
                          pretrain=False,
-                         debug=False,
+                         is_debug=False,
                          **kwargs):
     if pretrain:
         return process_imdb_dataset_for_pretrain(data, split, tokenizer,
                                                  max_seq_len, cache_dir,
-                                                 client_id, debug)
+                                                 client_id, is_debug)
 
     save_dir = osp.join(cache_dir, 'train', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
@@ -39,7 +39,7 @@ def process_imdb_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = get_imdb_examples(data, debug)
+        examples = get_imdb_examples(data, is_debug)
         texts = [ex[0] for ex in examples]
         encoded_inputs = tokenizer(texts,
                                    padding='max_length',
@@ -58,7 +58,7 @@ def process_imdb_dataset(data,
     labels = [ex[1] for ex in examples]
     example_indices = torch.arange(encoded_inputs.input_ids.size(0),
                                    dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': encoded_inputs.input_ids,
         'token_type_ids': encoded_inputs.token_type_ids,
         'attention_mask': encoded_inputs.attention_mask,
@@ -74,7 +74,7 @@ def process_imdb_dataset_for_pretrain(data,
                                       max_seq_len,
                                       cache_dir='',
                                       client_id=None,
-                                      debug=False):
+                                      is_debug=False):
     save_dir = osp.join(cache_dir, 'pretrain', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
     if osp.exists(cache_file):
@@ -83,7 +83,7 @@ def process_imdb_dataset_for_pretrain(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = get_imdb_examples(data, debug)
+        examples = get_imdb_examples(data, is_debug)
         texts = [ex[0] for ex in examples]
         texts = split_sent(texts, eoq=tokenizer.eoq_token)
         encoded_inputs = tokenizer(texts,
@@ -107,7 +107,7 @@ def process_imdb_dataset_for_pretrain(data,
 
     example_indices = torch.arange(encoded_inputs.input_ids.size(0),
                                    dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': encoded_inputs.input_ids,
         'attention_mask': encoded_inputs.attention_mask,
         'example_indices': example_indices

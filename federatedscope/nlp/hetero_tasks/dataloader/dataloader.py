@@ -18,12 +18,12 @@ def modified_cfg(cfg, cfg_client):
         os.makedirs(cfg.federate.save_to, exist_ok=True)
 
     # modification for debug (load a small subset from the whole dataset)
-    if cfg.data.debug:
+    if cfg.data.is_debug:
         cfg.federate.client_num = 6
-        cfg.data.datasets = [
+        cfg.data.hetero_data_name = [
             'imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg'
         ]
-        cfg.data.num_grouped_clients = [1, 1, 1, 1, 1, 1]
+        cfg.data.num_of_client_for_data = [1, 1, 1, 1, 1, 1]
         cfg.federate.total_round_num = 2
         cfg.train.local_update_steps = 2
         # TODO
@@ -43,12 +43,12 @@ def modified_cfg(cfg, cfg_client):
         num_agg_topk = []
         if len(cfg.aggregator.num_agg_topk) > 0:
             for group_id, num_clients in enumerate(
-                    cfg.data.num_grouped_clients):
+                    cfg.data.num_of_client_for_data):
                 num_agg_topk += [cfg.aggregator.num_agg_topk[group_id]] * \
                                 num_clients
         else:
             for group_id, num_clients in enumerate(
-                    cfg.data.num_grouped_clients):
+                    cfg.data.num_of_client_for_data):
                 num_agg_topk += [cfg.federate.client_num] * num_clients
         cfg.aggregator.num_agg_topk = num_agg_topk
 
@@ -62,11 +62,11 @@ def modified_cfg(cfg, cfg_client):
                 tmp_cfg.cfg_check_funcs = []
                 print(tmp_cfg.dump())
 
-        num_grouped_clients = cfg.data.num_grouped_clients
+        num_of_client_for_data = cfg.data.num_of_client_for_data
         client_start_id = 1
-        for group_id, num_clients in enumerate(num_grouped_clients):
+        for group_id, num_clients in enumerate(num_of_client_for_data):
             group_cfg = cfg_client['client_group_{}'.format(group_id + 1)]
-            if cfg.data.debug:
+            if cfg.data.is_debug:
                 if group_cfg.train.local_update_steps > 5:
                     group_cfg.train.local_update_steps = 5
                 group_cfg.data.batch_size = 1
@@ -82,14 +82,12 @@ def load_heteroNLP_data(config, client_cfgs):
 
     from torch.utils.data import DataLoader
     from federatedscope.nlp.hetero_tasks.dataset.utils import setup_tokenizer
-    from federatedscope.core.data import DummyDataTranslator
     from federatedscope.nlp.hetero_tasks.dataset.get_data import \
         HeteroNLPDataLoader, SynthDataProcessor
     from federatedscope.nlp.hetero_tasks.dataloader.datacollator import \
         DataCollator
 
     class HeteroNLPDataset(object):
-        NAME = 'hetero_nlp_tasks_dataset'
         ALL_DATA_NAME = ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
 
         def __init__(self, config, client_cfgs):
@@ -121,7 +119,7 @@ def load_heteroNLP_data(config, client_cfgs):
 
             use_pretrain_task = config.model.stage == 'pretrain'
             use_contrastive = config.model.stage == 'contrastive'
-            tokenizer = setup_tokenizer(model_type=config.model.model_type)
+            tokenizer = setup_tokenizer(config.model.model_type)
             data_collator = DataCollator(tokenizer=tokenizer) \
                 if use_pretrain_task else None
             is_debug = config.data.is_debug  # load a subset of data
@@ -183,7 +181,7 @@ def load_heteroNLP_data(config, client_cfgs):
                             pin_memory=config.use_gpu),
                         'encoded': train_data[1],
                         'examples': train_data[2]
-                    },
+                    }
                 else:
                     dataloader['train_raw'] = {
                         'dataloader': DataLoader(
@@ -216,7 +214,7 @@ def load_heteroNLP_data(config, client_cfgs):
                     config, processed_data)
                 synth_data_processor.save_data()
 
-            return processed_data, config
+            return processed_data
 
         def _process_data(self, data, data_name, split, tokenizer, model_type,
                           cache_dir, cfg, client_id, pretrain, is_debug):
@@ -248,10 +246,10 @@ def load_heteroNLP_data(config, client_cfgs):
                 raise NotImplementedError(
                     f'Not process function is provided for {data_name}')
 
-            max_seq_len = getattr(cfg, 'max_seq_len', None),
-            max_query_len = getattr(cfg, 'max_query_len', None),
-            trunc_stride = getattr(cfg, 'trunc_stride', None),
-            max_tgt_len = getattr(cfg, 'max_tgt_len', None),
+            max_seq_len = getattr(cfg, 'max_seq_len', None)
+            max_query_len = getattr(cfg, 'max_query_len', None)
+            trunc_stride = getattr(cfg, 'trunc_stride', None)
+            max_tgt_len = getattr(cfg, 'max_tgt_len', None)
 
             return process_func(data=data,
                                 split=split,
@@ -275,6 +273,5 @@ def load_heteroNLP_data(config, client_cfgs):
         client_id + 1: dataset[client_id]
         for client_id in range(len(dataset))
     }
-    translator = DummyDataTranslator(modified_config, client_cfgs)
 
-    return translator(datadict), modified_config
+    return datadict, modified_config

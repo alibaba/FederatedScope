@@ -39,8 +39,6 @@ def extend_training_cfg(cfg):
     # you can add new arguments 'aa' by `cfg.train.scheduler.aa = 'bb'`
     cfg.train.scheduler = CN(new_allowed=True)
     cfg.train.scheduler.type = ''
-
-    # atc
     cfg.train.scheduler.warmup_ratio = 0.0
 
     # ---------------------------------------------------------------------- #
@@ -59,8 +57,6 @@ def extend_training_cfg(cfg):
 
     cfg.finetune.scheduler = CN(new_allowed=True)
     cfg.finetune.scheduler.type = ''
-
-    # atc
     cfg.finetune.scheduler.warmup_ratio = 0.0
 
     # ---------------------------------------------------------------------- #

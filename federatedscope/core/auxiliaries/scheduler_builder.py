@@ -1,3 +1,4 @@
+import copy
 import logging
 import federatedscope.register as register
 
@@ -32,15 +33,30 @@ def get_scheduler(optimizer, type, **kwargs):
         Please follow ``contrib.scheduler.example`` to implement your own \
         scheduler.
     """
+    # in case of users have not called the cfg.freeze()
+    tmp_kwargs = copy.deepcopy(kwargs)
+    if '__help_info__' in tmp_kwargs:
+        del tmp_kwargs['__help_info__']
+    if '__cfg_check_funcs__' in tmp_kwargs:
+        del tmp_kwargs['__cfg_check_funcs__']
+    if 'is_ready_for_run' in tmp_kwargs:
+        del tmp_kwargs['is_ready_for_run']
+    if 'warmup_ratio' in tmp_kwargs:
+        del tmp_kwargs['warmup_ratio']
+    if 'warmup_steps' in tmp_kwargs:
+        warmup_steps = tmp_kwargs['warmup_steps']
+        del tmp_kwargs['warmup_steps']
+    if 'total_steps' in tmp_kwargs:
+        total_steps = tmp_kwargs['total_steps']
+        del tmp_kwargs['total_steps']
+
     for func in register.scheduler_dict.values():
-        scheduler = func(optimizer, type, **kwargs)
+        scheduler = func(optimizer, type, **tmp_kwargs)
         if scheduler is not None:
             return scheduler
 
     if type == 'warmup_step':
         from torch.optim.lr_scheduler import LambdaLR
-        warmup_steps = kwargs['warmup_steps']
-        total_steps = kwargs['total_steps']
 
         def lr_lambda(cur_step):
             if cur_step < warmup_steps:
@@ -53,7 +69,6 @@ def get_scheduler(optimizer, type, **kwargs):
         return LambdaLR(optimizer, lr_lambda)
     elif type == 'warmup_noam':
         from torch.optim.lr_scheduler import LambdaLR
-        warmup_steps = kwargs['warmup_steps']
 
         def lr_lambda(cur_step):
             return min(
@@ -66,7 +81,8 @@ def get_scheduler(optimizer, type, **kwargs):
         return None
     if isinstance(type, str):
         if hasattr(torch.optim.lr_scheduler, type):
-            return getattr(torch.optim.lr_scheduler, type)(optimizer, **kwargs)
+            return getattr(torch.optim.lr_scheduler, type)(optimizer,
+                                                           **tmp_kwargs)
         else:
             raise NotImplementedError(
                 'Scheduler {} not implement'.format(type))

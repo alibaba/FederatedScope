@@ -34,6 +34,9 @@ class ATCAggregator(ClientsAvgAggregator):
         if self.use_contrastive_loss:
             self.contrast_monitor = None
 
+    def update_models(self, models):
+        self.models = models
+
     def update_neighbors(self, neighbors):
         self.neighbors = neighbors
 

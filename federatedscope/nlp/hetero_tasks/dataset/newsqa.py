@@ -3,7 +3,7 @@ import os.path as osp
 import torch
 import logging
 from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
-    DictDataset, NUM_DEBUG
+    DatasetDict, NUM_DEBUG
 
 logger = logging.getLogger(__name__)
 
@@ -138,8 +138,8 @@ def encode(tokenizer, text_a, text_b, max_seq_len, max_query_len,
                               overflow_token_ids)
 
 
-def get_newsqa_examples(data, split, debug=False):
-    if debug:
+def get_newsqa_examples(data, split, is_debug=False):
+    if is_debug:
         data = data[:NUM_DEBUG]
     examples = []
     for para in data:
@@ -182,12 +182,12 @@ def process_newsqa_dataset(data,
                            cache_dir='',
                            client_id=None,
                            pretrain=False,
-                           debug=False,
+                           is_debug=False,
                            **kwargs):
     if pretrain:
         return process_newsqa_dataset_for_pretrain(data, split, tokenizer,
                                                    max_seq_len, cache_dir,
-                                                   client_id, debug)
+                                                   client_id, is_debug)
 
     save_dir = osp.join(cache_dir, 'train', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
@@ -197,7 +197,7 @@ def process_newsqa_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = get_newsqa_examples(data, split, debug)
+        examples = get_newsqa_examples(data, split, is_debug)
         unique_id = 1000000000
         encoded_inputs = []
         for example_idx, example in enumerate(examples):
@@ -335,7 +335,7 @@ def process_newsqa_dataset(data,
         [inp.end_position for inp in encoded_inputs])
 
     example_indices = torch.arange(token_ids.size(0), dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': token_ids,
         'token_type_ids': token_type_ids,
         'attention_mask': attention_mask,
@@ -352,7 +352,7 @@ def process_newsqa_dataset_for_pretrain(data,
                                         max_seq_len,
                                         cache_dir='',
                                         client_id=None,
-                                        debug=False):
+                                        is_debug=False):
     save_dir = osp.join(cache_dir, 'pretrain', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
     if osp.exists(cache_file):
@@ -361,7 +361,7 @@ def process_newsqa_dataset_for_pretrain(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = get_newsqa_examples(data, split, debug)
+        examples = get_newsqa_examples(data, split, is_debug)
         texts = split_sent([e.context for e in examples],
                            eoq=tokenizer.eoq_token)
         encoded_inputs = tokenizer(texts,
@@ -385,7 +385,7 @@ def process_newsqa_dataset_for_pretrain(data,
 
     example_indices = torch.arange(encoded_inputs.input_ids.size(0),
                                    dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': encoded_inputs.input_ids,
         'attention_mask': encoded_inputs.attention_mask,
         'example_indices': example_indices

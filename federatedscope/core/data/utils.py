@@ -92,7 +92,7 @@ def load_dataset(config, client_cfgs=None):
     elif 'hetero_nlp_tasks' in config.data.type.lower():
         from federatedscope.nlp.hetero_tasks.dataloader import \
             load_heteroNLP_data
-        data, modified_config = load_heteroNLP_data(config, client_cfgs)
+        dataset, modified_config = load_heteroNLP_data(config, client_cfgs)
     elif '@' in config.data.type.lower():
         from federatedscope.core.data.utils import load_external_data
         dataset, modified_config = load_external_data(config)

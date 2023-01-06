@@ -39,6 +39,8 @@ def get_shape_from_data(data, model_config, backend='torch'):
         else:
             # node/link-level task
             return data['data'].x.shape, num_label, num_edge_features
+    elif model_config.type.lower() in ['atc_model']:
+        return None
 
     if isinstance(data, dict):
         keys = list(data.keys())

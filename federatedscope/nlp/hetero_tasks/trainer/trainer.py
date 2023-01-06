@@ -41,7 +41,7 @@ class ATCTrainer(GeneralTorchTrainer):
         self.pred_file, self.src_file, self.tgt_file = None, None, None
         self.finish_eval = False
         self.ctx.eval_metrics = None
-        self.ctx.tokenizer = setup_tokenizer(config)
+        self.ctx.tokenizer = setup_tokenizer(config.model.model_type)
         self.ctx.grad_accum_count = config.grad.grad_accum_count
         self.ctx.padding_idx = self.ctx.tokenizer.pad_token_id
         self.ctx.init_params = copy.deepcopy(model.state_dict())

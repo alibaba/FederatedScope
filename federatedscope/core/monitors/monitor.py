@@ -408,9 +408,9 @@ class Monitor(object):
         if 'group_avg' in forms:  # have different format
             # ({client_id: metrics})
             new_results = {}
-            num_grouped_clients = self.cfg.data.num_grouped_clients
+            num_of_client_for_data = self.cfg.data.num_of_client_for_data
             client_start_id = 1
-            for group_id, num_clients in enumerate(num_grouped_clients):
+            for group_id, num_clients in enumerate(num_of_client_for_data):
                 if client_start_id > len(results):
                     break
                 group_res = copy.deepcopy(results[client_start_id])

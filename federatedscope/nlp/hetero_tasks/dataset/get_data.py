@@ -32,8 +32,8 @@ class HeteroNLPDataLoader(object):
         self.test_data = []
 
     def get_data(self):
-        for each_data, each_client_num in enumerate(
-                zip(self.data_name, self.num_of_clients)):
+        for each_data, each_client_num in zip(self.data_name,
+                                              self.num_of_clients):
             train_and_val_data = self._load(each_data, 'train',
                                             each_client_num)
             each_train_data = [
@@ -41,7 +41,7 @@ class HeteroNLPDataLoader(object):
                 for data in train_and_val_data
             ]
             each_val_data = [
-                data[int(self.split[9] * len(data)):]
+                data[-int(self.split[1] * len(data)):]
                 for data in train_and_val_data
             ]
             each_test_data = self._load(each_data, 'test', each_client_num)
@@ -138,7 +138,7 @@ class HeteroNLPDataLoader(object):
             cur_data = data[data_idx:data_idx + num_split]
             data_idx += num_split
             splited_data.append(cur_data)
-        logger.info(f'Dataset {dataset ({split})} is splited into '
+        logger.info(f'Dataset {dataset} ({split}) is splited into '
                     f'{[len(x) for x in splited_data]}')
 
         return splited_data
@@ -168,13 +168,13 @@ class SynthDataProcessor(object):
             specified_device=self.cfg.device).auto_choice()
         self.pretrain_dir = config.federate.atc_load_from
         self.cache_dir = 'cache_debug' if \
-            config.data.debug else config.data.cache_dir
+            config.data.is_debug else config.data.cache_dir
         self.save_dir = os.path.join(self.cache_dir, 'synthetic')
-        self.batch_size = config.data.synth_batch_size
+        self.batch_size = config.data.hetero_synth_batch_size
         self.datasets = datasets
         self.num_clients = len(datasets)
-        self.synth_prim_weight = config.data.synth_prim_weight
-        self.synth_feat_dim = config.data.synth_feat_dim
+        self.synth_prim_weight = config.data.hetero_synth_prim_weight
+        self.synth_feat_dim = config.data.hetero_synth_feat_dim
         self.models = {}
 
     def save_data(self):
