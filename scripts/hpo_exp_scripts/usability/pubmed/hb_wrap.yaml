@@ -1,6 +1,6 @@
 use_gpu: True
 device: 2
-outdir: bo_gp_pubmed_avg
+outdir: hb_wrap_pubmed_avg
 early_stop:
   patience: 100
 seed: 12345
@@ -11,6 +11,7 @@ federate:
   total_round_num: 500
   share_local_model: True
   online_aggr: True
+  use_diff: True
 data:
   root: data/
   type: pubmed
@@ -39,15 +40,21 @@ dataloader:
   type: pyg
   batch_size: 1
 hpo:
-  scheduler: bo_gp
+  scheduler: wrap_hb
   num_workers: 0
   init_cand_num: 100
   ss: 'scripts/hpo_exp_scripts/usability/pubmed/ss.yaml'
   sha:
-    budgets: [ 50, 50 ]
+    budgets: [ 9, 81 ]
     elim_rate: 3
-    iter: 50
+    iter: 12
   table:
     num: 27
+  fedex:
+    sched: 'aggressive'
+    use: True
+    diff: False
+    eta0: -1.0
+    gamma: 0.0
   metric: 'server_global_eval.val_avg_loss'
-  working_folder: bo_gp_pubmed_avg
+  working_folder: hb_wrap_pubmed_avg
