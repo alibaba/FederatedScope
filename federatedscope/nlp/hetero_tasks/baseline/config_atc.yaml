@@ -21,7 +21,7 @@ data:
 model:
   type: atc_model
   model_type: google/bert_uncased_L-2_H-128_A-2
-  stage: contrastive
+  stage: contrast
   use_contrastive_loss: True
   contrast_topk: 20
   contrast_temp: 1.0

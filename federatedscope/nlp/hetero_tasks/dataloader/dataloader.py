@@ -32,14 +32,14 @@ def modified_cfg(cfg, cfg_client):
         cfg.data.cache_dir = ''
         cfg.data.batch_size = 1
 
-    if cfg.model.stage == 'pretrain':
+    if cfg.model.stage == 'assign':
         downstream_tasks = []
         for group_id, num_clients in enumerate(
                 cfg.data.num_of_client_for_data):
             downstream_tasks += [cfg.data.hetero_data_name[group_id]
                                  ] * num_clients
         cfg.model.downstream_tasks = downstream_tasks
-    elif cfg.model.stage == 'contrastive':
+    elif cfg.model.stage == 'contrast':
         num_agg_topk = []
         if len(cfg.aggregator.num_agg_topk) > 0:
             for group_id, num_clients in enumerate(
@@ -117,8 +117,8 @@ def load_heteroNLP_data(config, client_cfgs):
 
         def _preprocess(self, config, client_cfgs, data):
 
-            use_pretrain_task = config.model.stage == 'pretrain'
-            use_contrastive = config.model.stage == 'contrastive'
+            use_pretrain_task = config.model.stage == 'assign'
+            use_contrastive = config.model.stage == 'contrast'
             tokenizer = setup_tokenizer(config.model.model_type)
             data_collator = DataCollator(tokenizer=tokenizer) \
                 if use_pretrain_task else None

@@ -53,7 +53,7 @@ class ATCServer(Server):
             self.aggregator.update_neighbors(self.comm_manager.neighbors)
 
         self.use_contrastive_loss = self._cfg.model.use_contrastive_loss
-        if self._cfg.model.stage == 'contrastive':
+        if self._cfg.model.stage == 'contrast':
             # load synthetic for contrastive learning
             synth_feats, synth_toks = load_synth_data(self._cfg.data)
             self.contrast_monitor = ContrastiveMonitor()

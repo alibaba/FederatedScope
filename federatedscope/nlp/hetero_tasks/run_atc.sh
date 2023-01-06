@@ -3,6 +3,7 @@ set -e
 cd ../../..
 
 DEVICE=$1
+DEBUG=True
 
 python federatedscope/main.py \
   --cfg federatedscope/nlp/hetero_tasks/baseline/config_atc.yaml \
@@ -10,3 +11,4 @@ python federatedscope/main.py \
   federate.atc_load_from exp/atc/pretrain/ckpt/ \
   outdir exp/atc/train/ \
   device $DEVICE \
+  data.is_debug $DEBUG \

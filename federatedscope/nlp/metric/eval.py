@@ -21,27 +21,20 @@ class QGEvalCap:
         output = {}
         scorers = [
             (Bleu(4), ["Bleu_1", "Bleu_2", "Bleu_3", "Bleu_4"]),
-            # (Rouge(), "ROUGE_L"),
         ]
         if include_meteor:
             scorers.append((Meteor(), "METEOR"))
 
-        # =================================================
-        # Compute scores
-        # =================================================
         for scorer, method in scorers:
-            # print 'computing %s score...'%(scorer.method())
             score, scores = scorer.compute_score(self.gts, self.res)
             if type(method) == list:
                 for sc, scs, m in zip(score, scores, method):
                     if verbose:
                         print("%s: %0.5f" % (m, sc))
-                    # output.append(sc)
                     output[m] = sc
             else:
                 if verbose:
                     print("%s: %0.5f" % (method, score))
-                # output.append(score)
                 output[method] = score
         return output
 
@@ -73,8 +66,6 @@ def eval(out_file, src_file, tgt_file):
     gts = defaultdict(lambda: [])
     for pair in pairs[:]:
         key = pair['tokenized_sentence']
-        # res[key] = [pair['prediction'].encode('utf-8')]
-        # gts[key].append(pair['tokenized_question'].encode('utf-8'))
         res[key] = [pair['prediction']]
         gts[key].append(pair['tokenized_question'])
 

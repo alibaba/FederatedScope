@@ -32,9 +32,9 @@ python -m pyrouge.test
 # Download METEOR packages
 wget -c http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz
 tar -zxvf meteor-1.5.tar.gz
-mkdir ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_tasks/metric/generation/meteor/data/
-mv meteor-1.5/data/paraphrase-en.gz ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_tasks/metric/generation/meteor/data/
-mv meteor-1.5/meteor-1.5.jar ABSOLUTE/PATH/TO/federatedscope/nlp/hetero_tasks/metric/generation/meteor/
+mkdir ABSOLUTE/PATH/TO/federatedscope/nlp/metric/meteor/data/
+mv meteor-1.5/data/paraphrase-en.gz ABSOLUTE/PATH/TO/federatedscope/nlp/metric/meteor/data/
+mv meteor-1.5/meteor-1.5.jar ABSOLUTE/PATH/TO/federatedscope/nlp/metric/meteor/
 ```
 
 ### Reproduction
