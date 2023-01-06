@@ -391,7 +391,7 @@ class Client(BaseClient):
                                 init_timestamp=timestamp,
                                 instance_number=sample_size),
                             content=(sample_size, shared_model_para)))
-                logger.info("Client {} send model para finish".format(self.ID))
+                # logger.info("Client {} send model para finish".format(self.ID))
 
     def callback_funcs_for_assign_id(self, message: Message):
         """

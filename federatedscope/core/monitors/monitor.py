@@ -19,6 +19,7 @@ except ImportError:
     torch = None
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 global_all_monitors = [
 ]  # used in standalone mode, to merge sys metric results for all workers

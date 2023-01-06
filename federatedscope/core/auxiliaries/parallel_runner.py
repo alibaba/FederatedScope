@@ -35,14 +35,11 @@ def send_model_para(model_para, dst_rank):
 
 
 def recv_mode_para(model_para, src_rank):
-    logger.info("recv model {}->{} start".format(src_rank, dist.get_rank()))
-    try:
-        for k in model_para.keys():
-            dist.recv(tensor=model_para[k], src=src_rank)
-            # logger.info("Finish recv key {} from rank {} with {}".format(k, src_rank, str(model_para[k].size())))
-    except Exception as e:
-        logger.error(str(e))
-    logger.info("recv model {}->{} finish".format(src_rank, dist.get_rank()))
+    # logger.debug("recv model {}->{} start".format(src_rank, dist.get_rank()))
+    for v in model_para.values():
+        dist.recv(tensor=v, src=src_rank)
+        # logger.info("Finish recv key {} from rank {} with {}".format(k, src_rank, str(model_para[k].size())))
+    # logger.debug("recv model {}->{} finish".format(src_rank, dist.get_rank()))
 
 
 def setup_multigpu_runner(cfg, data, server_class, client_class, unseen_clients_id, server_resource_info, client_resource_info):
@@ -270,7 +267,7 @@ class ServerRunner(Runner):
         download_bytes, upload_bytes = msg.count_bytes()
         if msg.msg_type == 'model_para':            
             sender_rank = self.id2comm[sender] + 1
-            logger.info('ServerRunner recv model para from ClientRunner{}'.format(sender_rank))
+            # logger.debug('ServerRunner recv model para from ClientRunner{}'.format(sender_rank))
             tmp_model_para = get_clone_model_para(self.model_para)
             recv_mode_para(tmp_model_para, sender_rank)
             msg.content = (msg.content[0], tmp_model_para)

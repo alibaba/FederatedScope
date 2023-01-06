@@ -85,23 +85,20 @@ class StandaloneDDPCommManager(StandaloneCommManager):
         self.device = "cuda:{}".format(dist.get_rank())        
 
     def _send_model_para(self, model_para, dst_rank):
-        logger.info("send model {}->{} start".format(dist.get_rank(), dst_rank))
-        try:
-            for k in model_para.keys():
-                t = model_para[k].to(self.device)
-                # t = v.to(self.device)
-                dist.send(tensor=t, dst=dst_rank)
-                # logger.info("Finish send key {} to rank {} with {}".format(k, dst_rank, str(model_para[k].size())))
-        except Exception as e:
-            logger.error(str(e))
-        logger.info("send model {}->{} finish".format(dist.get_rank(), dst_rank))
+        # logger.debug("send model {}->{} start".format(dist.get_rank(), dst_rank))
+        for v in model_para.values():
+            t = v.to(self.device)
+            # t = v.to(self.device)
+            dist.send(tensor=t, dst=dst_rank)
+            # logger.debug("Finish send key {} to rank {} with {}".format(k, dst_rank, str(model_para[k].size())))
+        # logger.debug("send model {}->{} finish".format(dist.get_rank(), dst_rank))
     
     def send(self, message):
         is_model_para = message.msg_type == 'model_para'
         if self.id2comm is None:
             # client to server
             if is_model_para:
-                logger.info('ClientRunner {} send model para to Server'.format(dist.get_rank()))
+                # logger.info('ClientRunner {} send model para to Server'.format(dist.get_rank()))
                 model_para = message.content[1]
                 message.content = (message.content[0], {})
                 self.comm_queue.append(message) if isinstance(
@@ -127,7 +124,7 @@ class StandaloneDDPCommManager(StandaloneCommManager):
                     for each_receiver in receiver:
                         if each_receiver in self.neighbors and \
                                 self.id2comm[each_receiver] == idx:
-                            logger.info('ServerRunner send model para to ClientRunner{} {}'.format(idx + 1, str(receiver)))
+                            # logger.info('ServerRunner send model para to ClientRunner{} {}'.format(idx + 1, str(receiver)))
                             self._send_model_para(model_para, idx + 1)
                             break
         download_bytes, upload_bytes = message.count_bytes()
