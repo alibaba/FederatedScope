@@ -3,7 +3,7 @@ set -e
 cd ../../..
 
 DEVICE=$1
-DEBUG=True
+DEBUG=False
 
 python federatedscope/main.py \
   --cfg federatedscope/nlp/hetero_tasks/baseline/config_isolated.yaml \
