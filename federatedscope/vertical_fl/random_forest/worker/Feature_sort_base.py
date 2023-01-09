@@ -78,6 +78,8 @@ class Feature_sort_base:
                 best_gini = 1
                 for feature_idx in range(self.client.total_num_of_feature):
                     # for value_idx in range(self.client.x.shape[0]):
+                    if len(nonzero_idx) == 0:
+                        continue
                     for value_idx in range(nonzero_idx[0],
                                            nonzero_idx[-1] + 1):
                         left = np.concatenate(
@@ -98,6 +100,8 @@ class Feature_sort_base:
             elif self.client.criterion_type == 'Regression':
                 best_measure = float('inf')
                 for feature_idx in range(self.client.total_num_of_feature):
+                    if len(nonzero_idx) == 0:
+                        continue
                     for value_idx in range(nonzero_idx[0],
                                            nonzero_idx[-1] + 1):
                         # for value_idx in range(self.client.x.shape[0]):
