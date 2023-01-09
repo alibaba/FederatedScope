@@ -29,7 +29,7 @@ class HyperNet(nn.Module):
         self.out = nn.ModuleList()
         for num_cate in sizes:
             self.out.append(nn.Sequential(
-                nn.Linear(32, num_cate, bias=False),
+                nn.Linear(32, num_cate, bias=True),
                 nn.Softmax()
             ))
 
