@@ -1,5 +1,18 @@
 set -e
 
+# How to use:
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 0.05 12345
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 0.05 12346
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 0.05 12347
+#
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 0.5 12345
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 0.5 12346
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 0.5 12347
+#
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 5.0 12345
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 5.0 12346
+#bash scripts/hpo_exp_scripts/uniqueness/cifar10/run.sh 5.0 12347
+
 alpha=$1
 seed=$2
 
