@@ -1,5 +1,4 @@
 import logging
-
 from federatedscope.core.configs import constants
 
 logger = logging.getLogger(__name__)
@@ -68,6 +67,11 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         logger.warning(
             'Aggregator for method {} is not implemented. Will use default one'
             .format(method))
+
+    if config.data.type.lower() == 'hetero_nlp_tasks' and \
+            not config.federate.atc_vanilla:
+        from federatedscope.nlp.hetero_tasks.aggregator import ATCAggregator
+        return ATCAggregator(model=model, config=config, device=device)
 
     if config.fedopt.use or aggregator_type == 'fedopt':
         return FedOptAggregator(config=config, model=model, device=device)

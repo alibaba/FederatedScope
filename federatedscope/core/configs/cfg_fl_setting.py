@@ -49,6 +49,10 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.master_addr = '127.0.0.1'  # parameter of torch distributed
     cfg.federate.master_port = 29500      # parameter of torch distributed
 
+    # atc (TODO: merge later)
+    cfg.federate.atc_vanilla = False
+    cfg.federate.atc_load_from = ''
+
     # ---------------------------------------------------------------------- #
     # Distribute training related options
     # ---------------------------------------------------------------------- #

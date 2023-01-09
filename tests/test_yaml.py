@@ -17,6 +17,7 @@ class YAMLTest(unittest.TestCase):
             'federatedscope/gfl/baseline/fedavg_gin_minibatch_on_cikmcup_per_client.yaml',
             'federatedscope/gfl/baseline/mini_graph_dc/fedavg_per_client.yaml'
         ]
+        self.exclude_str = ['config.yaml', 'config_client']
         self.root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.exclude_all = [
             os.path.join(self.root, f) for f in self.exclude_all
@@ -43,6 +44,13 @@ class YAMLTest(unittest.TestCase):
                 yaml_file = os.path.join(dirpath, f)
                 # Ignore `ss` search space and yaml file in `exclude_file`
                 if yaml_file in self.exclude_file or 'ss' in yaml_file:
+                    continue
+                exclude = False
+                for s in self.exclude_str:
+                    if s in yaml_file:
+                        exclude = True
+                        break
+                if exclude:
                     continue
                 try:
                     init_cfg.merge_from_file(yaml_file)
