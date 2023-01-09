@@ -276,6 +276,7 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
 
 
 def flatten2nestdict(raw_dict, delimiter='.'):
+    # TODO: delete this for the function of `arm2dict`
     def nested_set(dic, keys, value):
         for key in keys[:-1]:
             dic = dic.setdefault(key, {})
