@@ -75,15 +75,23 @@ class FedExServer(Server):
         if self._cfg.hpo.fedex.psn:
             # personalized policy
             # TODO: client-wise RFF
-            self._client_encodings = torch.randn((client_num, 8), device=device) / np.sqrt(8)
-            self._policy_net = HyperNet(self._client_encodings.shape[-1],
-                                        sizes,
-                                        client_num,
-                                        device,
-                                        ).to(device)
+            self._client_encodings = torch.randn(
+                (client_num, 8), device=device) / np.sqrt(8)
+            self._policy_net = HyperNet(
+                self._client_encodings.shape[-1],
+                sizes,
+                client_num,
+                device,
+            ).to(device)
             self._policy_net.eval()
-            theta4stat = [theta.detach().cpu().numpy() for theta in self._policy_net(self._client_encodings)]
-            self._pn_optimizer = torch.optim.Adam(self._policy_net.parameters(), lr=self._cfg.hpo.fedex.pi_lr, weight_decay=1e-5)
+            theta4stat = [
+                theta.detach().cpu().numpy()
+                for theta in self._policy_net(self._client_encodings)
+            ]
+            self._pn_optimizer = torch.optim.Adam(
+                self._policy_net.parameters(),
+                lr=self._cfg.hpo.fedex.pi_lr,
+                weight_decay=1e-5)
         else:
             self._z = [np.full(size, -np.log(size)) for size in sizes]
             self._theta = [np.exp(z) for z in self._z]
@@ -129,7 +137,8 @@ class FedExServer(Server):
         if self._cfg.hpo.fedex.psn:
             entropy = 0.0
             for i in range(thetas[0].shape[0]):
-                for probs in product(*(theta[i][theta[i] > 0.0] for theta in thetas)):
+                for probs in product(*(theta[i][theta[i] > 0.0]
+                                       for theta in thetas)):
                     prob = np.prod(probs)
                     entropy -= prob * np.log(prob)
             return entropy / float(thetas[0].shape[0])
@@ -221,7 +230,10 @@ class FedExServer(Server):
             self._theta = self._policy_net(self._client_encodings)
         for rcv_idx in receiver:
             if self._cfg.hpo.fedex.psn:
-                cfg_idx, sampled_cfg = self.sample([theta[rcv_idx-1].detach().cpu().numpy() for theta in self._theta])
+                cfg_idx, sampled_cfg = self.sample([
+                    theta[rcv_idx - 1].detach().cpu().numpy()
+                    for theta in self._theta
+                ])
             else:
                 cfg_idx, sampled_cfg = self.sample(self._theta)
             content = {
@@ -294,16 +306,19 @@ class FedExServer(Server):
             # policy gradients
             pg_obj = .0
             for i, theta in enumerate(self._theta):
-                for idx, cidx, s, w in zip(index,
-                                           cids,
-                                           after - before if self._diff else after,
-                                           weight):
-                    pg_obj += w * -1.0 * (s - baseline) * torch.log(torch.clip(theta[cidx][idx[i]], min=1e-8, max=1.0))
+                for idx, cidx, s, w in zip(
+                        index, cids, after - before if self._diff else after,
+                        weight):
+                    pg_obj += w * -1.0 * (s - baseline) * torch.log(
+                        torch.clip(theta[cidx][idx[i]], min=1e-8, max=1.0))
             pg_loss = -1.0 * pg_obj
             pg_loss.backward()
             self._pn_optimizer.step()
             self._policy_net.eval()
-            thetas4stat = [theta.detach().cpu().numpy() for theta in self._policy_net(self._client_encodings)]
+            thetas4stat = [
+                theta.detach().cpu().numpy()
+                for theta in self._policy_net(self._client_encodings)
+            ]
         else:
             for i, (z, theta) in enumerate(zip(self._z, self._theta)):
                 grad = np.zeros(len(z))
@@ -323,8 +338,8 @@ class FedExServer(Server):
                 elif self._sched == 'constant':
                     denom = 1.0
                 elif self._sched == 'scale':
-                    denom = 1.0 / np.sqrt(
-                        2.0 * np.log(len(grad))) if len(grad) > 1 else float('inf')
+                    denom = 1.0 / np.sqrt(2.0 * np.log(len(grad))) if len(
+                        grad) > 1 else float('inf')
                 else:
                     raise NotImplementedError
                 eta = self._eta0[i] / denom
@@ -474,11 +489,18 @@ class FedExServer(Server):
                 # save the policy
                 ckpt = dict()
                 if self._cfg.hpo.fedex.psn:
-                    psn_pi_ckpt_path = self._cfg.federate.save_to[:self._cfg.federate.
-                                                          save_to.rfind(
-                                                              '.'
-                                                          )] + "_pfedex.pt"
-                    torch.save({'client_encodings': self._client_encodings, 'policy_net': self._policy_net.state_dict()}, psn_pi_ckpt_path)
+                    psn_pi_ckpt_path = self._cfg.federate.save_to[:self._cfg.
+                                                                  federate.
+                                                                  save_to.
+                                                                  rfind(
+                                                                      '.'
+                                                                  )] + \
+                                       "_pfedex.pt"
+                    torch.save(
+                        {
+                            'client_encodings': self._client_encodings,
+                            'policy_net': self._policy_net.state_dict()
+                        }, psn_pi_ckpt_path)
                 else:
                     z_list = [z.tolist() for z in self._z]
                     ckpt['z'] = z_list

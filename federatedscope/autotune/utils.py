@@ -144,7 +144,7 @@ def arm2dict(kvs):
     for k, v in kvs.items():
         names = k.split('.')
         cur_level = results
-        for i in range(len(names)-1):
+        for i in range(len(names) - 1):
             ln = names[i]
             if ln not in cur_level:
                 cur_level[ln] = dict()

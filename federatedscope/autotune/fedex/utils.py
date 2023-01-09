@@ -5,7 +5,6 @@ from federatedscope.autotune.utils import arm2dict
 
 
 class EncNet(nn.Module):
-
     def __init__(self, in_channel, out_channel, hid_dim=64):
         super(EncNet, self).__init__()
 
@@ -22,16 +21,20 @@ class EncNet(nn.Module):
 
 
 class HyperNet(nn.Module):
-
-    def __init__(self, input_dim, sizes, n_clients, device,):
+    def __init__(
+        self,
+        input_dim,
+        sizes,
+        n_clients,
+        device,
+    ):
         super(HyperNet, self).__init__()
         self.EncNet = EncNet(input_dim, 32)
         self.out = nn.ModuleList()
         for num_cate in sizes:
-            self.out.append(nn.Sequential(
-                nn.Linear(32, num_cate, bias=True),
-                nn.Softmax()
-            ))
+            self.out.append(
+                nn.Sequential(nn.Linear(32, num_cate, bias=True),
+                              nn.Softmax()))
 
     def forward(self, encoding):
         client_enc = self.EncNet(encoding)
@@ -42,7 +45,7 @@ class HyperNet(nn.Module):
         return probs
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import yaml
     import argparse
     import torch
@@ -61,19 +64,15 @@ if __name__=="__main__":
         ckpt = yaml.load(ips, Loader=yaml.FullLoader)
     stop_exploration = ckpt['stop']
     print("stop: {}".format(stop_exploration))
-    #self._trace = dict()
-    #self._trace['global'] = ckpt['global']
-    #self._trace['refine'] = ckpt['refine']
-    #self._trace['entropy'] = ckpt['entropy']
-    #self._trace['mle'] = ckpt['mle']
 
     psn_pi = torch.load(args.pt_path, map_location='cpu')
     client_encodings = psn_pi['client_encodings']
-    policy_net = HyperNet(client_encodings.shape[-1],
-                          [len(arms)],
-                          client_encodings.shape[0],
-                          'cpu',
-                          ).to('cpu')
+    policy_net = HyperNet(
+        client_encodings.shape[-1],
+        [len(arms)],
+        client_encodings.shape[0],
+        'cpu',
+    ).to('cpu')
     policy_net.load_state_dict(psn_pi['policy_net'])
     policy_net.eval()
     prbs = policy_net(client_encodings)
@@ -81,7 +80,8 @@ if __name__=="__main__":
     clientwise_configs = dict()
     for i in range(prbs.shape[0]):
         arm_idx = prbs[i].argmax()
-        clientwise_configs['client_{}'.format(i+1)] = arm2dict(arms['arm{}'.format(arm_idx)])
+        clientwise_configs['client_{}'.format(i + 1)] = arm2dict(
+            arms['arm{}'.format(arm_idx)])
     with open(args.save_path, 'w') as ops:
-        yaml.Dumper.ignore_aliases = lambda *args : True
+        yaml.Dumper.ignore_aliases = lambda *args: True
         yaml.dump(clientwise_configs, ops)
