@@ -1,7 +1,5 @@
 import logging
-
 import federatedscope.register as register
-from federatedscope.core.data.wrap_dataset import WrapDataset
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +39,8 @@ def get_shape_from_data(data, model_config, backend='torch'):
         else:
             # node/link-level task
             return data['data'].x.shape, num_label, num_edge_features
+    elif model_config.type.lower() in ['atc_model']:
+        return None
 
     if isinstance(data, dict):
         keys = list(data.keys())
@@ -185,6 +185,9 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in ['vmfnet', 'hmfnet']:
         from federatedscope.mf.model.model_builder import get_mfnet
         model = get_mfnet(model_config, input_shape)
+    elif model_config.type.lower() in ['atc_model']:
+        from federatedscope.nlp.hetero_tasks.model import ATCModel
+        model = ATCModel(model_config)
     else:
         raise ValueError('Model {} is not provided'.format(model_config.type))
 

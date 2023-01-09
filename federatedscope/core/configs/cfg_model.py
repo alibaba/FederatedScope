@@ -24,6 +24,25 @@ def extend_model_cfg(cfg):
     cfg.model.num_user = 0
     cfg.model.input_shape = ()  # A tuple, e.g., (in_channel, h, w)
 
+    # language model for hetero NLP tasks
+    cfg.model.stage = ''  # ['assign', 'contrast']
+    cfg.model.model_type = 'google/bert_uncased_L-2_H-128_A-2'
+    cfg.model.pretrain_tasks = []
+    cfg.model.downstream_tasks = []
+    cfg.model.num_labels = 1
+    cfg.model.max_length = 200
+    cfg.model.min_length = 1
+    cfg.model.no_repeat_ngram_size = 3
+    cfg.model.length_penalty = 2.0
+    cfg.model.num_beams = 5
+    cfg.model.label_smoothing = 0.1
+    cfg.model.n_best_size = 20
+    cfg.model.max_answer_len = 30
+    cfg.model.null_score_diff_threshold = 0.0
+    cfg.model.use_contrastive_loss = False
+    cfg.model.contrast_topk = 100
+    cfg.model.contrast_temp = 1.0
+
     # ---------------------------------------------------------------------- #
     # Criterion related options
     # ---------------------------------------------------------------------- #
