@@ -10,6 +10,8 @@ def extend_hpo_cfg(cfg):
     cfg.hpo = CN()
     cfg.hpo.working_folder = 'hpo'
     cfg.hpo.ss = ''
+    cfg.hpo.personalized_ss = False  # If True, the ss will be discrete to
+    # hadamard product of client's ss
     cfg.hpo.num_workers = 0
     cfg.hpo.init_cand_num = 16
     cfg.hpo.larger_better = False

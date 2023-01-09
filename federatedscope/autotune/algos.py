@@ -13,8 +13,10 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.auxiliaries.runner_builder import get_runner
+from federatedscope.core.configs.yacs_config import CfgNode
 from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results, log2wandb
+    config2cmdargs, config2str, summarize_hpo_results, log2wandb, \
+    flatten2nestdict
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +102,16 @@ class Scheduler(object):
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
+        # Convert to client_cfg
+        if self._cfg.hpo.personalized_ss:
+            # Do not support wrap_scheduler
+            client_num = self._cfg.federate.client_num
+            ss_client = CS.ConfigurationSpace()
+            for i in range(1, client_num + 1):
+                ss_client.add_configuration_space(f'client_{i}',
+                                                  self._search_space,
+                                                  delimiter='.')
+            self._search_space = ss_client
         self._init_configs = self._setup()
 
         logger.info(self._init_configs)
@@ -159,7 +171,14 @@ class ModelFreeBase(Scheduler):
                     thread_results[available_worker].clear()
 
                 trial_cfg = self._cfg.clone()
-                trial_cfg.merge_from_list(config2cmdargs(config))
+                if self._cfg.hpo.personalized_ss:
+                    if isinstance(self._client_cfgs, CS.Configuration):
+                        self._client_cfgs.merge_from_list(
+                            config2cmdargs(config))
+                    else:
+                        self._client_cfgs = CfgNode(flatten2nestdict(config))
+                else:
+                    trial_cfg.merge_from_list(config2cmdargs(config))
                 flags[available_worker].clear()
                 trial = TrialExecutor(i, flags[available_worker],
                                       thread_results[available_worker],
@@ -185,7 +204,14 @@ class ModelFreeBase(Scheduler):
             perfs = [None] * len(configs)
             for i, config in enumerate(configs):
                 trial_cfg = self._cfg.clone()
-                trial_cfg.merge_from_list(config2cmdargs(config))
+                if self._cfg.hpo.personalized_ss:
+                    if isinstance(self._client_cfgs, CS.Configuration):
+                        self._client_cfgs.merge_from_list(
+                            config2cmdargs(config))
+                    else:
+                        self._client_cfgs = CfgNode(flatten2nestdict(config))
+                else:
+                    trial_cfg.merge_from_list(config2cmdargs(config))
                 results = make_trial(trial_cfg, self._client_cfgs)
                 key1, key2 = trial_cfg.hpo.metric.split('.')
                 perfs[i] = results[key1][key2]

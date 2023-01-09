@@ -3,6 +3,8 @@ import logging
 import pandas as pd
 import ConfigSpace as CS
 
+from federatedscope.core.configs.yacs_config import CfgNode
+
 logger = logging.getLogger(__name__)
 
 
@@ -246,7 +248,14 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     # Global cfg
     trial_cfg = cfg.clone()
     # specify the configuration of interest
-    trial_cfg.merge_from_list(config2cmdargs(config))
+    if cfg.hpo.personalized_ss:
+        if isinstance(client_cfgs, CS.Configuration):
+            client_cfgs.merge_from_list(config2cmdargs(config))
+        else:
+            client_cfgs = CfgNode(flatten2nestdict(config))
+    else:
+        trial_cfg.merge_from_list(config2cmdargs(config))
+
     # specify the budget
     trial_cfg.merge_from_list(
         ["federate.total_round_num",
@@ -264,6 +273,19 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     results = fed_runner.run()
 
     return results
+
+
+def flatten2nestdict(raw_dict, delimiter='.'):
+    def nested_set(dic, keys, value):
+        for key in keys[:-1]:
+            dic = dic.setdefault(key, {})
+        dic[keys[-1]] = value
+
+    new_dict = dict()
+    for key, value in raw_dict.items():
+        keys = key.split(delimiter)
+        nested_set(new_dict, keys, value)
+    return new_dict
 
 
 def config_bool2int(config):
