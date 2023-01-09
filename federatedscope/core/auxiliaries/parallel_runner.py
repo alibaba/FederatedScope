@@ -9,7 +9,6 @@ import torch
 import torch.multiprocessing as mp
 import torch.distributed as dist
 
-from collections import OrderedDict
 from federatedscope.core.fed_runner import StandaloneMultiProcessRunner
 from federatedscope.core.auxiliaries.model_builder import get_model
 from federatedscope.core.auxiliaries.feat_engr_builder import \
@@ -20,36 +19,18 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-def get_clone_model_para(model_para):
-    # clone = copy.deepcopy(model_para)
-    # return clone
-    clone = OrderedDict()
-    for key in model_para.keys():
-        clone[key] = model_para[key].clone()
-    return clone
-
-
-def send_model_para(model_para, dst_rank):
-    for v in model_para.values():
-        dist.send(tensor=v, dst=dst_rank)
-
-
 def recv_mode_para(model_para, src_rank):
-    # logger.debug("recv model {}->{} start".format(src_rank, dist.get_rank()))
     for v in model_para.values():
         dist.recv(tensor=v, src=src_rank)
-        # logger.info("Finish recv key {} from rank {} with {}".format(k, src_rank, str(model_para[k].size())))
-    # logger.debug("recv model {}->{} finish".format(src_rank, dist.get_rank()))
 
-
-def setup_multigpu_runner(cfg, data, server_class, client_class, unseen_clients_id, server_resource_info, client_resource_info):
+def setup_multigpu_runner(cfg, server_class, client_class, unseen_clients_id, server_resource_info, client_resource_info):
     processes = []
     mp.set_start_method("spawn")
-    
+
     # init parameter
     client2server_queue = mp.Queue()
     server2client_queues = [
-            mp.Queue() for rank in range(1, cfg.federate.process_num)]
+            mp.Queue() for _ in range(1, cfg.federate.process_num)]
     id2comm = dict()
     clients_id_list = []
     client_num_per_process = \
@@ -112,7 +93,7 @@ class StandaloneMultiGPURunner(StandaloneMultiProcessRunner):
     def _set_up(self):
         if self.cfg.backend == 'torch':
             import torch
-            torch.set_num_threads(self.cfg.federate.process_num)
+            torch.set_num_threads(1)
         assert self.cfg.federate.client_num != 0, \
             "In standalone mode, self.cfg.federate.client_num should be " \
             "non-zero. " \
@@ -148,7 +129,7 @@ class StandaloneMultiGPURunner(StandaloneMultiProcessRunner):
         else:
             server_resource_info = None
             client_resource_info = None
-        setup_multigpu_runner(self.cfg, self.data, self.server_class, self.client_class, self.unseen_clients_id, server_resource_info, client_resource_info)
+        setup_multigpu_runner(self.cfg, self.server_class, self.client_class, self.unseen_clients_id, server_resource_info, client_resource_info)
 
 
 class Runner(object):
@@ -207,7 +188,7 @@ class ServerRunner(Runner):
             **kw)
 
         self.server.model.to(self.device)
-        self.model_para = copy.deepcopy(self.server.model.state_dict())
+        self.template_para = copy.deepcopy(self.server.model.state_dict())
         if self.config.nbafl.use:
             from federatedscope.core.trainers.trainer_nbafl import \
                 wrap_nbafl_server
@@ -253,22 +234,16 @@ class ServerRunner(Runner):
                         time.sleep(0.01)
                         # break
     
-    def _handle_msg(self, msg, rcv=-1):
+    def _handle_msg(self, msg):
         """
         To simulate the message handling process (used only for the
         standalone mode)
         """
-        if rcv != -1:
-            # simulate broadcast one-by-one
-            self.client[rcv].msg_handlers[msg.msg_type](msg)
-            return
-
         sender, receiver = msg.sender, msg.receiver
         download_bytes, upload_bytes = msg.count_bytes()
         if msg.msg_type == 'model_para':            
             sender_rank = self.id2comm[sender] + 1
-            # logger.debug('ServerRunner recv model para from ClientRunner{}'.format(sender_rank))
-            tmp_model_para = get_clone_model_para(self.model_para)
+            tmp_model_para = copy.deepcopy(self.template_para)
             recv_mode_para(tmp_model_para, sender_rank)
             msg.content = (msg.content[0], tmp_model_para)
         if not isinstance(receiver, list):
@@ -333,31 +308,25 @@ class ClientRunner(Runner):
             client.model.to(self.device)
             logger.info(f'Client {client_id} has been set up ... ')
             self.client_group[client_id] = client
-        self.model_para = copy.deepcopy(self.client_group[self.base_client_id].model.state_dict())
+        self.template_para = copy.deepcopy(self.client_group[self.base_client_id].model.state_dict())
         
         
     def run(self):
         logger.info("ClientRunner {} start to run".format(self.rank))
-        for id, client in self.client_group.items():
+        for _, client in self.client_group.items():
             client.join_in()
         while True:
             if not self.receive_channel.empty():
                 msg = self.receive_channel.get()
                 self._handle_msg(msg)
     
-    def _handle_msg(self, msg, rcv=-1):
-        if rcv != -1:
-            self.client_group[rcv].msg_handlers[msg.msg_type](msg)
-            return
-
+    def _handle_msg(self, msg):
         _, receiver = msg.sender, msg.receiver
         msg_type = msg.msg_type
         if msg_type == 'model_para':
-            logger.info('ClientRunner {} recv model para from ServerRunner'.format(self.rank))
-            sender_rank = 0
-            tmp_model_para = get_clone_model_para(self.model_para)
-            recv_mode_para(tmp_model_para, sender_rank)
-            msg.content = tmp_model_para
+            # recv from server
+            recv_mode_para(self.template_para, 0)
+            msg.content = self.template_para
         download_bytes, upload_bytes = msg.count_bytes()
         if not isinstance(receiver, list):
             receiver = [receiver]
