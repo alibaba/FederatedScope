@@ -275,6 +275,12 @@ def config_bool2int(config):
 
 def log2wandb(trial, config, results, trial_cfg, df):
     import wandb
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    FONTSIZE = 30
+    MARKSIZE = 200
+
     # Base information
     key1, key2 = trial_cfg.hpo.metric.split('.')
     log_res = {
@@ -283,15 +289,15 @@ def log2wandb(trial, config, results, trial_cfg, df):
         trial_cfg.hpo.metric: results[key1][key2],
     }
 
+    # TODO: Add baseline to illustrate we are being better
+
+    # TODO: Separate the trials (How?)
+
+    # TODO: Place all figures in one page
+
     # Diagnosis with 1d landscape
     landscape_1d = {}
     if trial_cfg.hpo.diagnosis.use:
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-
-        FONTSIZE = 30
-        MARKSIZE = 200
-
         col_name = df.columns
         num_results = df.shape[0]
         step = num_results
@@ -360,7 +366,50 @@ def log2wandb(trial, config, results, trial_cfg, df):
         plt.xlabel("ConfigSpace", size=FONTSIZE)
         plt.ylabel("Loss", size=FONTSIZE)
         pca = wandb.Image(plt.gcf())
-        plt.savefig('test.png')
         plt.close()
 
-        wandb.log({'pca': pca, **log_res, **landscape_1d})
+    # TODO: Add words to illustrate what we are doing
+    if trial_cfg.hpo.diagnosis.use:
+        plt.figure(figsize=(30, 15))
+        anc_x, anc_y, bias = 0.5, 0.95, 0
+        texts = [
+            "Searching the optimal federated configuration automatically...",
+            f"Trial [{trial}] ongoing", "The configurations being used are:",
+            config,
+            "For detailed information, please see Diagnosis and Autotune."
+        ]
+
+        for t in texts:
+            if isinstance(t, str):
+                plt.text(anc_x,
+                         anc_y + bias,
+                         t,
+                         size=50,
+                         ha="center",
+                         va="center",
+                         bbox=dict(
+                             boxstyle="sawtooth",
+                             facecolor='lightblue',
+                             edgecolor='black',
+                         ))
+                bias -= 0.1
+            elif isinstance(t, dict):
+                for key, value in t.items():
+                    plt.text(anc_x,
+                             anc_y + bias,
+                             f"{key}: {value}",
+                             size=50,
+                             ha='center',
+                             va="center",
+                             bbox=dict(
+                                 boxstyle="sawtooth",
+                                 facecolor='none',
+                                 edgecolor='black',
+                             ))
+                    bias -= 0.1
+
+        plt.axis('off')
+        info = wandb.Image(plt.gcf())
+        plt.close()
+
+    wandb.log({'pca': pca, 'info': info, **log_res, **landscape_1d})

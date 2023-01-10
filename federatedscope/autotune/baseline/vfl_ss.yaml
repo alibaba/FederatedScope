@@ -5,8 +5,8 @@ train.optimizer.lr:
   log: True
 train.optimizer.num_of_trees:
   type: int
-  lower: 3
-  upper: 5
+  lower: 10
+  upper: 20
 vertical.use:
   type: cate
   choices: [True, False]
