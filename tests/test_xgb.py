@@ -39,10 +39,10 @@ class XGBTest(unittest.TestCase):
 
         cfg.criterion.type = 'CrossEntropyLoss'
 
-        cfg.xgb_base.use = True
-        cfg.xgb_base.use_bin = False
-        cfg.xgb.dims = [5, 10]
-        cfg.xgb.algo = 'xgb'
+        cfg.vertical.use = True
+        cfg.vertical.xgb_use_bin = False
+        cfg.vertical.dims = [5, 10]
+        cfg.vertical.algo = 'xgb'
 
         cfg.trainer.type = 'verticaltrainer'
         cfg.eval.freq = 5
