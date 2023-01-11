@@ -49,4 +49,7 @@ if __name__ == '__main__':
     init_cfg.merge_from_other_cfg(modified_cfg)
 
     scheduler = get_scheduler(init_cfg, client_cfgs)
+    print(scheduler._search_space)
+    raise ValueError
+
     run_scheduler(scheduler, init_cfg, client_cfgs)

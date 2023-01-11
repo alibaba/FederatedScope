@@ -41,7 +41,7 @@ def parse_condition_param(condition, ss):
                                                  f'should be in' \
                                                  f' {str_func_mapping.keys()}.'
 
-    if cond_type in ['and', 'in']:
+    if cond_type in ['and', 'in', 'or']:
         return str_func_mapping[cond_type](
             parse_condition_param(condition['child'], ss),
             parse_condition_param(condition['parent'], ss),
@@ -96,6 +96,7 @@ def parse_search_space(config_path):
         if name.startswith('condition'):
             conditions.append(parse_condition_param(raw_ss_config[name], ss))
     ss.add_conditions(conditions)
+    print(ss)
     return ss
 
 
