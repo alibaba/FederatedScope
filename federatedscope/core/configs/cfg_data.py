@@ -64,6 +64,21 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.min_curv = 0.02
     cfg.data.quadratic.max_curv = 12.5
 
+    # Hetero NLP tasks data (for ATC)
+    cfg.data.hetero_data_name = []  # multiple datasets
+    cfg.data.num_of_client_for_data = [
+    ]  # each dataset can be splited into several clients
+    cfg.data.max_seq_len = 384
+    cfg.data.max_tgt_len = 128
+    cfg.data.max_query_len = 128
+    cfg.data.trunc_stride = 128
+    cfg.data.cache_dir = ''
+    cfg.data.hetero_synth_batch_size = 32
+    cfg.data.hetero_synth_prim_weight = 0.5
+    cfg.data.hetero_synth_feat_dim = 128
+    cfg.data.num_contrast = 0
+    cfg.data.is_debug = False
+
     # feature engineering
     cfg.feat_engr = CN()
     cfg.feat_engr.type = ''
@@ -110,6 +125,15 @@ def assert_data_cfg(cfg):
                                             'external data'
         assert cfg.data.splitter, '`data.splitter` should not be empty when ' \
                                   'using external data'
+
+    # hetero NLP taks data
+    if len(cfg.data.num_of_client_for_data) > 0:
+        assert cfg.federate.client_num == \
+               sum(cfg.data.num_of_client_for_data), '`federate.client_num` ' \
+                                                     'should be equal to sum '\
+                                                     'of `data.num_of_client'\
+                                                     '_for_data`'
+
     # --------------------------------------------------------------------
     # For compatibility with older versions of FS
     # TODO: delete this code block

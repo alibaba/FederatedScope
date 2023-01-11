@@ -29,6 +29,7 @@ TRAINER_CLASS_DICT = {
     "cltrainer": "CLTrainer",
     "lptrainer": "LPTrainer",
     "verticaltrainer": "VerticalTrainer",
+    "atc_trainer": "ATCTrainer",
 }
 
 
@@ -157,6 +158,8 @@ def get_trainer(model=None,
             dict_path = "federatedscope.gfl.flitplus.trainer"
         elif config.trainer.type.lower() in ['mftrainer']:
             dict_path = "federatedscope.mf.trainer.trainer"
+        elif config.trainer.type.lower() in ['atc_trainer']:
+            dict_path = "federatedscope.nlp.hetero_tasks.trainer"
         else:
             raise ValueError
 

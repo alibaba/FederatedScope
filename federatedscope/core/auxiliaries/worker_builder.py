@@ -60,6 +60,10 @@ def get_client_cls(cfg):
         else:
             raise ValueError(f'No client class for {cfg.vertical.algo}')
 
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
+        from federatedscope.nlp.hetero_tasks.worker import ATCClient
+        return ATCClient
+
     if cfg.federate.method.lower() in constants.CLIENTS_TYPE:
         client_type = constants.CLIENTS_TYPE[cfg.federate.method.lower()]
     else:
@@ -158,6 +162,10 @@ def get_server_cls(cfg):
             return XGBServer
         else:
             raise ValueError(f'No server class for {cfg.vertical.algo}')
+
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
+        from federatedscope.nlp.hetero_tasks.worker import ATCServer
+        return ATCServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:
         server_type = constants.SERVER_TYPE[cfg.federate.method.lower()]
