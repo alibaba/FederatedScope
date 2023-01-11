@@ -96,7 +96,6 @@ def parse_search_space(config_path):
         if name.startswith('condition'):
             conditions.append(parse_condition_param(raw_ss_config[name], ss))
     ss.add_conditions(conditions)
-    print(ss)
     return ss
 
 
