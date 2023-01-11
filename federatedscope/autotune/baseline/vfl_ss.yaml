@@ -3,23 +3,23 @@ train.optimizer.lr:
   lower: 0.01
   upper: 1.0
   log: True
-train.optimizer.num_of_trees:
+model.num_of_trees:
   type: int
   lower: 3
   upper: 5
-vertical.use:
+vertical.algo:
   type: cate
-  choices: [True, False]
+  choices: ['lr', 'xgb']
 feat_engr.type:
   type: cate
   choices: ['', 'min_max_norm', 'instance_norm', 'standardization', 'log_transform', 'uniform_binning', 'quantile_binning', 'correlation_filter', 'variance_filter', 'iv_filter']
 condition1:
   type: equal
-  child: train.optimizer.num_of_trees
-  parent: vertical.use
-  value: False
+  child: model.num_of_trees
+  parent: vertical.algo
+  value: 'xgb'
 condition2:
   type: equal
   child: train.optimizer.lr
-  parent: vertical.use
-  value: True
+  parent: vertical.algo
+  value: 'lr'
