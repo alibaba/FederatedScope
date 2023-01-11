@@ -44,6 +44,10 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex.gamma = .0
     cfg.hpo.fedex.diff = False
 
+    cfg.hpo.fedex.attack = CN()
+    cfg.hpo.fedex.attack.id = []  # client IDs who inject noise into policy
+    cfg.hpo.fedex.attack.sigma = 1.0  # sigma of white noise
+
     # Table
     cfg.hpo.table = CN()
     cfg.hpo.table.eps = 0.1
