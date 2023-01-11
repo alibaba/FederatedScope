@@ -24,6 +24,12 @@ def extend_model_cfg(cfg):
     cfg.model.num_user = 0
     cfg.model.input_shape = ()  # A tuple, e.g., (in_channel, h, w)
 
+    # For tree-based model
+    cfg.model.lambda_ = 0.1
+    cfg.model.gamma = 0
+    cfg.model.num_of_trees = 10
+    cfg.model.max_tree_depth = 3
+
     # ---------------------------------------------------------------------- #
     # Criterion related options
     # ---------------------------------------------------------------------- #

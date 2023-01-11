@@ -163,6 +163,9 @@ class BaseRunner(object):
             from federatedscope.core.trainers.trainer_nbafl import \
                 wrap_nbafl_server
             wrap_nbafl_server(server)
+        if self.cfg.vertical.use:
+            from federatedscope.vertical_fl.utils import wrap_vertical_server
+            server = wrap_vertical_server(server, self.cfg)
         logger.info('Server has been set up ... ')
         return self.feat_engr_wrapper_server(server)
 
@@ -206,6 +209,10 @@ class BaseRunner(object):
                                    is_unseen_client=client_id
                                    in self.unseen_clients_id,
                                    **kw)
+
+        if self.cfg.vertical.use:
+            from federatedscope.vertical_fl.utils import wrap_vertical_client
+            client = wrap_vertical_client(client, config=self.cfg)
 
         if client_id == -1:
             logger.info('Client (address {}:{}) has been set up ... '.format(
@@ -452,7 +459,9 @@ class StandaloneRunner(BaseRunner):
         while True:
             if len(self.shared_comm_queue) > 0:
                 msg = self.shared_comm_queue.popleft()
-                if msg.receiver == [self.server_id]:
+                if not self.cfg.vertical.use and msg.receiver == [
+                        self.server_id
+                ]:
                     # For the server, move the received message to a
                     # cache for reordering the messages according to
                     # the timestamps

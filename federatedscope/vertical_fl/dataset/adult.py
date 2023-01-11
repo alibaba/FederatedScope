@@ -9,7 +9,7 @@ from torchvision.datasets.utils import download_and_extract_archive
 logger = logging.getLogger(__name__)
 
 
-class Adult:
+class Adult(object):
     """
     Adult Data Set
     (https://archive.ics.uci.edu/ml/datasets/adult)
@@ -24,7 +24,6 @@ class Adult:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘adult’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client

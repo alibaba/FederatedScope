@@ -68,8 +68,8 @@ def extend_fl_setting_cfg(cfg):
     # Vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
     cfg.vertical = CN()
-    cfg.vertical.use = False  # TODO: we need it?
-    cfg.vertical.dims = [5, 10]
+    cfg.vertical.use = False
+    cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
     cfg.vertical.algo = 'lr'  # ['lr', 'xgb']

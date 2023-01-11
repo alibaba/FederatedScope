@@ -5,7 +5,11 @@ federate:
   mode: standalone
   client_num: 2
 model:
-  type: lr
+  type: xgb_tree
+  lambda_: 0.1
+  gamma: 0
+  num_of_trees: 10
+  max_tree_depth: 3
 data:
   root: data/
   type: blog
@@ -16,14 +20,10 @@ dataloader:
 criterion:
   type: Regression
 trainer:
-  type: none
+  type: verticaltrainer
 train:
   optimizer:
     bin_num: 1000
-    lambda_: 10
-    gamma: 0
-    num_of_trees: 9
-    max_tree_depth: 3
     # learning rate for xgb model
     eta: 1
 vertical:

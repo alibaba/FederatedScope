@@ -22,13 +22,13 @@ class XGBTest(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.federate.client_num = 2
 
-        cfg.model.type = 'lr'
+        cfg.model.type = 'xgb_tree'
+        cfg.model.lambda_ = 1
+        cfg.model.gamma = 0
+        cfg.model.num_of_trees = 5
+        cfg.model.max_tree_depth = 3
 
         cfg.train.optimizer.bin_num = 1000
-        cfg.train.optimizer.lambda_ = 1
-        cfg.train.optimizer.gamma = 0
-        cfg.train.optimizer.num_of_trees = 5
-        cfg.train.optimizer.max_tree_depth = 3
         cfg.train.optimizer.eta = 0.5
 
         cfg.data.root = 'test_data/'
@@ -41,8 +41,10 @@ class XGBTest(unittest.TestCase):
 
         cfg.xgb_base.use = True
         cfg.xgb_base.use_bin = False
+        cfg.xgb.dims = [5, 10]
+        cfg.xgb.algo = 'xgb'
 
-        cfg.trainer.type = 'none'
+        cfg.trainer.type = 'verticaltrainer'
         cfg.eval.freq = 5
         cfg.eval.best_res_update_round_wise_key = "test_loss"
 
