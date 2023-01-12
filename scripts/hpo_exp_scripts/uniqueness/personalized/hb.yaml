@@ -1,6 +1,6 @@
 use_gpu: True
 device: 3
-outdir: hb_femnist_avg
+outdir: hb_femnist_avg_per
 early_stop:
   patience: 100
 seed: 12345
@@ -49,4 +49,4 @@ hpo:
     elim_rate: 3
     iter: 12
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: hb_femnist_avg
+  working_folder: hb_femnist_avg_per
