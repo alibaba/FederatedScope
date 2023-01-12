@@ -108,7 +108,7 @@ class XGBClient(Client):
         logger.info(
             f"================= client {self.ID} received finish message "
             f"=================")
-        self._monitor.finish_fl()
+        # self._monitor.finish_fl()
 
     def check_and_move_on(self):
         if len(self.msg_buffer) == self.client_num:
