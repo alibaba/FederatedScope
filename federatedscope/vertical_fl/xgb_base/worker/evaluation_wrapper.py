@@ -11,16 +11,17 @@ logger = logging.getLogger(__name__)
 def wrap_client_for_evaluation(client):
     def eval(self, tree_num):
         self.criterion = get_vertical_loss(self._cfg.criterion.type)
-        self.test_x, self.test_y, self.test_result = self._fetch_test_data()
+        if self.test_x is None:
+            self.test_x, self.test_y = self._fetch_test_data()
+            self.test_result = np.zeros(self.test_x.shape[0])
         self.model[tree_num][0].indicator = np.ones(self.test_x.shape[0])
         self._test_for_node(tree_num, node_num=0)
 
     def _fetch_test_data(self):
         test_x = self.data['test']['x']
         test_y = self.data['test']['y'] if 'y' in self.data['test'] else None
-        test_result = np.zeros(test_x.shape[0])
 
-        return test_x, test_y, test_result
+        return test_x, test_y
 
     def _feedback_eval_metrics(self):
         test_loss = self.criterion.get_loss(self.test_y, self.test_result)
@@ -81,11 +82,13 @@ def wrap_client_for_evaluation(client):
                         state=self.state,
                         receiver=[self.model[tree_num][node_num].member],
                         content=(tree_num, node_num)))
+        else:
+            self._test_for_node(tree_num, node_num + 1)
 
     def callback_func_for_split_request(self, message: Message):
         if self.test_x is None:
-            self.test_x, self.test_y, self.test_result = self._fetch_test_data(
-            )
+            self.test_x, self.test_y = self._fetch_test_data()
+            self.test_result = np.zeros(self.test_x.shape[0])
         tree_num, node_num = message.content
         sender = message.sender
         feature_idx = self.model[tree_num][node_num].feature_idx
