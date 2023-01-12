@@ -244,7 +244,8 @@ class Server(BaseServer):
         min_received_num = self._cfg.asyn.min_received_num \
             if self._cfg.asyn.use else self._cfg.federate.sample_client_num
         num_failure = 0
-        time_budget = self._cfg.asyn.time_budget if self._cfg.asyn.use else -1
+        # time_budget = self._cfg.asyn.time_budget if self._cfg.asyn.use else -1
+        time_budget = self._cfg.federate.agg_time_budget
         with Timeout(time_budget) as time_counter:
             while self.state <= self.total_round_num:
                 try:
@@ -255,35 +256,19 @@ class Server(BaseServer):
                 except TimeoutError:
                     logger.info('Time out at the training round #{}'.format(
                         self.state))
-                    move_on_flag_eval = self.check_and_move_on(
-                        min_received_num=min_received_num,
-                        check_eval_result=True)
                     move_on_flag = self.check_and_move_on(
-                        min_received_num=min_received_num)
-                    if not move_on_flag and not move_on_flag_eval:
-                        num_failure += 1
-                        # Terminate the training if the number of failure
-                        # exceeds the maximum number (default value: 10)
-                        if time_counter.exceed_max_failure(num_failure):
-                            logger.info(f'----------- Training fails at round '
-                                        f'#{self.state}-------------')
-                            break
-
+                        min_received_num=self._cfg.federate.agg_lower_bound)
+                    if not move_on_flag:
                         # Time out, broadcast the model para and re-start
                         # the training round
                         logger.info(
                             f'----------- Re-starting the training round ('
                             f'Round #{self.state}) for {num_failure} time '
                             f'-------------')
-                        # TODO: Clean the msg_buffer
-                        if self.state in self.msg_buffer['train']:
-                            self.msg_buffer['train'][self.state].clear()
 
                         self.broadcast_model_para(
                             msg_type='model_para',
                             sample_client_num=self.sample_client_num)
-                    else:
-                        num_failure = 0
                     time_counter.reset()
 
         self.terminate(msg_type='finish')

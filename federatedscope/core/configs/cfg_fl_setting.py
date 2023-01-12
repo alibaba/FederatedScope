@@ -41,6 +41,8 @@ def extend_fl_setting_cfg(cfg):
     # in each training round, ['uniform', 'group']
     cfg.federate.resource_info_file = ""  # the device information file to
     # record computation and communication ability
+    cfg.federate.agg_time_budget = -1
+    cfg.federate.agg_lower_bound = 0
 
     # atc (TODO: merge later)
     cfg.federate.atc_vanilla = False
