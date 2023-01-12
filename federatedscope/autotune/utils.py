@@ -65,6 +65,7 @@ def parse_search_space(config_path):
 
     """
 
+    # TODO: add seed for `ConfigurationSpace`
     ss = CS.ConfigurationSpace()
     conditions = []
 
