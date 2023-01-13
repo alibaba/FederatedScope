@@ -20,15 +20,15 @@ class VerticalTrainer(object):
         self.bin_num = config.train.optimizer.bin_num
         self.eta = config.train.optimizer.eta
 
-        self.dataloader = batch_iter(self.data['train'],
-                                     self.cfg.dataloader.batch_size,
-                                     shuffled=True)
         self.batch_x = None
         self.batch_y = None
         self.batch_y_hat = None
         self.batch_z = None
 
     def prepare_for_train(self, index=None):
+        self.dataloader = batch_iter(self.data['train'],
+                                     self.cfg.dataloader.batch_size,
+                                     shuffled=True)
         self.criterion = get_vertical_loss(self.cfg.criterion.type)
         batch_index, self.batch_x, self.batch_y = self._fetch_train_data(index)
         feature_order = self._get_feature_order(self.batch_x)
