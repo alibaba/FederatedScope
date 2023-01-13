@@ -327,13 +327,13 @@ def generate_arm(cfg, config, config_id, ss):
             hyper = ss.get(k)
             if isinstance(hyper, CS.UniformFloatHyperparameter):
                 lb, ub = hyper.lower, hyper.upper
-                diameter = cfg.fedex.wrapper.eps * (ub - lb)
+                diameter = cfg.hpo.fedex.wrapper.eps * (ub - lb)
                 new_val = (config[k] -
                            0.5 * diameter) + np.random.uniform() * diameter
                 neighbor[k] = float(np.clip(new_val, lb, ub))
             elif isinstance(hyper, CS.UniformIntegerHyperparameter):
                 lb, ub = hyper.lower, hyper.upper
-                diameter = cfg.fedex.wrapper.eps * (ub - lb)
+                diameter = cfg.hpo.fedex.wrapper.eps * (ub - lb)
                 new_val = round(
                     float((config[k] - 0.5 * diameter) +
                           np.random.uniform() * diameter))
@@ -342,7 +342,7 @@ def generate_arm(cfg, config, config_id, ss):
                 if len(hyper.choices) == 1:
                     neighbor[k] = config[k]
                 else:
-                    threshold = cfg.fedex.wrapper.eps * len(
+                    threshold = cfg.hpo.fedex.wrapper.eps * len(
                         hyper.choices) / (len(hyper.choices) - 1)
                     rn = np.random.uniform()
                     new_val = np.random.choice(

@@ -1,6 +1,5 @@
 import logging
 import numpy as np
-import ConfigSpace as CS
 from federatedscope.autotune.utils import eval_in_fs, log2wandb
 from smac.facade.smac_bb_facade import SMAC4BB
 from smac.facade.smac_hpo_facade import SMAC4HPO
@@ -9,12 +8,13 @@ from smac.scenario.scenario import Scenario
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+config_id = 0
+
 
 def run_smac(cfg, scheduler, client_cfgs=None):
     config_space = scheduler._search_space
     init_configs = []
     perfs = []
-    config_id = 0
 
     def optimization_function_wrapper(config):
         """
@@ -25,10 +25,11 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         Returns:
             Best results of server of specific FS run.
         """
-        global config_id, config_space
+        global config_id
 
         budget = cfg.hpo.sha.budgets[-1]
-        results = eval_in_fs(cfg, config, budget, client_cfgs)
+        results = eval_in_fs(cfg, config, budget, config_id, config_space,
+                             client_cfgs)
         key1, key2 = cfg.hpo.metric.split('.')
         res = results[key1][key2]
         config = dict(config)
