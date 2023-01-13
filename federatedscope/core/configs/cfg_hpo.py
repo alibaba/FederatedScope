@@ -43,6 +43,8 @@ def extend_hpo_cfg(cfg):
     # discount factor; 0.0 is most recent, 1.0 is mean
     cfg.hpo.fedex.gamma = .0
     cfg.hpo.fedex.diff = False
+    cfg.hpo.fedex.psn = False
+    cfg.hpo.fedex.pi_lr = 0.01
 
     cfg.hpo.fedex.attack = CN()
     cfg.hpo.fedex.attack.id = []  # client IDs who inject noise into policy

@@ -1,0 +1,52 @@
+use_gpu: True
+device: 0
+seed: 12345
+outdir: exp/
+federate:
+  mode: standalone
+  method: fedavg
+  total_round_num: 200
+  client_num: 18
+  save_to: ckpt/
+data:
+  type: hetero_nlp_tasks
+  root: datasets/
+  hetero_data_name: ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
+  num_of_client_for_data: [1, 3, 3, 2, 5, 4]
+  max_seq_len: 384
+  max_tgt_len: 128
+  batch_size: 16
+  num_workers: 0
+  cache_dir: cache/
+model:
+  type: atc_model
+  model_type: google/bert_uncased_L-2_H-128_A-2
+  stage: assign
+  task: pretrain
+  pretrain_tasks: ['mlm', 'denoise']
+aggregator:
+  num_agg_groups: 5
+  inside_weight: 1.0
+  outside_weight: 0.0
+personalization:
+  local_param: ['classifier']
+trainer:
+  type: atc_trainer
+train:
+  batch_or_epoch: batch
+  local_update_steps: 50
+  optimizer:
+    type: AdamW
+    lr: 5e-4
+    weight_decay: 0.01
+  scheduler:
+    type: warmup_step
+    warmup_ratio: 0.1
+grad:
+  grad_clip: 1.0
+  grad_accum_count: 4
+eval:
+  metrics: ['acc']
+  split: ['test']
+  report: ['raw']
+  freq: 100000000  # eval freq across rounds

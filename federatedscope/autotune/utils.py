@@ -133,6 +133,30 @@ def config2str(config):
     return name
 
 
+def arm2dict(kvs):
+    """
+    Arguments:
+        kvs (dict): key is hyperparameter name in the form aaa.bb.cccc,
+                    and value is the choice.
+    Returns:
+        config (dict): the same specification for creating a cfg node.
+    """
+
+    results = dict()
+
+    for k, v in kvs.items():
+        names = k.split('.')
+        cur_level = results
+        for i in range(len(names) - 1):
+            ln = names[i]
+            if ln not in cur_level:
+                cur_level[ln] = dict()
+            cur_level = cur_level[ln]
+        cur_level[names[-1]] = v
+
+    return results
+
+
 def summarize_hpo_results(configs,
                           perfs,
                           white_list=None,

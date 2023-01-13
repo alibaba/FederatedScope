@@ -1,0 +1,96 @@
+name: UnitTests for ATC
+
+on: [push, pull_request]
+
+jobs:
+  run:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.9']
+        torch-version: ['1.10.1']
+        torchvision-version: ['0.11.2']
+        torchaudio-version: ['0.10.1']
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: '3.9'
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@master
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install PyTorch ${{ matrix.torch-version }}+cpu
+      run: |
+        pip install numpy typing-extensions dataclasses
+        pip install torch==${{ matrix.torch-version}}+cpu torchvision==${{matrix.torchvision-version}}+cpu torchaudio==${{matrix.torchaudio-version}}+cpu -f https://download.pytorch.org/whl/torch_stable.html
+    - name: Install FS
+      run: |
+        pip install -e .[test]
+    - name: Install NLTK
+      run: |
+        pip install nltk
+    - name: Install Transformers
+      run: |
+        pip install transformers==4.21.0
+    - name: Install ROUGE
+      run: |
+        git clone https://github.com/bheinzerling/pyrouge
+        cd pyrouge
+        pip install -e .
+        git clone https://github.com/andersjo/pyrouge.git rouge
+        pyrouge_set_rouge_path $(realpath rouge/tools/ROUGE-1.5.5/)
+        sudo apt-get install libxml-parser-perl
+        cd rouge/tools/ROUGE-1.5.5/data
+        rm WordNet-2.0.exc.db
+        ./WordNet-2.0-Exceptions/buildExeptionDB.pl ./WordNet-2.0-Exceptions ./smart_common_words.txt ./WordNet-2.0.exc.db
+        python -m pyrouge.test
+    - name: Download METEOR packages
+      run: |
+        wget -c http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz
+        tar -zxvf meteor-1.5.tar.gz
+        mkdir federatedscope/nlp/metric/meteor/data/
+        mv meteor-1.5/data/paraphrase-en.gz federatedscope/nlp/metric/meteor/data/
+        mv meteor-1.5/meteor-1.5.jar federatedscope/nlp/metric/meteor/
+    - name: Test ATC
+      run: |
+        python federatedscope/main.py \
+          --cfg federatedscope/nlp/hetero_tasks/baseline/config_isolated.yaml \
+          --client_cfg federatedscope/nlp/hetero_tasks/baseline/config_client_isolated.yaml \
+          outdir exp/isolated/ \
+          use_gpu False \
+          data.is_debug True \
+          data.root test_data/ \
+
+        [ $? -eq 1 ] && exit 1
+
+        python federatedscope/main.py \
+          --cfg federatedscope/nlp/hetero_tasks/baseline/config_fedavg.yaml \
+          --client_cfg federatedscope/nlp/hetero_tasks/baseline/config_client_fedavg.yaml \
+          outdir exp/fedavg/ \
+          use_gpu False \
+          data.is_debug True \
+          data.root test_data/ \
+
+        [ $? -eq 1 ] && exit 1
+
+        python federatedscope/main.py \
+          --cfg federatedscope/nlp/hetero_tasks/baseline/config_pretrain.yaml \
+          outdir exp/atc/pretrain/ \
+          use_gpu False \
+          data.is_debug True \
+          data.root test_data/ \
+
+        [ $? -eq 1 ] && exit 1
+
+        python federatedscope/main.py \
+          --cfg federatedscope/nlp/hetero_tasks/baseline/config_atc.yaml \
+          --client_cfg federatedscope/nlp/hetero_tasks/baseline/config_client_atc.yaml \
+          outdir exp/atc/train/ \
+          use_gpu False \
+          data.is_debug True \
+          data.root test_data/ \
+
+        [ $? -eq 1 ] && exit 1 || echo "Passed"

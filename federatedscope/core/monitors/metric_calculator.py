@@ -117,38 +117,50 @@ class MetricCalculator(object):
         """
         if ctx.get('ys_true', None) is None:
             raise KeyError('Missing key ys_true!')
-        if ctx.get('ys_prob', None) is None:
-            raise KeyError('Missing key ys_prob!')
+        if ctx.get('ys_prob', None) is None and \
+                ctx.get('ys_pred', None) is None:
+            raise KeyError('Missing key ys_prob and ys_pred!')
 
         y_true = ctx.ys_true
-        y_prob = ctx.ys_prob
-
         if torch is not None and isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
-        if torch is not None and isinstance(y_prob, torch.Tensor):
-            y_prob = y_prob.detach().cpu().numpy()
 
-        if 'regression' in ctx.cfg.model.task.lower():
-            y_pred = None
-        else:
-            # classification task
+        y_prob = None
+        if ctx.get('ys_pred', None) is not None:
+            y_pred = ctx.ys_pred
+            if torch is not None and isinstance(y_pred, torch.Tensor):
+                y_pred = y_pred.detach().cpu().numpy()
+
             if y_true.ndim == 1:
                 y_true = np.expand_dims(y_true, axis=-1)
-            if y_prob.ndim == 2:
-                y_prob = np.expand_dims(y_prob, axis=-1)
+            if y_pred.ndim == 1:
+                y_pred = np.expand_dims(y_pred, axis=-1)
+        else:
+            y_prob = ctx.ys_prob
+            if torch is not None and isinstance(y_prob, torch.Tensor):
+                y_prob = y_prob.detach().cpu().numpy()
 
-            # if len(y_prob.shape) > len(y_true.shape):
-            y_pred = np.argmax(y_prob, axis=1)
+            if 'regression' in ctx.cfg.model.task.lower():
+                y_pred = None
+            else:
+                # classification task
+                if y_true.ndim == 1:
+                    y_true = np.expand_dims(y_true, axis=-1)
+                if y_prob.ndim == 2:
+                    y_prob = np.expand_dims(y_prob, axis=-1)
 
-            # check shape and type
-            if not isinstance(y_true, np.ndarray):
-                raise RuntimeError('Type not support!')
-            if not y_true.shape == y_pred.shape:
-                raise RuntimeError('Shape not match!')
-            if not y_true.ndim == 2:
-                raise RuntimeError(
-                    'y_true must be 2-dim array, {}-dim given'.format(
-                        y_true.ndim))
+                # if len(y_prob.shape) > len(y_true.shape):
+                y_pred = np.argmax(y_prob, axis=1)
+
+                # check shape and type
+                if not isinstance(y_true, np.ndarray):
+                    raise RuntimeError('Type not support!')
+                if not y_true.shape == y_pred.shape:
+                    raise RuntimeError('Shape not match!')
+                if not y_true.ndim == 2:
+                    raise RuntimeError(
+                        'y_true must be 2-dim array, {}-dim given'.format(
+                            y_true.ndim))
 
         return y_true, y_pred, y_prob
 
