@@ -28,6 +28,15 @@ class XGBClient(Client):
         self.own_label = ('y' in data['train'])
         self.msg_buffer = dict()
         self.client_num = self._cfg.federate.client_num
+
+        self.feature_order = None
+        self.merged_feature_order = None
+
+        self.feature_partition = np.diff(self._cfg.vertical.dims, prepend=0)
+        self.total_num_of_feature = self._cfg.vertical.dims[-1]
+        self.num_of_feature = self.feature_partition[self.ID - 1]
+        self.feature_importance = [0] * self.num_of_feature
+
         self._init_data_related_var()
         # Add self-loop
         if self._cfg.federate.mode == 'distributed':
@@ -51,14 +60,6 @@ class XGBClient(Client):
         raise NotImplementedError
 
     def _init_data_related_var(self):
-
-        self.feature_order = None
-        self.merged_feature_order = None
-
-        self.feature_partition = np.diff(self._cfg.vertical.dims, prepend=0)
-        self.total_num_of_feature = self._cfg.vertical.dims[-1]
-        self.num_of_feature = self.feature_partition[self.ID - 1]
-        self.feature_importance = [0] * self.num_of_feature
 
         self.test_x = None
         self.test_y = None
