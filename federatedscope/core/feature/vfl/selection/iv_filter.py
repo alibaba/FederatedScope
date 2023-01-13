@@ -53,7 +53,7 @@ def wrap_iv_filter_server(worker):
                 else:
                     server_filtered_col = \
                         np.hstack((server_filtered_col, self.msg_buffer[
-                            'feat_dim'][i][1] + self.vertical_dims[i - 2]))
+                            'feat_dim'][i][1] + self._cfg.vertical.dims[i-2]))
             # Filter feature
             for split in ['train_data', 'val_data', 'test_data']:
                 if hasattr(worker.data, split):
