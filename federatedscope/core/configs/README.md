@@ -360,11 +360,10 @@ These arguments are exposed for customizing our provided auto-tuning components.
 
 #### Wrappers for FedEx 
 
-| Name | (Type) Default Value | Description                                | Note |
-|:----:|:--------------------:|:-------------------------------------------|:-----|
-| `hpo.table.eps` |     (float) 0.1 | The probability to make local perturbation.        | Larger values lead to drastically different arms of the bandit FedEx attempts to solve. |
-| `hpo.table.num` |     (int) 27 | The number of arms of the bandit FedEx attempts to solve.        | - |
-| `hpo.table.idx` |     (int) 0 | The key (i.e., name) of the hyperparameter wrapper considers.        | No need to change this argument. |
+|          Name           | (Type) Default Value | Description                                | Note |
+|:-----------------------:|:--------------------:|:-------------------------------------------|:-----|
+| `hpo.fedex.wrapper.eps` |     (float) 0.1 | The probability to make local perturbation.        | Larger values lead to drastically different arms of the bandit FedEx attempts to solve. |
+| `hpo.fedex.wrapper.arm` |     (int) 27 | The number of arms of the bandit FedEx attempts to solve.        | - |
 
 
 ### Attack 

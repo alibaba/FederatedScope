@@ -11,8 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 def run_smac(cfg, scheduler, client_cfgs=None):
+    config_space = scheduler._search_space
     init_configs = []
     perfs = []
+    config_id = 0
 
     def optimization_function_wrapper(config):
         """
@@ -23,6 +25,8 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         Returns:
             Best results of server of specific FS run.
         """
+        global config_id, config_space
+
         budget = cfg.hpo.sha.budgets[-1]
         results = eval_in_fs(cfg, config, budget, client_cfgs)
         key1, key2 = cfg.hpo.metric.split('.')
@@ -31,6 +35,7 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         config['federate.total_round_num'] = budget
         init_configs.append(config)
         perfs.append(res)
+        config_id += 1
         logger.info(f'Evaluate the {len(perfs)-1}-th config '
                     f'{config}, and get performance {res}')
         if cfg.wandb.use:
@@ -50,12 +55,6 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         logger.info("====================================================")
 
         return perfs
-
-    config_space = scheduler._search_space
-    if cfg.hpo.scheduler.startswith('wrap_'):
-        ss = CS.ConfigurationSpace()
-        ss.add_hyperparameter(config_space['hpo.table.idx'])
-        config_space = ss
 
     if cfg.hpo.sha.iter != 0:
         n_iterations = cfg.hpo.sha.iter

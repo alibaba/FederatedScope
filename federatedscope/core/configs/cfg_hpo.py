@@ -46,15 +46,14 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex.psn = False
     cfg.hpo.fedex.pi_lr = 0.01
 
+    # FedEx wrap optimizer related args
+    cfg.hpo.fedex.wrapper = CN()
+    cfg.hpo.fedex.wrapper.eps = 0.1
+    cfg.hpo.fedex.wrapper.arm = 27
+
     cfg.hpo.fedex.attack = CN()
     cfg.hpo.fedex.attack.id = []  # client IDs who inject noise into policy
     cfg.hpo.fedex.attack.sigma = 1.0  # sigma of white noise
-
-    # Table
-    cfg.hpo.table = CN()
-    cfg.hpo.table.eps = 0.1
-    cfg.hpo.table.num = 27
-    cfg.hpo.table.idx = 0
 
 
 def assert_hpo_cfg(cfg):
