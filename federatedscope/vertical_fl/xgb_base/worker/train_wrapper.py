@@ -24,8 +24,12 @@ def wrap_client_for_train(client):
             self._find_and_send_split(split_ref, tree_num, node_num)
         else:
             # Report evaluation results
+            self.eval_finish_flag = False
             self.eval(tree_num)
+            self._check_eval_finish(tree_num)
 
+    def _check_eval_finish(self, tree_num):
+        if self.eval_finish_flag:
             if tree_num + 1 < self._cfg.model.num_of_trees:
                 self.train(tree_num + 1)
 
@@ -80,6 +84,7 @@ def wrap_client_for_train(client):
         callback_funcs_for_continue_training, client)
     client._find_and_send_split = types.MethodType(_find_and_send_split,
                                                    client)
+    client._check_eval_finish = types.MethodType(_check_eval_finish, client)
 
     # Register handler functions
     client.register_handlers('split', client.callback_func_for_split)

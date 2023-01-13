@@ -276,6 +276,8 @@ def wrap_instance_norm_client(worker):
                         (split_data['x'].T - self.global_mean[split]) /
                         (feat_var[split]**0.5)).T
         logger.info('Instance norm finished.')
+        self.msg_buffer.pop('ss_instance_sum_norm_square')
+        self.msg_buffer.pop('ss_instance_sum')
         self._init_data_related_var()
 
     # Bind method to instance

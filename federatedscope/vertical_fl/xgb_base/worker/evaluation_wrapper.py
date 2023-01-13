@@ -68,6 +68,8 @@ def wrap_client_for_evaluation(client):
             ) % self._cfg.eval.freq == 0 or \
                     tree_num + 1 == self._cfg.model.num_of_trees:
                 self._feedback_eval_metrics()
+            self.eval_finish_flag = True
+            self._check_eval_finish(tree_num)
         # The client owns the weight
         elif self.model[tree_num][node_num].weight:
             self.test_result += self.model[tree_num][
@@ -111,10 +113,11 @@ def wrap_client_for_evaluation(client):
         self._test_for_node(tree_num, node_num + 1)
 
     def callback_func_for_feature_importance(self, message: Message):
+        state = message.state
         self.comm_manager.send(
             Message(msg_type='feature_importance',
                     sender=self.ID,
-                    state=self.state,
+                    state=state,
                     receiver=[self.server_id],
                     content=self.feature_importance))
 

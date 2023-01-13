@@ -24,12 +24,13 @@ class XGBServer(Server):
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
 
-        self._init_data_related_var()
-
-    def _init_data_related_var(self):
         self.batch_size = self._cfg.dataloader.batch_size
         self.feature_partition = np.diff(self._cfg.vertical.dims, prepend=0)
         self.total_num_of_feature = self._cfg.vertical.dims[-1]
+        self._init_data_related_var()
+
+    def _init_data_related_var(self):
+        pass
 
     def broadcast_model_para(self,
                              msg_type='model_para',

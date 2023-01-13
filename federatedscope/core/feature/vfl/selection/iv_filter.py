@@ -53,7 +53,7 @@ def wrap_iv_filter_server(worker):
                 else:
                     server_filtered_col = \
                         np.hstack((server_filtered_col, self.msg_buffer[
-                            'feat_dim'][i][1] + self.vertical_dims[i - 2]))
+                            'feat_dim'][i][1] + self._cfg.vertical.dims[i-2]))
             # Filter feature
             for split in ['train_data', 'val_data', 'test_data']:
                 if hasattr(worker.data, split):
@@ -74,6 +74,7 @@ def wrap_iv_filter_server(worker):
             self.vertical_dims = vertical_dims
             if hasattr(self, '_init_data_related_var'):
                 self._init_data_related_var()
+            self.msg_buffer.pop('feat_dim')
             self.trigger_train_func(**self.kwargs_for_trigger_train_func)
 
     # Bind method to instance
