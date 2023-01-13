@@ -54,8 +54,9 @@ def run_smac(cfg, scheduler, client_cfgs=None):
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
         logger.info("====================================================")
+        logger.info(f'Winner config_id: {np.argmin(perfs)}')
 
-        return perfs
+        return results
 
     if cfg.hpo.sha.iter != 0:
         n_iterations = cfg.hpo.sha.iter

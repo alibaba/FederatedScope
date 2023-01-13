@@ -83,7 +83,7 @@ class MyWorker(Worker):
             log2wandb(len(self._perfs) - 1, config, results, self.cfg)
         return {'loss': float(res), 'info': res}
 
-    def summarize(self):
+    def summarize(self, res=None):
         from federatedscope.autotune.utils import summarize_hpo_results
         results = summarize_hpo_results(self._init_configs,
                                         self._perfs,
@@ -94,6 +94,7 @@ class MyWorker(Worker):
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
         logger.info("====================================================")
+        logger.info(f'Winner config_id: {res.get_incumbent_id()}')
 
         return results
 
@@ -139,6 +140,6 @@ def run_hpbandster(cfg, scheduler, client_cfgs=None):
     optimizer.shutdown(shutdown_workers=True)
     NS.shutdown()
     all_runs = res.get_all_runs()
-    w.summarize()
+    w.summarize(res)
 
     return [x.info for x in all_runs]
