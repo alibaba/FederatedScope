@@ -277,14 +277,6 @@ def eval_in_fs(cfg, config, budget, config_id, ss, client_cfgs=None):
                                          f"idx_{config_id}.pth")
         config['federate.restore_from'] = osp(cfg.hpo.working_folder,
                                               f"idx_{config_id}.pth")
-    # if 'hpo.table.idx' in config.keys():
-    #     idx = config['hpo.table.idx']
-    #     config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
-    #                                  f"{idx}_tmp_grid_search_space.yaml")
-    #     config['federate.save_to'] = osp(cfg.hpo.working_folder,
-    #                                      f"idx_{idx}.pth")
-    #     config['federate.restore_from'] = osp(cfg.hpo.working_folder,
-    #                                           f"idx_{idx}.pth")
     # Global cfg
     trial_cfg = cfg.clone()
     # specify the configuration of interest
