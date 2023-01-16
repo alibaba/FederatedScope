@@ -49,13 +49,13 @@ hpo:
     budgets: [ 50, 50 ]
     elim_rate: 3
     iter: 50
-  table:
-    num: 27
   fedex:
     sched: 'aggressive'
     use: True
     diff: False
     eta0: -1.0
     gamma: 0.0
+    wrapper:
+      arm: 27
   metric: 'client_summarized_weighted_avg.val_avg_loss'
   working_folder: rs_wrap_femnist_avg

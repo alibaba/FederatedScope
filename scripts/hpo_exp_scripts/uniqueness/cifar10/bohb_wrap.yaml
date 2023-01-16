@@ -48,14 +48,11 @@ eval:
 hpo:
   scheduler: wrap_bohb
   num_workers: 0
-  init_cand_num: 100
   ss: 'scripts/hpo_exp_scripts/uniqueness/cifar10/ss.yaml'
   sha:
     budgets: [ 9, 81 ]
     elim_rate: 3
     iter: 12
-  table:
-    num: 27
   fedex:
     sched: 'aggressive'
     use: True

@@ -49,8 +49,6 @@ hpo:
     budgets: [ 50, 50 ]
     elim_rate: 3
     iter: 50
-  table:
-    num: 27
   fedex:
     psn: True
     pi_lr: 0.01
