@@ -7,7 +7,7 @@ seed: 12345
 federate:
   mode: standalone
   total_round_num: 500
-  sample_client_rate: 0.01
+  sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
   use_diff: True
@@ -45,7 +45,7 @@ hpo:
   num_workers: 0
   ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [ 3, 3 ]
+    budgets: [ 50, 50 ]
     elim_rate: 3
     iter: 50
   fedex:
