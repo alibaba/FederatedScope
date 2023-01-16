@@ -131,7 +131,6 @@ def parse_logs(root,
 
 def args_run_from_scratch(root,
                           file_list,
-                          eval_key='client_summarized_weighted_avg',
                           fs_yaml='********',
                           suf='',
                           device=8):
@@ -217,7 +216,6 @@ if __name__ == '__main__':
     args_run_from_scratch(
         list(TRIAL2SEED.keys()),
         list(METHOD.keys()),
-        eval_key='server_global_eval',
         fs_yaml=
         'scripts/hpo_exp_scripts/usability/pubmed/learn_from_scratch/pubmed.yaml',
         suf='_pubmed_avg')
