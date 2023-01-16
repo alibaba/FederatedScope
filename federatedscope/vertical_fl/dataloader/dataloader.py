@@ -30,8 +30,8 @@ def load_vertical_data(config=None, generate=False):
     else:
         args = {'normalization': False, 'standardization': False}
 
-    dataset_class = VERTICAL_DATASET[dataset_name]
     if not generate:
+        dataset_class = VERTICAL_DATASET[dataset_name]
         dataset = dataset_class(root=config.data.root,
                                 num_of_clients=config.federate.client_num,
                                 feature_partition=config.vertical.dims,
