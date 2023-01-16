@@ -1,3 +1,12 @@
+import os
+import yaml
+import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
+FONTSIZE = 40
+MARKSIZE = 25
+
 METHOD = {
     'rs': 'RS',
     'bo_gp': 'BO_GP',
@@ -13,6 +22,12 @@ METHOD = {
     'bohb_wrap': 'BOHB+FedEx',
 }
 
+TRIAL2SEED = {
+    't0': 12345,
+    't1': 12346,
+    't2': 12347,
+}
+
 COLORS = [
     u'#1f77b4', u'#ff7f0e', u'#2ca02c', u'#d62728', u'#8c564b', u'#9467bd'
 ]
@@ -22,14 +37,6 @@ def parse_logs(root,
                file_list,
                eval_key='client_summarized_weighted_avg',
                suf=''):
-    import os
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from tqdm import tqdm
-
-    FONTSIZE = 40
-    MARKSIZE = 25
-
     def process(file):
         history = []
         with open(file, 'r') as F:
@@ -122,7 +129,95 @@ def parse_logs(root,
     plt.close()
 
 
-parse_logs(['t0', 't1', 't2'],
-           list(METHOD.keys()),
-           eval_key='server_global_eval',
-           suf='_pubmed_avg')
+def args_run_from_scratch(root,
+                          file_list,
+                          eval_key='client_summarized_weighted_avg',
+                          fs_yaml='********',
+                          suf='',
+                          device=8):
+    def get_args(root, logs):
+        log_file = os.path.join(root, logs)
+        arg_key = []
+        arg_val = []
+        with open(log_file, 'r') as f:
+            flag = False
+            cnt = 0
+            for line in f.readlines():
+                if 'wrap' in log_file:
+                    if 'Winner config_id:' in line:
+                        idx = line.split('Winner config_id: ')[-1]
+                        if idx.endswith(' ') or idx.endswith('\n'):
+                            idx = idx[:-1]
+                        break
+                else:
+                    if '== HPO Final ==' in line:
+                        flag = True
+
+                    if flag:
+                        if line.startswith(' '):
+                            args = [x for x in line.split(' ') if len(x)]
+                            arg_key += args
+                        if line.startswith('0 '):
+                            args = [x for x in line.split(' ') if len(x)][1:]
+                            arg_val += args
+
+        if 'wrap' in log_file:
+            fedex_yaml = os.path.join(root, f'idx_{idx}_fedex.yaml')
+            arm_yaml = os.path.join(root, f'{idx}_tmp_grid_search_space.yaml')
+
+            with open(fedex_yaml, 'r') as y:
+                fedex = dict(yaml.load(y, Loader=yaml.FullLoader))
+
+            with open(arm_yaml, 'r') as y:
+                arm = dict(yaml.load(y, Loader=yaml.FullLoader))
+
+            best_arm = np.argmax(fedex['z'][0])
+            arg = ''
+            for key, val in arm[f'arm{best_arm}'].items():
+                arg += f'{key} {val} '
+        else:
+            arg_key = [x for x in arg_key if not x.endswith('\n')]
+            arg_val = [x for x in arg_val if not x.endswith('\n')]
+            arg = ''
+            for key, val in zip(arg_key[:-1], arg_val[:-1]):
+                arg += f'{key} {val} '
+        return arg
+
+    d = 0
+    for prefix in root:
+        for file in file_list:
+            if 'wrap' in file:
+                new_name = f'wrap_{file[:-5]}'
+            else:
+                new_name = file
+
+            if 'hb' in file:
+                budget = [9, 81]
+            else:
+                budget = [50, 50]
+            args = get_args(
+                os.path.join(prefix, f'{file}{suf}'),
+                os.path.join(
+                    f'{new_name}_{budget}_server_global_eval.val_avg_loss',
+                    'exp_print.log'))
+
+            seed = TRIAL2SEED[prefix]
+            print(
+                f'nohup python federatedscope/main.py --cfg {fs_yaml} {args} device {d % device} > {file}_{seed}{suf}.log &'
+            )
+            d += 1
+
+
+if __name__ == '__main__':
+    parse_logs(list(TRIAL2SEED.keys()),
+               list(METHOD.keys()),
+               eval_key='server_global_eval',
+               suf='_pubmed_avg')
+
+    args_run_from_scratch(
+        list(TRIAL2SEED.keys()),
+        list(METHOD.keys()),
+        eval_key='server_global_eval',
+        fs_yaml=
+        'scripts/hpo_exp_scripts/usability/pubmed/learn_from_scratch/pubmed.yaml',
+        suf='_pubmed_avg')
