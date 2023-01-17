@@ -9,7 +9,7 @@ from torchvision.datasets.utils import download_and_extract_archive
 logger = logging.getLogger(__name__)
 
 
-class Credit:
+class Credit(object):
     """
     Give Me Some Credit Data Set
     (https://www.kaggle.com/competitions/GiveMeSomeCredit)
@@ -19,7 +19,6 @@ class Credit:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘credit’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -37,7 +36,6 @@ class Credit:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
@@ -47,7 +45,6 @@ class Credit:
                  seed=123):
         super(Credit, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.feature_partition = feature_partition
         self.tr_frac = tr_frac

@@ -5,7 +5,11 @@ federate:
   mode: standalone
   client_num: 2
 model:
-  type: lr
+  type: xgb_tree
+  lambda_: 0.1
+  gamma: 0
+  num_of_trees: 10
+  max_tree_depth: 3
 data:
   root: data/
   type: adult
@@ -16,20 +20,17 @@ dataloader:
 criterion:
   type: CrossEntropyLoss
 trainer:
-  type: none    
+  type: verticaltrainer
 train:
   optimizer:
     bin_num: 100
-    lambda_: 0.1
-    gamma: 0
-    num_of_trees: 10
-    max_tree_depth: 3
     # learning rate for xgb model
     eta: 0.5
-vertical_dims: [7, 14]
-xgb_base:
+vertical:
   use: True
-  use_bin: True
+  dims: [7, 14]
+  algo: 'xgb'
+  xgb_use_bin: True
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
