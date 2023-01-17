@@ -7,13 +7,13 @@ logger = logging.getLogger(__name__)
 
 
 def wrap_client_for_train(client):
-    def train(self, tree_num, node_num=None):
+    def train(self, tree_num, node_num=None, feature_order_info=None):
         if node_num is None:
             logger.info(f'----------- Building a new tree (Tree '
                         f'#{tree_num}) -------------')
             self.state = tree_num
             finish_flag, results = self.trainer.train(
-                feature_order=self.merged_feature_order, tree_num=tree_num)
+                feature_order_info=feature_order_info, tree_num=tree_num)
         else:
             assert node_num is not None
             finish_flag, results = self.trainer.train(tree_num=tree_num,
@@ -59,8 +59,7 @@ def wrap_client_for_train(client):
         self.state = message.state
         self.feature_importance[feature_idx] += 1
 
-        instance_idx = self.feature_order[feature_idx][value_idx]
-        feature_value = self.trainer.batch_x[instance_idx, feature_idx]
+        feature_value = self.trainer.get_feature_value(feature_idx, value_idx)
 
         self.model[tree_num][node_num].feature_idx = feature_idx
         self.model[tree_num][node_num].feature_value = feature_value

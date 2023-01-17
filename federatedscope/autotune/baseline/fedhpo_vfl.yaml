@@ -36,7 +36,6 @@ vertical:
   key_size: 256
   dims: [7, 14]
   algo: 'xgb'
-  xgb_use_bin: False
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss

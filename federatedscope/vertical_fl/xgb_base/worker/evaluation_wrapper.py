@@ -56,7 +56,7 @@ def wrap_client_for_evaluation(client):
                     receiver=[
                         each
                         for each in list(self.comm_manager.neighbors.keys())
-                        if each != self.server_id
+                        if each not in [self.server_id, self.ID]
                     ],
                     content='None'))
 

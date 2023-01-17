@@ -12,24 +12,27 @@ model:
   max_tree_depth: 3
 data:
   root: data/
-  type: abalone
-  splits: [0.8, 0.2]
+  type: adult
+  splits: [1.0, 0.0]
 dataloader:
   type: raw
-  batch_size: 4000
+  batch_size: 2000
 criterion:
-  type: Regression
+  type: CrossEntropyLoss
 trainer:
   type: verticaltrainer
 train:
   optimizer:
-    bin_num: 1000
+    bin_num: 100
     # learning rate for xgb model
     eta: 0.5
 vertical:
   use: True
-  dims: [4, 8]
+  dims: [7, 14]
   algo: 'xgb'
+  protect_object: 'feature_order'
+  protect_method: 'use_bins'
+  protect_args: [{'bin_num': 100, 'share_bin': True}]
 eval:
-  freq: 5
+  freq: 3
   best_res_update_round_wise_key: test_loss
