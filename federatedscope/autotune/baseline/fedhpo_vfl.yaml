@@ -14,7 +14,6 @@ model:
 train:
   optimizer:
     lr: 0.5
-    bin_num: 100
     # learning rate for xgb model
     eta: 0.5
 data:

@@ -23,7 +23,6 @@ trainer:
   type: verticaltrainer
 train:
   optimizer:
-    bin_num: 100
     # learning rate for xgb model
     eta: 0.5
 vertical:
@@ -31,8 +30,8 @@ vertical:
   dims: [7, 14]
   algo: 'xgb'
   protect_object: 'feature_order'
-  protect_method: 'use_bins'
-  protect_args: [{'bin_num': 100, 'share_bin': True}]
+  protect_method: 'dp'
+  protect_args: [{'bucket_num': 100, 'epsilon':10}]
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

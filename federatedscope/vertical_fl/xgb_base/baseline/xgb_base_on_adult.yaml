@@ -23,7 +23,6 @@ trainer:
   type: verticaltrainer
 train:
   optimizer:
-    bin_num: 100
     # learning rate for xgb model
     eta: 0.5
 vertical:

@@ -33,7 +33,13 @@ class VerticalTrainer(object):
         self.criterion = get_vertical_loss(self.cfg.criterion.type)
         batch_index, self.batch_x, self.batch_y = self._fetch_train_data(index)
         feature_order_info = self._get_feature_order_info(self.batch_x)
-        self.client_feature_order = feature_order_info['feature_order']
+        if 'raw_feature_order' in feature_order_info:
+            # When applying protect method, the raw (real) feature order might
+            # be different from the shared feature order
+            self.client_feature_order = feature_order_info['raw_feature_order']
+            feature_order_info.pop('raw_feature_order')
+        else:
+            self.client_feature_order = feature_order_info['feature_order']
         if index is None:
             self.batch_y_hat = np.random.uniform(low=0.0,
                                                  high=1.0,
