@@ -18,6 +18,13 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.scheduler = 'rs'
     cfg.hpo.metric = 'client_summarized_weighted_avg.val_loss'
 
+    # multi-objective-optimization
+    cfg.hpo.multi_obj = CN()
+    cfg.hpo.multi_obj.algo = ''  # Choose from 'mean', 'parego'
+    cfg.hpo.multi_obj.key = []
+    cfg.hpo.multi_obj.weight = []  # `cfg.hpo.metric` weight is 1.0 when
+    # multi-objective-optimization algo is `mean`
+
     # SHA
     cfg.hpo.sha = CN()
     cfg.hpo.sha.elim_rate = 3

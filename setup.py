@@ -26,7 +26,7 @@ app_requires = [
 ]
 
 benchmark_hpo_requires = [
-    'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.3.3', 'optuna==2.10.0'
+    'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.4.0', 'optuna==2.10.0'
 ]
 
 benchmark_htl_requires = ['learn2learn']

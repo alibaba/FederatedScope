@@ -17,7 +17,9 @@ def run_scheduler(scheduler, cfg, client_cfgs=None):
     ]:
         from federatedscope.autotune.hpbandster import run_hpbandster
         run_hpbandster(cfg, scheduler, client_cfgs)
-    elif cfg.hpo.scheduler in ['bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf']:
+    elif cfg.hpo.scheduler in [
+            'bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf', 'multi'
+    ]:
         from federatedscope.autotune.smac import run_smac
         run_smac(cfg, scheduler, client_cfgs)
     else:

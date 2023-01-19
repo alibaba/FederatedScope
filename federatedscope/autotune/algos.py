@@ -75,7 +75,8 @@ def get_scheduler(init_cfg, client_cfgs=None):
     # TODO: fix wrap_sha
     support_optimizer = [
         'sha', 'rs', 'bo_kde', 'hb', 'bohb', 'wrap_rs', 'wrap_bo_kde',
-        'wrap_hb', 'wrap_bohb', 'bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf'
+        'wrap_hb', 'wrap_bohb', 'bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf',
+        'multi'
     ]
     assert init_cfg.hpo.scheduler in support_optimizer, \
         f'`init_cfg.hpo.scheduler` must be one of {support_optimizer}.'
