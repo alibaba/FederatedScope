@@ -18,7 +18,7 @@ dataloader:
   type: raw
   batch_size: 8000
 criterion:
-  type: Regression
+  type: RegressionMSELoss
 trainer:
   type: verticaltrainer
 train:

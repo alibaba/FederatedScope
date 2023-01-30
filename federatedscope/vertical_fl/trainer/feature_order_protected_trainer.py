@@ -120,7 +120,7 @@ class FeatureOrderProtectedTrainer(VerticalTrainer):
         """
             Add random noises to feature order for privacy protection.
             For more details, please see
-                OpBoost- A Vertical Federated Tree Boosting Framework Based on
+                OpBoost: A Vertical Federated Tree Boosting Framework Based on
                     Order-Preserving Desensitization.pdf
                 (https://arxiv.org/pdf/2210.01318.pdf)
         """
@@ -227,6 +227,7 @@ class FeatureOrderProtectedTrainer(VerticalTrainer):
             'extra_info': extra_info
         }
 
+    # TODO: more flexible for client to choose whether to protect or not
     def _get_feature_order_info(self, data):
         num_of_feature = data.shape[1]
         feature_order = [0] * num_of_feature
