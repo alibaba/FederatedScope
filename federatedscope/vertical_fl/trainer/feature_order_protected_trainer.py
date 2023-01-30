@@ -201,13 +201,13 @@ class FeatureOrderProtectedTrainer(VerticalTrainer):
                                      [0]][feature_idx]
                     if accumu_num == 0:
                         _split_value[accumu_num +
-                                     instance_num] = min_value / 2.0
+                                     instance_num] = max_value / 2.0
                     elif bucket_idx == self.bucket_num - 1:
-                        _split_value[accumu_num] += max_value / 2.0
+                        _split_value[accumu_num] += min_value / 2.0
                     else:
-                        _split_value[accumu_num] += max_value / 2.0
+                        _split_value[accumu_num] += min_value / 2.0
                         _split_value[accumu_num +
-                                     instance_num] = min_value / 2.0
+                                     instance_num] = max_value / 2.0
 
                     accumu_num += instance_num
 
