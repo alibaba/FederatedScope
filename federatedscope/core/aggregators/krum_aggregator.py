@@ -13,8 +13,8 @@ class KrumAggregator(ClientsAvgAggregator):
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(KrumAggregator, self).__init__(model, device, config)
-        self.byzantine_node_num = config.aggregation.byzantine_node_num
-        self.krum_agg_num = config.aggregation.krum.agg_num
+        self.byzantine_node_num = config.aggregator.byzantine_node_num
+        self.krum_agg_num = config.aggregator.krum.agg_num
         assert 2 * self.byzantine_node_num + 2 < config.federate.client_num, \
             "it should be satisfied that 2*byzantine_node_num + 2 < client_num"
 
