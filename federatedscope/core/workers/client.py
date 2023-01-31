@@ -79,16 +79,15 @@ class Client(BaseClient):
         self.is_unseen_client = is_unseen_client
 
         # Parse the attack_id since we support both 'int' (for single attack)
-        # and 'str' (for multiple attacks) for config.attack.attack_id
+        # and 'list' (for multiple attacks) for config.attack.attack_id
         parsed_attack_ids = list()
         if isinstance(config.attack.attacker_id, int):
             parsed_attack_ids.append(config.attack.attacker_id)
-        elif isinstance(config.attack.attacker_id, str):
-            for each_id in config.attack.attacker_id.split(','):
-                parsed_attack_ids.append(int(each_id))
+        elif isinstance(config.attack.attacker_id, list):
+            parsed_attack_ids = config.attack.attacker_id
         else:
             raise TypeError(f"The expected types of config.attack.attack_id "
-                            f"include 'int' amd 'str', but we got "
+                            f"include 'int' and 'list', but we got "
                             f"{type(config.attack.attacker_id)}")
 
         # Attack only support the stand alone model;

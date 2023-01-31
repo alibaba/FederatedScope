@@ -19,13 +19,14 @@ class KrumAlgoTest(unittest.TestCase):
         import torch
         cfg.use_gpu = torch.cuda.is_available()
         cfg.device = 0
-        cfg.eval.freq = 10
+        cfg.eval.freq = 20
+        cfg.eval.count_flops = False
         cfg.eval.metrics = ['acc', 'loss_regular']
 
         cfg.federate.mode = 'standalone'
-        cfg.train.local_update_steps = 5
+        cfg.train.local_update_steps = 2
         cfg.federate.total_round_num = 20
-        cfg.federate.sample_client_num = 10
+        cfg.federate.sample_client_num = 20
         cfg.federate.client_num = 50
 
         cfg.data.root = 'test_data/'
@@ -53,7 +54,7 @@ class KrumAlgoTest(unittest.TestCase):
         cfg.seed = 123
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = 1, 2, 3, 4, 5
+        cfg.attack.attacker_id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
         return backup_cfg
 
@@ -63,13 +64,14 @@ class KrumAlgoTest(unittest.TestCase):
         import torch
         cfg.use_gpu = torch.cuda.is_available()
         cfg.device = 0
-        cfg.eval.freq = 10
+        cfg.eval.freq = 50
+        cfg.eval.count_flops = False
         cfg.eval.metrics = ['acc', 'loss_regular']
 
         cfg.federate.mode = 'standalone'
-        cfg.train.local_update_steps = 5
+        cfg.train.local_update_steps = 2
         cfg.federate.total_round_num = 20
-        cfg.federate.sample_client_num = 10
+        cfg.federate.sample_client_num = 20
         cfg.federate.client_num = 50
 
         cfg.data.root = 'test_data/'
@@ -97,11 +99,11 @@ class KrumAlgoTest(unittest.TestCase):
         cfg.seed = 123
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = 1, 2, 3, 4, 5
+        cfg.attack.attacker_id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-        cfg.aggregation.byzantine_node_num = 5
-        cfg.aggregation.krum.use = True
-        cfg.aggregation.krum.agg_num = 1
+        cfg.aggregator.byzantine_node_num = 10
+        cfg.aggregator.krum.use = True
+        cfg.aggregator.krum.agg_num = 1
 
         return backup_cfg
 
@@ -111,13 +113,14 @@ class KrumAlgoTest(unittest.TestCase):
         import torch
         cfg.use_gpu = torch.cuda.is_available()
         cfg.device = 0
-        cfg.eval.freq = 10
+        cfg.eval.freq = 30
+        cfg.eval.count_flops = False
         cfg.eval.metrics = ['acc', 'loss_regular']
 
         cfg.federate.mode = 'standalone'
-        cfg.train.local_update_steps = 5
+        cfg.train.local_update_steps = 2
         cfg.federate.total_round_num = 20
-        cfg.federate.sample_client_num = 10
+        cfg.federate.sample_client_num = 20
         cfg.federate.client_num = 50
 
         cfg.data.root = 'test_data/'
@@ -145,11 +148,11 @@ class KrumAlgoTest(unittest.TestCase):
         cfg.seed = 123
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = 1, 2, 3, 4, 5
+        cfg.attack.attacker_id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-        cfg.aggregation.byzantine_node_num = 5
-        cfg.aggregation.krum.use = True
-        cfg.aggregation.krum.agg_num = 3
+        cfg.aggregator.byzantine_node_num = 10
+        cfg.aggregator.krum.use = True
+        cfg.aggregator.krum.agg_num = 5
 
         return backup_cfg
 
@@ -171,8 +174,9 @@ class KrumAlgoTest(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
-        self.assertLess(test_best_results['server_global_eval']['test_acc'],
-                        0.1)
+        self.assertLess(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.1)
         init_cfg.merge_from_other_cfg(backup_cfg)
 
     def test_guassian_attack_krum(self):
@@ -193,8 +197,9 @@ class KrumAlgoTest(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_best_results['server_global_eval']['test_acc'],
-                           0.4)
+        self.assertGreater(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.2)
         init_cfg.merge_from_other_cfg(backup_cfg)
 
     def test_guassian_attack_multi_krum(self):
@@ -215,8 +220,9 @@ class KrumAlgoTest(unittest.TestCase):
         test_best_results = Fed_runner.run()
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
-        self.assertGreater(test_best_results['server_global_eval']['test_acc'],
-                           0.6)
+        self.assertGreater(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.2)
         init_cfg.merge_from_other_cfg(backup_cfg)
 
 

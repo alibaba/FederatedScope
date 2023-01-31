@@ -36,15 +36,15 @@ def hook_on_batch_backward_generate_gaussian_noise_gradient(ctx):
         if 'bn' not in name:
             grad_values.append(param.grad.detach().cpu().view(-1))
 
-    grad_values = torch.concat(grad_values)
-    mean_for_gaussian_noise = torch.mean(grad_values)
+    grad_values = torch.cat(grad_values)
+    mean_for_gaussian_noise = torch.mean(grad_values) + 0.1
     std_for_gaussian_noise = torch.std(grad_values)
 
     for name, param in ctx.model.named_parameters():
         if 'bn' not in name:
             generated_grad = torch.normal(mean=mean_for_gaussian_noise,
                                           std=std_for_gaussian_noise,
-                                          size=param.grad.shape())
-            param.grad = generated_grad
+                                          size=param.grad.shape)
+            param.grad = generated_grad.to(param.grad.device)
 
     ctx.optimizer.step()

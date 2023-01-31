@@ -574,6 +574,14 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
         else:
             return False, None
 
+    # int <-> list, forced replacement
+    # To allow single <-> multiple cases
+    # e.g., attack_id = 1  <->  attack_id = [1,2,3]
+    if replacement_type == int and original_type == list:
+        return replacement
+    if replacement_type == list and original_type == int:
+        return replacement_type
+
     # Conditionally casts
     # list <-> tuple
     # For py2: allow converting from str (bytes) to a unicode string
