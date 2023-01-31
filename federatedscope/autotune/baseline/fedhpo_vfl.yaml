@@ -46,7 +46,7 @@ eval:
   freq: 1
   best_res_update_round_wise_key: test_loss
 hpo:
-  scheduler: rs
+  scheduler: bo_gp
   num_workers: 0
   init_cand_num: 50
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
@@ -59,4 +59,4 @@ hpo:
   # Enable wandb
   diagnosis:
     use: True
-    landscape_1d: ['feat_engr.type', 'vertical.use']
+    landscape_1d: ['feat_engr.type', 'vertical.algo']
