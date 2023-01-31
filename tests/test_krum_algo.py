@@ -53,7 +53,7 @@ class KrumAlgoTest(unittest.TestCase):
         cfg.seed = 123
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = 1,2,3,4,5
+        cfg.attack.attacker_id = 1, 2, 3, 4, 5
 
         return backup_cfg
 
@@ -76,7 +76,7 @@ class KrumAlgoTest(unittest.TestCase):
         print(test_best_results)
         init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertLess(test_best_results['server_global_eval']['test_acc'],
-                           0.1)
+                        0.1)
         init_cfg.merge_from_other_cfg(backup_cfg)
 
 

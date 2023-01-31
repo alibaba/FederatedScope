@@ -5,10 +5,11 @@ import torch
 
 from federatedscope.core.trainers import GeneralTorchTrainer
 
-
 logger = logging.getLogger(__name__)
 
-def wrap_GaussianAttackTrainer(base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
+
+def wrap_GaussianAttackTrainer(
+        base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
     '''
     wrap the gaussian attack trainer
 
