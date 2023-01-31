@@ -213,7 +213,8 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
         # 133.54320907592773, 'test_acc': 0.05555555555555555, 'val_total':
         # 36, 'val_avg_loss': 3.693923234939575, 'val_correct': 4.0,
         # 'val_acc': 0.1111111111111111}}
-        line = line.replace("Find new best result: ", "").replace("\'", "\"")
+        line = line.replace("Find new best result: ",
+                            "").replace("\'", "\"").replace("nan", "NaN")
         res = json.loads(s=line)
         for best_type_key, val in res.items():
             for inner_key, inner_val in val.items():

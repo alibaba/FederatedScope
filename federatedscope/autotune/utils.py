@@ -303,6 +303,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
     import wandb
     import seaborn as sns
     import matplotlib.pyplot as plt
+    from pandas.plotting import parallel_coordinates
 
     FONTSIZE = 30
     MARKSIZE = 200
@@ -333,12 +334,29 @@ def log2wandb(trial, config, results, trial_cfg, df):
                 continue
             else:
                 plt.figure(figsize=(20, 15))
-                sns.boxplot(x=df[hyperparam], y=df["performance"])
-                plt.title(f"{hyperparam} - 1d landscape", fontsize=FONTSIZE)
-                plt.xticks(rotation=15, fontsize=FONTSIZE)
-                plt.yticks(fontsize=FONTSIZE)
-                plt.xlabel("Choices", size=FONTSIZE)
-                plt.ylabel("Loss", size=FONTSIZE)
+                ranks = list(
+                    df.groupby(hyperparam)["performance"].mean().fillna(
+                        0).sort_values()[::-1].index).reverse()
+                sns.boxplot(x="performance",
+                            y=hyperparam,
+                            data=df,
+                            order=ranks,
+                            width=.2,
+                            saturation=0.5)
+                sns.stripplot(x="performance",
+                              y=hyperparam,
+                              data=df,
+                              jitter=True,
+                              color="black",
+                              size=10,
+                              linewidth=0,
+                              order=ranks)
+                plt.yticks(rotation=45, fontsize=FONTSIZE)
+                plt.xticks(fontsize=FONTSIZE)
+                plt.xlabel(trial_cfg.hpo.metric, size=FONTSIZE)
+                plt.ylabel("", size=FONTSIZE)
+                plt.title(f"{hyperparam} - Rank", fontsize=FONTSIZE)
+                sns.despine(trim=True)
                 landscape_1d[f"{hyperparam}"] = wandb.Image(plt.gcf())
                 plt.close()
 
@@ -432,10 +450,23 @@ def log2wandb(trial, config, results, trial_cfg, df):
         info = wandb.Image(plt.gcf())
         plt.close()
 
+    # Parallel coordinates
+    plt.figure(figsize=(20, 15))
+    X['index'] = range(1, len(X) + 1)
+    X['performance'] = df['performance']
+    parallel_coordinates(X, "index")
+    plt.legend("")
+    para_coo = wandb.Image(plt.gcf())
+    plt.close()
+
+    best_perf = np.min(df['performance'])
+
     wandb.log({
         'pca': pca,
         'info': info,
         'delimiter': 1.0,
+        'best_perf': best_perf,
+        'para_coo': para_coo,
         **log_res,
         **landscape_1d
     })
