@@ -10,6 +10,8 @@ from smac.scenario.scenario import Scenario
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+trial_index = 0
+
 
 def run_smac(cfg, scheduler, client_cfgs=None):
     config_space = scheduler._search_space
@@ -25,8 +27,10 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         Returns:
             Best results of server of specific FS run.
         """
+        global trial_index
+
         budget = cfg.hpo.sha.budgets[-1]
-        results = eval_in_fs(cfg, config, budget, client_cfgs)
+        results = eval_in_fs(cfg, config, budget, client_cfgs, trial_index)
         key1, key2 = cfg.hpo.metric.split('.')
         res = results[key1][key2]
         config = dict(config)
@@ -42,6 +46,7 @@ def run_smac(cfg, scheduler, client_cfgs=None):
                                       white_list=set(config_space.keys()),
                                       desc=cfg.hpo.larger_better)
             log2wandb(len(perfs) - 1, config, results, cfg, tmp_results)
+        trial_index += 1
         return res
 
     def summarize():

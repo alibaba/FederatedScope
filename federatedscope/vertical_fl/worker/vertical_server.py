@@ -104,7 +104,13 @@ class vFLServer(Server):
             if self._cfg.wandb.use:
                 try:
                     import wandb
-                    wandb.log(metrics)
+                    baseline_log = {}
+                    new_log = {}
+                    log = {'epoch': self.state, **metrics, **baseline_log}
+                    for key, value in log.items():
+                        new_log[f'{self._cfg.hpo.trial_index}:{key}'] = \
+                          value
+                    wandb.log(new_log)
                 except ImportError:
                     logger.error("cfg.wandb.use=True "
                                  "but not install the wandb package")
@@ -130,7 +136,13 @@ class vFLServer(Server):
             if self._cfg.wandb.use:
                 try:
                     import wandb
-                    wandb.log(metrics)
+                    baseline_log = {}
+                    new_log = {}
+                    log = {'epoch': self.state, **metrics, **baseline_log}
+                    for key, value in log.items():
+                        new_log[f'{self._cfg.hpo.trial_index}:{key}'] = \
+                          value
+                    wandb.log(new_log)
                 except ImportError:
                     logger.error("cfg.wandb.use=True but "
                                  "not install the wandb package")

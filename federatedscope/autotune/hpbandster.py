@@ -68,9 +68,11 @@ class MyWorker(Worker):
         self._ss = ss
         self._init_configs = []
         self._perfs = []
+        self.trial_index = 0
 
     def compute(self, config, budget, **kwargs):
-        results = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs)
+        results = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs,
+                             self.trial_index)
         key1, key2 = self.cfg.hpo.metric.split('.')
         res = results[key1][key2]
         config = dict(config)
@@ -89,6 +91,7 @@ class MyWorker(Worker):
                                       desc=self.cfg.hpo.larger_better)
             log2wandb(
                 len(self._perfs) - 1, config, results, self.cfg, tmp_results)
+        self.trial_index += 1
         return {'loss': float(res), 'info': res}
 
     def summarize(self):

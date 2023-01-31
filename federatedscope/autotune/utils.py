@@ -213,7 +213,7 @@ def parse_logs(file_list):
     plt.close()
 
 
-def eval_in_fs(cfg, config, budget, client_cfgs=None):
+def eval_in_fs(cfg, config, budget, client_cfgs=None, trial_index=0):
     """
 
     Args:
@@ -244,6 +244,8 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
                                          f"idx_{idx}.pth")
         config['federate.restore_from'] = osp(cfg.hpo.working_folder,
                                               f"idx_{idx}.pth")
+    config['hpo.trial_index'] = trial_index
+
     # Global cfg
     trial_cfg = cfg.clone()
     # specify the configuration of interest
@@ -288,12 +290,6 @@ def log2wandb(trial, config, results, trial_cfg, df):
         'Config': config_bool2int(config),
         trial_cfg.hpo.metric: results[key1][key2],
     }
-
-    # TODO: Add baseline to illustrate we are being better
-
-    # TODO: Separate the trials (How?)
-
-    # TODO: Place all figures in one page
 
     # Diagnosis with 1d landscape
     landscape_1d = {}
@@ -368,7 +364,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
         pca = wandb.Image(plt.gcf())
         plt.close()
 
-    # TODO: Add words to illustrate what we are doing
+    # Text info guidance
     if trial_cfg.hpo.diagnosis.use:
         plt.figure(figsize=(30, 15))
         anc_x, anc_y, bias = 0.5, 0.95, 0
@@ -412,4 +408,10 @@ def log2wandb(trial, config, results, trial_cfg, df):
         info = wandb.Image(plt.gcf())
         plt.close()
 
-    wandb.log({'pca': pca, 'info': info, **log_res, **landscape_1d})
+    wandb.log({
+        'pca': pca,
+        'info': info,
+        'delimiter': 1.0,
+        **log_res,
+        **landscape_1d
+    })

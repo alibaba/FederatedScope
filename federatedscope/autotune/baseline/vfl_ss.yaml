@@ -5,14 +5,14 @@ train.optimizer.lr:
   log: True
 train.optimizer.num_of_trees:
   type: int
-  lower: 10
-  upper: 20
+  lower: 20
+  upper: 50
 vertical.use:
   type: cate
   choices: [True, False]
 feat_engr.type:
   type: cate
-  choices: ['', 'min_max_norm', 'instance_norm', 'standardization', 'log_transform', 'uniform_binning', 'correlation_filter', 'variance_filter', 'iv_filter']
+  choices: ['', 'min_max_norm', 'instance_norm', 'standardization', 'log_transform', 'uniform_binning', 'variance_filter', 'iv_filter']
 condition1:
   type: equal
   child: train.optimizer.num_of_trees

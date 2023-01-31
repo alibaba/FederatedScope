@@ -94,7 +94,17 @@ class XGBServer(Server):
             if self._cfg.wandb.use:
                 try:
                     import wandb
-                    wandb.log(self.metrics)
+                    baseline_log = {}
+                    new_log = {}
+                    log = {
+                        'epoch': self.tree_num,
+                        **self.metrics,
+                        **baseline_log
+                    }
+                    for key, value in log.items():
+                        new_log[f'{self._cfg.hpo.trial_index}:{key}'] = \
+                            value
+                    wandb.log(new_log)
                 except ImportError:
                     logger.error("cfg.wandb.use=True "
                                  "but not install the wandb package")

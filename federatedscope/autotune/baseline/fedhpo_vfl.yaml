@@ -51,12 +51,12 @@ eval:
 hpo:
   scheduler: rs
   num_workers: 0
-  init_cand_num: 25
+  init_cand_num: 50
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
   sha:
-    budgets: [ 30, 30 ]
+    budgets: [ 100, 100 ]
     elim_rate: 3
-    iter: 25
+    iter: 50
   metric: 'server_global_eval.test_loss'
   working_folder: rs
   # Enable wandb
