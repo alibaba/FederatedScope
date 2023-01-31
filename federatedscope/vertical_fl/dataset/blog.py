@@ -103,6 +103,7 @@ class Blog(object):
 
     def _read_raw(self, file_path):
         data = pd.read_csv(file_path, header=None, usecols=list(range(281)))
+        data = data.fillna(method='ffill')
         data = data.values
         return data
 

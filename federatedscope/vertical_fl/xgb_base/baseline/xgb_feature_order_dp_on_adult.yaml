@@ -29,6 +29,9 @@ vertical:
   use: True
   dims: [7, 14]
   algo: 'xgb'
+  protect_object: 'feature_order'
+  protect_method: 'dp'
+  protect_args: [{'bucket_num': 100, 'epsilon':10}]
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

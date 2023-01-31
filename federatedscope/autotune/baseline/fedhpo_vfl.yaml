@@ -14,7 +14,6 @@ model:
 train:
   optimizer:
     lr: 0.5
-    bin_num: 100
     # learning rate for xgb model
     eta: 0.5
 data:
@@ -36,7 +35,6 @@ vertical:
   key_size: 256
   dims: [7, 14]
   algo: 'xgb'
-  xgb_use_bin: False
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss
