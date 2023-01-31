@@ -19,7 +19,8 @@ def wrap_log_transform(worker):
         if hasattr(worker.data, split):
             split_data = getattr(worker.data, split)
             if split_data is not None and 'x' in split_data:
-                split_data['x'] = np.log(split_data['x'])
+                split_data['x'] = np.log(split_data['x'] + 1 -
+                                         np.min(split_data['x']))
     worker._init_data_related_var()
     return worker
 

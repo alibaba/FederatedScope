@@ -5,7 +5,11 @@ federate:
   mode: standalone
   client_num: 2
 model:
-  type: lr
+  type: xgb_tree
+  lambda_: 0.1
+  gamma: 0
+  num_of_trees: 10
+  max_tree_depth: 3
 data:
   root: data/
   type: abalone
@@ -16,20 +20,17 @@ dataloader:
 criterion:
   type: Regression
 trainer:
-  type: none    
+  type: verticaltrainer
 train:
   optimizer:
     bin_num: 1000
-    lambda_: 0.1
-    gamma: 0
-    num_of_trees: 10
-    max_tree_depth: 3
     # learning rate for xgb model
     eta: 0.5
-vertical_dims: [4, 8]
-xgb_base:
+vertical:
   use: True
-  use_bin: True
+  dims: [4, 8]
+  algo: 'xgb'
+  xgb_use_bin: True
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss

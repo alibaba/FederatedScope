@@ -21,7 +21,7 @@ class Message(object):
                  sender=0,
                  receiver=0,
                  state=0,
-                 content=None,
+                 content='None',
                  timestamp=0,
                  strategy=None):
         self._msg_type = msg_type

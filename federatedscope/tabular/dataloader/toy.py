@@ -1,5 +1,5 @@
+import copy
 import pickle
-
 import numpy as np
 
 from federatedscope.core.data.wrap_dataset import WrapDataset
@@ -58,7 +58,7 @@ def load_toy_data(config=None):
         test_y = np.expand_dims(test_y, -1)
         test_data = {'x': test_x, 'y': test_y}
         for each_client in range(1, client_num + 1):
-            data[each_client]['test'] = test_data
+            data[each_client]['test'] = copy.deepcopy(test_data)
 
         # val data
         val_x = np.random.normal(loc=0.0,

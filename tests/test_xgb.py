@@ -6,7 +6,7 @@ from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_s
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 
 
 class XGBTest(unittest.TestCase):
@@ -22,13 +22,13 @@ class XGBTest(unittest.TestCase):
         cfg.federate.mode = 'standalone'
         cfg.federate.client_num = 2
 
-        cfg.model.type = 'lr'
+        cfg.model.type = 'xgb_tree'
+        cfg.model.lambda_ = 1
+        cfg.model.gamma = 0
+        cfg.model.num_of_trees = 5
+        cfg.model.max_tree_depth = 3
 
         cfg.train.optimizer.bin_num = 1000
-        cfg.train.optimizer.lambda_ = 1
-        cfg.train.optimizer.gamma = 0
-        cfg.train.optimizer.num_of_trees = 5
-        cfg.train.optimizer.max_tree_depth = 3
         cfg.train.optimizer.eta = 0.5
 
         cfg.data.root = 'test_data/'
@@ -39,10 +39,12 @@ class XGBTest(unittest.TestCase):
 
         cfg.criterion.type = 'CrossEntropyLoss'
 
-        cfg.xgb_base.use = True
-        cfg.xgb_base.use_bin = False
+        cfg.vertical.use = True
+        cfg.vertical.xgb_use_bin = False
+        cfg.vertical.dims = [5, 10]
+        cfg.vertical.algo = 'xgb'
 
-        cfg.trainer.type = 'none'
+        cfg.trainer.type = 'verticaltrainer'
         cfg.eval.freq = 5
         cfg.eval.best_res_update_round_wise_key = "test_loss"
 
@@ -58,10 +60,10 @@ class XGBTest(unittest.TestCase):
         init_cfg.merge_from_other_cfg(modified_config)
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)

@@ -12,21 +12,16 @@ federate:
   client_num: 2
   total_round_num: 30
 model:
-  type: lr
-  use_bias: False
+  type: xgb_tree
+  lambda_: 0.1
+  gamma: 0
+  num_of_trees: 10
 train:
   optimizer:
     lr: 0.5
     bin_num: 100
-    lambda_: 0.1
-    gamma: 0
-    num_of_trees: 5
-    max_tree_depth: 3
     # learning rate for xgb model
     eta: 0.5
-xgb_base:
-  use: True
-  use_bin: False
 data:
   root: data/
   type: adult
@@ -40,11 +35,13 @@ dataloader:
 criterion:
   type: CrossEntropyLoss
 trainer:
-  type: none
-vertical_dims: [7, 14]
+  type: verticaltrainer
 vertical:
-  use: False
+  use: True
   key_size: 256
+  dims: [7, 14]
+  algo: 'xgb'
+  xgb_use_bin: False
 eval:
   freq: 1
   best_res_update_round_wise_key: test_loss

@@ -9,7 +9,7 @@ from torchvision.datasets.utils import download_and_extract_archive
 logger = logging.getLogger(__name__)
 
 
-class Adult:
+class Adult(object):
     """
     Adult Data Set
     (https://archive.ics.uci.edu/ml/datasets/adult)
@@ -24,7 +24,6 @@ class Adult:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘adult’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -42,7 +41,6 @@ class Adult:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
@@ -52,7 +50,6 @@ class Adult:
                  seed=123):
         super(Adult, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.tr_frac = tr_frac
         self.feature_partition = feature_partition

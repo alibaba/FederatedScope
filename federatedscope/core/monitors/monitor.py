@@ -404,73 +404,109 @@ class Monitor(object):
             forms = ['weighted_avg', 'avg', 'fairness', 'raw']
         round_formatted_results = {'Role': role, 'Round': rnd}
         round_formatted_results_raw = {'Role': role, 'Round': rnd}
-        for form in forms:
-            new_results = copy.deepcopy(results)
-            if not role.lower().startswith('server') or form == 'raw':
-                round_formatted_results_raw['Results_raw'] = new_results
-            elif form not in Monitor.SUPPORTED_FORMS:
-                continue
-            else:
-                for key in results.keys():
-                    dataset_name = key.split("_")[0]
-                    if f'{dataset_name}_total' not in results:
-                        raise ValueError(
-                            "Results to be formatted should be include the "
-                            "dataset_num in the dict,"
-                            f"with key = {dataset_name}_total")
-                    else:
-                        dataset_num = np.array(
-                            results[f'{dataset_name}_total'])
+
+        if 'group_avg' in forms:  # have different format
+            # ({client_id: metrics})
+            new_results = {}
+            num_of_client_for_data = self.cfg.data.num_of_client_for_data
+            client_start_id = 1
+            for group_id, num_clients in enumerate(num_of_client_for_data):
+                if client_start_id > len(results):
+                    break
+                group_res = copy.deepcopy(results[client_start_id])
+                num_div = num_clients - max(
+                    0, client_start_id + num_clients - len(results) - 1)
+                for client_id in range(client_start_id,
+                                       client_start_id + num_clients):
+                    if client_id > len(results):
+                        break
+                    for k, v in group_res.items():
+                        if isinstance(v, dict):
+                            for kk in v:
+                                if client_id == client_start_id:
+                                    group_res[k][kk] /= num_div
+                                else:
+                                    group_res[k][kk] += results[client_id][k][
+                                        kk] / num_div
+                        else:
+                            if client_id == client_start_id:
+                                group_res[k] /= num_div
+                            else:
+                                group_res[k] += results[client_id][k] / num_div
+                new_results[group_id + 1] = group_res
+                client_start_id += num_clients
+                round_formatted_results['Results_group_avg'] = new_results
+
+        else:
+            for form in forms:
+                new_results = copy.deepcopy(results)
+                if not role.lower().startswith('server') or form == 'raw':
+                    round_formatted_results_raw['Results_raw'] = new_results
+                elif form not in Monitor.SUPPORTED_FORMS:
+                    continue
+                else:
+                    for key in results.keys():
+                        dataset_name = key.split("_")[0]
+                        if f'{dataset_name}_total' not in results:
+                            raise ValueError(
+                                "Results to be formatted should be include "
+                                "the dataset_num in the dict,"
+                                f"with key = {dataset_name}_total")
+                        else:
+                            dataset_num = np.array(
+                                results[f'{dataset_name}_total'])
+                            if key in [
+                                    f'{dataset_name}_total',
+                                    f'{dataset_name}_correct'
+                            ]:
+                                new_results[key] = np.mean(new_results[key])
+
                         if key in [
                                 f'{dataset_name}_total',
                                 f'{dataset_name}_correct'
                         ]:
                             new_results[key] = np.mean(new_results[key])
-
-                    if key in [
-                            f'{dataset_name}_total', f'{dataset_name}_correct'
-                    ]:
-                        new_results[key] = np.mean(new_results[key])
-                    else:
-                        all_res = np.array(copy.copy(results[key]))
-                        if form == 'weighted_avg':
-                            new_results[key] = np.sum(
-                                np.array(new_results[key]) *
-                                dataset_num) / np.sum(dataset_num)
-                        if form == "avg":
-                            new_results[key] = np.mean(new_results[key])
-                        if form == "fairness" and all_res.size > 1:
-                            # by default, log the std and decile
-                            new_results.pop(
-                                key, None)  # delete the redundant original one
-                            all_res.sort()
-                            new_results[f"{key}_std"] = np.std(
-                                np.array(all_res))
-                            new_results[f"{key}_bottom_decile"] = all_res[
-                                all_res.size // 10]
-                            new_results[f"{key}_top_decile"] = all_res[
-                                all_res.size * 9 // 10]
-                            # log more fairness metrics
-                            # min and max
-                            new_results[f"{key}_min"] = all_res[0]
-                            new_results[f"{key}_max"] = all_res[-1]
-                            # bottom and top 10%
-                            new_results[f"{key}_bottom10%"] = np.mean(
-                                all_res[:all_res.size // 10])
-                            new_results[f"{key}_top10%"] = np.mean(
-                                all_res[all_res.size * 9 // 10:])
-                            # cosine similarity between the performance
-                            # distribution and 1
-                            new_results[f"{key}_cos1"] = np.mean(all_res) / (
-                                np.sqrt(np.mean(all_res**2)))
-                            # entropy of performance distribution
-                            all_res_preprocessed = all_res + 1e-9
-                            new_results[f"{key}_entropy"] = np.sum(
-                                -all_res_preprocessed /
-                                np.sum(all_res_preprocessed) * (np.log(
-                                    (all_res_preprocessed) /
-                                    np.sum(all_res_preprocessed))))
-                round_formatted_results[f'Results_{form}'] = new_results
+                        else:
+                            all_res = np.array(copy.copy(results[key]))
+                            if form == 'weighted_avg':
+                                new_results[key] = np.sum(
+                                    np.array(new_results[key]) *
+                                    dataset_num) / np.sum(dataset_num)
+                            if form == "avg":
+                                new_results[key] = np.mean(new_results[key])
+                            if form == "fairness" and all_res.size > 1:
+                                # by default, log the std and decile
+                                new_results.pop(
+                                    key,
+                                    None)  # delete the redundant original one
+                                all_res.sort()
+                                new_results[f"{key}_std"] = np.std(
+                                    np.array(all_res))
+                                new_results[f"{key}_bottom_decile"] = all_res[
+                                    all_res.size // 10]
+                                new_results[f"{key}_top_decile"] = all_res[
+                                    all_res.size * 9 // 10]
+                                # log more fairness metrics
+                                # min and max
+                                new_results[f"{key}_min"] = all_res[0]
+                                new_results[f"{key}_max"] = all_res[-1]
+                                # bottom and top 10%
+                                new_results[f"{key}_bottom10%"] = np.mean(
+                                    all_res[:all_res.size // 10])
+                                new_results[f"{key}_top10%"] = np.mean(
+                                    all_res[all_res.size * 9 // 10:])
+                                # cosine similarity between the performance
+                                # distribution and 1
+                                new_results[f"{key}_cos1"] = np.mean(
+                                    all_res) / (np.sqrt(np.mean(all_res**2)))
+                                # entropy of performance distribution
+                                all_res_preprocessed = all_res + 1e-9
+                                new_results[f"{key}_entropy"] = np.sum(
+                                    -all_res_preprocessed /
+                                    np.sum(all_res_preprocessed) * (np.log(
+                                        (all_res_preprocessed) /
+                                        np.sum(all_res_preprocessed))))
+                    round_formatted_results[f'Results_{form}'] = new_results
 
         with open(os.path.join(self.outdir, "eval_results.raw"),
                   "a") as outfile:
