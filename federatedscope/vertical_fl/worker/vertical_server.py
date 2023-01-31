@@ -46,6 +46,13 @@ class vFLServer(Server):
 
     def _init_data_related_var(self):
         self.dims = [0] + self.vertical_dims
+
+        # Update `self.data` in server according to `self.dims`
+        for split in ['train', 'val', 'test']:
+            if split in self.data.keys():
+                if self.data[split] is not None and 'x' in self.data[split]:
+                    self.data[split]['x'] = self.data[split]['x'][:, :self.
+                                                                  dims[-1]]
         self.model = get_model(self._cfg.model, self.data)
         self.theta = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
 

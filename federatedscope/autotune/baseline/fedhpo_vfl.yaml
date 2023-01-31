@@ -59,4 +59,4 @@ hpo:
   # Enable wandb
   diagnosis:
     use: True
-    landscape_1d: ['feat_engr.type', 'vertical.algo']
+    landscape_1d: ['feat_engr.type', 'vertical.algo', 'vertical.dims']

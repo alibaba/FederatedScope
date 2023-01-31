@@ -13,6 +13,9 @@ vertical.algo:
 feat_engr.type:
   type: cate
   choices: ['', 'min_max_norm', 'instance_norm', 'standardization', 'log_transform', 'uniform_binning', 'variance_filter', 'iv_filter']
+vertical.dims:
+  type: cate
+  choices: ['[7, 14]', '[7, 13]', '[7, 12]', '[7, 11]']
 condition1:
   type: equal
   child: model.num_of_trees
