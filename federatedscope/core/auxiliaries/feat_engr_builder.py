@@ -20,7 +20,7 @@ def get_feat_engr_wrapper(config):
         return dummy_wrapper, dummy_wrapper
 
     logger.info(f'Feature engineering only works on tabular data, please '
-                f'check your `data.type` {config.data.type}.')
+                f'check your `data.type` ({config.data.type}).')
 
     wrap_client = \
         getattr(import_module(f'federatedscope.core.feature.'

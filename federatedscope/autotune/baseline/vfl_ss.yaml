@@ -5,8 +5,8 @@ train.optimizer.lr:
   log: True
 model.num_of_trees:
   type: int
-  lower: 20
-  upper: 50
+  lower: 10
+  upper: 20
 vertical.algo:
   type: cate
   choices: ['lr', 'xgb']

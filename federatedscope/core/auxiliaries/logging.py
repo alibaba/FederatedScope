@@ -202,7 +202,8 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
         best_key, best_val = parse_res[-2], parse_res[-1]
         # client_best_individual.test_acc -> client_best_individual/test_acc
         best_key = best_key.replace("Find new best result for",
-                                    "").replace(".", "/")
+                                    "").replace(".",
+                                                "/").replace("nan", "NaN")
         log_res_best[best_key.strip()] = float(best_val.strip())
 
     if "Find new best result:" in line:

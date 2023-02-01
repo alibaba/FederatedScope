@@ -16,6 +16,7 @@ model:
   lambda_: 0.1
   gamma: 0
   num_of_trees: 10
+  max_tree_depth: 3
 train:
   optimizer:
     lr: 0.5
@@ -46,7 +47,7 @@ eval:
   freq: 1
   best_res_update_round_wise_key: test_loss
 hpo:
-  scheduler: bo_gp
+  scheduler: bo_rf
   num_workers: 0
   init_cand_num: 50
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'

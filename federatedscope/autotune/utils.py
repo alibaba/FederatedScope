@@ -1,3 +1,5 @@
+import copy
+import time
 import yaml
 import logging
 import numpy as np
@@ -299,11 +301,25 @@ def config_bool2int(config):
     return new_dict
 
 
+def adjust_lightness(color, num=0.5):
+    import colorsys
+    import matplotlib.colors as mc
+
+    MAX_NUM = 1.8
+    num = min(num, MAX_NUM)
+    try:
+        c = mc.cnames[color]
+    except:
+        c = color
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    return colorsys.hls_to_rgb(c[0], max(0, min(1, num * c[1])), c[2])
+
+
 def log2wandb(trial, config, results, trial_cfg, df):
     import wandb
     import seaborn as sns
     import matplotlib.pyplot as plt
-    from pandas.plotting import parallel_coordinates
+    import plotly.graph_objects as go
 
     FONTSIZE = 30
     MARKSIZE = 200
@@ -336,7 +352,8 @@ def log2wandb(trial, config, results, trial_cfg, df):
                 plt.figure(figsize=(20, 15))
                 ranks = list(
                     df.groupby(hyperparam)["performance"].mean().fillna(
-                        0).sort_values()[::-1].index).reverse()
+                        0).sort_values()[::-1].index)
+                ranks.reverse()
                 sns.boxplot(x="performance",
                             y=hyperparam,
                             data=df,
@@ -451,14 +468,39 @@ def log2wandb(trial, config, results, trial_cfg, df):
         plt.close()
 
     # Parallel coordinates
-    plt.figure(figsize=(20, 15))
-    X['index'] = range(1, len(X) + 1)
-    X['performance'] = df['performance']
-    parallel_coordinates(X, "index")
-    plt.legend("")
-    para_coo = wandb.Image(plt.gcf())
-    plt.close()
+    new_df = copy.deepcopy(df)
+    px_layout = []
+    for col in new_df.columns.tolist():
+        if isinstance(new_df[col][0], str):
+            new_df[col] = new_df[col].astype('category')
+            cat_map = dict(zip(new_df[col].cat.codes, new_df[col]))
+            px_layout.append({
+                'range': [min(cat_map.keys()),
+                          max(cat_map.keys())],
+                'label': col,
+                'tickvals': list(cat_map.keys()),
+                'ticktext': list(cat_map.values()),
+                'values': new_df[col].cat.codes,
+            })
+        else:
+            px_layout.append({
+                'range': [0, max(new_df[col])],
+                'label': col,
+                'values': new_df[col],
+            })
+    new_df['Trial Index'] = range(1, len(new_df) + 1)
 
+    px_fig = go.Figure(data=go.Parcoords(line=dict(color=new_df['Trial Index'],
+                                                   colorscale='Electric',
+                                                   showscale=True,
+                                                   cmin=1,
+                                                   cmax=len(new_df) + 1),
+                                         dimensions=px_layout))
+    plotly_html = 'test.html'
+    px_fig.write_html(plotly_html, auto_play=False)
+    para_coo = wandb.Html(open(plotly_html))
+
+    # Loss, lower the better
     best_perf = np.min(df['performance'])
 
     wandb.log({
@@ -470,3 +512,5 @@ def log2wandb(trial, config, results, trial_cfg, df):
         **log_res,
         **landscape_1d
     })
+
+    time.sleep(3)
