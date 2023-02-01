@@ -5,11 +5,15 @@ early_stop:
 seed: 12345
 federate:
   mode: standalone
-  local_update_steps: 1
-  batch_or_epoch: epoch
   total_round_num: 300
   sample_client_rate: 0.2
   method: global
+train:
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
 data:
   root: data/
   type: femnist
@@ -22,9 +26,6 @@ model:
   type: convnet2
   hidden: 2048
   out_channels: 62
-optimizer:
-  lr: 0.01
-  weight_decay: 0.0
 grad:
   grad_clip: 5.0
 criterion:

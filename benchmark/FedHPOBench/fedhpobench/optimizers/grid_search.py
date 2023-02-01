@@ -6,8 +6,8 @@ import logging
 import ConfigSpace as CS
 from ConfigSpace.util import generate_grid
 
-from fedhpob.config import fhb_cfg
-from fedhpob.utils.monitor import Monitor
+from fedhpobench.config import fhb_cfg
+from fedhpobench.utils.monitor import Monitor
 
 logging.basicConfig(level=logging.WARNING)
 

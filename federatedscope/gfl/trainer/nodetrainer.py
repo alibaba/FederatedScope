@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
@@ -16,7 +16,6 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
         modes
-
         """
         init_dict = dict()
         if isinstance(data, dict):
@@ -92,7 +91,6 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
         modes
-
         """
         init_dict = dict()
         if isinstance(data, dict):
@@ -124,7 +122,6 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
         return init_dict
 
     def _hook_on_epoch_start(self, ctx):
-        # TODO: blind torch
         if not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                           ReIterator):
             if isinstance(ctx.get("{}_loader".format(ctx.cur_split)),

@@ -1,10 +1,43 @@
 import logging
+
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
 
+try:
+    from federatedscope.contrib.splitter import *
+except ImportError as error:
+    logger.warning(
+        f'{error} in `federatedscope.contrib.splitter`, some modules are not '
+        f'available.')
+
 
 def get_splitter(config):
+    """
+    This function is to build splitter to generate simulated federation \
+    datasets from non-FL dataset.
+
+    Args:
+        config: configurations for FL, see ``federatedscope.core.configs``
+
+    Returns:
+        An instance of splitter (see ``core.splitters`` for details)
+
+    Note:
+      The key-value pairs of ``cfg.data.splitter`` and domain:
+        ===================  ================================================
+        Splitter type        Domain
+        ===================  ================================================
+        lda	                 Generic
+        iid                  Generic
+        louvain	             Graph (node-level)
+        random	             Graph (node-level)
+        rel_type	         Graph (link-level)
+        scaffold	         Molecular
+        scaffold_lda       	 Molecular
+        rand_chunk	         Graph (graph-level)
+        ===================  ================================================
+    """
     client_num = config.federate.client_num
     if config.data.splitter_args:
         kwargs = config.data.splitter_args[0]
@@ -12,7 +45,7 @@ def get_splitter(config):
         kwargs = {}
 
     for func in register.splitter_dict.values():
-        splitter = func(client_num, **kwargs)
+        splitter = func(config.data.splitter, client_num, **kwargs)
         if splitter is not None:
             return splitter
     # Delay import

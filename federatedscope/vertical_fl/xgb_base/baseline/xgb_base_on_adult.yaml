@@ -1,0 +1,34 @@
+use_gpu: False
+device: 0
+backend: torch
+federate:
+  mode: standalone
+  client_num: 2
+model:
+  type: xgb_tree
+  lambda_: 0.1
+  gamma: 0
+  num_of_trees: 10
+  max_tree_depth: 3
+data:
+  root: data/
+  type: adult
+  splits: [1.0, 0.0]
+dataloader:
+  type: raw
+  batch_size: 2000
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: verticaltrainer
+train:
+  optimizer:
+    # learning rate for xgb model
+    eta: 0.5
+vertical:
+  use: True
+  dims: [7, 14]
+  algo: 'xgb'
+eval:
+  freq: 3
+  best_res_update_round_wise_key: test_loss

@@ -1,0 +1,47 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 5
+seed: 12345
+federate:
+  client_num: 2
+  mode: 'distributed'
+  make_global_eval: False
+  online_aggr: False
+  total_round_num: 20
+distribute:
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051
+  client_host: '127.0.0.1'
+  client_port: 50053
+  role: 'client'
+  data_idx: 2
+data:
+  root: data/
+  type: credit
+  splits: [0.8, 0.2]
+dataloader:
+  type: raw
+  batch_size: 2000
+model:
+  type: lr
+train:
+  optimizer:
+    lambda_: 0.1
+    gamma: 0
+    num_of_trees: 10
+    max_tree_depth: 3
+    # learning rate for xgb model
+    eta: 0.5
+vertical_dims: [5, 10]
+xgb_base:
+  use: True
+  use_bin: True
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: none
+eval:
+  freq: 3
+  best_res_update_round_wise_key: test_loss

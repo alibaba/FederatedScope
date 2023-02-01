@@ -1,8 +1,8 @@
 import ConfigSpace as CS
 from federatedscope.core.configs.config import CN
-from fedhpob.benchmarks import TabularBenchmark
-from fedhpob.benchmarks import RawBenchmark
-from fedhpob.benchmarks import SurrogateBenchmark
+from fedhpobench.benchmarks import TabularBenchmark
+from fedhpobench.benchmarks import RawBenchmark
+from fedhpobench.benchmarks import SurrogateBenchmark
 
 fhb_cfg = CN()
 

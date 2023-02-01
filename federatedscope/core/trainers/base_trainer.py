@@ -1,4 +1,5 @@
 import abc
+import inspect
 
 
 class BaseTrainer(abc.ABC):
@@ -24,6 +25,11 @@ class BaseTrainer(abc.ABC):
     def get_model_para(self):
         raise NotImplementedError
 
-    @abc.abstractmethod
     def print_trainer_meta_info(self):
-        raise NotImplementedError
+        """
+        Returns: String contains meta information of Trainer.
+        """
+        sign = inspect.signature(self.__init__).parameters.values()
+        meta_info = tuple([(val.name, getattr(self, val.name))
+                           for val in sign])
+        return f'{self.__class__.__name__}{meta_info}'

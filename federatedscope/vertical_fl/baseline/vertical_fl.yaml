@@ -10,11 +10,14 @@ train:
   optimizer:
     lr: 0.05
 data:
-  type: vertical_fl_data
+  type: synthetic_vfl_data
+dataloader:
+  type: raw
   batch_size: 50
 vertical:
   use: True
   key_size: 256
+  algo: 'lr'
 trainer:
   type: none
 eval:

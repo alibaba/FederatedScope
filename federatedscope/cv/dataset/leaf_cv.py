@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from sklearn.model_selection import train_test_split
 
-from federatedscope.core.auxiliaries.utils import save_local_data, download_url
+from federatedscope.core.data.utils import save_local_data, download_url
 from federatedscope.cv.dataset.leaf import LEAF
 
 IMAGE_SIZE = {'femnist': (28, 28), 'celeba': (84, 84, 3)}
@@ -108,12 +108,11 @@ class LEAF_CV(LEAF):
                 img = np.resize(imgs[idx].numpy().astype(np.uint8),
                                 IMAGE_SIZE[self.name])
                 img = Image.fromarray(img, mode=MODE[self.name])
-                target = targets[idx]
                 if self.transform is not None:
                     img = self.transform(img)
 
                 if self.target_transform is not None:
-                    target = self.target_transform(target)
+                    targets[idx] = self.target_transform(targets[idx])
 
                 img_dict[key].append((img, targets[idx]))
 

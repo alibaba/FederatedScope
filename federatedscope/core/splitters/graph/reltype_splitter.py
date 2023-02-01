@@ -10,14 +10,15 @@ from federatedscope.core.splitters import BaseSplitter
 
 
 class RelTypeSplitter(BaseTransform, BaseSplitter):
-    r"""
-    Split Data into small data via dirichlet distribution to
+    """
+    Split Data into small data via dirichlet distribution to \
     generate non-i.i.d data split.
 
     Arguments:
         client_num (int): Split data into client_num of pieces.
-        alpha (float): parameter controlling the identicalness among clients.
-
+        alpha (float): Partition hyperparameter in LDA, smaller alpha \
+            generates more extreme heterogeneous scenario see \
+            ``np.random.dirichlet``
     """
     def __init__(self, client_num, alpha=0.5, realloc_mask=False):
         BaseSplitter.__init__(self, client_num)

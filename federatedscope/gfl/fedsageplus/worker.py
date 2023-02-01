@@ -7,7 +7,7 @@ from torch_geometric.loader import NeighborSampler
 from federatedscope.core.message import Message
 from federatedscope.core.workers.server import Server
 from federatedscope.core.workers.client import Client
-from federatedscope.core.auxiliaries.utils import merge_dict
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 from federatedscope.core.data import ClientData
 
 from federatedscope.gfl.trainer.nodetrainer import NodeMiniBatchTrainer
@@ -193,12 +193,9 @@ class FedSagePlusServer(Server):
                     msg_list.append(train_msg_buffer[client_id])
 
                 # Trigger the monitor here (for training)
-                if 'dissim' in self._cfg.eval.monitoring:
-                    B_val = self._monitor.calc_blocal_dissim(
-                        self.model.load_state_dict(), msg_list)
-                    formatted_logs = self._monitor.format_eval_res(
-                        B_val, rnd=self.state, role='Server #')
-                    logger.info(formatted_logs)
+                self._monitor.calc_model_metric(self.model.state_dict(),
+                                                msg_list,
+                                                rnd=self.state)
 
                 # Aggregate
                 agg_info = {
@@ -235,8 +232,8 @@ class FedSagePlusServer(Server):
             else:  # in the evaluation process
                 # Get all the message & aggregate
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
-                self.history_results = merge_dict(self.history_results,
-                                                  formatted_eval_res)
+                self.history_results = merge_dict_of_results(
+                    self.history_results, formatted_eval_res)
                 self.check_and_save()
 
 

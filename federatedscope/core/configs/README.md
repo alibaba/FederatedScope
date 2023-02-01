@@ -1,5 +1,6 @@
 ## Configurations
 We summarize all the customizable configurations:
+- [config.py](#config)
 - [cfg_data.py](#data)
 - [cfg_model.py](#model)
 - [cfg_fl_algo.py](#federated-algorithms)
@@ -10,6 +11,23 @@ We summarize all the customizable configurations:
 - [cfg_differential_privacy.py](#differential-privacy)
 - [cfg_hpo.py](#auto-tuning-components)
 - [cfg_attack.py](#attack)
+
+### config
+The configurations related to environment of running experiment.
+
+| Name                   | (Type) Default Value | Description                                                  | Note |
+| ---------------------- | -------------------- | ------------------------------------------------------------ | ---- |
+| `backend`              | (string) 'torch'     | The backend for local training                               | -    |
+| `use_gpu`              | (bool) False         | Whether to use GPU                                           | -    |
+| `check_completeness`   | (bool) False         | Whether to check the completeness of msg_handler             | -    |
+| `verbose`              | (int) 1              | Whether to print verbose logging info                        | -    |
+| `print_decimal_digits` | (int) 6              | How many decimal places we print out using logger            | -    |
+| `device`               | (int) -1             | Specify the device for training                              | -    |
+| `seed`                 | (int) 0              | Random seed                                                  | -    |
+| `outdir`               | (string) ''          | The dir used to save log, exp_config, models, etc,.          | -    |
+| `expname`              | (string) ''          | Detailed exp name to distinguish different sub-exp           | -    |
+| `expname_tag`          | (string) ''          | Detailed exp tag to distinguish different sub-exp with the same expname | -    |
+
 
 ### Data
 The configurations related to the data/dataset are defined in `cfg_data.py`.
@@ -180,7 +198,6 @@ The following configurations are related to the grad clipping.
 |          `early_stop.patience`           | (int) 5 |  How long to wait after last time the monitored metric improved. |                        Note that the actual_checking_round = `early_step.patience` * `eval.freq`. To disable the early stop, set the `early_stop.patience` <=0                        |
 |            `early_stop.delta`            | (float) 0. |  Minimum change in the monitored metric to indicate a improvement. |                                                                                           -                                                                                           |
 |   `early_stop.improve_indicaator_mode`   | (string) 'best' | Early stop when there is no improvement within the last `early_step.patience` rounds, in ['mean', 'best'] |                                                                             Chosen from 'mean' or 'best'                                                                              |
-|   `early_step.the_smaller_the_better`    | (bool) True | The optimized direction of the chosen metric |                                                                                           -                                                                                           |
 
 
 ### FL Setting

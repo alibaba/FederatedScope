@@ -10,6 +10,20 @@ def extend_training_cfg(cfg):
 
     cfg.trainer.type = 'general'
 
+    cfg.trainer.sam = CN()
+    cfg.trainer.sam.adaptive = False
+    cfg.trainer.sam.rho = 1.0
+    cfg.trainer.sam.eta = .0
+
+    cfg.trainer.local_entropy = CN()
+    cfg.trainer.local_entropy.gamma = 1e-4
+    cfg.trainer.local_entropy.eps = 1e-3
+    cfg.trainer.local_entropy.alpha = 0.75
+
+    # atc (TODO: merge later)
+    cfg.trainer.disp_freq = 50
+    cfg.trainer.val_freq = 100000000  # eval freq across batches
+
     # ---------------------------------------------------------------------- #
     # Training related options
     # ---------------------------------------------------------------------- #
@@ -25,6 +39,7 @@ def extend_training_cfg(cfg):
     # you can add new arguments 'aa' by `cfg.train.scheduler.aa = 'bb'`
     cfg.train.scheduler = CN(new_allowed=True)
     cfg.train.scheduler.type = ''
+    cfg.train.scheduler.warmup_ratio = 0.0
 
     # ---------------------------------------------------------------------- #
     # Finetune related options
@@ -42,12 +57,14 @@ def extend_training_cfg(cfg):
 
     cfg.finetune.scheduler = CN(new_allowed=True)
     cfg.finetune.scheduler.type = ''
+    cfg.finetune.scheduler.warmup_ratio = 0.0
 
     # ---------------------------------------------------------------------- #
     # Gradient related options
     # ---------------------------------------------------------------------- #
     cfg.grad = CN()
     cfg.grad.grad_clip = -1.0  # negative numbers indicate we do not clip grad
+    cfg.grad.grad_accum_count = 1
 
     # ---------------------------------------------------------------------- #
     # Early stopping related options
@@ -57,14 +74,13 @@ def extend_training_cfg(cfg):
     # patience (int): How long to wait after last time the monitored metric
     # improved.
     # Note that the actual_checking_round = patience * cfg.eval.freq
-    # To disable the early stop, set the early_stop.patience a integer <=0
+    # To disable the early stop, set the early_stop.patience to 0
     cfg.early_stop.patience = 5
     # delta (float): Minimum change in the monitored metric to indicate an
     # improvement.
     cfg.early_stop.delta = 0.0
     # Early stop when no improve to last `patience` round, in ['mean', 'best']
     cfg.early_stop.improve_indicator_mode = 'best'
-    cfg.early_stop.the_smaller_the_better = True
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_training_cfg)

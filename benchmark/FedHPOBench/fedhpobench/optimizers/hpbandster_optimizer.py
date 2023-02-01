@@ -7,8 +7,8 @@ import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 
-from fedhpob.config import fhb_cfg
-from fedhpob.utils.monitor import Monitor
+from fedhpobench.config import fhb_cfg
+from fedhpobench.utils.monitor import Monitor
 
 logging.basicConfig(level=logging.WARNING)
 

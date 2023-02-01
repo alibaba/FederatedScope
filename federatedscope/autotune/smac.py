@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 import ConfigSpace as CS
-from federatedscope.autotune.utils import eval_in_fs
+from federatedscope.autotune.utils import eval_in_fs, log2wandb
 from smac.facade.smac_bb_facade import SMAC4BB
 from smac.facade.smac_hpo_facade import SMAC4HPO
 from smac.scenario.scenario import Scenario
@@ -10,19 +10,31 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-def run_smac(cfg, scheduler):
+def run_smac(cfg, scheduler, client_cfgs=None):
     init_configs = []
     perfs = []
 
     def optimization_function_wrapper(config):
+        """
+        Used as an evaluation function for SMAC optimizer.
+        Args:
+            config: configurations of FS run.
+
+        Returns:
+            Best results of server of specific FS run.
+        """
         budget = cfg.hpo.sha.budgets[-1]
-        res = eval_in_fs(cfg, config, budget)
+        results = eval_in_fs(cfg, config, budget, client_cfgs)
+        key1, key2 = cfg.hpo.metric.split('.')
+        res = results[key1][key2]
         config = dict(config)
         config['federate.total_round_num'] = budget
         init_configs.append(config)
         perfs.append(res)
         logger.info(f'Evaluate the {len(perfs)-1}-th config '
                     f'{config}, and get performance {res}')
+        if cfg.wandb.use:
+            log2wandb(len(perfs) - 1, config, results, cfg)
         return res
 
     def summarize():
@@ -30,7 +42,8 @@ def run_smac(cfg, scheduler):
         results = summarize_hpo_results(init_configs,
                                         perfs,
                                         white_list=set(config_space.keys()),
-                                        desc=cfg.hpo.larger_better)
+                                        desc=cfg.hpo.larger_better,
+                                        use_wandb=cfg.wandb.use)
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))

@@ -4,10 +4,18 @@ from federatedscope.core.data.base_data import ClientData
 
 class DummyDataTranslator(BaseDataTranslator):
     """
-    DummyDataTranslator convert FL dataset to DataLoader.
-    Do not perform FL split.
+    ``DummyDataTranslator`` convert datadict to ``StandaloneDataDict``. \
+    Compared to ``core.data.base_translator.BaseDataTranslator``, it do not \
+    perform FL split.
     """
     def split(self, dataset):
+        """
+        Perform ML split
+
+        Returns:
+            dict of ``ClientData`` with client_idx as key to build \
+            ``StandaloneDataDict``
+        """
         if not isinstance(dataset, dict):
             raise TypeError(f'Not support data type {type(dataset)}')
         datadict = {}
@@ -25,7 +33,7 @@ class DummyDataTranslator(BaseDataTranslator):
             else:
                 # Do not have train/val/test
                 train, val, test = self.split_train_val_test(
-                    dataset[client_id])
+                    dataset[client_id], client_cfg)
                 tmp_dict = dict(train=train, val=val, test=test)
                 # Only for graph-level task, get number of graph labels
                 if client_cfg.model.task.startswith('graph') and \
