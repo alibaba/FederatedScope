@@ -1,13 +1,14 @@
 use_gpu: True
-device: 1
-outdir: exp/pfedhpo_cifar12_1
+device: 0
+outdir: graph_exp/pfedhpo
 seed: 12345
 early_stop:
   patience: 100000
+  improve_indicator_mode: mean
 federate:
-  mode: standalone
+  mode: 'standalone'
   client_num: 10
-  total_round_num: 2000
+  total_round_num: 4000
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
@@ -44,14 +45,16 @@ trainer:
 eval:
   freq: 1
   metrics: ['acc', 'correct']
+  count_flops: False
 hpo:
   scheduler: pfedhpo
   num_workers: 0
   pfedhpo:
     use: True
+    discrete: True
     train_fl: False
     train_anchor: False
-    target_fl_total_round: 500
+    target_fl_total_round: 400
     ss: 'scripts/example_configs/cifar/ss.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: exp/pfedhpo_cifar12_1/working
+  working_folder: graph_exp/pfedhpo/working
