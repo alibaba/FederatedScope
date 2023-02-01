@@ -78,6 +78,9 @@ def extend_data_cfg(cfg):
     cfg.data.num_contrast = 0
     cfg.data.debug = False
 
+    # prompt learning
+    cfg.data.dataset_name = ''
+
     # --------------- outdated configs ---------------
     # TODO: delete this code block
     cfg.data.loader = ''

@@ -4,7 +4,7 @@ import logging
 import torch
 import numpy as np
 from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
-    DictDataset, NUM_DEBUG
+    DatasetDict, NUM_DEBUG
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ def create_cnndm_dataset(data,
             labels = tgt_encoded.input_ids
 
     example_indices = torch.arange(token_ids.size(0), dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': token_ids,
         'token_type_ids': token_type_ids,
         'attention_mask': attention_mask,
@@ -190,7 +190,7 @@ def create_cnndm_pretrain_dataset(data,
             attention_mask = src_encoded.attention_mask
 
     example_indices = torch.arange(token_ids.size(0), dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': token_ids,
         'attention_mask': attention_mask,
         'example_indices': example_indices

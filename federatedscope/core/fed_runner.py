@@ -197,7 +197,8 @@ class BaseRunner(object):
                                    model=client_model
                                    or get_model(client_specific_config.model,
                                                 client_data,
-                                                backend=self.cfg.backend),
+                                                backend=self.cfg.backend,
+                                                role='client'),
                                    device=client_device,
                                    is_unseen_client=client_id
                                    in self.unseen_clients_id,
@@ -323,8 +324,10 @@ class StandaloneRunner(BaseRunner):
         # assume the client-wise data are consistent in their input&output
         # shape
         self._shared_client_model = get_model(
-            self.cfg.model, self.data[1], backend=self.cfg.backend
-        ) if self.cfg.federate.share_local_model else None
+            self.cfg.model,
+            self.data[1],
+            backend=self.cfg.backend,
+            role='client') if self.cfg.federate.share_local_model else None
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id,
@@ -344,12 +347,16 @@ class StandaloneRunner(BaseRunner):
             server_data = self.data[self.server_id]
             model = get_model(self.cfg.model,
                               server_data,
-                              backend=self.cfg.backend)
+                              backend=self.cfg.backend,
+                              role='server')
         else:
             server_data = None
             data_representative = self.data[1]
             model = get_model(
-                self.cfg.model, data_representative, backend=self.cfg.backend
+                self.cfg.model,
+                data_representative,
+                backend=self.cfg.backend,
+                role='server'
             )  # get the model according to client's data if the server
             # does not own data
         kw = {
@@ -510,7 +517,8 @@ class DistributedRunner(BaseRunner):
         server_data = self.data
         model = get_model(self.cfg.model,
                           server_data,
-                          backend=self.cfg.backend)
+                          backend=self.cfg.backend,
+                          role='server')
         kw = self.server_address
         kw.update({'resource_info': resource_info})
         return server_data, model, kw
@@ -657,8 +665,10 @@ class FedRunner(object):
         # assume the client-wise data are consistent in their input&output
         # shape
         self._shared_client_model = get_model(
-            self.cfg.model, self.data[1], backend=self.cfg.backend
-        ) if self.cfg.federate.share_local_model else None
+            self.cfg.model,
+            self.data[1],
+            backend=self.cfg.backend,
+            role='client') if self.cfg.federate.share_local_model else None
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
@@ -807,14 +817,16 @@ class FedRunner(object):
                 server_data = self.data[self.server_id]
                 model = get_model(self.cfg.model,
                                   server_data,
-                                  backend=self.cfg.backend)
+                                  backend=self.cfg.backend,
+                                  role='server')
             else:
                 server_data = None
                 data_representative = self.data[1]
                 model = get_model(
                     self.cfg.model,
                     data_representative,
-                    backend=self.cfg.backend
+                    backend=self.cfg.backend,
+                    role='server'
                 )  # get the model according to client's data if the server
                 # does not own data
             kw = {
@@ -826,7 +838,8 @@ class FedRunner(object):
             server_data = self.data
             model = get_model(self.cfg.model,
                               server_data,
-                              backend=self.cfg.backend)
+                              backend=self.cfg.backend,
+                              role='server')
             kw = self.server_address
             kw.update({'resource_info': resource_info})
         else:
@@ -900,7 +913,8 @@ class FedRunner(object):
                 data=client_data,
                 model=client_model or get_model(client_specific_config.model,
                                                 client_data,
-                                                backend=self.cfg.backend),
+                                                backend=self.cfg.backend,
+                                                role='client'),
                 device=client_device,
                 is_unseen_client=client_id in self.unseen_clients_id,
                 **kw)

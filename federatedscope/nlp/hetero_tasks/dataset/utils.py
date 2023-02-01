@@ -22,7 +22,7 @@ def split_sent(examples, eoq='[unused2]', tokenize=True):
     return new_examples
 
 
-class DictDataset(Dataset):
+class DatasetDict(Dataset):
     def __init__(self, inputs):
         super().__init__()
         assert all(

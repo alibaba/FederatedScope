@@ -10,8 +10,8 @@ try:
     from federatedscope.contrib.trainer import *
 except ImportError as error:
     logger.warning(
-        f'{error} in `federatedscope.contrib.trainer`, some modules are not '
-        f'available.')
+        f"{error} in `federatedscope.contrib.trainer`, some modules are not "
+        f"available.")
 
 TRAINER_CLASS_DICT = {
     "cvtrainer": "CVTrainer",
@@ -29,6 +29,7 @@ TRAINER_CLASS_DICT = {
     "cltrainer": "CLTrainer",
     "lptrainer": "LPTrainer",
     "atc_trainer": "ATCTrainer",
+    "pl_trainer": "PLTrainer",
 }
 
 
@@ -108,8 +109,8 @@ def get_trainer(model=None,
         ``attack.auxiliary.attack_trainer_builder.wrap_attacker_trainer``
         ==================================  ===========================
     """
-    if config.trainer.type == 'general':
-        if config.backend == 'torch':
+    if config.trainer.type == "general":
+        if config.backend == "torch":
             from federatedscope.core.trainers import GeneralTorchTrainer
             trainer = GeneralTorchTrainer(model=model,
                                           data=data,
@@ -117,7 +118,7 @@ def get_trainer(model=None,
                                           config=config,
                                           only_for_eval=only_for_eval,
                                           monitor=monitor)
-        elif config.backend == 'tensorflow':
+        elif config.backend == "tensorflow":
             from federatedscope.core.trainers import GeneralTFTrainer
             trainer = GeneralTFTrainer(model=model,
                                        data=data,
@@ -127,36 +128,38 @@ def get_trainer(model=None,
                                        monitor=monitor)
         else:
             raise ValueError
-    elif config.trainer.type == 'none':
+    elif config.trainer.type == "none":
         return None
     elif config.trainer.type.lower() in TRAINER_CLASS_DICT:
-        if config.trainer.type.lower() in ['cvtrainer']:
+        if config.trainer.type.lower() in ["cvtrainer"]:
             dict_path = "federatedscope.cv.trainer.trainer"
-        elif config.trainer.type.lower() in ['nlptrainer']:
+        elif config.trainer.type.lower() in ["nlptrainer"]:
             dict_path = "federatedscope.nlp.trainer.trainer"
-        elif config.trainer.type.lower() in ['cltrainer', 'lptrainer']:
+        elif config.trainer.type.lower() in ["cltrainer", "lptrainer"]:
             dict_path = "federatedscope.cl.trainer.trainer"
         elif config.trainer.type.lower() in [
-                'graphminibatch_trainer',
+                "graphminibatch_trainer",
         ]:
             dict_path = "federatedscope.gfl.trainer.graphtrainer"
         elif config.trainer.type.lower() in [
-                'linkfullbatch_trainer', 'linkminibatch_trainer'
+                "linkfullbatch_trainer", "linkminibatch_trainer"
         ]:
             dict_path = "federatedscope.gfl.trainer.linktrainer"
         elif config.trainer.type.lower() in [
-                'nodefullbatch_trainer', 'nodeminibatch_trainer'
+                "nodefullbatch_trainer", "nodeminibatch_trainer"
         ]:
             dict_path = "federatedscope.gfl.trainer.nodetrainer"
         elif config.trainer.type.lower() in [
-                'flitplustrainer', 'flittrainer', 'fedvattrainer',
-                'fedfocaltrainer'
+                "flitplustrainer", "flittrainer", "fedvattrainer",
+                "fedfocaltrainer"
         ]:
             dict_path = "federatedscope.gfl.flitplus.trainer"
-        elif config.trainer.type.lower() in ['mftrainer']:
+        elif config.trainer.type.lower() in ["mftrainer"]:
             dict_path = "federatedscope.mf.trainer.trainer"
-        elif config.trainer.type.lower() in ['atc_trainer']:
+        elif config.trainer.type.lower() in ["atc_trainer"]:
             dict_path = "federatedscope.nlp.hetero_tasks.trainer"
+        elif config.trainer.type.lower() in ["pl_trainer"]:
+            dict_path = "federatedscope.nlp.prompt_learning.trainer"
         else:
             raise ValueError
 
@@ -181,15 +184,15 @@ def get_trainer(model=None,
                                       only_for_eval=only_for_eval,
                                       monitor=monitor)
         if trainer is None:
-            raise ValueError('Trainer {} is not provided'.format(
+            raise ValueError("Trainer {} is not provided".format(
                 config.trainer.type))
 
     if not isinstance(trainer, Trainer):
-        logger.warning(f'Hook-like plug-in functions cannot be enabled when '
-                       f'using {trainer}. If you want use our wrapper '
-                       f'functions for your trainer please consider '
-                       f'inheriting from '
-                       f'`federatedscope.core.trainers.Trainer` instead.')
+        logger.warning(f"Hook-like plug-in functions cannot be enabled when "
+                       f"using {trainer}. If you want use our wrapper "
+                       f"functions for your trainer please consider "
+                       f"inheriting from "
+                       f"`federatedscope.core.trainers.Trainer` instead.")
         return trainer
 
     # differential privacy plug-in
@@ -216,22 +219,22 @@ def get_trainer(model=None,
                                base_trainer=trainer)
 
     # attacker plug-in
-    if 'backdoor' in config.attack.attack_method:
+    if "backdoor" in config.attack.attack_method:
         from federatedscope.attack.trainer import wrap_benignTrainer
         trainer = wrap_benignTrainer(trainer)
 
     if is_attacker:
-        if 'backdoor' in config.attack.attack_method:
-            logger.info('--------This client is a backdoor attacker --------')
+        if "backdoor" in config.attack.attack_method:
+            logger.info("--------This client is a backdoor attacker --------")
         else:
-            logger.info('-------- This client is an privacy attacker --------')
+            logger.info("-------- This client is an privacy attacker --------")
         from federatedscope.attack.auxiliary.attack_trainer_builder \
             import wrap_attacker_trainer
         trainer = wrap_attacker_trainer(trainer, config)
 
-    elif 'backdoor' in config.attack.attack_method:
+    elif "backdoor" in config.attack.attack_method:
         logger.info(
-            '----- This client is a benign client for backdoor attacks -----')
+            "----- This client is a benign client for backdoor attacks -----")
 
     # fed algorithm plug-in
     if config.fedprox.use:

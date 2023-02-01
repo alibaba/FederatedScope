@@ -299,7 +299,7 @@ class ATCModel(nn.Module):
                            logits=logits)
 
 
-def call_atc_model(model_config, local_data):
+def call_atc_model(model_config, **kwargs):
     if model_config.type == 'atc_model':
         model = ATCModel(model_config)
         return model

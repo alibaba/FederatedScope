@@ -6,6 +6,7 @@ from federatedscope.core.data.utils import RegexInverseMap, load_dataset, \
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.nlp.dataloader import *
 from federatedscope.nlp.hetero_tasks.dataloader import *
+from federatedscope.nlp.prompt_learning.dataloader import *
 
 import federatedscope.register as register
 

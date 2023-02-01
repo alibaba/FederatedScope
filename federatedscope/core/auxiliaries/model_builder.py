@@ -2,6 +2,7 @@ import logging
 import federatedscope.register as register
 from federatedscope.nlp.model import *
 from federatedscope.nlp.hetero_tasks.model import *
+from federatedscope.nlp.prompt_learning.model import *
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
             return shape
 
 
-def get_model(model_config, local_data=None, backend='torch'):
+def get_model(model_config, local_data=None, backend='torch', role='client'):
     """
     This function builds an instance of model to be trained.
 
@@ -132,7 +133,9 @@ def get_model(model_config, local_data=None, backend='torch'):
                        'representative data to `get_model` if necessary')
 
     for func in register.model_dict.values():
-        model = func(model_config, input_shape)
+        model = func(model_config=model_config,
+                     input_shape=input_shape,
+                     role=role)
         if model is not None:
             return model
 

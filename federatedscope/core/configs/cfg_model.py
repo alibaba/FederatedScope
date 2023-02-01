@@ -49,6 +49,11 @@ def extend_model_cfg(cfg):
     cfg.model.contrast_topk = 100
     cfg.model.contrast_temp = 1.0
 
+    # prompt learning
+    cfg.model.prefix_len = 0
+    cfg.model.num_client_layers = -1
+    cfg.model.freeze_param = []
+
     # ---------------------------------------------------------------------- #
     # Criterion related options
     # ---------------------------------------------------------------------- #

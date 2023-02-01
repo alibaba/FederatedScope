@@ -25,6 +25,7 @@ def call_step_scheduler(optimizer,
 
         if optim is not None:
             scheduler = LambdaLR(optimizer, lr_lambda)
+
         return scheduler
 
 
@@ -44,6 +45,7 @@ def call_noam_scheduler(optimizer, type, warmup_steps=0, **kwargs):
 
         if optim is not None:
             scheduler = LambdaLR(optimizer, lr_lambda)
+
         return scheduler
 
 

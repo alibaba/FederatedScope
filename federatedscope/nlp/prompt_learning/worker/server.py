@@ -1,104 +1,20 @@
 import os
 import sys
-import json
 import logging
-import copy
 import pickle
-import torch
 import numpy as np
+import torch
 from federatedscope.core.message import Message
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 from federatedscope.core.workers import Server
-from federatedscope.nlp.hetero_tasks.trainer.utils import ContrastiveMonitor
+from federatedscope.nlp.prompt_learning.trainer.utils import merge_param_dict
+from federatedscope.nlp.prompt_learning.dataset.utils import SERVER_TRAIN
 
 logger = logging.getLogger(__name__)
 
 
-class ATCServer(Server):
-    def __init__(self,
-                 ID=-1,
-                 state=0,
-                 config=None,
-                 data=None,
-                 model=None,
-                 client_num=5,
-                 total_round_num=10,
-                 device='cpu',
-                 strategy=None,
-                 **kwargs):
-
-        super().__init__(ID=ID,
-                         state=state,
-                         config=config,
-                         data=data,
-                         model=model,
-                         client_num=client_num,
-                         total_round_num=total_round_num,
-                         device=device,
-                         strategy=strategy,
-                         **kwargs)
-
-        self.models = [
-            copy.deepcopy(self.model) for _ in range(self.client_num)
-        ]
-        self.tasks = [
-            config.model.pretrain_tasks[0]
-            if config.model.pretrain_tasks else None
-            for _ in range(self.client_num)
-        ]
-        self.atc_vanilla = config.federate.atc_vanilla
-        if not self.atc_vanilla:
-            self.aggregator.update_models(self.models)
-            self.aggregator.update_neighbors(self.comm_manager.neighbors)
-
-        self.use_contrastive_loss = self._cfg.model.use_contrastive_loss
-        if self.use_contrastive_loss:
-            self.contrast_monitor = ContrastiveMonitor()
-            synth_feats, synth_toks = self._load_synth_data()
-            self.contrast_monitor.update_enc_hidden(synth_feats)
-            self.contrast_monitor.update_synth_tokens(synth_toks)
-            self.aggregator.update_contrast_monitor(self.contrast_monitor)
-
-        if self._cfg.federate.restore_from != '':
-            cur_round = self.aggregator.load_model(
-                self._cfg.federate.restore_from)
-            logger.info(
-                "Restored the model from {}-th round's ckpt".format(cur_round))
-
-    def _load_synth_data(self):
-        if self._cfg.data.debug:
-            synth_dir = 'cache_debug/synthetic/'
-        else:
-            synth_dir = os.path.join(self._cfg.data.cache_dir, 'synthetic')
-        synth_prim_weight = self._cfg.data.synth_prim_weight
-        logger.info('Loading synthetic data from \'{}\''.format(synth_dir))
-        with open(os.path.join(synth_dir, 'shapes.json')) as f:
-            shapes = json.load(f)
-        synth_feat_path = os.path.join(
-            synth_dir, 'feature_{}.memmap'.format(synth_prim_weight))
-        synth_tok_path = os.path.join(
-            synth_dir, 'token_{}.memmap'.format(synth_prim_weight))
-        synth_feats = np.memmap(filename=synth_feat_path,
-                                shape=tuple(shapes['feature']),
-                                mode='r',
-                                dtype=np.float32)
-        synth_toks = np.memmap(filename=synth_tok_path,
-                               shape=tuple(shapes['token']),
-                               mode='r',
-                               dtype=np.int64)
-        num_contrast = self._cfg.data.num_contrast
-        synth_feats = {
-            k: v
-            for k, v in enumerate(
-                torch.from_numpy(synth_feats)[:num_contrast])
-        }
-        synth_toks = {
-            k: v
-            for k, v in enumerate(torch.from_numpy(synth_toks)[:num_contrast])
-        }
-        return synth_feats, synth_toks
-
+class PLServer(Server):
     def _perform_federated_aggregation(self):
         train_msg_buffer = dict(
             sorted(self.msg_buffer['train'][self.state].items(),
@@ -109,44 +25,17 @@ class ATCServer(Server):
 
         # Aggregate
         aggregated_num = len(msg_list)
-        if self.atc_vanilla:
-            agg_info = {
-                'client_feedback': [[x['sample_size'], x['model_para']]
-                                    for x in msg_list],
-                'recover_fun': self.recover_fun,
-            }
-            avg_models = self.aggregator.aggregate(agg_info)
-            tasks = [None for _ in range(self.client_num)]
-            for i in range(self.client_num):
-                self.models[i].load_state_dict(avg_models, strict=False)
-        else:
-            agg_info = {
-                'client_feedback': msg_list,
-                'recover_fun': self.recover_fun,
-            }
-            avg_models, tasks = self.aggregator.aggregate(agg_info)
-            if avg_models is not None and 'model_para' in avg_models:
-                for i in range(self.client_num):
-                    self.models[i].load_state_dict(avg_models['model_para'][i],
-                                                   strict=False)
-        self.tasks = tasks
-
-        if self.use_contrastive_loss:
-            if self._cfg.model.task != 'pretrain' and \
-                    self.contrast_monitor.stat == 2:
-                self.msg_buffer['train'][self.state].clear()
-                self.broadcast_model_para(
-                    msg_type='model_para',
-                    sample_client_num=self.sample_client_num)
-                return -1
-            if self.contrast_monitor.stat == 3:
-                self.contrast_monitor.reset()
+        agg_info = {
+            'client_feedback': [[x['sample_size'], x['model_para']]
+                                for x in msg_list],
+            'recover_fun': self.recover_fun,
+        }
+        avg_model = self.aggregator.aggregate(agg_info)
+        merged_param = merge_param_dict(self.model.state_dict().copy(),
+                                        avg_model)
+        self.model.load_state_dict(merged_param, strict=False)
 
         return aggregated_num
-
-    def save_best_results(self):
-        if self._cfg.federate.save_to != '':
-            self.aggregator.save_model(self._cfg.federate.save_to, self.state)
 
     def broadcast_model_para(self,
                              msg_type='model_para',
@@ -156,36 +45,20 @@ class ATCServer(Server):
             self.sampler.change_state(self.unseen_clients_id, 'unseen')
 
         if sample_client_num > 0:
-            sample_ids = np.random.choice(np.arange(self.client_num),
-                                          size=sample_client_num,
-                                          replace=False).tolist()
+            receiver = self.sampler.sample(size=sample_client_num)
         else:
-            sample_ids = list(range(self.client_num))
+            receiver = list(self.comm_manager.neighbors.keys())
+            if msg_type == 'model_para':
+                self.sampler.change_state(receiver, 'working')
 
-        receivers = sorted(list(self.comm_manager.neighbors.keys()))
-        model_para = [model.state_dict() for model in self.models]
         skip_broadcast = self._cfg.federate.method in ['local', 'global']
-        if skip_broadcast:
-            model_para = [{} for _ in self.models]
-
-        for i in sample_ids:
-            if not self.use_contrastive_loss:
-                content = {
-                    'model_para': model_para[i],
-                    'task': self.tasks[i],
-                }
-            else:
-                content = {
-                    'model_para': model_para[i],
-                    'task': self.tasks[i],
-                    'contrast_monitor': self.contrast_monitor,
-                }
-            self.comm_manager.send(
-                Message(msg_type=msg_type,
-                        sender=self.ID,
-                        receiver=receivers[i],
-                        state=self.state,
-                        content=content))
+        model_para = {} if skip_broadcast else self.model.state_dict()
+        self.comm_manager.send(
+            Message(msg_type=msg_type,
+                    sender=self.ID,
+                    receiver=receiver,
+                    state=self.state,
+                    content={'model_para': model_para}))
 
         if filter_unseen_clients:
             self.sampler.change_state(self.unseen_clients_id, 'seen')
@@ -216,10 +89,8 @@ class ATCServer(Server):
                     return move_on_flag
 
                 self.state += 1
-                if not self.atc_vanilla:
-                    self.aggregator.update_round(self.state)
-                if self.state % self._cfg.eval.freq == 0 and self.state != \
-                        self.total_round_num:
+                if self.state % self._cfg.eval.freq == 0 and \
+                        self.state < self.total_round_num:
                     #  Evaluate
                     logger.info(
                         'Server #{:d}: Starting evaluation at the end of '
@@ -276,6 +147,7 @@ class ATCServer(Server):
                         if key not in metrics_all_clients:
                             metrics_all_clients[key] = list()
                         metrics_all_clients[key].append(float(res))
+
         formatted_logs = self._monitor.format_eval_res(
             metrics_all_clients,
             rnd=self.state + 1,
@@ -283,6 +155,7 @@ class ATCServer(Server):
             forms=self._cfg.eval.report)
         logger.info(formatted_logs)
         self._monitor.save_formatted_results(formatted_logs)
+
         return formatted_logs
 
     def trigger_for_start(self):
@@ -329,3 +202,75 @@ class ATCServer(Server):
                             self._cfg.federate.total_round_num))
             self.broadcast_model_para(msg_type='model_para',
                                       sample_client_num=self.sample_client_num)
+
+    def eval(self):
+        if self._cfg.federate.make_global_eval:
+            # Perform training in server
+            skip_broadcast = self._cfg.federate.method in ['local', 'global']
+            model_para = {}
+            if not skip_broadcast and SERVER_TRAIN:
+                model_para = self.model.state_dict()
+                self.trainer.update(model_para)
+                sample_size, model_para, model_grads, train_metrics = \
+                    self.trainer.train()
+                self.model.load_state_dict(model_para, strict=False)
+
+                formatted_train_res = self._monitor.format_eval_res(
+                    train_metrics,
+                    rnd=self.state,
+                    role='Server #',
+                    return_raw=self._cfg.federate.make_global_eval)
+                logger.info(formatted_train_res)
+
+            # Evaluate on val dataset
+            val_metrics = self.trainer.evaluate(target_data_split_name='val')
+            formatted_val_res = self._monitor.format_eval_res(
+                val_metrics,
+                rnd=self.state,
+                role='Server #',
+                return_raw=self._cfg.federate.make_global_eval)
+            logger.info(formatted_val_res)
+
+            comp_metric = f'val_{self._cfg.eval.metrics[0]}'
+            max_score = -np.inf if self.state == 1 else \
+                max(self.history_results['Results_raw'][comp_metric])
+            cur_score = val_metrics[comp_metric]
+            save_path = os.path.join(self._cfg.federate.pl_save_to,
+                                     'best_model.pt')
+            if cur_score > max_score:
+                logger.info(f'Best score {cur_score} obtained. '
+                            f'Model saved to {save_path}.')
+                ckpt = {
+                    'round': self.state,
+                    'model': model_para,
+                    'val_score': cur_score
+                }
+                torch.save(ckpt, save_path)
+
+            self.history_results = merge_dict_of_results(
+                self.history_results, formatted_val_res)
+            self._monitor.save_formatted_results(formatted_val_res)
+
+            # Evaluate on test dataset
+            if self.state == self.total_round_num:
+                best_ckpt = torch.load(save_path, map_location='cpu')
+                model_para.update(best_ckpt['model'])
+                self.trainer.update(model_para)
+                logger.info(f"Loaded best model obtained in round "
+                            f"{best_ckpt['round']} "
+                            f"({best_ckpt['val_score']}).")
+
+                test_metrics = self.trainer.evaluate(
+                    target_data_split_name='test')
+                formatted_test_res = self._monitor.format_eval_res(
+                    test_metrics,
+                    rnd=self.state,
+                    role='Server #',
+                    return_raw=self._cfg.federate.make_global_eval)
+                self._monitor.save_formatted_results(formatted_test_res)
+                logger.info(formatted_test_res)
+
+            self.check_and_save()
+        else:
+            # Preform evaluation in clients
+            self.broadcast_model_para(msg_type='evaluate')

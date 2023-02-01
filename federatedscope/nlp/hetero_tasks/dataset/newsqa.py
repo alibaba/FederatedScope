@@ -3,7 +3,7 @@ import os.path as osp
 import torch
 import logging
 from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
-    DictDataset, NUM_DEBUG
+    DatasetDict, NUM_DEBUG
 
 logger = logging.getLogger(__name__)
 
@@ -335,7 +335,7 @@ def create_newsqa_dataset(data,
         [inp.end_position for inp in encoded_inputs])
 
     example_indices = torch.arange(token_ids.size(0), dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': token_ids,
         'token_type_ids': token_type_ids,
         'attention_mask': attention_mask,
@@ -385,7 +385,7 @@ def create_newsqa_pretrain_dataset(data,
 
     example_indices = torch.arange(encoded_inputs.input_ids.size(0),
                                    dtype=torch.long)
-    dataset = DictDataset({
+    dataset = DatasetDict({
         'token_ids': encoded_inputs.input_ids,
         'attention_mask': encoded_inputs.attention_mask,
         'example_indices': example_indices
