@@ -185,7 +185,7 @@ def wrap_server_for_evaluation(server):
             self.msg_buffer['eval'][state]['feature_importance'] = {}
             self.msg_buffer['eval'][state]['metrics'] = None
         self.msg_buffer['eval'][state]['feature_importance'].update(
-            {sender: feature_importance})
+            {str(sender): feature_importance})
         self._check_and_save_result()
 
     def callback_funcs_for_metrics(self, message: Message):
