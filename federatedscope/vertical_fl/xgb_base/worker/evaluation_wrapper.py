@@ -56,7 +56,7 @@ def wrap_client_for_evaluation(client):
                     receiver=[
                         each
                         for each in list(self.comm_manager.neighbors.keys())
-                        if each != self.server_id
+                        if each not in [self.server_id, self.ID]
                     ],
                     content='None'))
 
@@ -201,7 +201,7 @@ def wrap_server_for_evaluation(server):
             self.msg_buffer['eval'][state]['feature_importance'] = {}
             self.msg_buffer['eval'][state]['metrics'] = None
         self.msg_buffer['eval'][state]['feature_importance'].update(
-            {sender: feature_importance})
+            {str(sender): feature_importance})
         self._check_and_save_result()
 
     def callback_funcs_for_metrics(self, message: Message):

@@ -53,7 +53,7 @@ class XGBClient(Client):
                                self.callback_func_for_feature_order)
         self.register_handlers('finish', self.callback_func_for_finish)
 
-    def train(self, tree_num, node_num=None):
+    def train(self, tree_num, node_num=None, feature_order_info=None):
         raise NotImplementedError
 
     def eval(self, tree_num):
@@ -68,14 +68,13 @@ class XGBClient(Client):
     # each contains self.num_of_trees trees
     # label-owner initials y_hat
     # label-owner sends "sample data" to others
-    # label-owner calls self.preparation()
-
     def callback_func_for_model_para(self, message: Message):
         self.state = message.state
 
         if self.own_label:
-            batch_index, self.feature_order = self.trainer.prepare_for_train()
-            self.msg_buffer[self.ID] = self.feature_order
+            batch_index, feature_order_info = self.trainer.prepare_for_train()
+            self.feature_order = feature_order_info['feature_order']
+            self.msg_buffer[self.ID] = feature_order_info
             receiver = [
                 each for each in list(self.comm_manager.neighbors.keys())
                 if each not in [self.ID, self.server_id]
@@ -88,21 +87,21 @@ class XGBClient(Client):
                         content=batch_index))
 
     # other clients receive the data-sample information
-    # other clients also call self.preparation()
     def callback_func_for_data_sample(self, message: Message):
         batch_index, sender = message.content, message.sender
-        _, self.feature_order = self.trainer.prepare_for_train(
+        _, feature_order_info = self.trainer.prepare_for_train(
             index=batch_index)
+        self.feature_order = feature_order_info['feature_order']
         self.comm_manager.send(
             Message(msg_type='feature_order',
                     sender=self.ID,
                     state=self.state,
                     receiver=[sender],
-                    content=self.feature_order))
+                    content=feature_order_info))
 
     def callback_func_for_feature_order(self, message: Message):
-        feature_order, sender = message.content, message.sender
-        self.msg_buffer[sender] = feature_order
+        feature_order_info, sender = message.content, message.sender
+        self.msg_buffer[sender] = feature_order_info
         self.check_and_move_on()
 
     def callback_func_for_finish(self, message: Message):
@@ -113,7 +112,6 @@ class XGBClient(Client):
 
     def check_and_move_on(self):
         if len(self.msg_buffer) == self.client_num:
-            self.merged_feature_order = np.concatenate([
-                self.msg_buffer[idx] for idx in range(1, self.client_num + 1)
-            ])
-            self.train(tree_num=self.state)
+            received_feature_order_infos = self.msg_buffer
+            self.train(tree_num=self.state,
+                       feature_order_info=received_feature_order_infos)

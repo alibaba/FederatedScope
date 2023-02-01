@@ -28,7 +28,6 @@ TRAINER_CLASS_DICT = {
     "mftrainer": "MFTrainer",
     "cltrainer": "CLTrainer",
     "lptrainer": "LPTrainer",
-    "verticaltrainer": "VerticalTrainer",
     "atc_trainer": "ATCTrainer",
 }
 
@@ -135,8 +134,6 @@ def get_trainer(model=None,
             dict_path = "federatedscope.cv.trainer.trainer"
         elif config.trainer.type.lower() in ['nlptrainer']:
             dict_path = "federatedscope.nlp.trainer.trainer"
-        elif config.trainer.type.lower() in ['verticaltrainer']:
-            dict_path = "federatedscope.vertical_fl.trainer.trainer"
         elif config.trainer.type.lower() in ['cltrainer', 'lptrainer']:
             dict_path = "federatedscope.cl.trainer.trainer"
         elif config.trainer.type.lower() in [
@@ -171,6 +168,14 @@ def get_trainer(model=None,
                               config=config,
                               only_for_eval=only_for_eval,
                               monitor=monitor)
+    elif config.trainer.type.lower() in ['verticaltrainer']:
+        from federatedscope.vertical_fl.trainer.utils import \
+            get_vertical_trainer
+        trainer = get_vertical_trainer(config=config,
+                                       model=model,
+                                       data=data,
+                                       device=device,
+                                       monitor=monitor)
     else:
         # try to find user registered trainer
         trainer = None

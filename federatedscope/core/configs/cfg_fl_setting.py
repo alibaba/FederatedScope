@@ -77,7 +77,10 @@ def extend_fl_setting_cfg(cfg):
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
     cfg.vertical.algo = 'lr'  # ['lr', 'xgb']
-    cfg.vertical.xgb_use_bin = False
+    cfg.vertical.protect_object = ''  # feature_order, TODO: add more
+    cfg.vertical.protect_method = ''  # dp
+    cfg.vertical.protect_args = []
+    # Default values for 'dp': {'bucket_num':100, 'epsilon':None}
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)

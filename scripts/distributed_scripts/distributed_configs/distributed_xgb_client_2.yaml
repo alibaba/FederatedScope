@@ -28,7 +28,6 @@ model:
   type: lr
 train:
   optimizer:
-    bin_num: 100
     lambda_: 0.1
     gamma: 0
     num_of_trees: 10

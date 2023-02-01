@@ -29,6 +29,9 @@ vertical:
   use: True
   dims: [7, 14]
   algo: 'xgb'
+  protect_object: 'feature_order'
+  protect_method: 'op_boost'
+  protect_args: [{'algo': 'global'}]
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

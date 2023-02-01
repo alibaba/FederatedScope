@@ -23,14 +23,12 @@ trainer:
   type: verticaltrainer
 train:
   optimizer:
-    bin_num: 100
     # learning rate for xgb model
     eta: 0.5
 vertical:
   use: True
   dims: [5, 10]
   algo: 'xgb'
-  xgb_use_bin: True
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
