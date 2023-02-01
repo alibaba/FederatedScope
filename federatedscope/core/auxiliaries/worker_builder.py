@@ -58,7 +58,7 @@ def get_client_cls(cfg):
         from federatedscope.vertical_fl.xgb_base.worker import XGBClient
         return XGBClient
 
-    if cfg.trainer.type.lower() == 'atc_trainer':
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
         from federatedscope.nlp.hetero_tasks.worker import ATCClient
         return ATCClient
 
@@ -163,7 +163,7 @@ def get_server_cls(cfg):
         from federatedscope.vertical_fl.xgb_base.worker import XGBServer
         return XGBServer
 
-    if cfg.trainer.type.lower() == 'atc_trainer':
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
         from federatedscope.nlp.hetero_tasks.worker import ATCServer
         return ATCServer
 

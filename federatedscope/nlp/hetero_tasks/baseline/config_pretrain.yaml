@@ -9,10 +9,10 @@ federate:
   client_num: 18
   save_to: ckpt/
 data:
-  type: atc_data
+  type: hetero_nlp_tasks
   root: datasets/
-  datasets: ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
-  num_grouped_clients: [1, 3, 3, 2, 5, 4]
+  hetero_data_name: ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
+  num_of_client_for_data: [1, 3, 3, 2, 5, 4]
   max_seq_len: 384
   max_tgt_len: 128
   batch_size: 16
@@ -21,11 +21,9 @@ data:
 model:
   type: atc_model
   model_type: google/bert_uncased_L-2_H-128_A-2
+  stage: assign
   task: pretrain
   pretrain_tasks: ['mlm', 'denoise']
-  bos_token: '[unused0]'
-  eos_token: '[unused1]'
-  eoq_token: '[unused2]'
 aggregator:
   num_agg_groups: 5
   inside_weight: 1.0
@@ -42,7 +40,7 @@ train:
     lr: 5e-4
     weight_decay: 0.01
   scheduler:
-    type: step
+    type: warmup_step
     warmup_ratio: 0.1
 grad:
   grad_clip: 1.0

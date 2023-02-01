@@ -8,8 +8,8 @@ from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
 logger = logging.getLogger(__name__)
 
 
-def create_agnews_examples(data, debug=False):
-    if debug:
+def get_agnews_examples(data, is_debug=False):
+    if is_debug:
         data = data[:NUM_DEBUG]
     examples = []
     for ex in data:
@@ -17,19 +17,19 @@ def create_agnews_examples(data, debug=False):
     return examples
 
 
-def create_agnews_dataset(data,
-                          split,
-                          tokenizer,
-                          max_seq_len,
-                          cache_dir='',
-                          client_id=None,
-                          pretrain=False,
-                          debug=False,
-                          **kwargs):
+def process_agnews_dataset(data,
+                           split,
+                           tokenizer,
+                           max_seq_len,
+                           cache_dir='',
+                           client_id=None,
+                           pretrain=False,
+                           is_debug=False,
+                           **kwargs):
     if pretrain:
-        return create_agnews_pretrain_dataset(data, split, tokenizer,
-                                              max_seq_len, cache_dir,
-                                              client_id, debug)
+        return process_agnews_dataset_for_pretrain(data, split, tokenizer,
+                                                   max_seq_len, cache_dir,
+                                                   client_id, is_debug)
 
     save_dir = osp.join(cache_dir, 'train', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
@@ -39,7 +39,7 @@ def create_agnews_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_agnews_examples(data, debug)
+        examples = get_agnews_examples(data, is_debug)
         texts = [ex[0] for ex in examples]
         encoded_inputs = tokenizer(texts,
                                    padding='max_length',
@@ -68,13 +68,13 @@ def create_agnews_dataset(data,
     return dataset, encoded_inputs, examples
 
 
-def create_agnews_pretrain_dataset(data,
-                                   split,
-                                   tokenizer,
-                                   max_seq_len,
-                                   cache_dir='',
-                                   client_id=None,
-                                   debug=False):
+def process_agnews_dataset_for_pretrain(data,
+                                        split,
+                                        tokenizer,
+                                        max_seq_len,
+                                        cache_dir='',
+                                        client_id=None,
+                                        is_debug=False):
     save_dir = osp.join(cache_dir, 'pretrain', str(client_id))
     cache_file = osp.join(save_dir, split + '.pt')
 
@@ -84,7 +84,7 @@ def create_agnews_pretrain_dataset(data,
         examples = cache_data['examples']
         encoded_inputs = cache_data['encoded_inputs']
     else:
-        examples = create_agnews_examples(data, debug)
+        examples = get_agnews_examples(data, is_debug)
         texts = [ex[0] for ex in examples]
         texts = split_sent(texts, eoq=tokenizer.eoq_token)
         encoded_inputs = tokenizer(texts,

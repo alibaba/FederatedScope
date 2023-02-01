@@ -4,9 +4,6 @@ from importlib import import_module
 from federatedscope.core.data.utils import RegexInverseMap, load_dataset, \
     convert_data_mode
 from federatedscope.core.auxiliaries.utils import setup_seed
-from federatedscope.nlp.dataloader import *
-from federatedscope.nlp.hetero_tasks.dataloader import *
-from federatedscope.nlp.prompt_learning.dataloader import *
 
 import federatedscope.register as register
 
@@ -33,6 +30,7 @@ TRANS_DATA_MAP = {
         'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?', 'fb15k-237',
         'wn18', 'adult', 'abalone', 'credit', 'blog'
     ],  # Dummy for FL dataset
+    'RawDataTranslator': ['hetero_nlp_tasks'],
 }
 DATA_TRANS_MAP = RegexInverseMap(TRANS_DATA_MAP, None)
 
@@ -123,7 +121,7 @@ def get_data(config, client_cfgs=None):
             return data_and_config
 
     # Load dataset from source files
-    dataset, modified_config = load_dataset(config)
+    dataset, modified_config = load_dataset(config, client_cfgs)
 
     # Apply translator to non-FL dataset to transform it into its federated
     # counterpart

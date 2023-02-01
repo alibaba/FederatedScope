@@ -2,8 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.nn import CrossEntropyLoss
-from federatedscope.register import register_model
-from federatedscope.nlp.hetero_tasks.loss.label_smooth_loss import \
+from federatedscope.nlp.hetero_tasks.dataset.utils import setup_tokenizer
+from federatedscope.nlp.loss.label_smooth_loss import \
     LabelSmoothingLoss
 
 
@@ -56,8 +56,11 @@ class ATCModel(nn.Module):
         self.dropout_prob = self.pt_cfg.hidden_dropout_prob
         self.dropout = nn.Dropout(self.dropout_prob)
 
+        setup_tokenizer(config.model_type)  # update global token ids
+        from federatedscope.nlp.hetero_tasks.dataset.utils import \
+            BOS_TOKEN_ID, EOS_TOKEN_ID, PAD_TOKEN_ID
         self.label_smoothing = config.label_smoothing
-        self.padding_idx = config.pad_token_id
+        self.padding_idx = PAD_TOKEN_ID
         self.classifier = nn.Linear(self.hidden_size, config.num_labels)
 
         self.use_contrastive_loss = config.use_contrastive_loss
@@ -71,9 +74,9 @@ class ATCModel(nn.Module):
                 dropout_prob=self.dropout_prob)
 
         # for eval generation
-        self.model.config.decoder_start_token_id = config.bos_token_id
-        self.model.config.eos_token_id = config.eos_token_id
-        self.model.config.pad_token_id = config.pad_token_id
+        self.model.config.decoder_start_token_id = BOS_TOKEN_ID
+        self.model.config.eos_token_id = EOS_TOKEN_ID
+        self.model.config.pad_token_id = PAD_TOKEN_ID
         self.model.config.vocab_size = self.pt_cfg.vocab_size
         self.model.config.max_length = config.max_length
         self.model.config.min_length = config.min_length
@@ -297,12 +300,3 @@ class ATCModel(nn.Module):
                            regular_loss=regular_loss,
                            contrastive_loss=contrastive_loss,
                            logits=logits)
-
-
-def call_atc_model(model_config, **kwargs):
-    if model_config.type == 'atc_model':
-        model = ATCModel(model_config)
-        return model
-
-
-register_model('atc_model', call_atc_model)

@@ -165,6 +165,7 @@ class Context(LifecycleDict):
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None
             self.regularizer = None
+            self.optimizer = None
             self.grad_clip = None
 
     # Train related property, query from `cfg` if not set

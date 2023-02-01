@@ -14,8 +14,8 @@ from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import lifecycle, CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE, MODE
 from federatedscope.core.trainers.utils import filter_by_specified_keywords
-from federatedscope.nlp.hetero_tasks.monitor import MetricCalculator, \
-    eval_acc
+from federatedscope.core.monitors import MetricCalculator
+from federatedscope.core.monitors.metric_calculator import eval_acc
 from federatedscope.nlp.hetero_tasks.trainer.utils import AverageMeter, \
     ContrastiveMonitor
 from federatedscope.nlp.hetero_tasks.dataset.utils import setup_tokenizer
@@ -41,7 +41,7 @@ class ATCTrainer(GeneralTorchTrainer):
         self.pred_file, self.src_file, self.tgt_file = None, None, None
         self.finish_eval = False
         self.ctx.eval_metrics = None
-        self.ctx.tokenizer = setup_tokenizer(config)
+        self.ctx.tokenizer = setup_tokenizer(config.model.model_type)
         self.ctx.grad_accum_count = config.grad.grad_accum_count
         self.ctx.padding_idx = self.ctx.tokenizer.pad_token_id
         self.ctx.init_params = copy.deepcopy(model.state_dict())
@@ -60,9 +60,9 @@ class ATCTrainer(GeneralTorchTrainer):
     def update_stat(self, ID):
         self.ID = ID
         if self.task in {'cnndm', 'msqg'}:
-            pred_dir = os.path.join(self.cfg.eval.result_path, 'pred')
-            src_dir = os.path.join(self.cfg.eval.result_path, 'src')
-            tgt_dir = os.path.join(self.cfg.eval.result_path, 'tgt')
+            pred_dir = os.path.join(self.cfg.outdir, 'pred')
+            src_dir = os.path.join(self.cfg.outdir, 'src')
+            tgt_dir = os.path.join(self.cfg.outdir, 'tgt')
             self.ctx.pred_path = os.path.join(pred_dir, '%d.txt' % ID)
             self.ctx.src_path = os.path.join(src_dir, '%d.txt' % ID)
             self.ctx.tgt_path = os.path.join(tgt_dir, '%d.txt' % ID)

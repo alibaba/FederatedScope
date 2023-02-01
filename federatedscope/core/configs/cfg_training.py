@@ -20,7 +20,7 @@ def extend_training_cfg(cfg):
     cfg.trainer.local_entropy.eps = 1e-3
     cfg.trainer.local_entropy.alpha = 0.75
 
-    # atc
+    # atc (TODO: merge later)
     cfg.trainer.disp_freq = 50
     cfg.trainer.val_freq = 100000000  # eval freq across batches
 
@@ -39,8 +39,6 @@ def extend_training_cfg(cfg):
     # you can add new arguments 'aa' by `cfg.train.scheduler.aa = 'bb'`
     cfg.train.scheduler = CN(new_allowed=True)
     cfg.train.scheduler.type = ''
-
-    # atc
     cfg.train.scheduler.warmup_ratio = 0.0
 
     # ---------------------------------------------------------------------- #
@@ -59,8 +57,6 @@ def extend_training_cfg(cfg):
 
     cfg.finetune.scheduler = CN(new_allowed=True)
     cfg.finetune.scheduler.type = ''
-
-    # atc
     cfg.finetune.scheduler.warmup_ratio = 0.0
 
     # ---------------------------------------------------------------------- #

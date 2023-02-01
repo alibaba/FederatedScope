@@ -9,8 +9,8 @@ from federatedscope.nlp.hetero_tasks.dataset.utils import split_sent, \
 logger = logging.getLogger(__name__)
 
 
-def create_msqg_examples(data, debug=False):
-    if debug:
+def get_msqg_examples(data, is_debug=False):
+    if is_debug:
         data = data[:NUM_DEBUG]
     src_examples, tgt_examples = [], []
     for ex in data:
@@ -19,23 +19,23 @@ def create_msqg_examples(data, debug=False):
     return src_examples, tgt_examples
 
 
-def create_msqg_dataset(data,
-                        split,
-                        tokenizer,
-                        max_src_len,
-                        max_tgt_len,
-                        raw_cache_dir='',
-                        client_id=None,
-                        pretrain=False,
-                        debug=False,
-                        **kwargs):
+def process_msqg_dataset(data,
+                         split,
+                         tokenizer,
+                         max_src_len,
+                         max_tgt_len,
+                         raw_cache_dir='',
+                         client_id=None,
+                         pretrain=False,
+                         is_debug=False,
+                         **kwargs):
     if pretrain:
-        return create_msqg_pretrain_dataset(data, split, tokenizer,
-                                            max_src_len, raw_cache_dir,
-                                            client_id, debug)
+        return process_msqg_dataset_for_pretrain(data, split, tokenizer,
+                                                 max_src_len, raw_cache_dir,
+                                                 client_id, is_debug)
 
     cache_dir = osp.join(raw_cache_dir, 'train', str(client_id), split)
-    src_examples, tgt_examples = create_msqg_examples(data, debug)
+    src_examples, tgt_examples = get_msqg_examples(data, is_debug)
     if osp.exists(cache_dir):
         logger.info('Loading cache file from \'{}\''.format(cache_dir))
         token_ids = np.memmap(filename=osp.join(cache_dir, 'token_ids.memmap'),
@@ -132,15 +132,15 @@ def create_msqg_dataset(data,
     return dataset, None, None
 
 
-def create_msqg_pretrain_dataset(data,
-                                 split,
-                                 tokenizer,
-                                 max_src_len,
-                                 raw_cache_dir='',
-                                 client_id=None,
-                                 debug=False):
+def process_msqg_dataset_for_pretrain(data,
+                                      split,
+                                      tokenizer,
+                                      max_src_len,
+                                      raw_cache_dir='',
+                                      client_id=None,
+                                      is_debug=False):
     cache_dir = osp.join(raw_cache_dir, 'pretrain', str(client_id), split)
-    src_examples, tgt_examples = create_msqg_examples(data, debug)
+    src_examples, tgt_examples = get_msqg_examples(data, is_debug)
     if osp.exists(cache_dir):
         logger.info('Loading cache file from \'{}\''.format(cache_dir))
         token_ids = np.memmap(filename=osp.join(cache_dir, 'token_ids.memmap'),

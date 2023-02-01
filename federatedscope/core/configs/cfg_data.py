@@ -64,19 +64,37 @@ def extend_data_cfg(cfg):
     cfg.data.quadratic.min_curv = 0.02
     cfg.data.quadratic.max_curv = 12.5
 
-    # atc
-    cfg.data.datasets = []
-    cfg.data.num_grouped_clients = []
+    # Hetero NLP tasks data (for ATC)
+    cfg.data.hetero_data_name = []  # multiple datasets
+    cfg.data.num_of_client_for_data = [
+    ]  # each dataset can be splited into several clients
     cfg.data.max_seq_len = 384
     cfg.data.max_tgt_len = 128
     cfg.data.max_query_len = 128
     cfg.data.trunc_stride = 128
     cfg.data.cache_dir = ''
-    cfg.data.synth_batch_size = 32
-    cfg.data.synth_prim_weight = 0.5
-    cfg.data.synth_feat_dim = 128
+    cfg.data.hetero_synth_batch_size = 32
+    cfg.data.hetero_synth_prim_weight = 0.5
+    cfg.data.hetero_synth_feat_dim = 128
     cfg.data.num_contrast = 0
-    cfg.data.debug = False
+    cfg.data.is_debug = False
+
+    # feature engineering
+    cfg.feat_engr = CN()
+    cfg.feat_engr.type = ''
+    cfg.feat_engr.scenario = 'hfl'
+    cfg.feat_engr.num_bins = 5  # Used for binning
+    cfg.feat_engr.selec_threshold = 0.05  # Used for feature selection
+    cfg.feat_engr.selec_woe_binning = 'quantile'
+
+    cfg.feat_engr.secure = CN()
+    cfg.feat_engr.secure.type = 'encrypt'
+    cfg.feat_engr.secure.key_size = 3072
+
+    cfg.feat_engr.secure.encrypt = CN()
+    cfg.feat_engr.secure.encrypt.type = 'dummy'
+
+    cfg.feat_engr.secure.dp = CN()  # under dev
 
     # prompt learning
     cfg.data.dataset_name = ''
@@ -111,11 +129,13 @@ def assert_data_cfg(cfg):
         assert cfg.data.splitter, '`data.splitter` should not be empty when ' \
                                   'using external data'
 
-    # atc
-    if len(cfg.data.num_grouped_clients) > 0:
-        assert cfg.federate.client_num == sum(cfg.data.num_grouped_clients), \
-            '`federate.client_num` should be equal to ' \
-            'sum of `data.num_grouped_clients`'
+    # hetero NLP taks data
+    if len(cfg.data.num_of_client_for_data) > 0:
+        assert cfg.federate.client_num == \
+               sum(cfg.data.num_of_client_for_data), '`federate.client_num` ' \
+                                                     'should be equal to sum '\
+                                                     'of `data.num_of_client'\
+                                                     '_for_data`'
 
     # --------------------------------------------------------------------
     # For compatibility with older versions of FS

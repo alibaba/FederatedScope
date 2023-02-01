@@ -14,47 +14,52 @@ from federatedscope.core.data.utils import download_url
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.nlp.hetero_tasks.model.model import ATCModel
 
-ATC_DATA = ['imdb', 'agnews', 'squad', 'newsqa', 'cnndm', 'msqg']
 logger = logging.getLogger(__name__)
 
 
-class ATCDataProcessor(object):
-    def __init__(self, config, train_frac=0.9):
-        self.data_dir = config.data.root
-        self.datasets = config.data.datasets
-        self.num_grouped_clients = config.data.num_grouped_clients
-        self.train_frac = train_frac
-        self.all_train_data = []
-        self.all_val_data = []
-        self.all_test_data = []
+class HeteroNLPDataLoader(object):
+    """
+    Load hetero NLP task datasets (including multiple datasets), split them
+    into train/val/test, and partition into several clients.
+    """
+    def __init__(self, data_dir, data_name, num_of_clients, split=[0.9, 0.1]):
+        self.data_dir = data_dir
+        self.data_name = data_name
+        self.num_of_clients = num_of_clients
+        self.split = split  # split for train:val
+        self.train_data = []
+        self.val_data = []
+        self.test_data = []
 
     def get_data(self):
-        for i, dataset in enumerate(self.datasets):
-            if dataset not in ATC_DATA:
-                raise ValueError(f'No ATC dataset named {dataset}')
-            train_val_data = self._load_data(dataset, 'train',
-                                             self.num_grouped_clients[i])
-            train_data = [
-                data[:int(self.train_frac * len(data))]
-                for data in train_val_data
+        for each_data, each_client_num in zip(self.data_name,
+                                              self.num_of_clients):
+            train_and_val_data = self._load(each_data, 'train',
+                                            each_client_num)
+            each_train_data = [
+                data[:int(self.split[0] * len(data))]
+                for data in train_and_val_data
             ]
-            val_data = [
-                data[int(self.train_frac * len(data)):]
-                for data in train_val_data
+            each_val_data = [
+                data[-int(self.split[1] * len(data)):]
+                for data in train_and_val_data
             ]
-            test_data = self._load_data(dataset, 'test',
-                                        self.num_grouped_clients[i])
-            self.all_train_data.extend(train_data)
-            self.all_val_data.extend(val_data)
-            self.all_test_data.extend(test_data)
+            each_test_data = self._load(each_data, 'test', each_client_num)
+            self.train_data.extend(each_train_data)
+            self.val_data.extend(each_val_data)
+            self.test_data.extend(each_test_data)
 
-        return self.all_train_data, self.all_val_data, self.all_test_data
+        return {
+            'train': self.train_data,
+            'val': self.val_data,
+            'test': self.test_data
+        }
 
-    def _load_data(self, dataset, split, num_clients):
+    def _load(self, dataset, split, num_of_client):
         data_dir = os.path.join(self.data_dir, dataset)
         if not os.path.exists(data_dir):
-            self._download(dataset)
-            self._extract(dataset)
+            logger.info(f'Start tp download the dataset {dataset} ...')
+            self._download_and_extract(dataset)
 
         # read data
         data = []
@@ -124,25 +129,25 @@ class ATCDataProcessor(object):
 
         # split data
         logger.info(f'Spliting dataset {dataset} ({split})')
-        all_split_data = []
-        n = len(data) // num_clients
+        splited_data = []
+        n = len(data) // num_of_client
         data_idx = 0
-        for i in range(num_clients):
-            num_split = n if i < num_clients - 1 else \
-                len(data) - n * (num_clients - 1)
+        for i in range(num_of_client):
+            num_split = n if i < num_of_client - 1 else \
+                len(data) - n * (num_of_client - 1)
             cur_data = data[data_idx:data_idx + num_split]
             data_idx += num_split
-            all_split_data.append(cur_data)
-            logger.info(f'Client id: {len(self.all_train_data) + i + 1}, '
-                        f'num samples: {num_split}')
-        return all_split_data
+            splited_data.append(cur_data)
+        logger.info(f'Dataset {dataset} ({split}) is splited into '
+                    f'{[len(x) for x in splited_data]}')
 
-    def _download(self, dataset):
+        return splited_data
+
+    def _download_and_extract(self, dataset):
         url = 'https://federatedscope.oss-cn-beijing.aliyuncs.com'
         os.makedirs(self.data_dir, exist_ok=True)
         download_url(f'{url}/{dataset}.zip', self.data_dir)
 
-    def _extract(self, dataset):
         raw_dir = os.path.join(self.data_dir, dataset + '_raw')
         extract_dir = os.path.join(self.data_dir, dataset)
         with zipfile.ZipFile(os.path.join(self.data_dir, f'{dataset}.zip'),
@@ -155,7 +160,7 @@ class ATCDataProcessor(object):
         shutil.rmtree(raw_dir)
 
 
-class ATCSynthDataProcessor(object):
+class SynthDataProcessor(object):
     def __init__(self, config, datasets):
         self.cfg = config
         self.device = GPUManager(
@@ -163,13 +168,13 @@ class ATCSynthDataProcessor(object):
             specified_device=self.cfg.device).auto_choice()
         self.pretrain_dir = config.federate.atc_load_from
         self.cache_dir = 'cache_debug' if \
-            config.data.debug else config.data.cache_dir
+            config.data.is_debug else config.data.cache_dir
         self.save_dir = os.path.join(self.cache_dir, 'synthetic')
-        self.batch_size = config.data.synth_batch_size
+        self.batch_size = config.data.hetero_synth_batch_size
         self.datasets = datasets
         self.num_clients = len(datasets)
-        self.synth_prim_weight = config.data.synth_prim_weight
-        self.synth_feat_dim = config.data.synth_feat_dim
+        self.synth_prim_weight = config.data.hetero_synth_prim_weight
+        self.synth_feat_dim = config.data.hetero_synth_feat_dim
         self.models = {}
 
     def save_data(self):
@@ -178,8 +183,8 @@ class ATCSynthDataProcessor(object):
 
         max_sz, max_len = 1e8, 0
         for client_id in range(1, self.num_clients + 1):
-            dataset = self.datasets[client_id]['train_contrast'][
-                'dataloader'].dataset
+            dataset = self.datasets[client_id -
+                                    1]['train_contrast']['dataloader'].dataset
             max_sz = min(max_sz, len(dataset))
             max_len = max(max_len, len(dataset[0]['token_ids']))
         enc_hiddens = np.memmap(filename=os.path.join(self.cfg.outdir,
@@ -192,8 +197,8 @@ class ATCSynthDataProcessor(object):
 
         logger.info('Generating synthetic encoder hidden states')
         for client_id in tqdm(range(1, self.num_clients + 1)):
-            dataloader = self.datasets[client_id]['train_contrast'][
-                'dataloader']
+            dataloader = self.datasets[client_id -
+                                       1]['train_contrast']['dataloader']
             model = self.models[client_id]
             model.eval()
             model.to(self.device)

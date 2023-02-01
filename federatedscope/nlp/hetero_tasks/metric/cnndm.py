@@ -1,12 +1,14 @@
 import logging
+import os
 from federatedscope.register import register_metric
-from federatedscope.nlp.hetero_tasks.metric.generation.utils import test_rouge
+from federatedscope.nlp.metric.rouge.utils import test_rouge
 
 logger = logging.getLogger(__name__)
 
 
 def load_cnndm_metrics(ctx, **kwargs):
-    rouges = test_rouge(ctx.cfg.eval.temp_dir, ctx.pred_path, ctx.tgt_path)
+    tmp_dir = os.path.join(ctx.cfg.outdir, 'temp')
+    rouges = test_rouge(tmp_dir, ctx.pred_path, ctx.tgt_path)
     results = {
         k: v
         for k, v in rouges.items()

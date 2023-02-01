@@ -33,7 +33,7 @@ class RegexInverseMap:
         return str(self._items.items())
 
 
-def load_dataset(config):
+def load_dataset(config, client_cfgs=None):
     """
     Loads the dataset for the given config from branches
 
@@ -89,6 +89,10 @@ def load_dataset(config):
     ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         dataset, modified_config = load_mf_dataset(config)
+    elif 'hetero_nlp_tasks' in config.data.type.lower():
+        from federatedscope.nlp.hetero_tasks.dataloader import \
+            load_heteroNLP_data
+        dataset, modified_config = load_heteroNLP_data(config, client_cfgs)
     elif '@' in config.data.type.lower():
         from federatedscope.core.data.utils import load_external_data
         dataset, modified_config = load_external_data(config)
