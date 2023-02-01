@@ -5,6 +5,10 @@ This list is constantly being updated. Feel free to contribute!
 ### 2022
 | Title | Venue | Link |
 | --- | --- | --- |
+| When Federated Learning Meets Pre-trained Language Models' Parameter-Efficient Tuning Methods | arXiv | [pdf](https://arxiv.org/pdf/2212.10025.pdf), [code](https://github.com/iezhuozhuo/FedETuning/tree/deltaTuning) |
+| FewFedWeight: Few-shot Federated Learning Framework across Multiple NLP Tasks | arXiv | [pdf](https://arxiv.org/pdf/2212.08354.pdf) |
+| Federated NLP in Few-shot Scenarios | arXiv | [pdf](https://arxiv.org/pdf/2212.05974.pdf) |
+| AUG-FedPrompt: Practical Few-shot Federated NLP with Data-augmented Prompts | arXiv | [pdf](https://arxiv.org/pdf/2212.00192.pdf) |
 | FedPrompt: Communication-Efficient and Privacy Preserving Prompt Tuning in Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2208.12268.pdf) |
 | Fair NLP Models with Differentially Private Text Encoders | arXiv | [pdf](https://arxiv.org/pdf/2205.06135.pdf), [code](https://github.com/saist1993/DPNLP) |
 | FedQAS: Privacy-aware Machine Reading Comprehension with Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2202.04742.pdf), [code](https://github.com/aitmlouk/FEDn-client-FedQAS-tf) |
