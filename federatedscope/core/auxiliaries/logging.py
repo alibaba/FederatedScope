@@ -216,7 +216,11 @@ def logline_2_wandb_dict(exp_stop_normal, line, log_res_best, raw_out):
         # 'val_acc': 0.1111111111111111}}
         line = line.replace("Find new best result: ",
                             "").replace("\'", "\"").replace("nan", "NaN")
-        res = json.loads(s=line)
+        try:
+            res = json.loads(s=line)
+        except:
+            print(res)
+            raise ValueError
         for best_type_key, val in res.items():
             for inner_key, inner_val in val.items():
                 log_res_best[f"best_{best_type_key}/{inner_key}"] = inner_val

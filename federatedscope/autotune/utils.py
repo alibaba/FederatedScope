@@ -471,6 +471,10 @@ def log2wandb(trial, config, results, trial_cfg, df):
     new_df = copy.deepcopy(df)
     px_layout = []
     for col in new_df.columns.tolist():
+        if max(new_df[col]) is None:
+            range_max = 0
+        else:
+            range_max = max(new_df[col])
         if isinstance(new_df[col][0], str):
             new_df[col] = new_df[col].astype('category')
             cat_map = dict(zip(new_df[col].cat.codes, new_df[col]))
@@ -484,7 +488,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
             })
         else:
             px_layout.append({
-                'range': [0, max(new_df[col])],
+                'range': [0, range_max],
                 'label': col,
                 'values': new_df[col],
             })
