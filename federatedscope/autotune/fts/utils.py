@@ -433,8 +433,7 @@ class LocalBO(object):
     def maximize(self, init_points=5, n_iter=25):
         assert init_points > 1
         self.plog.reset_timer()
-        self.time_started = time.time()
-        self.res['all']['time_started'] = self.time_started
+        self.res['all']['time_started'] = time.time()
         self.util_ts = UtilityFunction(kind="ts")
 
         # get random initializations

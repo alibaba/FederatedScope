@@ -68,7 +68,6 @@ class DisHyperNet(nn.Module):
             out = module(client_enc)
             # out = torch.cat([out]*10, dim=0)
             logits.append(out)
-        print(logits[0])
         return logits, client_enc_reg
 
 class HyperNet(nn.Module):
@@ -101,7 +100,6 @@ class HyperNet(nn.Module):
         sample = torch.clamp(sample, 0., 1.)
         logprob = dist.log_prob(sample)
         entropy = dist.entropy()
-
         self.mean.data.copy_(mean.data)
 
         return sample, logprob, entropy
@@ -140,14 +138,6 @@ class AngularPenaltySMLoss(nn.Module):
 
     def __init__(self, in_features, out_features,
                  loss_type='arcface', eps=1e-7, s=None, m=None):
-        '''
-        Angular Penalty Softmax Loss
-        Three 'loss_types' available: ['arcface', 'sphereface', 'cosface']
-        These losses are described in the following papers:
-        ArcFace: https://arxiv.org/abs/1801.07698
-        SphereFace: https://arxiv.org/abs/1704.08063
-        CosFace/Ad Margin: https://arxiv.org/abs/1801.05599
-        '''
         super(AngularPenaltySMLoss, self).__init__()
         loss_type = loss_type.lower()
         assert loss_type in ['arcface', 'sphereface', 'cosface']
@@ -167,9 +157,6 @@ class AngularPenaltySMLoss(nn.Module):
         self.eps = eps
 
     def forward(self, x, labels):
-        '''
-        input shape (N, in_features)
-        '''
         assert len(x) == len(labels)
         assert torch.min(labels) >= 0
         assert torch.max(labels) < self.out_features
@@ -216,11 +203,6 @@ def flat_data(data, labels, device, n_labels=10, add_label=False):
 rff_param_tuple = namedtuple('rff_params', ['w', 'b'])
 
 def rff_sphere(x, rff_params):
-    """
-    this is a Pytorch version of anon's code for RFFKGauss
-    Fourier transform formula from
-    http://mathworld.wolfram.com/FourierTransformGaussian.html
-    """
     w = rff_params.w
     xwt = pt.mm(x, w.t())
     z_1 = pt.cos(xwt)
@@ -238,9 +220,6 @@ def weights_sphere(d_rff, d_enc, sig, device, seed=1234):
     return rff_param_tuple(w=w_freq, b=None)
 
 def rff_rahimi_recht(x, rff_params):
-    """
-    implementation more faithful to rahimi+recht paper
-    """
     w = rff_params.w
     b = rff_params.b
     xwt = pt.mm(x, w.t()) + b
@@ -285,7 +264,6 @@ def noisy_dataset_embedding(
     if graph:
         for data in train_loader:
             data, labels = data.x.to(device), data.y.to(device).reshape(-1)
-
             d_enc = data.shape[-1]
             if mmd_type == 'sphere':
                 w_freq = weights_sphere(d_rff, d_enc, sig, device, seed=1234)
