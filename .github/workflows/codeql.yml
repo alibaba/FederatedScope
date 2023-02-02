@@ -3,6 +3,7 @@ name: CodeQL (Code Scanning)
 on:
   pull_request:
     branches: [ "master" ]
+    types: [ "ready_for_review" ]
   schedule:
     - cron: '0 8 * * *'
 
