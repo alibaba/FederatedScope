@@ -12,15 +12,8 @@ class EncNet(nn.Module):
     def __init__(self, in_channel, num_params, hid_dim=64):
         super(EncNet, self).__init__()
         self.num_params = num_params
-
-        # self.fc_layer = nn.Sequential(
-        #     nn.Linear(in_channel, hid_dim),
-        #     nn.Tanh(),
-        #     nn.Linear(hid_dim, num_params),
-        # )
-
         self.fc_layer = nn.Sequential(
-            spectral_norm( nn.Linear(in_channel, hid_dim, bias=False)),
+            spectral_norm(nn.Linear(in_channel, hid_dim, bias=False)),
             nn.ReLU(inplace=True),
             spectral_norm(nn.Linear(hid_dim, num_params, bias=False)),
         )
@@ -41,14 +34,6 @@ class PolicyNet(nn.Module):
             nn.ReLU(inplace=True),
             spectral_norm(nn.Linear(hid_dim, num_params)),
         )
-
-        # self.fc_layer = nn.Sequential(
-        #     nn.Linear(in_channel, hid_dim),
-        #     nn.Tanh(),
-        #     nn.Linear(hid_dim, hid_dim),
-        #     nn.Tanh(),
-        #     nn.Linear(hid_dim, num_params),
-        # )
 
     def forward(self, client_enc):
         mean_update = self.fc_layer(client_enc)
@@ -257,15 +242,15 @@ def weights_sphere(d_rff, d_enc, sig, device, seed=1234):
     return rff_param_tuple(w=w_freq, b=None)
 
 def rff_rahimi_recht(x, rff_params):
-  """
-  implementation more faithful to rahimi+recht paper
-  """
-  w = rff_params.w
-  b = rff_params.b
-  xwt = pt.mm(x, w.t()) + b
-  z = pt.cos(xwt)
-  z = z * pt.sqrt(pt.tensor(2. / w.shape[0]).to(pt.float32))
-  return z
+    """
+    implementation more faithful to rahimi+recht paper
+    """
+    w = rff_params.w
+    b = rff_params.b
+    xwt = pt.mm(x, w.t()) + b
+    z = pt.cos(xwt)
+    z = z * pt.sqrt(pt.tensor(2. / w.shape[0]).to(pt.float32))
+    return z
 
 def weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234):
     np.random.seed(seed)
@@ -277,17 +262,17 @@ def weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234):
 def data_label_embedding(data, labels, rff_params, mmd_type,
                          labels_to_one_hot=False, n_labels=None,
                          device=None, reduce='mean'):
-  assert reduce in {'mean', 'sum'}
-  if labels_to_one_hot:
-    batch_size = data.shape[0]
-    one_hots = pt.zeros(batch_size, n_labels, device=device)
-    one_hots.scatter_(1, labels[:, None], 1)
-    labels = one_hots
+    assert reduce in {'mean', 'sum'}
+    if labels_to_one_hot:
+        batch_size = data.shape[0]
+        one_hots = pt.zeros(batch_size, n_labels, device=device)
+        one_hots.scatter_(1, labels[:, None], 1)
+        labels = one_hots
 
-  data_embedding = rff_sphere(data, rff_params) \
+    data_embedding = rff_sphere(data, rff_params) \
       if mmd_type == 'sphere' else rff_rahimi_recht(data, rff_params)
-  embedding = pt.einsum('ki,kj->kij', [data_embedding, labels])
-  return pt.mean(embedding, 0) if reduce == 'mean' else pt.sum(embedding, 0)
+    embedding = pt.einsum('ki,kj->kij', [data_embedding, labels])
+    return pt.mean(embedding, 0) if reduce == 'mean' else pt.sum(embedding, 0)
 
 
 def noisy_dataset_embedding(

@@ -330,21 +330,21 @@ class LocalBO(object):
                  ls=None, var=None, g_var=None,
                  P_N=None, M_target=100, verbose=1):
         """
-            f: the objective function of the target agent
-            pbounds: dict of hyperparameter ranges e.g. {'lr':(lower, upper)}
-            gp_opt_schedule: optimize the GP hyperparameters after every
-            gp_opt_schedule iterations
-            M: the number of random features for RFF approximation
-            N: the number of other agents
-            random_features: the saved random features, which is shared among
-            all agents info_ts: the information received from each agent
-            for the algorithm; for each agent,
-            the information includes a sampled \omega_n
-            pt: the sequence p_t; to run the standard TS algorithm
-            (without using information from other agents), just set pt to all 1
-            P_N: the distribution over agents used by the FTS algorithm
-            M_target: the number of random features used by both TS and FTS
-            to draw samples from the GP posterior of the target agent
+        f: the objective function of the target agent
+        pbounds: dict of hyperparameter ranges e.g. {'lr':(lower, upper)}
+        gp_opt_schedule: optimize the GP hyperparameters after every
+        gp_opt_schedule iterations
+        M: the number of random features for RFF approximation
+        N: the number of other agents
+        random_features: the saved random features, which is shared among
+        all agents info_ts: the information received from each agent
+        for the algorithm; for each agent,
+        the information includes a sampled \omega_n
+        pt: the sequence p_t; to run the standard TS algorithm
+        (without using information from other agents), just set pt to all 1
+        P_N: the distribution over agents used by the FTS algorithm
+        M_target: the number of random features used by both TS and FTS
+        to draw samples from the GP posterior of the target agent
         """
 
         self.N = N
