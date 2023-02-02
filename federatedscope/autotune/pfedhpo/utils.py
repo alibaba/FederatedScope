@@ -22,6 +22,7 @@ class EncNet(nn.Module):
         mean_update = self.fc_layer(client_enc)
         return mean_update
 
+
 class PolicyNet(nn.Module):
     def __init__(self, in_channel, num_params, hid_dim=32):
         super(PolicyNet, self).__init__()
@@ -41,7 +42,7 @@ class PolicyNet(nn.Module):
 
 
 class DisHyperNet(nn.Module):
-    def __init__(self, encoding, cands, n_clients, device,):
+    def __init__(self, encoding, cands, n_clients, device, ):
         super(DisHyperNet, self).__init__()
         num_params = len(cands)
         self.dim = input_dim = encoding.shape[1]
@@ -70,6 +71,7 @@ class DisHyperNet(nn.Module):
             logits.append(out)
         return logits, client_enc_reg
 
+
 class HyperNet(nn.Module):
     def __init__(self, encoding, num_params, n_clients, device, var):
         super(HyperNet, self).__init__()
@@ -81,7 +83,7 @@ class HyperNet(nn.Module):
         self.EncNet = EncNet(input_dim, num_params)
         self.meanNet = PolicyNet(num_params, num_params)
         self.combine = nn.Sequential(
-            nn.Linear(num_params*2, num_params),
+            nn.Linear(num_params * 2, num_params),
             nn.Sigmoid()
         )
 
@@ -90,12 +92,10 @@ class HyperNet(nn.Module):
     def forward(self):
         client_enc = self.EncNet(self.encoding)
         mean_update = self.meanNet(self.mean)
-        mean = self.combine(torch.cat([client_enc, mean_update],
-                                      dim=-1))
+        mean = self.combine(torch.cat([client_enc, mean_update], dim=-1))
 
         cov_matrix = torch.eye(mean.shape[-1]).to(mean.device) * self.var
-        dist = MultivariateNormal(loc=mean,
-                                  covariance_matrix=cov_matrix)
+        dist = MultivariateNormal(loc=mean, covariance_matrix=cov_matrix)
         sample = dist.sample()
         sample = torch.clamp(sample, 0., 1.)
         logprob = dist.log_prob(sample)
@@ -186,7 +186,6 @@ class AngularPenaltySMLoss(nn.Module):
         return -torch.mean(L)
 
 
-
 def flat_data(data, labels, device, n_labels=10, add_label=False):
     bs = data.shape[0]
     if add_label:
@@ -201,6 +200,7 @@ def flat_data(data, labels, device, n_labels=10, add_label=False):
 
 
 rff_param_tuple = namedtuple('rff_params', ['w', 'b'])
+
 
 def rff_sphere(x, rff_params):
     w = rff_params.w
@@ -219,6 +219,7 @@ def weights_sphere(d_rff, d_enc, sig, device, seed=1234):
     w_freq = pt.tensor(freq).to(pt.float32).to(device)
     return rff_param_tuple(w=w_freq, b=None)
 
+
 def rff_rahimi_recht(x, rff_params):
     w = rff_params.w
     b = rff_params.b
@@ -227,12 +228,14 @@ def rff_rahimi_recht(x, rff_params):
     z = z * pt.sqrt(pt.tensor(2. / w.shape[0]).to(pt.float32))
     return z
 
+
 def weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234):
     np.random.seed(seed)
     w_freq = pt.tensor(np.random.randn(d_rff, d_enc) /
                        np.sqrt(sig)).to(pt.float32).to(device)
     b_freq = pt.tensor(np.random.rand(d_rff) * (2 * np.pi * sig)).to(device)
     return rff_param_tuple(w=w_freq, b=b_freq)
+
 
 def data_label_embedding(data, labels, rff_params, mmd_type,
                          labels_to_one_hot=False, n_labels=None,

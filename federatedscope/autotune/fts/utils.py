@@ -9,8 +9,6 @@ from scipydirect import direct
 
 warnings.filterwarnings('ignore')
 
-
-
 ERROR_MESSAGES = (
     'u[i] < l[i] for some i',
     'maxf is too large',
@@ -52,6 +50,7 @@ class OptimizeResult(dict):
                               for k, v in self.items()])
         else:
             return self.__class__.__name__ + "()"
+
 
 def minimize(func,
              bounds=None,
@@ -131,9 +130,8 @@ class UtilityFunction(object):
         w_sample = para_dict["w_sample"]
         return self._ts(x, M, random_features, w_sample)
 
-
     @staticmethod
-    def _ts(x, M, random_features,  w_sample):
+    def _ts(x, M, random_features, w_sample):
 
         s = random_features["s"]
         b = random_features["b"]
@@ -183,6 +181,7 @@ class BColours(object):
     MAGENTA = '\033[35m'
     RED = '\033[31m'
     ENDC = '\033[0m'
+
 
 class PrintLog(object):
     def __init__(self, params):
@@ -275,7 +274,7 @@ class PrintLog(object):
 
 def acq_max(ac, gp, M, N, random_features, info_ts,
             pt, ws, use_target_label, w_sample, y_max,
-            bounds, iteration, gp_samples=None,):
+            bounds, iteration, gp_samples=None, ):
     para_dict = {"gp": gp, "M": M, "N": N,
                  "random_features": random_features,
                  "info_ts": info_ts, "pt": pt, "ws": ws,
@@ -388,7 +387,6 @@ class LocalBO(object):
                            'timestamps': []}
         self.cid = cid
         self.verbose = verbose
-
 
     def sample_from_local(self, y_max, iteration):
         M_target = self.M_target
@@ -510,13 +508,13 @@ class LocalBO(object):
                 self.gp.optimize_restarts(num_restarts=10,
                                           messages=False, verbose=False)
                 self.gp_params = self.gp.parameters
-            if i == n_iter-1:
+            if i == n_iter - 1:
                 print("---Client %d optimized hyper: " % self.cid, self.gp)
 
             _loop = True
             while _loop:
                 try:
-                    x_max, all_ucb = self.sample_from_local(y_max, i+2)
+                    x_max, all_ucb = self.sample_from_local(y_max, i + 2)
                     _loop = False
                 except:
                     _loop = True
@@ -536,4 +534,3 @@ class LocalBO(object):
 
         if self.verbose:
             self.plog.print_summary()
-
