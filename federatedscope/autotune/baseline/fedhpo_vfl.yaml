@@ -53,7 +53,7 @@ hpo:
     budgets: [ 100, 100 ]
     elim_rate: 3
     iter: 50
-  metric: 'server_global_eval.test_loss'
+  metric: 'server_global_eval.test_acc'
   working_folder: rs
   # Enable wandb
   diagnosis:

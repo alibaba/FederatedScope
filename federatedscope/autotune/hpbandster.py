@@ -88,11 +88,16 @@ class MyWorker(Worker):
                                       self._perfs,
                                       white_list=set(
                                           self._ss.keys()),
-                                      desc=self.cfg.hpo.larger_better)
+                                      desc=self.cfg.hpo.larger_better,
+                                      is_sorted=False)
             log2wandb(
                 len(self._perfs) - 1, config, results, self.cfg, tmp_results)
         self.trial_index += 1
-        return {'loss': float(res), 'info': res}
+
+        if self.cfg.hpo.larger_better:
+            return {'loss': -float(res), 'info': res}
+        else:
+            return {'loss': float(res), 'info': res}
 
     def summarize(self):
         results = summarize_hpo_results(self._init_configs,

@@ -161,7 +161,8 @@ def summarize_hpo_results(configs,
                           perfs,
                           white_list=None,
                           desc=False,
-                          use_wandb=False):
+                          use_wandb=False,
+                          is_sorted=True):
     if white_list is not None:
         cols = list(white_list) + ['performance']
     else:
@@ -176,7 +177,8 @@ def summarize_hpo_results(configs,
             ] + [result])
         else:
             d.append([trial_cfg[k] for k in trial_cfg] + [result])
-    d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
+    if is_sorted:
+        d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
     df = pd.DataFrame(d, columns=cols)
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.max_columns', None)
@@ -239,7 +241,7 @@ def parse_logs(file_list):
     plt.close()
 
 
-def eval_in_fs(cfg, config, budget, client_cfgs=None, trial_index=0):
+def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
     """
 
     Args:
@@ -259,25 +261,29 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None, trial_index=0):
     from federatedscope.core.auxiliaries.runner_builder import get_runner
     from os.path import join as osp
 
-    if isinstance(config, CS.Configuration):
-        config = dict(config)
-    # Add FedEx related keys to config
-    if 'hpo.table.idx' in config.keys():
-        idx = config['hpo.table.idx']
-        config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
-                                     f"{idx}_tmp_grid_search_space.yaml")
-        config['federate.save_to'] = osp(cfg.hpo.working_folder,
-                                         f"idx_{idx}.pth")
-        config['federate.restore_from'] = osp(cfg.hpo.working_folder,
-                                              f"idx_{idx}.pth")
-    config['hpo.trial_index'] = trial_index
-
     # Global cfg
     trial_cfg = cfg.clone()
-    # specify the configuration of interest
-    trial_cfg.merge_from_list(config2cmdargs(config))
-    # specify the budget
-    trial_cfg.merge_from_list(["federate.total_round_num", int(budget)])
+
+    if config:
+        if isinstance(config, CS.Configuration):
+            config = dict(config)
+        # Add FedEx related keys to config
+        if 'hpo.table.idx' in config.keys():
+            idx = config['hpo.table.idx']
+            config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
+                                         f"{idx}_tmp_grid_search_space.yaml")
+            config['federate.save_to'] = osp(cfg.hpo.working_folder,
+                                             f"idx_{idx}.pth")
+            config['federate.restore_from'] = osp(cfg.hpo.working_folder,
+                                                  f"idx_{idx}.pth")
+        config['hpo.trial_index'] = trial_index
+        # specify the configuration of interest
+        trial_cfg.merge_from_list(config2cmdargs(config))
+
+    if budget:
+        # specify the budget
+        trial_cfg.merge_from_list(["federate.total_round_num", int(budget)])
+
     setup_seed(trial_cfg.seed)
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
@@ -316,10 +322,12 @@ def adjust_lightness(color, num=0.5):
 
 
 def log2wandb(trial, config, results, trial_cfg, df):
+    import io
     import wandb
     import seaborn as sns
     import matplotlib.pyplot as plt
     import plotly.graph_objects as go
+    from PIL import Image
 
     FONTSIZE = 30
     MARKSIZE = 200
@@ -353,7 +361,8 @@ def log2wandb(trial, config, results, trial_cfg, df):
                 ranks = list(
                     df.groupby(hyperparam)["performance"].mean().fillna(
                         0).sort_values()[::-1].index)
-                ranks.reverse()
+                if not trial_cfg.hpo.larger_better:
+                    ranks.reverse()
                 sns.boxplot(x="performance",
                             y=hyperparam,
                             data=df,
@@ -372,7 +381,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
                 plt.xticks(fontsize=FONTSIZE)
                 plt.xlabel(trial_cfg.hpo.metric, size=FONTSIZE)
                 plt.ylabel("", size=FONTSIZE)
-                plt.title(f"{hyperparam} - Rank", fontsize=FONTSIZE)
+                plt.title(f"{hyperparam} - Rank ()", fontsize=FONTSIZE)
                 sns.despine(trim=True)
                 landscape_1d[f"{hyperparam}"] = wandb.Image(plt.gcf())
                 plt.close()
@@ -471,10 +480,6 @@ def log2wandb(trial, config, results, trial_cfg, df):
     new_df = copy.deepcopy(df)
     px_layout = []
     for col in new_df.columns.tolist():
-        if max(new_df[col]) is None:
-            range_max = 0
-        else:
-            range_max = max(new_df[col])
         if isinstance(new_df[col][0], str):
             new_df[col] = new_df[col].astype('category')
             cat_map = dict(zip(new_df[col].cat.codes, new_df[col]))
@@ -488,30 +493,27 @@ def log2wandb(trial, config, results, trial_cfg, df):
             })
         else:
             px_layout.append({
-                'range': [0, range_max],
+                'range': [0, np.nanmax(new_df[col])],
                 'label': col,
                 'values': new_df[col],
             })
     new_df['Trial Index'] = range(1, len(new_df) + 1)
 
     px_fig = go.Figure(data=go.Parcoords(line=dict(color=new_df['Trial Index'],
-                                                   colorscale='Electric',
+                                                   colorscale='YlOrRd',
                                                    showscale=True,
                                                    cmin=1,
                                                    cmax=len(new_df) + 1),
                                          dimensions=px_layout))
-    plotly_html = 'test.html'
-    px_fig.write_html(plotly_html, auto_play=False)
-    para_coo = wandb.Html(open(plotly_html))
-
-    # Loss, lower the better
-    best_perf = np.min(df['performance'])
+    para_coo = wandb.Image(
+        Image.open(io.BytesIO(px_fig.to_image(format="png"))))
 
     wandb.log({
         'pca': pca,
         'info': info,
         'delimiter': 1.0,
-        'best_perf': best_perf,
+        'best_perf': np.max(df['performance'])
+        if trial_cfg.hpo.larger_better else np.min(df['performance']),
         'para_coo': para_coo,
         **log_res,
         **landscape_1d

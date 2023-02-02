@@ -44,10 +44,15 @@ def run_smac(cfg, scheduler, client_cfgs=None):
                 summarize_hpo_results(init_configs,
                                       perfs,
                                       white_list=set(config_space.keys()),
-                                      desc=cfg.hpo.larger_better)
+                                      desc=cfg.hpo.larger_better,
+                                      is_sorted=False)
             log2wandb(len(perfs) - 1, config, results, cfg, tmp_results)
         trial_index += 1
-        return res
+
+        if cfg.hpo.larger_better:
+            return -res
+        else:
+            return res
 
     def summarize():
         results = summarize_hpo_results(init_configs,
