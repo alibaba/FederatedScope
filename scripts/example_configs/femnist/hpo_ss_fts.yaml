@@ -1,0 +1,10 @@
+hpo.fts.ls:
+  type: float
+  lower: 1.0
+  upper: 3.0
+  log: False
+hpo.fts.var:
+  type: float
+  lower: 0.005
+  upper: 0.05
+  log: False

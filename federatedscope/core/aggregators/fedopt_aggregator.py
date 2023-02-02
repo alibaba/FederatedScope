@@ -20,7 +20,7 @@ class FedOptAggregator(ClientsAvgAggregator):
         """
         new_model = super().aggregate(agg_info)
 
-        model = self.model.cpu().state_dict()
+        model = self.model.state_dict()
         with torch.no_grad():
             grads = {key: model[key] - new_model[key] for key in new_model}
 

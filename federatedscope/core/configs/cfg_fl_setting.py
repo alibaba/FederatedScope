@@ -149,15 +149,15 @@ def assert_fl_setting_cfg(cfg):
             cfg.federate.sample_client_num = max(
                 1,
                 int(cfg.federate.sample_client_rate * participated_client_num))
-            if sample_client_num_valid:
-                logger.warning(
-                    f"Users specify both valid sample_client_rate as"
-                    f" {cfg.federate.sample_client_rate} "
-                    f"and sample_client_num as {old_sample_client_num}.\n"
-                    f"\t\tWe will use the sample_client_rate value to "
-                    f"calculate "
-                    f"the actual number of participated clients as"
-                    f" {cfg.federate.sample_client_num}.")
+            # if sample_client_num_valid:
+            #     logger.warning(
+            #         f"Users specify both valid sample_client_rate as"
+            #         f" {cfg.federate.sample_client_rate} "
+            #         f"and sample_client_num as {old_sample_client_num}.\n"
+            #         f"\t\tWe will use the sample_client_rate value to "
+            #         f"calculate "
+            #         f"the actual number of participated clients as"
+            #         f" {cfg.federate.sample_client_num}.")
             # (b.2) use sample_client_num, commented since the below two
             # lines do not change anything
             # elif sample_client_num_valid:

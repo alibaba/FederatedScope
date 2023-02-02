@@ -666,8 +666,11 @@ class Server(BaseServer):
                     timestamp=self.cur_timestamp,
                     content=model_para))
         if self._cfg.federate.online_aggr:
-            for idx in range(self.model_num):
-                self.aggregators[idx].reset()
+            try:
+                for idx in range(self.model_num):
+                    self.aggregators[idx].reset()
+            except:
+                pass
 
         if filter_unseen_clients:
             # restore the state of the unseen clients within sampler
@@ -924,7 +927,10 @@ class Server(BaseServer):
             self.dropout_num += 1
 
         if self._cfg.federate.online_aggr:
-            self.aggregator.inc(content)
+            try:
+                self.aggregator.inc(content)
+            except:
+                pass
 
         move_on_flag = self.check_and_move_on()
         if self._cfg.asyn.use and self._cfg.asyn.broadcast_manner == \
