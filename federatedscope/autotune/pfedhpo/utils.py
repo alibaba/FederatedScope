@@ -183,8 +183,8 @@ class AngularPenaltySMLoss(nn.Module):
 
         excl = torch.cat([torch.cat((wf[i, :y], wf[i, y + 1:])).unsqueeze(0)
                           for i, y in enumerate(labels)], dim=0)
-        denominator = torch.exp(numerator) + \
-                      torch.sum(torch.exp(self.s * excl), dim=1)
+        denominator = torch.exp(numerator) + torch.sum(
+            torch.exp(self.s * excl), dim=1)
         L = numerator - torch.log(denominator)
         return -torch.mean(L)
 
