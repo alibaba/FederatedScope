@@ -141,7 +141,6 @@ class MiniGraphDCDataset(InMemoryDataset):
             },
         }
 
-
 def load_mini_graph_dt(config, client_cfgs=None):
     dataset = MiniGraphDCDataset(config.data.root)
     # Convert to dict
@@ -153,7 +152,6 @@ def load_mini_graph_dt(config, client_cfgs=None):
     translator = DummyDataTranslator(config, client_cfgs)
 
     return translator(datadict), config
-
 
 def call_mini_graph_dt(config, client_cfgs):
     if config.data.type == "mini-graph-dc":
