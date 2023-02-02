@@ -1,8 +1,6 @@
-import copy
 import os
 import logging
 from copy import deepcopy
-from contextlib import redirect_stdout
 import threading
 import math
 
@@ -14,11 +12,10 @@ from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results
-from federatedscope.autotune.pfedhpo.utils import *
-import pdb
+    config2cmdargs, config2str, summarize_hpo_results, log2wandb
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,14 +24,13 @@ def make_trial(trial_cfg, client_cfgs=None):
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    Fed_runner = FedRunner(data=data,
-                           server_class=get_server_cls(trial_cfg),
-                           client_class=get_client_cls(trial_cfg),
-                           config=trial_cfg.clone(),
-                           client_config=client_cfgs)
-    results = Fed_runner.run()
-    key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2]
+    fed_runner = get_runner(data=data,
+                            server_class=get_server_cls(trial_cfg),
+                            client_class=get_client_cls(trial_cfg),
+                            config=trial_cfg.clone(),
+                            client_configs=client_cfgs)
+    results = fed_runner.run()
+    return results
 
 
 class TrialExecutor(threading.Thread):
@@ -55,11 +51,11 @@ class TrialExecutor(threading.Thread):
         data, modified_config = get_data(config=self._trial_cfg.clone())
         self._trial_cfg.merge_from_other_cfg(modified_config)
         self._trial_cfg.freeze()
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(self._trial_cfg),
-                               client_class=get_client_cls(self._trial_cfg),
-                               config=self._trial_cfg.clone(),
-                               client_config=self._client_cfgs)
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(self._trial_cfg),
+                                client_class=get_client_cls(self._trial_cfg),
+                                config=self._trial_cfg.clone(),
+                                client_configs=self._client_cfgs)
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]
@@ -179,6 +175,7 @@ class ModelFreeBase(Scheduler):
                     completed_trial_results = thread_results[i]
                     cfg_idx = completed_trial_results['cfg_idx']
                     perfs[cfg_idx] = completed_trial_results['perf']
+                    # TODO: Support num_worker in WandB
                     logger.info(
                         "Evaluate the {}-th config {} and get performance {}".
                         format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
@@ -189,21 +186,24 @@ class ModelFreeBase(Scheduler):
             for i, config in enumerate(configs):
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
-                perfs[i] = make_trial(trial_cfg, self._client_cfgs)
+                results = make_trial(trial_cfg, self._client_cfgs)
+                key1, key2 = trial_cfg.hpo.metric.split('.')
+                perfs[i] = results[key1][key2]
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))
-
+                if self._cfg.wandb.use:
+                    log2wandb(i, config, results, trial_cfg)
         return perfs
 
     def optimize(self):
         perfs = self._evaluate(self._init_configs)
-
         results = summarize_hpo_results(self._init_configs,
                                         perfs,
                                         white_list=set(
                                             self._search_space.keys()),
-                                        desc=self._cfg.hpo.larger_better)
+                                        desc=self._cfg.hpo.larger_better,
+                                        use_wandb=self._cfg.wandb.use)
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
@@ -265,7 +265,8 @@ class IterativeScheduler(ModelFreeBase):
                 current_configs,
                 current_perfs,
                 white_list=set(self._search_space.keys()),
-                desc=self._cfg.hpo.larger_better)
+                desc=self._cfg.hpo.larger_better,
+                use_wandb=self._cfg.wandb.use)
             self._stage += 1
             logger.info(
                 "========================== Stage{} =========================="
@@ -276,81 +277,6 @@ class IterativeScheduler(ModelFreeBase):
                 current_configs, current_perfs)
 
         return current_configs
-
-class pFedHPO(IterativeScheduler):
-    def _setup(self):
-        self.search_space = parse_search_space(self._cfg.hpo.ss)
-        self.num_search_param = len(self.search_space)
-        self.pbounds = parse_pbounds(self.search_space)
-        self._iterations = 0
-        self.HyperNet = HyperNet(self._cfg.federate.client_num,
-                                 num_params=self.num_search_param)
-        return None
-
-    def _stop_criterion(self, configs, last_results):
-        return self._iterations > self._cfg.hpo.pfedhpo.max_iter
-
-    def _evaluate(self, configs):
-        perfs = [None] * len(configs)
-        for i, config in enumerate(configs):
-            trial_cfg = self._cfg.clone()
-            trial_cfg.merge_from_list(config2cmdargs(config))
-
-
-            setup_seed(trial_cfg.seed)
-            data, modified_config = get_data(config=trial_cfg.clone())
-            trial_cfg.merge_from_other_cfg(modified_config)
-            trial_cfg.freeze()
-            Fed_runner = FedRunner(data=data,
-                                   server_class=get_server_cls(trial_cfg),
-                                   client_class=get_client_cls(trial_cfg),
-                                   config=trial_cfg.clone())
-            results = Fed_runner.run()
-            key1, key2 = trial_cfg.hpo.metric.split('.')
-            perfs[i] = results[key1][key2]
-
-
-            logger.info(
-                "Evaluate the {}-th config {} and get performance {}".
-                format(i, config, perfs[i]))
-        return perfs
-
-    def _generate_next_population(self, configs, perfs):
-
-        if perfs:
-            # TODO: update HyperNet using perfs
-            pass
-
-        # TODO: random sample start round to load saved global model
-        start_round = None
-        ckpt_path = os.path.join(self._cfg.hpo.working_folder,
-                'temp_model_round_%d.pt' % start_round)
-        self._cfg.merge_from_list(['federate.restore_from', ckpt_path])
-
-
-        # TODO: generate params for all clients
-        outputs = None
-        assert outputs.shape[0] == self._cfg.federate.client_num
-
-
-        # save configs for all clients
-        for i in range(1, 1+outputs.shape[0]):
-            out = outputs[i]
-            param_i = x2conf(out, self.pbounds, self._ss)
-
-            cfg = self._cfg.clone()
-            cmd_args = []
-            for k, v in param_i.items():
-                cmd_args.append(k)
-                cmd_args.append(v)
-            cfg.merge_from_list(cmd_args)
-
-            client_config_path = os.path.join(self._cfg.hpo.working_folder,
-                'temp_config_client_%d.yaml' % i)
-            with open(client_config_path, 'w') as ops:
-                yaml.dump(cfg, ops)
-
-        return None
 
 
 class SuccessiveHalvingAlgo(IterativeScheduler):
