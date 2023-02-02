@@ -1,4 +1,4 @@
-name: Format Checking (Required)
+name: Pre-commit (Required)
 
 on: [push, pull_request]
 
