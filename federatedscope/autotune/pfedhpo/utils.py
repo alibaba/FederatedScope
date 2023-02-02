@@ -254,9 +254,9 @@ def data_label_embedding(data, labels, rff_params, mmd_type,
     return pt.mean(embedding, 0) if reduce == 'mean' else pt.sum(embedding, 0)
 
 
-def noisy_dataset_embedding(
-        train_loader, d_enc, sig, d_rff, device, n_labels,
-        noise_factor, mmd_type, sum_frequency=25, graph=False):
+def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff,
+                            device, n_labels, noise_factor,
+                            mmd_type, sum_frequency=25, graph=False):
     emb_acc = []
     n_data = 0
 
