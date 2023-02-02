@@ -50,9 +50,12 @@ class DisHyperNet(nn.Module):
         self.EncNet = EncNet(input_dim, 64)
         loss_type = 'sphereface'
         self.enc_loss = AngularPenaltySMLoss(64, 10, loss_type)
-        if loss_type == 'sphereface': self.reg_alpha = 0.1
-        if loss_type == 'cosface': self.reg_alpha = 0.2
-        if loss_type == 'arcface': self.reg_alpha = 0.1
+        if loss_type == 'sphereface':
+            self.reg_alpha = 0.1
+        if loss_type == 'cosface':
+            self.reg_alpha = 0.2
+        if loss_type == 'arcface':
+            self.reg_alpha = 0.1
 
         self.out = nn.ModuleList()
         for k, v in cands.items():
@@ -303,7 +306,7 @@ def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff,
     print('done collecting batches, n_data', n_data)
     emb_acc = pt.sum(pt.stack(emb_acc), 0) / n_data
     print(pt.norm(emb_acc), emb_acc.shape)
-    noise = pt.randn(d_rff, n_labels, device=device) \
-            * (2 * noise_factor / n_data)
+    noise = pt.randn(d_rff, n_labels,
+                     device=device) * (2 * noise_factor / n_data)
     noisy_emb = emb_acc + noise
     return noisy_emb

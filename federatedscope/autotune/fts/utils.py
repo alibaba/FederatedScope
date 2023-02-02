@@ -407,8 +407,8 @@ class LocalBO(object):
         Phi = np.zeros((self.X.shape[0], M_target))
         for i, x in enumerate(self.X):
             x = np.squeeze(x).reshape(1, -1)
-            features = np.sqrt(2 / M_target) * \
-                       np.cos(np.squeeze(np.dot(x, s.T)) + b)
+            features = np.sqrt(2 / M_target) * np.cos(
+                np.squeeze(np.dot(x, s.T)) + b)
             features = features / np.sqrt(np.inner(features, features))
             features = np.sqrt(v_kernel) * features
             Phi[i, :] = features
