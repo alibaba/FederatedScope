@@ -433,7 +433,6 @@ class LocalBO(object):
         self.plog.reset_timer()
         self.res['all']['time_started'] = time.time()
         self.util_ts = UtilityFunction(kind="ts")
-
         # get random initializations
         if not self.initialized:
             if self.use_init is not None:

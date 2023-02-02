@@ -193,10 +193,11 @@ def flat_data(data, labels, device, n_labels=10, add_label=False):
         gen_one_hots.scatter_(1, labels[:, None], 1)
         labels = gen_one_hots
         return pt.cat([pt.reshape(data, (bs, -1)), labels], dim=1)
-    elif len(data.shape) > 2:
-        return pt.reshape(data, (bs, -1))
     else:
-        return data
+        if len(data.shape) > 2:
+            return pt.reshape(data, (bs, -1))
+        else:
+            return data
 
 
 rff_param_tuple = namedtuple('rff_params', ['w', 'b'])
