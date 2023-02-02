@@ -3,13 +3,13 @@ name: CodeQL (Code Scanning)
 on:
   pull_request:
     branches: [ "master" ]
-    types: [ labeled ]
   schedule:
     - cron: '0 8 * * *'
 
 jobs:
   analyze:
     name: Analyze
+    if: false == contains(github.event.pull_request.title, 'WIP')
     runs-on: ubuntu-latest
     permissions:
       actions: read
