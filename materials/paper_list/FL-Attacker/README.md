@@ -1,14 +1,17 @@
 # Attacks in FL
-## Privacy Attacks in FL
+Here we present recent works on the attacks in FL.
+
+|[Survey](#survey)|[Privacy Attacks](#privacy-attacks-in-fl)|[Backdoor Attacks](#backdoor-attacks-in-fl)|[Untargeted Attacks](#untargeted-attacks-in-fl)|
+
 
 ## Survey
 | Title                                                        | Venue      | Link                                        | Year
 | ------------------------------------------------------------ | ---------- |---------------------------------------------|-----------|
  | A Survey on Gradient Inversion: Attacks, Defenses and Future Directions | arxiv | [pdf](https://arxiv.org/pdf/2206.07284.pdf) | 2022 |
  | Threats to Federated Learning: A Survey | arxiv|  [pdf](https://arxiv.org/pdf/2003.02133.pdf) | 2020 |
+ 
 
-
-
+## Privacy Attacks in FL
 
 ## 2022
 | Title                                                        | Venue      | Link                                        |
@@ -96,20 +99,15 @@
 ## 2022
 | Title | Venue | Link |
 | --- | --- | --- |
-|Learning to Attack Federated Learning: A
-Model-based Reinforcement Learning Attack
-Framework|NIPS|[pdf](https://openreview.net/pdf?id=4OHRr7gmhd4)|
+|Learning to Attack Federated Learning: A Model-based Reinforcement Learning Attack Framework|NeurIPS|[pdf](https://openreview.net/pdf?id=4OHRr7gmhd4)|
 
 ## 2021
 | Title | Venue | Link |
 | --- | --- | --- |
-|Manipulating the byzantine: Optimizing model
-poisoning attacks and defenses for federated learning|NDSS|[pdf](https://par.nsf.gov/servlets/purl/10286354)|
+|Manipulating the byzantine: Optimizing model poisoning attacks and defenses for federated learning|NDSS|[pdf](https://par.nsf.gov/servlets/purl/10286354)|
 
 ## 2020
 | Title | Venue | Link |
 | --- | --- | --- |
-|Local Model Poisoning Attacks to Byzantine-Robust
-Federated Learning|USENIX SCEURITY|[pdf](https://www.usenix.org/system/files/sec20summer_fang_prepub.pdf)|
-|Fall of Empires: Breaking Byzantine-tolerant SGD by 
-Inner Product Manipulation|UAI|[pdf](http://proceedings.mlr.press/v115/xie20a/xie20a.pdf)|
+|Local Model Poisoning Attacks to Byzantine-Robust Federated Learning|USENIX SCEURITY|[pdf](https://www.usenix.org/system/files/sec20summer_fang_prepub.pdf)|
+|Fall of Empires: Breaking Byzantine-tolerant SGD by  Inner Product Manipulation|UAI|[pdf](http://proceedings.mlr.press/v115/xie20a/xie20a.pdf)|
