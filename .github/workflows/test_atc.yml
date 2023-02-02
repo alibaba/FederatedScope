@@ -1,6 +1,8 @@
 name: UnitTests for ATC
 
-on: [ pull_request ]
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
 
 
 jobs:
