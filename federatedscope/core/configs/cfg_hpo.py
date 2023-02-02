@@ -80,10 +80,6 @@ def assert_hpo_cfg(cfg):
 
     assert cfg.hpo.num_workers >= 0, "#worker should be non-negative but " \
                                      "given {}".format(cfg.hpo.num_workers)
-    assert len(cfg.hpo.sha.budgets) > 0, \
-        "Either do NOT specify the budgets or specify the budget for each " \
-        "SHA iteration, but the given budgets is {}".format(
-            cfg.hpo.sha.budgets)
 
     assert not (cfg.hpo.fedex.use and cfg.federate.use_ss
                 ), "Cannot use secret sharing and FedEx at the same time"
