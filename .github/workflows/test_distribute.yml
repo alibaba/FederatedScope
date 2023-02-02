@@ -2,9 +2,10 @@ name: UnitTests for Distributed Mode
 
 on:
   pull_request:
-    types: [ "ready_for_review" ]
+    types: [ labeled ]
 
 jobs:
+  if: contains(github.event.pull_request.labels.*.name, 'ready_for_review')
   run:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20

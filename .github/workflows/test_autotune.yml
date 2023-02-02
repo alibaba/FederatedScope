@@ -2,7 +2,7 @@ name: UnitTests for Autotune Module
 
 on:
   pull_request:
-    types: [ "ready_for_review" ]
+    types: [ labeled ]
 
 jobs:
   run:
