@@ -123,8 +123,9 @@ class FTSServer(Server):
         obs_noise = self._cfg.hpo.fts.obs_noise
         M = self.M
 
-        s = np.random.multivariate_normal(np.zeros(self.dim), 1 / (ls ** 2) \
-                                          * np.identity(self.dim), M)
+        s = np.random.multivariate_normal(np.zeros(self.dim),
+                                          1 / ls ** 2 * np.identity(self.dim),
+                                          M)
         b = np.random.uniform(0, 2 * np.pi, M)
         random_features = {"M": M, "length_scale": ls, "s": s, "b": b,
                            "obs_noise": obs_noise, "v_kernel": v_kernel}

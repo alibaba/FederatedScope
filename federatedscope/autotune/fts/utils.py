@@ -432,8 +432,8 @@ class LocalBO(object):
 
     def maximize(self, init_points=5, n_iter=25):
         """
-            init_points: the number of random initializations
-            n_iter: the number of BO iterations
+        init_points: the number of random initializations
+        n_iter: the number of BO iterations
         """
         assert init_points > 1
         self.plog.reset_timer()

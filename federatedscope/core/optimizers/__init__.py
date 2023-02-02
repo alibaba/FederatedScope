@@ -1,1 +1,0 @@
-from federatedscope.core.optimizers.adadp import ADADP

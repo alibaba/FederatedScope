@@ -277,12 +277,14 @@ class pFedHPOServer(Server):
         return self.check_and_move_on()
 
     def update_policy(self):
-        key1 = 'Results_weighted_avg' # 'Results_avg', 'Results_fairness'
-        key2 = 'val_acc' # 'test_acc', 'test_correct', 'test_loss', 'test_total', 'test_avg_loss', 'val_acc', 'val_correct', 'val_loss', 'val_total', 'val_avg_loss'
+        key1 = 'Results_weighted_avg'
+        key2 = 'val_acc'
 
         if 'twitter' in str(self._cfg.data.type).lower():
-            anchor_res_start = self.anchor_res['Results_raw']['test_acc'][self.start_round-1]
-            res_end = self.history_results['Results_weighted_avg']['test_acc'][-1]
+            anchor_res_start = \
+                self.anchor_res['Results_raw']['test_acc'][self.start_round-1]
+            res_end = \
+                self.history_results['Results_weighted_avg']['test_acc'][-1]
         else:
             anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
             res_end = self.history_results[key1][key2][-1]
@@ -293,9 +295,10 @@ class pFedHPOServer(Server):
             losses = - reward * self.logprob
 
         else:
-            reward = np.maximum(0, res_end - anchor_res_start) * anchor_res_start
+            reward = np.maximum(0, res_end - anchor_res_start) \
+                     * anchor_res_start
             self.logprob = torch.stack(self.logprob, dim=-1)
-            losses = F.relu(- reward * self.logprob *100)
+            losses = F.relu(- reward * self.logprob * 100)
 
 
         self.opt.zero_grad()

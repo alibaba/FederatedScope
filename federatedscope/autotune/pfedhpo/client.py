@@ -30,7 +30,8 @@ class pFedHPOClient(Client):
         super(pFedHPOClient, self).__init__(ID, server_id, state, config,
             data, model, device, strategy, is_unseen_client, *args, **kwargs)
 
-        if self._cfg.hpo.pfedhpo.train_fl and self._cfg.hpo.pfedhpo.train_anchor:
+        if self._cfg.hpo.pfedhpo.train_fl and \
+                self._cfg.hpo.pfedhpo.train_anchor:
 
             if self._cfg.data.type == 'mini-graph-dc':
                 d_enc = 74

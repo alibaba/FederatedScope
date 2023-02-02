@@ -220,33 +220,34 @@ class AngularPenaltySMLoss(nn.Module):
 
 
 def flat_data(data, labels, device, n_labels=10, add_label=False):
-  bs = data.shape[0]
-  if add_label:
-    gen_one_hots = pt.zeros(bs, n_labels, device=device)
-    gen_one_hots.scatter_(1, labels[:, None], 1)
-    labels = gen_one_hots
-    return pt.cat([pt.reshape(data, (bs, -1)), labels], dim=1)
-  else:
-    if len(data.shape) > 2:
-      return pt.reshape(data, (bs, -1))
+    bs = data.shape[0]
+    if add_label:
+        gen_one_hots = pt.zeros(bs, n_labels, device=device)
+        gen_one_hots.scatter_(1, labels[:, None], 1)
+        labels = gen_one_hots
+        return pt.cat([pt.reshape(data, (bs, -1)), labels], dim=1)
     else:
-      return data
+        if len(data.shape) > 2:
+            return pt.reshape(data, (bs, -1))
+        else:
+            return data
+
 rff_param_tuple = namedtuple('rff_params', ['w', 'b'])
 
 def rff_sphere(x, rff_params):
-  """
-  this is a Pytorch version of anon's code for RFFKGauss
-  Fourier transform formula from
-  http://mathworld.wolfram.com/FourierTransformGaussian.html
-  """
-  w = rff_params.w
-  xwt = pt.mm(x, w.t())
-  z_1 = pt.cos(xwt)
-  z_2 = pt.sin(xwt)
-  z_cat = pt.cat((z_1, z_2), 1)
-  norm_const = pt.sqrt(pt.tensor(w.shape[0]).to(pt.float32))
-  z = z_cat / norm_const  # w.shape[0] == n_features / 2
-  return z
+    """
+    this is a Pytorch version of anon's code for RFFKGauss
+    Fourier transform formula from
+    http://mathworld.wolfram.com/FourierTransformGaussian.html
+    """
+    w = rff_params.w
+    xwt = pt.mm(x, w.t())
+    z_1 = pt.cos(xwt)
+    z_2 = pt.sin(xwt)
+    z_cat = pt.cat((z_1, z_2), 1)
+    norm_const = pt.sqrt(pt.tensor(w.shape[0]).to(pt.float32))
+    z = z_cat / norm_const  # w.shape[0] == n_features / 2
+    return z
 
 
 def weights_sphere(d_rff, d_enc, sig, device, seed=1234):
