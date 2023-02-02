@@ -92,3 +92,24 @@
 |Targeted Backdoor Attacks on Deep Learning Systems Using Data Poisoning |arxiv|[pdf](https://arxiv.org/pdf/1712.05526.pdf)|
 
 
+## Untargeted Attacks in FL
+## 2022
+| Title | Venue | Link |
+| --- | --- | --- |
+|Learning to Attack Federated Learning: A
+Model-based Reinforcement Learning Attack
+Framework|NIPS|[pdf](https://openreview.net/pdf?id=4OHRr7gmhd4)|
+
+## 2021
+| Title | Venue | Link |
+| --- | --- | --- |
+|Manipulating the byzantine: Optimizing model
+poisoning attacks and defenses for federated learning|NDSS|[pdf](https://par.nsf.gov/servlets/purl/10286354)|
+
+## 2020
+| Title | Venue | Link |
+| --- | --- | --- |
+|Local Model Poisoning Attacks to Byzantine-Robust
+Federated Learning|USENIX SCEURITY|[pdf](https://www.usenix.org/system/files/sec20summer_fang_prepub.pdf)|
+|Fall of Empires: Breaking Byzantine-tolerant SGD by 
+Inner Product Manipulation|UAI|[pdf](http://proceedings.mlr.press/v115/xie20a/xie20a.pdf)|
