@@ -255,8 +255,8 @@ class PrintLog(object):
             print("{: >10.5f}".format(y), end=" | ")
             for index in self.sorti:
                 print("{0: >{1}.{2}f}".format(x[index],
-                        self.sizes[index] + 2,
-                        min(self.sizes[index] - 3, 6 - 2)),
+                                              self.sizes[index] + 2,
+                                              min(self.sizes[index] - 3, 4)),
                       end=" | ")
 
         if warning:

@@ -142,14 +142,11 @@ class AngularPenaltySMLoss(nn.Module):
                  loss_type='arcface', eps=1e-7, s=None, m=None):
         '''
         Angular Penalty Softmax Loss
-
         Three 'loss_types' available: ['arcface', 'sphereface', 'cosface']
         These losses are described in the following papers:
-
         ArcFace: https://arxiv.org/abs/1801.07698
         SphereFace: https://arxiv.org/abs/1704.08063
         CosFace/Ad Margin: https://arxiv.org/abs/1801.05599
-
         '''
         super(AngularPenaltySMLoss, self).__init__()
         loss_type = loss_type.lower()
@@ -179,7 +176,6 @@ class AngularPenaltySMLoss(nn.Module):
 
         for W in self.fc.parameters():
             W = F.normalize(W, p=2, dim=1)
-
         x = F.normalize(x, p=2, dim=1)
 
         wf = self.fc(x)
@@ -270,7 +266,7 @@ def data_label_embedding(data, labels, rff_params, mmd_type,
         labels = one_hots
 
     data_embedding = rff_sphere(data, rff_params) \
-      if mmd_type == 'sphere' else rff_rahimi_recht(data, rff_params)
+        if mmd_type == 'sphere' else rff_rahimi_recht(data, rff_params)
     embedding = pt.einsum('ki,kj->kij', [data_embedding, labels])
     return pt.mean(embedding, 0) if reduce == 'mean' else pt.sum(embedding, 0)
 
@@ -320,7 +316,7 @@ def noisy_dataset_embedding(
             n_data += data.shape[0]
 
             if len(emb_acc) > sum_frequency:
-              emb_acc = [pt.sum(pt.stack(emb_acc), 0)]
+                emb_acc = [pt.sum(pt.stack(emb_acc), 0)]
 
     print('done collecting batches, n_data', n_data)
     emb_acc = pt.sum(pt.stack(emb_acc), 0) / n_data
