@@ -431,15 +431,10 @@ class LocalBO(object):
         return x_max, all_ucb
 
     def maximize(self, init_points=5, n_iter=25):
-        """
-        init_points: the number of random initializations
-        n_iter: the number of BO iterations
-        """
         assert init_points > 1
         self.plog.reset_timer()
         self.time_started = time.time()
         self.res['all']['time_started'] = self.time_started
-
         self.util_ts = UtilityFunction(kind="ts")
 
         # get random initializations
