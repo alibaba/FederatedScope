@@ -63,10 +63,14 @@ class MiniGraphDCDataset(InMemoryDataset):
                 featurizer = GenFeatures()
                 ds = []
                 for graph in dataset:
-                    graph = featurizer(graph)
-                    ds.append(
-                        Data(edge_index=graph.edge_index, x=graph.x,
-                             y=graph.y))
+                    try:
+                        graph = featurizer(graph)
+                        ds.append(
+                            Data(edge_index=graph.edge_index, x=graph.x,
+                                 y=graph.y))
+                    except:
+                        pass
+
                 dataset = ds
                 if name in ['BACE', 'BBBP']:
                     for i in range(len(dataset)):

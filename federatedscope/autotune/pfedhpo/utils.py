@@ -1,11 +1,8 @@
-import numpy as np
-from collections import OrderedDict
 import torch.nn.functional as F
 from torch import nn
 from torch.nn.utils import spectral_norm
 import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
-import math
 import numpy as np
 import torch as pt
 from collections import namedtuple
@@ -80,8 +77,6 @@ class DisHyperNet(nn.Module):
 
     def forward(self):
         client_enc = self.EncNet(self.encoding)
-        # client_enc_reg = self.enc_loss(client_enc, torch.arange(10).to(self.encoding.device)) * self.reg_alpha
-        # print('==== ', client_enc_reg)
         client_enc_reg = 0
         logits = []
         for module in self.out:
@@ -235,7 +230,8 @@ rff_param_tuple = namedtuple('rff_params', ['w', 'b'])
 def rff_sphere(x, rff_params):
   """
   this is a Pytorch version of anon's code for RFFKGauss
-  Fourier transform formula from http://mathworld.wolfram.com/FourierTransformGaussian.html
+  Fourier transform formula from
+  http://mathworld.wolfram.com/FourierTransformGaussian.html
   """
   w = rff_params.w
   xwt = pt.mm(x, w.t())
@@ -271,7 +267,8 @@ def weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234):
     return rff_param_tuple(w=w_freq, b=b_freq)
 
 def data_label_embedding(data, labels, rff_params, mmd_type,
-                         labels_to_one_hot=False, n_labels=None, device=None, reduce='mean'):
+                         labels_to_one_hot=False, n_labels=None,
+                         device=None, reduce='mean'):
   assert reduce in {'mean', 'sum'}
   if labels_to_one_hot:
     batch_size = data.shape[0]
@@ -279,12 +276,15 @@ def data_label_embedding(data, labels, rff_params, mmd_type,
     one_hots.scatter_(1, labels[:, None], 1)
     labels = one_hots
 
-  data_embedding = rff_sphere(data, rff_params) if mmd_type == 'sphere' else rff_rahimi_recht(data, rff_params)
+  data_embedding = rff_sphere(data, rff_params) \
+      if mmd_type == 'sphere' else rff_rahimi_recht(data, rff_params)
   embedding = pt.einsum('ki,kj->kij', [data_embedding, labels])
   return pt.mean(embedding, 0) if reduce == 'mean' else pt.sum(embedding, 0)
 
 
-def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff, device, n_labels, noise_factor, mmd_type, sum_frequency=25, graph=False):
+def noisy_dataset_embedding(
+        train_loader, d_enc, sig, d_rff, device, n_labels,
+        noise_factor, mmd_type, sum_frequency=25, graph=False):
     emb_acc = []
     n_data = 0
 
@@ -301,9 +301,11 @@ def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff, device, n_labels, n
             if mmd_type == 'sphere':
                 w_freq = weights_sphere(d_rff, d_enc, sig, device, seed=1234)
             else:
-                w_freq = weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234)
+                w_freq = weights_rahimi_recht(
+                    d_rff, d_enc, sig, device, seed=1234)
 
-            data = flat_data(data, labels, device, n_labels=n_labels, add_label=False)
+            data = flat_data(data, labels, device,
+                             n_labels=n_labels, add_label=False)
             emb_acc.append(data_label_embedding(
                 data, labels, w_freq, mmd_type,
                 labels_to_one_hot=True, n_labels=n_labels,
@@ -316,7 +318,8 @@ def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff, device, n_labels, n
     else:
         for data, labels in train_loader:
             data, labels = data.to(device), labels.to(device)
-            data = flat_data(data, labels, device, n_labels=n_labels, add_label=False)
+            data = flat_data(data, labels, device,
+                             n_labels=n_labels, add_label=False)
             emb_acc.append(data_label_embedding(
                 data, labels, w_freq, mmd_type,
                 labels_to_one_hot=True, n_labels=n_labels,
@@ -329,7 +332,8 @@ def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff, device, n_labels, n
     print('done collecting batches, n_data', n_data)
     emb_acc = pt.sum(pt.stack(emb_acc), 0) / n_data
     print(pt.norm(emb_acc), emb_acc.shape)
-    noise = pt.randn(d_rff, n_labels, device=device) * (2 * noise_factor / n_data)
+    noise = pt.randn(d_rff, n_labels, device=device) \
+            * (2 * noise_factor / n_data)
     noisy_emb = emb_acc + noise
     return noisy_emb
 
