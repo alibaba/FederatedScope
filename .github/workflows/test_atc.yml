@@ -6,6 +6,7 @@ on:
 
 jobs:
   run:
+    if: contains(github.event.pull_request.labels.*.name, 'ready_for_review')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
