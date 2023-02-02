@@ -5,8 +5,8 @@ on:
     types: [ labeled ]
 
 jobs:
-  if: contains(github.event.pull_request.labels.*.name, 'ready_for_review')
   run:
+    if: contains(github.event.pull_request.labels.*.name, 'ready_for_review')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
