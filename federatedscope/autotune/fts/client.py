@@ -43,7 +43,8 @@ class FTSClient(Client):
         self.local_init_path = os.path.join(self._cfg.hpo.working_folder,
             "local_init_" + str(self.ID) + ".pkl")
         self.local_info_path = os.path.join(self._cfg.hpo.working_folder,
-            "local_info_" + str(self.ID) + "_M_" + str(self._cfg.hpo.fts.M) + ".pkl")
+            "local_info_" + str(self.ID) + "_M_" \
+            + str(self._cfg.hpo.fts.M) + ".pkl")
 
         # prepare search space and bounds
         self._ss = parse_search_space(self._cfg.hpo.fts.ss)
@@ -105,7 +106,7 @@ class FTSClient(Client):
         results_after = self.trainer.evaluate('val')
 
         if self._diff:
-            res = results_before['val_avg_loss'] - results_after['val_avg_loss']
+            res = results_before['val_avg_loss']-results_after['val_avg_loss']
         else:
             res = baseline - results_after['val_avg_loss']
         if return_eval:
@@ -114,7 +115,7 @@ class FTSClient(Client):
             return res
 
     def _generate_agent_info(self, rand_feats):
-        logger.info(('-'*20, ' generate info on clinet %d ' % self.ID , '_'*20))
+        logger.info(('-'*20, ' generate info on clinet %d '%self.ID , '_'*20))
         v_kernel = self._cfg.hpo.fts.v_kernel
         obs_noise = self._cfg.hpo.fts.obs_noise
         M = self._cfg.hpo.fts.M
@@ -162,7 +163,8 @@ class FTSClient(Client):
         Sigma_t = np.dot(Phi.T, Phi) + obs_noise * np.identity(M)
         Sigma_t_inv = np.linalg.inv(Sigma_t)
         nu_t = np.dot(np.dot(Sigma_t_inv, Phi.T), ys)
-        w_samples = np.random.multivariate_normal(np.squeeze(nu_t), obs_noise * Sigma_t_inv, 1)
+        w_samples = np.random.multivariate_normal(np.squeeze(nu_t),
+                                                  obs_noise * Sigma_t_inv, 1)
         pickle.dump(w_samples, open(self.local_info_path, "wb"))
 
     def callback_funcs_for_model_para(self, message: Message):
@@ -197,10 +199,9 @@ class FTSClient(Client):
                         '}'
                         )
             logger.info(
-                self._monitor.format_eval_res(eval_res,
-                                              rnd=self.state,
-                                              role='Client #{}'.format(self.ID),
-                                              return_raw=True))
+                self._monitor.format_eval_res(
+                    eval_res, rnd=self.state,
+                    role='Client #{}'.format(self.ID), return_raw=True))
 
         self.state = round
         self.comm_manager.send(
@@ -214,7 +215,8 @@ class FTSClient(Client):
     def callback_funcs_for_evaluate(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
         require_agent_infos = content['require_agent_infos']
-        assert not require_agent_infos, "Can not evaluate when there is no agents' information"
+        assert not require_agent_infos, \
+            "Can not evaluate when there is no agents' information"
 
         self.state = message.state
         self._obj_func(content['x_max'])

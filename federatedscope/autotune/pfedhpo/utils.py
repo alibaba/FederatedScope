@@ -336,6 +336,3 @@ def noisy_dataset_embedding(
             * (2 * noise_factor / n_data)
     noisy_emb = emb_acc + noise
     return noisy_emb
-
-
-

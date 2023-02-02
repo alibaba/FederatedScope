@@ -22,9 +22,12 @@ ERROR_MESSAGES = (
 SUCCESS_MESSAGES = (
     'Number of function evaluations done is larger then maxf',
     'Number of iterations is equal to maxT',
-    'The best function value found is within fglper of the (known) global optimum',
-    'The volume of the hyperrectangle with best function value found is below volper',
-    'The volume of the hyperrectangle with best function value found is smaller then volper'
+    'The best function value found is within fglper of the (known) '
+    'global optimum',
+    'The volume of the hyperrectangle with best function value found is '
+    'below volper',
+    'The volume of the hyperrectangle with best function value found is '
+    'smaller then volper'
 )
 
 
@@ -62,12 +65,12 @@ def minimize(func, bounds=None, para_dict={}, nvar=None, args=(), disp=False,
              **kwargs
              ):
     if bounds is None:
-        l = np.zeros(nvar, dtype=np.float64)
-        u = np.ones(nvar, dtype=np.float64)
+        lb = np.zeros(nvar, dtype=np.float64)
+        ub = np.ones(nvar, dtype=np.float64)
     else:
         bounds = np.asarray(bounds)
-        l = bounds[:, 0]
-        u = bounds[:, 1]
+        lb = bounds[:, 0]
+        ub = bounds[:, 1]
 
     def _objective_wrap(x, iidata, ddata, cdata, n, iisize, idsize, icsize):
         return func(x, para_dict), 0
@@ -83,8 +86,8 @@ def minimize(func, bounds=None, para_dict={}, nvar=None, args=(), disp=False,
         eps,
         maxf,
         maxT,
-        l,
-        u,
+        lb,
+        ub,
         algmethod,
         'dummylogfile',
         fglobal,
@@ -98,7 +101,8 @@ def minimize(func, bounds=None, para_dict={}, nvar=None, args=(), disp=False,
     )
 
     return OptimizeResult(x=x, fun=fun, status=ierror, success=ierror > 0,
-                          message=SUCCESS_MESSAGES[ierror - 1] if ierror > 0 else ERROR_MESSAGES[abs(ierror) - 1])
+                          message=SUCCESS_MESSAGES[ierror - 1] if ierror > 0 \
+                              else ERROR_MESSAGES[abs(ierror) - 1])
 
 
 class UtilityFunction(object):
@@ -134,8 +138,10 @@ class UtilityFunction(object):
         features = np.sqrt(2 / M) * np.cos(np.squeeze(np.dot(x, s.T)) + b)
         features = features.reshape(-1, 1)
 
-        features = features / np.sqrt(np.inner(np.squeeze(features), np.squeeze(features)))
-        features = np.sqrt(v_kernel) * features  # v_kernel is set to be 1 here in the synthetic experiments
+        features = features / np.sqrt(np.inner(np.squeeze(features),
+                                               np.squeeze(features)))
+        features = np.sqrt(v_kernel) * features
+        # v_kernel is set to be 1 here in the synthetic experiments
 
         f_value = np.squeeze(np.dot(w_sample, features))
         optimizer_flag = 1
@@ -245,8 +251,8 @@ class PrintLog(object):
             print("{: >10.5f}".format(y), end=" | ")
             for index in self.sorti:
                 print("{0: >{1}.{2}f}".format(x[index],
-                                              self.sizes[index] + 2,
-                                              min(self.sizes[index] - 3, 6 - 2)),
+                        self.sizes[index] + 2,
+                        min(self.sizes[index] - 3, 6 - 2)),
                       end=" | ")
 
         if warning:
@@ -322,14 +328,19 @@ class LocalBO(object):
         """
             f: the objective function of the target agent
             pbounds: dict of hyperparameter ranges e.g. {'lr':(lower, upper)}
-            gp_opt_schedule: optimize the GP hyperparameters after every gp_opt_schedule iterations
+            gp_opt_schedule: optimize the GP hyperparameters after every
+            gp_opt_schedule iterations
             M: the number of random features for RFF approximation
             N: the number of other agents
-            random_features: the saved random features, which is shared among all agents
-            info_ts: the information received from each agent for the FTS algorithm; for each agent, the information includes a sampled \omega_n
-            pt: the sequence p_t; to run the standard TS algorithm (without using information from other agents), just set pt to all ones
+            random_features: the saved random features, which is shared among
+            all agents info_ts: the information received from each agent
+            for the algorithm; for each agent,
+            the information includes a sampled \omega_n
+            pt: the sequence p_t; to run the standard TS algorithm
+            (without using information from other agents), just set pt to all 1
             P_N: the distribution over agents used by the FTS algorithm
-            M_target: the number of random features used by both TS and FTS to draw samples from the GP posterior of the target agent
+            M_target: the number of random features used by both TS and FTS
+            to draw samples from the GP posterior of the target agent
         """
 
         self.N = N
@@ -383,7 +394,7 @@ class LocalBO(object):
         obs_noise = self.gp["Gaussian_noise.variance"][0]
 
         s = np.random.multivariate_normal(np.zeros(self.dim),
-                                          1 / (ls_target ** 2) * np.identity(self.dim), M_target)
+                1 / (ls_target ** 2) * np.identity(self.dim), M_target)
         b = np.random.uniform(0, 2 * np.pi, M_target)
 
         random_features_target = {"M": M_target, "length_scale": ls_target,
@@ -393,7 +404,8 @@ class LocalBO(object):
         Phi = np.zeros((self.X.shape[0], M_target))
         for i, x in enumerate(self.X):
             x = np.squeeze(x).reshape(1, -1)
-            features = np.sqrt(2 / M_target) * np.cos(np.squeeze(np.dot(x, s.T)) + b)
+            features = np.sqrt(2 / M_target) * \
+                       np.cos(np.squeeze(np.dot(x, s.T)) + b)
             features = features / np.sqrt(np.inner(features, features))
             features = np.sqrt(v_kernel) * features
             Phi[i, :] = features
@@ -434,11 +446,13 @@ class LocalBO(object):
                 self.initialized = True
                 self.res['all']['init'] = init
                 self.res['all']['init_values'] = list(self.Y)
-                print("==> Using pre-existing initializations with {0} points".format(len(self.Y)))
+                print("==> Using pre-existing initializations "
+                      "with {0} points".format(len(self.Y)))
             else:
                 if init_points > 0:
                     print('==> Random initialize')
-                    l = [np.random.uniform(x[0], x[1], size=init_points) for x in self.bounds]
+                    l = [np.random.uniform(x[0], x[1], size=init_points) \
+                         for x in self.bounds]
 
                     self.init_points += list(map(list, zip(*l)))
                     y_init = []
@@ -447,7 +461,8 @@ class LocalBO(object):
                         curr_y = self.f(x)
                         y_init.append(curr_y)
                         self.res['all']['init_values'].append(curr_y)
-                        self.res['all']['init_params'].append(dict(zip(self.keys, x)))
+                        self.res['all']['init_params'].append(
+                            dict(zip(self.keys, x)))
 
                     self.X = np.asarray(self.init_points)
                     self.Y = np.asarray(y_init)
@@ -492,7 +507,8 @@ class LocalBO(object):
             self.gp.set_XY(X=self.X[ur], Y=self.Y[ur].reshape(-1, 1))
 
             if i >= self.gp_opt_schedule and i % self.gp_opt_schedule == 0:
-                self.gp.optimize_restarts(num_restarts=10, messages=False, verbose=False)
+                self.gp.optimize_restarts(num_restarts=10,
+                                          messages=False, verbose=False)
                 self.gp_params = self.gp.parameters
             if i == n_iter-1:
                 print("---Client %d optimized hyper: " % self.cid, self.gp)
@@ -510,7 +526,8 @@ class LocalBO(object):
 
             self.i += 1
             x_max_param = self.X[self.Y.argmax(), :-1]
-            self.res['max'] = {'max_val': self.Y.max(), 'max_params': dict(zip(self.keys, x_max_param))}
+            self.res['max'] = {'max_val': self.Y.max(),
+                               'max_params': dict(zip(self.keys, x_max_param))}
             self.res['all']['values'].append(self.Y[-1])
             self.res['all']['params'].append(self.X[-1])
 

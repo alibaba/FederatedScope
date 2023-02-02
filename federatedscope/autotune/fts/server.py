@@ -65,7 +65,8 @@ class FTSServer(Server):
                 self.pbounds[k] = (l, u)
 
         # distribution used to sample GP models
-        pt = 1 - 1 / (np.arange(self._cfg.hpo.fts.fed_bo_max_iter + 5) + 1) ** (2.0)
+        pt = 1 - 1 / (np.arange(self._cfg.hpo.fts.fed_bo_max_iter + 5) \
+                      + 1) ** (2.0)
         pt[0] = pt[1]
         self.pt = pt
         self.num_other_clients = self._cfg.federate.client_num - 1
@@ -93,12 +94,15 @@ class FTSServer(Server):
         # else require the clients in the first round
         if os.path.exists(self.all_local_info_path) and \
                 self._cfg.hpo.fts.allow_load_existing_info:
-            logger.info('Using existing rand_feat, agent_infos, and agent_inits')
+            logger.info('Using existing rand_feat, agent_infos, '
+                        'and agent_inits')
             self.require_agent_infos = False
             self.state = 1
             self.random_feats = pickle.load(open(self.rand_feat_path, 'rb'))
-            self.all_agent_info = pickle.load(open(self.all_local_info_path, 'rb'))
-            self.all_agent_init = pickle.load(open(self.all_lcoal_init_path, 'rb'))
+            self.all_agent_info = pickle.load(
+                open(self.all_local_info_path, 'rb'))
+            self.all_agent_init = pickle.load(
+                open(self.all_lcoal_init_path, 'rb'))
         else:
             self.require_agent_infos = True
             self.random_feats = self._generate_shared_rand_feats()
@@ -120,9 +124,11 @@ class FTSServer(Server):
         obs_noise = self._cfg.hpo.fts.obs_noise
         M = self.M
 
-        s = np.random.multivariate_normal(np.zeros(self.dim), 1 / (ls ** 2) * np.identity(self.dim), M)
+        s = np.random.multivariate_normal(np.zeros(self.dim), 1 / (ls ** 2) \
+                                          * np.identity(self.dim), M)
         b = np.random.uniform(0, 2 * np.pi, M)
-        random_features = {"M": M, "length_scale": ls, "s": s, "b": b, "obs_noise": obs_noise, "v_kernel": v_kernel}
+        random_features = {"M": M, "length_scale": ls, "s": s, "b": b,
+                           "obs_noise": obs_noise, "v_kernel": v_kernel}
         pickle.dump(random_features, open(self.rand_feat_path, "wb"))
 
         return random_features
@@ -169,10 +175,14 @@ class FTSServer(Server):
 
                     ur = unique_rows(self.X[rcv_idx])
                     self.gp[rcv_idx] = GPy.models.GPRegression(
-                        self.X[rcv_idx][ur], self.Y[rcv_idx][ur].reshape(-1, 1),
-                        GPy.kern.RBF(input_dim=self.X[rcv_idx].shape[1], lengthscale=self._cfg.hpo.fts.ls,
-                                     variance=self._cfg.hpo.fts.var, ARD=False))
-                    self.gp[rcv_idx]["Gaussian_noise.variance"][0] = self._cfg.hpo.fts.g_var
+                        self.X[rcv_idx][ur],
+                        self.Y[rcv_idx][ur].reshape(-1, 1),
+                        GPy.kern.RBF(input_dim=self.X[rcv_idx].shape[1],
+                                     lengthscale=self._cfg.hpo.fts.ls,
+                                     variance=self._cfg.hpo.fts.var,
+                                     ARD=False))
+                    self.gp[rcv_idx]["Gaussian_noise.variance"][0] = \
+                        self._cfg.hpo.fts.g_var
                     self._opt_gp(rcv_idx)
                     self.initialized[rcv_idx] = True
 
@@ -221,7 +231,8 @@ class FTSServer(Server):
         obs_noise = self.gp[client]["Gaussian_noise.variance"][0]
 
         s = np.random.multivariate_normal(
-            np.zeros(self.dim), 1 / (ls_target ** 2) * np.identity(self.dim), M_target)
+            np.zeros(self.dim), 1 / (ls_target ** 2) * np.identity(self.dim),
+            M_target)
         b = np.random.uniform(0, 2 * np.pi, M_target)
         random_features_target = {"M": M_target, "length_scale": ls_target,
                                   "s": s, "b": b, "obs_noise": obs_noise,
@@ -230,14 +241,16 @@ class FTSServer(Server):
         Phi = np.zeros((self.X[client].shape[0], M_target))
         for i, x in enumerate(self.X[client]):
             x = np.squeeze(x).reshape(1, -1)
-            features = np.sqrt(2 / M_target) * np.cos(np.squeeze(np.dot(x, s.T)) + b)
+            features = np.sqrt(2 / M_target) * \
+                       np.cos(np.squeeze(np.dot(x, s.T)) + b)
             features = features / np.sqrt(np.inner(features, features))
             features = np.sqrt(v_kernel) * features
             Phi[i, :] = features
 
         Sigma_t = np.dot(Phi.T, Phi) + obs_noise * np.identity(M_target)
         Sigma_t_inv = np.linalg.inv(Sigma_t)
-        nu_t = np.dot(np.dot(Sigma_t_inv, Phi.T), self.Y[client].reshape(-1, 1))
+        nu_t = np.dot(np.dot(Sigma_t_inv, Phi.T),
+                      self.Y[client].reshape(-1, 1))
         w_sample = np.random.multivariate_normal(
             np.squeeze(nu_t), obs_noise * Sigma_t_inv, 1)
 
@@ -266,7 +279,8 @@ class FTSServer(Server):
         return x_max, all_ucb
 
     def _opt_gp(self, client):
-        self.gp[client].optimize_restarts(num_restarts=10, messages=False, verbose=False)
+        self.gp[client].optimize_restarts(num_restarts=10, messages=False,
+                                          verbose=False)
         self.gp_params[client] = self.gp[client].parameters
         # print("---Optimized Hyper of Client %d : " % client, self.gp[client])
 
@@ -305,36 +319,43 @@ class FTSServer(Server):
         if self.check_buffer(self.state, min_received_num, check_eval_result):
 
             if not check_eval_result:
-                # The first round is to collect clients' infomation, receive agent_info
+                # The first round is to collect clients' infomation,
+                # receive agent_info
                 if self.require_agent_infos:
-                    for _client, _content in self.msg_buffer['train'][self.state].items():
+                    for _client, _content in \
+                            self.msg_buffer['train'][self.state].items():
                         assert _content['is_required_agent_info']
                         self.all_agent_info[_client] = _content['agent_info']
                         self.all_agent_init[_client] = _content['agent_init']
-                    pickle.dump(self.all_agent_info, open(self.all_local_info_path, "wb"))
-                    pickle.dump(self.all_agent_init, open(self.all_lcoal_init_path, "wb"))
+                    pickle.dump(self.all_agent_info,
+                                open(self.all_local_info_path, "wb"))
+                    pickle.dump(self.all_agent_init,
+                                open(self.all_lcoal_init_path, "wb"))
                     self.require_agent_infos = False
 
                 # Other rounds are to update GP models, receive performance
                 else:
-                    for _client, _content in self.msg_buffer['train'][self.state].items():
+                    for _client, _content in \
+                            self.msg_buffer['train'][self.state].items():
                         curr_y = _content['curr_y']
                         self.Y[_client] = np.append(self.Y[_client], curr_y)
                         self.X[_client] = np.vstack((self.X[_client],
-                                                     self.x_max[_client].reshape((1, -1))))
+                                    self.x_max[_client].reshape((1, -1))))
                         if self.Y[_client][-1] > self.y_max[_client]:
                             self.y_max[_client] = self.Y[_client][-1]
                             self.incumbent[_client] = self.Y[_client][-1]
                         ur = unique_rows(self.X[_client])
                         self.gp[_client].set_XY(X=self.X[_client][ur],
-                                                Y=self.Y[_client][ur].reshape(-1, 1))
+                                    Y=self.Y[_client][ur].reshape(-1, 1))
 
                         _schedule = self._cfg.hpo.fts.gp_opt_schedule
-                        if self.state >= _schedule and self.state % _schedule == 0:
+                        if self.state >= _schedule \
+                                and self.state % _schedule == 0:
                             self._opt_gp(_client)
 
                         x_max_param = self.X[_client][self.Y[_client].argmax()]
-                        hyper_param = x2conf(x_max_param, self.pbounds, self._ss)
+                        hyper_param = x2conf(
+                            x_max_param, self.pbounds, self._ss)
                         self.res[_client]['max_param'] = hyper_param
                         self.res[_client]['max_value'] = self.Y[_client].max()
                         self.res[_client]['all_values'].append(
@@ -361,11 +382,12 @@ class FTSServer(Server):
 
             else:
                 _results = {}
-                for _client, _content in self.msg_buffer['eval'][self.state].items():
+                for _client, _content in \
+                        self.msg_buffer['eval'][self.state].items():
                     _results[_client] = _content
 
-                # formatted_eval_res = self.merge_eval_results_from_all_clients()
-                self.history_results = merge_dict(self.history_results, _results)
+                self.history_results = merge_dict(
+                    self.history_results, _results)
                 if self.state > self._cfg.hpo.fts.fed_bo_max_iter:
                     self.check_and_save()
         else:
