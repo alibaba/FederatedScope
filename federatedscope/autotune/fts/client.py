@@ -43,7 +43,7 @@ class FTSClient(Client):
         self.local_init_path = os.path.join(self._cfg.hpo.working_folder,
             "local_init_" + str(self.ID) + ".pkl")
         self.local_info_path = os.path.join(self._cfg.hpo.working_folder,
-            "local_info_" + str(self.ID) + "_M_" \
+            "local_info_" + str(self.ID) + "_M_"
             + str(self._cfg.hpo.fts.M) + ".pkl")
 
         # prepare search space and bounds
@@ -106,7 +106,8 @@ class FTSClient(Client):
         results_after = self.trainer.evaluate('val')
 
         if self._diff:
-            res = results_before['val_avg_loss']-results_after['val_avg_loss']
+            res = results_before['val_avg_loss'] \
+                  - results_after['val_avg_loss']
         else:
             res = baseline - results_after['val_avg_loss']
         if return_eval:
@@ -115,7 +116,7 @@ class FTSClient(Client):
             return res
 
     def _generate_agent_info(self, rand_feats):
-        logger.info(('-'*20, ' generate info on clinet %d '%self.ID , '_'*20))
+        logger.info(('-'*20, ' generate info on clinet %d '%self.ID, '_'*20))
         v_kernel = self._cfg.hpo.fts.v_kernel
         obs_noise = self._cfg.hpo.fts.obs_noise
         M = self._cfg.hpo.fts.M
@@ -192,12 +193,10 @@ class FTSClient(Client):
                 'curr_y': curr_y,
             }
             hyper_param = x2conf(x_max, self.pbounds, self._ss)
-            logger.info('{Client: %d, ' % self.ID + \
-                        'GP_opt_iter: %d, ' % round + \
-                        'Params: ' + str(hyper_param) + \
-                        ', Perform: ' + str(curr_y) + \
-                        '}'
-                        )
+            logger.info('{Client: %d, ' % self.ID +
+                        'GP_opt_iter: %d, ' % round +
+                        'Params: ' + str(hyper_param) +
+                        ', Perform: ' + str(curr_y) + '}')
             logger.info(
                 self._monitor.format_eval_res(
                     eval_res, rnd=self.state,
@@ -213,7 +212,8 @@ class FTSClient(Client):
 
 
     def callback_funcs_for_evaluate(self, message: Message):
-        round, sender, content = message.state, message.sender, message.content
+        round, sender, content = \
+            message.state, message.sender, message.content
         require_agent_infos = content['require_agent_infos']
         assert not require_agent_infos, \
             "Can not evaluate when there is no agents' information"

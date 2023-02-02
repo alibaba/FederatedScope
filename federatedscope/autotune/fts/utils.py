@@ -53,7 +53,12 @@ class OptimizeResult(dict):
         else:
             return self.__class__.__name__ + "()"
 
-def minimize(func, bounds=None, para_dict={}, nvar=None, args=(), disp=False,
+def minimize(func,
+             bounds=None,
+             para_dict={},
+             nvar=None,
+             args=(),
+             disp=False,
              eps=1e-4,
              maxf=20000,
              maxT=6000,
@@ -101,8 +106,8 @@ def minimize(func, bounds=None, para_dict={}, nvar=None, args=(), disp=False,
     )
 
     return OptimizeResult(x=x, fun=fun, status=ierror, success=ierror > 0,
-                          message=SUCCESS_MESSAGES[ierror - 1] if ierror > 0 \
-                              else ERROR_MESSAGES[abs(ierror) - 1])
+                          message=SUCCESS_MESSAGES[ierror - 1] if ierror > 0
+                          else ERROR_MESSAGES[abs(ierror) - 1])
 
 
 class UtilityFunction(object):
@@ -180,7 +185,6 @@ class BColours(object):
     ENDC = '\033[0m'
 
 class PrintLog(object):
-
     def __init__(self, params):
 
         self.ymax = None
@@ -393,8 +397,9 @@ class LocalBO(object):
         v_kernel = self.gp["rbf.variance"][0]
         obs_noise = self.gp["Gaussian_noise.variance"][0]
 
-        s = np.random.multivariate_normal(np.zeros(self.dim),
-                1 / (ls_target ** 2) * np.identity(self.dim), M_target)
+        s = np.random.multivariate_normal(
+            np.zeros(self.dim),
+            1 / (ls_target ** 2) * np.identity(self.dim), M_target)
         b = np.random.uniform(0, 2 * np.pi, M_target)
 
         random_features_target = {"M": M_target, "length_scale": ls_target,
@@ -422,7 +427,7 @@ class LocalBO(object):
                                  info_ts=self.info_ts, pt=self.pt,
                                  ws=self.ws, use_target_label=True,
                                  w_sample=w_sample, y_max=y_max,
-                                 bounds=self.bounds, iteration=iteration )
+                                 bounds=self.bounds, iteration=iteration)
         return x_max, all_ucb
 
     def maximize(self, init_points=5, n_iter=25):
@@ -439,7 +444,7 @@ class LocalBO(object):
 
         # get random initializations
         if not self.initialized:
-            if self.use_init != None:
+            if self.use_init is not None:
                 init = pickle.load(open(self.use_init, "rb"))
                 self.X, self.Y = init["X"], init["Y"]
                 self.incumbent = np.max(self.Y)
@@ -451,10 +456,11 @@ class LocalBO(object):
             else:
                 if init_points > 0:
                     print('==> Random initialize')
-                    l = [np.random.uniform(x[0], x[1], size=init_points) \
-                         for x in self.bounds]
+                    ls = [np.random.uniform(
+                        x[0], x[1],
+                        size=init_points) for x in self.bounds]
 
-                    self.init_points += list(map(list, zip(*l)))
+                    self.init_points += list(map(list, zip(*ls)))
                     y_init = []
                     for x in self.init_points:
                         print("[init point]: ", x)
@@ -477,7 +483,6 @@ class LocalBO(object):
         y_max = np.max(self.Y)
         ur = unique_rows(self.X)
 
-
         self.gp = GPy.models.GPRegression(
             self.X[ur], self.Y[ur].reshape(-1, 1),
             GPy.kern.RBF(input_dim=self.X.shape[1], lengthscale=self.ls,
@@ -493,8 +498,9 @@ class LocalBO(object):
         for i in range(n_iter):
             if not self.X.shape[0] == 0:
                 if np.any(np.all(self.X - x_max == 0, axis=1)):
-                    x_max = np.random.uniform(self.bounds[:, 0],
-                        self.bounds[:, 1], size=self.bounds.shape[0])
+                    x_max = np.random.uniform(
+                        self.bounds[:, 0], self.bounds[:, 1],
+                        size=self.bounds.shape[0])
 
             curr_y = self.f(x_max)
             self.res["all"]["timestamps"].append(time.time())
@@ -536,5 +542,4 @@ class LocalBO(object):
 
         if self.verbose:
             self.plog.print_summary()
-
 

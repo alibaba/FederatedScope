@@ -65,12 +65,11 @@ class FTSServer(Server):
                 self.pbounds[k] = (l, u)
 
         # distribution used to sample GP models
-        pt = 1 - 1 / (np.arange(self._cfg.hpo.fts.fed_bo_max_iter + 5) \
-                      + 1) ** (2.0)
+        pt = 1 - 1 / (np.arange(self._cfg.hpo.fts.fed_bo_max_iter+5)+1)**2.0
         pt[0] = pt[1]
         self.pt = pt
         self.num_other_clients = self._cfg.federate.client_num - 1
-        self.ws = np.ones(self.num_other_clients) / (self.num_other_clients)
+        self.ws = np.ones(self.num_other_clients) / self.num_other_clients
 
         # records for all GP models
         N = self._cfg.federate.client_num + 1
@@ -118,7 +117,7 @@ class FTSServer(Server):
 
 
     def _generate_shared_rand_feats(self):
-        ### generate shared random features
+        # generate shared random features
         ls = self._cfg.hpo.fts.ls
         v_kernel = self._cfg.hpo.fts.v_kernel
         obs_noise = self._cfg.hpo.fts.obs_noise
@@ -167,7 +166,7 @@ class FTSServer(Server):
                     self.Y[rcv_idx] = init['Y']
                     self.incumbent[rcv_idx] = np.max(self.Y[rcv_idx])
                     logger.info("Using pre-existing initializations "
-                                "for client {} with {} points".\
+                                "for client {} with {} points".
                                 format(rcv_idx, len(self.Y[rcv_idx])))
 
                     y_max = np.max(self.Y[rcv_idx])
@@ -195,8 +194,9 @@ class FTSServer(Server):
                     _loop = True
                     while _loop:
                         try:
-                            x_max, all_ucb = func(rcv_idx, self.y_max[rcv_idx],
-                                                    self.state, info_ts)
+                            x_max, all_ucb = func(
+                                rcv_idx, self.y_max[rcv_idx], self.state,
+                                info_ts)
                             _loop = False
                         except:
                             _loop = True
@@ -241,8 +241,8 @@ class FTSServer(Server):
         Phi = np.zeros((self.X[client].shape[0], M_target))
         for i, x in enumerate(self.X[client]):
             x = np.squeeze(x).reshape(1, -1)
-            features = np.sqrt(2 / M_target) * \
-                       np.cos(np.squeeze(np.dot(x, s.T)) + b)
+            features = np.sqrt(2 / M_target) * np.cos(
+                np.squeeze(np.dot(x, s.T)) + b)
             features = features / np.sqrt(np.inner(features, features))
             features = np.sqrt(v_kernel) * features
             Phi[i, :] = features
@@ -261,7 +261,7 @@ class FTSServer(Server):
                                  info_ts=info_ts, pt=self.pt,
                                  ws=self.ws, use_target_label=True,
                                  w_sample=w_sample, y_max=y_max,
-                                 bounds=self.bounds, iteration=iteration )
+                                 bounds=self.bounds, iteration=iteration)
         return x_max, all_ucb
 
     def _sample_from_others(self, client, y_max, iteration, info_ts):

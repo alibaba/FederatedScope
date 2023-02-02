@@ -70,7 +70,8 @@ class pFedHPOServer(Server):
         if not self.discrete:
             for k, v in self._ss.items():
                 if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
-                    raise ValueError("Unsupported hyper type {}".format(type(v)))
+                    raise ValueError("Unsupported hyper type {}"
+                                     .format(type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -83,7 +84,8 @@ class pFedHPOServer(Server):
                     if hasattr(v, 'choices'):
                         self.pbounds[k] = list(v.choices)
                     else:
-                        raise ValueError("Unsupported hyper type {}".format(type(v)))
+                        raise ValueError("Unsupported hyper type {}"
+                                         .format(type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -100,17 +102,18 @@ class pFedHPOServer(Server):
 
         if not self.discrete:
             self.var = 0.01
-            dist = MultivariateNormal(loc=torch.zeros(len(self.pbounds)),
+            dist = MultivariateNormal(
+                loc=torch.zeros(len(self.pbounds)),
                 covariance_matrix=torch.eye(len(self.pbounds)) * self.var)
             self.logprob_max = dist.log_prob(dist.sample() * 0)
         else:
             self.logprob_max = 1.
 
-        # encoding_tensor = F.one_hot(torch.arange(0, client_num)).float()
 
         encoding_tensor = []
         for i in range(self._cfg.federate.client_num+1):
-            p = os.path.join(self._cfg.hpo.working_folder, 'client_%d_encoding.pt' % i)
+            p = os.path.join(self._cfg.hpo.working_folder,
+                             'client_%d_encoding.pt' % i)
             if os.path.exists(p):
                 t = torch.load(p)
                 encoding_tensor.append(t)
@@ -123,24 +126,19 @@ class pFedHPOServer(Server):
                                      device=self._cfg.device,
                                      var=self.var).to(self._cfg.device)
         else:
-            self.HyperNet = DisHyperNet(encoding=encoding_tensor,
-                                     cands=self.pbounds,
-                                     n_clients=client_num,
-                                     device=self._cfg.device,
-                                     ).to(self._cfg.device)
+            self.HyperNet = DisHyperNet(
+                encoding=encoding_tensor, cands=self.pbounds,
+                n_clients=client_num, device=self._cfg.device,)\
+                .to(self._cfg.device)
 
-        self.saved_models = [None] * self._cfg.hpo.pfedhpo.target_fl_total_round
-        # self.opt_params = list(self.HyperNet.EncNet.parameters()) + list(self.HyperNet.meanNet.parameters())
-
-        # self.opt_params = self.HyperNet.parameters()
+        self.saved_models = [None] * self._cfg.hpo.pfedhpo.\
+            target_fl_total_round
         self.opt_params = self.HyperNet.EncNet.parameters()
 
 
         self.opt = torch.optim.Adam(
-            [{'params': self.HyperNet.EncNet.parameters(), 'lr': 0.001, 'weight_decay': 1e-4},
-             # {'params': self.HyperNet.encoding, 'lr': 0.001,
-             #  'weight_decay': 1e-4
-             #  }
+            [{'params': self.HyperNet.EncNet.parameters(),
+              'lr': 0.001, 'weight_decay': 1e-4},
              ])
 
         with open(os.path.join(self._cfg.hpo.working_folder,

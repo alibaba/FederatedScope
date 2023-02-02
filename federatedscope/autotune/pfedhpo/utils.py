@@ -111,7 +111,7 @@ class HyperNet(nn.Module):
 
         cov_matrix = torch.eye(mean.shape[-1]).to(mean.device) * self.var
         dist = MultivariateNormal(loc=mean,
-                    covariance_matrix=cov_matrix)
+                                  covariance_matrix=cov_matrix)
         sample = dist.sample()
         sample = torch.clamp(sample, 0., 1.)
         logprob = dist.log_prob(sample)
@@ -153,7 +153,8 @@ def x2conf(x, pbounds, ss):
 
 class AngularPenaltySMLoss(nn.Module):
 
-    def __init__(self, in_features, out_features, loss_type='arcface', eps=1e-7, s=None, m=None):
+    def __init__(self, in_features, out_features,
+                 loss_type='arcface', eps=1e-7, s=None, m=None):
         '''
         Angular Penalty Softmax Loss
 
@@ -198,16 +199,21 @@ class AngularPenaltySMLoss(nn.Module):
 
         wf = self.fc(x)
         if self.loss_type == 'cosface':
-            numerator = self.s * (torch.diagonal(wf.transpose(0, 1)[labels]) - self.m)
+            numerator = self.s * (torch.diagonal(wf.transpose(0, 1)[labels])
+                                  - self.m)
         if self.loss_type == 'arcface':
             numerator = self.s * torch.cos(torch.acos(
-                torch.clamp(torch.diagonal(wf.transpose(0, 1)[labels]), -1. + self.eps, 1 - self.eps)) + self.m)
+                torch.clamp(torch.diagonal(wf.transpose(0, 1)[labels]),
+                            -1. + self.eps, 1 - self.eps)) + self.m)
         if self.loss_type == 'sphereface':
             numerator = self.s * torch.cos(self.m * torch.acos(
-                torch.clamp(torch.diagonal(wf.transpose(0, 1)[labels]), -1. + self.eps, 1 - self.eps)))
+                torch.clamp(torch.diagonal(wf.transpose(0, 1)[labels]),
+                            -1. + self.eps, 1 - self.eps)))
 
-        excl = torch.cat([torch.cat((wf[i, :y], wf[i, y + 1:])).unsqueeze(0) for i, y in enumerate(labels)], dim=0)
-        denominator = torch.exp(numerator) + torch.sum(torch.exp(self.s * excl), dim=1)
+        excl = torch.cat([torch.cat((wf[i, :y], wf[i, y + 1:])).unsqueeze(0)
+                          for i, y in enumerate(labels)], dim=0)
+        denominator = torch.exp(numerator) + \
+                      torch.sum(torch.exp(self.s * excl), dim=1)
         L = numerator - torch.log(denominator)
         return -torch.mean(L)
 
@@ -262,7 +268,8 @@ def rff_rahimi_recht(x, rff_params):
 
 def weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234):
     np.random.seed(seed)
-    w_freq = pt.tensor(np.random.randn(d_rff, d_enc) / np.sqrt(sig)).to(pt.float32).to(device)
+    w_freq = pt.tensor(np.random.randn(d_rff, d_enc) /
+                       np.sqrt(sig)).to(pt.float32).to(device)
     b_freq = pt.tensor(np.random.rand(d_rff) * (2 * np.pi * sig)).to(device)
     return rff_param_tuple(w=w_freq, b=b_freq)
 
