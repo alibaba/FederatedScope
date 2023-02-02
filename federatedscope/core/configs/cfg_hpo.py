@@ -80,7 +80,6 @@ def assert_hpo_cfg(cfg):
 
     assert cfg.hpo.num_workers >= 0, "#worker should be non-negative but " \
                                      "given {}".format(cfg.hpo.num_workers)
-
     assert not (cfg.hpo.fedex.use and cfg.federate.use_ss
                 ), "Cannot use secret sharing and FedEx at the same time"
     assert cfg.train.optimizer.type == 'SGD' or not cfg.hpo.fedex.use, \
@@ -89,7 +88,7 @@ def assert_hpo_cfg(cfg):
         'adaptive', 'aggressive', 'auto', 'constant', 'scale'
     ], "schedule of FedEx must be choice from {}".format(
         ['adaptive', 'aggressive', 'auto', 'constant', 'scale'])
-    assert cfg.hpo.fedex.gamma >= .0 and cfg.hpo.fedex.gamma <= 1.0, \
+    assert not cfg.hpo.fedex.gamma < .0 and cfg.hpo.fedex.gamma <= 1.0, \
         "{} must be in [0, 1]".format(cfg.hpo.fedex.gamma)
     assert cfg.hpo.fedex.use == cfg.federate.use_diff, "Once FedEx is " \
                                                        "adopted, " \
