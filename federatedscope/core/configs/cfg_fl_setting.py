@@ -204,13 +204,14 @@ def assert_fl_setting_cfg(cfg):
                            f"but got {cfg.model.type}. Therefore "
                            f"cfg.model.type is changed to 'lr' here")
             cfg.model.type = 'lr'
-        if cfg.vertical.algo == 'xgb' and hasattr(cfg, "trainer") and \
-                cfg.trainer.type.lower() != 'verticaltrainer':
-            logger.warning(f"When given cfg.vertical.algo = 'xgb', the value "
-                           f"of cfg.trainer.type is expected to be "
-                           f"'verticaltrainer' but got {cfg.trainer.type}. "
-                           f"Therefore cfg.trainer.type is changed to "
-                           f"'verticaltrainer' here")
+        if cfg.vertical.algo in ['xgb', 'gbdt'] and hasattr(cfg, "trainer") \
+                and cfg.trainer.type.lower() != 'verticaltrainer':
+            logger.warning(
+                f"When given cfg.vertical.algo = 'xgb' or 'gbdt', the value "
+                f"of cfg.trainer.type is expected to be "
+                f"'verticaltrainer' but got {cfg.trainer.type}. "
+                f"Therefore cfg.trainer.type is changed to "
+                f"'verticaltrainer' here")
             cfg.trainer.type = 'verticaltrainer'
         if cfg.vertical.algo == 'xgb' and hasattr(cfg, "model") and \
                 cfg.model.type != 'xgb_tree':
@@ -219,6 +220,13 @@ def assert_fl_setting_cfg(cfg):
                            f"but got {cfg.model.type}. Therefore "
                            f"cfg.model.type is changed to 'xgb_tree' here")
             cfg.model.type = 'xgb_tree'
+        elif cfg.vertical.algo == 'gbdt' and hasattr(cfg, "model") and \
+                cfg.model.type != 'gbdt_tree':
+            logger.warning(f"When given cfg.vertical.algo = 'gbdt', the value "
+                           f"of cfg.model.type is expected to be 'gbdt_tree' "
+                           f"but got {cfg.model.type}. Therefore "
+                           f"cfg.model.type is changed to 'gbdt_tree' here")
+            cfg.model.type = 'gbdt_tree'
 
 
 register_config("fl_setting", extend_fl_setting_cfg)
