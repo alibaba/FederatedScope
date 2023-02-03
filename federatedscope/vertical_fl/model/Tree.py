@@ -37,12 +37,15 @@ class Tree(object):
     def cal_gain(self, grad, hess, split_idx):
         left_grad = np.sum(grad[:split_idx])
         right_grad = np.sum(grad[split_idx:])
-        left_hess = np.sum(hess[:split_idx])
-        right_hess = np.sum(hess[split_idx:])
-        left_gain = self._gain(left_grad, left_hess)
-        right_gain = self._gain(right_grad, right_hess)
-        total_gain = self._gain(left_grad + right_grad, left_hess + right_hess)
-        return (left_gain + right_gain - total_gain) * 0.5 - self.gamma
+        # left_hess = np.sum(hess[:split_idx])
+        # right_hess = np.sum(hess[split_idx:])
+        # left_gain = self._gain(left_grad, left_hess)
+        # right_gain = self._gain(right_grad, right_hess)
+        # total_gain =
+        # self._gain(left_grad + right_grad, left_hess + right_hess)
+        return left_grad**2 / (split_idx + self.lambda_) + right_grad**2 / (
+            len(grad) - split_idx + self.lambda_)
+        # return (left_gain + right_gain - total_gain) * 0.5 - self.gamma
 
     def split_childern(self, data, feature_value):
         left_index = [1 if x < feature_value else 0 for x in data]
@@ -52,7 +55,9 @@ class Tree(object):
     def set_weight(self, node_num):
         sum_of_g = np.sum(self.tree[node_num].grad)
         sum_of_h = np.sum(self.tree[node_num].hess)
-        weight = -sum_of_g / (sum_of_h + self.lambda_)
+        # weight = -sum_of_g / (sum_of_h + self.lambda_)
+        weight = -sum_of_g / (np.sum(self.tree[node_num].indicator) +
+                              self.lambda_)
         self.tree[node_num].weight = weight
 
     def set_status(self, node_num, status='off'):
