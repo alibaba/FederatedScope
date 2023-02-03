@@ -112,4 +112,5 @@ def assert_hpo_cfg(cfg):
     assert cfg.hpo.fts.use == cfg.federate.use_diff, \
         "Once FTS is adopted, federate.use_diff must be True."
 
+
 register_config("hpo", extend_hpo_cfg)

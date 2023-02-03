@@ -47,9 +47,9 @@ class pFedHPOFLServer(Server):
             self._grid = sorted(ss.keys())
             self._cfsp = [ss[pn] for pn in self._grid]
 
-        super(pFedHPOFLServer, self).__init__(
-            ID, state, config, data, model, client_num,
-            total_round_num, device, strategy, **kwargs)
+        super(pFedHPOFLServer,
+              self).__init__(ID, state, config, data, model, client_num,
+                             total_round_num, device, strategy, **kwargs)
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
 
         self.train_anchor = self._cfg.hpo.pfedhpo.train_anchor
@@ -63,7 +63,8 @@ class pFedHPOFLServer(Server):
         if not self.discrete:
             for k, v in self._ss.items():
                 if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
-                    raise ValueError("Unsupported hyper type {}".format(type(v)))
+                    raise ValueError("Unsupported hyper type {}".format(
+                        type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -76,7 +77,8 @@ class pFedHPOFLServer(Server):
                     if hasattr(v, 'choices'):
                         self.pbounds[k] = list(v.choices)
                     else:
-                        raise ValueError("Unsupported hyper type {}".format(type(v)))
+                        raise ValueError("Unsupported hyper type {}".format(
+                            type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -92,8 +94,9 @@ class pFedHPOFLServer(Server):
         self.client2idx = None
 
         if not self.train_anchor:
-            hyper_enc = torch.load(os.path.join(self._cfg.hpo.working_folder,
-                                                'hyperNet_encoding.pt'))
+            hyper_enc = torch.load(
+                os.path.join(self._cfg.hpo.working_folder,
+                             'hyperNet_encoding.pt'))
             if self._cfg.data.type == 'mini-graph-dc':
                 dim = 60
             elif 'cifar' in str(self._cfg.data.type).lower():
@@ -113,11 +116,12 @@ class pFedHPOFLServer(Server):
                                          device=self._cfg.device,
                                          var=0.01).to(self._cfg.device)
             else:
-                self.HyperNet = DisHyperNet(encoding=self.client_encoding,
-                                            cands=self.pbounds,
-                                            n_clients=client_num,
-                                            device=self._cfg.device,
-                                            ).to(self._cfg.device)
+                self.HyperNet = DisHyperNet(
+                    encoding=self.client_encoding,
+                    cands=self.pbounds,
+                    n_clients=client_num,
+                    device=self._cfg.device,
+                ).to(self._cfg.device)
 
             self.HyperNet.load_state_dict(hyper_enc['hyperNet'])
             self.HyperNet.eval()
@@ -164,8 +168,9 @@ class pFedHPOFLServer(Server):
         """
 
         if self.train_anchor:
-            ckpt_path = os.path.join(self._cfg.hpo.working_folder,
-                                     'temp_model_round_%d.pt' % (int(self.state)))
+            ckpt_path = os.path.join(
+                self._cfg.hpo.working_folder,
+                'temp_model_round_%d.pt' % (int(self.state)))
             torch.save(self.model.state_dict(), ckpt_path)
 
         if filter_unseen_clients:
@@ -208,25 +213,25 @@ class pFedHPOFLServer(Server):
                 sampled_cfg = None
             else:
                 if not self.discrete:
-                    sampled_cfg = x2conf(self.raw_params[self.client2idx[rcv_idx]], self.pbounds, self._ss)
+                    sampled_cfg = x2conf(
+                        self.raw_params[self.client2idx[rcv_idx]],
+                        self.pbounds, self._ss)
                 else:
                     sampled_cfg = {}
 
-                    for i, (k, v) in zip(range(len(self.pbounds)), self.pbounds.items()):
+                    for i, (k, v) in zip(range(len(self.pbounds)),
+                                         self.pbounds.items()):
                         probs = self.logits[i][self.client2idx[rcv_idx]]
                         p = v[torch.argmax(probs).item()]
 
                         if hasattr(self._ss[k], 'log') and self._ss[k].log:
-                            p = 10 ** p
+                            p = 10**p
                         if 'int' in str(type(self._ss[k])).lower():
                             sampled_cfg[k] = int(p)
                         else:
                             sampled_cfg[k] = float(p)
 
-            content = {
-                'model_param': model_para,
-                'hyper_param': sampled_cfg
-            }
+            content = {'model_param': model_para, 'hyper_param': sampled_cfg}
             self.comm_manager.send(
                 Message(msg_type=msg_type,
                         sender=self.ID,
@@ -246,11 +251,11 @@ class pFedHPOFLServer(Server):
             self.sampler.change_state(self.unseen_clients_id, 'seen')
 
     def save_res(self, feedbacks):
-        feedbacks = {'round': self.state,
-                     'results': feedbacks}
+        feedbacks = {'round': self.state, 'results': feedbacks}
         line = str(feedbacks) + "\n"
-        with open(os.path.join(self._cfg.hpo.working_folder,
-                               'anchor_eval_results.log'), "a") as outfile:
+        with open(
+                os.path.join(self._cfg.hpo.working_folder,
+                             'anchor_eval_results.log'), "a") as outfile:
             outfile.write(line)
 
     def check_and_move_on(self,
@@ -292,7 +297,8 @@ class pFedHPOFLServer(Server):
 
                         # collect feedbacks for updating the policy
                         if model_idx == 0:
-                            mab_feedbacks[client_id] = train_msg_buffer[client_id][2]
+                            mab_feedbacks[client_id] = train_msg_buffer[
+                                client_id][2]
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
@@ -340,15 +346,16 @@ class pFedHPOFLServer(Server):
 
             else:  # in the evaluation process
                 # Get all the message & aggregate
-                logger.info('-'*30)
+                logger.info('-' * 30)
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
                 self.check_and_save()
 
             if self.train_anchor and self.history_results:
-                with open(os.path.join(self._cfg.hpo.working_folder,
-                                       'anchor_eval_results.json'), 'w') as f:
+                with open(
+                        os.path.join(self._cfg.hpo.working_folder,
+                                     'anchor_eval_results.json'), 'w') as f:
                     json.dump(self.history_results, f)
         else:
             move_on_flag = False

@@ -42,7 +42,13 @@ class PolicyNet(nn.Module):
 
 
 class DisHyperNet(nn.Module):
-    def __init__(self, encoding, cands, n_clients, device, ):
+    def __init__(
+        self,
+        encoding,
+        cands,
+        n_clients,
+        device,
+    ):
         super(DisHyperNet, self).__init__()
         num_params = len(cands)
         self.dim = input_dim = encoding.shape[1]
@@ -59,10 +65,8 @@ class DisHyperNet(nn.Module):
 
         self.out = nn.ModuleList()
         for k, v in cands.items():
-            self.out.append(nn.Sequential(
-                nn.Linear(64, len(v), bias=False),
-                nn.Softmax()
-            ))
+            self.out.append(
+                nn.Sequential(nn.Linear(64, len(v), bias=False), nn.Softmax()))
 
     def forward(self):
         client_enc = self.EncNet(self.encoding)
@@ -85,10 +89,8 @@ class HyperNet(nn.Module):
 
         self.EncNet = EncNet(input_dim, num_params)
         self.meanNet = PolicyNet(num_params, num_params)
-        self.combine = nn.Sequential(
-            nn.Linear(num_params * 2, num_params),
-            nn.Sigmoid()
-        )
+        self.combine = nn.Sequential(nn.Linear(num_params * 2, num_params),
+                                     nn.Sigmoid())
 
         self.alpha = 0.8
 
@@ -132,15 +134,19 @@ def x2conf(x, pbounds, ss):
         l, u = b
         p = float(1. * x[i] * (u - l) + l)
         if p_inst.log:
-            p = 10 ** p
+            p = 10**p
         params[k] = int(p) if 'int' in str(type(p_inst)).lower() else p
     return params
 
 
 class AngularPenaltySMLoss(nn.Module):
-
-    def __init__(self, in_features, out_features,
-                 loss_type='arcface', eps=1e-7, s=None, m=None):
+    def __init__(self,
+                 in_features,
+                 out_features,
+                 loss_type='arcface',
+                 eps=1e-7,
+                 s=None,
+                 m=None):
         super(AngularPenaltySMLoss, self).__init__()
         loss_type = loss_type.lower()
         assert loss_type in ['arcface', 'sphereface', 'cosface']
@@ -170,19 +176,23 @@ class AngularPenaltySMLoss(nn.Module):
 
         wf = self.fc(x)
         if self.loss_type == 'cosface':
-            numerator = self.s * (torch.diagonal(wf.transpose(0, 1)[labels])
-                                  - self.m)
+            numerator = self.s * (torch.diagonal(wf.transpose(0, 1)[labels]) -
+                                  self.m)
         if self.loss_type == 'arcface':
-            numerator = self.s * torch.cos(torch.acos(
-                torch.clamp(torch.diagonal(wf.transpose(0, 1)[labels]),
-                            -1. + self.eps, 1 - self.eps)) + self.m)
+            numerator = self.s * torch.cos(
+                torch.acos(
+                    torch.clamp(torch.diagonal(wf.transpose(0, 1)[labels]),
+                                -1. + self.eps, 1 - self.eps)) + self.m)
         if self.loss_type == 'sphereface':
             numerator = self.s * torch.cos(self.m * torch.acos(
                 torch.clamp(torch.diagonal(wf.transpose(0, 1)[labels]),
                             -1. + self.eps, 1 - self.eps)))
 
-        excl = torch.cat([torch.cat((wf[i, :y], wf[i, y + 1:])).unsqueeze(0)
-                          for i, y in enumerate(labels)], dim=0)
+        excl = torch.cat([
+            torch.cat((wf[i, :y], wf[i, y + 1:])).unsqueeze(0)
+            for i, y in enumerate(labels)
+        ],
+                         dim=0)
         denominator = torch.exp(numerator) + torch.sum(
             torch.exp(self.s * excl), dim=1)
         L = numerator - torch.log(denominator)
@@ -235,15 +245,20 @@ def rff_rahimi_recht(x, rff_params):
 
 def weights_rahimi_recht(d_rff, d_enc, sig, device, seed=1234):
     np.random.seed(seed)
-    w_freq = pt.tensor(np.random.randn(d_rff, d_enc) /
-                       np.sqrt(sig)).to(pt.float32).to(device)
+    w_freq = pt.tensor(np.random.randn(d_rff, d_enc) / np.sqrt(sig)).to(
+        pt.float32).to(device)
     b_freq = pt.tensor(np.random.rand(d_rff) * (2 * np.pi * sig)).to(device)
     return rff_param_tuple(w=w_freq, b=b_freq)
 
 
-def data_label_embedding(data, labels, rff_params, mmd_type,
-                         labels_to_one_hot=False, n_labels=None,
-                         device=None, reduce='mean'):
+def data_label_embedding(data,
+                         labels,
+                         rff_params,
+                         mmd_type,
+                         labels_to_one_hot=False,
+                         n_labels=None,
+                         device=None,
+                         reduce='mean'):
     assert reduce in {'mean', 'sum'}
     if labels_to_one_hot:
         batch_size = data.shape[0]
@@ -257,9 +272,16 @@ def data_label_embedding(data, labels, rff_params, mmd_type,
     return pt.mean(embedding, 0) if reduce == 'mean' else pt.sum(embedding, 0)
 
 
-def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff,
-                            device, n_labels, noise_factor,
-                            mmd_type, sum_frequency=25, graph=False):
+def noisy_dataset_embedding(train_loader,
+                            d_enc,
+                            sig,
+                            d_rff,
+                            device,
+                            n_labels,
+                            noise_factor,
+                            mmd_type,
+                            sum_frequency=25,
+                            graph=False):
     emb_acc = []
     n_data = 0
 
@@ -275,15 +297,26 @@ def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff,
             if mmd_type == 'sphere':
                 w_freq = weights_sphere(d_rff, d_enc, sig, device, seed=1234)
             else:
-                w_freq = weights_rahimi_recht(
-                    d_rff, d_enc, sig, device, seed=1234)
+                w_freq = weights_rahimi_recht(d_rff,
+                                              d_enc,
+                                              sig,
+                                              device,
+                                              seed=1234)
 
-            data = flat_data(data, labels, device,
-                             n_labels=n_labels, add_label=False)
-            emb_acc.append(data_label_embedding(
-                data, labels, w_freq, mmd_type,
-                labels_to_one_hot=True, n_labels=n_labels,
-                device=device, reduce='sum'))
+            data = flat_data(data,
+                             labels,
+                             device,
+                             n_labels=n_labels,
+                             add_label=False)
+            emb_acc.append(
+                data_label_embedding(data,
+                                     labels,
+                                     w_freq,
+                                     mmd_type,
+                                     labels_to_one_hot=True,
+                                     n_labels=n_labels,
+                                     device=device,
+                                     reduce='sum'))
             n_data += data.shape[0]
 
             if len(emb_acc) > sum_frequency:
@@ -292,12 +325,20 @@ def noisy_dataset_embedding(train_loader, d_enc, sig, d_rff,
     else:
         for data, labels in train_loader:
             data, labels = data.to(device), labels.to(device)
-            data = flat_data(data, labels, device,
-                             n_labels=n_labels, add_label=False)
-            emb_acc.append(data_label_embedding(
-                data, labels, w_freq, mmd_type,
-                labels_to_one_hot=True, n_labels=n_labels,
-                device=device, reduce='sum'))
+            data = flat_data(data,
+                             labels,
+                             device,
+                             n_labels=n_labels,
+                             add_label=False)
+            emb_acc.append(
+                data_label_embedding(data,
+                                     labels,
+                                     w_freq,
+                                     mmd_type,
+                                     labels_to_one_hot=True,
+                                     n_labels=n_labels,
+                                     device=device,
+                                     reduce='sum'))
             n_data += data.shape[0]
 
             if len(emb_acc) > sum_frequency:

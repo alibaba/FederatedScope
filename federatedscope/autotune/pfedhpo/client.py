@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class pFedHPOClient(Client):
-
     def __init__(self,
                  ID=-1,
                  server_id=None,
@@ -27,8 +26,9 @@ class pFedHPOClient(Client):
                  *args,
                  **kwargs):
 
-        super(pFedHPOClient, self).__init__(ID, server_id, state, config,
-            data, model, device, strategy, is_unseen_client, *args, **kwargs)
+        super(pFedHPOClient,
+              self).__init__(ID, server_id, state, config, data, model, device,
+                             strategy, is_unseen_client, *args, **kwargs)
 
         if self._cfg.hpo.pfedhpo.train_fl and \
                 self._cfg.hpo.pfedhpo.train_anchor:
@@ -61,19 +61,30 @@ class pFedHPOClient(Client):
                 raise NotImplementedError
 
             mmd_type = 'sphere'
-            rff_sigma = [127,]
+            rff_sigma = [
+                127,
+            ]
             rff_sigma = [float(sig) for sig in rff_sigma]
 
             embs = []
             for sig in rff_sigma:
-                emb = noisy_dataset_embedding(
-                    data['train'], d_enc, sig, d_rff, device,
-                    n_labels=n_label, noise_factor=0.1,
-                    mmd_type=mmd_type, sum_frequency=25, graph=graph)
+                emb = noisy_dataset_embedding(data['train'],
+                                              d_enc,
+                                              sig,
+                                              d_rff,
+                                              device,
+                                              n_labels=n_label,
+                                              noise_factor=0.1,
+                                              mmd_type=mmd_type,
+                                              sum_frequency=25,
+                                              graph=graph)
                 embs.append(emb)
             feats = torch.cat(embs).reshape(-1)
 
-            torch.save(feats, os.path.join(self._cfg.hpo.working_folder, 'client_%d_encoding.pt' % self.ID))
+            torch.save(
+                feats,
+                os.path.join(self._cfg.hpo.working_folder,
+                             'client_%d_encoding.pt' % self.ID))
 
     def _apply_hyperparams(self, hyperparams):
         """Apply the given hyperparameters
@@ -95,12 +106,13 @@ class pFedHPOClient(Client):
 
     def callback_funcs_for_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
-        model_params, hyperparams = content["model_param"], content["hyper_param"]
+        model_params, hyperparams = content["model_param"], content[
+            "hyper_param"]
         attempt = {
             'Role': 'Client #{:d}'.format(self.ID),
             'Hyperparams': hyperparams
         }
-        logger.info('-'*30)
+        logger.info('-' * 30)
         logger.info(attempt)
 
         if hyperparams is not None:

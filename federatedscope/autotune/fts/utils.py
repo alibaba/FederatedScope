@@ -25,15 +25,13 @@ SUCCESS_MESSAGES = (
     'The volume of the hyperrectangle with best function value found is '
     'below volper',
     'The volume of the hyperrectangle with best function value found is '
-    'smaller then volper'
-)
+    'smaller then volper')
 
 
 class OptimizeResult(dict):
     """
     Represents the optimization result.
     """
-
     def __getattr__(self, name):
         try:
             return self[name]
@@ -46,8 +44,8 @@ class OptimizeResult(dict):
     def __repr__(self):
         if self.keys():
             m = max(map(len, list(self.keys()))) + 1
-            return '\n'.join([k.rjust(m) + ': ' + repr(v)
-                              for k, v in self.items()])
+            return '\n'.join(
+                [k.rjust(m) + ': ' + repr(v) for k, v in self.items()])
         else:
             return self.__class__.__name__ + "()"
 
@@ -66,8 +64,7 @@ def minimize(func,
              fglper=0.01,
              volper=-1.0,
              sigmaper=-1.0,
-             **kwargs
-             ):
+             **kwargs):
     if bounds is None:
         lb = np.zeros(nvar, dtype=np.float64)
         ub = np.ones(nvar, dtype=np.float64)
@@ -85,35 +82,22 @@ def minimize(func,
     ddata = np.ones(0, dtype=np.float64)
     cdata = np.ones([0, 40], dtype=np.uint8)
 
-    x, fun, ierror = direct(
-        _objective_wrap,
-        eps,
-        maxf,
-        maxT,
-        lb,
-        ub,
-        algmethod,
-        'dummylogfile',
-        fglobal,
-        fglper,
-        volper,
-        sigmaper,
-        iidata,
-        ddata,
-        cdata,
-        disp
-    )
+    x, fun, ierror = direct(_objective_wrap, eps, maxf, maxT, lb, ub,
+                            algmethod, 'dummylogfile', fglobal, fglper, volper,
+                            sigmaper, iidata, ddata, cdata, disp)
 
-    return OptimizeResult(x=x, fun=fun, status=ierror, success=ierror > 0,
-                          message=SUCCESS_MESSAGES[ierror - 1] if ierror > 0
-                          else ERROR_MESSAGES[abs(ierror) - 1])
+    return OptimizeResult(x=x,
+                          fun=fun,
+                          status=ierror,
+                          success=ierror > 0,
+                          message=SUCCESS_MESSAGES[ierror - 1]
+                          if ierror > 0 else ERROR_MESSAGES[abs(ierror) - 1])
 
 
 class UtilityFunction(object):
     """
     An object to compute the acquisition functions.
     """
-
     def __init__(self, kind):
         if kind not in ['ts']:
             err = "The utility function " \
@@ -141,8 +125,8 @@ class UtilityFunction(object):
         features = np.sqrt(2 / M) * np.cos(np.squeeze(np.dot(x, s.T)) + b)
         features = features.reshape(-1, 1)
 
-        features = features / np.sqrt(np.inner(np.squeeze(features),
-                                               np.squeeze(features)))
+        features = features / np.sqrt(
+            np.inner(np.squeeze(features), np.squeeze(features)))
         features = np.sqrt(v_kernel) * features
         # v_kernel is set to be 1 here in the synthetic experiments
 
@@ -208,8 +192,7 @@ class PrintLog(object):
     def print_header(self, initialization=True):
 
         if initialization:
-            print("{}Initialization{}".format(BColours.RED,
-                                              BColours.ENDC))
+            print("{}Initialization{}".format(BColours.RED, BColours.ENDC))
         else:
             print("{}Bayesian Optimization{}".format(BColours.RED,
                                                      BColours.ENDC))
@@ -222,8 +205,7 @@ class PrintLog(object):
         print("{0:>{1}}".format("Value", 10), end=" | ")
 
         for index in self.sorti:
-            print("{0:>{1}}".format(self.params[index],
-                                    self.sizes[index] + 2),
+            print("{0:>{1}}".format(self.params[index], self.sizes[index] + 2),
                   end=" | ")
         print('')
 
@@ -237,31 +219,26 @@ class PrintLog(object):
         if self.ymax is None or self.ymax < y:
             self.ymax = y
             self.xmax = x
-            print("{0}{2: >10.5f}{1}".format(BColours.MAGENTA,
-                                             BColours.ENDC,
+            print("{0}{2: >10.5f}{1}".format(BColours.MAGENTA, BColours.ENDC,
                                              y),
                   end=" | ")
 
             for index in self.sorti:
                 print("{0}{2: >{3}.{4}f}{1}".format(
-                    BColours.GREEN, BColours.ENDC,
-                    x[index],
-                    self.sizes[index] + 2,
-                    min(self.sizes[index] - 3, 6 - 2)
-                ),
-                    end=" | ")
+                    BColours.GREEN, BColours.ENDC, x[index],
+                    self.sizes[index] + 2, min(self.sizes[index] - 3, 6 - 2)),
+                      end=" | ")
         else:
             print("{: >10.5f}".format(y), end=" | ")
             for index in self.sorti:
-                print("{0: >{1}.{2}f}".format(x[index],
-                                              self.sizes[index] + 2,
+                print("{0: >{1}.{2}f}".format(x[index], self.sizes[index] + 2,
                                               min(self.sizes[index] - 3, 4)),
                       end=" | ")
 
         if warning:
             print("{}Warning: Test point chose at "
-                  "random due to repeated sample.{}".format(BColours.RED,
-                                                            BColours.ENDC))
+                  "random due to repeated sample.{}".format(
+                      BColours.RED, BColours.ENDC))
 
         print()
 
@@ -272,18 +249,40 @@ class PrintLog(object):
         pass
 
 
-def acq_max(ac, gp, M, N, random_features, info_ts,
-            pt, ws, use_target_label, w_sample, y_max,
-            bounds, iteration, gp_samples=None, ):
-    para_dict = {"gp": gp, "M": M, "N": N,
-                 "random_features": random_features,
-                 "info_ts": info_ts, "pt": pt, "ws": ws,
-                 "use_target_label": use_target_label,
-                 "tmp_ucb": None, "w_sample": w_sample,
-                 "y_max": y_max, "iteration": iteration,
-                 "gp_samples": gp_samples, }
+def acq_max(
+    ac,
+    gp,
+    M,
+    N,
+    random_features,
+    info_ts,
+    pt,
+    ws,
+    use_target_label,
+    w_sample,
+    y_max,
+    bounds,
+    iteration,
+    gp_samples=None,
+):
+    para_dict = {
+        "gp": gp,
+        "M": M,
+        "N": N,
+        "random_features": random_features,
+        "info_ts": info_ts,
+        "pt": pt,
+        "ws": ws,
+        "use_target_label": use_target_label,
+        "tmp_ucb": None,
+        "w_sample": w_sample,
+        "y_max": y_max,
+        "iteration": iteration,
+        "gp_samples": gp_samples,
+    }
 
-    x_tries = np.random.uniform(bounds[:, 0], bounds[:, 1],
+    x_tries = np.random.uniform(bounds[:, 0],
+                                bounds[:, 1],
                                 size=(10000, bounds.shape[0]))
     ys = []
     for x in x_tries:
@@ -293,11 +292,14 @@ def acq_max(ac, gp, M, N, random_features, info_ts,
     x_max = x_tries[ys.argmax()]
     max_acq = ys.max()
     _num_trials = 1
-    x_seeds = np.random.uniform(bounds[:, 0], bounds[:, 1],
+    x_seeds = np.random.uniform(bounds[:, 0],
+                                bounds[:, 1],
                                 size=(_num_trials, bounds.shape[0]))
     for x_try in x_seeds:
         res = minimize(lambda _x, para_dict: -ac(_x.reshape(1, -1), para_dict),
-                       para_dict=para_dict, bounds=bounds, method="L-BFGS-B")
+                       para_dict=para_dict,
+                       bounds=bounds,
+                       method="L-BFGS-B")
         if max_acq is None or -res.fun >= max_acq:
             x_max = res.x
             max_acq = -res.fun
@@ -315,19 +317,32 @@ def x2conf(x, pbounds, ss):
         l, u = b
         p = float(1. * x[i] * (u - l) + l)
         if p_inst.log:
-            p = 10 ** p
+            p = 10**p
         params[k] = int(p) if 'int' in str(type(p_inst)).lower() else p
     return params
 
 
 class LocalBO(object):
-
-    def __init__(self, cid, f, bounds, keys, gp_opt_schedule=5,
-                 ARD=False, use_init=False, log_file=None,
-                 save_init=False, save_init_file=None,
-                 N=None, info_ts=None, pt=None,
-                 ls=None, var=None, g_var=None,
-                 P_N=None, M_target=100, verbose=1):
+    def __init__(self,
+                 cid,
+                 f,
+                 bounds,
+                 keys,
+                 gp_opt_schedule=5,
+                 ARD=False,
+                 use_init=False,
+                 log_file=None,
+                 save_init=False,
+                 save_init_file=None,
+                 N=None,
+                 info_ts=None,
+                 pt=None,
+                 ls=None,
+                 var=None,
+                 g_var=None,
+                 P_N=None,
+                 M_target=100,
+                 verbose=1):
         """
         f: the objective function of the target agent
         pbounds: dict of hyperparameter ranges e.g. {'lr':(lower, upper)}
@@ -380,11 +395,16 @@ class LocalBO(object):
         self.var = var
         self.g_var = g_var
         self.res = {}
-        self.res['max'] = {'max_val': None,
-                           'max_params': None}
-        self.res['all'] = {'values': [], 'params': [], 'init_values': [],
-                           'init_params': [], 'init': [], 'time_started': 0,
-                           'timestamps': []}
+        self.res['max'] = {'max_val': None, 'max_params': None}
+        self.res['all'] = {
+            'values': [],
+            'params': [],
+            'init_values': [],
+            'init_params': [],
+            'init': [],
+            'time_started': 0,
+            'timestamps': []
+        }
         self.cid = cid
         self.verbose = verbose
 
@@ -396,19 +416,24 @@ class LocalBO(object):
         obs_noise = self.gp["Gaussian_noise.variance"][0]
 
         s = np.random.multivariate_normal(
-            np.zeros(self.dim),
-            1 / (ls_target ** 2) * np.identity(self.dim), M_target)
+            np.zeros(self.dim), 1 / (ls_target**2) * np.identity(self.dim),
+            M_target)
         b = np.random.uniform(0, 2 * np.pi, M_target)
 
-        random_features_target = {"M": M_target, "length_scale": ls_target,
-                                  "s": s, "b": b, "obs_noise": obs_noise,
-                                  "v_kernel": v_kernel}
+        random_features_target = {
+            "M": M_target,
+            "length_scale": ls_target,
+            "s": s,
+            "b": b,
+            "obs_noise": obs_noise,
+            "v_kernel": v_kernel
+        }
 
         Phi = np.zeros((self.X.shape[0], M_target))
         for i, x in enumerate(self.X):
             x = np.squeeze(x).reshape(1, -1)
-            features = np.sqrt(2 / M_target) * np.cos(
-                np.squeeze(np.dot(x, s.T)) + b)
+            features = np.sqrt(
+                2 / M_target) * np.cos(np.squeeze(np.dot(x, s.T)) + b)
             features = features / np.sqrt(np.inner(features, features))
             features = np.sqrt(v_kernel) * features
             Phi[i, :] = features
@@ -416,16 +441,23 @@ class LocalBO(object):
         Sigma_t = np.dot(Phi.T, Phi) + obs_noise * np.identity(M_target)
         Sigma_t_inv = np.linalg.inv(Sigma_t)
         nu_t = np.dot(np.dot(Sigma_t_inv, Phi.T), self.Y.reshape(-1, 1))
-        w_sample = np.random.multivariate_normal(
-            np.squeeze(nu_t), obs_noise * Sigma_t_inv, 1)
+        w_sample = np.random.multivariate_normal(np.squeeze(nu_t),
+                                                 obs_noise * Sigma_t_inv, 1)
 
-        x_max, all_ucb = acq_max(ac=self.util_ts.utility, gp=self.gp,
-                                 M=M_target, N=self.N, gp_samples=None,
+        x_max, all_ucb = acq_max(ac=self.util_ts.utility,
+                                 gp=self.gp,
+                                 M=M_target,
+                                 N=self.N,
+                                 gp_samples=None,
                                  random_features=random_features_target,
-                                 info_ts=self.info_ts, pt=self.pt,
-                                 ws=self.ws, use_target_label=True,
-                                 w_sample=w_sample, y_max=y_max,
-                                 bounds=self.bounds, iteration=iteration)
+                                 info_ts=self.info_ts,
+                                 pt=self.pt,
+                                 ws=self.ws,
+                                 use_target_label=True,
+                                 w_sample=w_sample,
+                                 y_max=y_max,
+                                 bounds=self.bounds,
+                                 iteration=iteration)
         return x_max, all_ucb
 
     def maximize(self, init_points=5, n_iter=25):
@@ -447,9 +479,10 @@ class LocalBO(object):
             else:
                 if init_points > 0:
                     print('==> Random initialize')
-                    ls = [np.random.uniform(
-                        x[0], x[1],
-                        size=init_points) for x in self.bounds]
+                    ls = [
+                        np.random.uniform(x[0], x[1], size=init_points)
+                        for x in self.bounds
+                    ]
 
                     self.init_points += list(map(list, zip(*ls)))
                     y_init = []
@@ -476,8 +509,10 @@ class LocalBO(object):
 
         self.gp = GPy.models.GPRegression(
             self.X[ur], self.Y[ur].reshape(-1, 1),
-            GPy.kern.RBF(input_dim=self.X.shape[1], lengthscale=self.ls,
-                         variance=self.var, ARD=self.ARD))
+            GPy.kern.RBF(input_dim=self.X.shape[1],
+                         lengthscale=self.ls,
+                         variance=self.var,
+                         ARD=self.ARD))
         self.gp["Gaussian_noise.variance"][0] = self.g_var
         print("---Client %d initial hyper: " % self.cid, self.gp)
 
@@ -489,9 +524,9 @@ class LocalBO(object):
         for i in range(n_iter):
             if not self.X.shape[0] == 0:
                 if np.any(np.all(self.X - x_max == 0, axis=1)):
-                    x_max = np.random.uniform(
-                        self.bounds[:, 0], self.bounds[:, 1],
-                        size=self.bounds.shape[0])
+                    x_max = np.random.uniform(self.bounds[:, 0],
+                                              self.bounds[:, 1],
+                                              size=self.bounds.shape[0])
 
             curr_y = self.f(x_max)
             self.res["all"]["timestamps"].append(time.time())
@@ -505,7 +540,8 @@ class LocalBO(object):
 
             if i >= self.gp_opt_schedule and i % self.gp_opt_schedule == 0:
                 self.gp.optimize_restarts(num_restarts=10,
-                                          messages=False, verbose=False)
+                                          messages=False,
+                                          verbose=False)
                 self.gp_params = self.gp.parameters
             if i == n_iter - 1:
                 print("---Client %d optimized hyper: " % self.cid, self.gp)
@@ -523,8 +559,10 @@ class LocalBO(object):
 
             self.i += 1
             x_max_param = self.X[self.Y.argmax(), :-1]
-            self.res['max'] = {'max_val': self.Y.max(),
-                               'max_params': dict(zip(self.keys, x_max_param))}
+            self.res['max'] = {
+                'max_val': self.Y.max(),
+                'max_params': dict(zip(self.keys, x_max_param))
+            }
             self.res['all']['values'].append(self.Y[-1])
             self.res['all']['params'].append(self.X[-1])
 

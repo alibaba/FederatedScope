@@ -55,9 +55,9 @@ class pFedHPOServer(Server):
             self._grid = sorted(ss.keys())
             self._cfsp = [ss[pn] for pn in self._grid]
 
-        super(pFedHPOServer, self).__init__(
-            ID, state, config, data, model, client_num,
-            total_round_num, device, strategy, **kwargs)
+        super(pFedHPOServer,
+              self).__init__(ID, state, config, data, model, client_num,
+                             total_round_num, device, strategy, **kwargs)
 
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self.discrete = self._cfg.hpo.pfedhpo.discrete
@@ -70,8 +70,8 @@ class pFedHPOServer(Server):
         if not self.discrete:
             for k, v in self._ss.items():
                 if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
-                    raise ValueError("Unsupported hyper type {}"
-                                     .format(type(v)))
+                    raise ValueError("Unsupported hyper type {}".format(
+                        type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -84,8 +84,8 @@ class pFedHPOServer(Server):
                     if hasattr(v, 'choices'):
                         self.pbounds[k] = list(v.choices)
                     else:
-                        raise ValueError("Unsupported hyper type {}"
-                                         .format(type(v)))
+                        raise ValueError("Unsupported hyper type {}".format(
+                            type(v)))
                 else:
                     if v.log:
                         l, u = np.log10(v.lower), np.log10(v.upper)
@@ -109,9 +109,8 @@ class pFedHPOServer(Server):
         else:
             self.logprob_max = 1.
 
-
         encoding_tensor = []
-        for i in range(self._cfg.federate.client_num+1):
+        for i in range(self._cfg.federate.client_num + 1):
             p = os.path.join(self._cfg.hpo.working_folder,
                              'client_%d_encoding.pt' % i)
             if os.path.exists(p):
@@ -135,14 +134,17 @@ class pFedHPOServer(Server):
             target_fl_total_round
         self.opt_params = self.HyperNet.EncNet.parameters()
 
+        self.opt = torch.optim.Adam([
+            {
+                'params': self.HyperNet.EncNet.parameters(),
+                'lr': 0.001,
+                'weight_decay': 1e-4
+            },
+        ])
 
-        self.opt = torch.optim.Adam(
-            [{'params': self.HyperNet.EncNet.parameters(),
-              'lr': 0.001, 'weight_decay': 1e-4},
-             ])
-
-        with open(os.path.join(self._cfg.hpo.working_folder,
-                               'anchor_eval_results.json'), 'r') as f:
+        with open(
+                os.path.join(self._cfg.hpo.working_folder,
+                             'anchor_eval_results.json'), 'r') as f:
             self.anchor_res = json.load(f)
         self.anchor_res_smooth = None
 
@@ -172,10 +174,11 @@ class pFedHPOServer(Server):
 
         if msg_type == 'model_para':
             # random sample start round and load saved global model
-            self.start_round = np.random.randint(1,
-                self._cfg.hpo.pfedhpo.target_fl_total_round)
-            logger.info('==> Sampled start round: %d'%self.start_round)
-            ckpt_path = os.path.join(self._cfg.hpo.working_folder,
+            self.start_round = np.random.randint(
+                1, self._cfg.hpo.pfedhpo.target_fl_total_round)
+            logger.info('==> Sampled start round: %d' % self.start_round)
+            ckpt_path = os.path.join(
+                self._cfg.hpo.working_folder,
                 'temp_model_round_%d.pt' % self.start_round)
             if self.model_num > 1:
                 raise NotImplementedError
@@ -195,7 +198,8 @@ class pFedHPOServer(Server):
         if not self.discrete:
             var_max = 2.0
             var_min = 0.1
-            var = var_max + (var_min - var_max) / (0.5 * self.total_round_num) * self.state
+            var = var_max + (var_min - var_max) / (
+                0.5 * self.total_round_num) * self.state
             if var < 0.1:
                 var = 0.1
             self.HyperNet.var = var
@@ -214,19 +218,21 @@ class pFedHPOServer(Server):
         self.sampled = False
         for rcv_idx in self.receiver:
             if not self.discrete:
-                sampled_cfg = x2conf(xs[self.client2idx[rcv_idx]], self.pbounds, self._ss)
+                sampled_cfg = x2conf(xs[self.client2idx[rcv_idx]],
+                                     self.pbounds, self._ss)
             else:
                 client_logprob = 0.
                 sampled_cfg = {}
 
-                for i, (k, v) in zip(range(len(self.pbounds)), self.pbounds.items()):
+                for i, (k, v) in zip(range(len(self.pbounds)),
+                                     self.pbounds.items()):
                     probs = logits[i][self.client2idx[rcv_idx]]
                     m = torch.distributions.Categorical(probs)
 
                     idx = m.sample()
                     p = v[idx.item()]
                     if hasattr(self._ss[k], 'log') and self._ss[k].log:
-                        p = 10 ** p
+                        p = 10**p
                     if 'int' in str(type(self._ss[k])).lower():
                         sampled_cfg[k] = int(p)
                     else:
@@ -234,14 +240,13 @@ class pFedHPOServer(Server):
 
                     log_prob = m.log_prob(idx)
                     client_logprob += log_prob
-                    self.p_idx[k][self.client2idx[rcv_idx]] = torch.argmax(probs)
+                    self.p_idx[k][self.client2idx[rcv_idx]] = torch.argmax(
+                        probs)
 
-                self.logprob[self.client2idx[rcv_idx]] = client_logprob / len(self.pbounds)
+                self.logprob[self.client2idx[rcv_idx]] = client_logprob / len(
+                    self.pbounds)
 
-            content = {
-                'model_param': model_para,
-                'hyper_param': sampled_cfg
-            }
+            content = {'model_param': model_para, 'hyper_param': sampled_cfg}
             self.comm_manager.send(
                 Message(msg_type=msg_type,
                         sender=self.ID,
@@ -286,20 +291,20 @@ class pFedHPOServer(Server):
             res_end = \
                 self.history_results['Results_weighted_avg']['test_acc'][-1]
         else:
-            anchor_res_start = self.anchor_res[key1][key2][self.start_round-1]
+            anchor_res_start = self.anchor_res[key1][key2][self.start_round -
+                                                           1]
             res_end = self.history_results[key1][key2][-1]
 
         if not self.discrete:
 
             reward = np.maximum(0, res_end - anchor_res_start)
-            losses = - reward * self.logprob
+            losses = -reward * self.logprob
 
         else:
             reward = np.maximum(0, res_end - anchor_res_start) \
                      * anchor_res_start
             self.logprob = torch.stack(self.logprob, dim=-1)
-            losses = F.relu(- reward * self.logprob * 100)
-
+            losses = F.relu(-reward * self.logprob * 100)
 
         self.opt.zero_grad()
         loss = losses.mean()
@@ -311,17 +316,20 @@ class pFedHPOServer(Server):
 
         for cid in self.fb.keys():
             idx = self.client2idx[cid]
-            self.tb_writer.add_scalar('loss_%d'%cid, losses[idx], self.state)
+            self.tb_writer.add_scalar('loss_%d' % cid, losses[idx], self.state)
             if not self.discrete:
-                self.tb_writer.add_scalar('logprob_%d'%cid, self.logprob[idx], self.state)
-                self.tb_writer.add_scalar('entropy_%d'%cid, self.entropy[idx], self.state)
+                self.tb_writer.add_scalar('logprob_%d' % cid,
+                                          self.logprob[idx], self.state)
+                self.tb_writer.add_scalar('entropy_%d' % cid,
+                                          self.entropy[idx], self.state)
             else:
-                self.tb_writer.add_scalar('logprob_%d'%cid, self.logprob[idx], self.state)
+                self.tb_writer.add_scalar('logprob_%d' % cid,
+                                          self.logprob[idx], self.state)
                 for k in self.pbounds.keys():
-                    self.tb_writer.add_scalar('%s_%d'%(k,cid), self.p_idx[k][idx], self.state)
+                    self.tb_writer.add_scalar('%s_%d' % (k, cid),
+                                              self.p_idx[k][idx], self.state)
         self.tb_writer.add_scalar('loss', loss, self.state)
         self.tb_writer.add_scalar('reward', reward, self.state)
-
 
     def check_and_move_on(self,
                           check_eval_result=False,
@@ -362,7 +370,8 @@ class pFedHPOServer(Server):
 
                         # collect feedbacks for updating the policy
                         if model_idx == 0:
-                            mab_feedbacks[client_id] = train_msg_buffer[client_id][2]
+                            mab_feedbacks[client_id] = train_msg_buffer[
+                                client_id][2]
 
                     # Trigger the monitor here (for training)
                     if 'dissim' in self._cfg.eval.monitoring:
@@ -387,13 +396,13 @@ class pFedHPOServer(Server):
                 self.state += 1
                 #  Evaluate
                 logger.info(
-                    'Server: Starting evaluation at begin of round {:d}.'.format(
-                        self.state))
+                    'Server: Starting evaluation at begin of round {:d}.'.
+                    format(self.state))
                 self.eval()
 
             else:  # in the evaluation process
                 # Get all the message & aggregate
-                logger.info('-'*30)
+                logger.info('-' * 30)
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
                 self.history_results = merge_dict(self.history_results,
                                                   formatted_eval_res)
@@ -401,7 +410,8 @@ class pFedHPOServer(Server):
 
                 if self.state < self.total_round_num:
                     if len(self.history_results) > 0:
-                        logger.info('=' * 10 + ' updating hypernet at round ' + str(self.state) + ' ' + '=' * 10)
+                        logger.info('=' * 10 + ' updating hypernet at round ' +
+                                    str(self.state) + ' ' + '=' * 10)
                         self.update_policy()
 
                     # Move to next round of training
@@ -447,7 +457,7 @@ class pFedHPOServer(Server):
 
         if self.state % 50 == 0 or self.state == self.total_round_num:
             _path = os.path.join(self._cfg.hpo.working_folder,
-                                    'hyperNet_encoding.pt')
+                                 'hyperNet_encoding.pt')
             hyper_enc = {
                 'hyperNet': self.HyperNet.state_dict(),
             }
@@ -491,5 +501,3 @@ class pFedHPOServer(Server):
         if self.state == self.total_round_num:
             # break out the loop for distributed mode
             self.state += 1
-
-

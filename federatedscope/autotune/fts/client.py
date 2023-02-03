@@ -12,7 +12,6 @@ from federatedscope.autotune.fts.utils import *
 from federatedscope.autotune.utils import parse_search_space
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -29,8 +28,9 @@ class FTSClient(Client):
                  is_unseen_client=False,
                  *args,
                  **kwargs):
-        super(FTSClient,self).__init__(ID, server_id, state, config,
-            data, model, device, strategy, is_unseen_client, *args, **kwargs)
+        super(FTSClient,
+              self).__init__(ID, server_id, state, config, data, model, device,
+                             strategy, is_unseen_client, *args, **kwargs)
         self.data = data
         self.model = model
         self.device = device
@@ -39,20 +39,21 @@ class FTSClient(Client):
 
         # local file paths
         self.local_bo_path = os.path.join(self._cfg.hpo.working_folder,
-            "local_bo_" + str(self.ID) + ".pkl")
-        self.local_init_path = os.path.join(self._cfg.hpo.working_folder,
+                                          "local_bo_" + str(self.ID) + ".pkl")
+        self.local_init_path = os.path.join(
+            self._cfg.hpo.working_folder,
             "local_init_" + str(self.ID) + ".pkl")
-        self.local_info_path = os.path.join(self._cfg.hpo.working_folder,
-            "local_info_" + str(self.ID) + "_M_"
-            + str(self._cfg.hpo.fts.M) + ".pkl")
+        self.local_info_path = os.path.join(
+            self._cfg.hpo.working_folder, "local_info_" + str(self.ID) +
+            "_M_" + str(self._cfg.hpo.fts.M) + ".pkl")
 
         # prepare search space and bounds
         self._ss = parse_search_space(self._cfg.hpo.fts.ss)
         self.dim = len(self._ss)
         self.bounds = np.asarray([(0., 1.) for _ in self._ss])
         self.pbounds = {}
-        for k,v in self._ss.items():
-            if not (hasattr(v, 'lower') and  hasattr(v, 'upper')):
+        for k, v in self._ss.items():
+            if not (hasattr(v, 'lower') and hasattr(v, 'upper')):
                 raise ValueError("Unsupported hyper type {}".format(type(v)))
             else:
                 if v.log:
@@ -88,8 +89,6 @@ class FTSClient(Client):
                                    is_attacker=self.is_attacker,
                                    monitor=self._monitor)
 
-
-
     def _obj_func(self, x, return_eval=False):
         """
         Run local evaluation, return some metric to maximize (e.g. val_acc)
@@ -116,7 +115,8 @@ class FTSClient(Client):
             return res
 
     def _generate_agent_info(self, rand_feats):
-        logger.info(('-'*20, ' generate info on clinet %d '%self.ID, '_'*20))
+        logger.info(
+            ('-' * 20, ' generate info on clinet %d ' % self.ID, '_' * 20))
         v_kernel = self._cfg.hpo.fts.v_kernel
         obs_noise = self._cfg.hpo.fts.obs_noise
         M = self._cfg.hpo.fts.M
@@ -126,24 +126,22 @@ class FTSClient(Client):
         max_iter = self._cfg.hpo.fts.local_bo_max_iter
         gp_opt_schedule = self._cfg.hpo.fts.gp_opt_schedule
         pt = np.ones(max_iter + 5)
-        LocalBO(
-            cid = self.ID,
-            f=self._obj_func,
-            bounds=self.bounds,
-            keys=list(self.pbounds.keys()),
-            gp_opt_schedule=gp_opt_schedule,
-            use_init=None,
-            log_file=self.local_bo_path,
-            save_init=True,
-            save_init_file=self.local_init_path,
-            pt=pt,
-            P_N=None,
-            ls=self._cfg.hpo.fts.ls,
-            var=self._cfg.hpo.fts.var,
-            g_var=self._cfg.hpo.fts.g_var,
-            N=self._cfg.federate.client_num-1,
-            M_target=M_target
-        ).maximize(n_iter=max_iter, init_points=3)
+        LocalBO(cid=self.ID,
+                f=self._obj_func,
+                bounds=self.bounds,
+                keys=list(self.pbounds.keys()),
+                gp_opt_schedule=gp_opt_schedule,
+                use_init=None,
+                log_file=self.local_bo_path,
+                save_init=True,
+                save_init_file=self.local_init_path,
+                pt=pt,
+                P_N=None,
+                ls=self._cfg.hpo.fts.ls,
+                var=self._cfg.hpo.fts.var,
+                g_var=self._cfg.hpo.fts.g_var,
+                N=self._cfg.federate.client_num - 1,
+                M_target=M_target).maximize(n_iter=max_iter, init_points=3)
 
         # generate local RFF information
         res = pickle.load(open(self.local_bo_path, "rb"))
@@ -194,13 +192,14 @@ class FTSClient(Client):
             }
             hyper_param = x2conf(x_max, self.pbounds, self._ss)
             logger.info('{Client: %d, ' % self.ID +
-                        'GP_opt_iter: %d, ' % round +
-                        'Params: ' + str(hyper_param) +
-                        ', Perform: ' + str(curr_y) + '}')
+                        'GP_opt_iter: %d, ' % round + 'Params: ' +
+                        str(hyper_param) + ', Perform: ' + str(curr_y) + '}')
             logger.info(
-                self._monitor.format_eval_res(
-                    eval_res, rnd=self.state,
-                    role='Client #{}'.format(self.ID), return_raw=True))
+                self._monitor.format_eval_res(eval_res,
+                                              rnd=self.state,
+                                              role='Client #{}'.format(
+                                                  self.ID),
+                                              return_raw=True))
 
         self.state = round
         self.comm_manager.send(
@@ -209,7 +208,6 @@ class FTSClient(Client):
                     receiver=[sender],
                     state=self.state,
                     content=content))
-
 
     def callback_funcs_for_evaluate(self, message: Message):
         round, sender, content = \
