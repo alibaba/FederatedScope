@@ -7,6 +7,7 @@ from federatedscope.core.aggregators.asyn_clients_avg_aggregator import \
 from federatedscope.core.aggregators.server_clients_interpolate_aggregator \
     import ServerClientsInterpolateAggregator
 from federatedscope.core.aggregators.fedopt_aggregator import FedOptAggregator
+from federatedscope.core.aggregators.krum_aggregator import KrumAggregator
 
 __all__ = [
     'Aggregator',
@@ -16,4 +17,5 @@ __all__ = [
     'AsynClientsAvgAggregator',
     'ServerClientsInterpolateAggregator',
     'FedOptAggregator',
+    'KrumAggregator',
 ]
