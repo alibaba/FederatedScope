@@ -576,11 +576,20 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
 
     # int <-> list, forced replacement
     # To allow single <-> multiple cases
-    # e.g., attack_id = 1  <->  attack_id = [1,2,3]
+    # A usecase: By default, we have cfg.attack.attacker_id = -1 to
+    # denote that there exists no attacker in the simulated FL course.
+    # We can easily change it to cfg.attack.attacker_id = 1 to conduct
+    # experiments with one attacker client#1. However, when we want
+    # multiple attackersvia  setting cfg.attack.attacker_id = [1,2,3],
+    # an error would be raised by yacs since the default value
+    # (-1, type int) could be replaced with [1,2,3] ()type list).
+    # This error motivates me to add such a forced replacement rule
+    # to support both single and multiple attackers here.
+    # TODO: a better solucation?
     if replacement_type == int and original_type == list:
         return replacement
     if replacement_type == list and original_type == int:
-        return replacement_type
+        return replacement
 
     # Conditionally casts
     # list <-> tuple
