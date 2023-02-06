@@ -326,20 +326,6 @@ def config_bool2int(config):
     return new_dict
 
 
-def adjust_lightness(color, num=0.5):
-    import colorsys
-    import matplotlib.colors as mc
-
-    MAX_NUM = 1.8
-    num = min(num, MAX_NUM)
-    try:
-        c = mc.cnames[color]
-    except:
-        c = color
-    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
-    return colorsys.hls_to_rgb(c[0], max(0, min(1, num * c[1])), c[2])
-
-
 def log2wandb(trial, config, results, trial_cfg, df):
     import io
     import wandb
