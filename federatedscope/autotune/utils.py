@@ -1,10 +1,11 @@
 import copy
-import time
 import yaml
 import logging
 import numpy as np
 import pandas as pd
 import ConfigSpace as CS
+
+from federatedscope.autotune.draw import draw_interation
 
 logger = logging.getLogger(__name__)
 
@@ -508,6 +509,11 @@ def log2wandb(trial, config, results, trial_cfg, df):
     para_coo = wandb.Image(
         Image.open(io.BytesIO(px_fig.to_image(format="png"))))
 
+    # Interaction
+    inter_fig = wandb.Image(
+        draw_interation(info=f'Feedback performance '
+                        f'{round(results[key1][key2], 2)}'))
+
     wandb.log({
         'pca': pca,
         'info': info,
@@ -515,8 +521,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
         'best_perf': np.max(df['performance'])
         if trial_cfg.hpo.larger_better else np.min(df['performance']),
         'para_coo': para_coo,
+        'inter_fig': inter_fig,
         **log_res,
         **landscape_1d
     })
-
-    time.sleep(3)
