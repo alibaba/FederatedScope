@@ -1,4 +1,5 @@
 import copy
+import time
 import yaml
 import logging
 import numpy as np
@@ -285,6 +286,23 @@ def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
         # specify the budget
         trial_cfg.merge_from_list(["federate.total_round_num", int(budget)])
 
+    # WandB
+    if cfg.wandb.use:
+        try:
+            import wandb
+            inter_fig = wandb.Image(
+                draw_interation(info=f'Launch FS runner with configuration'
+                                f'\n'
+                                f' {config}.',
+                                arrow_dir='down'))
+            wandb.log({'inter_fig': inter_fig})
+            # For visualization
+            time.sleep(3)
+        except ImportError:
+            logger.error("cfg.wandb.use=True but "
+                         "not install the wandb package")
+            exit()
+
     setup_seed(trial_cfg.seed)
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
@@ -511,8 +529,9 @@ def log2wandb(trial, config, results, trial_cfg, df):
 
     # Interaction
     inter_fig = wandb.Image(
-        draw_interation(info=f'Feedback performance '
-                        f'{round(results[key1][key2], 2)}'))
+        draw_interation(arrow_dir='up',
+                        info=f'Feedback results with performance: '
+                        f'{round(results[key1][key2], 4)}'))
 
     wandb.log({
         'pca': pca,
@@ -525,3 +544,6 @@ def log2wandb(trial, config, results, trial_cfg, df):
         **log_res,
         **landscape_1d
     })
+
+    # For visualization
+    time.sleep(3)

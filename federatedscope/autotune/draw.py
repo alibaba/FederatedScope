@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 
 
 def draw_interation(cube1='Autotune Center',
-                    cube2='FS Executors',
+                    cube2='FS Runner',
                     arrow_dir='down',
-                    arrow_len=10,
+                    arrow_len=6,
                     info=None,
                     max_width=20,
                     font_size=50):
@@ -16,11 +16,11 @@ def draw_interation(cube1='Autotune Center',
             return ' ' * (text_width - len(text)) + text + ' ' * (text_width -
                                                                   len(text))
 
-    x, y = 0.3, 0.2
+    x, y = 0.3, 0.4
     size, max_len = font_size, 10
     width, height = (size / max_len) * 0.085, 0.5
 
-    fig = plt.figure(figsize=(20, 20))
+    fig = plt.figure(figsize=(20, 15))
     ax = fig.add_subplot()
 
     # Cubes
@@ -37,23 +37,18 @@ def draw_interation(cube1='Autotune Center',
             bbox=dict(boxstyle="round4", alpha=0.3, color='black'))
 
     # Arrows
-    if arrow_dir == 'down':
-        ax.text(x + width / 2, (y + height) / 2,
-                wrap_text(' ', arrow_len),
-                size=size,
-                rotation=270,
-                bbox=dict(boxstyle="rarrow", alpha=0.2, color='green'))
-
-    else:
-        ax.text(x + width / 2, (y + height) / 2,
-                wrap_text(' ', arrow_len),
-                size=size,
-                rotation=90,
-                bbox=dict(boxstyle="rarrow", alpha=0.2, color='green'))
+    a_x = x + width / 2
+    a_y = (y + height) / 2 + 0.1
+    ax.text(a_x,
+            a_y,
+            wrap_text(' ', arrow_len),
+            size=size,
+            rotation=270 if arrow_dir == 'down' else 90,
+            bbox=dict(boxstyle="rarrow", alpha=0.2, color='green'))
 
     if info:
         # Bubbles
-        ix, iy = x + width / 2 + 0.08, (y + height) / 2
+        ix, iy = a_x + 0.08, a_y
         for i in range(3):
             ax.text(ix,
                     iy,
@@ -64,8 +59,8 @@ def draw_interation(cube1='Autotune Center',
             ix, iy = ix + 0.03, iy + 0.03
         # Information
         info = textwrap.fill(info,
-                             width=max_width - 2,
-                             max_lines=5,
+                             width=max_width,
+                             max_lines=8,
                              placeholder="...")
         plt.text(ix,
                  iy,
