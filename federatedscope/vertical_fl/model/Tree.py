@@ -47,7 +47,7 @@ class XGBTree(Tree):
     def _gain(self, grad, hess):
         return np.power(grad, 2) / (hess + self.lambda_)
 
-    def cal_gain(self, grad, hess, split_idx):
+    def cal_gain(self, grad, hess, split_idx, node_num):
         left_grad = np.sum(grad[:split_idx])
         right_grad = np.sum(grad[split_idx:])
         left_hess = np.sum(hess[:split_idx])
@@ -84,12 +84,15 @@ class GBDTTree(Tree):
     def __init__(self, max_depth, lambda_, gamma):
         super().__init__(max_depth, lambda_, gamma)
 
-    def cal_gain(self, grad, hess, split_idx):
+    def cal_gain(self, grad, hess, split_idx, node_num):
         left_grad = np.sum(grad[:split_idx])
         right_grad = np.sum(grad[split_idx:])
+        left_indicator = np.sum(self.tree[node_num].indicator[:split_idx])
+        right_indicator = np.sum(self.tree[node_num].indicator[split_idx:])
 
-        return left_grad**2 / (split_idx + self.lambda_) + right_grad**2 / (
-            len(grad) - split_idx + self.lambda_)
+        return left_grad**2 / (
+            left_indicator + self.lambda_) + right_grad**2 / (right_indicator +
+                                                              self.lambda_)
 
     def set_weight(self, node_num):
         sum_of_g = np.sum(self.tree[node_num].grad)

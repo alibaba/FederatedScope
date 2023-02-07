@@ -132,7 +132,7 @@ class VerticalTrainer(object):
                 tree_num, node_num, feature_idx)
             for value_idx in split_position[feature_idx]:
                 gain = self.model[tree_num].cal_gain(ordered_g, ordered_h,
-                                                     value_idx)
+                                                     value_idx, node_num)
 
                 if gain > best_gain:
                     best_gain = gain
