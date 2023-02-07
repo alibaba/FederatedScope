@@ -50,12 +50,12 @@ hpo:
   init_cand_num: 50
   ss: 'federatedscope/autotune/baseline/vfl_ss.yaml'
   sha:
-    budgets: [ 100, 100 ]
+    budgets: [ 50, 50 ]
     elim_rate: 3
-    iter: 50
+    iter: 150
   metric: 'server_global_eval.test_acc'
   working_folder: rs
   # Enable wandb
   diagnosis:
     use: True
-    landscape_1d: ['feat_engr.type', 'vertical.algo', 'vertical.dims']
+    landscape_1d: ['feat_engr.type', 'vertical.algo', 'vertical.dims', 'model.num_of_trees']

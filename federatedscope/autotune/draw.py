@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
-FONTSIZE = 30
+FONTSIZE = 45
 MARKSIZE = 200
+COLOR_PLAT = ['#F38181', '#FCE38A', '#EAFFD0', '#95E1D3']
 
 
 def draw_interation(cube1='Autotune Center',
@@ -25,9 +26,9 @@ def draw_interation(cube1='Autotune Center',
             return ' ' * (text_width - len(text)) + text + ' ' * (text_width -
                                                                   len(text))
 
-    x, y = 0.2, 0.4  # Initial position
+    x, y = 0.25, 0.4  # Initial position
     size, max_len = font_size, 10
-    width, height = (size / max_len) * 0.085, 0.5
+    width, height = (size / max_len) * 0.07, 0.5
 
     fig = plt.figure(figsize=(20, 15))
     ax = fig.add_subplot()
@@ -37,23 +38,33 @@ def draw_interation(cube1='Autotune Center',
             y + height,
             wrap_text(cube1, max_width),
             size=size,
-            bbox=dict(boxstyle="round4", alpha=0.3, color='black'))
+            bbox=dict(boxstyle="round4", alpha=0.8, color='#85CDFD'))
 
     ax.text(x,
             y,
             wrap_text(cube2, max_width),
             size=size,
-            bbox=dict(boxstyle="round4", alpha=0.3, color='black'))
+            bbox=dict(boxstyle="round4", alpha=0.8, color='#85CDFD'))
 
     # Arrows
-    a_x = x + width / 2
+    a_x = x + width * 0.75
     a_y = (y + height) / 2 + 0.1
+    # Down
+    ax.text(x + width * 0.3,
+            a_y,
+            wrap_text(' ', arrow_len),
+            size=size,
+            rotation=270,
+            bbox=dict(boxstyle="rarrow",
+                      color='green' if arrow_dir == 'down' else 'grey'))
+    # Up
     ax.text(a_x,
             a_y,
             wrap_text(' ', arrow_len),
             size=size,
-            rotation=270 if arrow_dir == 'down' else 90,
-            bbox=dict(boxstyle="rarrow", alpha=0.2, color='green'))
+            rotation=90,
+            bbox=dict(boxstyle="rarrow",
+                      color='grey' if arrow_dir == 'down' else 'green'))
 
     if info:
         # Bubbles
@@ -64,12 +75,12 @@ def draw_interation(cube1='Autotune Center',
                     ' ',
                     size=20 + i * 3,
                     rotation=270,
-                    bbox=dict(boxstyle="circle", alpha=0.4, color='lightblue'))
+                    bbox=dict(boxstyle="circle", alpha=0.4, color='#F2DEBA'))
             ix, iy = ix + 0.03, iy + 0.03
         # Information
         info = textwrap.fill(info,
                              width=max_width,
-                             max_lines=5,
+                             max_lines=6,
                              placeholder="...")
         plt.text(ix,
                  iy,
@@ -77,10 +88,11 @@ def draw_interation(cube1='Autotune Center',
                  size=40,
                  bbox=dict(
                      boxstyle="sawtooth",
-                     facecolor='lightblue',
+                     facecolor='#F2DEBA',
                      edgecolor='black',
                  ))
     plt.axis('off')
+    plt.tight_layout()
     fig = plt.gcf()
     plt.close()
     return fig
@@ -89,14 +101,9 @@ def draw_interation(cube1='Autotune Center',
 def draw_landscape(df, diagnosis_configs, larger_better, metric):
     import seaborn as sns
 
+    df = copy.deepcopy(df)
     landscape_1d = {}
     col_name = df.columns
-    num_results = df.shape[0]
-    step = num_results
-
-    # Return when number of results are too less
-    if step < 0:
-        return {}
 
     # 1D landscape
     for hyperparam in diagnosis_configs:
@@ -104,19 +111,27 @@ def draw_landscape(df, diagnosis_configs, larger_better, metric):
             logger.warning(f'Invalid hyperparam name: {hyperparam}')
             continue
         else:
+            df[hyperparam] = df[hyperparam].apply(str)
             plt.figure(figsize=(20, 15))
             ranks = list(
                 df.groupby(hyperparam)["performance"].mean().fillna(
                     0).sort_values()[::-1].index)
+            # Set color
+            palette = {
+                x: COLOR_PLAT[c % len(COLOR_PLAT)]
+                for c, x in enumerate(ranks)
+            }
             if not larger_better:
                 ranks.reverse()
-            sns.boxplot(x="performance",
-                        y=hyperparam,
-                        data=df,
-                        order=ranks,
-                        width=.2,
-                        saturation=0.3,
-                        notch=True)
+            sns.boxplot(
+                x="performance",
+                y=hyperparam,
+                data=df,
+                order=ranks,
+                width=.2,
+                # saturation=0.3,
+                notch=True,
+                palette=palette)
             sns.stripplot(x="performance",
                           y=hyperparam,
                           data=df,
@@ -126,11 +141,12 @@ def draw_landscape(df, diagnosis_configs, larger_better, metric):
                           linewidth=0,
                           order=ranks)
             plt.yticks(rotation=45, fontsize=FONTSIZE)
-            plt.xticks(fontsize=FONTSIZE)
+            plt.xticks(rotation=10, fontsize=FONTSIZE)
             plt.xlabel(metric, size=FONTSIZE)
             plt.ylabel("Higher the better", size=FONTSIZE)
-            # plt.title(f"{hyperparam} - Rank ", fontsize=FONTSIZE)
+            plt.title(f"Rank of {hyperparam}", fontsize=FONTSIZE)
             sns.despine(trim=True)
+            plt.tight_layout()
             landscape_1d[f"{hyperparam}"] = plt.gcf()
             plt.close()
     return landscape_1d
@@ -176,6 +192,7 @@ def draw_pca(df):
     plt.yticks(fontsize=FONTSIZE)
     plt.xlabel("ConfigSpace", size=FONTSIZE)
     plt.ylabel("Loss", size=FONTSIZE)
+    plt.tight_layout()
     pca = plt.gcf()
     plt.close()
     return pca
@@ -183,12 +200,12 @@ def draw_pca(df):
 
 def draw_info(trial, config, metric):
     plt.figure(figsize=(30, 15))
-    anc_x, anc_y, bias = 0.5, 0.95, 0
+    anc_x, anc_y, bias, dy = 0.5, 0.8, 0, 0.14
+    fontsize = 75
     texts = [
-        "Searching the optimal federated configuration automatically...",
-        f"Trial [{trial}] ongoing", "The configurations being used are:",
-        config, "For detailed information, please see Diagnosis and Autotune.",
-        f"Observed performance is `{metric}`."
+        f"Trial [{trial}] ongoing:",
+        config,
+        f"Monitoring `{metric}`...",
     ]
 
     for line, t in enumerate(texts):
@@ -196,22 +213,22 @@ def draw_info(trial, config, metric):
             plt.text(anc_x,
                      anc_y + bias,
                      t,
-                     size=50,
+                     size=fontsize,
                      ha="center",
                      va="center",
                      bbox=dict(
-                         boxstyle="sawtooth",
+                         boxstyle="round4" if line == len(texts) -
+                         1 else 'sawtooth',
                          facecolor='lightblue',
-                         edgecolor='red' if line == len(texts) -
-                         1 else 'black',
+                         edgecolor='black',
                      ))
-            bias -= 0.1
+            bias -= dy
         elif isinstance(t, dict):
             for key, value in t.items():
                 plt.text(anc_x,
                          anc_y + bias,
                          f"{key}: {value}",
-                         size=50,
+                         size=fontsize,
                          ha='center',
                          va="center",
                          bbox=dict(
@@ -219,9 +236,10 @@ def draw_info(trial, config, metric):
                              facecolor='none',
                              edgecolor='black',
                          ))
-                bias -= 0.1
+                bias -= dy
 
     plt.axis('off')
+    plt.tight_layout()
     info = plt.gcf()
     plt.close()
     return info
@@ -252,11 +270,13 @@ def draw_para_coo(df):
             })
     new_df['Trial Index'] = range(1, len(new_df) + 1)
 
-    px_fig = go.Figure(data=go.Parcoords(line=dict(color=new_df['Trial Index'],
-                                                   colorscale='YlOrRd',
-                                                   showscale=True,
-                                                   cmin=1,
-                                                   cmax=len(new_df) + 1),
+    px_fig = go.Figure(data=go.Parcoords(line=dict(
+        color=new_df['Trial Index'],
+        colorscale='YlOrRd',
+        showscale=True,
+        cmin=1,
+        cmax=len(new_df) + 1,
+        colorbar=dict(dtick=len(new_df) // 2, tickprefix='Trial')),
                                          dimensions=px_layout,
                                          labelangle=18,
                                          labelside='bottom'))

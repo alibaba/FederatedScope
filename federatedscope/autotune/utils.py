@@ -12,6 +12,7 @@ from federatedscope.autotune.draw import draw_interation, draw_landscape, \
     draw_pca, draw_info, draw_para_coo
 
 logger = logging.getLogger(__name__)
+IS_VIEW = False
 
 
 def generate_hpo_exp_name(cfg):
@@ -295,13 +296,14 @@ def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
             import wandb
             # config_str = f'{readable_args(config)}'.replace(',', ',\n')
             inter_fig = wandb.Image(
-                draw_interation(info=f'Launch FS runner: \n'
+                draw_interation(info=f'Launch FS runner. \n'
                                 f'Configuration is \n'
                                 f' {readable_args(config)}',
                                 arrow_dir='down'))
             wandb.log({'inter_fig': inter_fig})
             # For visualization
-            time.sleep(5)
+            if IS_VIEW:
+                time.sleep(5)
         except ImportError:
             logger.error("cfg.wandb.use=True but "
                          "not install the wandb package")
@@ -360,7 +362,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
     from PIL import Image
 
     config = readable_args(config)
-    df = readable_args(df)
+    df = readable_args(df).fillna(value=np.nan)
 
     # Base information
     key1, key2 = trial_cfg.hpo.metric.split('.')
@@ -404,8 +406,8 @@ def log2wandb(trial, config, results, trial_cfg, df):
     # Baseline
     # TODO: remove this or add read baseline
     base_perfs = [
-        0.4 + x * 0.25 / trial_cfg.hpo.sha.budgets[-1]
-        for x in range(trial_cfg.hpo.sha.budgets[-1])
+        0.63 + x * 0.12 / trial_cfg.hpo.sha.iter
+        for x in range(trial_cfg.hpo.sha.iter)
     ]
     base_perf = base_perfs[len(df)]
 
@@ -423,4 +425,5 @@ def log2wandb(trial, config, results, trial_cfg, df):
     })
 
     # For visualization
-    time.sleep(5)
+    if IS_VIEW:
+        time.sleep(5)
