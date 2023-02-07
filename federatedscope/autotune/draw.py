@@ -25,7 +25,7 @@ def draw_interation(cube1='Autotune Center',
             return ' ' * (text_width - len(text)) + text + ' ' * (text_width -
                                                                   len(text))
 
-    x, y = 0.3, 0.4
+    x, y = 0.2, 0.4  # Initial position
     size, max_len = font_size, 10
     width, height = (size / max_len) * 0.085, 0.5
 
@@ -86,7 +86,7 @@ def draw_interation(cube1='Autotune Center',
     return fig
 
 
-def draw_landscape(df, trial_cfg):
+def draw_landscape(df, diagnosis_configs, larger_better, metric):
     import seaborn as sns
 
     landscape_1d = {}
@@ -99,7 +99,7 @@ def draw_landscape(df, trial_cfg):
         return {}
 
     # 1D landscape
-    for hyperparam in trial_cfg.hpo.diagnosis.landscape_1d:
+    for hyperparam in diagnosis_configs:
         if hyperparam not in col_name:
             logger.warning(f'Invalid hyperparam name: {hyperparam}')
             continue
@@ -108,14 +108,15 @@ def draw_landscape(df, trial_cfg):
             ranks = list(
                 df.groupby(hyperparam)["performance"].mean().fillna(
                     0).sort_values()[::-1].index)
-            if not trial_cfg.hpo.larger_better:
+            if not larger_better:
                 ranks.reverse()
             sns.boxplot(x="performance",
                         y=hyperparam,
                         data=df,
                         order=ranks,
                         width=.2,
-                        saturation=0.5)
+                        saturation=0.3,
+                        notch=True)
             sns.stripplot(x="performance",
                           y=hyperparam,
                           data=df,
@@ -126,9 +127,9 @@ def draw_landscape(df, trial_cfg):
                           order=ranks)
             plt.yticks(rotation=45, fontsize=FONTSIZE)
             plt.xticks(fontsize=FONTSIZE)
-            plt.xlabel(trial_cfg.hpo.metric, size=FONTSIZE)
-            plt.ylabel("", size=FONTSIZE)
-            plt.title(f"{hyperparam} - Rank ()", fontsize=FONTSIZE)
+            plt.xlabel(metric, size=FONTSIZE)
+            plt.ylabel("Higher the better", size=FONTSIZE)
+            plt.title(f"{hyperparam} - Rank ", fontsize=FONTSIZE)
             sns.despine(trim=True)
             landscape_1d[f"{hyperparam}"] = plt.gcf()
             plt.close()
@@ -254,5 +255,8 @@ def draw_para_coo(df):
                                                    showscale=True,
                                                    cmin=1,
                                                    cmax=len(new_df) + 1),
-                                         dimensions=px_layout))
+                                         dimensions=px_layout,
+                                         labelangle=18,
+                                         labelside='bottom'))
+    px_fig.update_layout(font={'size': 18})
     return px_fig.to_image(format="png")
