@@ -6,6 +6,9 @@ class BinaryClsLoss(object):
     y = {1, 0}
     L = -yln(p)-(1-y)ln(1-p)
     """
+    def __init__(self, cal_hess=True):
+        self.cal_hess = cal_hess
+
     def get_metric(self, y, y_pred):
         pred_prob = 1.0 / (1.0 + np.exp(-y_pred))
         pred_prob[pred_prob >= 0.5] = 1.
@@ -23,5 +26,5 @@ class BinaryClsLoss(object):
         y = np.array(y)
         prob = 1.0 / (1.0 + np.exp(-pred))
         grad = prob - y
-        hess = prob * (1.0 - prob)
+        hess = prob * (1.0 - prob) if self.cal_hess else None
         return grad, hess
