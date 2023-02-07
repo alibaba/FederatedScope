@@ -78,18 +78,16 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     # Vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
-    cfg.vertical_dims = [5, 10]  # Avoid to be removed when `use` is False
     cfg.vertical = CN()
     cfg.vertical.use = False
+    cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
-
-    # ---------------------------------------------------------------------- #
-    # Vertical FL for xgboost related options
-    # ---------------------------------------------------------------------- #
-    cfg.xgb_base = CN()
-    cfg.xgb_base.use = False
-    cfg.xgb_base.use_bin = False
+    cfg.vertical.algo = 'lr'  # ['lr', 'xgb']
+    cfg.vertical.protect_object = ''  # feature_order, TODO: add more
+    cfg.vertical.protect_method = ''  # dp
+    cfg.vertical.protect_args = []
+    # Default values for 'dp': {'bucket_num':100, 'epsilon':None}
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
@@ -218,5 +216,37 @@ def assert_fl_setting_cfg(cfg):
     if cfg.federate.multi_gpu and torch.cuda.device_count() == 1:
         cfg.federate.multi_gpu = False
         logger.warning('Set cfg.federate.multi_gpu=False since there is only one gpu')
+    # TODO
+    if cfg.vertical.use:
+        if cfg.vertical.algo == 'lr' and hasattr(cfg, "trainer") and \
+                cfg.trainer.type != 'none':
+            logger.warning(f"When given cfg.vertical.algo = 'lr', the value "
+                           f"of cfg.trainer.type is expected to be 'none' "
+                           f"but got {cfg.trainer.type}. Therefore "
+                           f"cfg.trainer.type is changed to 'none' here")
+            cfg.trainer.type = 'none'
+        if cfg.vertical.algo == 'lr' and hasattr(cfg, "model") and \
+                cfg.model.type != 'lr':
+            logger.warning(f"When given cfg.vertical.algo = 'lr', the value "
+                           f"of cfg.model.type is expected to be 'lr' "
+                           f"but got {cfg.model.type}. Therefore "
+                           f"cfg.model.type is changed to 'lr' here")
+            cfg.model.type = 'lr'
+        if cfg.vertical.algo == 'xgb' and hasattr(cfg, "trainer") and \
+                cfg.trainer.type.lower() != 'verticaltrainer':
+            logger.warning(f"When given cfg.vertical.algo = 'xgb', the value "
+                           f"of cfg.trainer.type is expected to be "
+                           f"'verticaltrainer' but got {cfg.trainer.type}. "
+                           f"Therefore cfg.trainer.type is changed to "
+                           f"'verticaltrainer' here")
+            cfg.trainer.type = 'verticaltrainer'
+        if cfg.vertical.algo == 'xgb' and hasattr(cfg, "model") and \
+                cfg.model.type != 'xgb_tree':
+            logger.warning(f"When given cfg.vertical.algo = 'xgb', the value "
+                           f"of cfg.model.type is expected to be 'xgb_tree' "
+                           f"but got {cfg.model.type}. Therefore "
+                           f"cfg.model.type is changed to 'xgb_tree' here")
+            cfg.model.type = 'xgb_tree'
+
 
 register_config("fl_setting", extend_fl_setting_cfg)

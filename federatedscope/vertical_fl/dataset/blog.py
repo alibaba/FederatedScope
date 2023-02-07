@@ -11,7 +11,7 @@ from torchvision.datasets.utils import download_and_extract_archive
 logger = logging.getLogger(__name__)
 
 
-class Blog:
+class Blog(object):
     """
     BlogFeedback Data Set
     (https://archive.ics.uci.edu/ml/datasets/BlogFeedback)
@@ -38,7 +38,6 @@ class Blog:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘blog’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -56,7 +55,6 @@ class Blog:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
@@ -66,7 +64,6 @@ class Blog:
                  seed=123):
         super(Blog, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.tr_frac = tr_frac
         self.feature_partition = feature_partition
@@ -106,6 +103,7 @@ class Blog:
 
     def _read_raw(self, file_path):
         data = pd.read_csv(file_path, header=None, usecols=list(range(281)))
+        data = data.fillna(method='ffill')
         data = data.values
         return data
 

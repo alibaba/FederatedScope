@@ -18,6 +18,9 @@ def wrap_attacker_trainer(base_trainer, config):
     elif config.attack.attack_method.lower() == 'backdoor':
         from federatedscope.attack.trainer import wrap_backdoorTrainer
         return wrap_backdoorTrainer(base_trainer)
+    elif config.attack.attack_method.lower() == 'gaussian_noise':
+        from federatedscope.attack.trainer import wrap_GaussianAttackTrainer
+        return wrap_GaussianAttackTrainer(base_trainer)
     else:
         raise ValueError('Trainer {} is not provided'.format(
             config.attack.attack_method))

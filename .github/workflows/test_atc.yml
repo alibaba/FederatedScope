@@ -1,9 +1,13 @@
 name: UnitTests for ATC
 
-on: [push, pull_request]
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+
 
 jobs:
   run:
+    if: false == contains(github.event.pull_request.title, 'WIP')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -42,7 +46,7 @@ jobs:
         pip install -e .
         git clone https://github.com/andersjo/pyrouge.git rouge
         pyrouge_set_rouge_path $(realpath rouge/tools/ROUGE-1.5.5/)
-        sudo apt-get install libxml-parser-perl
+        sudo apt-get install libxml-parser-perl --fix-missing
         cd rouge/tools/ROUGE-1.5.5/data
         rm WordNet-2.0.exc.db
         ./WordNet-2.0-Exceptions/buildExeptionDB.pl ./WordNet-2.0-Exceptions ./smart_common_words.txt ./WordNet-2.0.exc.db
@@ -94,3 +98,4 @@ jobs:
           data.root test_data/ \
 
         [ $? -eq 1 ] && exit 1 || echo "Passed"
+
