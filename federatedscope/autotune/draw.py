@@ -68,8 +68,8 @@ def draw_interation(cube1='Autotune Center',
             ix, iy = ix + 0.03, iy + 0.03
         # Information
         info = textwrap.fill(info,
-                             width=1.5 * max_width,
-                             max_lines=8,
+                             width=max_width,
+                             max_lines=5,
                              placeholder="...")
         plt.text(ix,
                  iy,
@@ -129,7 +129,7 @@ def draw_landscape(df, diagnosis_configs, larger_better, metric):
             plt.xticks(fontsize=FONTSIZE)
             plt.xlabel(metric, size=FONTSIZE)
             plt.ylabel("Higher the better", size=FONTSIZE)
-            plt.title(f"{hyperparam} - Rank ", fontsize=FONTSIZE)
+            # plt.title(f"{hyperparam} - Rank ", fontsize=FONTSIZE)
             sns.despine(trim=True)
             landscape_1d[f"{hyperparam}"] = plt.gcf()
             plt.close()
@@ -181,16 +181,17 @@ def draw_pca(df):
     return pca
 
 
-def draw_info(trial, config):
+def draw_info(trial, config, metric):
     plt.figure(figsize=(30, 15))
     anc_x, anc_y, bias = 0.5, 0.95, 0
     texts = [
         "Searching the optimal federated configuration automatically...",
         f"Trial [{trial}] ongoing", "The configurations being used are:",
-        config, "For detailed information, please see Diagnosis and Autotune."
+        config, "For detailed information, please see Diagnosis and Autotune.",
+        f"Observed performance is `{metric}`."
     ]
 
-    for t in texts:
+    for line, t in enumerate(texts):
         if isinstance(t, str):
             plt.text(anc_x,
                      anc_y + bias,
@@ -201,7 +202,8 @@ def draw_info(trial, config):
                      bbox=dict(
                          boxstyle="sawtooth",
                          facecolor='lightblue',
-                         edgecolor='black',
+                         edgecolor='red' if line == len(texts) -
+                         1 else 'black',
                      ))
             bias -= 0.1
         elif isinstance(t, dict):

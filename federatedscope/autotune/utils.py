@@ -295,8 +295,9 @@ def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
             import wandb
             # config_str = f'{readable_args(config)}'.replace(',', ',\n')
             inter_fig = wandb.Image(
-                draw_interation(info='Launch FS runner.\n See details in'
-                                '`Information` module beside.',
+                draw_interation(info=f'Launch FS runner: \n'
+                                f'Configuration is \n'
+                                f' {readable_args(config)}',
                                 arrow_dir='down'))
             wandb.log({'inter_fig': inter_fig})
             # For visualization
@@ -389,7 +390,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
 
     # Text info guidance
     if trial_cfg.hpo.diagnosis.use:
-        info = wandb.Image(draw_info(trial, config))
+        info = wandb.Image(draw_info(trial, config, trial_cfg.hpo.metric))
 
     # Parallel coordinates
     para_coo = wandb.Image(Image.open(io.BytesIO(draw_para_coo(df))))
@@ -401,8 +402,9 @@ def log2wandb(trial, config, results, trial_cfg, df):
                         f'{round(results[key1][key2], 4)}'))
 
     # Baseline
+    # TODO: remove this or add read baseline
     base_perfs = [
-        0.4 + x * 0.3 / trial_cfg.hpo.sha.budgets[-1]
+        0.4 + x * 0.25 / trial_cfg.hpo.sha.budgets[-1]
         for x in range(trial_cfg.hpo.sha.budgets[-1])
     ]
     base_perf = base_perfs[len(df)]
