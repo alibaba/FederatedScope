@@ -51,5 +51,5 @@ attack:
   self_epoch: 6
   scale_poisoning: False
   scale_para: 5.0
-  mean: [0.1307]
-  std: [0.3081]
+  mean: [0.9637]
+  std: [0.1592]
