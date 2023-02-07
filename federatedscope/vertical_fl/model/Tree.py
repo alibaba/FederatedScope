@@ -40,7 +40,7 @@ class Tree(object):
         self.tree[node_num].status = status
 
 
-class Tree_XGB(Tree):
+class XGBTree(Tree):
     def __init__(self, max_depth, lambda_, gamma):
         super().__init__(max_depth, lambda_, gamma)
 
@@ -80,7 +80,7 @@ class Tree_XGB(Tree):
                   2].indicator = self.tree[node_num].indicator * right_child
 
 
-class Tree_GBDT(Tree):
+class GBDTTree(Tree):
     def __init__(self, max_depth, lambda_, gamma):
         super().__init__(max_depth, lambda_, gamma)
 
@@ -102,21 +102,17 @@ class Tree_GBDT(Tree):
         self.tree[2 * node_num +
                   1].grad = self.tree[node_num].grad * left_child
         self.tree[2 * node_num +
-                  1].hess = self.tree[node_num].hess * left_child
-        self.tree[2 * node_num +
                   1].indicator = self.tree[node_num].indicator * left_child
         self.tree[2 * node_num +
                   2].grad = self.tree[node_num].grad * right_child
         self.tree[2 * node_num +
-                  2].hess = self.tree[node_num].hess * right_child
-        self.tree[2 * node_num +
                   2].indicator = self.tree[node_num].indicator * right_child
 
 
-class MultipleTrees_XGB(object):
+class MultipleXGBTrees(object):
     def __init__(self, max_depth, lambda_, gamma, num_of_trees):
         self.trees = [
-            Tree_XGB(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
+            XGBTree(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
             for _ in range(num_of_trees)
         ]
         self.num_of_trees = num_of_trees
@@ -128,10 +124,10 @@ class MultipleTrees_XGB(object):
         return self.trees[item]
 
 
-class MultipleTrees_GBDT(object):
+class MultipleGBDTTrees(object):
     def __init__(self, max_depth, lambda_, gamma, num_of_trees):
         self.trees = [
-            Tree_GBDT(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
+            GBDTTree(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
             for _ in range(num_of_trees)
         ]
         self.num_of_trees = num_of_trees
