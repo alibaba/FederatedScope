@@ -1,5 +1,8 @@
 use_gpu: True
 device: 0
+expname: 'tianchi_submit'
+outdir: '.'
+verbose: 1
 early_stop:
   patience: 5
 seed: 12345
@@ -7,6 +10,8 @@ federate:
   mode: standalone
   total_round_num: 100
   sample_client_rate: 0.1
+  share_local_model: True
+  online_aggr: True
 data:
   root: data/
   type: femnist
@@ -34,5 +39,3 @@ trainer:
 eval:
   freq: 10
   metrics: ['acc', 'correct']
-expname: 'tianchi_submit'
-outdir: '.'
