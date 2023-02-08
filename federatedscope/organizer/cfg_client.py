@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------- #
 # Lobby related (global variable stored in Redis)
 # ---------------------------------------------------------------------- #
-server_ip = '172.17.138.149'
+server_ip = '127.0.0.1'
 broker_url = f'redis://{server_ip}:6379/0'
 result_backend = f'redis://{server_ip}/0'
 

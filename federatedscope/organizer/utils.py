@@ -1,8 +1,8 @@
 import os
 import shlex
-import datetime
 import paramiko
 
+from datetime import datetime
 from collections.abc import MutableMapping
 
 from federatedscope.core.cmd_args import parse_args

@@ -152,7 +152,7 @@ def draw_landscape(df, diagnosis_configs, larger_better, metric):
     return landscape_1d
 
 
-def draw_pca(df):
+def draw_pca(df, metric='loss'):
     import seaborn as sns
     from sklearn import preprocessing
     from sklearn.decomposition import PCA
@@ -191,7 +191,7 @@ def draw_pca(df):
     plt.xticks(fontsize=FONTSIZE)
     plt.yticks(fontsize=FONTSIZE)
     plt.xlabel("ConfigSpace", size=FONTSIZE)
-    plt.ylabel("Loss", size=FONTSIZE)
+    plt.ylabel("metric", size=FONTSIZE)
     plt.tight_layout()
     pca = plt.gcf()
     plt.close()

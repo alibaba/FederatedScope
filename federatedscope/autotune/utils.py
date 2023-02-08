@@ -12,7 +12,7 @@ from federatedscope.autotune.draw import draw_interation, draw_landscape, \
     draw_pca, draw_info, draw_para_coo
 
 logger = logging.getLogger(__name__)
-IS_VIEW = False
+IS_BETTER_VIEW = False
 
 
 def generate_hpo_exp_name(cfg):
@@ -302,7 +302,7 @@ def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
                                 arrow_dir='down'))
             wandb.log({'inter_fig': inter_fig})
             # For visualization
-            if IS_VIEW:
+            if IS_BETTER_VIEW:
                 time.sleep(5)
         except ImportError:
             logger.error("cfg.wandb.use=True but "
@@ -361,6 +361,13 @@ def log2wandb(trial, config, results, trial_cfg, df):
     import wandb
     from PIL import Image
 
+    if 'acc' in trial_cfg.hpo.metric:
+        metric = 'Accuracy'
+    elif 'loss' in trial_cfg.hpo.metric:
+        metric = 'Loss'
+    else:
+        metric = trial_cfg.hpo.metric
+
     config = readable_args(config)
     df = readable_args(df).fillna(value=np.nan)
 
@@ -375,12 +382,6 @@ def log2wandb(trial, config, results, trial_cfg, df):
     # Diagnosis with 1d landscape
     landscape_1d = {}
     if trial_cfg.hpo.diagnosis.use:
-        if 'acc' in trial_cfg.hpo.metric:
-            metric = 'Accuracy'
-        elif 'loss' in trial_cfg.hpo.metric:
-            metric = 'Loss'
-        else:
-            metric = trial_cfg.hpo.metric
         landscape_1d = draw_landscape(
             df, readable_args(trial_cfg.hpo.diagnosis.landscape_1d),
             trial_cfg.hpo.larger_better, metric)
@@ -388,7 +389,7 @@ def log2wandb(trial, config, results, trial_cfg, df):
 
     # PCA of exploration
     if trial_cfg.hpo.diagnosis.use:
-        pca = wandb.Image(draw_pca(df))
+        pca = wandb.Image(draw_pca(df, metric))
 
     # Text info guidance
     if trial_cfg.hpo.diagnosis.use:
@@ -425,5 +426,5 @@ def log2wandb(trial, config, results, trial_cfg, df):
     })
 
     # For visualization
-    if IS_VIEW:
+    if IS_BETTER_VIEW:
         time.sleep(5)
