@@ -12,7 +12,6 @@ from federatedscope.core.message import Message
 from federatedscope.core.workers import Server
 from federatedscope.autotune.pfedhpo.utils import *
 from federatedscope.autotune.utils import parse_search_space
-from federatedscope.core.auxiliaries.utils import merge_dict, merge_param_dict
 
 logger = logging.getLogger(__name__)
 

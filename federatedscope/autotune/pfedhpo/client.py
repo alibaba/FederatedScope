@@ -99,7 +99,7 @@ class pFedHPOClient(Client):
         self._cfg.merge_from_list(cmd_args)
         self._cfg.freeze(inform=False)
 
-        self.trainer.ctx.setup_vars()
+        # self.trainer.ctx.setup_vars()
 
     def callback_funcs_for_model_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content

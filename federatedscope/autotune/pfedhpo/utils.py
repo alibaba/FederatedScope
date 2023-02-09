@@ -351,3 +351,19 @@ def noisy_dataset_embedding(train_loader,
                      device=device) * (2 * noise_factor / n_data)
     noisy_emb = emb_acc + noise
     return noisy_emb
+
+
+def merge_dict(dict1, dict2):
+    # Merge results for history
+    for key, value in dict2.items():
+        if key not in dict1:
+            if isinstance(value, dict):
+                dict1[key] = merge_dict({}, value)
+            else:
+                dict1[key] = [value]
+        else:
+            if isinstance(value, dict):
+                merge_dict(dict1[key], value)
+            else:
+                dict1[key].append(value)
+    return dict1

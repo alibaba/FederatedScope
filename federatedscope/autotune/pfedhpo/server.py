@@ -1,24 +1,12 @@
-import copy
 import os
 import json
 import logging
-import pdb
-from itertools import product
-import pickle
-import ast
-
 import torch.nn
 import yaml
-
-import numpy as np
-from numpy.linalg import norm
-from scipy.special import logsumexp
 from torch.nn import functional as F
-from torch.utils.tensorboard import SummaryWriter
 
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Server
-from federatedscope.core.auxiliaries.utils import merge_dict
 from federatedscope.autotune.pfedhpo.utils import *
 from federatedscope.autotune.utils import parse_search_space
 
@@ -147,11 +135,6 @@ class pFedHPOServer(Server):
                              'anchor_eval_results.json'), 'r') as f:
             self.anchor_res = json.load(f)
         self.anchor_res_smooth = None
-
-        # TODO: sampler
-        # self.sampler = None
-
-        self.tb_writer = SummaryWriter(os.path.join(self._cfg.outdir, 'tb'))
 
     def broadcast_model_para(self,
                              msg_type='model_para',
@@ -313,23 +296,6 @@ class pFedHPOServer(Server):
         loss.backward()
         nn.utils.clip_grad_norm_(self.opt_params, max_norm=10, norm_type=2)
         self.opt.step()
-
-        for cid in self.fb.keys():
-            idx = self.client2idx[cid]
-            self.tb_writer.add_scalar('loss_%d' % cid, losses[idx], self.state)
-            if not self.discrete:
-                self.tb_writer.add_scalar('logprob_%d' % cid,
-                                          self.logprob[idx], self.state)
-                self.tb_writer.add_scalar('entropy_%d' % cid,
-                                          self.entropy[idx], self.state)
-            else:
-                self.tb_writer.add_scalar('logprob_%d' % cid,
-                                          self.logprob[idx], self.state)
-                for k in self.pbounds.keys():
-                    self.tb_writer.add_scalar('%s_%d' % (k, cid),
-                                              self.p_idx[k][idx], self.state)
-        self.tb_writer.add_scalar('loss', loss, self.state)
-        self.tb_writer.add_scalar('reward', reward, self.state)
 
     def check_and_move_on(self,
                           check_eval_result=False,

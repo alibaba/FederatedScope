@@ -45,6 +45,6 @@ hpo:
     train_fl: False
     train_anchor: False
     target_fl_total_round: 400
-    ss: 'scripts/example_configs/twitter/ss.yaml'
+    ss: 'scripts/example_configs/pfedhpo/twitter/ss.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
   working_folder: twitter_exp/pfedhpo_R0_2/working

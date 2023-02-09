@@ -1,6 +1,6 @@
 use_gpu: True
 device: 0
-outdir: graph_exp/pfedhpo
+outdir: cifar_exp/pfedhpo
 seed: 12345
 early_stop:
   patience: 100000
@@ -55,6 +55,6 @@ hpo:
     train_fl: False
     train_anchor: False
     target_fl_total_round: 400
-    ss: 'scripts/example_configs/cifar/ss.yaml'
+    ss: 'scripts/example_configs/pfedhpo/cifar/ss.yaml'
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: graph_exp/pfedhpo/working
+  working_folder: cifar_exp/pfedhpo/working
