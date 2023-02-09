@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 def wrap_client_for_evaluation(client):
     def eval(self, tree_num):
-        self.criterion = get_vertical_loss(self._cfg.criterion.type)
+        self.criterion = get_vertical_loss(
+            self._cfg.criterion.type,
+            cal_hess=(self._cfg.model.type == 'xgb_tree'))
         if self.test_x is None:
             self.test_x, self.test_y = self._fetch_test_data()
             self.test_result = np.zeros(self.test_x.shape[0])

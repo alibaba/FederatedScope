@@ -30,7 +30,9 @@ class VerticalTrainer(object):
         self.dataloader = batch_iter(self.data['train'],
                                      self.cfg.dataloader.batch_size,
                                      shuffled=True)
-        self.criterion = get_vertical_loss(self.cfg.criterion.type)
+        self.criterion = get_vertical_loss(
+            self.cfg.criterion.type,
+            cal_hess=(self.cfg.model.type == 'xgb_tree'))
         batch_index, self.batch_x, self.batch_y = self._fetch_train_data(index)
         feature_order_info = self._get_feature_order_info(self.batch_x)
         if 'raw_feature_order' in feature_order_info:
@@ -103,7 +105,11 @@ class VerticalTrainer(object):
     def _get_ordered_gh(self, tree_num, node_num, feature_idx):
         order = self.merged_feature_order[feature_idx]
         ordered_g = self.model[tree_num][node_num].grad[order]
-        ordered_h = self.model[tree_num][node_num].hess[order]
+        if self.model[tree_num][node_num].hess is None:
+            # hess is not used in GBDT
+            ordered_h = None
+        else:
+            ordered_h = self.model[tree_num][node_num].hess[order]
         return ordered_g, ordered_h
 
     def _get_best_gain(self, tree_num, node_num):
@@ -126,7 +132,7 @@ class VerticalTrainer(object):
                 tree_num, node_num, feature_idx)
             for value_idx in split_position[feature_idx]:
                 gain = self.model[tree_num].cal_gain(ordered_g, ordered_h,
-                                                     value_idx)
+                                                     value_idx, node_num)
 
                 if gain > best_gain:
                     best_gain = gain

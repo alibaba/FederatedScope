@@ -31,10 +31,23 @@ class Tree(object):
     def __getitem__(self, item):
         return self.tree[item]
 
+    def split_childern(self, data, feature_value):
+        left_index = [1 if x < feature_value else 0 for x in data]
+        right_index = [1 if x >= feature_value else 0 for x in data]
+        return left_index, right_index
+
+    def set_status(self, node_num, status='off'):
+        self.tree[node_num].status = status
+
+
+class XGBTree(Tree):
+    def __init__(self, max_depth, lambda_, gamma):
+        super().__init__(max_depth, lambda_, gamma)
+
     def _gain(self, grad, hess):
         return np.power(grad, 2) / (hess + self.lambda_)
 
-    def cal_gain(self, grad, hess, split_idx):
+    def cal_gain(self, grad, hess, split_idx, node_num):
         left_grad = np.sum(grad[:split_idx])
         right_grad = np.sum(grad[split_idx:])
         left_hess = np.sum(hess[:split_idx])
@@ -42,21 +55,15 @@ class Tree(object):
         left_gain = self._gain(left_grad, left_hess)
         right_gain = self._gain(right_grad, right_hess)
         total_gain = self._gain(left_grad + right_grad, left_hess + right_hess)
-        return (left_gain + right_gain - total_gain) * 0.5 - self.gamma
 
-    def split_childern(self, data, feature_value):
-        left_index = [1 if x < feature_value else 0 for x in data]
-        right_index = [1 if x >= feature_value else 0 for x in data]
-        return left_index, right_index
+        return (left_gain + right_gain - total_gain) * 0.5 - self.gamma
 
     def set_weight(self, node_num):
         sum_of_g = np.sum(self.tree[node_num].grad)
         sum_of_h = np.sum(self.tree[node_num].hess)
         weight = -sum_of_g / (sum_of_h + self.lambda_)
-        self.tree[node_num].weight = weight
 
-    def set_status(self, node_num, status='off'):
-        self.tree[node_num].status = status
+        self.tree[node_num].weight = weight
 
     def update_child(self, node_num, left_child, right_child):
         self.tree[2 * node_num +
@@ -73,10 +80,57 @@ class Tree(object):
                   2].indicator = self.tree[node_num].indicator * right_child
 
 
-class MultipleTrees(object):
+class GBDTTree(Tree):
+    def __init__(self, max_depth, lambda_, gamma):
+        super().__init__(max_depth, lambda_, gamma)
+
+    def cal_gain(self, grad, hess, split_idx, node_num):
+        left_grad = np.sum(grad[:split_idx])
+        right_grad = np.sum(grad[split_idx:])
+        left_indicator = np.sum(self.tree[node_num].indicator[:split_idx])
+        right_indicator = np.sum(self.tree[node_num].indicator[split_idx:])
+
+        return left_grad**2 / (
+            left_indicator + self.lambda_) + right_grad**2 / (right_indicator +
+                                                              self.lambda_)
+
+    def set_weight(self, node_num):
+        sum_of_g = np.sum(self.tree[node_num].grad)
+        weight = -sum_of_g / (np.sum(self.tree[node_num].indicator) +
+                              self.lambda_)
+
+        self.tree[node_num].weight = weight
+
+    def update_child(self, node_num, left_child, right_child):
+        self.tree[2 * node_num +
+                  1].grad = self.tree[node_num].grad * left_child
+        self.tree[2 * node_num +
+                  1].indicator = self.tree[node_num].indicator * left_child
+        self.tree[2 * node_num +
+                  2].grad = self.tree[node_num].grad * right_child
+        self.tree[2 * node_num +
+                  2].indicator = self.tree[node_num].indicator * right_child
+
+
+class MultipleXGBTrees(object):
     def __init__(self, max_depth, lambda_, gamma, num_of_trees):
         self.trees = [
-            Tree(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
+            XGBTree(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
+            for _ in range(num_of_trees)
+        ]
+        self.num_of_trees = num_of_trees
+        self.lambda_ = lambda_
+        self.gamma = gamma
+        self.max_depth = max_depth
+
+    def __getitem__(self, item):
+        return self.trees[item]
+
+
+class MultipleGBDTTrees(object):
+    def __init__(self, max_depth, lambda_, gamma, num_of_trees):
+        self.trees = [
+            GBDTTree(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
             for _ in range(num_of_trees)
         ]
         self.num_of_trees = num_of_trees
