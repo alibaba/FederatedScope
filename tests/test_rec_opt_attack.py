@@ -56,7 +56,7 @@ class RECTest(unittest.TestCase):
         cfg.attack.reconstruct_lr = 0.1
         cfg.attack.reconstruct_optim = 'Adam'
         cfg.attack.info_diff_type = 'l2'
-        cfg.attack.max_ite = 500
+        cfg.attack.max_ite = 1000
 
         return backup_cfg
 
