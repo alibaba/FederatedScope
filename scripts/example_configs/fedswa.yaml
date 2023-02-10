@@ -7,6 +7,9 @@ federate:
   mode: standalone
   total_round_num: 6
   sample_client_rate: 0.1
+  make_global_eval: True
+  merge_test_data: True
+  merge_val_data: True
 fedswa:
   use: True
   freq: 3
