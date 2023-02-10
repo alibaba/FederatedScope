@@ -16,8 +16,7 @@ data:
   type: 'CIFAR10@torchvision'
   splits: [0.8,0.2,0.0]
   num_workers: 0
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.247, 0.243, 0.261]}]]
-  test_transform: [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.247, 0.243, 0.261]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.2470, 0.2435, 0.2616]}]]
   args: [{'download': True}]
   splitter: 'lda'
   splitter_args: [{'alpha': 0.5}]

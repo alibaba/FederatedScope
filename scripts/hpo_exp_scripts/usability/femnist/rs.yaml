@@ -1,6 +1,6 @@
 use_gpu: True
 device: 3
-outdir: bo_rf_femnist_avg
+outdir: rs_femnist_avg
 early_stop:
   patience: 100
 seed: 12345
@@ -15,7 +15,7 @@ data:
   type: femnist
   splits: [0.6,0.2,0.2]
   subsample: 0.05
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.9637], 'std': [0.1592]}]]
 dataloader:
   batch_size: 16
 model:
@@ -40,12 +40,13 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: bo_rf
+  scheduler: rs
   num_workers: 0
+  init_cand_num: 10
   ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
     budgets: [ 50, 50 ]
     elim_rate: 3
     iter: 50
   metric: 'client_summarized_weighted_avg.val_avg_loss'
-  working_folder: bo_rf_femnist_avg
+  working_folder: rs_femnist_avg

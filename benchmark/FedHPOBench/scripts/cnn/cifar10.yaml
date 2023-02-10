@@ -17,7 +17,7 @@ data:
   splits: [0.8,0.2,0.0]
   batch_size: 32
   num_workers: 0
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.2470, 0.2435, 0.2616]}]]
   args: [{'download': True}]
   splitter: 'lda'
   splitter_args: [{'alpha': 0.5}]

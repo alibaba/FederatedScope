@@ -1,6 +1,6 @@
 use_gpu: True
-device: 0
-outdir: learn_from_scratch
+device: 3
+outdir: bo_kde_femnist_avg
 early_stop:
   patience: 100
 seed: 12345
@@ -10,13 +10,12 @@ federate:
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
-  use_diff: True
 data:
   root: data/
   type: femnist
   splits: [0.6,0.2,0.2]
   subsample: 0.05
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.9637], 'std': [0.1592]}]]
 dataloader:
   batch_size: 16
 model:
@@ -40,3 +39,13 @@ eval:
   freq: 1
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
+hpo:
+  scheduler: bo_kde
+  num_workers: 0
+  ss: 'scripts/example_configs/femnist/avg/ss.yaml'
+  sha:
+    budgets: [ 50, 50 ]
+    elim_rate: 3
+    iter: 50
+  metric: 'client_summarized_weighted_avg.val_avg_loss'
+  working_folder: bo_kde_femnist_avg

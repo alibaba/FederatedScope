@@ -1,5 +1,6 @@
 use_gpu: True
 device: 3
+outdir: hb_femnist_avg
 early_stop:
   patience: 100
 seed: 12345
@@ -9,13 +10,12 @@ federate:
   sample_client_rate: 1.0
   share_local_model: True
   online_aggr: True
-  use_diff: True
 data:
   root: data/
   type: femnist
   splits: [0.6,0.2,0.2]
   subsample: 0.05
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.9637], 'std': [0.1592]}]]
 dataloader:
   batch_size: 16
 model:
@@ -40,10 +40,12 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
-  scheduler: sha
+  scheduler: hb
   num_workers: 0
-  init_cand_num: 27
-  ss: 'scripts/example_configs/femnist/hpo_ss_sha.yaml'
+  ss: 'scripts/example_configs/femnist/avg/ss.yaml'
   sha:
-    budgets: [12, 13, 19]
+    budgets: [ 9, 81 ]
+    elim_rate: 3
+    iter: 12
   metric: 'client_summarized_weighted_avg.val_avg_loss'
+  working_folder: hb_femnist_avg
