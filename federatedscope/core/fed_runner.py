@@ -166,6 +166,9 @@ class BaseRunner(object):
         if self.cfg.vertical.use:
             from federatedscope.vertical_fl.utils import wrap_vertical_server
             server = wrap_vertical_server(server, self.cfg)
+        if self.cfg.fedswa.use:
+            from federatedscope.core.workers.wrapper import wrap_swa_server
+            server = wrap_swa_server(server)
         logger.info('Server has been set up ... ')
         return self.feat_engr_wrapper_server(server)
 
@@ -869,7 +872,7 @@ class FedRunner(object):
 
         logger.info('Server has been set up ... ')
 
-        return server
+        return self.feat_engr_wrapper_server(server)
 
     def _setup_client(self,
                       client_id=-1,
@@ -926,7 +929,7 @@ class FedRunner(object):
         else:
             logger.info(f'Client {client_id} has been set up ... ')
 
-        return client
+        return self.feat_engr_wrapper_client(client)
 
     def _handle_msg(self, msg, rcv=-1):
         """
