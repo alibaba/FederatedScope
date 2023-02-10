@@ -1,0 +1,25 @@
+train.optimizer.lr:
+  type: float
+  lower: 0.01
+  upper: 1.0
+  log: True
+model.num_of_trees:
+  type: int
+  lower: 3
+  upper: 5
+vertical.algo:
+  type: cate
+  choices: ['lr', 'xgb']
+feat_engr.type:
+  type: cate
+  choices: ['', 'min_max_norm', 'instance_norm', 'standardization', 'log_transform', 'uniform_binning', 'quantile_binning', 'correlation_filter', 'variance_filter', 'iv_filter']
+condition1:
+  type: equal
+  child: model.num_of_trees
+  parent: vertical.algo
+  value: 'xgb'
+condition2:
+  type: equal
+  child: train.optimizer.lr
+  parent: vertical.algo
+  value: 'lr'

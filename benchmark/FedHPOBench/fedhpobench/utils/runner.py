@@ -1,6 +1,6 @@
 from federatedscope.core.cmd_args import parse_args
-from fedhpob.config import fhb_cfg, add_configs
-from fedhpob.optimizers import run_dehb, run_hpbandster, run_optuna, \
+from fedhpobench.config import fhb_cfg, add_configs
+from fedhpobench.optimizers import run_dehb, run_hpbandster, run_optuna, \
     run_smac, run_grid_search
 
 

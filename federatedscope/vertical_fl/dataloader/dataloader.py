@@ -1,6 +1,14 @@
 import numpy as np
 
-from federatedscope.vertical_fl.dataset.adult import Adult
+from federatedscope.vertical_fl.dataset import Adult, Abalone, Credit, Blog
+from federatedscope.core.data.wrap_dataset import WrapDataset
+
+VERTICAL_DATASET = {
+    'adult': Adult,
+    'credit': Credit,
+    'abalone': Abalone,
+    'blog': Blog,
+}
 
 
 def load_vertical_data(config=None, generate=False):
@@ -14,35 +22,27 @@ def load_vertical_data(config=None, generate=False):
     :rtype: dict
     """
 
-    splits = config.data.splits
-    path = config.data.root
-    name = config.data.type.lower()
+    dataset_name = config.data.type.lower()
     # TODO: merge the following later
-    if config.vertical.use:
-        feature_partition = config.vertical.dims
-        algo = 'lr'
-    elif config.xgb_base.use:
-        feature_partition = config.xgb_base.dims
-        algo = 'xgb'
 
     if config.data.args:
         args = config.data.args[0]
     else:
         args = {'normalization': False, 'standardization': False}
 
-    if name == 'adult':
-        dataset = Adult(root=path,
-                        name=name,
-                        num_of_clients=config.federate.client_num,
-                        feature_partition=feature_partition,
-                        tr_frac=splits[0],
-                        download=True,
-                        seed=1234,
-                        args=args,
-                        algo=algo)
+    if not generate:
+        dataset_class = VERTICAL_DATASET[dataset_name]
+        dataset = dataset_class(root=config.data.root,
+                                num_of_clients=config.federate.client_num,
+                                feature_partition=config.vertical.dims,
+                                tr_frac=config.data.splits[0],
+                                algo=config.vertical.algo,
+                                download=True,
+                                seed=1234,
+                                args=args)
         data = dataset.data
         return data, config
-    elif generate:
+    else:
         # generate toy data for running a vertical FL example
         INSTANCE_NUM = 1000
         TRAIN_SPLIT = 0.9
@@ -82,5 +82,3 @@ def load_vertical_data(config=None, generate=False):
         data[2]['test'] = test_data
 
         return data, config
-    else:
-        raise ValueError('You must provide the data file')

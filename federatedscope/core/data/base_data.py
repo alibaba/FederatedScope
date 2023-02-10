@@ -1,4 +1,7 @@
 import logging
+
+from scipy.sparse.csc import csc_matrix
+
 from federatedscope.core.data.utils import merge_data
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 
@@ -7,7 +10,14 @@ logger = logging.getLogger(__name__)
 
 class StandaloneDataDict(dict):
     """
-        `StandaloneDataDict` maintain several `ClientData`.
+    ``StandaloneDataDict`` maintain several ``ClientData``, only used in \
+    ``Standalone`` mode to be passed to ``Runner``, which will conduct \
+    several preprocess based on ``global_cfg``, see ``preprocess()`` \
+    for details.
+
+    Args:
+        datadict: ``Dict`` with ``client_id`` as key,  ``ClientData`` as value.
+        global_cfg: global ``CfgNode``
     """
     def __init__(self, datadict, global_cfg):
         """
@@ -23,11 +33,12 @@ class StandaloneDataDict(dict):
 
     def resetup(self, global_cfg, client_cfgs=None):
         """
-        Resetup new configs for `ClientData`, which might be used in HPO.
+        Reset-up new configs for ``ClientData``, when the configs change \
+        which might be used in HPO.
 
         Args:
-            global_cfg: enable new config for `ClientData`
-            client_cfgs: enable new client-specific config for `ClientData`
+            global_cfg: enable new config for ``ClientData``
+            client_cfgs: enable new client-specific config for ``ClientData``
         """
         self.global_cfg, self.client_cfgs = global_cfg, client_cfgs
         for client_id, client_data in self.items():
@@ -46,9 +57,11 @@ class StandaloneDataDict(dict):
 
     def preprocess(self, datadict):
         """
-        Preprocess for StandaloneDataDict for:
-            1. Global evaluation (merge test data).
-            2. Global mode (train with centralized setting, merge all data).
+        Preprocess for:
+
+        (1) Global evaluation (merge test data).
+        (2) Global mode (train with centralized setting, merge all data).
+        (3) Apply data attack algorithms.
 
         Args:
             datadict: dict with `client_id` as key,  `ClientData` as value.
@@ -59,7 +72,7 @@ class StandaloneDataDict(dict):
                 merged_max_data_id=self.global_cfg.federate.client_num,
                 specified_dataset_name=['test'])
             # `0` indicate Server
-            datadict[0] = server_data
+            datadict[0] = ClientData(self.global_cfg, **server_data)
 
         if self.global_cfg.federate.method == "global":
             if self.global_cfg.federate.client_num != 1:
@@ -73,16 +86,16 @@ class StandaloneDataDict(dict):
                 else:
                     logger.info(f"Will merge data from clients whose ids in "
                                 f"[1, {self.global_cfg.federate.client_num}]")
-                    datadict[1] = merge_data(
+                    merged_data = merge_data(
                         all_data=datadict,
                         merged_max_data_id=self.global_cfg.federate.client_num)
+                    datadict[1] = ClientData(self.global_cfg, **merged_data)
         datadict = self.attack(datadict)
         return datadict
 
     def attack(self, datadict):
         """
-        Apply attack to `StandaloneDataDict`.
-
+        Apply attack to ``StandaloneDataDict``.
         """
         if 'backdoor' in self.global_cfg.attack.attack_method and 'edge' in \
                 self.global_cfg.attack.trigger_type:
@@ -124,24 +137,27 @@ class StandaloneDataDict(dict):
 
 class ClientData(dict):
     """
-        `ClientData` converts dataset to train/val/test DataLoader.
-        Key `data` in `ClientData` is the raw dataset.
-    """
-    def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
-        """
+    ``ClientData`` converts split data to ``DataLoader``.
 
-        Args:
-            loader: Dataloader class or data dict which have been built
-            client_cfg: client-specific CfgNode
-            data: raw dataset, which will stay raw
-            train: train dataset, which will be converted to DataLoader
-            val: valid dataset, which will be converted to DataLoader
-            test: test dataset, which will be converted to DataLoader
-        """
+    Args:
+        loader: ``Dataloader`` class or data dict which have been built
+        client_cfg: client-specific ``CfgNode``
+        data: raw dataset, which will stay raw
+        train: train dataset, which will be converted to ``Dataloader``
+        val: valid dataset, which will be converted to ``Dataloader``
+        test: test dataset, which will be converted to ``Dataloader``
+
+    Note:
+        Key ``{split}_data`` in ``ClientData`` is the raw dataset.
+        Key ``{split}`` in ``ClientData`` is the dataloader.
+    """
+    SPLIT_NAMES = ['train', 'val', 'test']
+
+    def __init__(self, client_cfg, train=None, val=None, test=None, **kwargs):
         self.client_cfg = None
-        self.train = train
-        self.val = val
-        self.test = test
+        self.train_data = train
+        self.val_data = val
+        self.test_data = test
         self.setup(client_cfg)
         if kwargs is not None:
             for key in kwargs:
@@ -150,25 +166,34 @@ class ClientData(dict):
 
     def setup(self, new_client_cfg=None):
         """
+        Set up ``DataLoader`` in ``ClientData`` with new configurations.
 
         Args:
             new_client_cfg: new client-specific CfgNode
 
         Returns:
-            Status: indicate whether the client_cfg is updated
+            Bool: Status for indicating whether the client_cfg is updated
         """
-        # if `batch_size` or `shuffle` change, reinstantiate DataLoader
+        # if `batch_size` or `shuffle` change, re-instantiate DataLoader
         if self.client_cfg is not None:
             if dict(self.client_cfg.dataloader) == dict(
                     new_client_cfg.dataloader):
                 return False
 
         self.client_cfg = new_client_cfg
-        if self.train is not None:
-            self['train'] = get_dataloader(self.train, self.client_cfg,
-                                           'train')
-        if self.val is not None:
-            self['val'] = get_dataloader(self.val, self.client_cfg, 'val')
-        if self.test is not None:
-            self['test'] = get_dataloader(self.test, self.client_cfg, 'test')
+
+        for split_data, split_name in zip(
+            [self.train_data, self.val_data, self.test_data],
+                self.SPLIT_NAMES):
+            if split_data is not None:
+                # csc_matrix does not have ``__len__`` attributes
+                if isinstance(split_data, csc_matrix):
+                    self[split_name] = get_dataloader(split_data,
+                                                      self.client_cfg,
+                                                      split_name)
+                elif len(split_data) > 0:
+                    self[split_name] = get_dataloader(split_data,
+                                                      self.client_cfg,
+                                                      split_name)
+
         return True

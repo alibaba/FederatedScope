@@ -15,6 +15,32 @@ except ImportError as error:
 
 
 def get_client_cls(cfg):
+    """
+    This function return a class of client.
+
+    Args:
+        cfg: configurations for FL, see ``federatedscope.core.configs``
+
+    Returns:
+        A client class decided by ``cfg``.
+
+    Note:
+      The key-value pairs of client type and source:
+        ==================== ==============================================
+        Client type          Source
+        ==================== ==============================================
+        ``local``            ``core.workers.Client``
+        ``fedavg``           ``core.workers.Client``
+        ``pfedme``           ``core.workers.Client``
+        ``ditto``            ``core.workers.Client``
+        ``fedex``            ``autotune.fedex.FedExClient``
+        ``vfl``              ``vertical_fl.worker.vFLClient``
+        ``fedsageplus``      ``gfl.fedsageplus.worker.FedSagePlusClient``
+        ``gcflplus``         ``gfl.gcflplus.worker.GCFLPlusClient``
+        ``gradascent``       \
+        ``attack.worker_as_attacker.active_client``
+        ==================== ==============================================
+    """
     for func in register.worker_dict.values():
         worker_class = func(cfg.federate.method.lower())
         if worker_class is not None:
@@ -25,12 +51,18 @@ def get_client_cls(cfg):
         return FedExClient
 
     if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLClient
-        return vFLClient
+        if cfg.vertical.algo == 'lr':
+            from federatedscope.vertical_fl.worker import vFLClient
+            return vFLClient
+        elif cfg.vertical.algo in ['xgb', 'gbdt']:
+            from federatedscope.vertical_fl.xgb_base.worker import XGBClient
+            return XGBClient
+        else:
+            raise ValueError(f'No client class for {cfg.vertical.algo}')
 
-    if cfg.xgb_base.use:
-        from federatedscope.vertical_fl.xgb_base.worker import XGBClient
-        return XGBClient
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
+        from federatedscope.nlp.hetero_tasks.worker import ATCClient
+        return ATCClient
 
     if cfg.federate.method.lower() in constants.CLIENTS_TYPE:
         client_type = constants.CLIENTS_TYPE[cfg.federate.method.lower()]
@@ -69,6 +101,35 @@ def get_client_cls(cfg):
 
 
 def get_server_cls(cfg):
+    """
+    This function return a class of server.
+
+    Args:
+        cfg: configurations for FL, see ``federatedscope.core.configs``
+
+    Returns:
+        A server class decided by ``cfg``.
+
+    Note:
+      The key-value pairs of server type and source:
+        ==================== ==============================================
+        Server type          Source
+        ==================== ==============================================
+        ``local``            ``core.workers.Server``
+        ``fedavg``           ``core.workers.Server``
+        ``pfedme``           ``core.workers.Server``
+        ``ditto``            ``core.workers.Server``
+        ``fedex``            ``autotune.fedex.FedExServer``
+        ``vfl``              ``vertical_fl.worker.vFLServer``
+        ``fedsageplus``      ``gfl.fedsageplus.worker.FedSagePlusServer``
+        ``gcflplus``         ``gfl.gcflplus.worker.GCFLPlusServer``
+        ``attack``           \
+        ``attack.worker_as_attacker.server_attacker.PassiveServer`` and \
+        ``attack.worker_as_attacker.server_attacker.PassivePIAServer``
+        ``backdoor``         \
+        ``attack.worker_as_attacker.server_attacker.BackdoorServer``
+        ==================== ==============================================
+    """
     for func in register.worker_dict.values():
         worker_class = func(cfg.federate.method.lower())
         if worker_class is not None:
@@ -93,12 +154,18 @@ def get_server_cls(cfg):
         return BackdoorServer
 
     if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLServer
-        return vFLServer
+        if cfg.vertical.algo == 'lr':
+            from federatedscope.vertical_fl.worker import vFLServer
+            return vFLServer
+        elif cfg.vertical.algo in ['xgb', 'gbdt']:
+            from federatedscope.vertical_fl.xgb_base.worker import XGBServer
+            return XGBServer
+        else:
+            raise ValueError(f'No server class for {cfg.vertical.algo}')
 
-    if cfg.xgb_base.use:
-        from federatedscope.vertical_fl.xgb_base.worker import XGBServer
-        return XGBServer
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
+        from federatedscope.nlp.hetero_tasks.worker import ATCServer
+        return ATCServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:
         server_type = constants.SERVER_TYPE[cfg.federate.method.lower()]

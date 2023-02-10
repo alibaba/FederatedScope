@@ -21,7 +21,7 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [07-30-2022] We release FederatedScope v0.2.0! 
 - [06-17-2022] We release **pFL-Bench**, a comprehensive benchmark for personalized Federated Learning (pFL), containing 10+ datasets and 20+ baselines. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench), [pdf](https://arxiv.org/abs/2206.03655)]
-- [06-17-2022] We release **FedHPO-B**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOB), [pdf](https://arxiv.org/abs/2206.03966)]
+- [06-17-2022] We release **FedHPO-Bench**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOBench), [pdf](https://arxiv.org/abs/2206.03966)]
 - [06-17-2022] We release **B-FHTL**, a benchmark suit for studying federated hetero-task learning. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/B-FHTL), [pdf](https://arxiv.org/abs/2206.03436)]
 - [06-13-2022] Our project was receiving an attack, which has been resolved. [More details](https://github.com/alibaba/FederatedScope/blob/master/doc/news/06-13-2022_Declaration_of_Emergency.txt).
 - [05-25-2022] Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!
@@ -104,7 +104,7 @@ conda activate fs
 If your backend is torch, please install torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
 
 ```bash
-conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 torchtext=0.11.1 cudatoolkit=11.3 -c pytorch -c conda-forge
 ```
 
 For users with Apple M1 chips:
@@ -268,7 +268,7 @@ As a comprehensive FL platform, FederatedScope provides the fundamental implemen
 - **Differential Privacy**: Different from the encryption algorithms that require a large amount of computation resources,  differential privacy is an economical yet flexible technique to protect privacy, which has achieved great success in database and is ever-growing in federated learning.
 - ...
 
-More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning!
+More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning! 
 
 Materials of related topics are constantly being updated, please refer to [FL-Recommendation](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Recommendation), [Federated-HPO](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_HPO), [Personalized FL](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Personalized_FL), [Federated Graph Learning](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_Graph_Learning), [FL-NLP](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-NLP), [FL-Attacker](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Attacker), [FL-Incentive-Mechanism](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Incentive), [FL-Fairness](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Fiarness) and so on. 
 

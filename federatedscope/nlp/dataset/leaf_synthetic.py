@@ -8,7 +8,7 @@ import os.path as osp
 from sklearn.utils import shuffle
 from torch.utils.data import Dataset
 
-from federatedscope.core.auxiliaries.utils import save_local_data
+from federatedscope.core.data.utils import save_local_data
 from federatedscope.cv.dataset.leaf import LEAF
 
 

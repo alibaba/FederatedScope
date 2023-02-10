@@ -4,16 +4,25 @@ from abc import ABC, abstractmethod
 
 
 class Aggregator(ABC):
+    """
+    Abstract class of Aggregator.
+    """
     def __init__(self):
         pass
 
     @abstractmethod
     def aggregate(self, agg_info):
+        """
+        Aggregation function.
+
+        Args:
+            agg_info: information to be aggregated.
+        """
         pass
 
 
 class NoCommunicationAggregator(Aggregator):
-    """"Clients do not communicate. Each client work locally
+    """Clients do not communicate. Each client work locally
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(Aggregator, self).__init__()
@@ -45,5 +54,11 @@ class NoCommunicationAggregator(Aggregator):
             raise ValueError("The file {} does NOT exist".format(path))
 
     def aggregate(self, agg_info):
+        """
+        Aggregation function.
+
+        Args:
+            agg_info: information to be aggregated.
+        """
         # do nothing
         return {}

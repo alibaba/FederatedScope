@@ -1,7 +1,7 @@
 import logging
 
 from federatedscope.mf.trainer.trainer import MFTrainer
-from federatedscope.core.auxiliaries.utils import get_random
+from federatedscope.core.trainers.utils import get_random
 from typing import Type
 import numpy as np
 

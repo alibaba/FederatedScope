@@ -11,7 +11,7 @@ data:
   type: celeba
   splits: [0.6,0.2,0.2]
   subsample: 0.1
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}]]
 dataloader:
   batch_size: 5
 model:

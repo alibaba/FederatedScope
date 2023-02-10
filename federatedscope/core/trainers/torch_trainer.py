@@ -10,12 +10,12 @@ except ImportError:
     DataLoader = None
     Dataset = None
 
-from federatedscope.core.auxiliaries.enums import MODE
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
+from federatedscope.core.trainers.enums import MODE, LIFECYCLE
 from federatedscope.core.trainers.trainer import Trainer
 from federatedscope.core.trainers.context import CtxVar
+from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
+from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
+from federatedscope.core.data import ClientData
 from federatedscope.core.data.wrap_dataset import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
@@ -32,10 +32,20 @@ class GeneralTorchTrainer(Trainer):
             self.ctx.model.state_dict() if self.cfg.federate.
             share_local_model else self.ctx.model.cpu().state_dict())
 
+    def setup_data(self, ctx):
+        """
+        Initialization data by ``cfg``.
+        """
+        if isinstance(ctx.data, ClientData):
+            ctx.data.setup(ctx.cfg)
+        else:
+            logger.warning(f'The data type should be `ClientData` to '
+                           f'enable new `config`, but got '
+                           f'{type(ctx.data)} instead.')
+
     def parse_data(self, data):
         """Populate "${split}_data", "${split}_loader" and "num_${
         split}_data" for different data splits
-
         """
         init_dict = dict()
         if isinstance(data, dict):
@@ -135,6 +145,22 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
     def _hook_on_fit_start_init(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.model``                       Move to ``ctx.device``
+            ``ctx.optimizer``                   Initialize by ``ctx.cfg``
+            ``ctx.scheduler``                   Initialize by ``ctx.cfg``
+            ``ctx.loss_batch_total``            Initialize to 0
+            ``ctx.loss_regular_total``          Initialize to 0
+            ``ctx.num_samples``                 Initialize to 0
+            ``ctx.ys_true``                     Initialize to ``[]``
+            ``ctx.ys_prob``                     Initialize to ``[]``
+            ==================================  ===========================
+        """
         # prepare model and optimizer
         ctx.model.to(ctx.device)
 
@@ -158,17 +184,35 @@ class GeneralTorchTrainer(Trainer):
         ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_fit_start_calculate_model_size(self, ctx):
-        if not isinstance(self.ctx.monitor, Monitor):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.monitor``                     Track model size
+            ==================================  ===========================
+        """
+        if not isinstance(ctx.monitor, Monitor):
             logger.warning(
                 f"The trainer {type(self)} does contain a valid monitor, "
                 f"this may be caused by initializing trainer subclasses "
                 f"without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
-        if self.ctx.monitor.total_model_size == 0:
-            self.ctx.monitor.track_model_size(ctx.models)
+        if ctx.monitor.total_model_size == 0:
+            ctx.monitor.track_model_size(ctx.models)
 
     def _hook_on_epoch_start(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.{ctx.cur_split}_loader``      Initialize DataLoader
+            ==================================  ===========================
+        """
         # prepare dataloader
         if ctx.get("{}_loader".format(ctx.cur_split)) is None:
             loader = get_dataloader(
@@ -183,6 +227,15 @@ class GeneralTorchTrainer(Trainer):
             ctx.get("{}_loader".format(ctx.cur_split)).reset()
 
     def _hook_on_batch_start_init(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.data_batch``                  Initialize batch data
+            ==================================  ===========================
+        """
         # prepare data batch
         try:
             ctx.data_batch = CtxVar(
@@ -192,6 +245,18 @@ class GeneralTorchTrainer(Trainer):
             raise StopIteration
 
     def _hook_on_batch_forward(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.y_true``                      Move to `ctx.device`
+            ``ctx.y_prob``                      Forward propagation get y_prob
+            ``ctx.loss_batch``                  Calculate the loss
+            ``ctx.batch_size``                  Get the batch_size
+            ==================================  ===========================
+        """
         x, label = [_.to(ctx.device) for _ in ctx.data_batch]
         pred = ctx.model(x)
         if len(label.size()) == 0:
@@ -204,25 +269,29 @@ class GeneralTorchTrainer(Trainer):
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         """
-            the monitoring hook to calculate the flops during the fl course
+        The monitoring hook to calculate the flops during the fl course
 
-            Note: for customized cases that the forward process is not only
-            based on ctx.model, please override this function (inheritance
-            case) or replace this hook (plug-in case)
+        Note:
+          For customized cases that the forward process is not only \
+          based on ctx.model, please override this function (inheritance \
+          case) or replace this hook (plug-in case)
 
-        :param ctx:
-        :return:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.monitor``                     Track average flops
+            ==================================  ===========================
         """
-        if not isinstance(self.ctx.monitor, Monitor):
+        if not isinstance(ctx.monitor, Monitor):
             logger.warning(
                 f"The trainer {type(self)} does contain a valid monitor, "
                 f"this may be caused by initializing trainer subclasses "
                 f"without passing a valid monitor instance."
-                f"Plz check whether this is you want.")
+                f"Please check whether this is you want.")
             return
 
-        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample \
-                == 0:
+        if self.cfg.eval.count_flops and ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 x, y = [_.to(ctx.device) for _ in ctx.data_batch]
@@ -235,9 +304,9 @@ class GeneralTorchTrainer(Trainer):
                         "by internal model nums as self.mirrored_models=True."
                         "if this is not the case you want, "
                         "please customize the count hook")
-                self.ctx.monitor.track_avg_flops(flops_one_batch,
-                                                 ctx.batch_size)
+                ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
             except:
+                # Raise warning at the first failure
                 logger.warning(
                     "current flop count implementation is for general "
                     "trainer case: "
@@ -245,21 +314,42 @@ class GeneralTorchTrainer(Trainer):
                     "2) the ctx.model takes only x as input."
                     "Please check the forward format or implement your own "
                     "flop_count function")
-                self.ctx.monitor.flops_per_sample = -1  # warning at the
-                # first failure
+                ctx.monitor.flops_per_sample = -1
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward
-        self.ctx.monitor.total_flops +=\
-            self.ctx.monitor.flops_per_sample * ctx.batch_size
+        ctx.monitor.total_flops += ctx.monitor.flops_per_sample * \
+            ctx.batch_size
 
     def _hook_on_batch_forward_regularizer(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.loss_regular``                Calculate the regular loss
+            ``ctx.loss_task``                   Sum the ``ctx.loss_regular`` \
+            and ``ctx.loss``
+            ==================================  ===========================
+        """
         ctx.loss_regular = CtxVar(
             self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
         ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular,
                                LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.optimizer``                   Update by gradient
+            ``ctx.loss_task``                   Backward propagation
+            ``ctx.scheduler``                   Update by gradient
+            ==================================  ===========================
+        """
         ctx.optimizer.zero_grad()
         ctx.loss_task.backward()
         if ctx.grad_clip > 0:
@@ -271,6 +361,19 @@ class GeneralTorchTrainer(Trainer):
             ctx.scheduler.step()
 
     def _hook_on_batch_end(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.num_samples``                 Add ``ctx.batch_size``
+            ``ctx.loss_batch_total``            Add batch loss
+            ``ctx.loss_regular_total``          Add batch regular loss
+            ``ctx.ys_true``                     Append ``ctx.y_true``
+            ``ctx.ys_prob``                     Append ``ctx.ys_prob``
+            ==================================  ===========================
+        """
         # update statistics
         ctx.num_samples += ctx.batch_size
         ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
@@ -280,12 +383,24 @@ class GeneralTorchTrainer(Trainer):
         ctx.ys_prob.append(ctx.y_prob.detach().cpu().numpy())
 
     def _hook_on_fit_end(self, ctx):
-        """Evaluate metrics.
+        """
+        Evaluate metrics.
 
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.ys_true``                     Convert to ``numpy.array``
+            ``ctx.ys_prob``                     Convert to ``numpy.array``
+            ``ctx.monitor``                     Evaluate the results
+            ``ctx.eval_metrics``                Get evaluated results from \
+            ``ctx.monitor``
+            ==================================  ===========================
         """
         ctx.ys_true = CtxVar(np.concatenate(ctx.ys_true), LIFECYCLE.ROUTINE)
         ctx.ys_prob = CtxVar(np.concatenate(ctx.ys_prob), LIFECYCLE.ROUTINE)
-        results = self.metric_calculator.eval(ctx)
+        results = ctx.monitor.eval(ctx)
         setattr(ctx, 'eval_metrics', results)
 
     def save_model(self, path, cur_round=-1):
@@ -305,8 +420,8 @@ class GeneralTorchTrainer(Trainer):
             raise ValueError("The file {} does NOT exist".format(path))
 
     def discharge_model(self):
-        """Discharge the model from GPU device
-
+        """
+        Discharge the model from GPU device
         """
         # Avoid memory leak
         if not self.cfg.federate.share_local_model:

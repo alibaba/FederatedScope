@@ -269,6 +269,10 @@ class PassiveServer(Server):
         self.msg_buffer['train'][round][sender] = content
 
         # run reconstruction before the clear of self.msg_buffer
+        if 'DLG_loss' not in self.best_results.keys():
+            self.best_results['DLG_loss'] = {}
+        if round not in self.best_results['DLG_loss'].keys():
+            self.best_results['DLG_loss'][round] = {}
 
         if self.state_to_reconstruct is None or message.state in \
                 self.state_to_reconstruct:
@@ -276,6 +280,11 @@ class PassiveServer(Server):
                     self.client_to_reconstruct:
                 self.run_reconstruct(state_list=[message.state],
                                      sender_list=[message.sender])
+                logger.info(
+                    'Finish DLG attack; Final DLG reconstruction loss: {}'.
+                    format(self.reconstructor.dlg_recover_loss))
+                self.best_results['DLG_loss'][round][
+                    sender] = self.reconstructor.dlg_recover_loss
                 if self.reconstructed_data_sav_fn is not None:
                     self.reconstructed_data_sav_fn(
                         data=self.reconstruct_data[message.state][

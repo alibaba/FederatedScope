@@ -5,9 +5,9 @@ import datetime
 import numpy as np
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.auxiliaries.data_builder import get_data
-from fedhpob.utils.tabular_dataloader import load_data
-from fedhpob.utils.util import disable_fs_logger
-from fedhpob.utils.cost_model import get_cost_model
+from fedhpobench.utils.tabular_dataloader import load_data
+from fedhpobench.utils.util import disable_fs_logger
+from fedhpobench.utils.cost_model import get_cost_model
 
 
 class BaseBenchmark(abc.ABC):
@@ -79,14 +79,14 @@ class BaseBenchmark(abc.ABC):
                 filterd_result['eval_time'])
             return c.total_seconds() / float(client_num)
         else:
-            from fedhpob.config import fhb_cfg
+            from fedhpobench.config import fhb_cfg
             return fhb_cfg.cost.c
 
     def _cost(self, configuration, fidelity, **kwargs):
         try:
             kwargs['const'] = self.get_lamba_from_df(configuration, fidelity)
         except:
-            from fedhpob.config import fhb_cfg
+            from fedhpobench.config import fhb_cfg
             kwargs['const'] = fhb_cfg.cost.c
         cost_model = get_cost_model(mode=self.cost_mode)
         t = cost_model(self.cfg, configuration, fidelity, self.data, **kwargs)

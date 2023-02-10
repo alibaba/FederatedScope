@@ -16,15 +16,15 @@ RDLogger.DisableLog('rdApp.*')
 
 
 class GenFeatures:
-    r"""Implementation of 'CanonicalAtomFeaturizer' and
-    'CanonicalBondFeaturizer' in DGL.
+    r"""Implementation of ``CanonicalAtomFeaturizer`` and
+    ``CanonicalBondFeaturizer`` in DGL. \
     Source: https://lifesci.dgl.ai/_modules/dgllife/utils/featurizers.html
 
     Arguments:
         data: PyG.data in PyG.dataset.
 
     Returns:
-        data: PyG.data, data passing featurizer.
+        PyG.data: data passing featurizer.
 
     """
     def __init__(self):
@@ -151,16 +151,18 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
 
 
 class ScaffoldLdaSplitter(BaseSplitter):
-    r"""First adopt scaffold splitting and then assign the samples to
+    """
+    First adopt scaffold splitting and then assign the samples to \
     clients according to Latent Dirichlet Allocation.
 
     Arguments:
         dataset (List or PyG.dataset): The molecular datasets.
-        alpha (float): Partition hyperparameter in LDA, smaller alpha
-        generates more extreme heterogeneous scenario.
+        alpha (float): Partition hyperparameter in LDA, smaller alpha \
+            generates more extreme heterogeneous scenario see \
+            ``np.random.dirichlet``
 
     Returns:
-        data_list (List(List(PyG.data))): Splited dataset via scaffold split.
+         List(List(PyG.data)): data_list of split dataset via scaffold split.
 
     """
     def __init__(self, client_num, alpha):

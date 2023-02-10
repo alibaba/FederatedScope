@@ -19,7 +19,6 @@ def extend_evaluation_cfg(cfg):
 
     # Monitoring, e.g., 'dissim' for B-local dissimilarity
     cfg.eval.monitoring = []
-
     cfg.eval.count_flops = True
 
     # ---------------------------------------------------------------------- #

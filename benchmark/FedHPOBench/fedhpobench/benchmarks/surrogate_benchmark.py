@@ -1,7 +1,7 @@
 import os
 
-from fedhpob.benchmarks.base_benchmark import BaseBenchmark
-from fedhpob.utils.surrogate_dataloader import build_surrogate_model, \
+from fedhpobench.benchmarks.base_benchmark import BaseBenchmark
+from fedhpobench.utils.surrogate_dataloader import build_surrogate_model, \
     load_surrogate_model
 
 
