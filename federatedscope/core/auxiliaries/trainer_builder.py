@@ -168,6 +168,14 @@ def get_trainer(model=None,
                               config=config,
                               only_for_eval=only_for_eval,
                               monitor=monitor)
+    elif config.trainer.type.lower() in ['verticaltrainer']:
+        from federatedscope.vertical_fl.trainer.utils import \
+            get_vertical_trainer
+        trainer = get_vertical_trainer(config=config,
+                                       model=model,
+                                       data=data,
+                                       device=device,
+                                       monitor=monitor)
     else:
         # try to find user registered trainer
         trainer = None

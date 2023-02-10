@@ -36,7 +36,7 @@ class vFLServer(Server):
         cfg_key_size = config.vertical.key_size
         self.public_key, self.private_key = \
             abstract_paillier.generate_paillier_keypair(n_length=cfg_key_size)
-        self.vertical_dims = config.vertical_dims
+        self.vertical_dims = config.vertical.dims
         self._init_data_related_var()
 
         self.lr = config.train.optimizer.lr

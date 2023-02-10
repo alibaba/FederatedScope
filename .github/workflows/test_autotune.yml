@@ -1,9 +1,12 @@
 name: UnitTests for Autotune Module
 
-on: [push, pull_request]
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
 
 jobs:
   run:
+    if: false == contains(github.event.pull_request.title, 'WIP')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:

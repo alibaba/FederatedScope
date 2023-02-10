@@ -51,12 +51,14 @@ def get_client_cls(cfg):
         return FedExClient
 
     if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLClient
-        return vFLClient
-
-    if cfg.xgb_base.use:
-        from federatedscope.vertical_fl.xgb_base.worker import XGBClient
-        return XGBClient
+        if cfg.vertical.algo == 'lr':
+            from federatedscope.vertical_fl.worker import vFLClient
+            return vFLClient
+        elif cfg.vertical.algo in ['xgb', 'gbdt']:
+            from federatedscope.vertical_fl.xgb_base.worker import XGBClient
+            return XGBClient
+        else:
+            raise ValueError(f'No client class for {cfg.vertical.algo}')
 
     if cfg.data.type.lower() == 'hetero_nlp_tasks':
         from federatedscope.nlp.hetero_tasks.worker import ATCClient
@@ -152,12 +154,14 @@ def get_server_cls(cfg):
         return BackdoorServer
 
     if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLServer
-        return vFLServer
-
-    if cfg.xgb_base.use:
-        from federatedscope.vertical_fl.xgb_base.worker import XGBServer
-        return XGBServer
+        if cfg.vertical.algo == 'lr':
+            from federatedscope.vertical_fl.worker import vFLServer
+            return vFLServer
+        elif cfg.vertical.algo in ['xgb', 'gbdt']:
+            from federatedscope.vertical_fl.xgb_base.worker import XGBServer
+            return XGBServer
+        else:
+            raise ValueError(f'No server class for {cfg.vertical.algo}')
 
     if cfg.data.type.lower() == 'hetero_nlp_tasks':
         from federatedscope.nlp.hetero_tasks.worker import ATCServer
