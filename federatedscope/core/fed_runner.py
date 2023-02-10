@@ -872,7 +872,7 @@ class FedRunner(object):
 
         logger.info('Server has been set up ... ')
 
-        return self.feat_engr_wrapper_server(server)
+        return server
 
     def _setup_client(self,
                       client_id=-1,
@@ -929,7 +929,7 @@ class FedRunner(object):
         else:
             logger.info(f'Client {client_id} has been set up ... ')
 
-        return self.feat_engr_wrapper_client(client)
+        return client
 
     def _handle_msg(self, msg, rcv=-1):
         """
