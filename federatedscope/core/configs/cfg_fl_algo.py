@@ -26,7 +26,7 @@ def extend_fl_algo_cfg(cfg):
     cfg.fedprox.mu = 0.
 
     # ---------------------------------------------------------------------- #
-    # fedswa related options, a general fl algorithm
+    # fedswa related options, Stochastic Weight Averaging (SWA)
     # ---------------------------------------------------------------------- #
     cfg.fedswa = CN()
     cfg.fedswa.use = False
