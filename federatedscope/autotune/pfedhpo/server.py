@@ -279,7 +279,6 @@ class pFedHPOServer(Server):
             res_end = self.history_results[key1][key2][-1]
 
         if not self.discrete:
-
             reward = np.maximum(0, res_end - anchor_res_start)
             losses = -reward * self.logprob
 
@@ -291,8 +290,6 @@ class pFedHPOServer(Server):
 
         self.opt.zero_grad()
         loss = losses.mean()
-        # if self.discrete:
-        #     loss += self.enc_loss
         loss.backward()
         nn.utils.clip_grad_norm_(self.opt_params, max_norm=10, norm_type=2)
         self.opt.step()
@@ -421,13 +418,12 @@ class pFedHPOServer(Server):
         if should_stop:
             self.state = self.total_round_num + 1
 
-        if self.state % 50 == 0 or self.state == self.total_round_num:
-            _path = os.path.join(self._cfg.hpo.working_folder,
-                                 'hyperNet_encoding.pt')
-            hyper_enc = {
-                'hyperNet': self.HyperNet.state_dict(),
-            }
-            torch.save(hyper_enc, _path)
+        _path = os.path.join(self._cfg.hpo.working_folder,
+                             'hyperNet_encoding.pt')
+        hyper_enc = {
+            'hyperNet': self.HyperNet.state_dict(),
+        }
+        torch.save(hyper_enc, _path)
 
         if should_stop or self.state == self.total_round_num:
             logger.info('Server: Final evaluation is finished! Starting '
