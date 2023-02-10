@@ -16,6 +16,7 @@ def extend_fl_algo_cfg(cfg):
         'SGD', description="optimizer type for FedOPT")
     cfg.fedopt.optimizer.lr = Argument(
         0.01, description="learning rate for FedOPT optimizer")
+    cfg.fedopt.annealing = False
 
     # ---------------------------------------------------------------------- #
     # fedprox related options, a general fl algorithm
