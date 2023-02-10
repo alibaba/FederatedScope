@@ -83,7 +83,7 @@ class LocalEntropyTrainer(BaseTrainer):
             outputs = self.model(inputs)
             ce_loss = criterion(outputs, targets)
             loss = ce_loss + self._thermal * prox_term(self.model.state_dict(),
-                                                 current_global_model)
+                                                       current_global_model)
             loss.backward()
             optimizer.step()
 
