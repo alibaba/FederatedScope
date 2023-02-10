@@ -5,15 +5,15 @@ early_stop:
 seed: 12345
 federate:
   mode: standalone
-  total_round_num: 6
+  total_round_num: 100
   sample_client_rate: 0.1
   make_global_eval: True
   merge_test_data: True
   merge_val_data: True
 fedswa:
   use: True
-  freq: 3
-  start_rnd: 2
+  freq: 10
+  start_rnd: 75
 data:
   root: data/
   type: femnist

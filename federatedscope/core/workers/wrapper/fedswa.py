@@ -39,7 +39,6 @@ def wrap_swa_server(server):
                         model.state_dict() for model in self.models
                     ]
                     self.swa_rnd = 1
-                    self.eval_swa = False
                 elif self.state > \
                     self._cfg.fedswa.start_rnd and \
                         (self.state - self._cfg.fedswa.start_rnd) % \
@@ -212,6 +211,7 @@ def wrap_swa_server(server):
         self._monitor.save_formatted_results(formatted_best_res)
 
     # Bind method to instance
+    setattr(server, 'eval_swa', False)
     server.check_and_move_on = types.MethodType(check_and_move_on, server)
     server.eval = types.MethodType(eval, server)
     server.check_and_save = types.MethodType(check_and_save, server)
