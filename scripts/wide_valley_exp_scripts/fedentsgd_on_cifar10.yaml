@@ -58,7 +58,7 @@ hpo:
   num_workers: 0
   ss: 'scripts/wide_valley_exp_scripts/search_space_for_fedentsgd.yaml'
   sha:
-    budgets: [10, 10]
-    iter: 10
+    budgets: [10000, 10000]
+    iter: 400
   metric: server_global_eval.test_acc
   working_folder: bo_gp_fedentsgd
