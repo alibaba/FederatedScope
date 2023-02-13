@@ -17,8 +17,8 @@ def copy_params(src):
 
 def prox_term(cur, last):
     loss = .0
-    for name, tensor in last.items():
-        loss += 0.5 * torch.sum((cur[name] - tensor)**2)
+    for name, w in cur.named_parameters():
+        loss += 0.5 * torch.sum((w - last[name])**2)
     return loss
 
 
@@ -82,7 +82,7 @@ class LocalEntropyTrainer(BaseTrainer):
             optimizer.zero_grad()
             outputs = self.model(inputs)
             ce_loss = criterion(outputs, targets)
-            loss = ce_loss + self._thermal * prox_term(self.model.state_dict(),
+            loss = ce_loss + self._thermal * prox_term(self.model,
                                                        current_global_model)
             loss.backward()
             optimizer.step()
@@ -101,7 +101,7 @@ class LocalEntropyTrainer(BaseTrainer):
                 running_loss += targets.shape[0] * ce_loss.item()
 
             num_samples += targets.shape[0]
-            self._thermal *= 1.001
+            self._thermal *= self.local_entropy_config.inc_factor
 
         return num_samples, running_loss
 

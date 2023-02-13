@@ -1,0 +1,24 @@
+trainer.local_entropy.gamma:
+  type: float
+  lower: 0.0
+  upper: 0.1
+trainer.local_entropy.inc_factor:
+  type: cate
+  choices: [0.0, 1.0001, 1.001]
+trainer.local_entropy.eps:
+  type: float
+  lower: 1e-5
+  upper: 1e-2
+  log: True
+trainer.local_entropy.alpha:
+  type: float
+  lower: 0.75
+  upper: 1.0
+fedopt.optimizer.lr:
+  type: float
+  lower: 0.01
+  upper: 10.0
+  log: True
+fedopt.annealing:
+  type: cate
+  choices: [False, True]

@@ -17,6 +17,8 @@ def extend_fl_algo_cfg(cfg):
     cfg.fedopt.optimizer.lr = Argument(
         0.01, description="learning rate for FedOPT optimizer")
     cfg.fedopt.annealing = False
+    cfg.fedopt.annealing_step_size = 2000
+    cfg.fedopt.annealing_gamma = 0.5
 
     # ---------------------------------------------------------------------- #
     # fedprox related options, a general fl algorithm

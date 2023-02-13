@@ -17,8 +17,8 @@ class FedOptAggregator(ClientsAvgAggregator):
             self._annealing = True
             # TODO: generic scheduler construction
             self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,
-                                                             step_size=4000,
-                                                             gamma=0.2)
+                                                             step_size=config.fedopt.annealing_step_size,
+                                                             gamma=config.fedopt.annealing_gamma)
         else:
             self._annealing = False
 
