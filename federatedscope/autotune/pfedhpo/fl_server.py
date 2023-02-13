@@ -212,7 +212,7 @@ class pFedHPOFLServer(Server):
                 sampled_cfg = None
             else:
                 if not self.discrete:
-                    sampled_cfg = x2conf(
+                    sampled_cfg = map_value_to_param(
                         self.raw_params[self.client2idx[rcv_idx]],
                         self.pbounds, self._ss)
                 else:
@@ -330,7 +330,6 @@ class pFedHPOFLServer(Server):
                     logger.info(
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
-                    logger.info(self._cfg.device)
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
 

@@ -201,7 +201,7 @@ class pFedHPOServer(Server):
         self.sampled = False
         for rcv_idx in self.receiver:
             if not self.discrete:
-                sampled_cfg = x2conf(xs[self.client2idx[rcv_idx]],
+                sampled_cfg = map_value_to_param(xs[self.client2idx[rcv_idx]],
                                      self.pbounds, self._ss)
             else:
                 client_logprob = 0.

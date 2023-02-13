@@ -16,7 +16,6 @@ federate:
 data:
   root: data/
   type: 'CIFAR10@torchvision'
-  subsample: 0.05
   splits: [ 0.8,0.2,0.0 ]
   batch_size: 32
   num_workers: 0

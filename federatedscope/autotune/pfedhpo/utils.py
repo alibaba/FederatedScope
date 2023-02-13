@@ -124,7 +124,7 @@ def parse_pbounds(search_space):
     return pbounds
 
 
-def x2conf(x, pbounds, ss):
+def map_value_to_param(x, pbounds, ss):
     x = np.array(x).reshape(-1)
     assert len(x) == len(pbounds)
     params = {}
@@ -344,9 +344,7 @@ def noisy_dataset_embedding(train_loader,
             if len(emb_acc) > sum_frequency:
                 emb_acc = [pt.sum(pt.stack(emb_acc), 0)]
 
-    print('done collecting batches, n_data', n_data)
     emb_acc = pt.sum(pt.stack(emb_acc), 0) / n_data
-    print(pt.norm(emb_acc), emb_acc.shape)
     noise = pt.randn(d_rff, n_labels,
                      device=device) * (2 * noise_factor / n_data)
     noisy_emb = emb_acc + noise
