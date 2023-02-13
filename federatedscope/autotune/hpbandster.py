@@ -9,7 +9,8 @@ import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 
-from federatedscope.autotune.utils import eval_in_fs, log2wandb
+from federatedscope.autotune.utils import eval_in_fs, log2wandb, \
+    summarize_hpo_results
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -67,9 +68,11 @@ class MyWorker(Worker):
         self._ss = ss
         self._init_configs = []
         self._perfs = []
+        self.trial_index = 0
 
     def compute(self, config, budget, **kwargs):
-        results = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs)
+        results = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs,
+                             self.trial_index)
         key1, key2 = self.cfg.hpo.metric.split('.')
         res = results[key1][key2]
         config = dict(config)
@@ -80,11 +83,23 @@ class MyWorker(Worker):
         logger.info(f'Evaluate the {len(self._perfs)-1}-th config '
                     f'{config}, and get performance {res}')
         if self.cfg.wandb.use:
-            log2wandb(len(self._perfs) - 1, config, results, self.cfg)
-        return {'loss': float(res), 'info': res}
+            tmp_results = \
+                summarize_hpo_results(self._init_configs,
+                                      self._perfs,
+                                      white_list=set(
+                                          self._ss.keys()),
+                                      desc=self.cfg.hpo.larger_better,
+                                      is_sorted=False)
+            log2wandb(
+                len(self._perfs) - 1, config, results, self.cfg, tmp_results)
+        self.trial_index += 1
+
+        if self.cfg.hpo.larger_better:
+            return {'loss': -float(res), 'info': res}
+        else:
+            return {'loss': float(res), 'info': res}
 
     def summarize(self):
-        from federatedscope.autotune.utils import summarize_hpo_results
         results = summarize_hpo_results(self._init_configs,
                                         self._perfs,
                                         white_list=set(self._ss.keys()),

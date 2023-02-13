@@ -1,7 +1,8 @@
 import logging
 import numpy as np
 import ConfigSpace as CS
-from federatedscope.autotune.utils import eval_in_fs, log2wandb
+from federatedscope.autotune.utils import eval_in_fs, log2wandb, \
+    summarize_hpo_results
 from smac.facade.smac_bb_facade import SMAC4BB
 from smac.facade.smac_hpo_facade import SMAC4HPO
 from smac.scenario.scenario import Scenario
@@ -9,8 +10,11 @@ from smac.scenario.scenario import Scenario
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+trial_index = 0
+
 
 def run_smac(cfg, scheduler, client_cfgs=None):
+    config_space = scheduler._search_space
     init_configs = []
     perfs = []
 
@@ -19,12 +23,13 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         Used as an evaluation function for SMAC optimizer.
         Args:
             config: configurations of FS run.
-
         Returns:
             Best results of server of specific FS run.
         """
+        global trial_index
+
         budget = cfg.hpo.sha.budgets[-1]
-        results = eval_in_fs(cfg, config, budget, client_cfgs)
+        results = eval_in_fs(cfg, config, budget, client_cfgs, trial_index)
         key1, key2 = cfg.hpo.metric.split('.')
         res = results[key1][key2]
         config = dict(config)
@@ -34,11 +39,21 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         logger.info(f'Evaluate the {len(perfs)-1}-th config '
                     f'{config}, and get performance {res}')
         if cfg.wandb.use:
-            log2wandb(len(perfs) - 1, config, results, cfg)
-        return res
+            tmp_results = \
+                summarize_hpo_results(init_configs,
+                                      perfs,
+                                      white_list=set(config_space.keys()),
+                                      desc=cfg.hpo.larger_better,
+                                      is_sorted=False)
+            log2wandb(len(perfs) - 1, config, results, cfg, tmp_results)
+        trial_index += 1
+
+        if cfg.hpo.larger_better:
+            return -res
+        else:
+            return res
 
     def summarize():
-        from federatedscope.autotune.utils import summarize_hpo_results
         results = summarize_hpo_results(init_configs,
                                         perfs,
                                         white_list=set(config_space.keys()),
@@ -51,7 +66,6 @@ def run_smac(cfg, scheduler, client_cfgs=None):
 
         return perfs
 
-    config_space = scheduler._search_space
     if cfg.hpo.scheduler.startswith('wrap_'):
         ss = CS.ConfigurationSpace()
         ss.add_hyperparameter(config_space['hpo.table.idx'])
