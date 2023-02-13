@@ -29,6 +29,13 @@ if __name__ == '__main__':
     cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
     init_cfg.merge_from_list(cfg_opt)
 
+    if init_cfg.hpo.use:
+        # TODO: fix hpo yaml file
+        # Update Exp_name for hpo
+        if init_cfg.expname == '':
+            from federatedscope.autotune.utils import generate_hpo_exp_name
+            init_cfg.expname = generate_hpo_exp_name(init_cfg)
+
     update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
@@ -40,18 +47,24 @@ if __name__ == '__main__':
     else:
         client_cfgs = None
 
-    # federated dataset might change the number of clients
-    # thus, we allow the creation procedure of dataset to modify the global
-    # cfg object
-    data, modified_cfg = get_data(config=init_cfg.clone(),
-                                  client_cfgs=client_cfgs)
-    init_cfg.merge_from_other_cfg(modified_cfg)
+    if init_cfg.hpo.use:
+        # TODO: fix hpo yaml file
+        from federatedscope.autotune import get_scheduler, run_scheduler
+        scheduler = get_scheduler(init_cfg, client_cfgs)
+        run_scheduler(scheduler, init_cfg, client_cfgs)
+    else:
+        # federated dataset might change the number of clients
+        # thus, we allow the creation procedure of dataset to modify the global
+        # cfg object
+        data, modified_cfg = get_data(config=init_cfg.clone(),
+                                      client_cfgs=client_cfgs)
+        init_cfg.merge_from_other_cfg(modified_cfg)
 
-    init_cfg.freeze()
+        init_cfg.freeze()
 
-    runner = get_runner(data=data,
-                        server_class=get_server_cls(init_cfg),
-                        client_class=get_client_cls(init_cfg),
-                        config=init_cfg.clone(),
-                        client_configs=client_cfgs)
-    _ = runner.run()
+        runner = get_runner(data=data,
+                            server_class=get_server_cls(init_cfg),
+                            client_class=get_client_cls(init_cfg),
+                            config=init_cfg.clone(),
+                            client_configs=client_cfgs)
+        _ = runner.run()

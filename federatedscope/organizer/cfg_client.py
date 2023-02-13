@@ -14,6 +14,7 @@ enable_utc = True
 # ---------------------------------------------------------------------- #
 # ECS ssh related (To verify and launch the virtual environment)
 # ---------------------------------------------------------------------- #
-env_name = 'test_org'
-root_path = 'test_org'
-fs_version = '0.2.1'
+ENV_NAME = 'test_org'
+ROOT_PATH = 'test_org'
+FS_VERSION = '0.2.1'
+TIMEOUT = 30
