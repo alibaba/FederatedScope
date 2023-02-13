@@ -28,7 +28,7 @@ data:
   splits: [0.6,0.2,0.2]
   batch_size: 16
   subsample: 0.05
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.9637], 'std': [0.1592]}]]
   num_workers: 0
 model:
   type: convnet2

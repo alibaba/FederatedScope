@@ -1,7 +1,12 @@
+import os.path
+
 import yaml
 import logging
 import pandas as pd
+import numpy as np
 import ConfigSpace as CS
+
+from federatedscope.core.configs.yacs_config import CfgNode
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +44,7 @@ def parse_condition_param(condition, ss):
                                                  f'should be in' \
                                                  f' {str_func_mapping.keys()}.'
 
-    if cond_type in ['and', 'in']:
+    if cond_type in ['and', 'in', 'or']:
         return str_func_mapping[cond_type](
             parse_condition_param(condition['child'], ss),
             parse_condition_param(condition['parent'], ss),
@@ -63,6 +68,7 @@ def parse_search_space(config_path):
 
     """
 
+    # TODO: add seed for `ConfigurationSpace`
     ss = CS.ConfigurationSpace()
     conditions = []
 
@@ -236,13 +242,15 @@ def parse_logs(file_list):
     plt.close()
 
 
-def eval_in_fs(cfg, config, budget, client_cfgs=None):
+def eval_in_fs(cfg, config, budget, config_id, ss, client_cfgs=None):
     """
 
     Args:
         cfg: fs cfg
         config: sampled trial CS.Configuration
         budget: budget round for this trial
+        config_id: Identifier to generate somadditional files
+        ss: search space of HPO
         client_cfgs: client-wise cfg
 
     Returns:
@@ -258,19 +266,28 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
 
     if isinstance(config, CS.Configuration):
         config = dict(config)
-    # Add FedEx related keys to config
-    if 'hpo.table.idx' in config.keys():
-        idx = config['hpo.table.idx']
-        config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
-                                     f"{idx}_tmp_grid_search_space.yaml")
+    if 'wrap' in cfg.hpo.scheduler:
+        logger.info('FedEx is wrapped by scheduler.')
+        config['hpo.fedex.ss'] = osp(
+            cfg.hpo.working_folder, f"{config_id}_tmp_grid_search_space.yaml")
+        if not os.path.exists(config['hpo.fedex.ss']):
+            generate_arm(cfg, config, config_id, ss)
+
         config['federate.save_to'] = osp(cfg.hpo.working_folder,
-                                         f"idx_{idx}.pth")
+                                         f"idx_{config_id}.pth")
         config['federate.restore_from'] = osp(cfg.hpo.working_folder,
-                                              f"idx_{idx}.pth")
+                                              f"idx_{config_id}.pth")
     # Global cfg
     trial_cfg = cfg.clone()
     # specify the configuration of interest
-    trial_cfg.merge_from_list(config2cmdargs(config))
+    if cfg.hpo.personalized_ss:
+        if isinstance(client_cfgs, CS.Configuration):
+            client_cfgs.merge_from_list(config2cmdargs(config))
+        else:
+            client_cfgs = CfgNode(flatten2nestdict(config))
+    else:
+        trial_cfg.merge_from_list(config2cmdargs(config))
+
     # specify the budget
     trial_cfg.merge_from_list(
         ["federate.total_round_num",
@@ -288,6 +305,73 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     results = fed_runner.run()
 
     return results
+
+
+def generate_arm(cfg, config, config_id, ss):
+    def make_local_perturbation(config):
+        neighbor = dict()
+        for k in config:
+            if 'fedex' in k or 'fedopt' in k or k in [
+                    'federate.save_to', 'federate.total_round_num', 'eval.freq'
+            ]:
+                # a workaround
+                continue
+            hyper = ss.get(k)
+            if isinstance(hyper, CS.UniformFloatHyperparameter):
+                lb, ub = hyper.lower, hyper.upper
+                diameter = cfg.hpo.fedex.wrapper.eps * (ub - lb)
+                new_val = (config[k] -
+                           0.5 * diameter) + np.random.uniform() * diameter
+                neighbor[k] = float(np.clip(new_val, lb, ub))
+            elif isinstance(hyper, CS.UniformIntegerHyperparameter):
+                lb, ub = hyper.lower, hyper.upper
+                diameter = cfg.hpo.fedex.wrapper.eps * (ub - lb)
+                new_val = round(
+                    float((config[k] - 0.5 * diameter) +
+                          np.random.uniform() * diameter))
+                neighbor[k] = int(np.clip(new_val, lb, ub))
+            elif isinstance(hyper, CS.CategoricalHyperparameter):
+                if len(hyper.choices) == 1:
+                    neighbor[k] = config[k]
+                else:
+                    threshold = cfg.hpo.fedex.wrapper.eps * len(
+                        hyper.choices) / (len(hyper.choices) - 1)
+                    rn = np.random.uniform()
+                    new_val = np.random.choice(
+                        hyper.choices) if rn <= threshold else config[k]
+                    if type(new_val) in [np.int32, np.int64]:
+                        neighbor[k] = int(new_val)
+                    elif type(new_val) in [np.float32, np.float64]:
+                        neighbor[k] = float(new_val)
+                    else:
+                        neighbor[k] = str(new_val)
+            else:
+                raise TypeError("Value of {} has an invalid type {}".format(
+                    k, type(config[k])))
+
+        return neighbor
+
+    arms = dict(("arm{}".format(1 + j), make_local_perturbation(config))
+                for j in range(cfg.hpo.fedex.wrapper.arm - 1))
+    arms['arm0'] = dict((k, v) for k, v in config.items() if k in arms['arm1'])
+    with open(
+            os.path.join(cfg.hpo.working_folder,
+                         f'{config_id}_tmp_grid_search_space.yaml'), 'w') as f:
+        yaml.dump(arms, f)
+
+
+def flatten2nestdict(raw_dict, delimiter='.'):
+    # TODO: delete this for the function of `arm2dict`
+    def nested_set(dic, keys, value):
+        for key in keys[:-1]:
+            dic = dic.setdefault(key, {})
+        dic[keys[-1]] = value
+
+    new_dict = dict()
+    for key, value in raw_dict.items():
+        keys = key.split(delimiter)
+        nested_set(new_dict, keys, value)
+    return new_dict
 
 
 def config_bool2int(config):

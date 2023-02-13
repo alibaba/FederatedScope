@@ -13,8 +13,10 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
 from federatedscope.core.auxiliaries.runner_builder import get_runner
+from federatedscope.core.configs.yacs_config import CfgNode
 from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results, log2wandb
+    config2cmdargs, config2str, summarize_hpo_results, log2wandb, \
+    flatten2nestdict
 
 logger = logging.getLogger(__name__)
 
@@ -70,14 +72,17 @@ def get_scheduler(init_cfg, client_cfgs=None):
         client_cfgs: client-specific configuration
     """
 
-    if init_cfg.hpo.scheduler in [
-            'sha', 'rs', 'bo_kde', 'bohb', 'hb', 'bo_gp', 'bo_rf'
-    ]:
-        scheduler = SuccessiveHalvingAlgo(init_cfg, client_cfgs)
+    # TODO: fix wrap_sha
+    support_optimizer = [
+        'sha', 'rs', 'bo_kde', 'hb', 'bohb', 'wrap_rs', 'wrap_bo_kde',
+        'wrap_hb', 'wrap_bohb', 'bo_gp', 'bo_rf', 'wrap_bo_gp', 'wrap_bo_rf',
+        'multi'
+    ]
+    assert init_cfg.hpo.scheduler in support_optimizer, \
+        f'`init_cfg.hpo.scheduler` must be one of {support_optimizer}.'
+    scheduler = SuccessiveHalvingAlgo(init_cfg, client_cfgs)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
-    elif init_cfg.hpo.scheduler.startswith('wrap', client_cfgs):
-        scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 
 
@@ -100,6 +105,16 @@ class Scheduler(object):
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
+        # Convert to client_cfg
+        if self._cfg.hpo.personalized_ss:
+            # Do not support wrap_scheduler
+            client_num = self._cfg.federate.client_num
+            ss_client = CS.ConfigurationSpace()
+            for i in range(1, client_num + 1):
+                ss_client.add_configuration_space(f'client_{i}',
+                                                  self._search_space,
+                                                  delimiter='.')
+            self._search_space = ss_client
         self._init_configs = self._setup()
 
         logger.info(self._init_configs)
@@ -159,7 +174,14 @@ class ModelFreeBase(Scheduler):
                     thread_results[available_worker].clear()
 
                 trial_cfg = self._cfg.clone()
-                trial_cfg.merge_from_list(config2cmdargs(config))
+                if self._cfg.hpo.personalized_ss:
+                    if isinstance(self._client_cfgs, CS.Configuration):
+                        self._client_cfgs.merge_from_list(
+                            config2cmdargs(config))
+                    else:
+                        self._client_cfgs = CfgNode(flatten2nestdict(config))
+                else:
+                    trial_cfg.merge_from_list(config2cmdargs(config))
                 flags[available_worker].clear()
                 trial = TrialExecutor(i, flags[available_worker],
                                       thread_results[available_worker],
@@ -185,7 +207,14 @@ class ModelFreeBase(Scheduler):
             perfs = [None] * len(configs)
             for i, config in enumerate(configs):
                 trial_cfg = self._cfg.clone()
-                trial_cfg.merge_from_list(config2cmdargs(config))
+                if self._cfg.hpo.personalized_ss:
+                    if isinstance(self._client_cfgs, CS.Configuration):
+                        self._client_cfgs.merge_from_list(
+                            config2cmdargs(config))
+                    else:
+                        self._client_cfgs = CfgNode(flatten2nestdict(config))
+                else:
+                    trial_cfg.merge_from_list(config2cmdargs(config))
                 results = make_trial(trial_cfg, self._client_cfgs)
                 key1, key2 = trial_cfg.hpo.metric.split('.')
                 perfs[i] = results[key1][key2]
@@ -327,85 +356,85 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
         return next_population
 
 
-class SHAWrapFedex(SuccessiveHalvingAlgo):
-    """This SHA is customized as a wrapper for FedEx algorithm."""
-    def _make_local_perturbation(self, config):
-        neighbor = dict()
-        for k in config:
-            if 'fedex' in k or 'fedopt' in k or k in [
-                    'federate.save_to', 'federate.total_round_num', 'eval.freq'
-            ]:
-                # a workaround
-                continue
-            hyper = self._search_space.get(k)
-            if isinstance(hyper, CS.UniformFloatHyperparameter):
-                lb, ub = hyper.lower, hyper.upper
-                diameter = self._cfg.hpo.table.eps * (ub - lb)
-                new_val = (config[k] -
-                           0.5 * diameter) + np.random.uniform() * diameter
-                neighbor[k] = float(np.clip(new_val, lb, ub))
-            elif isinstance(hyper, CS.UniformIntegerHyperparameter):
-                lb, ub = hyper.lower, hyper.upper
-                diameter = self._cfg.hpo.table.eps * (ub - lb)
-                new_val = round(
-                    float((config[k] - 0.5 * diameter) +
-                          np.random.uniform() * diameter))
-                neighbor[k] = int(np.clip(new_val, lb, ub))
-            elif isinstance(hyper, CS.CategoricalHyperparameter):
-                if len(hyper.choices) == 1:
-                    neighbor[k] = config[k]
-                else:
-                    threshold = self._cfg.hpo.table.eps * len(
-                        hyper.choices) / (len(hyper.choices) - 1)
-                    rn = np.random.uniform()
-                    new_val = np.random.choice(
-                        hyper.choices) if rn <= threshold else config[k]
-                    if type(new_val) in [np.int32, np.int64]:
-                        neighbor[k] = int(new_val)
-                    elif type(new_val) in [np.float32, np.float64]:
-                        neighbor[k] = float(new_val)
-                    else:
-                        neighbor[k] = str(new_val)
-            else:
-                raise TypeError("Value of {} has an invalid type {}".format(
-                    k, type(config[k])))
-
-        return neighbor
-
-    def _setup(self):
-        # self._cache_yaml()
-        init_configs = super(SHAWrapFedex, self)._setup()
-        new_init_configs = []
-        for idx, trial_cfg in enumerate(init_configs):
-            arms = dict(("arm{}".format(1 + j),
-                         self._make_local_perturbation(trial_cfg))
-                        for j in range(self._cfg.hpo.table.num - 1))
-            arms['arm0'] = dict(
-                (k, v) for k, v in trial_cfg.items() if k in arms['arm1'])
-            with open(
-                    os.path.join(self._cfg.hpo.working_folder,
-                                 f'{idx}_tmp_grid_search_space.yaml'),
-                    'w') as f:
-                yaml.dump(arms, f)
-            new_trial_cfg = dict()
-            for k in trial_cfg:
-                if k not in arms['arm0']:
-                    new_trial_cfg[k] = trial_cfg[k]
-            new_trial_cfg['hpo.table.idx'] = idx
-            new_trial_cfg['hpo.fedex.ss'] = os.path.join(
-                self._cfg.hpo.working_folder,
-                f"{new_trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
-            new_trial_cfg['federate.save_to'] = os.path.join(
-                self._cfg.hpo.working_folder, "idx_{}.pth".format(idx))
-            new_init_configs.append(new_trial_cfg)
-
-        self._search_space.add_hyperparameter(
-            CS.CategoricalHyperparameter("hpo.table.idx",
-                                         choices=list(
-                                             range(len(new_init_configs)))))
-
-        return new_init_configs
-
+# class SHAWrapFedex(SuccessiveHalvingAlgo):
+#     """This SHA is customized as a wrapper for FedEx algorithm."""
+#     def _make_local_perturbation(self, config):
+#         neighbor = dict()
+#         for k in config:
+#             if 'fedex' in k or 'fedopt' in k or k in [
+#                     'federate.save_to', 'federate.total_round_num',
+#                     'eval.freq'
+#             ]:
+#                 # a workaround
+#                 continue
+#             hyper = self._search_space.get(k)
+#             if isinstance(hyper, CS.UniformFloatHyperparameter):
+#                 lb, ub = hyper.lower, hyper.upper
+#                 diameter = self._cfg.fedex.wrapper.eps * (ub - lb)
+#                 new_val = (config[k] -
+#                            0.5 * diameter) + np.random.uniform() * diameter
+#                 neighbor[k] = float(np.clip(new_val, lb, ub))
+#             elif isinstance(hyper, CS.UniformIntegerHyperparameter):
+#                 lb, ub = hyper.lower, hyper.upper
+#                 diameter = self._cfg.fedex.wrapper.eps * (ub - lb)
+#                 new_val = round(
+#                     float((config[k] - 0.5 * diameter) +
+#                           np.random.uniform() * diameter))
+#                 neighbor[k] = int(np.clip(new_val, lb, ub))
+#             elif isinstance(hyper, CS.CategoricalHyperparameter):
+#                 if len(hyper.choices) == 1:
+#                     neighbor[k] = config[k]
+#                 else:
+#                     threshold = self._cfg.fedex.wrapper.eps * len(
+#                         hyper.choices) / (len(hyper.choices) - 1)
+#                     rn = np.random.uniform()
+#                     new_val = np.random.choice(
+#                         hyper.choices) if rn <= threshold else config[k]
+#                     if type(new_val) in [np.int32, np.int64]:
+#                         neighbor[k] = int(new_val)
+#                     elif type(new_val) in [np.float32, np.float64]:
+#                         neighbor[k] = float(new_val)
+#                     else:
+#                         neighbor[k] = str(new_val)
+#             else:
+#                 raise TypeError("Value of {} has an invalid type {}".format(
+#                     k, type(config[k])))
+#
+#         return neighbor
+#
+#     def _setup(self):
+#         # self._cache_yaml()
+#         init_configs = super(SHAWrapFedex, self)._setup()
+#         new_init_configs = []
+#         for idx, trial_cfg in enumerate(init_configs):
+#             arms = dict(("arm{}".format(1 + j),
+#                          self._make_local_perturbation(trial_cfg))
+#                         for j in range(self._cfg.hpo.fedex.wrapper.arm - 1))
+#             arms['arm0'] = dict(
+#                 (k, v) for k, v in trial_cfg.items() if k in arms['arm1'])
+#             with open(
+#                     os.path.join(self._cfg.hpo.working_folder,
+#                                  f'{idx}_tmp_grid_search_space.yaml'),
+#                     'w') as f:
+#                 yaml.dump(arms, f)
+#             new_trial_cfg = dict()
+#             for k in trial_cfg:
+#                 if k not in arms['arm0']:
+#                     new_trial_cfg[k] = trial_cfg[k]
+#             new_trial_cfg['hpo.table.idx'] = idx
+#             new_trial_cfg['hpo.fedex.ss'] = os.path.join(
+#                 self._cfg.hpo.working_folder,
+#                 f"{new_trial_cfg['hpo.table.idx']}_tmp_grid_search_space.yaml")
+#             new_trial_cfg['federate.save_to'] = os.path.join(
+#                 self._cfg.hpo.working_folder, "idx_{}.pth".format(idx))
+#             new_init_configs.append(new_trial_cfg)
+#
+#         self._search_space.add_hyperparameter(
+#             CS.CategoricalHyperparameter("hpo.table.idx",
+#                                          choices=list(
+#                                              range(len(new_init_configs)))))
+#
+#         return new_init_configs
 
 # TODO: refactor PBT to enable async parallel
 # class PBT(IterativeScheduler):

@@ -10,11 +10,20 @@ def extend_hpo_cfg(cfg):
     cfg.hpo = CN()
     cfg.hpo.working_folder = 'hpo'
     cfg.hpo.ss = ''
+    cfg.hpo.personalized_ss = False  # If True, the ss will be discrete to
+    # hadamard product of client's ss
     cfg.hpo.num_workers = 0
     cfg.hpo.init_cand_num = 16
     cfg.hpo.larger_better = False
     cfg.hpo.scheduler = 'rs'
     cfg.hpo.metric = 'client_summarized_weighted_avg.val_loss'
+
+    # multi-objective-optimization
+    cfg.hpo.multi_obj = CN()
+    cfg.hpo.multi_obj.algo = ''  # Choose from 'mean', 'parego'
+    cfg.hpo.multi_obj.key = []
+    cfg.hpo.multi_obj.weight = []  # `cfg.hpo.metric` weight is 1.0 when
+    # multi-objective-optimization algo is `mean`
 
     # SHA
     cfg.hpo.sha = CN()
@@ -44,11 +53,14 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.fedex.psn = False
     cfg.hpo.fedex.pi_lr = 0.01
 
-    # Table
-    cfg.hpo.table = CN()
-    cfg.hpo.table.eps = 0.1
-    cfg.hpo.table.num = 27
-    cfg.hpo.table.idx = 0
+    # FedEx wrap optimizer related args
+    cfg.hpo.fedex.wrapper = CN()
+    cfg.hpo.fedex.wrapper.eps = 0.1
+    cfg.hpo.fedex.wrapper.arm = 27
+
+    cfg.hpo.fedex.attack = CN()
+    cfg.hpo.fedex.attack.id = []  # client IDs who inject noise into policy
+    cfg.hpo.fedex.attack.sigma = 1.0  # sigma of white noise
 
 
 def assert_hpo_cfg(cfg):

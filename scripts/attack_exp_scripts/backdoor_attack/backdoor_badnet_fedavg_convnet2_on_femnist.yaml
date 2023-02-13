@@ -17,7 +17,7 @@ data:
   # form: dataloader
   splits: [0.6,0.2,0.2]
   subsample: 0.05
-  # transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+  # transform: [['ToTensor'], ['Normalize', {'mean': [0.9637], 'std': [0.1592]}]]
   transform: [ [ 'ToTensor' ] ]
 dataloader:
   batch_size: 32

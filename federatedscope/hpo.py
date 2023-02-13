@@ -10,6 +10,7 @@ if DEV_MODE:
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
+from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.configs.config import global_cfg, CfgNode
 from federatedscope.autotune import get_scheduler, run_scheduler
 
@@ -41,6 +42,11 @@ if __name__ == '__main__':
         client_cfgs.merge_from_list(client_cfg_opt)
     else:
         client_cfgs = None
+
+    # Update client num
+    data, modified_cfg = get_data(config=init_cfg.clone(),
+                                  client_cfgs=client_cfgs)
+    init_cfg.merge_from_other_cfg(modified_cfg)
 
     scheduler = get_scheduler(init_cfg, client_cfgs)
     run_scheduler(scheduler, init_cfg, client_cfgs)

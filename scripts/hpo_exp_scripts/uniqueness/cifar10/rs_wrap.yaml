@@ -1,0 +1,62 @@
+use_gpu: True
+device: 3
+outdir: rs_wrap_cifar10_avg
+early_stop:
+  patience: 100
+seed: 12345
+federate:
+  mode: standalone
+  client_num: 5
+  total_round_num: 500
+  sample_client_rate: 1.0
+  share_local_model: True
+  online_aggr: True
+  use_diff: True
+data:
+  root: data/
+  type: 'CIFAR10@torchvision'
+  splits: [0.8,0.2,0.0]
+  num_workers: 0
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 'std': [0.2470, 0.2435, 0.2616]}]]
+  args: [{'download': True}]
+  splitter: 'lda'
+  splitter_args: [{'alpha': 5}]
+dataloader:
+  batch_size: 64
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 10
+  dropout: 0.0
+train:
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
+grad:
+  grad_clip: 5.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  freq: 1
+  metrics: ['acc', 'correct', 'f1']
+  split: ['test', 'val', 'train']
+hpo:
+  scheduler: wrap_rs
+  num_workers: 0
+  ss: 'scripts/hpo_exp_scripts/uniqueness/cifar10/ss.yaml'
+  sha:
+    budgets: [ 50, 50 ]
+    elim_rate: 3
+    iter: 50
+  fedex:
+    sched: 'aggressive'
+    use: True
+    diff: False
+    eta0: -1.0
+    gamma: 0.0
+  metric: 'client_summarized_weighted_avg.val_avg_loss'
+  working_folder: rs_wrap_cifar10_avg

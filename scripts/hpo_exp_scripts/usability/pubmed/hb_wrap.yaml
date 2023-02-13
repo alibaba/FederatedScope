@@ -1,0 +1,57 @@
+use_gpu: True
+device: 2
+outdir: hb_wrap_pubmed_avg
+early_stop:
+  patience: 100
+seed: 12345
+federate:
+  mode: standalone
+  make_global_eval: True
+  client_num: 5
+  total_round_num: 500
+  share_local_model: True
+  online_aggr: True
+  use_diff: True
+data:
+  root: data/
+  type: pubmed
+  splitter: 'louvain'
+model:
+  type: gcn
+  hidden: 64
+  dropout: 0.5
+  out_channels: 3
+  task: node
+train:
+  batch_or_epoch: epoch
+  local_update_steps: 1
+  optimizer:
+    lr: 0.01
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nodefullbatch_trainer
+eval:
+  freq: 1
+  metrics: ['acc', 'correct', 'f1']
+  split: ['test', 'val', 'train']
+dataloader:
+  type: pyg
+  batch_size: 1
+hpo:
+  scheduler: wrap_hb
+  num_workers: 0
+  ss: 'scripts/hpo_exp_scripts/usability/pubmed/ss.yaml'
+  sha:
+    budgets: [ 9, 81 ]
+    elim_rate: 3
+    iter: 12
+  fedex:
+    sched: 'aggressive'
+    use: True
+    diff: False
+    eta0: -1.0
+    gamma: 0.0
+  metric: 'server_global_eval.val_avg_loss'
+  working_folder: hb_wrap_pubmed_avg

@@ -1,6 +1,7 @@
 import logging
 import json
 import copy
+import numpy as np
 
 from federatedscope.core.message import Message
 from federatedscope.core.workers import Client
@@ -56,6 +57,10 @@ class FedExClient(Client):
                                           rnd=self.state,
                                           role='Client #{}'.format(self.ID),
                                           return_raw=True))
+        # Inject
+        if self.ID in self._cfg.hpo.fedex.attack.id:
+            results['val_avg_loss_after'] += \
+                self._cfg.hpo.fedex.attack.sigma * np.random.randn()
 
         results['arms'] = arms
         results['client_id'] = self.ID - 1
