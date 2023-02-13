@@ -13,6 +13,7 @@ def extend_hpo_cfg(cfg):
     # hpo related options
     # ---------------------------------------------------------------------- #
     cfg.hpo = CN()
+    cfg.hpo.trial_index = 0
     cfg.hpo.working_folder = 'hpo'
     cfg.hpo.ss = ''
     cfg.hpo.num_workers = 0

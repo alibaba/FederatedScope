@@ -108,6 +108,8 @@ class MyWorker(Worker):
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
+        results.to_csv(os.path.join(self.cfg.hpo.working_folder,
+                                    'results.csv'))
         logger.info("====================================================")
 
         return results

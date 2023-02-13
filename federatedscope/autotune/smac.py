@@ -1,3 +1,4 @@
+import os
 import logging
 import numpy as np
 import ConfigSpace as CS
@@ -62,6 +63,7 @@ def run_smac(cfg, scheduler, client_cfgs=None):
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
+        results.to_csv(os.path.join(cfg.hpo.working_folder, 'results.csv'))
         logger.info("====================================================")
 
         return perfs

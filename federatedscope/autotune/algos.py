@@ -203,6 +203,8 @@ class ModelFreeBase(Scheduler):
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
+        results.to_csv(
+            os.path.join(self._cfg.hpo.working_folder, 'results.csv'))
         logger.info("====================================================")
 
         return results
@@ -268,6 +270,8 @@ class IterativeScheduler(ModelFreeBase):
                 "========================== Stage{} =========================="
                 .format(self._stage))
             logger.info("\n{}".format(last_results))
+            last_results.to_csv(
+                os.path.join(self._cfg.hpo.working_folder, 'results.csv'))
             logger.info("====================================================")
             current_configs = self._generate_next_population(
                 current_configs, current_perfs)
@@ -292,7 +296,7 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
             for trial_cfg in init_configs:
                 rnd = min(
                     self._cfg.hpo.sha.budgets[0] *
-                    self._cfg.hpo.elim_rate**[self._stage],
+                    self._cfg.hpo.sha.elim_rate**self._stage,
                     self._cfg.hpo.sha.budgets[1])
                 trial_cfg['federate.total_round_num'] = rnd
                 trial_cfg['eval.freq'] = rnd
@@ -315,10 +319,10 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
             if 'federate.restore_from' not in trial_cfg:
                 trial_cfg['federate.restore_from'] = trial_cfg[
                     'federate.save_to']
-                rnd = min(
-                    self._cfg.hpo.sha.budgets[0] *
-                    self._cfg.hpo.elim_rate**[self._stage],
-                    self._cfg.hpo.sha.budgets[1])
+            rnd = min(
+                self._cfg.hpo.sha.budgets[0] *
+                self._cfg.hpo.sha.elim_rate**self._stage,
+                self._cfg.hpo.sha.budgets[1])
             if self._cfg.hpo.sha.budgets and rnd < \
                     self._cfg.hpo.sha.budgets[1]:
                 trial_cfg['federate.total_round_num'] = rnd
