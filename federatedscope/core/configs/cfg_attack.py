@@ -20,8 +20,8 @@ def extend_attack_cfg(cfg):
     cfg.attack.setting = 'fix'
     cfg.attack.freq = 10
     cfg.attack.insert_round = 100000
-    cfg.attack.mean = [0.1307]
-    cfg.attack.std = [0.3081]
+    cfg.attack.mean = [0.9637]
+    cfg.attack.std = [0.1592]
     cfg.attack.trigger_type = 'edge'
     cfg.attack.label_type = 'dirty'
     # dirty, clean_label, dirty-label attack is all2one attack.

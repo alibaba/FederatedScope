@@ -158,7 +158,8 @@ def summarize_hpo_results(configs,
                           perfs,
                           white_list=None,
                           desc=False,
-                          use_wandb=False):
+                          use_wandb=False,
+                          is_sorted=True):
     if white_list is not None:
         cols = list(white_list) + ['performance']
     else:
@@ -173,7 +174,8 @@ def summarize_hpo_results(configs,
             ] + [result])
         else:
             d.append([trial_cfg[k] for k in trial_cfg] + [result])
-    d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
+    if is_sorted:
+        d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
     df = pd.DataFrame(d, columns=cols)
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.max_columns', None)
@@ -236,15 +238,13 @@ def parse_logs(file_list):
     plt.close()
 
 
-def eval_in_fs(cfg, config, budget, client_cfgs=None):
+def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
     """
-
     Args:
         cfg: fs cfg
         config: sampled trial CS.Configuration
         budget: budget round for this trial
         client_cfgs: client-wise cfg
-
     Returns:
         The best results returned from FedRunner
     """
@@ -256,26 +256,29 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     from federatedscope.core.auxiliaries.runner_builder import get_runner
     from os.path import join as osp
 
-    if isinstance(config, CS.Configuration):
-        config = dict(config)
-    # Add FedEx related keys to config
-    if 'hpo.table.idx' in config.keys():
-        idx = config['hpo.table.idx']
-        config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
-                                     f"{idx}_tmp_grid_search_space.yaml")
-        config['federate.save_to'] = osp(cfg.hpo.working_folder,
-                                         f"idx_{idx}.pth")
-        config['federate.restore_from'] = osp(cfg.hpo.working_folder,
-                                              f"idx_{idx}.pth")
     # Global cfg
     trial_cfg = cfg.clone()
-    # specify the configuration of interest
-    trial_cfg.merge_from_list(config2cmdargs(config))
-    # specify the budget
-    trial_cfg.merge_from_list(
-        ["federate.total_round_num",
-         int(budget), "eval.freq",
-         int(budget)])
+
+    if config:
+        if isinstance(config, CS.Configuration):
+            config = dict(config)
+        # Add FedEx related keys to config
+        if 'hpo.table.idx' in config.keys():
+            idx = config['hpo.table.idx']
+            config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
+                                         f"{idx}_tmp_grid_search_space.yaml")
+            config['federate.save_to'] = osp(cfg.hpo.working_folder,
+                                             f"idx_{idx}.pth")
+            config['federate.restore_from'] = osp(cfg.hpo.working_folder,
+                                                  f"idx_{idx}.pth")
+        config['hpo.trial_index'] = trial_index
+        # specify the configuration of interest
+        trial_cfg.merge_from_list(config2cmdargs(config))
+
+    if budget:
+        # specify the budget
+        trial_cfg.merge_from_list(["federate.total_round_num", int(budget)])
+
     setup_seed(trial_cfg.seed)
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)

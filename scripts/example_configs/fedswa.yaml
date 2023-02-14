@@ -4,19 +4,16 @@ early_stop:
   patience: 5
 seed: 12345
 federate:
-  client_num: 3
-  mode: 'distributed'
-  make_global_eval: False
-  online_aggr: False
-  total_round_num: 20
-distribute:
+  mode: standalone
+  total_round_num: 100
+  sample_client_rate: 0.1
+  make_global_eval: True
+  merge_test_data: True
+  merge_val_data: True
+fedswa:
   use: True
-  server_host: '127.0.0.1'
-  server_port: 50051
-  client_host: '127.0.0.1'
-  client_port: 50052
-  role: 'client'
-  data_idx: 2
+  freq: 10
+  start_rnd: 75
 data:
   root: data/
   type: femnist
@@ -27,7 +24,7 @@ dataloader:
   batch_size: 10
 model:
   type: convnet2
-  hidden: 128
+  hidden: 2048
   out_channels: 62
 train:
   local_update_steps: 1
@@ -44,5 +41,4 @@ trainer:
 eval:
   freq: 10
   metrics: ['acc', 'correct']
-  report: [ 'weighted_avg', 'raw' ]
   count_flops: False

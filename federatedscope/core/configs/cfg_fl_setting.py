@@ -27,6 +27,8 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.merge_test_data = False  # For efficient simulation, users
     # can choose to merge the test data and perform global evaluation,
     # instead of perform test at each client
+    cfg.federate.merge_val_data = False  # Enabled only when
+    # `merge_test_data` is True, also for efficient simulation
 
     # the method name is used to internally determine composition of
     # different aggregators, messages, handlers, etc.,
