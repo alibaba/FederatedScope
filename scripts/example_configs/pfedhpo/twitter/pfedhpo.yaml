@@ -1,0 +1,50 @@
+use_gpu: True
+device: 0
+outdir: twitter_exp/pfedhpo_R0_2
+seed: 11111
+early_stop:
+  patience: 100000
+federate:
+  mode: 'standalone'
+  total_round_num: 4
+  sample_client_rate: 0.01
+  share_local_model: True
+  online_aggr: True
+  make_global_eval: False
+  merge_test_data: False
+data:
+  root: data/
+  type: twitter
+  batch_size: 5
+  subsample: 0.005
+  num_workers: 0
+model:
+  type: lr
+  out_channels: 2
+  dropout: 0.0
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 0.0003
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nlptrainer
+eval:
+  freq: 1
+  metrics: ['acc', 'correct', 'f1']
+  split: [ 'test' ]
+  best_res_update_round_wise_key: 'test_loss'
+hpo:
+  scheduler: pfedhpo
+  num_workers: 0
+  pfedhpo:
+    use: True
+    discrete: True
+    train_fl: False
+    train_anchor: False
+    target_fl_total_round: 4
+    ss: 'scripts/example_configs/pfedhpo/twitter/ss.yaml'
+  metric: 'client_summarized_weighted_avg.val_avg_loss'
+  working_folder: twitter_exp/pfedhpo_R0_2/working
