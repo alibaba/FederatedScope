@@ -84,7 +84,6 @@ def extend_hpo_cfg(cfg):
     cfg.hpo.pfedhpo.ss = ''
     cfg.hpo.pfedhpo.target_fl_total_round = 1000
 
-
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_hpo_cfg)
 
