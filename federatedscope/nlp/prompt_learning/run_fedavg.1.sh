@@ -3,90 +3,134 @@ set -e
 cd ../../..
 
 DEVICE=$1
-CFG=federatedscope/nlp/prompt_learning/baseline/config_fedavg.yaml
-OUT=exp/fedavg/server_train/n_layer_1/
-ROUND_NUM=200
-ROUND_NUM_RECORD=5
-PREFIX_LEN=100
-NUM_CLIENT_LAYERS=1
+CFG=federatedscope/nlp/prompt_learning/baseline/config_fedavg_step.yaml
+OUT=exp/fedavg/server_not_train/iid/nl24_rn1000_ls1_bs1/
+BS=1
+ROUND_NUM=1000
+LOCAL_STEPS=1
+PREFIX_LEN=40
+NUM_CLIENT_LAYERS=24
+LR=5e-3
+MAKE_GLOBAL_TRAIN=False
+NON_IID_SPLIT=False
 DEBUG=False
 
 python federatedscope/main.py \
   --cfg $CFG \
-  data.dataset_name cb \
+  data.dataset_name boolq \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
   federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
   model.prefix_len $PREFIX_LEN \
   model.num_client_layers $NUM_CLIENT_LAYERS \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
+  outdir $OUT/boolq \
+  device $DEVICE \
+  data.is_debug $DEBUG \
+
+python federatedscope/main.py \
+  --cfg $CFG \
+  data.dataset_name cb \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
+  federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
+  model.prefix_len $PREFIX_LEN \
+  model.num_client_layers $NUM_CLIENT_LAYERS \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
   outdir $OUT/cb \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
   data.dataset_name copa \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
   federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
   model.prefix_len $PREFIX_LEN \
   model.num_client_layers $NUM_CLIENT_LAYERS \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
   outdir $OUT/copa \
   device $DEVICE \
-  data.debug $DEBUG \
-
-python federatedscope/main.py \
-  --cfg $CFG \
-  data.dataset_name wsc \
-  federate.total_round_num $ROUND_NUM \
-  model.prefix_len $PREFIX_LEN \
-  model.num_client_layers $NUM_CLIENT_LAYERS \
-  outdir $OUT/wsc \
-  device $DEVICE \
-  data.debug $DEBUG \
-
-python federatedscope/main.py \
-  --cfg $CFG \
-  data.dataset_name rte \
-  federate.total_round_num $ROUND_NUM \
-  model.prefix_len $PREFIX_LEN \
-  model.num_client_layers $NUM_CLIENT_LAYERS \
-  outdir $OUT/rte \
-  device $DEVICE \
-  data.debug $DEBUG \
-
-python federatedscope/main.py \
-  --cfg $CFG \
-  data.dataset_name wic \
-  federate.total_round_num $ROUND_NUM \
-  model.prefix_len $PREFIX_LEN \
-  model.num_client_layers $NUM_CLIENT_LAYERS \
-  outdir $OUT/wic \
-  device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
   data.dataset_name multirc \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
   federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
   model.prefix_len $PREFIX_LEN \
   model.num_client_layers $NUM_CLIENT_LAYERS \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
   outdir $OUT/multirc \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
-  data.dataset_name boolq \
+  data.dataset_name rte \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
   federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
   model.prefix_len $PREFIX_LEN \
   model.num_client_layers $NUM_CLIENT_LAYERS \
-  outdir $OUT/boolq \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
+  outdir $OUT/rte \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
+
+python federatedscope/main.py \
+  --cfg $CFG \
+  data.dataset_name wic \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
+  federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
+  model.prefix_len $PREFIX_LEN \
+  model.num_client_layers $NUM_CLIENT_LAYERS \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
+  outdir $OUT/wic \
+  device $DEVICE \
+  data.is_debug $DEBUG \
+
+python federatedscope/main.py \
+  --cfg $CFG \
+  data.dataset_name wsc \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
+  federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
+  model.prefix_len $PREFIX_LEN \
+  model.num_client_layers $NUM_CLIENT_LAYERS \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
+  outdir $OUT/wsc \
+  device $DEVICE \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
   data.dataset_name record \
-  federate.total_round_num $ROUND_NUM_RECORD \
+  data.non_iid_split $NON_IID_SPLIT \
+  data.batch_size $BS \
+  federate.total_round_num $ROUND_NUM \
+  federate.make_global_train $MAKE_GLOBAL_TRAIN \
   model.prefix_len $PREFIX_LEN \
   model.num_client_layers $NUM_CLIENT_LAYERS \
+  train.optimizer.lr $LR \
+  train.local_update_steps $LOCAL_STEPS \
   outdir $OUT/record \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \

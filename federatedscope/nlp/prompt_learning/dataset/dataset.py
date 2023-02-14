@@ -5,7 +5,7 @@ from datasets.load import load_dataset
 from federatedscope.core.splitters.utils import \
     dirichlet_distribution_noniid_slice
 from federatedscope.nlp.prompt_learning.dataset.utils import \
-    DatasetDict, NUM_DEBUG, SERVER_TRAIN
+    DatasetDict, NUM_DEBUG
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 class PLDataProcessor(object):
     def __init__(self, config, train_frac=0.9):
         self.dataset_name = config.data.dataset_name
-        if SERVER_TRAIN:  # server & client
+        self.make_global_train = config.federate.make_global_train
+        self.non_iid_split = config.data.non_iid_split
+        if self.make_global_train:  # server & client
             self.num_clients = config.federate.client_num + 1
         else:
             self.num_clients = config.federate.client_num
@@ -22,7 +24,7 @@ class PLDataProcessor(object):
         self.dataset = raw_dataset.map(
             self.load_data,
             batched=True,
-            load_from_cache_file=False,
+            load_from_cache_file=True,
             remove_columns=raw_dataset['train'].column_names
             if self.dataset_name == 'record' else None,
         )
@@ -121,13 +123,20 @@ class PLDataProcessor(object):
         val_data = {k: v[num_train:] for k, v in train_val_data.items()}
 
         labels = np.array(train_data['labels'])
-        idx_slice = dirichlet_distribution_noniid_slice(
-            label=labels, client_num=self.num_clients, alpha=0.5)
+        if self.non_iid_split:
+            idx_slice = dirichlet_distribution_noniid_slice(
+                label=labels, client_num=self.num_clients, alpha=0.5)
+        else:
+            indices = np.arange(0, len(labels))
+            np.random.shuffle(indices)
+            idx_slice = [
+                x.tolist() for x in np.array_split(indices, self.num_clients)
+            ]
         train_data = [{
             k: np.array(v)[idxs].tolist()
             for k, v in train_data.items()
         } for idxs in idx_slice]
-        if not SERVER_TRAIN:
+        if not self.make_global_train:
             train_data = [None] + train_data
 
         return train_data, val_data, test_data

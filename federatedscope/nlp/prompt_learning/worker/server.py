@@ -9,7 +9,6 @@ from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 from federatedscope.core.workers import Server
 from federatedscope.nlp.prompt_learning.trainer.utils import merge_param_dict
-from federatedscope.nlp.prompt_learning.dataset.utils import SERVER_TRAIN
 
 logger = logging.getLogger(__name__)
 
@@ -206,14 +205,12 @@ class PLServer(Server):
     def eval(self):
         if self._cfg.federate.make_global_eval:
             # Perform training in server
-            skip_broadcast = self._cfg.federate.method in ['local', 'global']
-            model_para = {}
-            if not skip_broadcast and SERVER_TRAIN:
-                model_para = self.model.state_dict()
-                self.trainer.update(model_para)
+            if self._cfg.federate.make_global_train:
+                # model_para = self.model.state_dict()
+                # self.trainer.update(model_para)
                 sample_size, model_para, model_grads, train_metrics = \
                     self.trainer.train()
-                self.model.load_state_dict(model_para, strict=False)
+                # self.model.load_state_dict(model_para, strict=False)
 
                 formatted_train_res = self._monitor.format_eval_res(
                     train_metrics,
@@ -223,6 +220,8 @@ class PLServer(Server):
                 logger.info(formatted_train_res)
 
             # Evaluate on val dataset
+            # model_para = self.model.state_dict()
+            # self.trainer.update(model_para)
             val_metrics = self.trainer.evaluate(target_data_split_name='val')
             formatted_val_res = self._monitor.format_eval_res(
                 val_metrics,
@@ -242,7 +241,7 @@ class PLServer(Server):
                             f'Model saved to {save_path}.')
                 ckpt = {
                     'round': self.state,
-                    'model': model_para,
+                    'model': self.trainer.get_model_para(),
                     'val_score': cur_score
                 }
                 torch.save(ckpt, save_path)
@@ -253,9 +252,23 @@ class PLServer(Server):
 
             # Evaluate on test dataset
             if self.state == self.total_round_num:
+                # last ckpt
+                # model_para = self.model.state_dict()
+                # self.trainer.update(model_para)
+                test_metrics = self.trainer.evaluate(
+                    target_data_split_name='test')
+                formatted_test_res = self._monitor.format_eval_res(
+                    test_metrics,
+                    rnd=self.state,
+                    role='Server # (Last)',
+                    return_raw=self._cfg.federate.make_global_eval)
+                self._monitor.save_formatted_results(formatted_test_res)
+                logger.info(formatted_test_res)
+
+                # best ckpt
                 best_ckpt = torch.load(save_path, map_location='cpu')
-                model_para.update(best_ckpt['model'])
-                self.trainer.update(model_para)
+                # model_para.update(best_ckpt['model'])
+                self.trainer.update(best_ckpt['model'])
                 logger.info(f"Loaded best model obtained in round "
                             f"{best_ckpt['round']} "
                             f"({best_ckpt['val_score']}).")
@@ -265,7 +278,7 @@ class PLServer(Server):
                 formatted_test_res = self._monitor.format_eval_res(
                     test_metrics,
                     rnd=self.state,
-                    role='Server #',
+                    role='Server # (Best)',
                     return_raw=self._cfg.federate.make_global_eval)
                 self._monitor.save_formatted_results(formatted_test_res)
                 logger.info(formatted_test_res)

@@ -5,7 +5,7 @@ outdir: exp
 federate:
   mode: standalone
   method: fedavg
-  total_round_num: 100
+  total_round_num: 10
   client_num: 20
   make_global_train: True
   make_global_eval: True
@@ -24,8 +24,8 @@ model:
 trainer:
   type: pl_trainer
 train:
-  batch_or_epoch: epoch
-  local_update_steps: 1
+  batch_or_epoch: batch
+  local_update_steps: 100
   optimizer:
     type: AdamW
     lr: 5e-3

@@ -1,7 +1,6 @@
 from torch.utils.data.dataset import Dataset
 
 NUM_DEBUG = 20
-SERVER_TRAIN = True
 
 
 class DatasetDict(Dataset):

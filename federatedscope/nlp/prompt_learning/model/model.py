@@ -101,12 +101,3 @@ class PLModel(nn.Module):
                 if fp in n:
                     p.requires_grad = False
                     break
-
-
-def call_pl_model(model_config, role, **kwargs):
-    if model_config.type == 'pl_model':
-        model = PLModel(model_config, role)
-        return model
-
-
-register_model('pl_model', call_pl_model)

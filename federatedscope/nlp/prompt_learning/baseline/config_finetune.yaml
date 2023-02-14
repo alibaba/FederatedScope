@@ -6,8 +6,8 @@ federate:
   mode: standalone
   method: fedavg
 #  total_round_num: 100
-  client_num: 20
-  make_global_train: True
+#  client_num: 20
+#  make_global_train: True
   make_global_eval: True
   pl_save_to: ckpt
 data:
@@ -27,8 +27,8 @@ train:
   local_update_steps: 1
   optimizer:
     type: AdamW
-    lr: 5e-3
+#    lr: 5e-3
     weight_decay: 0.01
   scheduler:
-    type: step
+    type: warmup_step
     warmup_ratio: 0.1

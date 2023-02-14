@@ -30,7 +30,7 @@ TRANS_DATA_MAP = {
         'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?', 'fb15k-237',
         'wn18', 'adult', 'abalone', 'credit', 'blog'
     ],  # Dummy for FL dataset
-    'RawDataTranslator': ['hetero_nlp_tasks'],
+    'RawDataTranslator': ['hetero_nlp_tasks', 'pl_data'],
 }
 DATA_TRANS_MAP = RegexInverseMap(TRANS_DATA_MAP, None)
 

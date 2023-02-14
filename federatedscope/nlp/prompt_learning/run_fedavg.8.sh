@@ -19,7 +19,7 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/cb \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
@@ -29,7 +29,7 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/copa \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
@@ -39,7 +39,7 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/wsc \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
@@ -49,7 +49,7 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/rte \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
@@ -59,7 +59,7 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/wic \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
@@ -69,7 +69,7 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/multirc \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
@@ -79,7 +79,7 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/boolq \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \
 
 python federatedscope/main.py \
   --cfg $CFG \
@@ -89,4 +89,4 @@ python federatedscope/main.py \
   model.num_client_layers $NUM_CLIENT_LAYERS \
   outdir $OUT/record \
   device $DEVICE \
-  data.debug $DEBUG \
+  data.is_debug $DEBUG \

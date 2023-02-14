@@ -132,9 +132,7 @@ def get_model(model_config, local_data=None, backend='torch', role='client'):
                        'representative data to `get_model` if necessary')
 
     for func in register.model_dict.values():
-        model = func(model_config=model_config,
-                     input_shape=input_shape,
-                     role=role)
+        model = func(model_config, input_shape)
         if model is not None:
             return model
 
@@ -190,6 +188,9 @@ def get_model(model_config, local_data=None, backend='torch', role='client'):
     elif model_config.type.lower() in ['atc_model']:
         from federatedscope.nlp.hetero_tasks.model import ATCModel
         model = ATCModel(model_config)
+    elif model_config.type.lower() in ['pl_model']:
+        from federatedscope.nlp.prompt_learning.model import PLModel
+        model = PLModel(model_config, role=role)
     else:
         raise ValueError('Model {} is not provided'.format(model_config.type))
 

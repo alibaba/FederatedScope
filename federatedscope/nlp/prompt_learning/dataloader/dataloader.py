@@ -6,8 +6,7 @@ from torch.utils.data import DataLoader
 from federatedscope.register import register_data
 from federatedscope.nlp.prompt_learning.dataset.dataset import \
     PLDataProcessor, create_pl_dataset
-from federatedscope.nlp.prompt_learning.dataset.utils import setup_tokenizer, \
-    SERVER_TRAIN
+from federatedscope.nlp.prompt_learning.dataset.utils import setup_tokenizer
 
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 logger = logging.getLogger(__name__)
@@ -36,7 +35,7 @@ def extend_cfg(config):
 
     config.personalization.local_param += config.model.freeze_param
 
-    if config.data.debug:
+    if config.data.is_debug:
         config.federate.client_num = 2
         config.federate.total_round_num = 2
         config.train.local_update_steps = 2
@@ -57,7 +56,7 @@ def collate_fn(batch):
 def load_pl_data(config):
     extend_cfg(config)
     tokenizer = setup_tokenizer(config)
-    debug = config.data.debug
+    debug = config.data.is_debug
 
     logger.info(f'Preprocessing dataset {config.data.type}')
     data_processor = PLDataProcessor(config, train_frac=0.9)
@@ -65,7 +64,7 @@ def load_pl_data(config):
 
     data_dict = dict()
     for client_id in tqdm(range(config.federate.client_num + 1)):
-        if not SERVER_TRAIN and client_id == 0:
+        if not config.federate.make_global_train and client_id == 0:
             dataloader_dict = {}
         else:
             cur_train_data = create_pl_dataset(
@@ -120,12 +119,3 @@ def load_pl_data(config):
         data_dict[client_id] = dataloader_dict
 
     return data_dict, config
-
-
-def call_pl_data(config, *args):
-    if config.data.type == 'pl_data':
-        data, modified_config = load_pl_data(config)
-        return data, modified_config
-
-
-register_data('pl_data', call_pl_data)

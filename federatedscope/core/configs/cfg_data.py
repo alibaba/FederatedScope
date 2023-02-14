@@ -98,6 +98,7 @@ def extend_data_cfg(cfg):
 
     # prompt learning
     cfg.data.dataset_name = ''
+    cfg.data.non_iid_split = False
 
     # --------------- outdated configs ---------------
     # TODO: delete this code block
