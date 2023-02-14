@@ -26,8 +26,6 @@ class VerticalTrainer(object):
         self.batch_y_hat = None
         self.batch_z = 0
 
-        self._init_for_train()
-
     def _init_for_train(self):
         self.eta = self.cfg.train.optimizer.eta
         self.dataloader = VerticalDataSampler(

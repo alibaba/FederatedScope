@@ -61,6 +61,7 @@ class XGBClient(Client):
 
     def _init_data_related_var(self):
 
+        self.trainer._init_for_train()
         self.test_x = None
         self.test_y = None
 
