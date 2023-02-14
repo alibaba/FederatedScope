@@ -5,11 +5,11 @@ federate:
   mode: standalone
   client_num: 2
 model:
-  type: xgb_tree
+  type: random_forest
   lambda_: 0.1
   gamma: 0
   num_of_trees: 10
-  max_tree_depth: 3
+  max_tree_depth: 5
 data:
   root: data/
   type: adult
@@ -21,18 +21,12 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: verticaltrainer
-train:
-  optimizer:
-    # learning rate for xgb model
-    eta: 0.5
 vertical:
   use: True
   dims: [7, 14]
-  algo: 'xgb'
-  protect_object: 'feature_order'
-  protect_method: 'dp'
-  protect_args: [{'bucket_num': 100, 'epsilon':10}]
-  data_size_for_debug: 2000
+  algo: 'rf'
+  data_size_for_debug: 1500
+  feature_subsample_ratio: 0.8
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

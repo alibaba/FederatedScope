@@ -54,7 +54,7 @@ def get_client_cls(cfg):
         if cfg.vertical.algo == 'lr':
             from federatedscope.vertical_fl.worker import vFLClient
             return vFLClient
-        elif cfg.vertical.algo in ['xgb', 'gbdt']:
+        elif cfg.vertical.algo in ['xgb', 'gbdt', 'rf']:
             from federatedscope.vertical_fl.xgb_base.worker import XGBClient
             return XGBClient
         else:
@@ -157,7 +157,7 @@ def get_server_cls(cfg):
         if cfg.vertical.algo == 'lr':
             from federatedscope.vertical_fl.worker import vFLServer
             return vFLServer
-        elif cfg.vertical.algo in ['xgb', 'gbdt']:
+        elif cfg.vertical.algo in ['xgb', 'gbdt', 'rf']:
             from federatedscope.vertical_fl.xgb_base.worker import XGBServer
             return XGBServer
         else:

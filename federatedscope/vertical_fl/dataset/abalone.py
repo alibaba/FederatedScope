@@ -2,6 +2,7 @@ import logging
 import os
 import os.path as osp
 
+import numpy as np
 import pandas as pd
 from torchvision.datasets.utils import download_and_extract_archive
 
@@ -43,7 +44,9 @@ class Abalone(object):
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -58,6 +61,7 @@ class Abalone(object):
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         self.root = root
@@ -67,6 +71,7 @@ class Abalone(object):
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -84,6 +89,10 @@ class Abalone(object):
         file = osp.join(fpath, self.raw_file)
         data = self._read_raw(file)
         data = self._process(data)
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(data), self.data_size_for_debug)
+            np.random.shuffle(data)
+            data = data[:subset_size]
         train_num = int(self.tr_frac * len(data))
         self.data_dict['train'] = data[:train_num]
         self.data_dict['test'] = data[train_num:]

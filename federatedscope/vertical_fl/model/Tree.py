@@ -9,7 +9,8 @@ class Node(object):
                  weight=None,
                  grad=None,
                  hess=None,
-                 indicator=None):
+                 indicator=None,
+                 label=None):
         self.member = None
         self.status = status
         self.feature_idx = feature_idx
@@ -19,6 +20,7 @@ class Node(object):
         self.grad = grad
         self.hess = hess
         self.indicator = indicator
+        self.label = label
 
 
 class Tree(object):
@@ -112,6 +114,88 @@ class GBDTTree(Tree):
                   2].indicator = self.tree[node_num].indicator * right_child
 
 
+class DecisionTree(Tree):
+    def __init__(self, max_depth, lambda_, gamma):
+        super().__init__(max_depth, lambda_, gamma)
+        self.task_type = None  # ['classification', 'regression']
+
+    def _gini(self, indicator, y):
+        total_num = np.sum(indicator)
+        positive_num = np.dot(indicator, y)
+        negative_num = total_num - positive_num
+        return 1 - (positive_num / total_num)**2 - (negative_num /
+                                                    total_num)**2
+
+    def _check_same_label(self, y, indicator):
+        active_idx = np.nonzero(indicator)[0]
+        active_y = y[active_idx]
+        if np.sum(active_y) in [0, len(active_y)]:
+            return True
+        return False
+
+    def cal_gini(self, split_idx, y, indicator):
+        if self._check_same_label(y, indicator):
+            return np.float('inf')
+
+        left_child_indicator = indicator * np.concatenate(
+            [np.ones(split_idx),
+             np.zeros(len(y) - split_idx)])
+        right_child_indicator = indicator - left_child_indicator
+        left_gini = self._gini(left_child_indicator, y)
+        right_gini = self._gini(right_child_indicator, y)
+        total_num = np.sum(indicator)
+        return np.sum(left_child_indicator) / total_num * left_gini + sum(
+            right_child_indicator) / total_num * right_gini
+
+    def cal_sse(self, split_idx, y, indicator):
+        left_child_indicator = indicator * np.concatenate(
+            [np.ones(split_idx),
+             np.zeros(len(y) - split_idx)])
+        right_child_indicator = indicator - left_child_indicator
+
+        left_avg_value = np.dot(left_child_indicator,
+                                y) / np.sum(left_child_indicator)
+        right_avg_value = np.dot(right_child_indicator,
+                                 y) / np.sum(right_child_indicator)
+        return np.sum((y * indicator - left_avg_value * left_child_indicator -
+                       right_avg_value * right_child_indicator)**2)
+
+    def cal_gain(self, split_idx, y, indicator):
+        if self.task_type == 'classification':
+            return self.cal_gini(split_idx, y, indicator)
+        elif self.task_type == 'regression':
+            return self.cal_sse(split_idx, y, indicator)
+        else:
+            raise ValueError(f'Task type error: {self.task_type}')
+
+    def set_task_type(self, task_type):
+        self.task_type = task_type
+
+    def set_weight(self, node_num):
+        active_idx = np.nonzero(self.tree[node_num].indicator)[0]
+        active_y = self.tree[node_num].label[active_idx]
+
+        # majority vote in classification
+        if self.task_type == 'classification':
+            vote = np.mean(active_y)
+            self.tree[node_num].weight = 1 if vote >= 0.5 else 0
+        # mean value for regression
+        elif self.task_type == 'regression':
+            self.tree[node_num].weight = np.mean(active_y)
+        else:
+            raise ValueError
+
+    def update_child(self, node_num, left_child, right_child):
+        self.tree[2 * node_num +
+                  1].label = self.tree[node_num].label * left_child
+        self.tree[2 * node_num +
+                  1].indicator = self.tree[node_num].indicator * left_child
+        self.tree[2 * node_num +
+                  2].label = self.tree[node_num].label * right_child
+        self.tree[2 * node_num +
+                  2].indicator = self.tree[node_num].indicator * right_child
+
+
 class MultipleXGBTrees(object):
     def __init__(self, max_depth, lambda_, gamma, num_of_trees):
         self.trees = [
@@ -140,3 +224,29 @@ class MultipleGBDTTrees(object):
 
     def __getitem__(self, item):
         return self.trees[item]
+
+
+class RandomForest(object):
+    def __init__(self, max_depth, lambda_, gamma, num_of_trees):
+        self.trees = [
+            DecisionTree(max_depth=max_depth, lambda_=lambda_, gamma=gamma)
+            for _ in range(num_of_trees)
+        ]
+        self.num_of_trees = num_of_trees
+        self.lambda_ = lambda_
+        self.gamma = gamma
+        self.max_depth = max_depth
+
+    def __getitem__(self, item):
+        return self.trees[item]
+
+    def set_task_type(self, criterion_type):
+        if criterion_type == 'CrossEntropyLoss':
+            task_type = 'classification'
+        elif 'regression' in criterion_type.lower():
+            task_type = 'regression'
+        else:
+            raise ValueError
+
+        for tree in self.trees:
+            tree.set_task_type(task_type)

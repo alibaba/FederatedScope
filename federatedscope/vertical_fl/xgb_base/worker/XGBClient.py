@@ -71,25 +71,17 @@ class XGBClient(Client):
     def callback_func_for_model_para(self, message: Message):
         self.state = message.state
 
+        self.trainer.prepare_for_train()
         if self.own_label:
-            batch_index, feature_order_info = self.trainer.prepare_for_train()
-            self.feature_order = feature_order_info['feature_order']
-            self.msg_buffer[self.ID] = feature_order_info
-            receiver = [
-                each for each in list(self.comm_manager.neighbors.keys())
-                if each not in [self.ID, self.server_id]
-            ]
-            self.comm_manager.send(
-                Message(msg_type='data_sample',
-                        sender=self.ID,
-                        state=self.state,
-                        receiver=receiver,
-                        content=batch_index))
+            batch_index, feature_order_info = self.trainer.fetch_train_data()
+            self.start_a_new_training_round(batch_index,
+                                            feature_order_info,
+                                            tree_num=0)
 
     # other clients receive the data-sample information
     def callback_func_for_data_sample(self, message: Message):
         batch_index, sender = message.content, message.sender
-        _, feature_order_info = self.trainer.prepare_for_train(
+        _, feature_order_info = self.trainer.fetch_train_data(
             index=batch_index)
         self.feature_order = feature_order_info['feature_order']
         self.comm_manager.send(
@@ -109,6 +101,25 @@ class XGBClient(Client):
             f"================= client {self.ID} received finish message "
             f"=================")
         # self._monitor.finish_fl()
+
+    def start_a_new_training_round(self,
+                                   batch_index,
+                                   feature_order_info,
+                                   tree_num=0):
+        self.msg_buffer.clear()
+        self.feature_order = feature_order_info['feature_order']
+        self.msg_buffer[self.ID] = feature_order_info
+        self.state = tree_num
+        receiver = [
+            each for each in list(self.comm_manager.neighbors.keys())
+            if each not in [self.ID, self.server_id]
+        ]
+        self.comm_manager.send(
+            Message(msg_type='data_sample',
+                    sender=self.ID,
+                    state=self.state,
+                    receiver=receiver,
+                    content=batch_index))
 
     def check_and_move_on(self):
         if len(self.msg_buffer) == self.client_num:
