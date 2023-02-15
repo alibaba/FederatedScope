@@ -17,8 +17,8 @@ def copy_params(src):
 
 def prox_term(cur, last):
     loss = .0
-    for name, tensor in last.items():
-        loss += 0.5 * torch.sum((cur[name] - tensor)**2)
+    for name, w in cur.named_parameters():
+        loss += 0.5 * torch.sum((w - last[name])**2)
     return loss
 
 
@@ -46,6 +46,7 @@ class LocalEntropyTrainer(BaseTrainer):
         self.config = kwargs['config']
         self.optim_config = self.config.train.optimizer
         self.local_entropy_config = self.config.trainer.local_entropy
+        self._thermal = self.local_entropy_config.gamma
 
     def train(self):
         # Criterion & Optimizer
@@ -72,21 +73,21 @@ class LocalEntropyTrainer(BaseTrainer):
     def run_epoch(self, optimizer, criterion, current_global_model, mu):
         running_loss = 0.0
         num_samples = 0
-        thermal = self.local_entropy_config.gamma
         # for inputs, targets in self.trainloader:
         for inputs, targets in self.data['train']:
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
 
             # Descent Step
+            optimizer.zero_grad()
             outputs = self.model(inputs)
             ce_loss = criterion(outputs, targets)
-            loss = ce_loss + thermal * prox_term(self.model.state_dict(),
-                                                 current_global_model)
+            loss = ce_loss + self._thermal * prox_term(self.model,
+                                                       current_global_model)
             loss.backward()
             optimizer.step()
 
-            # add noise for langevine dynamics
+            # add noise for langevin dynamics
             add_noise(
                 self.model,
                 math.sqrt(self.optim_config.lr) *
@@ -100,7 +101,7 @@ class LocalEntropyTrainer(BaseTrainer):
                 running_loss += targets.shape[0] * ce_loss.item()
 
             num_samples += targets.shape[0]
-            thermal *= 1.001
+            self._thermal *= self.local_entropy_config.inc_factor
 
         return num_samples, running_loss
 

@@ -30,9 +30,9 @@ criterion:
 trainer:
   type: sam_trainer
   sam:
-    adaptive: True
-    rho: 0.7
-    eta: 0.2
+    adaptive: False
+    rho: 0.1
+    eta: 0.0
 train:
   batch_or_epoch: 'epoch'
   optimizer:
@@ -42,5 +42,5 @@ train:
 eval:
   freq: 100
   metrics: ['acc', 'correct']
-  best_res_update_round_wise_key: test_loss
+  best_res_update_round_wise_key: test_acc
   count_flops: False
