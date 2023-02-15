@@ -160,14 +160,23 @@ class VerticalTrainer(object):
         if self.extra_info is not None:
             split_position = self.extra_info.get('split_position', None)
 
+        activate_idx = [
+            np.nonzero(self.model[tree_num][node_num].indicator[order])[0]
+            for order in self.merged_feature_order
+        ]
+        activate_idx = np.asarray(activate_idx)
         if split_position is None:
-            activate_idx = [
-                np.nonzero(self.model[tree_num][node_num].indicator[order])[0]
-                for order in self.merged_feature_order
-            ]
-            activate_idx = np.asarray(activate_idx)
             # The left/right sub-tree cannot be empty
             split_position = activate_idx[:, 1:]
+        else:
+            active_split_position = list()
+            for idx, each_split_position in enumerate(split_position):
+                active_split_position.append([
+                    x for x in each_split_position
+                    if x in activate_idx[idx, 1:]
+                ])
+            split_position = active_split_position
+
         for feature_idx in range(feature_num):
             ordered_g, ordered_h = self._get_ordered_gh(
                 tree_num, node_num, feature_idx)
