@@ -185,6 +185,10 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in ['vmfnet', 'hmfnet']:
         from federatedscope.mf.model.model_builder import get_mfnet
         model = get_mfnet(model_config, input_shape)
+    elif model_config.type.lower() in ['xgb_tree', 'gbdt_tree']:
+        from federatedscope.vertical_fl.model.model_builder import \
+            get_tree_model
+        model = get_tree_model(model_config)
     elif model_config.type.lower() in ['atc_model']:
         from federatedscope.nlp.hetero_tasks.model import ATCModel
         model = ATCModel(model_config)

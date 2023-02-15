@@ -79,12 +79,13 @@ def load_dataset(config, client_cfgs=None):
     ] or config.data.type.startswith('graph_multi_domain'):
         from federatedscope.gfl.dataloader import load_graphlevel_dataset
         dataset, modified_config = load_graphlevel_dataset(config)
-    elif config.data.type.lower() == 'vertical_fl_data':
+    elif config.data.type.lower() in [
+            'synthetic_vfl_data', 'adult', 'abalone', 'credit', 'blog'
+    ]:
         from federatedscope.vertical_fl.dataloader import load_vertical_data
-        dataset, modified_config = load_vertical_data(config, generate=True)
-    elif config.data.type.lower() in ['adult', 'abalone', 'credit', 'blog']:
-        from federatedscope.vertical_fl.dataloader import load_vertical_data
-        dataset, modified_config = load_vertical_data(config, generate=False)
+        generate = config.data.type.lower() == 'synthetic_vfl_data'
+        dataset, modified_config = load_vertical_data(config,
+                                                      generate=generate)
     elif 'movielens' in config.data.type.lower(
     ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset

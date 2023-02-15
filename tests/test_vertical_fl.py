@@ -28,7 +28,7 @@ class vFLTest(unittest.TestCase):
 
         cfg.train.optimizer.lr = 0.05
 
-        cfg.data.type = 'vertical_fl_data'
+        cfg.data.type = 'synthetic_vfl_data'
         cfg.data.size = 50
 
         cfg.dataloader.type = 'raw'

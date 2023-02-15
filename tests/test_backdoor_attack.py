@@ -56,8 +56,8 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.attack.label_type = 'dirty'
         cfg.attack.trigger_type = 'gridTrigger'
         cfg.attack.target_label_ind = 1
-        cfg.attack.mean = [0.1307]
-        cfg.attack.std = [0.3081]
+        cfg.attack.mean = [0.9637]
+        cfg.attack.std = [0.1592]
 
         return backup_cfg
 

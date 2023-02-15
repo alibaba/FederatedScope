@@ -92,6 +92,7 @@ def wrap_correlation_filter_server(worker):
             self.vertical_dims = vertical_dims
             if hasattr(self, '_init_data_related_var'):
                 self._init_data_related_var()
+            self.msg_buffer.pop('feat_dim')
             self.trigger_train_func(**self.kwargs_for_trigger_train_func)
 
     # Bind method to instance
@@ -236,6 +237,8 @@ def wrap_correlation_filter_client(worker):
     def callback_funcs_for_vertical_dims(self, message: Message):
         vertical_dims = message.content
         self.vertical_dims = vertical_dims
+        if self.own_label:
+            self.msg_buffer.pop('encrypted_norm_feat')
         if hasattr(self, '_init_data_related_var'):
             self._init_data_related_var()
 

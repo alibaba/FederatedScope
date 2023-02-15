@@ -758,7 +758,7 @@ class Server(BaseServer):
         """
 
         if self.check_client_join_in():
-            if self._cfg.federate.use_ss:
+            if self._cfg.federate.use_ss or self._cfg.vertical.use:
                 self.broadcast_client_address()
 
             # get sampler

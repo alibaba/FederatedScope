@@ -67,10 +67,13 @@ class StandaloneDataDict(dict):
             datadict: dict with `client_id` as key,  `ClientData` as value.
         """
         if self.global_cfg.federate.merge_test_data:
+            merge_split = ['test']
+            if self.global_cfg.federate.merge_val_data:
+                merge_split += ['val']
             server_data = merge_data(
                 all_data=datadict,
                 merged_max_data_id=self.global_cfg.federate.client_num,
-                specified_dataset_name=['test'])
+                specified_dataset_name=merge_split)
             # `0` indicate Server
             datadict[0] = ClientData(self.global_cfg, **server_data)
 

@@ -29,7 +29,7 @@ def extend_data_cfg(cfg):
 
     cfg.data.transform = [
     ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [
-    # 0.1307], 'std': [0.3081]}]]
+    # 0.9637], 'std': [0.1592]}]]
     cfg.data.target_transform = []  # target_transform for y, use as above
     cfg.data.pre_transform = [
     ]  # pre_transform for `torch_geometric` dataset, use as above
