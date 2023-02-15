@@ -71,6 +71,8 @@ class Client(BaseClient):
         if config is None:
             return
 
+        self.args, self.kwargs = args, kwargs
+
         # the unseen_client indicates that whether this client contributes to
         # FL process by training on its local data and uploading the local
         # model update, which is useful for check the participation

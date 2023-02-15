@@ -1,11 +1,20 @@
-use_gpu: False
+use_gpu: True
 device: 0
-backend: torch
-outdir: vFL_adult
+early_stop:
+  patience: 5
+seed: 12345
 federate:
-  mode: standalone
   client_num: 2
-  total_round_num: 30
+  mode: 'distributed'
+  make_global_eval: False
+  online_aggr: False
+  total_round_num: 20
+distribute:
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051
+  role: 'server'
+  data_idx: 0
 model:
   type: xgb_tree
   lambda_: 0.1

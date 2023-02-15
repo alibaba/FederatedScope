@@ -17,6 +17,7 @@ data:
 model:
   type: 'lr'
 hpo:
+  use: True
   scheduler: sha
   num_workers: 1
   init_cand_num: 5

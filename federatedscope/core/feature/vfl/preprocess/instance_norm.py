@@ -17,9 +17,9 @@ def wrap_instance_norm_server(worker):
     Returns:
         Wrap vfl server with instance norm.
     """
-    def trigger_for_feat_engr(self,
-                              trigger_train_func,
-                              kwargs_for_trigger_train_func={}):
+    def trigger_for_train(self,
+                          trigger_train_func,
+                          kwargs_for_trigger_train_func={}):
         # broadcast_model_para_func after feature engineering finishing
         self.trigger_train_func = trigger_train_func
         self.kwargs_for_trigger_train_func = \
@@ -108,8 +108,7 @@ def wrap_instance_norm_server(worker):
             self.trigger_train_func(**self.kwargs_for_trigger_train_func)
 
     # Bind method to instance
-    worker.trigger_for_feat_engr = types.MethodType(trigger_for_feat_engr,
-                                                    worker)
+    worker.trigger_for_train = types.MethodType(trigger_for_train, worker)
     worker.callback_func_for_ss_instance_sum = types.MethodType(
         callback_func_for_ss_instance_sum, worker)
     worker.callback_func_for_ss_instance_sum_norm_square = types.MethodType(

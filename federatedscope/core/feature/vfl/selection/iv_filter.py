@@ -19,9 +19,9 @@ def wrap_iv_filter_server(worker):
     Returns:
         Wrap vfl server with iv_filter.
     """
-    def trigger_for_feat_engr(self,
-                              trigger_train_func,
-                              kwargs_for_trigger_train_func={}):
+    def trigger_for_train(self,
+                          trigger_train_func,
+                          kwargs_for_trigger_train_func={}):
         logger.info('Start to execute woe_filter, which requires HE.')
         self.trigger_train_func = trigger_train_func
         self.kwargs_for_trigger_train_func = \
@@ -78,8 +78,7 @@ def wrap_iv_filter_server(worker):
             self.trigger_train_func(**self.kwargs_for_trigger_train_func)
 
     # Bind method to instance
-    worker.trigger_for_feat_engr = types.MethodType(trigger_for_feat_engr,
-                                                    worker)
+    worker.trigger_for_train = types.MethodType(trigger_for_train, worker)
     worker.callbacks_funcs_for_feat_dim = types.MethodType(
         callbacks_funcs_for_feat_dim, worker)
 
