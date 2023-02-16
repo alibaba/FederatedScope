@@ -35,6 +35,8 @@ vertical:
   key_size: 256
   dims: [7, 14]
   algo: 'xgb'
+  data_size_for_debug: 1500
+  feature_subsample_ratio: 1.0
 eval:
   freq: 5
   best_res_update_round_wise_key: test_loss

@@ -78,11 +78,16 @@ def extend_fl_setting_cfg(cfg):
     cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
-    cfg.vertical.algo = 'lr'  # ['lr', 'xgb']
+    cfg.vertical.algo = 'lr'  # ['lr', 'xgb', 'gbdt', 'rf']
+    cfg.vertical.feature_subsample_ratio = 1.0
     cfg.vertical.protect_object = ''  # feature_order, TODO: add more
-    cfg.vertical.protect_method = ''  # dp
+    cfg.vertical.protect_method = ''  # dp, op_boost
     cfg.vertical.protect_args = []
     # Default values for 'dp': {'bucket_num':100, 'epsilon':None}
+    # Default values for 'op_boost': {'algo':'global', 'lower_bound':1,
+    #                                 'upper_bound':100, 'epsilon':2}
+    cfg.vertical.data_size_for_debug = 0  # use a subset for debug in vfl,
+    # 0 indicates using the entire dataset (disable debug mode)
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
@@ -229,6 +234,12 @@ def assert_fl_setting_cfg(cfg):
                            f"but got {cfg.model.type}. Therefore "
                            f"cfg.model.type is changed to 'gbdt_tree' here")
             cfg.model.type = 'gbdt_tree'
+
+        if not (cfg.vertical.feature_subsample_ratio > 0
+                and cfg.vertical.feature_subsample_ratio <= 1.0):
+            raise ValueError(f'The value of vertical.feature_subsample_ratio '
+                             f'must be in (0, 1.0], but got '
+                             f'{cfg.vertical.feature_subsample_ratio}')
 
 
 register_config("fl_setting", extend_fl_setting_cfg)

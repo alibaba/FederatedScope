@@ -32,6 +32,7 @@ vertical:
   protect_object: 'feature_order'
   protect_method: 'op_boost'
   protect_args: [{'algo': 'global'}]
+  data_size_for_debug: 2000
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
