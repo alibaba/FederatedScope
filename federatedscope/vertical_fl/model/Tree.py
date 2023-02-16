@@ -135,7 +135,8 @@ class DecisionTree(Tree):
 
     def cal_gini(self, split_idx, y, indicator):
         if self._check_same_label(y, indicator):
-            return np.float('inf')
+            # Return the maximum gini value
+            return 1.0
 
         left_child_indicator = indicator * np.concatenate(
             [np.ones(split_idx),
@@ -147,7 +148,7 @@ class DecisionTree(Tree):
         return np.sum(left_child_indicator) / total_num * left_gini + sum(
             right_child_indicator) / total_num * right_gini
 
-    def cal_sse(self, split_idx, y, indicator):
+    def cal_sum_of_square_mean_err(self, split_idx, y, indicator):
         left_child_indicator = indicator * np.concatenate(
             [np.ones(split_idx),
              np.zeros(len(y) - split_idx)])
@@ -164,7 +165,7 @@ class DecisionTree(Tree):
         if self.task_type == 'classification':
             return self.cal_gini(split_idx, y, indicator)
         elif self.task_type == 'regression':
-            return self.cal_sse(split_idx, y, indicator)
+            return self.cal_sum_of_square_mean_err(split_idx, y, indicator)
         else:
             raise ValueError(f'Task type error: {self.task_type}')
 
