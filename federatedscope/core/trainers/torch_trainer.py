@@ -34,7 +34,7 @@ class GeneralTorchTrainer(Trainer):
 
     def setup_data(self, ctx):
         """
-        Initialization data by ``cfg``.
+        Initializsetup_dataation data by ``cfg``.
         """
         if isinstance(ctx.data, ClientData):
             ctx.data.setup(ctx.cfg)
