@@ -166,6 +166,9 @@ class BaseRunner(object):
         if self.cfg.vertical.use:
             from federatedscope.vertical_fl.utils import wrap_vertical_server
             server = wrap_vertical_server(server, self.cfg)
+        if self.cfg.fedswa.use:
+            from federatedscope.core.workers.wrapper import wrap_swa_server
+            server = wrap_swa_server(server)
         logger.info('Server has been set up ... ')
         return self.feat_engr_wrapper_server(server)
 

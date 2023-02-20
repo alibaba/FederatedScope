@@ -26,7 +26,9 @@ class Credit(object):
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -41,6 +43,7 @@ class Credit(object):
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         super(Credit, self).__init__()
@@ -51,6 +54,7 @@ class Credit(object):
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -89,6 +93,11 @@ class Credit(object):
         sample_idx = balance_sample(sample_size, data[:, 0])
         data = data[sample_idx]
         # '''
+
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(data), self.data_size_for_debug)
+            np.random.shuffle(data)
+            data = data[:subset_size]
 
         train_num = int(self.tr_frac * len(data))
 

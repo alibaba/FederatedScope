@@ -1,4 +1,5 @@
 use_gpu: True
+outdir: exp
 device: 0
 early_stop:
   patience: 0
@@ -9,6 +10,13 @@ federate:
   sample_client_num: 5
   make_global_eval: True
   merge_test_data: True
+fedopt:
+  use: True
+  optimizer:
+    lr: 1.0
+    weight_decay: 0.0
+    momentum: 0.0
+  annealing: True
 data:
   root: data/
   type: 'CIFAR10@torchvision'
@@ -27,14 +35,30 @@ model:
   dropout: 0.0
 criterion:
   type: CrossEntropyLoss
+trainer:
+  type: local_entropy_trainer
+  local_entropy:
+    gamma: 0.03
+    inc_factor: 1.0001
+    eps: 0.0001
+    alpha: 0.75
 train:
   batch_or_epoch: 'epoch'
   optimizer:
-    lr: 0.01
-    weight_decay: 0.0004
+    lr: 0.1
+    weight_decay: 0.0
     momentum: 0.0
 eval:
   freq: 100
   metrics: ['acc', 'correct']
-  best_res_update_round_wise_key: test_loss
+  best_res_update_round_wise_key: test_acc
   count_flops: False
+hpo:
+  scheduler: bo_gp
+  num_workers: 0
+  ss: 'scripts/wide_valley_exp_scripts/search_space_for_fedentsgd.yaml'
+  sha:
+    budgets: [10000, 10000]
+    iter: 400
+  metric: server_global_eval.test_acc
+  working_folder: bo_gp_fedentsgd

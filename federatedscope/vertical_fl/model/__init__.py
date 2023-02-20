@@ -1,4 +1,4 @@
 from federatedscope.vertical_fl.model.Tree \
-    import MultipleXGBTrees, MultipleGBDTTrees
+    import MultipleXGBTrees, MultipleGBDTTrees, RandomForest
 
-__all__ = ['MultipleXGBTrees', 'MultipleGBDTTrees']
+__all__ = ['MultipleXGBTrees', 'MultipleGBDTTrees', 'RandomForest']

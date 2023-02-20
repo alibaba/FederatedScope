@@ -45,7 +45,9 @@ class Blog(object):
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -60,6 +62,7 @@ class Blog(object):
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         super(Blog, self).__init__()
@@ -70,6 +73,7 @@ class Blog(object):
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -97,6 +101,11 @@ class Blog(object):
                 flag = 1
             else:
                 test_data = np.concatenate((test_data, f_data), axis=0)
+
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(train_data), self.data_size_for_debug)
+            np.random.shuffle(train_data)
+            train_data = train_data[:subset_size]
 
         self.data_dict['train'] = train_data
         self.data_dict['test'] = test_data

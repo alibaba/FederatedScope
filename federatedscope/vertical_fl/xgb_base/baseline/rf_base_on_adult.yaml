@@ -1,0 +1,32 @@
+use_gpu: False
+device: 0
+backend: torch
+federate:
+  mode: standalone
+  client_num: 2
+model:
+  type: random_forest
+  lambda_: 0.1
+  gamma: 0
+  num_of_trees: 10
+  max_tree_depth: 5
+data:
+  root: data/
+  type: adult
+  splits: [1.0, 0.0]
+dataloader:
+  type: raw
+  batch_size: 2000
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: verticaltrainer
+vertical:
+  use: True
+  dims: [7, 14]
+  algo: 'rf'
+  data_size_for_debug: 1500
+  feature_subsample_ratio: 0.8
+eval:
+  freq: 3
+  best_res_update_round_wise_key: test_loss

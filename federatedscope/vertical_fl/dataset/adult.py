@@ -31,7 +31,9 @@ class Adult(object):
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -46,6 +48,7 @@ class Adult(object):
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         super(Adult, self).__init__()
@@ -56,6 +59,7 @@ class Adult(object):
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -70,6 +74,10 @@ class Adult(object):
         train_data = self._read_raw(train_file)
         test_data = self._read_raw(test_file)
         train_data, test_data = self._process(train_data, test_data)
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(train_data), self.data_size_for_debug)
+            np.random.shuffle(train_data)
+            train_data = train_data[:subset_size]
         self._partition_data(train_data, test_data)
 
     def _read_raw(self, file_path):
@@ -102,6 +110,8 @@ class Adult(object):
 
         train_set = combined_set[:train_set.shape[0]]
         test_set = combined_set[train_set.shape[0]:]
+        train_set = train_set.values
+        test_set = test_set.values
         return train_set, test_set
 
     # normalization
@@ -116,8 +126,6 @@ class Adult(object):
         return (data - mu) / sigma
 
     def _partition_data(self, train_set, test_set):
-        train_set = train_set.values
-        test_set = test_set.values
         x, y = train_set[:, :-1], train_set[:, -1]
         test_x, test_y = test_set[:, :-1], test_set[:, -1]
 
