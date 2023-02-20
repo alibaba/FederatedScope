@@ -45,15 +45,17 @@ class XGBClient(Client):
                                                 'host': self.comm_manager.host,
                                                 'port': self.comm_manager.port
                                             })
+        else:
+            self.comm_manager.add_neighbors(neighbor_id=self.ID, address=None)
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('data_sample',
                                self.callback_func_for_data_sample)
-        self.register_handlers('feature_order',
-                               self.callback_func_for_feature_order)
+        self.register_handlers('training_info',
+                               self.callback_func_for_training_info)
         self.register_handlers('finish', self.callback_func_for_finish)
 
-    def train(self, tree_num, node_num=None, feature_order_info=None):
+    def train(self, tree_num, node_num=None, training_info=None):
         raise NotImplementedError
 
     def eval(self, tree_num):
@@ -85,14 +87,24 @@ class XGBClient(Client):
         _, feature_order_info = self.trainer.fetch_train_data(
             index=batch_index)
         self.feature_order = feature_order_info['feature_order']
+
+        if self._cfg.vertical.mode == 'order_based':
+            training_info = feature_order_info
+        elif self._cfg.vertical.mode == 'label_based':
+            training_info = 'dummy_info'
+        else:
+            raise TypeError(f'The expected types of vertical.mode include '
+                            f'["label_based", "order_based"], but got '
+                            f'{self._cfg.vertical.mode}.')
+
         self.comm_manager.send(
-            Message(msg_type='feature_order',
+            Message(msg_type='training_info',
                     sender=self.ID,
                     state=self.state,
                     receiver=[sender],
-                    content=feature_order_info))
+                    content=training_info))
 
-    def callback_func_for_feature_order(self, message: Message):
+    def callback_func_for_training_info(self, message: Message):
         feature_order_info, sender = message.content, message.sender
         self.msg_buffer[sender] = feature_order_info
         self.check_and_move_on()
@@ -109,7 +121,8 @@ class XGBClient(Client):
                                    tree_num=0):
         self.msg_buffer.clear()
         self.feature_order = feature_order_info['feature_order']
-        self.msg_buffer[self.ID] = feature_order_info
+        self.msg_buffer[self.ID] = feature_order_info \
+            if self._cfg.vertical.mode == 'order_based' else 'dummy_info'
         self.state = tree_num
         receiver = [
             each for each in list(self.comm_manager.neighbors.keys())
@@ -124,6 +137,7 @@ class XGBClient(Client):
 
     def check_and_move_on(self):
         if len(self.msg_buffer) == self.client_num:
-            received_feature_order_infos = self.msg_buffer
+            received_training_infos = self.msg_buffer
             self.train(tree_num=self.state,
-                       feature_order_info=received_feature_order_infos)
+                       training_info=received_training_infos)
+            self.msg_buffer.clear()

@@ -75,6 +75,7 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.vertical = CN()
     cfg.vertical.use = False
+    cfg.vertical.mode = 'order_based'  # ['order_based', 'label_based']
     cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
