@@ -58,42 +58,49 @@ def wrap_client_for_train(client):
                 client_id = index + 1
                 self.model[tree_num][node_num].member = client_id
 
+                split_ref['feature_idx'] -= accum_dim
+                split_child = False
                 self.comm_manager.send(
                     Message(msg_type='split',
                             sender=self.ID,
                             state=self.state,
                             receiver=[client_id],
-                            content=(tree_num, node_num,
-                                     split_ref['feature_idx'] - accum_dim,
-                                     split_ref['value_idx'])))
+                            content=(tree_num, node_num, split_ref,
+                                     split_child)))
                 break
             else:
                 accum_dim += dim
 
     def callback_func_for_split(self, message: Message):
-        if len(message.content) == 4:
-            tree_num, node_num, feature_idx, value_idx = message.content
-            left_child = None
-            right_child = None
-        else:
-            tree_num, node_num = message.content
+        tree_num, node_num, split_ref, split_child = message.content
+
+        if split_ref is None:
             feature_idx = self.trainer.split_ref['feature_idx']
-            split_feature = self.trainer.client_feature_order[feature_idx]
             value_idx = self.trainer.split_ref['value_idx']
-            left_child, right_child = self.trainer.get_children_indicator(
-                value_idx=value_idx, split_feature=split_feature)
+        else:
+            feature_idx = split_ref['feature_idx']
+            value_idx = split_ref['value_idx']
 
         sender = message.sender
         self.state = message.state
         abs_feature_idx = self.trainer.get_abs_feature_idx(feature_idx)
         self.feature_importance[abs_feature_idx] += 1
+        if hasattr(self.trainer, 'get_abs_value_idx'):
+            abs_value_idx = self.trainer.get_abs_value_idx(
+                feature_idx, value_idx)
+        else:
+            abs_value_idx = value_idx
 
-        feature_value = self.trainer.get_feature_value(feature_idx, value_idx)
+        feature_value = self.trainer.get_feature_value(feature_idx,
+                                                       abs_value_idx)
 
         self.model[tree_num][node_num].feature_idx = abs_feature_idx
         self.model[tree_num][node_num].feature_value = feature_value
 
-        if left_child is not None and right_child is not None:
+        if split_child:
+            split_feature = self.trainer.client_feature_order[feature_idx]
+            left_child, right_child = self.trainer.get_children_indicator(
+                value_idx=abs_value_idx, split_feature=split_feature)
             content = (tree_num, node_num, left_child, right_child)
         else:
             content = (tree_num, node_num)
@@ -117,38 +124,39 @@ def wrap_client_for_train(client):
 
     def callback_funcs_for_grad_and_hess(self, message: Message):
         tree_num, node_num, g, h = message.content
-        improved_flag, split_ref, best_gain = self.trainer._get_best_gain(
+        improved_flag, split_info, best_gain = self.trainer._get_best_gain(
             tree_num, node_num, g, h)
-        self.trainer.split_ref = split_ref
+        if 'feature_idx' in split_info and 'value_idx' in split_info:
+            self.trainer.split_ref = split_info
         self.comm_manager.send(
             Message(msg_type='local_best_gain',
                     sender=self.ID,
                     state=self.state,
                     receiver=[message.sender],
-                    content=(tree_num, node_num, best_gain, improved_flag)))
+                    content=(tree_num, node_num, best_gain, split_info,
+                             improved_flag)))
 
     def callback_funcs_for_local_best_gain(self, message: Message):
-        tree_num, node_num, local_best_gain, improved_flag = message.content
+        tree_num, node_num, local_best_gain, split_info, improved_flag = \
+            message.content
         client_id = message.sender
-        self.msg_buffer[client_id] = (local_best_gain, improved_flag)
+        self.msg_buffer[client_id] = (local_best_gain, improved_flag,
+                                      split_info)
         if len(self.msg_buffer) == self.client_num:
-            client_has_max_gain = None
-            max_gain = None
-            for client_id, local_gain in self.msg_buffer.items():
-                gain, improved_flag = local_gain
-                if improved_flag:
-                    if max_gain is None or gain > max_gain:
-                        max_gain = gain
-                        client_has_max_gain = client_id
-
+            max_gain, split_client_id, split_ref = \
+                self.trainer.get_best_gain_from_msg(tree_num=tree_num,
+                                                    node_num=node_num,
+                                                    msg=self.msg_buffer)
             if max_gain is not None:
-                self.model[tree_num][node_num].member = client_has_max_gain
+                self.model[tree_num][node_num].member = split_client_id
+                split_child = True
                 self.comm_manager.send(
                     Message(msg_type='split',
                             sender=self.ID,
                             state=self.state,
-                            receiver=[client_has_max_gain],
-                            content=(tree_num, node_num)))
+                            receiver=[split_client_id],
+                            content=(tree_num, node_num, split_ref,
+                                     split_child)))
             else:
                 self.trainer._set_weight_and_status(tree_num, node_num)
 

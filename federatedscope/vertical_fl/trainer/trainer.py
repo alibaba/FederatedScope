@@ -21,6 +21,7 @@ class VerticalTrainer(object):
         self.complete_feature_order_info = None
         self.client_feature_num = list()
         self.extra_info = None
+        self.client_extra_info = None
         self.batch_x = None
         self.batch_y = None
         self.batch_y_hat = None
@@ -81,6 +82,7 @@ class VerticalTrainer(object):
             feature_order_info.pop('raw_feature_order')
         else:
             self.client_feature_order = feature_order_info['feature_order']
+            self.client_extra_info = feature_order_info.get('extra_info', None)
 
         return batch_index, feature_order_info
 
@@ -150,12 +152,12 @@ class VerticalTrainer(object):
                         hess=None):
         order = self.merged_feature_order[feature_idx]
         if grad is not None:
-            ordered_g = grad[order]
+            ordered_g = np.asarray(grad)[order]
         else:
             ordered_g = self.model[tree_num][node_num].grad[order]
 
         if hess is not None:
-            ordered_h = hess[order]
+            ordered_h = np.asarray(hess)[order]
         elif self.model[tree_num][node_num].hess is not None:
             ordered_h = self.model[tree_num][node_num].hess[order]
         else:
@@ -169,6 +171,9 @@ class VerticalTrainer(object):
 
         if self.merged_feature_order is None:
             self.merged_feature_order = self.client_feature_order
+        if self.extra_info is None:
+            self.extra_info = self.client_extra_info
+
         feature_num = len(self.merged_feature_order)
         split_position = None
         if self.extra_info is not None:
@@ -298,3 +303,15 @@ class VerticalTrainer(object):
 
     def update_child(self, tree_num, node_num, left_child, right_child):
         self.model[tree_num].update_child(node_num, left_child, right_child)
+
+    def get_best_gain_from_msg(self, msg, tree_num=None, node_num=None):
+        client_has_max_gain = None
+        max_gain = None
+        for client_id, local_gain in msg.items():
+            gain, improved_flag, _ = local_gain
+            if improved_flag:
+                if max_gain is None or gain > max_gain:
+                    max_gain = gain
+                    client_has_max_gain = client_id
+
+        return max_gain, client_has_max_gain, None
