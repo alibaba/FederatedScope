@@ -1,0 +1,9 @@
+train.optimizer.lr:
+  type: cate
+  choices: [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2]
+train.optimizer.weight_decay:
+  type: cate
+  choices: [ 0, 1e-5, 1e-4, 1e-3, 1e-2 ]
+
+
+

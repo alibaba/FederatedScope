@@ -236,7 +236,8 @@ class Context(LifecycleDict):
         if mode in ['train', 'finetune']:
             num_batch, num_batch_last_epoch, num_epoch, num_total_batch = \
                 calculate_batch_epoch_num(
-                    self.cfg.train.local_update_steps,
+                    self.cfg.train.local_update_steps *
+                    self.cfg.grad.grad_accum_count,
                     self.cfg.train.batch_or_epoch,
                     self.get(f'num_{cur_split}_data'),
                     self.cfg.dataloader.batch_size,

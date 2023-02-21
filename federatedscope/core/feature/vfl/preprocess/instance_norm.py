@@ -58,7 +58,7 @@ def wrap_instance_norm_server(worker):
                     for content in self.msg_buffer['ss_instance_sum']
                 ])
                 instance_mean[split] = instance_mean[split][
-                    'sum'] / self._cfg.vertical_dims[-1]
+                    'sum'] / self._cfg.vertical.dims[-1]
             logger.info('Server send instance_mean to clients')
             self.global_mean = instance_mean
             self.comm_manager.send(
@@ -87,7 +87,7 @@ def wrap_instance_norm_server(worker):
                     self.msg_buffer['ss_instance_sum_norm_square']
                 ])
                 instance_var[split] = instance_var[split][
-                    'sum_norm_square'] / self._cfg.vertical_dims[-1]
+                    'sum_norm_square'] / self._cfg.vertical.dims[-1]
 
             # Apply instance norm
             for split in ['train_data', 'val_data', 'test_data']:
@@ -276,6 +276,8 @@ def wrap_instance_norm_client(worker):
                         (split_data['x'].T - self.global_mean[split]) /
                         (feat_var[split]**0.5)).T
         logger.info('Instance norm finished.')
+        self.msg_buffer.pop('ss_instance_sum_norm_square')
+        self.msg_buffer.pop('ss_instance_sum')
         self._init_data_related_var()
 
     # Bind method to instance

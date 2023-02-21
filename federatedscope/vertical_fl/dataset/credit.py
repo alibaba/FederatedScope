@@ -9,7 +9,7 @@ from torchvision.datasets.utils import download_and_extract_archive
 logger = logging.getLogger(__name__)
 
 
-class Credit:
+class Credit(object):
     """
     Give Me Some Credit Data Set
     (https://www.kaggle.com/competitions/GiveMeSomeCredit)
@@ -19,7 +19,6 @@ class Credit:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘credit’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -27,7 +26,9 @@ class Credit:
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -37,23 +38,23 @@ class Credit:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         super(Credit, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.feature_partition = feature_partition
         self.tr_frac = tr_frac
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -93,6 +94,11 @@ class Credit:
         data = data[sample_idx]
         # '''
 
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(data), self.data_size_for_debug)
+            np.random.shuffle(data)
+            data = data[:subset_size]
+
         train_num = int(self.tr_frac * len(data))
 
         self.data_dict['train'] = data[:train_num]
@@ -100,6 +106,7 @@ class Credit:
 
     def _read_raw(self, file_path):
         data = pd.read_csv(file_path)
+        data = data.fillna(method='ffill')
         data = data.values
         return data
 

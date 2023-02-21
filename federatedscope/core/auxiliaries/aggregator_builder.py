@@ -1,5 +1,4 @@
 import logging
-
 from federatedscope.core.configs import constants
 
 logger = logging.getLogger(__name__)
@@ -59,7 +58,7 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         from federatedscope.core.aggregators import ClientsAvgAggregator, \
             OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, \
             FedOptAggregator, NoCommunicationAggregator, \
-            AsynClientsAvgAggregator
+            AsynClientsAvgAggregator, KrumAggregator
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
@@ -68,6 +67,11 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         logger.warning(
             'Aggregator for method {} is not implemented. Will use default one'
             .format(method))
+
+    if config.data.type.lower() == 'hetero_nlp_tasks' and \
+            not config.federate.atc_vanilla:
+        from federatedscope.nlp.hetero_tasks.aggregator import ATCAggregator
+        return ATCAggregator(model=model, config=config, device=device)
 
     if config.fedopt.use or aggregator_type == 'fedopt':
         return FedOptAggregator(config=config, model=model, device=device)
@@ -83,6 +87,8 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             return AsynClientsAvgAggregator(model=model,
                                             device=device,
                                             config=config)
+        elif config.aggregator.krum.use:
+            return KrumAggregator(model=model, device=device, config=config)
         else:
             return ClientsAvgAggregator(model=model,
                                         device=device,

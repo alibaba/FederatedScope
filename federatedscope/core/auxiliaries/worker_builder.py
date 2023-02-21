@@ -49,14 +49,26 @@ def get_client_cls(cfg):
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExClient
         return FedExClient
+    if cfg.hpo.fts.use:
+        from federatedscope.autotune.fts import FTSClient
+        return FTSClient
+    if cfg.hpo.pfedhpo.use:
+        from federatedscope.autotune.pfedhpo import pFedHPOClient
+        return pFedHPOClient
 
     if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLClient
-        return vFLClient
+        if cfg.vertical.algo == 'lr':
+            from federatedscope.vertical_fl.worker import vFLClient
+            return vFLClient
+        elif cfg.vertical.algo in ['xgb', 'gbdt', 'rf']:
+            from federatedscope.vertical_fl.xgb_base.worker import XGBClient
+            return XGBClient
+        else:
+            raise ValueError(f'No client class for {cfg.vertical.algo}')
 
-    if cfg.xgb_base.use:
-        from federatedscope.vertical_fl.xgb_base.worker import XGBClient
-        return XGBClient
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
+        from federatedscope.nlp.hetero_tasks.worker import ATCClient
+        return ATCClient
 
     if cfg.federate.method.lower() in constants.CLIENTS_TYPE:
         client_type = constants.CLIENTS_TYPE[cfg.federate.method.lower()]
@@ -133,6 +145,16 @@ def get_server_cls(cfg):
         from federatedscope.autotune.fedex import FedExServer
         return FedExServer
 
+    if cfg.hpo.fts.use:
+        from federatedscope.autotune.fts import FTSServer
+        return FTSServer
+    if cfg.hpo.pfedhpo.use and not cfg.hpo.pfedhpo.train_fl:
+        from federatedscope.autotune.pfedhpo import pFedHPOServer
+        return pFedHPOServer
+    if cfg.hpo.pfedhpo.use and cfg.hpo.pfedhpo.train_fl:
+        from federatedscope.autotune.pfedhpo import pFedHPOFLServer
+        return pFedHPOFLServer
+
     if cfg.attack.attack_method.lower() in ['dlg', 'ig']:
         from federatedscope.attack.worker_as_attacker.server_attacker import\
             PassiveServer
@@ -148,12 +170,18 @@ def get_server_cls(cfg):
         return BackdoorServer
 
     if cfg.vertical.use:
-        from federatedscope.vertical_fl.worker import vFLServer
-        return vFLServer
+        if cfg.vertical.algo == 'lr':
+            from federatedscope.vertical_fl.worker import vFLServer
+            return vFLServer
+        elif cfg.vertical.algo in ['xgb', 'gbdt', 'rf']:
+            from federatedscope.vertical_fl.xgb_base.worker import XGBServer
+            return XGBServer
+        else:
+            raise ValueError(f'No server class for {cfg.vertical.algo}')
 
-    if cfg.xgb_base.use:
-        from federatedscope.vertical_fl.xgb_base.worker import XGBServer
-        return XGBServer
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
+        from federatedscope.nlp.hetero_tasks.worker import ATCServer
+        return ATCServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:
         server_type = constants.SERVER_TYPE[cfg.federate.method.lower()]

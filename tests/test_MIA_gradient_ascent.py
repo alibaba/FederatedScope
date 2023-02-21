@@ -36,8 +36,8 @@ class GradAscentTest(unittest.TestCase):
         cfg.data.transform = [['ToTensor'],
                               [
                                   'Normalize', {
-                                      'mean': [0.1307],
-                                      'std': [0.3081]
+                                      'mean': [0.9637],
+                                      'std': [0.1592]
                                   }
                               ]]
 

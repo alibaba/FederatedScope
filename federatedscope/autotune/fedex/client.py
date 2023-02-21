@@ -58,6 +58,7 @@ class FedExClient(Client):
                                           return_raw=True))
 
         results['arms'] = arms
+        results['client_id'] = self.ID - 1
         content = (sample_size, model_para_all, results)
         self.comm_manager.send(
             Message(msg_type='model_para',

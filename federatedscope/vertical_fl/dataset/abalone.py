@@ -2,13 +2,14 @@ import logging
 import os
 import os.path as osp
 
+import numpy as np
 import pandas as pd
 from torchvision.datasets.utils import download_and_extract_archive
 
 logger = logging.getLogger(__name__)
 
 
-class Abalone:
+class Abalone(object):
     """
     Abalone Data Set
     (https://archive.ics.uci.edu/ml/datasets/abalone)
@@ -36,7 +37,6 @@ class Abalone:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘abalone’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -44,7 +44,9 @@ class Abalone:
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -54,22 +56,22 @@ class Abalone:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.feature_partition = feature_partition
         self.tr_frac = tr_frac
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -87,6 +89,10 @@ class Abalone:
         file = osp.join(fpath, self.raw_file)
         data = self._read_raw(file)
         data = self._process(data)
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(data), self.data_size_for_debug)
+            np.random.shuffle(data)
+            data = data[:subset_size]
         train_num = int(self.tr_frac * len(data))
         self.data_dict['train'] = data[:train_num]
         self.data_dict['test'] = data[train_num:]

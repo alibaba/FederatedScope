@@ -78,10 +78,22 @@ class Client(BaseClient):
         # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
         self.is_unseen_client = is_unseen_client
 
+        # Parse the attack_id since we support both 'int' (for single attack)
+        # and 'list' (for multiple attacks) for config.attack.attack_id
+        parsed_attack_ids = list()
+        if isinstance(config.attack.attacker_id, int):
+            parsed_attack_ids.append(config.attack.attacker_id)
+        elif isinstance(config.attack.attacker_id, list):
+            parsed_attack_ids = config.attack.attacker_id
+        else:
+            raise TypeError(f"The expected types of config.attack.attack_id "
+                            f"include 'int' and 'list', but we got "
+                            f"{type(config.attack.attacker_id)}")
+
         # Attack only support the stand alone model;
         # Check if is a attacker; a client is a attacker if the
         # config.attack.attack_method is provided
-        self.is_attacker = config.attack.attacker_id == ID and \
+        self.is_attacker = ID in parsed_attack_ids and \
             config.attack.attack_method != '' and \
             config.federate.mode == 'standalone'
 
@@ -357,7 +369,7 @@ class Client(BaseClient):
                 self.msg_buffer['train'][self.state] = [(sample_size,
                                                          content_frame)]
             else:
-                if self._cfg.asyn.use:
+                if self._cfg.asyn.use or self._cfg.aggregator.krum.use:
                     # Return the model delta when using asynchronous training
                     # protocol, because the staled updated might be discounted
                     # and cause that the sum of the aggregated weights might
@@ -484,7 +496,7 @@ class Client(BaseClient):
                 metrics,
                 rnd=self.state,
                 role='Client #{}'.format(self.ID),
-                forms='raw',
+                forms=['raw'],
                 return_raw=True)
             self._monitor.update_best_result(self.best_results,
                                              formatted_eval_res['Results_raw'],

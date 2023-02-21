@@ -33,7 +33,7 @@ class RegexInverseMap:
         return str(self._items.items())
 
 
-def load_dataset(config):
+def load_dataset(config, client_cfgs=None):
     """
     Loads the dataset for the given config from branches
 
@@ -79,16 +79,21 @@ def load_dataset(config):
     ] or config.data.type.startswith('graph_multi_domain'):
         from federatedscope.gfl.dataloader import load_graphlevel_dataset
         dataset, modified_config = load_graphlevel_dataset(config)
-    elif config.data.type.lower() == 'vertical_fl_data':
+    elif config.data.type.lower() in [
+            'synthetic_vfl_data', 'adult', 'abalone', 'credit', 'blog'
+    ]:
         from federatedscope.vertical_fl.dataloader import load_vertical_data
-        dataset, modified_config = load_vertical_data(config, generate=True)
-    elif config.data.type.lower() in ['adult', 'abalone', 'credit', 'blog']:
-        from federatedscope.vertical_fl.dataloader import load_vertical_data
-        dataset, modified_config = load_vertical_data(config, generate=False)
+        generate = config.data.type.lower() == 'synthetic_vfl_data'
+        dataset, modified_config = load_vertical_data(config,
+                                                      generate=generate)
     elif 'movielens' in config.data.type.lower(
     ) or 'netflix' in config.data.type.lower():
         from federatedscope.mf.dataloader import load_mf_dataset
         dataset, modified_config = load_mf_dataset(config)
+    elif 'hetero_nlp_tasks' in config.data.type.lower():
+        from federatedscope.nlp.hetero_tasks.dataloader import \
+            load_heteroNLP_data
+        dataset, modified_config = load_heteroNLP_data(config, client_cfgs)
     elif '@' in config.data.type.lower():
         from federatedscope.core.data.utils import load_external_data
         dataset, modified_config = load_external_data(config)
