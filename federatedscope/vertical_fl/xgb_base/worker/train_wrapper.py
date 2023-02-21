@@ -1,5 +1,6 @@
 import types
 import logging
+import copy
 
 from federatedscope.core.message import Message
 
@@ -155,10 +156,12 @@ def wrap_client_for_train(client):
         self.msg_buffer[client_id] = (local_best_gain, improved_flag,
                                       split_info)
         if len(self.msg_buffer) == self.client_num:
+            received_msg = copy.deepcopy(self.msg_buffer)
+            self.msg_buffer.clear()
             max_gain, split_client_id, split_ref = \
                 self.trainer.get_best_gain_from_msg(tree_num=tree_num,
                                                     node_num=node_num,
-                                                    msg=self.msg_buffer)
+                                                    msg=received_msg)
             if max_gain is not None:
                 self.model[tree_num][node_num].member = split_client_id
                 split_child = True
@@ -174,8 +177,6 @@ def wrap_client_for_train(client):
                     self.comm_manager.send(send_message)
             else:
                 self.trainer._set_weight_and_status(tree_num, node_num)
-
-            self.msg_buffer.clear()
 
     # Bind method to instance
     client.train = types.MethodType(train, client)

@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+import copy
 
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
@@ -119,16 +120,17 @@ class XGBClient(Client):
             each for each in list(self.comm_manager.neighbors.keys())
             if each != self.server_id
         ]
-        self.comm_manager.send(
-            Message(msg_type='data_sample',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=receiver,
-                    content=batch_index))
+        send_message = Message(msg_type='data_sample',
+                               sender=self.ID,
+                               state=self.state,
+                               receiver=receiver,
+                               content=batch_index)
+        self.comm_manager.send(send_message)
+        self.callback_func_for_data_sample(send_message)
 
     def check_and_move_on(self):
         if len(self.msg_buffer) == self.client_num:
-            received_training_infos = self.msg_buffer
+            received_training_infos = copy.deepcopy(self.msg_buffer)
+            self.msg_buffer.clear()
             self.train(tree_num=self.state,
                        training_info=received_training_infos)
-            self.msg_buffer.clear()
