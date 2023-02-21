@@ -27,7 +27,7 @@ class XGBClient(Client):
 
         self.data = data
         self.own_label = ('y' in data['train'])
-        self.msg_buffer = dict()
+        self.msg_buffer = {'train': {}, 'eval': {}}
         self.client_num = self._cfg.federate.client_num
 
         self.feature_order = None
@@ -98,7 +98,7 @@ class XGBClient(Client):
 
     def callback_func_for_training_info(self, message: Message):
         feature_order_info, sender = message.content, message.sender
-        self.msg_buffer[sender] = feature_order_info
+        self.msg_buffer['train'][sender] = feature_order_info
         self.check_and_move_on()
 
     def callback_func_for_finish(self, message: Message):
@@ -111,9 +111,9 @@ class XGBClient(Client):
                                    batch_index,
                                    feature_order_info,
                                    tree_num=0):
-        self.msg_buffer.clear()
+        self.msg_buffer['train'].clear()
         self.feature_order = feature_order_info['feature_order']
-        self.msg_buffer[self.ID] = feature_order_info \
+        self.msg_buffer['train'][self.ID] = feature_order_info \
             if self._cfg.vertical.mode == 'order_based' else 'dummy_info'
         self.state = tree_num
         receiver = [
@@ -126,11 +126,10 @@ class XGBClient(Client):
                                receiver=receiver,
                                content=batch_index)
         self.comm_manager.send(send_message)
-        self.callback_func_for_data_sample(send_message)
 
     def check_and_move_on(self):
-        if len(self.msg_buffer) == self.client_num:
-            received_training_infos = copy.deepcopy(self.msg_buffer)
-            self.msg_buffer.clear()
+        if len(self.msg_buffer['train']) == self.client_num:
+            received_training_infos = copy.deepcopy(self.msg_buffer['train'])
+            self.msg_buffer['train'].clear()
             self.train(tree_num=self.state,
                        training_info=received_training_infos)

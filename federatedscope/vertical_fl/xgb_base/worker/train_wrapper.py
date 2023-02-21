@@ -153,11 +153,11 @@ def wrap_client_for_train(client):
         tree_num, node_num, local_best_gain, split_info, improved_flag = \
             message.content
         client_id = message.sender
-        self.msg_buffer[client_id] = (local_best_gain, improved_flag,
-                                      split_info)
-        if len(self.msg_buffer) == self.client_num:
-            received_msg = copy.deepcopy(self.msg_buffer)
-            self.msg_buffer.clear()
+        self.msg_buffer['train'][client_id] = (local_best_gain, improved_flag,
+                                               split_info)
+        if len(self.msg_buffer['train']) == self.client_num:
+            received_msg = copy.deepcopy(self.msg_buffer['train'])
+            self.msg_buffer['train'].clear()
             max_gain, split_client_id, split_ref = \
                 self.trainer.get_best_gain_from_msg(tree_num=tree_num,
                                                     node_num=node_num,
