@@ -198,7 +198,7 @@ class XGBTest(unittest.TestCase):
 
         return backup_cfg
 
-    def set_config_for_xgb_bucket(self, cfg):
+    def set_config_for_label_based_xgb(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
@@ -226,9 +226,9 @@ class XGBTest(unittest.TestCase):
         cfg.vertical.use = True
         cfg.vertical.dims = [7, 14]
         cfg.vertical.algo = 'xgb'
-        cfg.vertical.protect_object = 'feature_order'
-        cfg.vertical.protect_method = 'dp'
-        cfg.vertical.protect_args = [{'bucket_num': 100}]
+        cfg.vertical.mode = 'label_based'
+        cfg.vertical.protect_object = 'grad_and_hess'
+        cfg.vertical.protect_method = 'he'
         cfg.vertical.data_size_for_debug = 2000
 
         cfg.trainer.type = 'verticaltrainer'
@@ -419,9 +419,9 @@ class XGBTest(unittest.TestCase):
         print(test_results)
         self.assertLess(test_results['server_global_eval']['test_acc'], 0.76)
 
-    def test_XGB_use_bucket(self):
+    def test_label_based_XGB(self):
         init_cfg = global_cfg.clone()
-        backup_cfg = self.set_config_for_xgb_bucket(init_cfg)
+        backup_cfg = self.set_config_for_label_based_xgb(init_cfg)
         setup_seed(init_cfg.seed)
         update_logger(init_cfg, True)
 
