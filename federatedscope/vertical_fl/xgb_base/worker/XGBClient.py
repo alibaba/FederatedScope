@@ -38,15 +38,6 @@ class XGBClient(Client):
         self.feature_importance = [0] * self.num_of_feature
 
         self._init_data_related_var()
-        # Add self-loop
-        if self._cfg.federate.mode == 'distributed':
-            self.comm_manager.add_neighbors(neighbor_id=self.ID,
-                                            address={
-                                                'host': self.comm_manager.host,
-                                                'port': self.comm_manager.port
-                                            })
-        else:
-            self.comm_manager.add_neighbors(neighbor_id=self.ID, address=None)
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('data_sample',
@@ -126,7 +117,7 @@ class XGBClient(Client):
         self.state = tree_num
         receiver = [
             each for each in list(self.comm_manager.neighbors.keys())
-            if each not in [self.ID, self.server_id]
+            if each != self.server_id
         ]
         self.comm_manager.send(
             Message(msg_type='data_sample',

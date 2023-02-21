@@ -28,17 +28,18 @@ def wrap_client_for_train(client):
             self._find_and_send_split(split_ref, tree_num, node_num)
         elif train_flag == 'call_for_local_gain':
             g, h, tree_num, node_num = results
-            self.comm_manager.send(
-                Message(
-                    msg_type='grad_and_hess',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=[
-                        each
-                        for each in list(self.comm_manager.neighbors.keys())
-                        if each != self.server_id
-                    ],
-                    content=(tree_num, node_num, g, h)))
+            send_message = Message(
+                msg_type='grad_and_hess',
+                sender=self.ID,
+                state=self.state,
+                receiver=[
+                    each for each in list(self.comm_manager.neighbors.keys())
+                    if each != self.server_id
+                ],
+                content=(tree_num, node_num, g, h))
+            self.comm_manager.send(send_message)
+            # imitate send this message to itself
+            self.callback_funcs_for_grad_and_hess(send_message)
         else:
             raise ValueError(f'The handler of {train_flag} is not defined.')
 
@@ -60,13 +61,17 @@ def wrap_client_for_train(client):
 
                 split_ref['feature_idx'] -= accum_dim
                 split_child = False
-                self.comm_manager.send(
-                    Message(msg_type='split',
-                            sender=self.ID,
-                            state=self.state,
-                            receiver=[client_id],
-                            content=(tree_num, node_num, split_ref,
-                                     split_child)))
+                send_message = Message(msg_type='split',
+                                       sender=self.ID,
+                                       state=self.state,
+                                       receiver=[client_id],
+                                       content=(tree_num, node_num, split_ref,
+                                                split_child))
+                if client_id == self.ID:
+                    self.callback_func_for_split(send_message)
+                else:
+                    self.comm_manager.send(send_message)
+
                 break
             else:
                 accum_dim += dim
@@ -105,12 +110,15 @@ def wrap_client_for_train(client):
         else:
             content = (tree_num, node_num)
 
-        self.comm_manager.send(
-            Message(msg_type='continue_training',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=[sender],
-                    content=content))
+        send_message = Message(msg_type='continue_training',
+                               sender=self.ID,
+                               state=self.state,
+                               receiver=[sender],
+                               content=content)
+        if sender == self.ID:
+            self.callback_funcs_for_continue_training(send_message)
+        else:
+            self.comm_manager.send(send_message)
 
     def callback_funcs_for_continue_training(self, message: Message):
         if len(message.content) == 4:
@@ -128,13 +136,17 @@ def wrap_client_for_train(client):
             tree_num, node_num, g, h)
         if 'feature_idx' in split_info and 'value_idx' in split_info:
             self.trainer.split_ref = split_info
-        self.comm_manager.send(
-            Message(msg_type='local_best_gain',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=[message.sender],
-                    content=(tree_num, node_num, best_gain, split_info,
-                             improved_flag)))
+
+        send_message = Message(msg_type='local_best_gain',
+                               sender=self.ID,
+                               state=self.state,
+                               receiver=[message.sender],
+                               content=(tree_num, node_num, best_gain,
+                                        split_info, improved_flag))
+        if message.sender == self.ID:
+            self.callback_funcs_for_local_best_gain(send_message)
+        else:
+            self.comm_manager.send(send_message)
 
     def callback_funcs_for_local_best_gain(self, message: Message):
         tree_num, node_num, local_best_gain, split_info, improved_flag = \
@@ -150,13 +162,16 @@ def wrap_client_for_train(client):
             if max_gain is not None:
                 self.model[tree_num][node_num].member = split_client_id
                 split_child = True
-                self.comm_manager.send(
-                    Message(msg_type='split',
-                            sender=self.ID,
-                            state=self.state,
-                            receiver=[split_client_id],
-                            content=(tree_num, node_num, split_ref,
-                                     split_child)))
+                send_message = Message(msg_type='split',
+                                       sender=self.ID,
+                                       state=self.state,
+                                       receiver=[split_client_id],
+                                       content=(tree_num, node_num, split_ref,
+                                                split_child))
+                if split_client_id == self.ID:
+                    self.callback_func_for_split(send_message)
+                else:
+                    self.comm_manager.send(send_message)
             else:
                 self.trainer._set_weight_and_status(tree_num, node_num)
 
