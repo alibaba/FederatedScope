@@ -1,4 +1,5 @@
 import numpy as np
+from federatedscope.vertical_fl.trainer.utils import bucketize
 
 
 def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
@@ -41,14 +42,6 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                                                  value_idx=value_idx)
 
             return self.split_value[feature_idx][value_idx]
-
-        def _bucketize(self, feature_order, bucket_size, bucket_num):
-            bucketized_feature_order = list()
-            for bucket_idx in range(bucket_num):
-                start = bucket_idx * bucket_size
-                end = min((bucket_idx + 1) * bucket_size, len(feature_order))
-                bucketized_feature_order.append(feature_order[start:end])
-            return bucketized_feature_order
 
         def _processed_data(self, data):
             min_value = np.min(data, axis=0)
@@ -168,7 +161,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
             self.split_value = []
 
             for feature_idx in range(len(raw_feature_order)):
-                bucketized_feature_order = self._bucketize(
+                bucketized_feature_order = bucketize(
                     raw_feature_order[feature_idx], bucket_size,
                     self.bucket_num)
                 noisy_bucketizd_feature_order = [

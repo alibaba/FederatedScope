@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+import copy
 
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
@@ -26,7 +27,7 @@ class XGBClient(Client):
 
         self.data = data
         self.own_label = ('y' in data['train'])
-        self.msg_buffer = dict()
+        self.msg_buffer = {'train': {}, 'eval': {}}
         self.client_num = self._cfg.federate.client_num
 
         self.feature_order = None
@@ -38,22 +39,15 @@ class XGBClient(Client):
         self.feature_importance = [0] * self.num_of_feature
 
         self._init_data_related_var()
-        # Add self-loop
-        if self._cfg.federate.mode == 'distributed':
-            self.comm_manager.add_neighbors(neighbor_id=self.ID,
-                                            address={
-                                                'host': self.comm_manager.host,
-                                                'port': self.comm_manager.port
-                                            })
 
         self.register_handlers('model_para', self.callback_func_for_model_para)
         self.register_handlers('data_sample',
                                self.callback_func_for_data_sample)
-        self.register_handlers('feature_order',
-                               self.callback_func_for_feature_order)
+        self.register_handlers('training_info',
+                               self.callback_func_for_training_info)
         self.register_handlers('finish', self.callback_func_for_finish)
 
-    def train(self, tree_num, node_num=None, feature_order_info=None):
+    def train(self, tree_num, node_num=None, training_info=None):
         raise NotImplementedError
 
     def eval(self, tree_num):
@@ -85,16 +79,26 @@ class XGBClient(Client):
         _, feature_order_info = self.trainer.fetch_train_data(
             index=batch_index)
         self.feature_order = feature_order_info['feature_order']
+
+        if self._cfg.vertical.mode == 'order_based':
+            training_info = feature_order_info
+        elif self._cfg.vertical.mode == 'label_based':
+            training_info = 'dummy_info'
+        else:
+            raise TypeError(f'The expected types of vertical.mode include '
+                            f'["label_based", "order_based"], but got '
+                            f'{self._cfg.vertical.mode}.')
+
         self.comm_manager.send(
-            Message(msg_type='feature_order',
+            Message(msg_type='training_info',
                     sender=self.ID,
                     state=self.state,
                     receiver=[sender],
-                    content=feature_order_info))
+                    content=training_info))
 
-    def callback_func_for_feature_order(self, message: Message):
+    def callback_func_for_training_info(self, message: Message):
         feature_order_info, sender = message.content, message.sender
-        self.msg_buffer[sender] = feature_order_info
+        self.msg_buffer['train'][sender] = feature_order_info
         self.check_and_move_on()
 
     def callback_func_for_finish(self, message: Message):
@@ -107,23 +111,25 @@ class XGBClient(Client):
                                    batch_index,
                                    feature_order_info,
                                    tree_num=0):
-        self.msg_buffer.clear()
+        self.msg_buffer['train'].clear()
         self.feature_order = feature_order_info['feature_order']
-        self.msg_buffer[self.ID] = feature_order_info
+        self.msg_buffer['train'][self.ID] = feature_order_info \
+            if self._cfg.vertical.mode == 'order_based' else 'dummy_info'
         self.state = tree_num
         receiver = [
             each for each in list(self.comm_manager.neighbors.keys())
-            if each not in [self.ID, self.server_id]
+            if each != self.server_id
         ]
-        self.comm_manager.send(
-            Message(msg_type='data_sample',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=receiver,
-                    content=batch_index))
+        send_message = Message(msg_type='data_sample',
+                               sender=self.ID,
+                               state=self.state,
+                               receiver=receiver,
+                               content=batch_index)
+        self.comm_manager.send(send_message)
 
     def check_and_move_on(self):
-        if len(self.msg_buffer) == self.client_num:
-            received_feature_order_infos = self.msg_buffer
+        if len(self.msg_buffer['train']) == self.client_num:
+            received_training_infos = copy.deepcopy(self.msg_buffer['train'])
+            self.msg_buffer['train'].clear()
             self.train(tree_num=self.state,
-                       feature_order_info=received_feature_order_infos)
+                       training_info=received_training_infos)

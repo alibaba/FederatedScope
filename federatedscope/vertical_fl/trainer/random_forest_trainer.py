@@ -34,7 +34,7 @@ class RandomForestTrainer(VerticalTrainer):
         ordered_label = self.model[tree_num][node_num].label[order]
         return ordered_indicator, ordered_label
 
-    def _get_best_gain(self, tree_num, node_num):
+    def _get_best_gain(self, tree_num, node_num, grad=None, hess=None):
         if self.cfg.criterion.type == 'CrossEntropyLoss':
             default_gain = 1
         elif 'Regression' in self.cfg.criterion.type:
@@ -80,4 +80,4 @@ class RandomForestTrainer(VerticalTrainer):
                     split_ref['feature_idx'] = feature_idx
                     split_ref['value_idx'] = value_idx
 
-        return best_gain < default_gain, split_ref
+        return best_gain < default_gain, split_ref, best_gain
