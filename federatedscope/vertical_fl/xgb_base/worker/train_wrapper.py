@@ -46,6 +46,7 @@ def wrap_client_for_train(client):
 
     def _check_eval_finish(self, tree_num):
         if self.eval_finish_flag:
+            self.eval_finish_flag = False
             if tree_num + 1 < self._cfg.model.num_of_trees:
                 batch_index, feature_order_info = \
                     self.trainer.fetch_train_data()
