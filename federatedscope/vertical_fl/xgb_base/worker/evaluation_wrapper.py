@@ -60,7 +60,7 @@ def wrap_client_for_evaluation(client):
                     receiver=[
                         each
                         for each in list(self.comm_manager.neighbors.keys())
-                        if each not in [self.server_id, self.ID]
+                        if each != self.server_id
                     ],
                     content='None'))
 
@@ -87,12 +87,17 @@ def wrap_client_for_evaluation(client):
             self._test_for_node(tree_num, node_num + 1)
         # Other client owns the weight, need to communicate
         elif self.model[tree_num][node_num].member:
-            self.comm_manager.send(
-                Message(msg_type='split_request',
-                        sender=self.ID,
-                        state=self.state,
-                        receiver=[self.model[tree_num][node_num].member],
-                        content=(tree_num, node_num)))
+            send_message = Message(
+                msg_type='split_request',
+                sender=self.ID,
+                state=self.state,
+                receiver=[self.model[tree_num][node_num].member],
+                content=(tree_num, node_num))
+            if self.model[tree_num][node_num].member == self.ID:
+                self.callback_func_for_split_request(send_message)
+            else:
+                self.comm_manager.send(send_message)
+
         else:
             self._test_for_node(tree_num, node_num + 1)
 
@@ -105,12 +110,16 @@ def wrap_client_for_evaluation(client):
         feature_value = self.model[tree_num][node_num].feature_value
         left_child, right_child = self.model[tree_num].split_childern(
             self.test_x[:, feature_idx], feature_value)
-        self.comm_manager.send(
-            Message(msg_type='split_result',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=[sender],
-                    content=(tree_num, node_num, left_child, right_child)))
+        send_message = Message(msg_type='split_result',
+                               sender=self.ID,
+                               state=self.state,
+                               receiver=[sender],
+                               content=(tree_num, node_num, left_child,
+                                        right_child))
+        if sender == self.ID:
+            self.callback_func_for_split_result(send_message)
+        else:
+            self.comm_manager.send(send_message)
 
     def callback_func_for_split_result(self, message: Message):
         tree_num, node_num, left_child, right_child = message.content
