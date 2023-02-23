@@ -95,8 +95,8 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
         def get_abs_value_idx(self, feature_idx, value_idx):
             if self.extra_info is not None and self.extra_info.get(
                     'split_position', None) is not None:
-                return self.extra_info['split_position'][feature_idx][
-                    value_idx]
+                return self.extra_info['split_position'][feature_idx][value_idx
+                                                                      - 1]
             else:
                 return value_idx
 
