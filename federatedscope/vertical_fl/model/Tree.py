@@ -41,6 +41,14 @@ class Tree(object):
     def set_status(self, node_num, status='off'):
         self.tree[node_num].status = status
 
+    def check_empty_child(self, node_num, split_idx, order):
+        indicator = self.tree[node_num].indicator[order]
+        if np.sum(indicator[:split_idx]) == 0 or np.sum(
+                indicator[split_idx:]) == 0:
+            return True
+
+        return False
+
 
 class XGBTree(Tree):
     def __init__(self, max_depth, lambda_, gamma):

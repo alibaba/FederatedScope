@@ -194,19 +194,15 @@ class VerticalTrainer(object):
         if split_position is None:
             # The left/right sub-tree cannot be empty
             split_position = activate_idx[:, 1:]
-        else:
-            active_split_position = list()
-            for idx, each_split_position in enumerate(split_position):
-                active_split_position.append([
-                    x for x in each_split_position
-                    if x in activate_idx[idx, 1:]
-                ])
-            split_position = active_split_position
 
         for feature_idx in range(feature_num):
             ordered_g, ordered_h = self._get_ordered_gh(
                 tree_num, node_num, feature_idx, grad, hess)
+            order = self.merged_feature_order[feature_idx]
             for value_idx in split_position[feature_idx]:
+                if self.model[tree_num].check_empty_child(
+                        node_num, value_idx, order):
+                    continue
                 gain = self.model[tree_num].cal_gain(ordered_g, ordered_h,
                                                      value_idx, node_num)
 
