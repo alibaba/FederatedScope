@@ -163,7 +163,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 bucketized_feature_order = bucketize(
                     raw_feature_order[feature_idx], bucket_size,
                     self.bucket_num)
-                noisy_bucketizd_feature_order = [
+                noisy_bucketized_feature_order = [
                     [] for _ in range(self.bucket_num)
                 ]
 
@@ -175,7 +175,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                         selected_bucket_idx = np.random.choice(list(
                             range(self.bucket_num)),
                                                                p=probs)
-                        noisy_bucketizd_feature_order[
+                        noisy_bucketized_feature_order[
                             selected_bucket_idx].append(each)
 
                 # Save split positions (instance number within buckets)
@@ -184,7 +184,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 _split_value = dict()
                 accumu_num = 0
                 for bucket_idx, each_bucket in enumerate(
-                        noisy_bucketizd_feature_order):
+                        noisy_bucketized_feature_order):
                     instance_num = len(each_bucket)
                     # Skip the empty bucket
                     if instance_num != 0:
@@ -213,13 +213,13 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 split_position.append(_split_position)
                 self.split_value.append(_split_value)
 
-                noisy_bucketizd_feature_order = [
-                    x for x in noisy_bucketizd_feature_order if len(x) > 0
+                noisy_bucketized_feature_order = [
+                    x for x in noisy_bucketized_feature_order if len(x) > 0
                 ]
-                [np.random.shuffle(x) for x in noisy_bucketizd_feature_order]
-                noisy_bucketizd_feature_order = np.concatenate(
-                    noisy_bucketizd_feature_order)
-                protected_feature_order.append(noisy_bucketizd_feature_order)
+                [np.random.shuffle(x) for x in noisy_bucketized_feature_order]
+                noisy_bucketized_feature_order = np.concatenate(
+                    noisy_bucketized_feature_order)
+                protected_feature_order.append(noisy_bucketized_feature_order)
 
             extra_info = {'split_position': split_position}
 
