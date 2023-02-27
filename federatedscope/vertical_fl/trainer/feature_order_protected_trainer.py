@@ -148,8 +148,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                     (https://arxiv.org/pdf/2011.02796.pdf)
             """
             protected_feature_order = list()
-            bucket_size = int(
-                np.ceil(self.cfg.dataloader.batch_size / self.bucket_num))
+            bucket_size = int(np.floor(data.shape[0] / self.bucket_num))
             if self.epsilon is None:
                 prob_for_preserving = 1.0
             else:
@@ -214,6 +213,9 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 split_position.append(_split_position)
                 self.split_value.append(_split_value)
 
+                noisy_bucketizd_feature_order = [
+                    x for x in noisy_bucketizd_feature_order if len(x) > 0
+                ]
                 [np.random.shuffle(x) for x in noisy_bucketizd_feature_order]
                 noisy_bucketizd_feature_order = np.concatenate(
                     noisy_bucketizd_feature_order)
