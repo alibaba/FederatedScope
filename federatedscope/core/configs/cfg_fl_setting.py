@@ -75,13 +75,16 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.vertical = CN()
     cfg.vertical.use = False
+    cfg.vertical.mode = 'order_based'  # ['order_based', 'label_based']
     cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
     cfg.vertical.algo = 'lr'  # ['lr', 'xgb', 'gbdt', 'rf']
     cfg.vertical.feature_subsample_ratio = 1.0
-    cfg.vertical.protect_object = ''  # feature_order, TODO: add more
-    cfg.vertical.protect_method = ''  # dp, op_boost
+    cfg.vertical.protect_object = ''  # [feature_order, grad_and_hess]
+    cfg.vertical.protect_method = ''
+    # [dp, op_boost] for protect_object = feature_order
+    # [he] for protect_object = grad_and_hess
     cfg.vertical.protect_args = []
     # Default values for 'dp': {'bucket_num':100, 'epsilon':None}
     # Default values for 'op_boost': {'algo':'global', 'lower_bound':1,

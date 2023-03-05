@@ -21,6 +21,7 @@ class VerticalTrainer(object):
         self.complete_feature_order_info = None
         self.client_feature_num = list()
         self.extra_info = None
+        self.client_extra_info = None
         self.batch_x = None
         self.batch_y = None
         self.batch_y_hat = None
@@ -81,15 +82,17 @@ class VerticalTrainer(object):
             feature_order_info.pop('raw_feature_order')
         else:
             self.client_feature_order = feature_order_info['feature_order']
+            self.client_extra_info = feature_order_info.get('extra_info', None)
 
         return batch_index, feature_order_info
 
-    def train(self, feature_order_info=None, tree_num=0, node_num=None):
+    def train(self, training_info=None, tree_num=0, node_num=None):
         # Start to build a tree
         if node_num is None:
-            if feature_order_info is not None:
+            if training_info is not None and \
+                    self.cfg.vertical.mode == 'order_based':
                 self.merged_feature_order, self.extra_info = \
-                    self._parse_feature_order(feature_order_info)
+                    self._parse_training_info(training_info)
             return self._compute_for_root(tree_num=tree_num)
         # Continue training
         else:
@@ -110,7 +113,7 @@ class VerticalTrainer(object):
     def _predict(self, tree_num):
         self._compute_weight(tree_num, node_num=0)
 
-    def _parse_feature_order(self, feature_order_info):
+    def _parse_training_info(self, feature_order_info):
         client_ids = list(feature_order_info.keys())
         client_ids = sorted(client_ids)
         merged_feature_order = list()
@@ -141,46 +144,65 @@ class VerticalTrainer(object):
             feature_order[i] = data[:, i].argsort()
         return {'feature_order': feature_order}
 
-    def _get_ordered_gh(self, tree_num, node_num, feature_idx):
+    def _get_ordered_gh(self,
+                        tree_num,
+                        node_num,
+                        feature_idx,
+                        grad=None,
+                        hess=None):
         order = self.merged_feature_order[feature_idx]
-        ordered_g = self.model[tree_num][node_num].grad[order]
-        if self.model[tree_num][node_num].hess is None:
-            # hess is not used in GBDT
-            ordered_h = None
+        if grad is not None:
+            ordered_g = np.asarray(grad)[order]
         else:
+            ordered_g = self.model[tree_num][node_num].grad[order]
+
+        if hess is not None:
+            ordered_h = np.asarray(hess)[order]
+        elif self.model[tree_num][node_num].hess is not None:
             ordered_h = self.model[tree_num][node_num].hess[order]
+        else:
+            ordered_h = None
+
         return ordered_g, ordered_h
 
-    def _get_best_gain(self, tree_num, node_num):
+    def _get_best_gain(self, tree_num, node_num, grad=None, hess=None):
         best_gain = 0
         split_ref = {'feature_idx': None, 'value_idx': None}
+
+        if self.merged_feature_order is None:
+            self.merged_feature_order = self.client_feature_order
+        if self.extra_info is None:
+            self.extra_info = self.client_extra_info
 
         feature_num = len(self.merged_feature_order)
         split_position = None
         if self.extra_info is not None:
             split_position = self.extra_info.get('split_position', None)
 
-        activate_idx = [
-            np.nonzero(self.model[tree_num][node_num].indicator[order])[0]
-            for order in self.merged_feature_order
-        ]
+        if self.model[tree_num][node_num].indicator is not None:
+            activate_idx = [
+                np.nonzero(self.model[tree_num][node_num].indicator[order])[0]
+                for order in self.merged_feature_order
+            ]
+        else:
+            activate_idx = [
+                np.arange(self.batch_x.shape[0])
+                for _ in self.merged_feature_order
+            ]
+
         activate_idx = np.asarray(activate_idx)
         if split_position is None:
             # The left/right sub-tree cannot be empty
             split_position = activate_idx[:, 1:]
-        else:
-            active_split_position = list()
-            for idx, each_split_position in enumerate(split_position):
-                active_split_position.append([
-                    x for x in each_split_position
-                    if x in activate_idx[idx, 1:]
-                ])
-            split_position = active_split_position
 
         for feature_idx in range(feature_num):
             ordered_g, ordered_h = self._get_ordered_gh(
-                tree_num, node_num, feature_idx)
+                tree_num, node_num, feature_idx, grad, hess)
+            order = self.merged_feature_order[feature_idx]
             for value_idx in split_position[feature_idx]:
+                if self.model[tree_num].check_empty_child(
+                        node_num, value_idx, order):
+                    continue
                 gain = self.model[tree_num].cal_gain(ordered_g, ordered_h,
                                                      value_idx, node_num)
 
@@ -189,7 +211,7 @@ class VerticalTrainer(object):
                     split_ref['feature_idx'] = feature_idx
                     split_ref['value_idx'] = value_idx
 
-        return best_gain > 0, split_ref
+        return best_gain > 0, split_ref, best_gain
 
     def _compute_for_root(self, tree_num):
         if self.batch_y_hat is None:
@@ -209,8 +231,7 @@ class VerticalTrainer(object):
         # All the nodes have been traversed
         if node_num >= 2**self.model.max_depth - 1:
             self._predict(tree_num)
-            finish_flag = True
-            return finish_flag, None
+            return 'train_finish', None
         elif self.model[tree_num][node_num].status == 'off':
             return self._compute_for_node(tree_num, node_num + 1)
         # The leaf node
@@ -219,23 +240,27 @@ class VerticalTrainer(object):
             return self._compute_for_node(tree_num, node_num + 1)
         # Calculate best gain
         else:
-            improved_flag, split_ref = self._get_best_gain(tree_num, node_num)
-            if improved_flag:
-                split_feature = self.merged_feature_order[
-                    split_ref['feature_idx']]
-                left_child = np.zeros(self.batch_x.shape[0])
-                for x in range(split_ref['value_idx']):
-                    left_child[split_feature[x]] = 1
-                right_child = np.ones(self.batch_x.shape[0]) - left_child
-                self.model[tree_num].update_child(node_num, left_child,
-                                                  right_child)
-
-                finish_flag = False
-                results = (split_ref, tree_num, node_num)
-                return finish_flag, results
-            else:
-                self._set_weight_and_status(tree_num, node_num)
-                return self._compute_for_node(tree_num, node_num + 1)
+            if self.cfg.vertical.mode == 'order_based':
+                improved_flag, split_ref, _ = self._get_best_gain(
+                    tree_num, node_num)
+                if improved_flag:
+                    split_feature = self.merged_feature_order[
+                        split_ref['feature_idx']]
+                    left_child, right_child = self.get_children_indicator(
+                        value_idx=split_ref['value_idx'],
+                        split_feature=split_feature)
+                    self.update_child(tree_num, node_num, left_child,
+                                      right_child)
+                    results = (split_ref, tree_num, node_num)
+                    return 'call_for_node_split', results
+                else:
+                    self._set_weight_and_status(tree_num, node_num)
+                    return self._compute_for_node(tree_num, node_num + 1)
+            elif self.cfg.vertical.mode == 'label_based':
+                results = (self.model[tree_num][node_num].grad,
+                           self.model[tree_num][node_num].hess, tree_num,
+                           node_num)
+                return 'call_for_local_gain', results
 
     def _compute_weight(self, tree_num, node_num):
         if node_num >= 2**self.model.max_depth - 1:
@@ -263,3 +288,26 @@ class VerticalTrainer(object):
             if 2 * cur_node + 2 <= 2**self.model[tree_num].max_depth - 1:
                 queue.append(2 * cur_node + 1)
                 queue.append(2 * cur_node + 2)
+
+    def get_children_indicator(self, value_idx, split_feature):
+        left_child = np.zeros(self.batch_x.shape[0])
+        for x in range(value_idx):
+            left_child[split_feature[x]] = 1
+        right_child = np.ones(self.batch_x.shape[0]) - left_child
+
+        return left_child, right_child
+
+    def update_child(self, tree_num, node_num, left_child, right_child):
+        self.model[tree_num].update_child(node_num, left_child, right_child)
+
+    def get_best_gain_from_msg(self, msg, tree_num=None, node_num=None):
+        client_has_max_gain = None
+        max_gain = None
+        for client_id, local_gain in msg.items():
+            gain, improved_flag, _ = local_gain
+            if improved_flag:
+                if max_gain is None or gain > max_gain:
+                    max_gain = gain
+                    client_has_max_gain = client_id
+
+        return max_gain, client_has_max_gain, None

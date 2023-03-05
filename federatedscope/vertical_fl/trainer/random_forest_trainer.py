@@ -34,7 +34,7 @@ class RandomForestTrainer(VerticalTrainer):
         ordered_label = self.model[tree_num][node_num].label[order]
         return ordered_indicator, ordered_label
 
-    def _get_best_gain(self, tree_num, node_num):
+    def _get_best_gain(self, tree_num, node_num, grad=None, hess=None):
         if self.cfg.criterion.type == 'CrossEntropyLoss':
             default_gain = 1
         elif 'Regression' in self.cfg.criterion.type:
@@ -57,14 +57,6 @@ class RandomForestTrainer(VerticalTrainer):
         if split_position is None:
             # The left/right sub-tree cannot be empty
             split_position = activate_idx[:, 1:]
-        else:
-            active_split_position = list()
-            for idx, each_split_position in enumerate(split_position):
-                active_split_position.append([
-                    x for x in each_split_position
-                    if x in activate_idx[idx, 1:]
-                ])
-            split_position = active_split_position
 
         for feature_idx in range(feature_num):
             if len(split_position[feature_idx]) == 0:
@@ -72,7 +64,11 @@ class RandomForestTrainer(VerticalTrainer):
             ordered_indicator, ordered_label = \
                 self._get_ordered_indicator_and_label(
                     tree_num, node_num, feature_idx)
+            order = self.merged_feature_order[feature_idx]
             for value_idx in split_position[feature_idx]:
+                if self.model[tree_num].check_empty_child(
+                        node_num, value_idx, order):
+                    continue
                 gain = self.model[tree_num].cal_gain(value_idx, ordered_label,
                                                      ordered_indicator)
                 if gain < best_gain:
@@ -80,4 +76,4 @@ class RandomForestTrainer(VerticalTrainer):
                     split_ref['feature_idx'] = feature_idx
                     split_ref['value_idx'] = value_idx
 
-        return best_gain < default_gain, split_ref
+        return best_gain < default_gain, split_ref, best_gain
