@@ -21,7 +21,7 @@ RUN apt-get -y update \
 RUN apt-get update -y \
     && apt-get install -y wget
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py39_23.1.0-1-Linux-x86_64.sh \
-    && Miniconda3-py39_23.1.0-1-Linux-x86_64.sh -b \
+    && bash Miniconda3-py39_23.1.0-1-Linux-x86_64.sh -b \
     && rm Miniconda3-py39_23.1.0-1-Linux-x86_64.sh
 
 ENV PATH=/root/miniconda3/bin:${PATH}
