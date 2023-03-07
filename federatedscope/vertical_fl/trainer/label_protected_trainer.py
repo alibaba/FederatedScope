@@ -26,8 +26,7 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
                     f"The method {args['method']} is not provided")
 
         def _bucketize(self, raw_feature_order, data):
-            bucket_size = int(
-                np.ceil(self.cfg.dataloader.batch_size / self.bucket_num))
+            bucket_size = int(np.floor(data.shape[0] / self.bucket_num))
             split_position = list()
             self.split_value = list()
 
