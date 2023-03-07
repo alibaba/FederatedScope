@@ -149,7 +149,8 @@ class VerticalTrainer(object):
                         node_num,
                         feature_idx,
                         grad=None,
-                        hess=None):
+                        hess=None,
+                        indicator=None):
         order = self.merged_feature_order[feature_idx]
         if grad is not None:
             ordered_g = np.asarray(grad)[order]
@@ -163,9 +164,21 @@ class VerticalTrainer(object):
         else:
             ordered_h = None
 
-        return ordered_g, ordered_h
+        if indicator is not None:
+            ordered_indicator = np.asarray(indicator)[order]
+        elif self.model[tree_num][node_num].indicator is not None:
+            ordered_indicator = self.model[tree_num][node_num].indicator[order]
+        else:
+            ordered_indicator = None
 
-    def _get_best_gain(self, tree_num, node_num, grad=None, hess=None):
+        return ordered_g, ordered_h, ordered_indicator
+
+    def _get_best_gain(self,
+                       tree_num,
+                       node_num,
+                       grad=None,
+                       hess=None,
+                       indicator=None):
         best_gain = 0
         split_ref = {'feature_idx': None, 'value_idx': None}
 
@@ -196,15 +209,16 @@ class VerticalTrainer(object):
             split_position = activate_idx[:, 1:]
 
         for feature_idx in range(feature_num):
-            ordered_g, ordered_h = self._get_ordered_gh(
-                tree_num, node_num, feature_idx, grad, hess)
+            ordered_g, ordered_h, ordered_indicator = self._get_ordered_gh(
+                tree_num, node_num, feature_idx, grad, hess, indicator)
             order = self.merged_feature_order[feature_idx]
             for value_idx in split_position[feature_idx]:
                 if self.model[tree_num].check_empty_child(
                         node_num, value_idx, order):
                     continue
                 gain = self.model[tree_num].cal_gain(ordered_g, ordered_h,
-                                                     value_idx, node_num)
+                                                     value_idx,
+                                                     ordered_indicator)
 
                 if gain > best_gain:
                     best_gain = gain
