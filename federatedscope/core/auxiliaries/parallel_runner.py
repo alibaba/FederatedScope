@@ -15,22 +15,25 @@ from federatedscope.core.auxiliaries.feat_engr_builder import \
     get_feat_engr_wrapper
 from federatedscope.core.auxiliaries.data_builder import get_data
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
 
 def recv_mode_para(model_para, src_rank):
     for v in model_para.values():
         dist.recv(tensor=v, src=src_rank)
 
-def setup_multigpu_runner(cfg, server_class, client_class, unseen_clients_id, server_resource_info, client_resource_info):
+
+def setup_multigpu_runner(cfg, server_class, client_class, unseen_clients_id,
+                          server_resource_info, client_resource_info):
     processes = []
     mp.set_start_method("spawn")
 
     # init parameter
     client2server_queue = mp.Queue()
     server2client_queues = [
-            mp.Queue() for _ in range(1, cfg.federate.process_num)]
+        mp.Queue() for _ in range(1, cfg.federate.process_num)
+    ]
     id2comm = dict()
     clients_id_list = []
     client_num_per_process = \
@@ -46,20 +49,22 @@ def setup_multigpu_runner(cfg, server_class, client_class, unseen_clients_id, se
 
     # setup server process
     server_rank = 0
-    server_process = mp.Process(target=run, args=(server_rank, cfg.federate.process_num, cfg.federate.master_addr, cfg.federate.master_port, ServerRunner(
-        rank=server_rank,
-        config=cfg,
-        server_class=server_class,
-        receive_channel=client2server_queue,
-        send_channels=server2client_queues,
-        id2comm=id2comm,
-        unseen_clients_id=unseen_clients_id,
-        resource_info=server_resource_info,
-        client_resource_info=client_resource_info
-    )))
+    server_process = mp.Process(
+        target=run,
+        args=(server_rank, cfg.federate.process_num, cfg.federate.master_addr,
+              cfg.federate.master_port,
+              ServerRunner(rank=server_rank,
+                           config=cfg,
+                           server_class=server_class,
+                           receive_channel=client2server_queue,
+                           send_channels=server2client_queues,
+                           id2comm=id2comm,
+                           unseen_clients_id=unseen_clients_id,
+                           resource_info=server_resource_info,
+                           client_resource_info=client_resource_info)))
     server_process.start()
     processes.append(server_process)
-    
+
     # setup client process
     for rank in range(1, cfg.federate.process_num):
         client_runner = ClientRunner(
@@ -70,9 +75,11 @@ def setup_multigpu_runner(cfg, server_class, client_class, unseen_clients_id, se
             unseen_clients_id=unseen_clients_id,
             receive_channel=server2client_queues[rank - 1],
             send_channel=client2server_queue,
-            client_resource_info=client_resource_info
-        )
-        p = mp.Process(target=run, args=(rank, cfg.federate.process_num, cfg.federate.master_addr, cfg.federate.master_port, client_runner))
+            client_resource_info=client_resource_info)
+        p = mp.Process(target=run,
+                       args=(rank, cfg.federate.process_num,
+                             cfg.federate.master_addr,
+                             cfg.federate.master_port, client_runner))
         p.start()
         processes.append(p)
     for p in processes:
@@ -157,7 +164,9 @@ class StandaloneMultiGPURunner(StandaloneRunner):
         else:
             server_resource_info = None
             client_resource_info = None
-        setup_multigpu_runner(self.cfg, self.server_class, self.client_class, self.unseen_clients_id, server_resource_info, client_resource_info)
+        setup_multigpu_runner(self.cfg, self.server_class, self.client_class,
+                              self.unseen_clients_id, server_resource_info,
+                              client_resource_info)
 
     def _handle_msg(self, msg, rcv=-1):
         """
@@ -221,6 +230,7 @@ class StandaloneMultiGPURunner(StandaloneRunner):
                         time.sleep(0.01)
                         # break
 
+
 class Runner(object):
     def __init__(self, rank):
         self.rank = rank
@@ -231,11 +241,12 @@ class Runner(object):
 
     def run(self):
         raise NotImplementedError
-        
+
 
 class ServerRunner(Runner):
-    
-    def __init__(self, rank, config, server_class, receive_channel, send_channels, id2comm, unseen_clients_id, resource_info, client_resource_info):
+    def __init__(self, rank, config, server_class, receive_channel,
+                 send_channels, id2comm, unseen_clients_id, resource_info,
+                 client_resource_info):
         super().__init__(rank)
         self.config = config
         self.server_class = server_class
@@ -248,16 +259,19 @@ class ServerRunner(Runner):
         self.client_resource_info = client_resource_info
 
     def setup(self):
-        data, modified_cfg = get_data(config=self.config,
-                                    client_cfgs=None)
+        data, modified_cfg = get_data(config=self.config, client_cfgs=None)
         self.config.merge_from_other_cfg(modified_cfg)
         self.config.freeze()
         if self.rank in data:
             self.data = data[self.rank] if self.rank in data else data[1]
-            model = get_model(self.config.model, self.data, backend=self.config.backend)
+            model = get_model(self.config.model,
+                              self.data,
+                              backend=self.config.backend)
         else:
             self.data = None
-            model = get_model(self.config.model, data[1], backend=self.config.backend)
+            model = get_model(self.config.model,
+                              data[1],
+                              backend=self.config.backend)
         kw = {
             'shared_comm_queue': self.send_channel,
             'id2comm': self.id2comm,
@@ -322,7 +336,7 @@ class ServerRunner(Runner):
                         # server_msg_cache are all empty
                         time.sleep(0.01)
                         # break
-    
+
     def _handle_msg(self, msg):
         """
         To simulate the message handling process (used only for the
@@ -330,7 +344,7 @@ class ServerRunner(Runner):
         """
         sender, receiver = msg.sender, msg.receiver
         download_bytes, upload_bytes = msg.count_bytes()
-        if msg.msg_type == 'model_para':            
+        if msg.msg_type == 'model_para':
             sender_rank = self.id2comm[sender] + 1
             tmp_model_para = copy.deepcopy(self.template_para)
             recv_mode_para(tmp_model_para, sender_rank)
@@ -345,8 +359,11 @@ class ServerRunner(Runner):
                 # should not go here
                 logger.warning('server received a wrong message')
 
+
 class ClientRunner(Runner):
-    def __init__(self, rank, client_ids, config, client_class, unseen_clients_id, receive_channel, send_channel, client_resource_info):
+    def __init__(self, rank, client_ids, config, client_class,
+                 unseen_clients_id, receive_channel, send_channel,
+                 client_resource_info):
         super().__init__(rank)
         self.client_ids = client_ids
         self.config = config
@@ -357,49 +374,52 @@ class ClientRunner(Runner):
         self.client2server_comm_queue = send_channel
         self.client_group = dict()
         self.client_resource_info = client_resource_info
-    
+
     def setup(self):
         self.data, modified_cfg = get_data(config=self.config,
-                                    client_cfgs=None)
+                                           client_cfgs=None)
         self.config.merge_from_other_cfg(modified_cfg)
         self.config.freeze()
         self.shared_model = get_model(
-            self.config.model, self.data[self.base_client_id], backend=self.config.backend
+            self.config.model,
+            self.data[self.base_client_id],
+            backend=self.config.backend
         ) if self.config.federate.share_local_model else None
-        
+
         server_id = 0
-        
+
         for client_id in self.client_ids:
             client_data = self.data[client_id]
             kw = {
                 'shared_comm_queue': self.client2server_comm_queue,
                 'resource_info': self.client_resource_info[client_id]
-                                 if self.client_resource_info is not None else None
+                if self.client_resource_info is not None else None
             }
             client_specific_config = self.config.clone()
             if self.client_resource_info is not None:
                 client_specific_config.defrost()
                 client_specific_config.merge_from_other_cfg(
-                    self.client_resource_info.get('client_{}'.format(client_id)))
+                    self.client_resource_info.get(
+                        'client_{}'.format(client_id)))
                 client_specific_config.freeze()
-            client = self.client_class(ID=client_id,
-                                  server_id=server_id,
-                                  config=client_specific_config,
-                                  data=client_data,
-                                  model=self.shared_model
-                                  or get_model(client_specific_config.model,
-                                               client_data,
-                                               backend=self.config.backend),
-                                  device=self.device,
-                                  is_unseen_client=client_id
-                                  in self.unseen_clients_id,
-                                  **kw)
+            client = self.client_class(
+                ID=client_id,
+                server_id=server_id,
+                config=client_specific_config,
+                data=client_data,
+                model=self.shared_model
+                or get_model(client_specific_config.model,
+                             client_data,
+                             backend=self.config.backend),
+                device=self.device,
+                is_unseen_client=client_id in self.unseen_clients_id,
+                **kw)
             client.model.to(self.device)
             logger.info(f'Client {client_id} has been set up ... ')
             self.client_group[client_id] = client
-        self.template_para = copy.deepcopy(self.client_group[self.base_client_id].model.state_dict())
-        
-        
+        self.template_para = copy.deepcopy(
+            self.client_group[self.base_client_id].model.state_dict())
+
     def run(self):
         logger.info("ClientRunner {} start to run".format(self.rank))
         for _, client in self.client_group.items():
@@ -408,7 +428,7 @@ class ClientRunner(Runner):
             if not self.receive_channel.empty():
                 msg = self.receive_channel.get()
                 self._handle_msg(msg)
-    
+
     def _handle_msg(self, msg):
         _, receiver = msg.sender, msg.receiver
         msg_type = msg.msg_type

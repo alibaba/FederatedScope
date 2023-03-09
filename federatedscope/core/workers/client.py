@@ -152,11 +152,11 @@ class Client(BaseClient):
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
             if self._cfg.federate.process_num == 1:
-                self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                             monitor=self._monitor)
+                self.comm_manager = StandaloneCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
             else:
-                self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
-                                                             monitor=self._monitor)
+                self.comm_manager = StandaloneDDPCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
             host = kwargs['host']
@@ -403,7 +403,6 @@ class Client(BaseClient):
                                 init_timestamp=timestamp,
                                 instance_number=sample_size),
                             content=(sample_size, shared_model_para)))
-                # logger.info("Client {} send model para finish".format(self.ID))
 
     def callback_funcs_for_assign_id(self, message: Message):
         """

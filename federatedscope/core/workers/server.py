@@ -201,12 +201,13 @@ class Server(BaseServer):
             comm_queue = kwargs.get('shared_comm_queue', None)
             if self._cfg.federate.process_num > 1:
                 id2comm = kwargs.get('id2comm', None)
-                self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor,
-                                                      id2comm=id2comm)
+                self.comm_manager = StandaloneDDPCommManager(
+                    comm_queue=comm_queue,
+                    monitor=self._monitor,
+                    id2comm=id2comm)
             else:
-                self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor)
+                self.comm_manager = StandaloneCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
@@ -826,11 +827,11 @@ class Server(BaseServer):
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.
                 format(self.state))
-            print(time.strftime('%Y-%m-%d %H:%M:%S',
+            print(
+                time.strftime('%Y-%m-%d %H:%M:%S',
                               time.localtime(time.time())))
             self.init_time = time.time()
             self.ori_time = time.time()
-
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,

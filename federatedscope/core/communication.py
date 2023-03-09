@@ -57,13 +57,13 @@ class StandaloneDDPCommManager(StandaloneCommManager):
     def __init__(self, comm_queue, monitor=None, id2comm=None):
         super().__init__(comm_queue, monitor)
         self.id2comm = id2comm
-        self.device = "cuda:{}".format(dist.get_rank())        
+        self.device = "cuda:{}".format(dist.get_rank())
 
     def _send_model_para(self, model_para, dst_rank):
         for v in model_para.values():
             t = v.to(self.device)
             dist.send(tensor=t, dst=dst_rank)
-    
+
     def send(self, message):
         is_model_para = message.msg_type == 'model_para'
         if self.id2comm is None:
@@ -98,7 +98,7 @@ class StandaloneDDPCommManager(StandaloneCommManager):
                             break
         download_bytes, upload_bytes = message.count_bytes()
         self.monitor.track_upload_bytes(upload_bytes)
-    
+
 
 class gRPCCommManager(object):
     """

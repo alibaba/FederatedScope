@@ -48,7 +48,7 @@ def extend_fl_setting_cfg(cfg):
     # The configurations for parallel in standalone
     cfg.federate.process_num = 1
     cfg.federate.master_addr = '127.0.0.1'  # parameter of torch distributed
-    cfg.federate.master_port = 29500      # parameter of torch distributed
+    cfg.federate.master_port = 29500  # parameter of torch distributed
 
     # atc (TODO: merge later)
     cfg.federate.atc_vanilla = False
@@ -215,10 +215,13 @@ def assert_fl_setting_cfg(cfg):
                        'thus cfg.federate.process_num is modified to 1')
     if cfg.federate.process_num > 1 and not torch.cuda.is_available():
         cfg.federate.process_num = 1
-        logger.warning('No GPU found for your device, set cfg.federate.process_num=1')
+        logger.warning(
+            'No GPU found for your device, set cfg.federate.process_num=1')
     if torch.cuda.device_count() < cfg.federate.process_num:
         cfg.federate.process_num = torch.cuda.device_count()
-        logger.warning(f'We found the number of gpu is insufficient, thus cfg.federate.process_num={cfg.federate.process_num}')
+        logger.warning(
+            'We found the number of gpu is insufficient, '
+            f'thus cfg.federate.process_num={cfg.federate.process_num}')
     # TODO
     if cfg.vertical.use:
         if cfg.vertical.algo == 'lr' and hasattr(cfg, "trainer") and \
