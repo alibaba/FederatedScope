@@ -151,7 +151,7 @@ class Client(BaseClient):
         self.server_id = server_id
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            if self._cfg.federate.process_num == 1:
+            if self._cfg.federate.process_num <= 1:
                 self.comm_manager = StandaloneCommManager(
                     comm_queue=comm_queue, monitor=self._monitor)
             else:

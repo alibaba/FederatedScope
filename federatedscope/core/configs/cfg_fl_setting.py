@@ -208,11 +208,6 @@ def assert_fl_setting_cfg(cfg):
         cfg.federate.process_num = 1
         logger.warning('Parallel training can only be used in standalone mode'
                        ', thus cfg.federate.process_num is modified to 1')
-    if cfg.federate.mode == 'standalone' and cfg.federate.process_num < 1:
-        cfg.federate.process_num = 1
-        logger.warning('We found that cfg.federate.process_num is invalid for '
-                       'standalone mode (i.e., process_num < 1), '
-                       'thus cfg.federate.process_num is modified to 1')
     if cfg.federate.process_num > 1 and not torch.cuda.is_available():
         cfg.federate.process_num = 1
         logger.warning(
