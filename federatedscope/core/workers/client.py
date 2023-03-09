@@ -295,8 +295,9 @@ class Client(BaseClient):
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
             # and synchronized with the received model
-            for k, v in content.items():
-                content[k] = v.to(self.device)
+            if self._cfg.federate.process_num > 1:
+                for k, v in content.items():
+                    content[k] = v.to(self.device)
             self.trainer.update(content,
                                 strict=self._cfg.federate.share_local_model)
             self.state = round

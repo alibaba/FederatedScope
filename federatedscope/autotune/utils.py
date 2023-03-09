@@ -283,11 +283,11 @@ def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    fed_runner = get_runner(data=data,
-                            server_class=get_server_cls(trial_cfg),
+    fed_runner = get_runner(server_class=get_server_cls(trial_cfg),
                             client_class=get_client_cls(trial_cfg),
                             config=trial_cfg.clone(),
-                            client_configs=client_cfgs)
+                            client_configs=client_cfgs,
+                            data=data)
     results = fed_runner.run()
 
     return results

@@ -4,7 +4,11 @@ from federatedscope.core.auxiliaries.parallel_runner import \
 from federatedscope.core.auxiliaries.data_builder import get_data
 
 
-def get_runner(server_class, client_class, config, client_configs=None):
+def get_runner(server_class,
+               client_class,
+               config,
+               client_configs=None,
+               data=None):
     """
     Instantiate a runner based on a configuration file
 
@@ -40,7 +44,6 @@ def get_runner(server_class, client_class, config, client_configs=None):
     elif mode == 'distributed':
         runner_cls = DistributedRunner
 
-    data = None
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global
     # cfg object
