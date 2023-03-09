@@ -28,6 +28,8 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.merge_test_data = False  # For efficient simulation, users
     # can choose to merge the test data and perform global evaluation,
     # instead of perform test at each client
+    cfg.federate.merge_val_data = False  # Enabled only when
+    # `merge_test_data` is True, also for efficient simulation
 
     # the method name is used to internally determine composition of
     # different aggregators, messages, handlers, etc.,
@@ -80,14 +82,22 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.vertical = CN()
     cfg.vertical.use = False
+    cfg.vertical.mode = 'order_based'  # ['order_based', 'label_based']
     cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
-    cfg.vertical.algo = 'lr'  # ['lr', 'xgb']
-    cfg.vertical.protect_object = ''  # feature_order, TODO: add more
-    cfg.vertical.protect_method = ''  # dp
+    cfg.vertical.algo = 'lr'  # ['lr', 'xgb', 'gbdt', 'rf']
+    cfg.vertical.feature_subsample_ratio = 1.0
+    cfg.vertical.protect_object = ''  # [feature_order, grad_and_hess]
+    cfg.vertical.protect_method = ''
+    # [dp, op_boost] for protect_object = feature_order
+    # [he] for protect_object = grad_and_hess
     cfg.vertical.protect_args = []
     # Default values for 'dp': {'bucket_num':100, 'epsilon':None}
+    # Default values for 'op_boost': {'algo':'global', 'lower_bound':1,
+    #                                 'upper_bound':100, 'epsilon':2}
+    cfg.vertical.data_size_for_debug = 0  # use a subset for debug in vfl,
+    # 0 indicates using the entire dataset (disable debug mode)
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
@@ -232,13 +242,14 @@ def assert_fl_setting_cfg(cfg):
                            f"but got {cfg.model.type}. Therefore "
                            f"cfg.model.type is changed to 'lr' here")
             cfg.model.type = 'lr'
-        if cfg.vertical.algo == 'xgb' and hasattr(cfg, "trainer") and \
-                cfg.trainer.type.lower() != 'verticaltrainer':
-            logger.warning(f"When given cfg.vertical.algo = 'xgb', the value "
-                           f"of cfg.trainer.type is expected to be "
-                           f"'verticaltrainer' but got {cfg.trainer.type}. "
-                           f"Therefore cfg.trainer.type is changed to "
-                           f"'verticaltrainer' here")
+        if cfg.vertical.algo in ['xgb', 'gbdt'] and hasattr(cfg, "trainer") \
+                and cfg.trainer.type.lower() != 'verticaltrainer':
+            logger.warning(
+                f"When given cfg.vertical.algo = 'xgb' or 'gbdt', the value "
+                f"of cfg.trainer.type is expected to be "
+                f"'verticaltrainer' but got {cfg.trainer.type}. "
+                f"Therefore cfg.trainer.type is changed to "
+                f"'verticaltrainer' here")
             cfg.trainer.type = 'verticaltrainer'
         if cfg.vertical.algo == 'xgb' and hasattr(cfg, "model") and \
                 cfg.model.type != 'xgb_tree':
@@ -247,6 +258,19 @@ def assert_fl_setting_cfg(cfg):
                            f"but got {cfg.model.type}. Therefore "
                            f"cfg.model.type is changed to 'xgb_tree' here")
             cfg.model.type = 'xgb_tree'
+        elif cfg.vertical.algo == 'gbdt' and hasattr(cfg, "model") and \
+                cfg.model.type != 'gbdt_tree':
+            logger.warning(f"When given cfg.vertical.algo = 'gbdt', the value "
+                           f"of cfg.model.type is expected to be 'gbdt_tree' "
+                           f"but got {cfg.model.type}. Therefore "
+                           f"cfg.model.type is changed to 'gbdt_tree' here")
+            cfg.model.type = 'gbdt_tree'
+
+        if not (cfg.vertical.feature_subsample_ratio > 0
+                and cfg.vertical.feature_subsample_ratio <= 1.0):
+            raise ValueError(f'The value of vertical.feature_subsample_ratio '
+                             f'must be in (0, 1.0], but got '
+                             f'{cfg.vertical.feature_subsample_ratio}')
 
 
 register_config("fl_setting", extend_fl_setting_cfg)

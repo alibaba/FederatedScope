@@ -1,0 +1,6 @@
+train.optimizer.lr:
+  type: cate
+  choices: [ 1e-1, 1e-2, 1e-3, 1e-4 ]
+train.local_update_steps:
+  type: cate
+  choices: [1,2,3,4]

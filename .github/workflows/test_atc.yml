@@ -1,8 +1,8 @@
 name: UnitTests for ATC
 
 on:
-  pull_request:
-    types: [opened, synchronize, edited]
+  schedule:
+    - cron: '0 8 * * 0'
 
 
 jobs:

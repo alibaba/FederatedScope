@@ -9,12 +9,6 @@ federate:
   sample_client_num: 5
   make_global_eval: True
   merge_test_data: True
-fedopt:
-  use: True
-  optimizer:
-    lr: 0.0001
-    weight_decay: 0.0
-    momentum: 0.0
 data:
   root: data/
   type: 'CIFAR10@torchvision'
@@ -34,19 +28,19 @@ model:
 criterion:
   type: CrossEntropyLoss
 trainer:
-  type: local_entropy_trainer
-  local_entropy:
-    gamma: 0.0001
-    eps: 0.001
-    alpha: 0.75
+  type: sam_trainer
+  sam:
+    adaptive: True
+    rho: 0.7
+    eta: 0.2
 train:
   batch_or_epoch: 'epoch'
   optimizer:
-    lr: 0.1
-    weight_decay: 0.0
+    lr: 0.01
+    weight_decay: 0.0004
     momentum: 0.0
 eval:
   freq: 100
   metrics: ['acc', 'correct']
-  best_res_update_round_wise_key: test_loss
+  best_res_update_round_wise_key: test_acc
   count_flops: False

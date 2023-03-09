@@ -13,6 +13,15 @@ class FedOptAggregator(ClientsAvgAggregator):
         super(FedOptAggregator, self).__init__(model, device, config)
         self.optimizer = get_optimizer(model=self.model,
                                        **config.fedopt.optimizer)
+        if config.fedopt.annealing:
+            self._annealing = True
+            # TODO: generic scheduler construction
+            self.scheduler = torch.optim.lr_scheduler.StepLR(
+                self.optimizer,
+                step_size=config.fedopt.annealing_step_size,
+                gamma=config.fedopt.annealing_gamma)
+        else:
+            self._annealing = False
 
     def aggregate(self, agg_info):
         """
@@ -29,5 +38,7 @@ class FedOptAggregator(ClientsAvgAggregator):
             if key in new_model.keys():
                 p.grad = grads[key]
         self.optimizer.step()
+        if self._annealing:
+            self.scheduler.step()
 
         return self.model.state_dict()

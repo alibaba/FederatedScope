@@ -37,6 +37,7 @@ def load_vertical_data(config=None, generate=False):
                                 feature_partition=config.vertical.dims,
                                 tr_frac=config.data.splits[0],
                                 algo=config.vertical.algo,
+                                debug_size=config.vertical.data_size_for_debug,
                                 download=True,
                                 seed=1234,
                                 args=args)

@@ -33,10 +33,10 @@ def get_transform(config, package):
         if config.data[name]:
             test_transform_funcs[suf_name] = config.data[name]
 
-    # Transform are all None, do not import package and return dict with
+    # Transform are all `[]`, do not import package and return dict with
     # None value
-    if len(transform_funcs) and len(val_transform_funcs) and len(
-            test_transform_funcs):
+    if len(transform_funcs) == 0 and len(val_transform_funcs) == 0 and len(
+            test_transform_funcs) == 0:
         return {}, {}, {}
 
     transforms = getattr(import_module(package), 'transforms')

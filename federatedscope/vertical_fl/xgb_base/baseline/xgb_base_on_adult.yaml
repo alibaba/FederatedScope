@@ -29,6 +29,7 @@ vertical:
   use: True
   dims: [7, 14]
   algo: 'xgb'
+  data_size_for_debug: 2000
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

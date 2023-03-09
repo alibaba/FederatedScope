@@ -10,10 +10,12 @@ logger = logging.getLogger(__name__)
 
 def wrap_client_for_evaluation(client):
     def eval(self, tree_num):
-        self.criterion = get_vertical_loss(self._cfg.criterion.type)
+        self.criterion = get_vertical_loss(loss_type=self._cfg.criterion.type,
+                                           model_type=self._cfg.model.type)
         if self.test_x is None:
             self.test_x, self.test_y = self._fetch_test_data()
-            self.test_result = np.zeros(self.test_x.shape[0])
+            self.merged_test_result = list()
+        self.test_result = np.zeros(self.test_x.shape[0])
         self.model[tree_num][0].indicator = np.ones(self.test_x.shape[0])
         self._test_for_node(tree_num, node_num=0)
 
@@ -24,8 +26,10 @@ def wrap_client_for_evaluation(client):
         return test_x, test_y
 
     def _feedback_eval_metrics(self):
-        test_loss = self.criterion.get_loss(self.test_y, self.test_result)
-        metrics = self.criterion.get_metric(self.test_y, self.test_result)
+        test_loss = self.criterion.get_loss(self.test_y,
+                                            self.merged_test_result)
+        metrics = self.criterion.get_metric(self.test_y,
+                                            self.merged_test_result)
         modified_metrics = dict()
         for key in metrics.keys():
             if 'test' not in key:
@@ -56,13 +60,14 @@ def wrap_client_for_evaluation(client):
                     receiver=[
                         each
                         for each in list(self.comm_manager.neighbors.keys())
-                        if each not in [self.server_id, self.ID]
+                        if each != self.server_id
                     ],
                     content='None'))
 
     def _test_for_node(self, tree_num, node_num):
         # All nodes have been traversed
         if node_num >= 2**self.model.max_depth - 1:
+            self.merged_test_result.append(self.test_result)
             if (
                     tree_num + 1
             ) % self._cfg.eval.freq == 0 or \
@@ -72,37 +77,49 @@ def wrap_client_for_evaluation(client):
             self._check_eval_finish(tree_num)
         # The client owns the weight
         elif self.model[tree_num][node_num].weight:
+            if self._cfg.model.type in ['xgb_tree', 'gbdt_tree']:
+                eta = self._cfg.train.optimizer.eta
+            else:
+                eta = 1.0
             self.test_result += self.model[tree_num][
                 node_num].indicator * self.model[tree_num][
-                    node_num].weight * self._cfg.train.optimizer.eta
+                    node_num].weight * eta
             self._test_for_node(tree_num, node_num + 1)
         # Other client owns the weight, need to communicate
         elif self.model[tree_num][node_num].member:
-            self.comm_manager.send(
-                Message(msg_type='split_request',
-                        sender=self.ID,
-                        state=self.state,
-                        receiver=[self.model[tree_num][node_num].member],
-                        content=(tree_num, node_num)))
+            send_message = Message(
+                msg_type='split_request',
+                sender=self.ID,
+                state=self.state,
+                receiver=[self.model[tree_num][node_num].member],
+                content=(tree_num, node_num))
+            if self.model[tree_num][node_num].member == self.ID:
+                self.callback_func_for_split_request(send_message)
+            else:
+                self.comm_manager.send(send_message)
+
         else:
             self._test_for_node(tree_num, node_num + 1)
 
     def callback_func_for_split_request(self, message: Message):
         if self.test_x is None:
             self.test_x, self.test_y = self._fetch_test_data()
-            self.test_result = np.zeros(self.test_x.shape[0])
         tree_num, node_num = message.content
         sender = message.sender
         feature_idx = self.model[tree_num][node_num].feature_idx
         feature_value = self.model[tree_num][node_num].feature_value
         left_child, right_child = self.model[tree_num].split_childern(
             self.test_x[:, feature_idx], feature_value)
-        self.comm_manager.send(
-            Message(msg_type='split_result',
-                    sender=self.ID,
-                    state=self.state,
-                    receiver=[sender],
-                    content=(tree_num, node_num, left_child, right_child)))
+        send_message = Message(msg_type='split_result',
+                               sender=self.ID,
+                               state=self.state,
+                               receiver=[sender],
+                               content=(tree_num, node_num, left_child,
+                                        right_child))
+        if sender == self.ID:
+            self.callback_func_for_split_result(send_message)
+        else:
+            self.comm_manager.send(send_message)
 
     def callback_func_for_split_result(self, message: Message):
         tree_num, node_num, left_child, right_child = message.content
