@@ -55,7 +55,8 @@ class StandaloneDDPCommManager(StandaloneCommManager):
     The communicator used for standalone mode with multigpu
     """
     def __init__(self, comm_queue, monitor=None, id2comm=None):
-        super().__init__(comm_queue, monitor, id2comm)
+        super().__init__(comm_queue, monitor)
+        self.id2comm = id2comm
         self.device = "cuda:{}".format(dist.get_rank())        
 
     def _send_model_para(self, model_para, dst_rank):

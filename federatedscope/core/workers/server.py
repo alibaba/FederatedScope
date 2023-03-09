@@ -199,15 +199,14 @@ class Server(BaseServer):
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
             comm_queue = kwargs.get('shared_comm_queue', None)
-            id2comm = kwargs.get('id2comm', None)
-            if self.cfg.federate.process_num > 1:
+            if self._cfg.federate.process_num > 1:
+                id2comm = kwargs.get('id2comm', None)
                 self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
                                                       monitor=self._monitor,
                                                       id2comm=id2comm)
             else:
                 self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor,
-                                                      id2comm=id2comm)
+                                                      monitor=self._monitor)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']

@@ -4,8 +4,8 @@ import sys
 import pickle
 
 from federatedscope.core.message import Message
-from federatedscope.core.communication import StandaloneDDPCommManager, \
-    gRPCCommManager
+from federatedscope.core.communication import StandaloneCommManager, \
+    StandaloneDDPCommManager, gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
@@ -151,7 +151,11 @@ class Client(BaseClient):
         self.server_id = server_id
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
+            if self._cfg.federate.process_num == 1:
+                self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
+                                                             monitor=self._monitor)
+            else:
+                self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
                                                              monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':

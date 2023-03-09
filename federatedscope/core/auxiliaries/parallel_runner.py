@@ -9,7 +9,7 @@ import torch
 import torch.multiprocessing as mp
 import torch.distributed as dist
 
-from federatedscope.core.fed_runner import StandaloneMultiProcessRunner
+from federatedscope.core.fed_runner import StandaloneRunner
 from federatedscope.core.auxiliaries.model_builder import get_model
 from federatedscope.core.auxiliaries.feat_engr_builder import \
     get_feat_engr_wrapper
@@ -89,7 +89,7 @@ def run(rank, world_size, master_addr, master_port, runner):
     runner.run()
 
 
-class StandaloneMultiGPURunner(StandaloneMultiProcessRunner):
+class StandaloneMultiGPURunner(StandaloneRunner):
     def _set_up(self):
         if self.cfg.backend == 'torch':
             import torch
