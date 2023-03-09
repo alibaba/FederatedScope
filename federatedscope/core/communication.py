@@ -19,12 +19,11 @@ class StandaloneCommManager(object):
     """
     The communicator used for standalone mode
     """
-    def __init__(self, comm_queue, monitor=None, id2comm=None):
+    def __init__(self, comm_queue, monitor=None):
         self.comm_queue = comm_queue
         self.neighbors = dict()
         self.monitor = monitor  # used to track the communication related
         # metrics
-        self.id2comm = id2comm  # the mapping table from worker ID to
 
     def receive(self):
         # we don't need receive() in standalone
@@ -48,23 +47,7 @@ class StandaloneCommManager(object):
 
     def send(self, message):
         # All the workers share one comm_queue
-        if self.id2comm is None:
-            self.comm_queue.append(message) if isinstance(
-                self.comm_queue, deque) else self.comm_queue.put(message)
-        # Send the message to the responding comm_queue
-        else:
-            receiver = message.receiver
-            if not isinstance(receiver, list):
-                receiver = [receiver]
-            for idx, each_comm in enumerate(self.comm_queue):
-                for each_receiver in receiver:
-                    if each_receiver in self.neighbors and \
-                            self.id2comm[each_receiver] == idx:
-                        each_comm.put(message)
-                        break
-
-        download_bytes, upload_bytes = message.count_bytes()
-        self.monitor.track_upload_bytes(upload_bytes)
+        self.comm_queue.append(message)
 
 
 class StandaloneDDPCommManager(StandaloneCommManager):

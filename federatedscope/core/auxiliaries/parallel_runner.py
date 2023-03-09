@@ -103,7 +103,35 @@ class StandaloneMultiGPURunner(StandaloneMultiProcessRunner):
         if self.cfg.federate.client_num < self.cfg.federate.process_num:
             logger.warning('The process number is more than client number')
             self.cfg.federate.process_num = self.cfg.federate.client_num
-        
+
+    def _get_server_args(self, resource_info=None, client_resource_info=None):
+        if self.server_id in self.data:
+            server_data = self.data[self.server_id]
+            model = get_model(self.cfg.model,
+                              server_data,
+                              backend=self.cfg.backend)
+        else:
+            server_data = None
+            data_representative = self.data[1]
+            model = get_model(
+                self.cfg.model, data_representative, backend=self.cfg.backend
+            )  # get the model according to client's data if the server
+            # does not own data
+        kw = {
+            'shared_comm_queue': self.server2client_comm_queue,
+            'id2comm': self.id2comm,
+            'resource_info': resource_info,
+            'client_resource_info': client_resource_info
+        }
+        return server_data, model, kw
+
+    def _get_client_args(self, client_id=-1, resource_info=None):
+        client_data = self.data[client_id]
+        kw = {
+            'shared_comm_queue': self.client2server_comm_queue,
+            'resource_info': resource_info
+        }
+        return client_data, kw
 
     def run(self):
         logger.info("Multi-GPU are starting for parallel training ...")
@@ -131,6 +159,67 @@ class StandaloneMultiGPURunner(StandaloneMultiProcessRunner):
             client_resource_info = None
         setup_multigpu_runner(self.cfg, self.server_class, self.client_class, self.unseen_clients_id, server_resource_info, client_resource_info)
 
+    def _handle_msg(self, msg, rcv=-1):
+        """
+        To simulate the message handling process (used only for the
+        standalone mode)
+        """
+        if rcv != -1:
+            # simulate broadcast one-by-one
+            self.client[rcv].msg_handlers[msg.msg_type](msg)
+            return
+
+        _, receiver = msg.sender, msg.receiver
+        download_bytes, upload_bytes = msg.count_bytes()
+        if not isinstance(receiver, list):
+            receiver = [receiver]
+        for each_receiver in receiver:
+            if each_receiver == 0:
+                self.server.msg_handlers[msg.msg_type](msg)
+                self.server._monitor.track_download_bytes(download_bytes)
+            else:
+                self.client[each_receiver].msg_handlers[msg.msg_type](msg)
+                self.client[each_receiver]._monitor.track_download_bytes(
+                    download_bytes)
+
+    def _run_simulation(self):
+        """
+        Run for standalone simulation (W/O online aggr)
+        """
+        server_msg_cache = list()
+        while True:
+            if not self.client2server_comm_queue.empty():
+                msg = self.client2server_comm_queue.get()
+                # For the server, move the received message to a
+                # cache for reordering the messages according to
+                # the timestamps
+                heapq.heappush(server_msg_cache, msg)
+            elif len(server_msg_cache) > 0:
+                msg = heapq.heappop(server_msg_cache)
+                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                        == 'time_up':
+                    # When the timestamp of the received message beyond
+                    # the deadline for the currency round, trigger the
+                    # time up event first and push the message back to
+                    # the cache
+                    if self.server.trigger_for_time_up(msg.timestamp):
+                        heapq.heappush(server_msg_cache, msg)
+                    else:
+                        self._handle_msg(msg)
+                else:
+                    self._handle_msg(msg)
+            else:
+                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
+                        == 'time_up':
+                    self.server.trigger_for_time_up()
+                    if self.client2server_comm_queue.empty() and \
+                            len(server_msg_cache) == 0:
+                        break
+                    else:
+                        # terminate when shared_comm_queue and
+                        # server_msg_cache are all empty
+                        time.sleep(0.01)
+                        # break
 
 class Runner(object):
     def __init__(self, rank):

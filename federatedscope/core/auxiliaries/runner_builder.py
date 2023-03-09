@@ -1,4 +1,4 @@
-from federatedscope.core.fed_runner import StandaloneRunner, DistributedRunner, StandaloneMultiProcessRunner
+from federatedscope.core.fed_runner import StandaloneRunner, DistributedRunner
 from federatedscope.core.auxiliaries.parallel_runner import StandaloneMultiGPURunner
 from federatedscope.core.auxiliaries.data_builder import get_data
 
@@ -23,22 +23,18 @@ def get_runner(server_class, client_class, config, client_configs=None):
         ============================================  ===============================
         ``standalone``                                ``core.fed_runner.StandaloneRunner``
         ``distributed``                               ``core.fed_runner.DistributedRunner``
-        ``standalone(multi_gpu=False,prcess_num>1)``  ``core.fed_runner.StandaloneMultiProcessRunner``
-        ``standalone(multi_gpu=True,process_num>1)``  ``core.fed_runner.StandaloneMultiGPURunner``
+        ``standalone(process_num>1)``                 ``core.auxiliaries.parallel_runner.StandaloneMultiGPURunner``
         ============================================  ===============================
     """
 
     mode = config.federate.mode.lower()
-    multi_gpu = config.federate.multi_gpu
     process_num = config.federate.process_num
 
     if mode == 'standalone':
-        if process_num == 1:
+        if process_num <= 1:
             runner_cls = StandaloneRunner
-        elif multi_gpu:
-            runner_cls = StandaloneMultiGPURunner
         else:
-            runner_cls = StandaloneMultiProcessRunner
+            runner_cls = StandaloneMultiGPURunner
     elif mode == 'distributed':
         runner_cls = DistributedRunner
     

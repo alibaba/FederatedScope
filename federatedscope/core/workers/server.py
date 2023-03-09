@@ -200,7 +200,7 @@ class Server(BaseServer):
         if self.mode == 'standalone':
             comm_queue = kwargs.get('shared_comm_queue', None)
             id2comm = kwargs.get('id2comm', None)
-            if self._cfg.federate.multi_gpu:
+            if self.cfg.federate.process_num > 1:
                 self.comm_manager = StandaloneDDPCommManager(comm_queue=comm_queue,
                                                       monitor=self._monitor,
                                                       id2comm=id2comm)
