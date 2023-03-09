@@ -50,7 +50,7 @@ def get_runner(server_class,
     if runner_cls is not StandaloneMultiGPURunner:
         data, modified_cfg = get_data(config=config.clone(),
                                       client_cfgs=client_configs)
-        config.defroze()
+        config.defrost()
         config.merge_from_other_cfg(modified_cfg)
         config.freeze()
 
