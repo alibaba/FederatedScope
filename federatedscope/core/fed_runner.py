@@ -840,7 +840,7 @@ class FedRunner(object):
                 )  # get the model according to client's data if the server
                 # does not own data
             kw = {
-                'comm_queue': self.shared_comm_queue,
+                'shared_comm_queue': self.shared_comm_queue,
                 'resource_info': resource_info,
                 'client_resource_info': client_resource_info
             }
