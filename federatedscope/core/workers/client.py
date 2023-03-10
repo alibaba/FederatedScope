@@ -64,6 +64,9 @@ class Client(BaseClient):
                  *args,
                  **kwargs):
         super(Client, self).__init__(ID, state, config, model, strategy)
+
+        self.data = data
+
         # Register message handlers
         self._register_default_handlers()
 
@@ -422,10 +425,10 @@ class Client(BaseClient):
                                  self._cfg.dataloader.batch_size
                 else:
                     num_sample = self._cfg.train.local_update_steps * \
-                                 len(self.data['train'])
+                                 len(self.trainer.data.train_data)
                 join_in_info['num_sample'] = num_sample
                 if self._cfg.trainer.type == 'nodefullbatch_trainer':
-                    join_in_info['num_sample'] = self.data['data'].x.shape[0]
+                    join_in_info['num_sample'] = self.trainer.data.train_data.x.shape[0]
             elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \
