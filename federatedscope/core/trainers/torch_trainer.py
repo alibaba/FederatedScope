@@ -28,18 +28,12 @@ logger = logging.getLogger(__name__)
 
 class GeneralTorchTrainer(Trainer):
     def get_model_para(self):
-        if self.cfg.federate.share_local_model:
-            if self.cfg.federate.process_num > 1:
-                return self._param_filter(self.ctx.model.state_dict())
-            else:
-                param = self.ctx.model.state_dict()
-                for k, v in param.items():
-                    param[k] = v.cpu()
-                return self._param_filter(param)
         if self.cfg.federate.process_num > 1:
             return self.ctx.model.state_dict()
         else:
-            return self.ctx.model.cpu().state_dict()
+            return self._param_filter(
+                self.ctx.model.state_dict() if self.cfg.federate.
+                share_local_model else self.ctx.model.cpu().state_dict())
 
     def setup_data(self, ctx):
         """

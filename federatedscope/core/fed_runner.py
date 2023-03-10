@@ -891,7 +891,7 @@ class FedRunner(object):
         if self.mode == 'standalone':
             client_data = self.data[client_id]
             kw = {
-                'comm_queue': self.shared_comm_queue,
+                'shared_comm_queue': self.shared_comm_queue,
                 'resource_info': resource_info
             }
         elif self.mode == 'distributed':
