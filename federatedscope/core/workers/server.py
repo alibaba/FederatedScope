@@ -330,17 +330,8 @@ class Server(BaseServer):
         # round or finishing the evaluation
         if self.check_buffer(self.state, min_received_num, check_eval_result):
             if not check_eval_result:
-                print(
-                    'before aggregation',
-                    time.strftime('%Y-%m-%d %H:%M:%S',
-                                  time.localtime(time.time())))
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
-                print(
-                    'after aggregation',
-                    time.strftime('%Y-%m-%d %H:%M:%S',
-                                  time.localtime(time.time())))
-
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
                         self.total_round_num:
@@ -354,9 +345,6 @@ class Server(BaseServer):
                     logger.info(
                         f'----------- Starting a new training round (Round '
                         f'#{self.state}) -------------')
-                    print('time cost: {:.2f}'.format(time.time() -
-                                                     self.init_time))
-                    self.init_time = time.time()
                     # Clean the msg_buffer
                     self.msg_buffer['train'][self.state - 1].clear()
                     self.msg_buffer['train'][self.state] = dict()
@@ -365,8 +353,6 @@ class Server(BaseServer):
                     self._start_new_training_round(aggregated_num)
                 else:
                     # Final Evaluate
-                    print('time cost: {:.2f}'.format(time.time() -
-                                                     self.ori_time))
                     logger.info('Server: Training is finished! Starting '
                                 'evaluation.')
                     self.eval()
@@ -374,6 +360,8 @@ class Server(BaseServer):
             else:
                 # Receiving enough feedback in the evaluation process
                 self._merge_and_format_eval_results()
+                if self.state >= self.total_round_num:
+                    self.is_finish = True
 
         else:
             move_on_flag = False
@@ -830,8 +818,6 @@ class Server(BaseServer):
             print(
                 time.strftime('%Y-%m-%d %H:%M:%S',
                               time.localtime(time.time())))
-            self.init_time = time.time()
-            self.ori_time = time.time()
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,

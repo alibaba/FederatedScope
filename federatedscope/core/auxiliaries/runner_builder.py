@@ -47,12 +47,8 @@ def get_runner(server_class,
     # federated dataset might change the number of clients
     # thus, we allow the creation procedure of dataset to modify the global
     # cfg object
-    if runner_cls is not StandaloneMultiGPURunner:
-        data, modified_cfg = get_data(config=config.clone(),
-                                      client_cfgs=client_configs)
-        config.defrost()
-        config.merge_from_other_cfg(modified_cfg)
-        config.freeze()
+    if runner_cls is StandaloneMultiGPURunner:
+        data = None
 
     return runner_cls(data=data,
                       server_class=server_class,

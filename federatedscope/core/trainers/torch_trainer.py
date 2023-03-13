@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class GeneralTorchTrainer(Trainer):
     def get_model_para(self):
         if self.cfg.federate.process_num > 1:
-            return self.ctx.model.state_dict()
+            return self._param_filter(self.ctx.model.state_dict())
         else:
             return self._param_filter(
                 self.ctx.model.state_dict() if self.cfg.federate.

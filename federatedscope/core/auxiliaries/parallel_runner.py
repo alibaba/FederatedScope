@@ -168,68 +168,6 @@ class StandaloneMultiGPURunner(StandaloneRunner):
                               self.unseen_clients_id, server_resource_info,
                               client_resource_info)
 
-    def _handle_msg(self, msg, rcv=-1):
-        """
-        To simulate the message handling process (used only for the
-        standalone mode)
-        """
-        if rcv != -1:
-            # simulate broadcast one-by-one
-            self.client[rcv].msg_handlers[msg.msg_type](msg)
-            return
-
-        _, receiver = msg.sender, msg.receiver
-        download_bytes, upload_bytes = msg.count_bytes()
-        if not isinstance(receiver, list):
-            receiver = [receiver]
-        for each_receiver in receiver:
-            if each_receiver == 0:
-                self.server.msg_handlers[msg.msg_type](msg)
-                self.server._monitor.track_download_bytes(download_bytes)
-            else:
-                self.client[each_receiver].msg_handlers[msg.msg_type](msg)
-                self.client[each_receiver]._monitor.track_download_bytes(
-                    download_bytes)
-
-    def _run_simulation(self):
-        """
-        Run for standalone simulation (W/O online aggr)
-        """
-        server_msg_cache = list()
-        while True:
-            if not self.client2server_comm_queue.empty():
-                msg = self.client2server_comm_queue.get()
-                # For the server, move the received message to a
-                # cache for reordering the messages according to
-                # the timestamps
-                heapq.heappush(server_msg_cache, msg)
-            elif len(server_msg_cache) > 0:
-                msg = heapq.heappop(server_msg_cache)
-                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
-                        == 'time_up':
-                    # When the timestamp of the received message beyond
-                    # the deadline for the currency round, trigger the
-                    # time up event first and push the message back to
-                    # the cache
-                    if self.server.trigger_for_time_up(msg.timestamp):
-                        heapq.heappush(server_msg_cache, msg)
-                    else:
-                        self._handle_msg(msg)
-                else:
-                    self._handle_msg(msg)
-            else:
-                if self.cfg.asyn.use and self.cfg.asyn.aggregator \
-                        == 'time_up':
-                    self.server.trigger_for_time_up()
-                    if self.client2server_comm_queue.empty() and \
-                            len(server_msg_cache) == 0:
-                        break
-                    else:
-                        # terminate when shared_comm_queue and
-                        # server_msg_cache are all empty
-                        time.sleep(0.01)
-                        # break
-
 
 class Runner(object):
     def __init__(self, rank):
@@ -259,6 +197,7 @@ class ServerRunner(Runner):
         self.client_resource_info = client_resource_info
 
     def setup(self):
+        self.config.defrost()
         data, modified_cfg = get_data(config=self.config, client_cfgs=None)
         self.config.merge_from_other_cfg(modified_cfg)
         self.config.freeze()
@@ -331,11 +270,11 @@ class ServerRunner(Runner):
                     if self.client2server_comm_queue.empty() and \
                             len(server_msg_cache) == 0:
                         break
+                else:
+                    if self.server.is_finish:
+                        break
                     else:
-                        # terminate when shared_comm_queue and
-                        # server_msg_cache are all empty
                         time.sleep(0.01)
-                        # break
 
     def _handle_msg(self, msg):
         """
@@ -374,8 +313,10 @@ class ClientRunner(Runner):
         self.client2server_comm_queue = send_channel
         self.client_group = dict()
         self.client_resource_info = client_resource_info
+        self.is_finish = False
 
     def setup(self):
+        self.config.defrost()
         self.data, modified_cfg = get_data(config=self.config,
                                            client_cfgs=None)
         self.config.merge_from_other_cfg(modified_cfg)
@@ -428,11 +369,13 @@ class ClientRunner(Runner):
             if not self.receive_channel.empty():
                 msg = self.receive_channel.get()
                 self._handle_msg(msg)
+            elif self.is_finish:
+                break
 
     def _handle_msg(self, msg):
         _, receiver = msg.sender, msg.receiver
         msg_type = msg.msg_type
-        if msg_type == 'model_para':
+        if msg_type == 'model_para' or msg_type == 'evaluate':
             # recv from server
             recv_mode_para(self.template_para, 0)
             msg.content = self.template_para
@@ -445,3 +388,5 @@ class ClientRunner(Runner):
                     msg)
                 self.client_group[each_receiver]._monitor.track_download_bytes(
                     download_bytes)
+        if msg.msg_type == 'finish':
+            self.is_finish = True

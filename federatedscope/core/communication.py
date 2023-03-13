@@ -66,6 +66,7 @@ class StandaloneDDPCommManager(StandaloneCommManager):
 
     def send(self, message):
         is_model_para = message.msg_type == 'model_para'
+        is_evaluate = message.msg_type == 'evaluate'
         if self.id2comm is None:
             # client to server
             if is_model_para:
@@ -81,7 +82,7 @@ class StandaloneDDPCommManager(StandaloneCommManager):
             receiver = message.receiver
             if not isinstance(receiver, list):
                 receiver = [receiver]
-            if is_model_para:
+            if is_model_para or is_evaluate:
                 model_para = message.content
                 message.content = {}
             for idx, each_comm in enumerate(self.comm_queue):
@@ -90,7 +91,7 @@ class StandaloneDDPCommManager(StandaloneCommManager):
                             self.id2comm[each_receiver] == idx:
                         each_comm.put(message)
                         break
-                if is_model_para:
+                if is_model_para or is_evaluate:
                     for each_receiver in receiver:
                         if each_receiver in self.neighbors and \
                                 self.id2comm[each_receiver] == idx:
