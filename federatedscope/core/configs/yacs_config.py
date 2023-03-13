@@ -533,6 +533,10 @@ def _merge_a_into_b(a, b, root, key_list):
         else:
             if root.key_is_deprecated(full_key):
                 continue
+            elif k in [
+                    '__cfg_check_funcs__', '__help_info__', 'is_ready_for_run'
+            ]:
+                continue
             elif root.key_is_renamed(full_key):
                 root.raise_key_rename_error(full_key)
             else:

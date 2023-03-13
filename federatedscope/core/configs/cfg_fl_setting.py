@@ -2,6 +2,7 @@ import logging
 
 from federatedscope.core.configs.config import CN
 from federatedscope.register import register_config
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,11 @@ def extend_fl_setting_cfg(cfg):
     # in each training round, ['uniform', 'group']
     cfg.federate.resource_info_file = ""  # the device information file to
     # record computation and communication ability
+
+    # The configurations for parallel in standalone
+    cfg.federate.process_num = 1
+    cfg.federate.master_addr = '127.0.0.1'  # parameter of torch distributed
+    cfg.federate.master_port = 29500  # parameter of torch distributed
 
     # atc (TODO: merge later)
     cfg.federate.atc_vanilla = False
@@ -198,6 +204,19 @@ def assert_fl_setting_cfg(cfg):
         logger.warning('Set cfg.federate.make_global_eval=True since '
                        'cfg.federate.merge_test_data=True')
 
+    if cfg.federate.process_num > 1 and cfg.federate.mode != 'standalone':
+        cfg.federate.process_num = 1
+        logger.warning('Parallel training can only be used in standalone mode'
+                       ', thus cfg.federate.process_num is modified to 1')
+    if cfg.federate.process_num > 1 and not torch.cuda.is_available():
+        cfg.federate.process_num = 1
+        logger.warning(
+            'No GPU found for your device, set cfg.federate.process_num=1')
+    if torch.cuda.device_count() < cfg.federate.process_num:
+        cfg.federate.process_num = torch.cuda.device_count()
+        logger.warning(
+            'We found the number of gpu is insufficient, '
+            f'thus cfg.federate.process_num={cfg.federate.process_num}')
     # TODO
     if cfg.vertical.use:
         if cfg.vertical.algo == 'lr' and hasattr(cfg, "trainer") and \

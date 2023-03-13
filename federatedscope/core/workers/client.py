@@ -5,7 +5,7 @@ import pickle
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    StandaloneDDPCommManager, gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
@@ -14,6 +14,7 @@ from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
 from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Client(BaseClient):
@@ -105,6 +106,7 @@ class Client(BaseClient):
                                    config=self._cfg,
                                    is_attacker=self.is_attacker,
                                    monitor=self._monitor)
+        self.device = device
 
         # For client-side evaluation
         self.best_results = dict()
@@ -149,8 +151,12 @@ class Client(BaseClient):
         self.server_id = server_id
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor)
+            if self._cfg.federate.process_num <= 1:
+                self.comm_manager = StandaloneCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
+            else:
+                self.comm_manager = StandaloneDDPCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
             host = kwargs['host']
@@ -223,6 +229,13 @@ class Client(BaseClient):
             if msg.msg_type == 'finish':
                 break
 
+    def run_standalone(self):
+        """
+        Run in standalone mode
+        """
+        self.join_in()
+        self.run()
+
     def callback_funcs_for_model_para(self, message: Message):
         """
         The handling function for receiving model parameters, \
@@ -282,6 +295,9 @@ class Client(BaseClient):
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
             # and synchronized with the received model
+            if self._cfg.federate.process_num > 1:
+                for k, v in content.items():
+                    content[k] = v.to(self.device)
             self.trainer.update(content,
                                 strict=self._cfg.federate.share_local_model)
             self.state = round
