@@ -1,7 +1,6 @@
 from federatedscope.core.fed_runner import StandaloneRunner, DistributedRunner
-from federatedscope.core.auxiliaries.parallel_runner import \
+from federatedscope.core.parallel.parallel_runner import \
     StandaloneMultiGPURunner
-from federatedscope.core.auxiliaries.data_builder import get_data
 
 
 def get_runner(server_class,

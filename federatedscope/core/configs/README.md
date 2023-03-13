@@ -228,6 +228,7 @@ The configurations related to FL settings are defined in `cfg_fl_setting.py`.
 | `federate.join_in_info` | (list of string) [] | The information requirements (from server) for joining in the FL course. | We support 'num_sample/client_resource' and allow user customization.
 | `federate.sampler` | (string) 'uniform' </br> Choices: {'uniform', 'group'} | The sample strategy of server used for client selection in a training round. | - |
 | `federate.` </br>`resource_info_file` | (string) '' | the device information file to record computation and communication ability | - | 
+| `federate.process_num` | (int) 1 | The number of parallel processes. It only takes effect when `use_gpu=True`, `backend='torch'`, `federate.mode='standalone'` and `federate.share_local_model=False`, and the value is required to be not greater than the number of GPUs. | - |
 #### `distribute`: for distribute mode
 | Name |  (Type) Default Value |  Description  | Note |
 |:----:|:-----:|:---------- |:---- |
