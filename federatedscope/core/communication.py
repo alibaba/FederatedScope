@@ -1,11 +1,18 @@
 import grpc
 from concurrent import futures
+import logging
+import torch.distributed as dist
+
+from collections import deque
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.proto import gRPC_comm_manager_pb2, \
     gRPC_comm_manager_pb2_grpc
 from federatedscope.core.gRPC_server import gRPCComServeFunc
 from federatedscope.core.message import Message
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class StandaloneCommManager(object):
@@ -39,7 +46,57 @@ class StandaloneCommManager(object):
             return self.neighbors
 
     def send(self, message):
+        # All the workers share one comm_queue
         self.comm_queue.append(message)
+
+
+class StandaloneDDPCommManager(StandaloneCommManager):
+    """
+    The communicator used for standalone mode with multigpu
+    """
+    def __init__(self, comm_queue, monitor=None, id2comm=None):
+        super().__init__(comm_queue, monitor)
+        self.id2comm = id2comm
+        self.device = "cuda:{}".format(dist.get_rank())
+
+    def _send_model_para(self, model_para, dst_rank):
+        for v in model_para.values():
+            t = v.to(self.device)
+            dist.send(tensor=t, dst=dst_rank)
+
+    def send(self, message):
+        is_model_para = message.msg_type == 'model_para'
+        is_evaluate = message.msg_type == 'evaluate'
+        if self.id2comm is None:
+            # client to server
+            if is_model_para:
+                model_para = message.content[1]
+                message.content = (message.content[0], {})
+                self.comm_queue.append(message) if isinstance(
+                    self.comm_queue, deque) else self.comm_queue.put(message)
+                self._send_model_para(model_para, 0)
+            else:
+                self.comm_queue.append(message) if isinstance(
+                    self.comm_queue, deque) else self.comm_queue.put(message)
+        else:
+            receiver = message.receiver
+            if not isinstance(receiver, list):
+                receiver = [receiver]
+            if is_model_para or is_evaluate:
+                model_para = message.content
+                message.content = {}
+            for idx, each_comm in enumerate(self.comm_queue):
+                for each_receiver in receiver:
+                    if each_receiver in self.neighbors and \
+                            self.id2comm[each_receiver] == idx:
+                        each_comm.put(message)
+                        break
+                if is_model_para or is_evaluate:
+                    for each_receiver in receiver:
+                        if each_receiver in self.neighbors and \
+                                self.id2comm[each_receiver] == idx:
+                            self._send_model_para(model_para, idx + 1)
+                            break
         download_bytes, upload_bytes = message.count_bytes()
         self.monitor.track_upload_bytes(upload_bytes)
 

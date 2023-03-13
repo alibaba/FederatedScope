@@ -5,11 +5,12 @@ import sys
 
 import numpy as np
 import pickle
+import time
 
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    StandaloneDDPCommManager, gRPCCommManager
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
@@ -19,6 +20,7 @@ from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Server(BaseServer):
@@ -88,7 +90,8 @@ class Server(BaseServer):
             self._cfg.early_stop.improve_indicator_mode,
             self._monitor.the_larger_the_better)
 
-        if self._cfg.federate.share_local_model:
+        if self._cfg.federate.share_local_model \
+                and not self._cfg.federate.process_num > 1:
             # put the model to the specified device
             model.to(device)
         # Build aggregator
@@ -195,9 +198,16 @@ class Server(BaseServer):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
-            comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor)
+            comm_queue = kwargs.get('shared_comm_queue', None)
+            if self._cfg.federate.process_num > 1:
+                id2comm = kwargs.get('id2comm', None)
+                self.comm_manager = StandaloneDDPCommManager(
+                    comm_queue=comm_queue,
+                    monitor=self._monitor,
+                    id2comm=id2comm)
+            else:
+                self.comm_manager = StandaloneCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
@@ -322,7 +332,6 @@ class Server(BaseServer):
             if not check_eval_result:
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
-
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
                         self.total_round_num:
@@ -351,6 +360,8 @@ class Server(BaseServer):
             else:
                 # Receiving enough feedback in the evaluation process
                 self._merge_and_format_eval_results()
+                if self.state >= self.total_round_num:
+                    self.is_finish = True
 
         else:
             move_on_flag = False
@@ -804,6 +815,9 @@ class Server(BaseServer):
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.
                 format(self.state))
+            print(
+                time.strftime('%Y-%m-%d %H:%M:%S',
+                              time.localtime(time.time())))
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,

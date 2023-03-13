@@ -24,6 +24,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 self.protect_funcs = self._protect_via_op_boost
                 self.lower_bound = args.get('lower_bound', 1)
                 self.upper_bound = args.get('upper_bound', 100)
+                self.bucket_num = args.get('bucket_num', None)
                 if self.algo == 'global':
                     self.epsilon = args.get('epsilon', 2)
                 elif self.algo == 'adjusting':
@@ -70,8 +71,8 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
 
         def _adjusting_mapping_fun(self, x, partition_edges):
             for part_idx in range(self.partition_num):
-                if partition_edges[part_idx] < x and partition_edges[part_idx +
-                                                                     1] >= x:
+                if partition_edges[part_idx] < x <= partition_edges[part_idx +
+                                                                    1]:
                     selected_part = self._global_mapping_fun(
                         part_idx,
                         epsilon=self.epsilon_prt,
@@ -135,10 +136,47 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
             for i in range(num_of_feature):
                 protected_feature_order[i] = mapped_data[:, i].argsort()
 
-            return {
-                'raw_feature_order': raw_feature_order,
-                'feature_order': protected_feature_order,
-            }
+            # add bucket in op_boost to accelerate
+            if self.bucket_num:
+                new_protected_feature_order = list()
+                bucket_size = int(np.floor(data.shape[0] / self.bucket_num))
+                split_position = []
+                self.split_value = []
+
+                for feature_idx in range(len(raw_feature_order)):
+                    bucketized_feature_order = bucketize(
+                        raw_feature_order[feature_idx], bucket_size,
+                        self.bucket_num)
+                    bucketized_protected_feature_order = bucketize(
+                        protected_feature_order[feature_idx], bucket_size,
+                        self.bucket_num)
+
+                    split_position = self.compute_extra_info(
+                        data, split_position, feature_idx,
+                        bucketized_feature_order, bucketized_feature_order)
+
+                    bucketized_protected_feature_order = [
+                        x for x in bucketized_protected_feature_order
+                        if len(x) > 0
+                    ]
+
+                    bucketized_protected_feature_order = np.concatenate(
+                        bucketized_protected_feature_order)
+                    new_protected_feature_order.append(
+                        bucketized_protected_feature_order)
+
+                extra_info = {'split_position': split_position}
+
+                return {
+                    'raw_feature_order': raw_feature_order,
+                    'feature_order': new_protected_feature_order,
+                    'extra_info': extra_info
+                }
+            else:
+                return {
+                    'raw_feature_order': raw_feature_order,
+                    'feature_order': protected_feature_order,
+                }
 
         def _protect_via_dp(self, raw_feature_order, data):
             """
@@ -180,38 +218,9 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
 
                 # Save split positions (instance number within buckets)
                 # We exclude the endpoints to avoid empty sub-trees
-                _split_position = list()
-                _split_value = dict()
-                accumu_num = 0
-                for bucket_idx, each_bucket in enumerate(
-                        noisy_bucketized_feature_order):
-                    instance_num = len(each_bucket)
-                    # Skip the empty bucket
-                    if instance_num != 0:
-                        # Skip the endpoints
-                        if bucket_idx != self.bucket_num - 1:
-                            _split_position.append(accumu_num + instance_num)
-
-                        # Save split values: average of min value of (j-1)-th
-                        # bucket and max value of j-th bucket
-                        max_value = data[bucketized_feature_order[bucket_idx]
-                                         [-1]][feature_idx]
-                        min_value = data[bucketized_feature_order[bucket_idx]
-                                         [0]][feature_idx]
-                        if accumu_num == 0:
-                            _split_value[accumu_num +
-                                         instance_num] = max_value / 2.0
-                        elif bucket_idx == self.bucket_num - 1:
-                            _split_value[accumu_num] += min_value / 2.0
-                        else:
-                            _split_value[accumu_num] += min_value / 2.0
-                            _split_value[accumu_num +
-                                         instance_num] = max_value / 2.0
-
-                        accumu_num += instance_num
-
-                split_position.append(_split_position)
-                self.split_value.append(_split_value)
+                split_position = self.compute_extra_info(
+                    data, split_position, feature_idx,
+                    noisy_bucketized_feature_order, bucketized_feature_order)
 
                 noisy_bucketized_feature_order = [
                     x for x in noisy_bucketized_feature_order if len(x) > 0
@@ -228,6 +237,45 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 'feature_order': protected_feature_order,
                 'extra_info': extra_info
             }
+
+        def compute_extra_info(self, data, split_position, feature_idx,
+                               noisy_bucketized_feature_order,
+                               bucketized_feature_order):
+            # Save split positions (instance number within buckets)
+            # We exclude the endpoints to avoid empty sub-trees
+            _split_position = list()
+            _split_value = dict()
+            accumu_num = 0
+            for bucket_idx, each_bucket in enumerate(
+                    noisy_bucketized_feature_order):
+                instance_num = len(each_bucket)
+                # Skip the empty bucket
+                if instance_num != 0:
+                    # Skip the endpoints
+                    if bucket_idx != self.bucket_num - 1:
+                        _split_position.append(accumu_num + instance_num)
+
+                    # Save split values: average of min value of (j-1)-th
+                    # bucket and max value of j-th bucket
+                    max_value = data[bucketized_feature_order[bucket_idx]
+                                     [-1]][feature_idx]
+                    min_value = data[bucketized_feature_order[bucket_idx]
+                                     [0]][feature_idx]
+                    if accumu_num == 0:
+                        _split_value[accumu_num +
+                                     instance_num] = max_value / 2.0
+                    elif bucket_idx == self.bucket_num - 1:
+                        _split_value[accumu_num] += min_value / 2.0
+                    else:
+                        _split_value[accumu_num] += min_value / 2.0
+                        _split_value[accumu_num +
+                                     instance_num] = max_value / 2.0
+
+                    accumu_num += instance_num
+
+            split_position.append(_split_position)
+            self.split_value.append(_split_value)
+            return split_position
 
         # TODO: more flexible for client to choose whether to protect or not
         def _get_feature_order_info(self, data):

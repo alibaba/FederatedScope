@@ -161,6 +161,8 @@ class Context(LifecycleDict):
                                            self.device)
             self.regularizer = get_regularizer(self.cfg.regularizer.type)
             self.grad_clip = self.cfg.grad.grad_clip
+            if self.cfg.federate.process_num > 1:
+                self.model.to(self.device)
         elif self.cfg.backend == 'tensorflow':
             self.trainable_para_names = self.model.trainable_variables()
             self.criterion = None

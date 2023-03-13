@@ -94,11 +94,11 @@ class GBDTTree(Tree):
     def __init__(self, max_depth, lambda_, gamma):
         super().__init__(max_depth, lambda_, gamma)
 
-    def cal_gain(self, grad, hess, split_idx, node_num):
+    def cal_gain(self, grad, hess, split_idx, indicator):
         left_grad = np.sum(grad[:split_idx])
         right_grad = np.sum(grad[split_idx:])
-        left_indicator = np.sum(self.tree[node_num].indicator[:split_idx])
-        right_indicator = np.sum(self.tree[node_num].indicator[split_idx:])
+        left_indicator = np.sum(indicator[:split_idx])
+        right_indicator = np.sum(indicator[split_idx:])
 
         return left_grad**2 / (
             left_indicator + self.lambda_) + right_grad**2 / (right_indicator +
