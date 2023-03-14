@@ -37,7 +37,7 @@ class FEMNISTTabularFedHPOBench(BaseTabularFedHPOBench):
               "/fedhpob_cnn_tabular.zip"
         triplets = ('cnn', 'femnist', 'avg')
         client_num = 200
-        num_param = 871294
+        num_param = 6603902
         super(FEMNISTTabularFedHPOBench, self).__init__(data_path,
                                                         url,
                                                         triplets,
