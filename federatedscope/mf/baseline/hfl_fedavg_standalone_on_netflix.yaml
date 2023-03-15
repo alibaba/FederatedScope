@@ -13,7 +13,6 @@ data:
   root: data/
   type: HFLNetflix
 dataloader:
-  batch_size: 32
   type: mf
 model:
   type: HMFNet
