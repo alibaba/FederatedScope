@@ -124,7 +124,7 @@ class BaseTabularFedHPOBench(AbstractBenchmark):
             self.client_num * fidelity['sample_client'] * self.num_param /
             self.bandwidth['server_up'],
             self.num_param / self.bandwidth['client_down'])
-        return cmp_cost + cmm_cost
+        return (cmp_cost + cmm_cost) * fidelity['round']
 
     def _search(self, configuration, fidelity):
         # For configuration
