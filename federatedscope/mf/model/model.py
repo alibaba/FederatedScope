@@ -33,6 +33,8 @@ class BasicMFNet(Module):
 
     def forward(self, indices, ratings):
         indices = np.array(indices)
+
+        # User-Item mask
         user_mask = torch.zeros_like(self.embed_user.data, dtype=bool)
         user_mask[indices[0]] = True
         user_embedding_coo = self.embed_user.mul(
@@ -46,7 +48,12 @@ class BasicMFNet(Module):
         pred = torch.sparse.mm(user_embedding_coo,
                                item_embedding_coo.transpose(0, 1)).to_dense()
 
-        label = torch.sparse_coo_tensor(np.array(indices),
+        # Mask pred
+        mask = torch.zeros_like(pred, dtype=bool)
+        mask[indices] = True
+        pred = pred.mul(mask.to(pred.device))
+
+        label = torch.sparse_coo_tensor(indices,
                                         ratings,
                                         size=pred.shape,
                                         device=pred.device,
