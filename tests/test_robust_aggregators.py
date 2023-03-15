@@ -118,74 +118,74 @@ class robust_aggr_AlgoTest(unittest.TestCase):
 
 
 
-    # def test_0_multikrum(self):
-    #     init_cfg = global_cfg.clone()
-    #     backup_cfg = self.set_config_multikrum(init_cfg)
-    #     setup_seed(init_cfg.seed)
-    #     update_logger(init_cfg, True)
+    def test_0_multikrum(self):
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_multikrum(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg, True)
 
-    #     data, modified_cfg = get_data(init_cfg.clone())
-    #     init_cfg.merge_from_other_cfg(modified_cfg)
-    #     self.assertIsNotNone(data)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
+        self.assertIsNotNone(data)
 
-    #     Fed_runner = get_runner(data=data,
-    #                             server_class=get_server_cls(init_cfg),
-    #                             client_class=get_client_cls(init_cfg),
-    #                             config=init_cfg.clone())
-    #     self.assertIsNotNone(Fed_runner)
-    #     test_best_results = Fed_runner.run()
-    #     print(test_best_results)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
-    #     self.assertLess(
-    #         test_best_results['client_summarized_weighted_avg']['test_acc'],
-    #         0.7)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
+        self.assertIsNotNone(Fed_runner)
+        test_best_results = Fed_runner.run()
+        print(test_best_results)
+        init_cfg.merge_from_other_cfg(backup_cfg)
+        self.assertLess(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.7)
+        init_cfg.merge_from_other_cfg(backup_cfg)
 
-    # def test_1_median(self):
-    #     init_cfg = global_cfg.clone()
-    #     backup_cfg = self.set_config_median(init_cfg)
-    #     setup_seed(init_cfg.seed)
-    #     update_logger(init_cfg, True)
+    def test_1_median(self):
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_median(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg, True)
 
-    #     data, modified_cfg = get_data(init_cfg.clone())
-    #     init_cfg.merge_from_other_cfg(modified_cfg)
-    #     self.assertIsNotNone(data)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
+        self.assertIsNotNone(data)
 
-    #     Fed_runner = get_runner(data=data,
-    #                             server_class=get_server_cls(init_cfg),
-    #                             client_class=get_client_cls(init_cfg),
-    #                             config=init_cfg.clone())
-    #     self.assertIsNotNone(Fed_runner)
-    #     test_best_results = Fed_runner.run()
-    #     print(test_best_results)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
-    #     self.assertLess(
-    #         test_best_results['client_summarized_weighted_avg']['test_acc'],
-    #         0.7)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
+        self.assertIsNotNone(Fed_runner)
+        test_best_results = Fed_runner.run()
+        print(test_best_results)
+        init_cfg.merge_from_other_cfg(backup_cfg)
+        self.assertLess(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.7)
+        init_cfg.merge_from_other_cfg(backup_cfg)
 
-    # def test_2_trimmedmean(self):
-    #     init_cfg = global_cfg.clone()
-    #     backup_cfg = self.set_config_trimmedmean(init_cfg)
-    #     setup_seed(init_cfg.seed)
-    #     update_logger(init_cfg, True)
+    def test_2_trimmedmean(self):
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_trimmedmean(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg, True)
 
-    #     data, modified_cfg = get_data(init_cfg.clone())
-    #     init_cfg.merge_from_other_cfg(modified_cfg)
-    #     self.assertIsNotNone(data)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
+        self.assertIsNotNone(data)
 
-    #     Fed_runner = get_runner(data=data,
-    #                             server_class=get_server_cls(init_cfg),
-    #                             client_class=get_client_cls(init_cfg),
-    #                             config=init_cfg.clone())
-    #     self.assertIsNotNone(Fed_runner)
-    #     test_best_results = Fed_runner.run()
-    #     print(test_best_results)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
-    #     self.assertLess(
-    #         test_best_results['client_summarized_weighted_avg']['test_acc'],
-    #         0.7)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
+        self.assertIsNotNone(Fed_runner)
+        test_best_results = Fed_runner.run()
+        print(test_best_results)
+        init_cfg.merge_from_other_cfg(backup_cfg)
+        self.assertLess(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.7)
+        init_cfg.merge_from_other_cfg(backup_cfg)
 
     def test_3_bulyan(self):
         init_cfg = global_cfg.clone()
@@ -210,50 +210,50 @@ class robust_aggr_AlgoTest(unittest.TestCase):
             0.7)
         init_cfg.merge_from_other_cfg(backup_cfg)
     
-    # def test_4_normbounding(self):
-    #     init_cfg = global_cfg.clone()
-    #     backup_cfg = self.set_config_normbounding(init_cfg)
-    #     setup_seed(init_cfg.seed)
-    #     update_logger(init_cfg, True)
+    def test_4_normbounding(self):
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_normbounding(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg, True)
 
-    #     data, modified_cfg = get_data(init_cfg.clone())
-    #     init_cfg.merge_from_other_cfg(modified_cfg)
-    #     self.assertIsNotNone(data)
-    #     Fed_runner = get_runner(data=data,
-    #                             server_class=get_server_cls(init_cfg),
-    #                             client_class=get_client_cls(init_cfg),
-    #                             config=init_cfg.clone())
-    #     self.assertIsNotNone(Fed_runner)
-    #     test_best_results = Fed_runner.run()
-    #     print(test_best_results)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
-    #     self.assertLess(
-    #         test_best_results['client_summarized_weighted_avg']['test_acc'],
-    #         0.7)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
+        self.assertIsNotNone(data)
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
+        self.assertIsNotNone(Fed_runner)
+        test_best_results = Fed_runner.run()
+        print(test_best_results)
+        init_cfg.merge_from_other_cfg(backup_cfg)
+        self.assertLess(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.7)
+        init_cfg.merge_from_other_cfg(backup_cfg)
 
-    # def test_5_fltrust(self):
-    #     init_cfg = global_cfg.clone()
-    #     backup_cfg = self.set_config_fltrust(init_cfg)
-    #     setup_seed(init_cfg.seed)
-    #     update_logger(init_cfg, True)
+    def test_5_fltrust(self):
+        init_cfg = global_cfg.clone()
+        backup_cfg = self.set_config_fltrust(init_cfg)
+        setup_seed(init_cfg.seed)
+        update_logger(init_cfg, True)
 
-    #     data, modified_cfg = get_data(init_cfg.clone())
-    #     init_cfg.merge_from_other_cfg(modified_cfg)
-    #     self.assertIsNotNone(data)
+        data, modified_cfg = get_data(init_cfg.clone())
+        init_cfg.merge_from_other_cfg(modified_cfg)
+        self.assertIsNotNone(data)
 
-    #     Fed_runner = get_runner(data=data,
-    #                             server_class=get_server_cls(init_cfg),
-    #                             client_class=get_client_cls(init_cfg),
-    #                             config=init_cfg.clone())
-    #     self.assertIsNotNone(Fed_runner)
-    #     test_best_results = Fed_runner.run()
-    #     print(test_best_results)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
-    #     self.assertLess(
-    #         test_best_results['client_summarized_weighted_avg']['test_acc'],
-    #         0.7)
-    #     init_cfg.merge_from_other_cfg(backup_cfg)
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
+        self.assertIsNotNone(Fed_runner)
+        test_best_results = Fed_runner.run()
+        print(test_best_results)
+        init_cfg.merge_from_other_cfg(backup_cfg)
+        self.assertLess(
+            test_best_results['client_summarized_weighted_avg']['test_acc'],
+            0.7)
+        init_cfg.merge_from_other_cfg(backup_cfg)
     
 
 if __name__ == '__main__':
