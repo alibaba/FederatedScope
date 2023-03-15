@@ -41,7 +41,10 @@ def load_cv_dataset(config=None):
     config.merge_from_list(['federate.client_num', client_num])
 
     # Convert list to dict
-    data_dict = dict()
+    if config.data.root_dataset_need:
+        data_dict = {0: dataset[1]}
+    else:
+        data_dict = dict()
     for client_idx in range(1, client_num + 1):
         data_dict[client_idx] = dataset[client_idx - 1]
 

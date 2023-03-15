@@ -58,7 +58,9 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         from federatedscope.core.aggregators import ClientsAvgAggregator, \
             OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, \
             FedOptAggregator, NoCommunicationAggregator, \
-            AsynClientsAvgAggregator, KrumAggregator
+            AsynClientsAvgAggregator, KrumAggregator, \
+            MedianAggregator,TrimmedmeanAggregator, \
+            BulyanAggregator,FLtrustAggregator,NormboundingAggregator
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
@@ -89,6 +91,16 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
                                             config=config)
         elif config.aggregator.krum.use:
             return KrumAggregator(model=model, device=device, config=config)
+        elif config.aggregator.median.use:
+            return MedianAggregator(model=model, device=device, config=config)
+        elif config.aggregator.trimmedmean.use:
+            return TrimmedmeanAggregator(model=model, device=device, config=config)
+        elif config.aggregator.bulyan.use:
+            return BulyanAggregator(model=model, device=device, config=config)
+        elif config.aggregator.fltrust.use:
+            return FLtrustAggregator(model=model, device=device, config=config)
+        elif config.aggregator.normbounding.use:
+            return NormboundingAggregator(model=model, device=device, config=config)
         else:
             return ClientsAvgAggregator(model=model,
                                         device=device,

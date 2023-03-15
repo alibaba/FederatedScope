@@ -385,7 +385,10 @@ class Client(BaseClient):
                 self.msg_buffer['train'][self.state] = [(sample_size,
                                                          content_frame)]
             else:
-                if self._cfg.asyn.use or self._cfg.aggregator.krum.use:
+                if self._cfg.asyn.use or self._cfg.aggregator.fltrust.use or \
+                    self._cfg.aggregator.krum.use or self._cfg.aggregator.median.use \
+                        or self._cfg.aggregator.trimmedmean.use or self._cfg.aggregator.bulyan.use \
+                            or self._cfg.aggregator.normbounding.use:
                     # Return the model delta when using asynchronous training
                     # protocol, because the staled updated might be discounted
                     # and cause that the sum of the aggregated weights might
