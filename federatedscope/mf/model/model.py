@@ -32,20 +32,27 @@ class BasicMFNet(Module):
         self.register_parameter('embed_item', self.embed_item)
 
     def forward(self, indices, ratings):
-        # TODO: do not use all embedding
-        pred = torch.matmul(self.embed_user, self.embed_item.T)
-        label = torch.sparse_coo_tensor(indices,
+        indices = np.array(indices)
+        user_mask = torch.zeros_like(self.embed_user.data, dtype=bool)
+        user_mask[indices[0]] = True
+        user_embedding_coo = self.embed_user.mul(
+            user_mask.to(self.embed_user.data.device)).to_sparse()
+
+        item_mask = torch.zeros_like(self.embed_item.data, dtype=bool)
+        item_mask[indices[1]] = True
+        item_embedding_coo = self.embed_item.mul(
+            item_mask.to(self.embed_item.data.device)).to_sparse()
+
+        pred = torch.sparse.mm(user_embedding_coo,
+                               item_embedding_coo.transpose(0, 1)).to_dense()
+
+        label = torch.sparse_coo_tensor(np.array(indices),
                                         ratings,
                                         size=pred.shape,
                                         device=pred.device,
                                         dtype=torch.float32).to_dense()
-        mask = torch.sparse_coo_tensor(indices,
-                                       np.ones(len(ratings)),
-                                       size=pred.shape,
-                                       device=pred.device,
-                                       dtype=torch.float32).to_dense()
 
-        return mask * pred, label, float(np.prod(pred.size())) / len(ratings)
+        return pred, label, float(np.prod(pred.size())) / len(ratings)
 
     def load_state_dict(self, state_dict, strict: bool = True):
 
