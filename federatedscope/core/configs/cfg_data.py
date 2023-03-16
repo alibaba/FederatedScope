@@ -34,7 +34,8 @@ def extend_data_cfg(cfg):
     cfg.data.pre_transform = [
     ]  # pre_transform for `torch_geometric` dataset, use as above
 
-    cfg.data.root_dataset_need = False # whether to split a root dataset to the server
+    # whether to split a root dataset to the server
+    cfg.data.root_dataset_need = False
 
     # If not provided, use `cfg.data.transform` for all splits
     cfg.data.val_transform = []

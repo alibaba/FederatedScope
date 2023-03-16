@@ -59,8 +59,8 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, \
             FedOptAggregator, NoCommunicationAggregator, \
             AsynClientsAvgAggregator, KrumAggregator, \
-            MedianAggregator,TrimmedmeanAggregator, \
-            BulyanAggregator,FLtrustAggregator,NormboundingAggregator
+            MedianAggregator, TrimmedmeanAggregator, \
+            BulyanAggregator, FLtrustAggregator, NormboundingAggregator
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
@@ -94,13 +94,17 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         elif config.aggregator.median.use:
             return MedianAggregator(model=model, device=device, config=config)
         elif config.aggregator.trimmedmean.use:
-            return TrimmedmeanAggregator(model=model, device=device, config=config)
+            return TrimmedmeanAggregator(model=model,
+                                         device=device,
+                                         config=config)
         elif config.aggregator.bulyan.use:
             return BulyanAggregator(model=model, device=device, config=config)
         elif config.aggregator.fltrust.use:
             return FLtrustAggregator(model=model, device=device, config=config)
         elif config.aggregator.normbounding.use:
-            return NormboundingAggregator(model=model, device=device, config=config)
+            return NormboundingAggregator(model=model,
+                                          device=device,
+                                          config=config)
         else:
             return ClientsAvgAggregator(model=model,
                                         device=device,

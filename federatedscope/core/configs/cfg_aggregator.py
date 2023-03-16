@@ -22,20 +22,20 @@ def extend_aggregator_cfg(cfg):
     cfg.aggregator.krum.use = False
     cfg.aggregator.krum.agg_num = 1
 
-     # For median Algos
+    # For median Algos
     cfg.aggregator.median = CN()
     cfg.aggregator.median.use = False
 
-     # For trimmed_mean Algos
+    # For trimmed_mean Algos
     cfg.aggregator.trimmedmean = CN()
     cfg.aggregator.trimmedmean.use = False
-    cfg.aggregator.trimmedmean.excluded_ratio=0.1
+    cfg.aggregator.trimmedmean.excluded_ratio = 0.1
 
-     # For bulyan Algos
+    # For bulyan Algos
     cfg.aggregator.bulyan = CN()
     cfg.aggregator.bulyan.use = False
 
-     # For fltrust Algos
+    # For fltrust Algos
     cfg.aggregator.fltrust = CN()
     cfg.aggregator.fltrust.use = False
     cfg.aggregator.fltrust.global_learningrate = 0.01
@@ -54,6 +54,7 @@ def extend_aggregator_cfg(cfg):
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_aggregator_cfg)
 
+
 def assert_aggregator_cfg(cfg):
 
     if cfg.aggregator.byzantine_node_num == 0 and cfg.aggregator.krum.use:
@@ -62,4 +63,3 @@ def assert_aggregator_cfg(cfg):
 
 
 register_config('aggregator', extend_aggregator_cfg)
-

@@ -13,29 +13,31 @@ class robust_aggr_AlgoTest(unittest.TestCase):
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
 
-    
     def set_config_multikrum(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
-        cfg.merge_from_file('federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.merge_from_file(
+            'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
         cfg.federate.client_num = 50
-        cfg.federate.total_round_num = 50 
+        cfg.federate.total_round_num = 50
         cfg.aggregator.byzantine_node_num = 10
         cfg.aggregator.krum.use = True
         cfg.aggregator.krum.agg_num = 30
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = [i+1 for i in range(cfg.aggregator.byzantine_node_num)]
+        cfg.attack.attacker_id = [
+            i + 1 for i in range(cfg.aggregator.byzantine_node_num)
+        ]
 
         return backup_cfg
-
 
     def set_config_median(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
-        cfg.merge_from_file('federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.merge_from_file(
+            'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 50
 
@@ -43,7 +45,9 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.aggregator.median.use = True
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = [i+1 for i in range(cfg.aggregator.byzantine_node_num)]
+        cfg.attack.attacker_id = [
+            i + 1 for i in range(cfg.aggregator.byzantine_node_num)
+        ]
 
         return backup_cfg
 
@@ -51,7 +55,8 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         backup_cfg = cfg.clone()
 
         import torch
-        cfg.merge_from_file('federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.merge_from_file(
+            'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 50
 
@@ -60,15 +65,18 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.aggregator.trimmedmean.excluded_ratio = 0.2
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = [i+1 for i in range(cfg.aggregator.byzantine_node_num)]
+        cfg.attack.attacker_id = [
+            i + 1 for i in range(cfg.aggregator.byzantine_node_num)
+        ]
 
         return backup_cfg
-    
+
     def set_config_bulyan(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
-        cfg.merge_from_file('federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.merge_from_file(
+            'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 50
@@ -77,14 +85,17 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.aggregator.byzantine_node_num = 10
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = [i+1 for i in range(cfg.aggregator.byzantine_node_num)]
+        cfg.attack.attacker_id = [
+            i + 1 for i in range(cfg.aggregator.byzantine_node_num)
+        ]
         return backup_cfg
-    
+
     def set_config_normbounding(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
-        cfg.merge_from_file('federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.merge_from_file(
+            'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 50
@@ -94,14 +105,17 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.aggregator.byzantine_node_num = 10
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = [i+1 for i in range(cfg.aggregator.byzantine_node_num)]
+        cfg.attack.attacker_id = [
+            i + 1 for i in range(cfg.aggregator.byzantine_node_num)
+        ]
         return backup_cfg
 
     def set_config_fltrust(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
-        cfg.merge_from_file('federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.merge_from_file(
+            'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 50
@@ -112,11 +126,10 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.eval.best_res_update_round_wise_key = 'val_loss'
 
         cfg.attack.attack_method = 'gaussian_noise'
-        cfg.attack.attacker_id = [i+1 for i in range(cfg.aggregator.byzantine_node_num)]
+        cfg.attack.attacker_id = [
+            i + 1 for i in range(cfg.aggregator.byzantine_node_num)
+        ]
         return backup_cfg
-
-
-
 
     def test_0_multikrum(self):
         init_cfg = global_cfg.clone()
@@ -209,7 +222,7 @@ class robust_aggr_AlgoTest(unittest.TestCase):
             test_best_results['client_summarized_weighted_avg']['test_acc'],
             0.7)
         init_cfg.merge_from_other_cfg(backup_cfg)
-    
+
     def test_4_normbounding(self):
         init_cfg = global_cfg.clone()
         backup_cfg = self.set_config_normbounding(init_cfg)
@@ -254,7 +267,7 @@ class robust_aggr_AlgoTest(unittest.TestCase):
             test_best_results['client_summarized_weighted_avg']['test_acc'],
             0.7)
         init_cfg.merge_from_other_cfg(backup_cfg)
-    
+
 
 if __name__ == '__main__':
     unittest.main()

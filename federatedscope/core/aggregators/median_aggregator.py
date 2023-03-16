@@ -3,11 +3,13 @@ import torch
 import numpy as np
 from federatedscope.core.aggregators import ClientsAvgAggregator
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class MedianAggregator(ClientsAvgAggregator):
     """
-    Implementation of median refers to `Byzantine-robust distributed 
+    Implementation of median refers to `Byzantine-robust distributed
     learning: Towards optimal statistical rates`
     [Yin et al., 2018]
     (http://proceedings.mlr.press/v80/yin18a/yin18a.pdf)
@@ -40,8 +42,9 @@ class MedianAggregator(ClientsAvgAggregator):
         init_model = self.model.state_dict()
         global_update = copy.deepcopy(init_model)
         for key in init_model:
-            temp = torch.stack([each_model[1][key] for each_model in models],0)
-            temp_pos, _ = torch.median(temp,dim=0)
-            temp_neg, _ = torch.median(-temp,dim=0)
-            global_update[key] = (temp_pos-temp_neg)/2
+            temp = torch.stack([each_model[1][key] for each_model in models],
+                               0)
+            temp_pos, _ = torch.median(temp, dim=0)
+            temp_neg, _ = torch.median(-temp, dim=0)
+            global_update[key] = (temp_pos - temp_neg) / 2
         return global_update

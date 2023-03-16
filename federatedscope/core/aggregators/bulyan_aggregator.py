@@ -2,14 +2,15 @@ import copy
 import torch
 from federatedscope.core.aggregators import ClientsAvgAggregator
 
+
 class BulyanAggregator(ClientsAvgAggregator):
     """
-    Implementation of Bulyan refers to `The Hidden Vulnerability 
+    Implementation of Bulyan refers to `The Hidden Vulnerability
     of Distributed Learning in Byzantium`
     [Mhamdi et al., 2018]
     (http://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a.pdf)
 
-    It combines the MultiKrum aggregator and a variant of treamedmean aggregator
+    It combines the MultiKrum aggregator and the treamedmean aggregator
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(BulyanAggregator, self).__init__(model, device, config)
@@ -73,31 +74,33 @@ class BulyanAggregator(ClientsAvgAggregator):
 
     def _aggre_with_bulyan(self, models):
         '''
-        Apply MultiKrum to select \theta (\theta <= client_num- 
+        Apply MultiKrum to select \theta (\theta <= client_num-
         2*self.byzantine_node_num) local models
         '''
         init_model = self.model.state_dict()
-        global_update=copy.deepcopy(init_model)
+        global_update = copy.deepcopy(init_model)
         models_para = [each_model[1] for each_model in models]
         krum_scores = self._calculate_score(models_para)
         index_order = torch.sort(krum_scores)[1].numpy()
         reliable_models = list()
         for number, index in enumerate(index_order):
-            if number < len(models) - int(2*self.client_sampled_ratio*self.byzantine_node_num):
+            if number < len(models) - int(
+                    2 * self.client_sampled_ratio * self.byzantine_node_num):
                 reliable_models.append(models[index])
-        
         '''
-        Sort parameter for each coordinate of the rest \theta reliable 
-        local models, and find \gamma (gamma<\theta-2*self.byzantine_num) 
+        Sort parameter for each coordinate of the rest \theta reliable
+        local models, and find \gamma (gamma<\theta-2*self.byzantine_num)
         parameters closest to the median to perform averaging
         '''
-        exluded_num = int(self.client_sampled_ratio*self.byzantine_node_num)
-        gamma=len(reliable_models)-2*exluded_num
+        exluded_num = int(self.client_sampled_ratio * self.byzantine_node_num)
+        gamma = len(reliable_models) - 2 * exluded_num
         for key in init_model:
-            temp=torch.stack([each_model[1][key] for each_model in reliable_models],0)
+            temp = torch.stack(
+                [each_model[1][key] for each_model in reliable_models], 0)
             pos_largest, _ = torch.topk(temp, exluded_num, 0)
             neg_smallest, _ = torch.topk(-temp, exluded_num, 0)
-            new_stacked = torch.cat([temp, -pos_largest, neg_smallest]).sum(0).float()
+            new_stacked = torch.cat([temp, -pos_largest,
+                                     neg_smallest]).sum(0).float()
             new_stacked /= gamma
-            global_update[key]=new_stacked
+            global_update[key] = new_stacked
         return global_update

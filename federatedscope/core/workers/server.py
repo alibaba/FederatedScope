@@ -152,21 +152,21 @@ class Server(BaseServer):
                 ])
 
         if self._cfg.aggregator.fltrust.use:
-            # set up a trainer for conducting global model training and model evaluation in server
+            # set up a trainer for conducting global model training and
+            # model evaluation in server
             assert self.model is not None
             assert self.data is not None
-            self.trainer = get_trainer(
-                model=self.model,
-                data=self.data,
-                device=self.device,
-                config=self._cfg,
-                monitor=self._monitor
-            )  
-            # the trainer can be applied in both glbal training and  global evaluation
+            self.trainer = get_trainer(model=self.model,
+                                       data=self.data,
+                                       device=self.device,
+                                       config=self._cfg,
+                                       monitor=self._monitor)
+            # the trainer can be applied in both glbal training and
+            # global evaluation
             self.trainers = [self.trainer]
             if self.model_num > 1:
-                # By default, the training and evaluation is conducted by calling
-                # trainer[i].eval over all internal models
+                # By default, the training and evaluation is conducted by
+                # calling trainer[i].eval over all internal models
                 self.trainers.extend([
                     copy.deepcopy(self.trainer)
                     for _ in range(self.model_num - 1)
@@ -488,7 +488,8 @@ class Server(BaseServer):
                 'recover_fun': self.recover_fun,
                 'staleness': staleness,
             }
-            # for the fltrust aggregator, a global update is required to calculate the trustscore
+            # for the fltrust aggregator, a global update is required to
+            # calculate the trustscore
             if self._cfg.aggregator.fltrust.use:
                 agg_info['global_delta'] = self._global_trainer()
             # logger.info(f'The staleness is {staleness}')
@@ -924,22 +925,25 @@ class Server(BaseServer):
             # Preform evaluation in clients
             self.broadcast_model_para(msg_type='evaluate',
                                       filter_unseen_clients=False)
-            
+
     def _calculate_model_delta(self, init_model, updated_model):
         model_delta = copy.deepcopy(self.model.state_dict())
         for key in self.model.state_dict():
             model_delta[key] = updated_model[key] - init_model[key]
         return model_delta
-            
+
     def _global_trainer(self):
         """
-        The function is applied to conduct the global model training on a root dataset. \
-        For now, this function is simply used to implement the Fltrust aggregator, which \
-        is an advanced byzantine robust aggregator.
+        The function is applied to conduct the global model training \
+        on a root dataset. For now, this function is simply used to \
+        implement the Fltrust aggregator, which is an advanced byzantine \
+        robust aggregator.
         """
         temp_model = copy.deepcopy(self.model.state_dict())
-        _, model_para_all, _ = self.trainer.train(target_data_split_name='train')
-        global_delta = self._calculate_model_delta(init_model=temp_model, updated_model=model_para_all)
+        _, model_para_all, _ = self.trainer.train(
+            target_data_split_name='train')
+        global_delta = self._calculate_model_delta(
+            init_model=temp_model, updated_model=model_para_all)
         self.model.load_state_dict(temp_model)
         return global_delta
 

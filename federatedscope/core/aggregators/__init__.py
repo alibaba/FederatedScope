@@ -9,10 +9,15 @@ from federatedscope.core.aggregators.server_clients_interpolate_aggregator \
 from federatedscope.core.aggregators.fedopt_aggregator import FedOptAggregator
 from federatedscope.core.aggregators.krum_aggregator import KrumAggregator
 from federatedscope.core.aggregators.median_aggregator import MedianAggregator
-from federatedscope.core.aggregators.trimmedmean_aggregator import TrimmedmeanAggregator
-from federatedscope.core.aggregators.bulyan_aggregator import BulyanAggregator
-from federatedscope.core.aggregators.fltrust_aggregator import FLtrustAggregator
-from federatedscope.core.aggregators.normbounding_aggregator import NormboundingAggregator
+from federatedscope.core.aggregators.trimmedmean_aggregator import \
+    TrimmedmeanAggregator
+from federatedscope.core.aggregators.bulyan_aggregator import \
+    BulyanAggregator
+from federatedscope.core.aggregators.fltrust_aggregator import \
+    FLtrustAggregator
+from federatedscope.core.aggregators.normbounding_aggregator import \
+    NormboundingAggregator
+
 __all__ = [
     'Aggregator',
     'NoCommunicationAggregator',
