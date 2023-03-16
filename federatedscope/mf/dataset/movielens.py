@@ -35,8 +35,8 @@ class VMFDataset:
             test_ratings_all.append(test_ratings)
         # Server holds all
         data[0] = {
-            "train": sp.vstack(train_ratings_all).tocsc(),
-            "test": sp.vstack(test_ratings_all).tocsc()
+            "train": sp.hstack(train_ratings_all).tocsc(),
+            "test": sp.hstack(test_ratings_all).tocsc()
         }
         with open(self.processed_data, 'wb') as f:
             pickle.dump(data, f)
