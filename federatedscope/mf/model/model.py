@@ -30,7 +30,7 @@ class BasicMFNet(Module):
 
         label = torch.tensor(np.array(ratings)).to(device)
 
-        return pred, label, 1.0
+        return pred, label
 
     def load_state_dict(self, state_dict, strict: bool = True):
 

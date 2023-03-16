@@ -53,9 +53,8 @@ class MFTrainer(GeneralTorchTrainer):
 
     def _hook_on_batch_forward(self, ctx):
         indices, ratings = ctx.data_batch
-        pred, label, ratio = ctx.model(indices, ratings)
-        ctx.loss_batch = CtxVar(
-            ctx.criterion(pred, label) * ratio, LIFECYCLE.BATCH)
+        pred, label = ctx.model(indices, ratings)
+        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
 
         ctx.batch_size = len(ratings)
 
