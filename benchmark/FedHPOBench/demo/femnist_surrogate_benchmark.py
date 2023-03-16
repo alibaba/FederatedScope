@@ -24,7 +24,7 @@ class FENISTSurrogateFedHPOBench(BaseSurrogateFedHPOBench):
                     "/fedhpob_cnn_surrogate.zip"
         triplets = ('cnn', 'femnist', 'avg')
         client_num = 200
-        num_param = 871294
+        num_param = 6603902
         super(FENISTSurrogateFedHPOBench,
               self).__init__(data_path, model_path, data_url, model_url,
                              triplets, client_num, num_param, rng)
