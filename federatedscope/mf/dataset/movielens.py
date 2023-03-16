@@ -61,7 +61,7 @@ class HMFDataset:
             data[cliendId + 1] = {"train": train_ratings, "test": test_ratings}
             train_ratings_all.append(train_ratings)
             test_ratings_all.append(test_ratings)
-            # Server holds all
+        # Server holds all
         data[0] = {
             "train": sp.vstack(train_ratings_all).tocsc(),
             "test": sp.vstack(test_ratings_all).tocsc()
