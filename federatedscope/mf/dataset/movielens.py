@@ -6,6 +6,7 @@ from torchvision.datasets.utils import check_integrity, \
     download_and_extract_archive, calculate_md5
 import pandas as pd
 from tqdm import tqdm
+import scipy.sparse as sp
 from numpy.random import shuffle
 from scipy.sparse import coo_matrix
 from scipy.sparse import csc_matrix
@@ -24,11 +25,19 @@ class VMFDataset:
         shuffle(id_item)
         items_per_client = np.array_split(id_item, num_client)
         data = dict()
+        train_ratings_all, test_ratings_all = [], []
         for clientId, items in tqdm(enumerate(items_per_client)):
             client_ratings = ratings[:, items]
             train_ratings, test_ratings = self._split_train_test_ratings(
                 client_ratings, test_portion)
             data[clientId + 1] = {"train": train_ratings, "test": test_ratings}
+            train_ratings_all.append(train_ratings)
+            test_ratings_all.append(test_ratings)
+        # Server holds all
+        data[0] = {
+            "train": sp.vstack(train_ratings_all).tocsc(),
+            "test": sp.vstack(test_ratings_all).tocsc()
+        }
         with open(self.processed_data, 'wb') as f:
             pickle.dump(data, f)
         return data
@@ -44,11 +53,19 @@ class HMFDataset:
         shuffle(id_user)
         users_per_client = np.array_split(id_user, num_client)
         data = dict()
+        train_ratings_all, test_ratings_all = [], []
         for cliendId, users in tqdm(enumerate(users_per_client)):
             client_ratings = ratings[users, :]
             train_ratings, test_ratings = self._split_train_test_ratings(
                 client_ratings, test_portion)
             data[cliendId + 1] = {"train": train_ratings, "test": test_ratings}
+            train_ratings_all.append(train_ratings)
+            test_ratings_all.append(test_ratings)
+            # Server holds all
+        data[0] = {
+            "train": sp.vstack(train_ratings_all).tocsc(),
+            "test": sp.vstack(test_ratings_all).tocsc()
+        }
         with open(self.processed_data, 'wb') as f:
             pickle.dump(data, f)
         return data
