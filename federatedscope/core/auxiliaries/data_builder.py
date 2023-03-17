@@ -26,9 +26,10 @@ TRANS_DATA_MAP = {
     'DummyDataTranslator': [
         'toy', 'quadratic', 'femnist', 'celeba', 'shakespeare', 'twitter',
         'subreddit', 'synthetic', 'ciao', 'epinions', '.*?vertical_fl_data.*?',
-        '.*?movielens.*?', '.*?cikmcup.*?', 'graph_multi_domain.*?', 'cora',
-        'citeseer', 'pubmed', 'dblp_conf', 'dblp_org', 'csbm.*?', 'fb15k-237',
-        'wn18', 'adult', 'abalone', 'credit', 'blog'
+        '.*?movielens.*?', '.*?netflix.*?', '.*?cikmcup.*?',
+        'graph_multi_domain.*?', 'cora', 'citeseer', 'pubmed', 'dblp_conf',
+        'dblp_org', 'csbm.*?', 'fb15k-237', 'wn18', 'adult', 'abalone',
+        'credit', 'blog'
     ],  # Dummy for FL dataset
     'RawDataTranslator': ['hetero_nlp_tasks'],
 }
