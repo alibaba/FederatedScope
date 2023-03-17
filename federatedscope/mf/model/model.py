@@ -26,7 +26,7 @@ class BasicMFNet(Module):
         user_embedding = self.embed_user(indices[0])
         item_embedding = self.embed_item(indices[1])
 
-        pred = torch.diag(torch.matmul(user_embedding, item_embedding.T))
+        pred = (user_embedding * item_embedding).sum(dim=1)
 
         label = torch.tensor(np.array(ratings)).to(device)
 
