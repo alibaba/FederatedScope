@@ -69,7 +69,7 @@ def load_toy_data(config=None):
         val_y = np.expand_dims(val_y, -1)
         val_data = {'x': val_x, 'y': val_y}
         for each_client in range(1, client_num + 1):
-            data[each_client]['val'] = val_data
+            data[each_client]['val'] = copy.deepcopy(val_data)
 
         # server_data
         data[0] = dict()
