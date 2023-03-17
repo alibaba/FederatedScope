@@ -7,7 +7,7 @@ on:
 
 jobs:
   run:
-    if: false == contains(github.event.pull_request.title, 'WIP')
+    if: (false == contains(github.event.pull_request.title, 'WIP') && github.repository == 'alibaba/FederatedScope')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
