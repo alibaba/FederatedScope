@@ -29,6 +29,9 @@ vertical:
   use: True
   dims: [4, 8]
   algo: 'xgb'
+  protect_object: 'feature_order'
+  protect_method: 'dp'
+  protect_args: [ { 'bucket_num': 100, 'epsilon': 10 } ]
   data_size_for_debug: 2000
 eval:
   freq: 5

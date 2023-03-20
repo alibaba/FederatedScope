@@ -95,6 +95,7 @@ def extend_fl_setting_cfg(cfg):
     # Default values for 'dp': {'bucket_num':100, 'epsilon':None}
     # Default values for 'op_boost': {'algo':'global', 'lower_bound':1,
     #                                 'upper_bound':100, 'epsilon':2}
+    cfg.vertical.eval = ''
     cfg.vertical.data_size_for_debug = 0  # use a subset for debug in vfl,
     # 0 indicates using the entire dataset (disable debug mode)
 

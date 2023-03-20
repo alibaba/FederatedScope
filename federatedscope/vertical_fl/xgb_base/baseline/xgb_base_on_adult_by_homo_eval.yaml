@@ -12,13 +12,13 @@ model:
   max_tree_depth: 3
 data:
   root: data/
-  type: abalone
-  splits: [0.8, 0.2]
+  type: adult
+  splits: [1.0, 0.0]
 dataloader:
   type: raw
   batch_size: 2000
 criterion:
-  type: RegressionMSELoss
+  type: CrossEntropyLoss
 trainer:
   type: verticaltrainer
 train:
@@ -27,9 +27,10 @@ train:
     eta: 0.5
 vertical:
   use: True
-  dims: [4, 8]
+  dims: [7, 14]
   algo: 'xgb'
+  eval: 'homo'
   data_size_for_debug: 2000
 eval:
-  freq: 5
+  freq: 3
   best_res_update_round_wise_key: test_loss
