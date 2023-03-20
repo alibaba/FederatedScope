@@ -195,6 +195,7 @@ class ServerRunner(Runner):
         self.server_id = 0
         self.resource_info = resource_info
         self.client_resource_info = client_resource_info
+        self.serial_num_for_msg = 0
 
     def setup(self):
         self.config.defrost()
@@ -248,6 +249,8 @@ class ServerRunner(Runner):
                 # For the server, move the received message to a
                 # cache for reordering the messages according to
                 # the timestamps
+                msg.serial_num = self.serial_num_for_msg
+                self.serial_num_for_msg += 1
                 heapq.heappush(server_msg_cache, msg)
             elif len(server_msg_cache) > 0:
                 msg = heapq.heappop(server_msg_cache)
