@@ -132,10 +132,10 @@ class Server(BaseServer):
 
         if self._cfg.federate.make_global_eval:
             # set up a trainer for conducting evaluation in server
-            assert self.model is not None
+            assert self.models is not None
             assert self.data is not None
             self.trainer = get_trainer(
-                model=self.model,
+                model=self.models[0],
                 data=self.data,
                 device=self.device,
                 config=self._cfg,
@@ -456,7 +456,7 @@ class Server(BaseServer):
                 staleness.append((client_id, self.state - state))
 
             # Trigger the monitor here (for training)
-            self._monitor.calc_model_metric(self.model.state_dict(),
+            self._monitor.calc_model_metric(self.models[0].state_dict(),
                                             msg_list,
                                             rnd=self.state)
 
@@ -664,7 +664,7 @@ class Server(BaseServer):
             model_para = [{} if skip_broadcast else model.state_dict()
                           for model in self.models]
         else:
-            model_para = {} if skip_broadcast else self.model.state_dict()
+            model_para = {} if skip_broadcast else self.models[0].state_dict()
 
         # We define the evaluation happens at the end of an epoch
         rnd = self.state - 1 if msg_type == 'evaluate' else self.state
@@ -781,7 +781,7 @@ class Server(BaseServer):
             else:
                 if self._cfg.backend == 'torch':
                     model_size = sys.getsizeof(pickle.dumps(
-                        self.model)) / 1024.0 * 8.
+                        self.models[0])) / 1024.0 * 8.
                 else:
                     # TODO: calculate model size for TF Model
                     model_size = 1.0
@@ -851,7 +851,7 @@ class Server(BaseServer):
         if self.model_num > 1:
             model_para = [model.state_dict() for model in self.models]
         else:
-            model_para = self.model.state_dict()
+            model_para = self.models[0].state_dict()
 
         self._monitor.finish_fl()
 

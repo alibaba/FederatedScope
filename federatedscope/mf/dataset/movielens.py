@@ -5,6 +5,8 @@ import logging
 from torchvision.datasets.utils import check_integrity, \
     download_and_extract_archive, calculate_md5
 import pandas as pd
+from tqdm import tqdm
+import scipy.sparse as sp
 from numpy.random import shuffle
 from scipy.sparse import coo_matrix
 from scipy.sparse import csc_matrix
@@ -23,12 +25,22 @@ class VMFDataset:
         shuffle(id_item)
         items_per_client = np.array_split(id_item, num_client)
         data = dict()
-        for clientId, items in enumerate(items_per_client):
+        train_ratings_all, test_ratings_all = [], []
+        for clientId, items in tqdm(enumerate(items_per_client)):
             client_ratings = ratings[:, items]
             train_ratings, test_ratings = self._split_train_test_ratings(
                 client_ratings, test_portion)
             data[clientId + 1] = {"train": train_ratings, "test": test_ratings}
-        self.data = data
+            train_ratings_all.append(train_ratings)
+            test_ratings_all.append(test_ratings)
+        # Server holds all
+        data[0] = {
+            "train": sp.hstack(train_ratings_all).tocsc(),
+            "test": sp.hstack(test_ratings_all).tocsc()
+        }
+        with open(self.processed_data, 'wb') as f:
+            pickle.dump(data, f)
+        return data
 
 
 class HMFDataset:
@@ -41,12 +53,22 @@ class HMFDataset:
         shuffle(id_user)
         users_per_client = np.array_split(id_user, num_client)
         data = dict()
-        for cliendId, users in enumerate(users_per_client):
+        train_ratings_all, test_ratings_all = [], []
+        for cliendId, users in tqdm(enumerate(users_per_client)):
             client_ratings = ratings[users, :]
             train_ratings, test_ratings = self._split_train_test_ratings(
                 client_ratings, test_portion)
             data[cliendId + 1] = {"train": train_ratings, "test": test_ratings}
-        self.data = data
+            train_ratings_all.append(train_ratings)
+            test_ratings_all.append(test_ratings)
+        # Server holds all
+        data[0] = {
+            "train": sp.vstack(train_ratings_all).tocsc(),
+            "test": sp.vstack(test_ratings_all).tocsc()
+        }
+        with open(self.processed_data, 'wb') as f:
+            pickle.dump(data, f)
+        return data
 
 
 class MovieLensData(object):
@@ -75,7 +97,16 @@ class MovieLensData(object):
                                "You can use download=True to download it")
 
         ratings = self._load_meta()
-        self._split_n_clients_rating(ratings, num_client, 1 - train_portion)
+
+        self.processed_data = os.path.join(self.root, self.base_folder,
+                                           'processed_data.pkl')
+        if os.path.exists(self.processed_data):
+            with open(self.processed_data, 'rb') as f:
+                self.data = pickle.load(f)
+        else:
+            logger.info(f"Processing data into {num_client} parties.")
+            self.data = self._split_n_clients_rating(ratings, num_client,
+                                                     1 - train_portion)
 
     def _split_train_test_ratings(self, ratings: csc_matrix,
                                   test_portion: float):
@@ -114,7 +145,7 @@ class MovieLensData(object):
     def _load_meta(self):
         meta_path = os.path.join(self.root, self.base_folder, "ratings.pkl")
         if not os.path.exists(meta_path):
-            logger.info("Processing data into {} parties.")
+            logger.info("Processing ratings.")
             data = self._read_raw()
             # Map idx
             unique_id_item, unique_id_user = np.sort(

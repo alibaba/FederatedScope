@@ -1,4 +1,5 @@
-use_gpu: False
+use_gpu: True
+device: 0
 early_stop:
   patience: 100
 federate:
@@ -12,7 +13,6 @@ data:
   root: data/
   type: HFLNetflix
 dataloader:
-  batch_size: 32
   type: mf
 model:
   type: HMFNet
@@ -28,3 +28,5 @@ trainer:
 eval:
   freq: 100
   metrics: []
+  best_res_update_round_wise_key: test_avg_loss
+  count_flops: False

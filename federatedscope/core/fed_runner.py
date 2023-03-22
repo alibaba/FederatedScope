@@ -59,6 +59,7 @@ class BaseRunner(object):
             config.ready_for_run()
         self.cfg = config
         self.client_cfgs = client_configs
+        self.serial_num_for_msg = 0
 
         self.mode = self.cfg.federate.mode.lower()
         self.gpu_manager = GPUManager(gpu_available=self.cfg.use_gpu,
@@ -471,6 +472,8 @@ class StandaloneRunner(BaseRunner):
                     # For the server, move the received message to a
                     # cache for reordering the messages according to
                     # the timestamps
+                    msg.serial_num = self.serial_num_for_msg
+                    self.serial_num_for_msg += 1
                     heapq.heappush(server_msg_cache, msg)
                 else:
                     self._handle_msg(msg)

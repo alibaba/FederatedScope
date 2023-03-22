@@ -23,7 +23,8 @@ class Message(object):
                  state=0,
                  content='None',
                  timestamp=0,
-                 strategy=None):
+                 strategy=None,
+                 serial_num=0):
         self._msg_type = msg_type
         self._sender = sender
         self._receiver = receiver
@@ -31,6 +32,7 @@ class Message(object):
         self._content = content
         self._timestamp = timestamp
         self._strategy = strategy
+        self.serial_num = serial_num
 
     @property
     def msg_type(self):
@@ -93,8 +95,10 @@ class Message(object):
     def __lt__(self, other):
         if self.timestamp != other.timestamp:
             return self.timestamp < other.timestamp
-        else:
+        elif self.state != other.state:
             return self.state < other.state
+        else:
+            return self.serial_num < other.serial_num
 
     def transform_to_list(self, x):
         if isinstance(x, list) or isinstance(x, tuple):
