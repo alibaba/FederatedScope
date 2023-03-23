@@ -60,7 +60,7 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             FedOptAggregator, NoCommunicationAggregator, \
             AsynClientsAvgAggregator, KrumAggregator, \
             MedianAggregator, TrimmedmeanAggregator, \
-            BulyanAggregator, FLtrustAggregator, NormboundingAggregator
+            BulyanAggregator,  NormboundingAggregator
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
@@ -89,19 +89,17 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             return AsynClientsAvgAggregator(model=model,
                                             device=device,
                                             config=config)
-        elif config.aggregator.krum.use:
+        elif config.aggregator.robust_rule == 'krum':
             return KrumAggregator(model=model, device=device, config=config)
-        elif config.aggregator.median.use:
+        elif config.aggregator.robust_rule == 'median':
             return MedianAggregator(model=model, device=device, config=config)
-        elif config.aggregator.trimmedmean.use:
+        elif config.aggregator.robust_rule == 'trimmedmean':
             return TrimmedmeanAggregator(model=model,
                                          device=device,
                                          config=config)
-        elif config.aggregator.bulyan.use:
+        elif config.aggregator.robust_rule == 'bulyan':
             return BulyanAggregator(model=model, device=device, config=config)
-        elif config.aggregator.fltrust.use:
-            return FLtrustAggregator(model=model, device=device, config=config)
-        elif config.aggregator.normbounding.use:
+        elif config.aggregator.robust_rule == 'normbounding':
             return NormboundingAggregator(model=model,
                                           device=device,
                                           config=config)

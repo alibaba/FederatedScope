@@ -15,7 +15,7 @@ class BulyanAggregator(ClientsAvgAggregator):
     def __init__(self, model=None, device='cpu', config=None):
         super(BulyanAggregator, self).__init__(model, device, config)
         self.byzantine_node_num = config.aggregator.byzantine_node_num
-        self.client_sampled_ratio = config.aggregator.client_sampled_ratio
+        self.sample_client_rate = config.federate.sample_client_rate
         assert 4 * self.byzantine_node_num + 3 <= config.federate.client_num
 
     def aggregate(self, agg_info):
@@ -85,14 +85,14 @@ class BulyanAggregator(ClientsAvgAggregator):
         reliable_models = list()
         for number, index in enumerate(index_order):
             if number < len(models) - int(
-                    2 * self.client_sampled_ratio * self.byzantine_node_num):
+                    2 * self.sample_client_rate * self.byzantine_node_num):
                 reliable_models.append(models[index])
         '''
         Sort parameter for each coordinate of the rest \theta reliable
         local models, and find \gamma (gamma<\theta-2*self.byzantine_num)
         parameters closest to the median to perform averaging
         '''
-        exluded_num = int(self.client_sampled_ratio * self.byzantine_node_num)
+        exluded_num = int(self.sample_client_rate * self.byzantine_node_num)
         gamma = len(reliable_models) - 2 * exluded_num
         for key in init_model:
             temp = torch.stack(
