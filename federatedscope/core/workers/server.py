@@ -901,7 +901,11 @@ class Server(BaseServer):
             # Preform evaluation in clients
             self.broadcast_model_para(msg_type='evaluate',
                                       filter_unseen_clients=False)
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> 46ca407 (modify some auxiliary contents of the robust aggregators)
     def callback_funcs_model_para(self, message: Message):
         """
         The handling function for receiving model parameters, which triggers \
