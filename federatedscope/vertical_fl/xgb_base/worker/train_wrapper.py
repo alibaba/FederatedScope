@@ -178,6 +178,7 @@ def wrap_client_for_train(client):
                     self.comm_manager.send(send_message)
             else:
                 self.trainer._set_weight_and_status(tree_num, node_num)
+                self.train(tree_num=tree_num, node_num=node_num + 1)
 
     # Bind method to instance
     client.train = types.MethodType(train, client)
