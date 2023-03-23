@@ -13,8 +13,6 @@ from federatedscope.core.aggregators.trimmedmean_aggregator import \
     TrimmedmeanAggregator
 from federatedscope.core.aggregators.bulyan_aggregator import \
     BulyanAggregator
-from federatedscope.core.aggregators.fltrust_aggregator import \
-    FLtrustAggregator
 from federatedscope.core.aggregators.normbounding_aggregator import \
     NormboundingAggregator
 
@@ -30,6 +28,5 @@ __all__ = [
     'MedianAggregator',
     'TrimmedmeanAggregator',
     'BulyanAggregator',
-    'FLtrustAggregator',
     'NormboundingAggregator',
 ]
