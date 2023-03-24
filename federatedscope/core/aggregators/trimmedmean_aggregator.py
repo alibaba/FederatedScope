@@ -14,10 +14,12 @@ class TrimmedmeanAggregator(ClientsAvgAggregator):
     [Yin et al., 2018]
     (http://proceedings.mlr.press/v80/yin18a/yin18a.pdf)
 
+    The code is adapted from https://github.com/bladesteam/blades
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(TrimmedmeanAggregator, self).__init__(model, device, config)
-        self.excluded_ratio = config.aggregator.trimmedmean.excluded_ratio
+        self.excluded_ratio = \
+            config.aggregator.BFT_args.trimmedmean_excluded_ratio
         self.byzantine_node_num = config.aggregator.byzantine_node_num
         assert 2 * self.byzantine_node_num + 2 < config.federate.client_num, \
             "it should be satisfied that 2*byzantine_node_num + 2 < client_num"

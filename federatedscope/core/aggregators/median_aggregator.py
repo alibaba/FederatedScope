@@ -15,6 +15,8 @@ class MedianAggregator(ClientsAvgAggregator):
     (http://proceedings.mlr.press/v80/yin18a/yin18a.pdf)
 
     It computes the coordinate-wise median of recieved updates from clients
+
+    The code is adapted from https://github.com/bladesteam/blades
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(MedianAggregator, self).__init__(model, device, config)

@@ -62,6 +62,15 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             MedianAggregator, TrimmedmeanAggregator, \
             BulyanAggregator,  NormboundingAggregator
 
+    STR2AGG = {
+        'fedavg': ClientsAvgAggregator,
+        'krum': KrumAggregator,
+        'median': MedianAggregator,
+        'bulyan': BulyanAggregator,
+        'TrimmedmeanAggregator': TrimmedmeanAggregator,
+        'normbounding': NormboundingAggregator
+    }
+
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
     else:
@@ -89,24 +98,17 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
             return AsynClientsAvgAggregator(model=model,
                                             device=device,
                                             config=config)
-        elif config.aggregator.robust_rule == 'krum':
-            return KrumAggregator(model=model, device=device, config=config)
-        elif config.aggregator.robust_rule == 'median':
-            return MedianAggregator(model=model, device=device, config=config)
-        elif config.aggregator.robust_rule == 'trimmedmean':
-            return TrimmedmeanAggregator(model=model,
-                                         device=device,
-                                         config=config)
-        elif config.aggregator.robust_rule == 'bulyan':
-            return BulyanAggregator(model=model, device=device, config=config)
-        elif config.aggregator.robust_rule == 'normbounding':
-            return NormboundingAggregator(model=model,
-                                          device=device,
-                                          config=config)
         else:
-            return ClientsAvgAggregator(model=model,
-                                        device=device,
-                                        config=config)
+            if config.aggregator.robust_rule not in STR2AGG:
+                logger.warning(
+                    f'The specified {config.aggregator.robust_rule} aggregtion\
+                    rule has not been supported, the vanilla fedavg algorithm \
+                    will be used instead.')
+                return STR2AGG.get(config.aggregator.robust_rule,
+                                   ClientsAvgAggregator)(model=model,
+                                                         device=device,
+                                                         config=config)
+
     elif aggregator_type == 'server_clients_interpolation':
         return ServerClientsInterpolateAggregator(
             model=model,

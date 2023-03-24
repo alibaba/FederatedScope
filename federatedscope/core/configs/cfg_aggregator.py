@@ -12,21 +12,10 @@ def extend_aggregator_cfg(cfg):
     # 'trimmedmean', 'bulyan' and 'normbounding', the use case is refered
     #  to tests/test_robust_aggregators.py
     # ---------------------------------------------------------------------- #
-    cfg.aggregator = CN(new_allowed=True)
-    cfg.aggregator.robust_rule = 'oracle_fedavg'
+    cfg.aggregator = CN()
+    cfg.aggregator.robust_rule = 'fedavg'
     cfg.aggregator.byzantine_node_num = 0
-
-    # For krum Algos
-    cfg.aggregator.krum = CN()
-    cfg.aggregator.krum.agg_num = 1
-
-    # For trimmedmean Algos
-    cfg.aggregator.trimmedmean = CN()
-    cfg.aggregator.trimmedmean.excluded_ratio = 0.1
-
-    # For normbounding Algos
-    cfg.aggregator.normbounding = CN()
-    cfg.aggregator.normbounding.norm_bound = 10.0
+    cfg.aggregator.BFT_args = CN(new_allowed=True)
 
     # For ATC method
     cfg.aggregator.num_agg_groups = 1

@@ -14,7 +14,7 @@ class NormboundingAggregator(ClientsAvgAggregator):
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(NormboundingAggregator, self).__init__(model, device, config)
-        self.norm_bound = config.aggregator.normbounding.norm_bound
+        self.norm_bound = config.aggregator.BFT_args.normbounding_norm_bound
 
     def aggregate(self, agg_info):
         """
