@@ -20,17 +20,22 @@ class AverageMeter(object):
 
 def merge_param_dict(raw_param, filtered_param):
     for key in filtered_param.keys():
-        raw_p, merge_p = raw_param[key], filtered_param[key]
-        raw_sz, merge_sz = raw_p.size(), merge_p.size()
+        if key not in raw_param:
+            continue
+        raw_sz, merge_sz = raw_param[key].size(), filtered_param[key].size()
         if raw_sz == merge_sz:
             raw_param[key] = filtered_param[key]
         else:
-            assert len(raw_sz) == len(merge_sz) == 2 and \
-                   raw_sz[0] == merge_sz[0]
-            if raw_sz[1] > merge_sz[1]:  # merge from client to server
-                raw_param[key] = merge_p.repeat(1, raw_sz[1] // merge_sz[1])
-            else:  # merge from server to client
-                raw_param[key] = torch.stack(merge_p.split(raw_sz[1],
-                                                           dim=-1)).mean(0)
+            # print(f'skip params with different size: '
+            #       f'{key} ({merge_sz} vs. {raw_sz})')
+            if 'prefix_encoder' in key:
+                assert len(raw_sz) == len(merge_sz) == 2 and \
+                       raw_sz[0] == merge_sz[0]
+                if raw_sz[1] > merge_sz[1]:  # merge from client to server
+                    raw_param[key] = filtered_param[key].repeat(
+                        1, raw_sz[1] // merge_sz[1])
+                else:  # merge from server to client
+                    raw_param[key] = torch.stack(filtered_param[key].split(
+                        raw_sz[1], dim=-1)).mean(0)
 
     return raw_param

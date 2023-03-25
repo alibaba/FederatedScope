@@ -48,7 +48,14 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.atc_load_from = ''
 
     # prompt learning
+    cfg.federate.skip_local_train = False
     cfg.federate.pl_save_to = ''
+    cfg.federate.pl_ret_avg_model = False
+    cfg.federate.pl_alter_train = False  # alternately train model and prompt
+    # in each client
+    cfg.federate.pl_init_kd = False
+    cfg.federate.pl_kd_cfg_file = ''
+    cfg.federate.pl_global_cfg_file = ''
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options

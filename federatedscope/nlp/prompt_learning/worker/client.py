@@ -37,14 +37,26 @@ class PLClient(Client):
         self.state = round
         self.trainer.update(content['model_para'])
 
-        sample_size, model_para_all, model_grads, results = \
-            self.trainer.train()
+        if self._cfg.federate.skip_local_train:
+            sample_size = 0
+            model_para_all = self.trainer.get_model_para()
+            model_grads = self.trainer.get_model_grads()
+        else:
+            if self._cfg.federate.pl_alter_train:
+                self.trainer.update_alter_stage('model')
+                self.trainer.train()
+                self.trainer.update_alter_stage('prompt')
 
-        logger.info(
-            self._monitor.format_eval_res(results,
-                                          rnd=self.state + 1,
-                                          role='Client #{}'.format(self.ID),
-                                          return_raw=True))
+            sample_size, model_para_all, model_grads, results = \
+                self.trainer.train()
+
+            logger.info(
+                self._monitor.format_eval_res(results,
+                                              rnd=self.state + 1,
+                                              role='Client #{}'.format(
+                                                  self.ID),
+                                              return_raw=True))
+
         self.comm_manager.send(
             Message(msg_type='model_para',
                     sender=self.ID,

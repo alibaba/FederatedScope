@@ -61,8 +61,13 @@ class BaseRunner(object):
         self.client_cfgs = client_configs
 
         self.mode = self.cfg.federate.mode.lower()
+        device_id = self.cfg.device
+        if self.cfg.backend == 'torch' and self.cfg.use_ddp:
+            import torch.distributed as dist
+            device_id = dist.get_rank()
+
         self.gpu_manager = GPUManager(gpu_available=self.cfg.use_gpu,
-                                      specified_device=self.cfg.device)
+                                      specified_device=device_id)
 
         self.unseen_clients_id = []
         self.feat_engr_wrapper_client, self.feat_engr_wrapper_server = \

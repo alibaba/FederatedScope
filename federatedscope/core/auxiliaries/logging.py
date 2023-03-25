@@ -100,7 +100,7 @@ def update_logger(cfg, clear_before_add=False):
                 "sub_exp" + datetime.now().strftime('_%Y%m%d%H%M%S'))
         cfg.outdir = outdir
     # if not, make directory with given name
-    os.makedirs(cfg.outdir)
+    os.makedirs(cfg.outdir, exist_ok=True)
 
     # create file handler which logs even debug messages
     fh = logging.FileHandler(os.path.join(cfg.outdir, 'exp_print.log'))

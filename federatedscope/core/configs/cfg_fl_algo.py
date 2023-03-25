@@ -52,6 +52,10 @@ def extend_fl_algo_cfg(cfg):
     cfg.personalization.K = 5  # the local approximation steps for pFedMe
     cfg.personalization.beta = 1.0  # the average moving parameter for pFedMe
 
+    # prompt learning
+    cfg.personalization.server_local_param = []
+    cfg.personalization.client_local_param = []
+
     # ---------------------------------------------------------------------- #
     # FedSage+ related options, gfl
     # ---------------------------------------------------------------------- #

@@ -301,6 +301,10 @@ def init_global_cfg(cfg):
     cfg.expname_tag = ''  # detailed exp tag to distinguish different
     # sub-exp with the same expname
 
+    # Use distributed data parallel and mixed precision training
+    cfg.use_ddp = False
+    cfg.use_amp = False
+
     # extend user customized configs
     for func in register.config_dict.values():
         func(cfg)

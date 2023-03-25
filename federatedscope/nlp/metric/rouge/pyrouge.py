@@ -47,8 +47,7 @@ class DirectoryProcessor:
         files in output_dir.
 
         """
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
         input_file_names = os.listdir(input_dir)
         for input_file_name in input_file_names:
             input_file = os.path.join(input_dir, input_file_name)
@@ -647,8 +646,7 @@ class Rouge155(object):
             parent_dir = os.path.dirname(__file__)
             config_dir_name = ""
         config_dir = os.path.join(parent_dir, config_dir_name)
-        if not os.path.exists(config_dir):
-            os.makedirs(config_dir)
+        os.makedirs(config_dir, exist_ok=True)
         return os.path.join(config_dir, 'settings.ini')
 
 

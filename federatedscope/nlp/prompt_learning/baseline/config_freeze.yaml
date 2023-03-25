@@ -1,0 +1,34 @@
+use_gpu: True
+device: 0
+seed: 12345
+outdir: exp
+federate:
+  mode: standalone
+  method: fedavg
+  total_round_num: 100
+  client_num: 20
+  make_global_eval: True
+  pl_save_to: ckpt
+data:
+  type: pl_data
+  batch_size: 16
+  max_seq_len: 2048
+  num_workers: 0
+model:
+  type: pl_model
+  model_type: gpt2-xl #facebook/opt-1.3b
+  num_server_layers: 24
+  server_freeze_param: ['model']
+  client_freeze_param: ['model']
+trainer:
+  type: pl_trainer
+train:
+  batch_or_epoch: batch
+  local_update_steps: 10
+  optimizer:
+    type: AdamW
+    lr: 5e-2
+    weight_decay: 0.01
+  scheduler:
+    type: warmup_step
+    warmup_ratio: 0.1

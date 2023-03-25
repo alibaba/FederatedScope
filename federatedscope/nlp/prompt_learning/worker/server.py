@@ -4,16 +4,99 @@ import logging
 import pickle
 import numpy as np
 import torch
+import torch.nn as nn
+import torch.distributed as dist
+import json
+from lm_eval import evaluator
 from federatedscope.core.message import Message
+from federatedscope.core.auxiliaries.model_builder import get_model
+from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 from federatedscope.core.workers import Server
+from federatedscope.nlp.prompt_learning.dataset.utils import setup_tokenizer
 from federatedscope.nlp.prompt_learning.trainer.utils import merge_param_dict
+from federatedscope.nlp.prompt_learning.model.model import LMEvalModel
 
 logger = logging.getLogger(__name__)
+LM_EVAL_TASK_NAME_MAPPING = {'web_questions': 'webqs'}
 
 
 class PLServer(Server):
+    def __init__(self,
+                 ID=-1,
+                 state=0,
+                 config=None,
+                 data=None,
+                 model=None,
+                 client_num=5,
+                 total_round_num=10,
+                 device='cpu',
+                 strategy=None,
+                 unseen_clients_id=None,
+                 **kwargs):
+        super(PLServer, self).__init__(ID=ID,
+                                       state=state,
+                                       config=config,
+                                       data=data,
+                                       model=model,
+                                       client_num=client_num,
+                                       total_round_num=total_round_num,
+                                       device=device,
+                                       strategy=strategy,
+                                       unseen_clients_id=unseen_clients_id,
+                                       **kwargs)
+
+        self.local_rank = dist.get_rank() if self._cfg.use_ddp else 0
+        if self._cfg.federate.pl_init_kd:
+            self.init_cfg = self._cfg.clone()
+            self.init_cfg.defrost()
+            self.init_cfg.merge_from_file(self._cfg.federate.pl_kd_cfg_file)
+            self.init_cfg.model.client_freeze_param = []
+            self.init_cfg.freeze()
+            self.init_model = get_model(self.init_cfg.model,
+                                        local_data=None,
+                                        backend=self.init_cfg.backend,
+                                        role='client')
+            self.init_trainer = get_trainer(model=self.init_model,
+                                            data=data,
+                                            device=device,
+                                            config=self.init_cfg,
+                                            monitor=self._monitor)
+            self.init_trainer.ctx.teacher_model = get_model(
+                self.init_cfg.model,
+                local_data=None,
+                backend=self.init_cfg.backend,
+                role='server')
+
+        if self._cfg.federate.make_global_eval:
+            self.global_cfg = self._cfg.clone()
+            self.global_cfg.defrost()
+            self.global_cfg.merge_from_file(
+                self._cfg.federate.pl_global_cfg_file)
+            self.global_cfg.freeze()
+            self.trainer = get_trainer(
+                model=self.model,
+                data=self.data,
+                device=self.device,
+                config=self.global_cfg,
+                only_for_eval=not self._cfg.federate.make_global_train,
+                monitor=self._monitor)
+            self.trainers = [self.trainer]
+
+            self.client_model = get_model(self._cfg.model,
+                                          local_data=None,
+                                          backend=self._cfg.backend,
+                                          role='client')
+            self.client_trainer = get_trainer(model=self.client_model,
+                                              data=data,
+                                              device=device,
+                                              config=self._cfg,
+                                              monitor=self._monitor)
+            self.trainer.ctx.teacher_model = self.client_model
+            self.client_trainer.ctx.teacher_model = self.model
+            self.best_val_res = np.inf
+
     def _perform_federated_aggregation(self):
         train_msg_buffer = dict(
             sorted(self.msg_buffer['train'][self.state].items(),
@@ -30,9 +113,16 @@ class PLServer(Server):
             'recover_fun': self.recover_fun,
         }
         avg_model = self.aggregator.aggregate(agg_info)
-        merged_param = merge_param_dict(self.model.state_dict().copy(),
-                                        avg_model)
-        self.model.load_state_dict(merged_param, strict=False)
+        if self._cfg.federate.make_global_eval:  # When server and
+            # client have different personalized params, params of
+            # avg_model that are also in server's personalized params
+            # should be filtered out first to avoid overwriting.
+            self.trainer.update(avg_model)
+            self.client_trainer.update(avg_model)
+        else:
+            merged_param = merge_param_dict(self.model.state_dict().copy(),
+                                            avg_model)
+            self.model.load_state_dict(merged_param, strict=False)
 
         return aggregated_num
 
@@ -51,7 +141,34 @@ class PLServer(Server):
                 self.sampler.change_state(receiver, 'working')
 
         skip_broadcast = self._cfg.federate.method in ['local', 'global']
-        model_para = {} if skip_broadcast else self.model.state_dict()
+        model_para = {}
+        if not skip_broadcast:
+            if self._cfg.federate.pl_init_kd and self.state == 0:
+                logger.info('Conducting initial KD training')
+
+                if self.init_cfg.federate.pl_alter_train:
+                    self.init_trainer.update_alter_stage('model')
+                    self.init_trainer.train()
+                    self.init_trainer.update_alter_stage('prompt')
+                train_metrics = self.init_trainer.train()[-1]
+                formatted_train_res = self._monitor.format_eval_res(
+                    train_metrics,
+                    rnd=self.state,
+                    role='Client #',
+                    return_raw=self.init_cfg.federate.make_global_eval)
+                logger.info(formatted_train_res)
+                model_para = self.init_trainer.get_model_para()
+            else:
+                if self._cfg.federate.make_global_eval:
+                    if self._cfg.federate.pl_ret_avg_model:
+                        model_para = self.client_trainer.get_model_para()
+                    else:  # avoid undesired param overwriting due to
+                        # different personalized params between server
+                        # and client
+                        model_para = self.trainer.get_model_para()
+                else:
+                    model_para = self.model.state_dict()
+
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
@@ -206,12 +323,8 @@ class PLServer(Server):
         if self._cfg.federate.make_global_eval:
             # Perform training in server
             if self._cfg.federate.make_global_train:
-                # model_para = self.model.state_dict()
-                # self.trainer.update(model_para)
-                sample_size, model_para, model_grads, train_metrics = \
-                    self.trainer.train()
-                # self.model.load_state_dict(model_para, strict=False)
-
+                # server
+                train_metrics = self.trainer.train()[-1]
                 formatted_train_res = self._monitor.format_eval_res(
                     train_metrics,
                     rnd=self.state,
@@ -220,68 +333,66 @@ class PLServer(Server):
                 logger.info(formatted_train_res)
 
             # Evaluate on val dataset
-            # model_para = self.model.state_dict()
-            # self.trainer.update(model_para)
-            val_metrics = self.trainer.evaluate(target_data_split_name='val')
-            formatted_val_res = self._monitor.format_eval_res(
-                val_metrics,
-                rnd=self.state,
-                role='Server #',
-                return_raw=self._cfg.federate.make_global_eval)
-            logger.info(formatted_val_res)
-
-            comp_metric = f'val_{self._cfg.eval.metrics[0]}'
-            max_score = -np.inf if self.state == 1 else \
-                max(self.history_results['Results_raw'][comp_metric])
-            cur_score = val_metrics[comp_metric]
             save_path = os.path.join(self._cfg.federate.pl_save_to,
                                      'best_model.pt')
-            if cur_score > max_score:
-                logger.info(f'Best score {cur_score} obtained. '
-                            f'Model saved to {save_path}.')
-                ckpt = {
-                    'round': self.state,
-                    'model': self.trainer.get_model_para(),
-                    'val_score': cur_score
-                }
-                torch.save(ckpt, save_path)
+            if not self._cfg.federate.skip_local_train:
+                # server
+                val_metrics = self.trainer.evaluate(
+                    target_data_split_name='val')
+                formatted_val_res = self._monitor.format_eval_res(
+                    val_metrics,
+                    rnd=self.state,
+                    role='Server #',
+                    return_raw=self._cfg.federate.make_global_eval)
+                logger.info(formatted_val_res)
 
-            self.history_results = merge_dict_of_results(
-                self.history_results, formatted_val_res)
-            self._monitor.save_formatted_results(formatted_val_res)
+                cur_val_res = val_metrics['val_avg_loss']
+                if cur_val_res < self.best_val_res:
+                    self.best_val_res = cur_val_res
+                    if self._cfg.federate.pl_save_to and self.local_rank == 0:
+                        logger.info(f'Best val res {cur_val_res} obtained. '
+                                    f'Model saved to {save_path}.')
+                        ckpt = {
+                            'round': self.state,
+                            'val_res': cur_val_res,
+                            'model': self.trainer.get_model_para()
+                        }
+                        os.makedirs(self._cfg.federate.pl_save_to,
+                                    exist_ok=True)
+                        torch.save(ckpt, save_path)
+
+                self.history_results = merge_dict_of_results(
+                    self.history_results, formatted_val_res)
+                self._monitor.save_formatted_results(formatted_val_res)
 
             # Evaluate on test dataset
             if self.state == self.total_round_num:
-                # last ckpt
-                # model_para = self.model.state_dict()
-                # self.trainer.update(model_para)
-                test_metrics = self.trainer.evaluate(
-                    target_data_split_name='test')
-                formatted_test_res = self._monitor.format_eval_res(
-                    test_metrics,
-                    rnd=self.state,
-                    role='Server # (Last)',
-                    return_raw=self._cfg.federate.make_global_eval)
-                self._monitor.save_formatted_results(formatted_test_res)
-                logger.info(formatted_test_res)
+                if os.path.exists(save_path):
+                    best_ckpt = torch.load(save_path, map_location='cpu')
+                    self.trainer.update(best_ckpt['model'])
+                    logger.info(f"Loaded best model obtained in round "
+                                f"{best_ckpt['round']} "
+                                f"({best_ckpt['val_res']}).")
 
-                # best ckpt
-                best_ckpt = torch.load(save_path, map_location='cpu')
-                # model_para.update(best_ckpt['model'])
-                self.trainer.update(best_ckpt['model'])
-                logger.info(f"Loaded best model obtained in round "
-                            f"{best_ckpt['round']} "
-                            f"({best_ckpt['val_score']}).")
-
-                test_metrics = self.trainer.evaluate(
-                    target_data_split_name='test')
-                formatted_test_res = self._monitor.format_eval_res(
-                    test_metrics,
-                    rnd=self.state,
-                    role='Server # (Best)',
-                    return_raw=self._cfg.federate.make_global_eval)
-                self._monitor.save_formatted_results(formatted_test_res)
-                logger.info(formatted_test_res)
+                tokenizer = setup_tokenizer(self._cfg)
+                self.model.to(self.device)
+                lm_eval_model = LMEvalModel(self.model, tokenizer, self.device)
+                test_results = evaluator.simple_evaluate(
+                    model=lm_eval_model,
+                    tasks=[
+                        LM_EVAL_TASK_NAME_MAPPING.get(
+                            self._cfg.data.dataset_name,
+                            self._cfg.data.dataset_name)
+                    ],
+                    batch_size=128,
+                    no_cache=True,
+                )
+                self.model.to('cpu')
+                del test_results['config']['model']
+                logger.info(evaluator.make_table(test_results))
+                with open(os.path.join(self._cfg.outdir, 'test_results.json'),
+                          'w') as f:
+                    json.dump(test_results, f, indent=2)
 
             self.check_and_save()
         else:

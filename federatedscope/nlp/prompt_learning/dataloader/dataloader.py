@@ -1,12 +1,13 @@
 import os
 import logging
 import torch
+import torch.distributed as dist
 from tqdm import tqdm
-from torch.utils.data import DataLoader
-from federatedscope.register import register_data
-from federatedscope.nlp.prompt_learning.dataset.dataset import \
-    PLDataProcessor, create_pl_dataset
-from federatedscope.nlp.prompt_learning.dataset.utils import setup_tokenizer
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
+from torch.utils.data.distributed import DistributedSampler
+from federatedscope.nlp.prompt_learning.dataset.dataset import PLDataProcessor
+from federatedscope.nlp.prompt_learning.dataset.utils import DatasetDict, \
+    setup_tokenizer
 
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 logger = logging.getLogger(__name__)
@@ -14,13 +15,6 @@ logger = logging.getLogger(__name__)
 
 def extend_cfg(config):
     dataset_name = config.data.dataset_name
-    if dataset_name == 'copa':
-        config.model.num_labels = 1
-    elif dataset_name == 'cb':
-        config.model.num_labels = 3
-    else:
-        config.model.num_labels = 2
-
     if dataset_name == 'multirc':
         config.eval.metrics = ['f1']
     elif dataset_name == 'record':
@@ -31,9 +25,10 @@ def extend_cfg(config):
     if config.federate.pl_save_to:
         config.federate.pl_save_to = os.path.join(config.outdir,
                                                   config.federate.pl_save_to)
-        os.makedirs(config.federate.pl_save_to, exist_ok=True)
-
-    config.personalization.local_param += config.model.freeze_param
+    config.personalization.server_local_param += \
+        config.model.server_freeze_param
+    config.personalization.client_local_param += \
+        config.model.client_freeze_param
 
     if config.data.is_debug:
         config.federate.client_num = 2
@@ -44,76 +39,57 @@ def extend_cfg(config):
     return config
 
 
-def collate_fn(batch):
-    out = {k: [d[k] for d in batch] for k in batch[0]}
-    out = {
-        k: torch.stack(v) if isinstance(v[0], torch.Tensor) else v
-        for k, v in out.items()
-    }
-    return out
-
-
 def load_pl_data(config):
+    if config.use_ddp:
+        dist.init_process_group(backend='nccl')
+        torch.cuda.set_device(dist.get_rank())
+
     extend_cfg(config)
     tokenizer = setup_tokenizer(config)
     debug = config.data.is_debug
-
     logger.info(f'Preprocessing dataset {config.data.type}')
-    data_processor = PLDataProcessor(config, train_frac=0.9)
+    data_processor = PLDataProcessor(config, tokenizer, debug)
     train_data, val_data, test_data = data_processor.split_data()
 
     data_dict = dict()
     for client_id in tqdm(range(config.federate.client_num + 1)):
-        if not config.federate.make_global_train and client_id == 0:
-            dataloader_dict = {}
-        else:
-            cur_train_data = create_pl_dataset(
-                data=train_data[client_id],
-                tokenizer=tokenizer,
-                dataset_name=config.data.dataset_name,
-                max_seq_len=config.data.max_seq_len,
-                debug=debug)
-
+        dataloader_dict = {}
+        if train_data[client_id] is not None:
+            dataset = DatasetDict(train_data[client_id])
             dataloader_dict = {
                 'train': {
                     'dataloader': DataLoader(
-                        dataset=cur_train_data,
+                        dataset=dataset,
                         batch_size=config.data.batch_size,
-                        shuffle=config.data.shuffle,
                         num_workers=config.data.num_workers,
                         pin_memory=config.use_gpu,
-                        collate_fn=collate_fn),
+                        sampler=DistributedSampler(dataset)
+                        if config.use_ddp else RandomSampler(dataset),
+                    ),
                 },
             }
 
         if client_id == 0:  # server
-            cur_val_data, cur_test_data = [
-                create_pl_dataset(data=data,
-                                  tokenizer=tokenizer,
-                                  dataset_name=config.data.dataset_name,
-                                  max_seq_len=config.data.max_seq_len,
-                                  debug=debug)
-                for data in [val_data, test_data]
-            ]
-
+            val_dataset = DatasetDict(val_data)
+            test_dataset = DatasetDict(test_data)
             dataloader_dict.update({
                 'val': {
                     'dataloader': DataLoader(
-                        dataset=cur_val_data,
+                        dataset=val_dataset,
                         batch_size=config.data.batch_size,
-                        shuffle=False,
                         num_workers=config.data.num_workers,
                         pin_memory=config.use_gpu,
-                        collate_fn=collate_fn),
+                        sampler=SequentialSampler(val_dataset),
+                    ),
                 },
                 'test': {
                     'dataloader': DataLoader(
-                        dataset=cur_test_data,
+                        dataset=test_dataset,
                         batch_size=config.data.batch_size,
-                        shuffle=False,
                         num_workers=config.data.num_workers,
                         pin_memory=config.use_gpu,
-                        collate_fn=collate_fn),
+                        sampler=SequentialSampler(test_dataset),
+                    ),
                 },
             })
         data_dict[client_id] = dataloader_dict
