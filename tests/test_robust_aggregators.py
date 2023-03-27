@@ -20,6 +20,7 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.merge_from_file(
             'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
+        cfg.data.root = 'test_data/'
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 10
         cfg.aggregator.byzantine_node_num = 10
@@ -38,6 +39,7 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         import torch
         cfg.merge_from_file(
             'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.data.root = 'test_data/'
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 10
 
@@ -57,6 +59,7 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         import torch
         cfg.merge_from_file(
             'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
+        cfg.data.root = 'test_data/'
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 10
 
@@ -78,6 +81,7 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.merge_from_file(
             'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
+        cfg.data.root = 'test_data/'
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 10
 
@@ -97,9 +101,9 @@ class robust_aggr_AlgoTest(unittest.TestCase):
         cfg.merge_from_file(
             'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
+        cfg.data.root = 'test_data/'
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 10
-
         cfg.aggregator.robust_rule = 'normbounding'
         cfg.aggregator.BFT_args.normbounding_norm_bound = 5
         cfg.aggregator.byzantine_node_num = 10
