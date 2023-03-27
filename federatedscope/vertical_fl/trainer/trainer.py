@@ -31,7 +31,7 @@ class VerticalTrainer(object):
         self.eta = self.cfg.train.optimizer.eta
         self.dataloader = VerticalDataSampler(
             data=self.data['train'],
-            use_full_trainset=1,
+            use_full_trainset=True,
             feature_frac=self.cfg.vertical.feature_subsample_ratio)
         self.criterion = get_vertical_loss(loss_type=self.cfg.criterion.type,
                                            model_type=self.cfg.model.type)
