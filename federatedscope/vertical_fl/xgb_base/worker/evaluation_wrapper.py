@@ -73,7 +73,7 @@ def wrap_client_for_evaluation(client):
             ) % self._cfg.eval.freq == 0 or \
                     tree_num + 1 == self._cfg.model.num_of_trees:
                 self._feedback_eval_metrics()
-            self.eval_finish_flag = True
+            self.eval_finish_flag = 1
             self._check_eval_finish(tree_num)
         # The client owns the weight
         elif self.model[tree_num][node_num].weight:

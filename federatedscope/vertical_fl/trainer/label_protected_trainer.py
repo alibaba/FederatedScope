@@ -180,7 +180,7 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
                 'sum_of_hess': sum_of_hess,
                 'sum_of_indicator': sum_of_indicator
             }
-            return False, results, None
+            return 0, results, None
 
         def get_best_gain_from_msg(self, msg, tree_num=None, node_num=None):
             client_has_max_gain = None

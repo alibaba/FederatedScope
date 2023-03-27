@@ -31,7 +31,7 @@ class VerticalTrainer(object):
         self.eta = self.cfg.train.optimizer.eta
         self.dataloader = VerticalDataSampler(
             data=self.data['train'],
-            use_full_trainset=True,
+            use_full_trainset=1,
             feature_frac=self.cfg.vertical.feature_subsample_ratio)
         self.criterion = get_vertical_loss(loss_type=self.cfg.criterion.type,
                                            model_type=self.cfg.model.type)
@@ -53,6 +53,10 @@ class VerticalTrainer(object):
             sample_size=self.cfg.dataloader.batch_size, index=index)
         feature_index, self.batch_x = self.dataloader.sample_feature(
             self.batch_x)
+
+        # convert 'range' to 'list'
+        #   to support gRPC protocols in distributed mode
+        batch_index = list(batch_index)
 
         # If the complete trainset is used, we only need to get the slices
         # from the complete feature order info according to the feature index,

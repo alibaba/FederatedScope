@@ -21,7 +21,7 @@ def wrap_client_for_train(client):
 
         if train_flag == 'train_finish':
             # Report evaluation results
-            self.eval_finish_flag = False
+            self.eval_finish_flag = 0
             self.eval(tree_num)
             self._check_eval_finish(tree_num)
         elif train_flag == 'call_for_node_split':
@@ -46,7 +46,7 @@ def wrap_client_for_train(client):
 
     def _check_eval_finish(self, tree_num):
         if self.eval_finish_flag:
-            self.eval_finish_flag = False
+            self.eval_finish_flag = 0
             if tree_num + 1 < self._cfg.model.num_of_trees:
                 batch_index, feature_order_info = \
                     self.trainer.fetch_train_data()
@@ -62,7 +62,7 @@ def wrap_client_for_train(client):
                 self.model[tree_num][node_num].member = client_id
 
                 split_ref['feature_idx'] -= accum_dim
-                split_child = False
+                split_child = 0
                 send_message = Message(msg_type='split',
                                        sender=self.ID,
                                        state=self.state,
@@ -165,7 +165,7 @@ def wrap_client_for_train(client):
                                                     msg=received_msg)
             if max_gain is not None:
                 self.model[tree_num][node_num].member = split_client_id
-                split_child = True
+                split_child = 1
                 send_message = Message(msg_type='split',
                                        sender=self.ID,
                                        state=self.state,
