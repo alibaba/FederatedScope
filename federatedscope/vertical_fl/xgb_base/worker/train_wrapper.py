@@ -62,13 +62,13 @@ def wrap_client_for_train(client):
                 self.model[tree_num][node_num].member = client_id
 
                 split_ref['feature_idx'] -= accum_dim
-                split_child = 0
+                split_child = False
                 send_message = Message(msg_type='split',
                                        sender=self.ID,
                                        state=self.state,
                                        receiver=[client_id],
                                        content=(tree_num, node_num, split_ref,
-                                                split_child))
+                                                int(split_child)))
                 if client_id == self.ID:
                     self.callback_func_for_split(send_message)
                 else:
@@ -165,13 +165,13 @@ def wrap_client_for_train(client):
                                                     msg=received_msg)
             if max_gain is not None:
                 self.model[tree_num][node_num].member = split_client_id
-                split_child = 1
+                split_child = True
                 send_message = Message(msg_type='split',
                                        sender=self.ID,
                                        state=self.state,
                                        receiver=[split_client_id],
                                        content=(tree_num, node_num, split_ref,
-                                                split_child))
+                                                int(split_child)))
                 if split_client_id == self.ID:
                     self.callback_func_for_split(send_message)
                 else:
