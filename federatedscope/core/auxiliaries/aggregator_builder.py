@@ -105,9 +105,9 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
                     rule has not been supported, the vanilla fedavg algorithm \
                     will be used instead.')
             return STR2AGG.get(config.aggregator.robust_rule,
-                                   ClientsAvgAggregator)(model=model,
-                                                         device=device,
-                                                         config=config)
+                               ClientsAvgAggregator)(model=model,
+                                                     device=device,
+                                                     config=config)
 
     elif aggregator_type == 'server_clients_interpolation':
         return ServerClientsInterpolateAggregator(
