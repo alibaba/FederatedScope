@@ -264,12 +264,12 @@ def assert_fl_setting_cfg(cfg):
                              f'must be in (0, 1.0], but got '
                              f'{cfg.vertical.feature_subsample_ratio}')
 
-        if cfg.distribute.grpc_compression.lower() not in [
-                'nocompression', 'deflate', 'gzip'
-        ]:
-            raise ValueError(f'The type of grpc compression is expected to '
-                             f'be one of ["nocompression", "deflate", "gzip"]'
-                             f' but got {cfg.distribure.grpc_compression}.')
+    if cfg.distribute.grpc_compression.lower() not in [
+            'nocompression', 'deflate', 'gzip'
+    ]:
+        raise ValueError(f'The type of grpc compression is expected to be one '
+                         f'of ["nocompression", "deflate", "gzip"], but got '
+                         f'{cfg.distribute.grpc_compression}.')
 
 
 register_config("fl_setting", extend_fl_setting_cfg)

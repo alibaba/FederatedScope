@@ -816,9 +816,6 @@ class Server(BaseServer):
             logger.info(
                 '----------- Starting training (Round #{:d}) -------------'.
                 format(self.state))
-            print(
-                time.strftime('%Y-%m-%d %H:%M:%S',
-                              time.localtime(time.time())))
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,

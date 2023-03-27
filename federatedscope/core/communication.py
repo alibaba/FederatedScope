@@ -115,6 +115,14 @@ class gRPCCommManager(object):
              cfg.grpc_max_receive_message_length),
             ("grpc.enable_http_proxy", cfg.grpc_enable_http_proxy),
         ]
+
+        if cfg.grpc_compression.lower() == 'deflate':
+            self.comp_method = grpc.Compression.Deflate
+        elif cfg.grpc_compression.lower() == 'gzip':
+            self.comp_method = grpc.Compression.Gzip
+        else:
+            self.comp_method = grpc.Compression.NoCompression
+
         self.server_funcs = gRPCComServeFunc()
         self.grpc_server = self.serve(max_workers=client_num,
                                       host=host,
@@ -122,13 +130,6 @@ class gRPCCommManager(object):
                                       options=options)
         self.neighbors = dict()
         self.monitor = None  # used to track the communication related metrics
-
-        if cfg.compression.lower() == 'deflate':
-            self.comp_method = grpc.Compression.Deflate
-        elif cfg.compression.lower() == 'gzip':
-            self.comp_method = grpc.Compression.Gzip
-        else:
-            self.comp_method = grpc.Compression.NoCompression
 
     def serve(self, max_workers, host, port, options):
         """
