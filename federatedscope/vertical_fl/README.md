@@ -11,7 +11,8 @@ More details of the provided example can be found in [Tutorial](https://federate
 Note that FederatedScope only provide an `abstract_paillier`, user can refer to [pyphe](https://github.com/data61/python-paillier/blob/master/phe/paillier.py) for the detail implementation, or adopt other homomorphic encryption algorithms.
 
 ## Tree-based Models
-FederatedScope-Tree is an efficient package for VFL. We provide a hands-on tutorial here. For more details, please refer to our paper ..
+FederatedScope-Tree is an efficient package for VFL. We provide a hands-on tutorial here. 
+<!-- For more details, please refer to our paper -->
 
 ### Run with example config
 You can run with the following as an example:
@@ -51,61 +52,78 @@ trainer:
   type: verticaltrainer
 vertical:
   use: True
-  dims: [6, 10]
+  # feature split for two clients, one has feature 0~3, 
+  # and other other has feature 4~7
+  dims: [4, 8]  
   algo: 'xgb' # 'xgb' or 'gbdt' or 'rf'
-  data_size_for_debug: 0
+  # use a subset for debug in vfl,
+    # 0 indicates using the entire dataset (disable debug mode)
+  data_size_for_debug: 0  
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
-  ```
+```
 The ```model.type``` and ```vertical.algo``` must correspond to each other, there are three choices: ```[xgb_tree, 'xgb']```,```[gbdt_tree, 'gbdt']``` and ```[random_forest, 'rf']```.
 
 #### Privacy-preserving for feature-gathering model
-The above .yaml contains no privacy protecting. For feature-gathering model, we provide two privacy-preserving methods for XGBoost, GBDT and random forest. One is [FederBoost: Private Federated Learning for
-GBDT](https://arxiv.org/pdf/2011.02796.pdf), and the other is [OpBoost: A Vertical Federated Tree Boosting Framework Based
-on Order-Preserving Desensitization](https://arxiv.org/pdf/2210.01318.pdf). You can add it in .yaml file as:
+The above .yaml contains no privacy protecting. For feature-gathering model, we provide two privacy-preserving methods to protect the order of feature values for XGBoost, GBDT and random forest.
+
+The first protection method is use bucket and DP, which can be set in .yaml file as follows:
 ```bash
   ...
 vertical:
+  ...
   protect_object: 'feature_order'
   protect_method: 'dp'
   protect_args: [{'bucket_num': 50, 'epsilon': 3}]
   # protect_args: [{'bucket_num': 50}]
   ...  
-``` 
-or 
+```
+```'bucket_num': b``` means that we partition the order into $b$ buckets evenly, and each sample in the bucket will stay inside its own bucket with a fixed probability $p$, and with probability $1-p$ it will fly to another bucket uniformly and independently, where $p=\frac{e^{\epsilon}}{e^{\epsilon}+b-1}$ and $b$ are parameters to control the strength for privacy preserving. From the formaluatino, it can be seen that, when $b$ and $\epsilon$ are smaller, the strength for privacy preserving will be stronger, but the results will become worse. The default value of $b$ is $100$ and the deault value of $\epsilon$ is ```None``` which means $p=1$.
+
+
+
+The second protection method is using 'op_boost' as follows: 
+
 ```bash
   ...
 vertical:
+  ...
   protect_object: 'feature_order'
   protect_method: 'op_boost'
-  protect_args: [{'algo': 'global', 'epsilon': 2, 'bucket_num': 50}]
-  # protect_args: [{'algo': 'adjust', 'epsilon_prt': 2, 'epsilon_ner': 2, 'partition_num': 50}]
+  protect_args: [{'algo': 'global', 'lower_bound': lb, 'upper_bound': ub, 'epsilon': 2}]
+  # protect_args: [{'algo': 'adjust', 'lower_bound': lb, 'upper_bound': ub, 'epsilon_prt': 2, 'epsilon_ner': 2, 'partition_num': pb}]
   ...
 ```
-For more details, please see [feture_order_protected_train.py](https://github.com/alibaba/FederatedScope/blob/master/federatedscope/vertical_fl/trainer/feature_order_protected_trainer.py).
+We provide two algorithms. The first one is 'global', which means we map the data into the integers between $[lb, ub]$ by affine transformation where $lb<ub$ are integers, and for each mapped value $x$, it will be re-mapped to $i\in[lb, ub]$ with probability $p=\frac{e^{-|x-i|\cdot\epsilon/2}}{\sum_{j\in[lb, ub]e^{-|x-j|\cdot\epsilon/2}}}$. Finally, we use the order of the values for training. The default setting is ```protect_args: [{'algo': 'global', 'lower_bound': 1, 'upper_bound': 100, 'epsilon': 2}]```. The second one is 'adjusting', which means we map the data into the integers between $[lb, ub]$, and then partition  $[lb, ub]$ into $pb$ buckets. For a value $x$ inside the $m$-th bucket, we first select a bucket $i$ with probability $p=\frac{e^{-|m-i|\cdot\epsilon_{prt}/2}}{\sum_{j\in[lb, ub]e^{-|m-j|\cdot\epsilon_{prt}/2}}}$, then we select a value $v$ in the selected bucket with probability  $p=\frac{e^{-|x-v|\cdot\epsilon_{ner}/2}}{\sum_{j\in[lb, ub]e^{-|x-j|\cdot\epsilon_{ner}/2}}}$. Finally, we use the order of the values for training. The default setting is ```protect_args: [{'algo': 'adjusting', 'lower_bound': 1, 'upper_bound': 100, 'epsilon_prt': 2, 'epsilon_ner': 2, 'partition_num': 10}]```. Thus, when $lb$ and $ub$ are closer, $\epsilon, \epsilon_{prt}, \epsilon_{ner}$ and $pb$ are smaller, the strength for privacy preserving will be stronger, but the results will become worse. 
 
-#### Privacy-preserving for label-gathering model
-For label-scattering model, we provide one privacy-preserving method only for XGBoost and GBDT, see [SecureBoost: A Lossless Federated Learning
-Framework](https://arxiv.org/pdf/1901.08755.pdf). You can add it in .yaml file as: 
+ For more details, please see [feture_order_protected_train.py](https://github.com/alibaba/FederatedScope/blob/master/federatedscope/vertical_fl/trainer/feature_order_protected_trainer.py).
+
+#### Remark
+
+The above two protection method are proposed in  "FederBoost: Private Federated Learning for
+GBDT" and "OpBoost: A Vertical Federated Tree Boosting Framework Based on Order-Preserving Desensitization". 
+
+#### Privacy-preserving for label-scattering model
+For label-scattering model, we provide one privacy-preserving method only for XGBoost and GBDT, which is from  "SecureBoost: A Lossless Federated Learning
+Framework".  The .yaml file is as follows: 
+
 ```bash
   ...
 vertical:
+  ...
   mode: 'label_based'
   protect_object: 'grad_and_hess'
   protect_method: 'he'
-  key_size: 512
-  protect_args: [ { 'bucket_num': 50 } ]
+  key_size: ks
+  protect_args: [ { 'bucket_num': b } ]
   ...  
-``` 
-
-#### Inference procedure
-The default procedure is as stated in [SecureBoost: A Lossless Federated Learning
-Framework](https://arxiv.org/pdf/1901.08755.pdf). We have implemented two more ways. One uses PHE as [Fed-EINI: An Efficient and Interpretable Inference Framework for Decision Tree Ensembles in Vertical Federat](https://arxiv.org/pdf/2105.09540.pdf), the other uses secret sharing as [https://arxiv.org/pdf/2105.09540.pdf](https://arxiv.org/pdf/2005.08479.pdf). You can set it here:
-```bash
-  ...
-vertical:
-  eval: 'homo' # or 'ss' or None 
-  ...
 ```
 
+The detail is that task party (label onwer) encrypts the label-related informatin (such as grad and hess for XGBoost , grad and indicator vector for GBDT), and send them to data party (parties do not hold the label). Each data party sort the encrtypted information by the order of feature values, and partition them into $b$ buckets evenly, and calculates the partial sums and sends them back to task party for computing best gain.
+
+The defalut setting are ```key_size: 3072``` and ```protect_args: [ { 'bucket_num': 100 } ]```
+
+#### Inference procedure
+
+To be coming soon!
