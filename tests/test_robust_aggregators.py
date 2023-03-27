@@ -21,6 +21,7 @@ class robust_aggr_AlgoTest(unittest.TestCase):
             'federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml')
 
         cfg.data.root = 'test_data/'
+
         cfg.federate.client_num = 50
         cfg.federate.total_round_num = 10
         cfg.aggregator.byzantine_node_num = 10
