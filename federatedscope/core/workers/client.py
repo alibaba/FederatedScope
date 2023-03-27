@@ -164,7 +164,10 @@ class Client(BaseClient):
             server_host = kwargs['server_host']
             server_port = kwargs['server_port']
             self.comm_manager = gRPCCommManager(
-                host=host, port=port, client_num=self._cfg.federate.client_num)
+                host=host,
+                port=port,
+                client_num=self._cfg.federate.client_num,
+                cfg=self._cfg.distribute)
             logger.info('Client: Listen to {}:{}...'.format(host, port))
             self.comm_manager.add_neighbors(neighbor_id=server_id,
                                             address={

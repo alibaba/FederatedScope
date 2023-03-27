@@ -106,16 +106,14 @@ class gRPCCommManager(object):
         The implementation of gRPCCommManager is referred to the tutorial on
         https://grpc.io/docs/languages/python/
     """
-    def __init__(self, host='0.0.0.0', port='50050', client_num=2):
+    def __init__(self, host='0.0.0.0', port='50050', client_num=2, cfg=None):
         self.host = host
         self.port = port
         options = [
-            ("grpc.max_send_message_length",
-             global_cfg.distribute.grpc_max_send_message_length),
+            ("grpc.max_send_message_length", cfg.grpc_max_send_message_length),
             ("grpc.max_receive_message_length",
-             global_cfg.distribute.grpc_max_receive_message_length),
-            ("grpc.enable_http_proxy",
-             global_cfg.distribute.grpc_enable_http_proxy),
+             cfg.grpc_max_receive_message_length),
+            ("grpc.enable_http_proxy", cfg.grpc_enable_http_proxy),
         ]
         self.server_funcs = gRPCComServeFunc()
         self.grpc_server = self.serve(max_workers=client_num,
@@ -125,6 +123,13 @@ class gRPCCommManager(object):
         self.neighbors = dict()
         self.monitor = None  # used to track the communication related metrics
 
+        if cfg.compression.lower() == 'deflate':
+            self.comp_method = grpc.Compression.Deflate
+        elif cfg.compression.lower() == 'gzip':
+            self.comp_method = grpc.Compression.Gzip
+        else:
+            self.comp_method = grpc.Compression.NoCompression
+
     def serve(self, max_workers, host, port, options):
         """
         This function is referred to
@@ -132,6 +137,7 @@ class gRPCCommManager(object):
         """
         server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=max_workers),
+            compression=self.comp_method,
             options=options)
         gRPC_comm_manager_pb2_grpc.add_gRPCComServeFuncServicer_to_server(
             self.server_funcs, server)
@@ -170,6 +176,7 @@ class gRPCCommManager(object):
             https://grpc.io/docs/languages/python/basics/#creating-a-stub
             """
             channel = grpc.insecure_channel(receiver_address,
+                                            compression=self.comp_method,
                                             options=(('grpc.enable_http_proxy',
                                                       0), ))
             stub = gRPC_comm_manager_pb2_grpc.gRPCComServeFuncStub(channel)
