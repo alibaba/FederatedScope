@@ -45,7 +45,6 @@ jobs:
         [ $? -eq 1 ] && exit 1 || echo "Passed"
     - name: Test Distributed (LR on toy with multiple files)
       run: |
-        python scripts/distributed_scripts/gen_data.py
         python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml data.file_path 'toy_data/server_data' distribute.data_idx -1 &
         sleep 2
         python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml data.file_path 'toy_data/client_1_data' distribute.data_idx -1 &
