@@ -264,7 +264,7 @@ def assert_fl_setting_cfg(cfg):
                              f'must be in (0, 1.0], but got '
                              f'{cfg.vertical.feature_subsample_ratio}')
 
-    if cfg.distribute.grpc_compression.lower() not in [
+    if cfg.distribute.use and cfg.distribute.grpc_compression.lower() not in [
             'nocompression', 'deflate', 'gzip'
     ]:
         raise ValueError(f'The type of grpc compression is expected to be one '
