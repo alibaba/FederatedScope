@@ -667,6 +667,20 @@ class Server(BaseServer):
         else:
             model_para = {} if skip_broadcast else self.models[0].state_dict()
 
+        # quantization
+        if msg_type == 'model_para' and not skip_broadcast and \
+                self._cfg.quantization.method == 'uniform':
+            from federatedscope.core.compression import \
+                symmetric_uniform_quantization
+            nbits = self._cfg.quantization.nbits
+            if self.model_num > 1:
+                model_para = [
+                    symmetric_uniform_quantization(x, nbits)
+                    for x in model_para
+                ]
+            else:
+                model_para = symmetric_uniform_quantization(model_para, nbits)
+
         # We define the evaluation happens at the end of an epoch
         rnd = self.state - 1 if msg_type == 'evaluate' else self.state
 
@@ -917,6 +931,20 @@ class Server(BaseServer):
         timestamp = message.timestamp
         content = message.content
         self.sampler.change_state(sender, 'idle')
+
+        # dequantization
+        if self._cfg.quantization.method == 'uniform':
+            from federatedscope.core.compression import \
+                symmetric_uniform_dequantization
+            if isinstance(content[1], list):  # multiple model
+                sample_size = content[0]
+                quant_model = [
+                    symmetric_uniform_dequantization(x) for x in content[1]
+                ]
+            else:
+                sample_size = content[0]
+                quant_model = symmetric_uniform_dequantization(content[1])
+            content = (sample_size, quant_model)
 
         # update the currency timestamp according to the received message
         assert timestamp >= self.cur_timestamp  # for test
