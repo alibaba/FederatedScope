@@ -28,7 +28,7 @@ def wrap_client_for_train(client):
             split_ref, tree_num, node_num = results
             self._find_and_send_split(split_ref, tree_num, node_num)
         elif train_flag == 'call_for_local_gain':
-            g, h, indicator, tree_num, node_num = results
+            g, h, indicator, label, tree_num, node_num = results
             send_message = Message(
                 msg_type='grad_and_hess',
                 sender=self.ID,
@@ -37,7 +37,7 @@ def wrap_client_for_train(client):
                     each for each in list(self.comm_manager.neighbors.keys())
                     if each != self.server_id
                 ],
-                content=(tree_num, node_num, g, h, indicator))
+                content=(tree_num, node_num, g, h, indicator, label))
             self.comm_manager.send(send_message)
             # imitate send this message to itself
             self.callback_funcs_for_grad_and_hess(send_message)
@@ -133,9 +133,9 @@ def wrap_client_for_train(client):
         self.train(tree_num=tree_num, node_num=node_num + 1)
 
     def callback_funcs_for_grad_and_hess(self, message: Message):
-        tree_num, node_num, g, h, indicator = message.content
+        tree_num, node_num, g, h, indicator, label = message.content
         improved_flag, split_info, best_gain = self.trainer._get_best_gain(
-            tree_num, node_num, g, h, indicator)
+            tree_num, node_num, g, h, indicator, label)
         if 'feature_idx' in split_info and 'value_idx' in split_info:
             self.trainer.split_ref = split_info
 
@@ -160,11 +160,15 @@ def wrap_client_for_train(client):
         if len(self.msg_buffer['train']) == self.client_num:
             received_msg = copy.deepcopy(self.msg_buffer['train'])
             self.msg_buffer['train'].clear()
-            max_gain, split_client_id, split_ref = \
+            best_gain, split_client_id, split_ref = \
                 self.trainer.get_best_gain_from_msg(tree_num=tree_num,
                                                     node_num=node_num,
                                                     msg=received_msg)
-            if max_gain is not None:
+            if self._cfg.vertical.algo == 'rf' and best_gain == 0:
+                self.trainer._set_weight_and_status(tree_num, node_num)
+                self.train(tree_num=tree_num, node_num=node_num + 1)
+
+            elif best_gain is not None:
                 self.model[tree_num][node_num].member = split_client_id
                 split_child = True
                 send_message = Message(msg_type='split',

@@ -94,13 +94,19 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
         def get_abs_value_idx(self, feature_idx, value_idx):
             if self.extra_info is not None and self.extra_info.get(
                     'split_position', None) is not None:
-                return self.extra_info['split_position'][feature_idx][value_idx
-                                                                      - 1]
+                if self.cfg.vertical.algo != 'rf':
+                    return self.extra_info['split_position'][feature_idx][
+                        value_idx - 1]
+                else:
+                    return self.client_extra_info['split_position'][
+                        feature_idx][value_idx - 1]
+                # or just :
+                # return self.client_extra_info
+                #   ['split_position'][feature_idx][value_idx - 1]
             else:
                 return value_idx
 
         def _compute_for_node(self, tree_num, node_num):
-
             # All the nodes have been traversed
             if node_num >= 2**self.model.max_depth - 1:
                 self._predict(tree_num)
@@ -113,27 +119,42 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
                 return self._compute_for_node(tree_num, node_num + 1)
             # Calculate sum of grad and hess based on the encrypted results
             else:
-                en_grad = [
-                    self.public_key.encrypt(x)
-                    for x in self.model[tree_num][node_num].grad
-                ]
-                if self.model[tree_num][node_num].hess is not None:
-                    en_hess = [
+                if self.model[tree_num][node_num].grad is None:
+                    en_label = [
                         self.public_key.encrypt(x)
-                        for x in self.model[tree_num][node_num].hess
+                        for x in self.model[tree_num][node_num].label
                     ]
-                    en_indicator = None
-                else:
                     en_indicator = [
                         self.public_key.encrypt(x)
                         for x in self.model[tree_num][node_num].indicator
                     ]
+                    en_grad = None
                     en_hess = None
-                results = (en_grad, en_hess, en_indicator, tree_num, node_num)
+                else:
+                    en_label = None
+                    en_grad = [
+                        self.public_key.encrypt(x)
+                        for x in self.model[tree_num][node_num].grad
+                    ]
+                    if self.model[tree_num][node_num].hess is not None:
+                        en_hess = [
+                            self.public_key.encrypt(x)
+                            for x in self.model[tree_num][node_num].hess
+                        ]
+                        en_indicator = None
+                    else:
+                        en_indicator = [
+                            self.public_key.encrypt(x)
+                            for x in self.model[tree_num][node_num].indicator
+                        ]
+                        en_hess = None
+                results = (en_grad, en_hess, en_indicator, en_label, tree_num,
+                           node_num)
 
                 return 'call_for_local_gain', results
 
-        def _get_best_gain(self, tree_num, node_num, grad, hess, indicator):
+        def _get_best_gain(self, tree_num, node_num, grad, hess, indicator,
+                           label):
             # We can only get partial sum since the grad/hess is encrypted
 
             if self.merged_feature_order is None:
@@ -146,39 +167,67 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
             sum_of_grad = list()
             sum_of_hess = list()
             sum_of_indicator = list()
+            sum_of_label = list()
 
-            for feature_idx in range(feature_num):
-                ordered_g, ordered_h, ordered_indicator = self._get_ordered_gh(
-                    tree_num, node_num, feature_idx, grad, hess, indicator)
-                start_idx = 0
-                _sum_of_grad = list()
-                _sum_of_hess = list()
-                _sum_of_indicator = list()
-                for value_idx in split_position[feature_idx]:
-                    _sum_of_grad.append(np.sum(ordered_g[start_idx:value_idx]))
+            if grad is not None:
+                sum_of_label = None
+                for feature_idx in range(feature_num):
+                    ordered_g, ordered_h, ordered_indicator, ordered_label =\
+                        self._get_ordered_gh(tree_num, node_num, feature_idx,
+                                             grad, hess, indicator, label)
+                    start_idx = 0
+                    _sum_of_grad = list()
+                    _sum_of_hess = list()
+                    _sum_of_indicator = list()
+                    for value_idx in split_position[feature_idx]:
+                        _sum_of_grad.append(
+                            np.sum(ordered_g[start_idx:value_idx]))
+                        if ordered_h is not None:
+                            _sum_of_hess.append(
+                                np.sum(ordered_h[start_idx:value_idx]))
+                        else:
+                            _sum_of_indicator.append(
+                                np.sum(ordered_indicator[start_idx:value_idx]))
+                        start_idx = value_idx
+                    _sum_of_grad.append(np.sum(ordered_g[start_idx:]))
+                    sum_of_grad.append(_sum_of_grad)
                     if ordered_h is not None:
-                        _sum_of_hess.append(
-                            np.sum(ordered_h[start_idx:value_idx]))
+                        _sum_of_hess.append(np.sum(ordered_h[start_idx:]))
+                        sum_of_hess.append(_sum_of_hess)
+                        sum_of_indicator = None
                     else:
                         _sum_of_indicator.append(
+                            np.sum(ordered_indicator[start_idx:]))
+                        sum_of_indicator.append(_sum_of_indicator)
+                        sum_of_hess = None
+            else:
+                self.merged_feature_order = self.client_feature_order
+                self.extra_info = self.client_extra_info
+                sum_of_grad = None
+                sum_of_hess = None
+                for feature_idx in range(feature_num):
+                    ordered_g, ordered_h, ordered_indicator, ordered_label\
+                        = self._get_ordered_gh(tree_num, node_num, feature_idx,
+                                               grad, hess, indicator, label)
+                    start_idx = 0
+                    _sum_of_label = list()
+                    _sum_of_indicator = list()
+                    for value_idx in split_position[feature_idx]:
+                        _sum_of_label.append(
+                            np.sum(ordered_label[start_idx:value_idx]))
+                        _sum_of_indicator.append(
                             np.sum(ordered_indicator[start_idx:value_idx]))
-                    start_idx = value_idx
-                _sum_of_grad.append(np.sum(ordered_g[start_idx:]))
-                sum_of_grad.append(_sum_of_grad)
-                if ordered_h is not None:
-                    _sum_of_hess.append(np.sum(ordered_h[start_idx:]))
-                    sum_of_hess.append(_sum_of_hess)
-                    sum_of_indicator = None
-                else:
+                        start_idx = value_idx
+                    _sum_of_label.append(np.sum(ordered_label[start_idx:]))
+                    sum_of_label.append(_sum_of_label)
                     _sum_of_indicator.append(
                         np.sum(ordered_indicator[start_idx:]))
                     sum_of_indicator.append(_sum_of_indicator)
-                    sum_of_hess = None
-
             results = {
                 'sum_of_grad': sum_of_grad,
                 'sum_of_hess': sum_of_hess,
-                'sum_of_indicator': sum_of_indicator
+                'sum_of_indicator': sum_of_indicator,
+                'sum_of_label': sum_of_label
             }
             return False, results, None
 
@@ -186,38 +235,86 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
             client_has_max_gain = None
             best_gain = None
             split_ref = {}
-            for client_id, local_gain in msg.items():
-                _, _, split_info = local_gain
-                sum_of_grad = split_info['sum_of_grad']
-                sum_of_hess = split_info['sum_of_hess']
-                sum_of_indicator = split_info['sum_of_indicator']
-                for feature_idx in range(len(sum_of_grad)):
-                    grad = [
-                        self.private_key.decrypt(x)
-                        for x in sum_of_grad[feature_idx]
-                    ]
-                    if sum_of_hess is not None:
-                        hess = [
+            if self.cfg.vertical.algo != 'rf':
+                for client_id, local_gain in msg.items():
+                    _, _, split_info = local_gain
+                    sum_of_grad = split_info['sum_of_grad']
+                    sum_of_hess = split_info['sum_of_hess']
+                    sum_of_indicator = split_info['sum_of_indicator']
+                    for feature_idx in range(len(sum_of_grad)):
+                        grad = [
                             self.private_key.decrypt(x)
-                            for x in sum_of_hess[feature_idx]
+                            for x in sum_of_grad[feature_idx]
                         ]
-                        indicator = None
-                    else:
+                        if sum_of_hess is not None:
+                            hess = [
+                                self.private_key.decrypt(x)
+                                for x in sum_of_hess[feature_idx]
+                            ]
+                            indicator = None
+                        else:
+                            indicator = [
+                                self.private_key.decrypt(x)
+                                for x in sum_of_indicator[feature_idx]
+                            ]
+                            hess = None
+
+                        for value_idx in range(1, len(grad)):
+                            gain = self.model[tree_num].cal_gain(
+                                grad, hess, value_idx, indicator)
+
+                            if best_gain is None or gain > best_gain:
+                                client_has_max_gain = client_id
+                                best_gain = gain
+                                split_ref['feature_idx'] = feature_idx
+                                split_ref['value_idx'] = value_idx
+            else:
+                # for random forest
+                if self.cfg.criterion.type == 'CrossEntropyLoss':
+                    default_gain = 1
+                elif 'Regression' in self.cfg.criterion.type:
+                    default_gain = float('inf')
+                else:
+                    raise ValueError
+
+                split_ref = {'feature_idx': None, 'value_idx': None}
+                best_gain = default_gain
+
+                for client_id, local_gain in msg.items():
+                    _, _, split_info = local_gain
+                    sum_of_label = split_info['sum_of_label']
+                    sum_of_indicator = split_info['sum_of_indicator']
+
+                    for feature_idx in range(len(sum_of_label)):
+                        label = [
+                            self.private_key.decrypt(x)
+                            for x in sum_of_label[feature_idx]
+                        ]
                         indicator = [
                             self.private_key.decrypt(x)
                             for x in sum_of_indicator[feature_idx]
                         ]
-                        hess = None
+                        for value_idx in range(1, len(label)):
 
-                    for value_idx in range(1, len(grad)):
-                        gain = self.model[tree_num].cal_gain(
-                            grad, hess, value_idx, indicator)
+                            if np.sum(indicator[:value_idx]) == 0 or np.sum(
+                                    indicator[value_idx:]) == 0:
+                                continue
 
-                        if best_gain is None or gain > best_gain:
-                            client_has_max_gain = client_id
-                            best_gain = gain
-                            split_ref['feature_idx'] = feature_idx
-                            split_ref['value_idx'] = value_idx
+                            gain = self.model[
+                                tree_num].cal_gain_for_rf_label_base(
+                                    node_num, value_idx, label, indicator)
+                            if gain < best_gain:
+                                client_has_max_gain = client_id
+                                best_gain = gain
+                                split_ref['feature_idx'] = feature_idx
+                                split_ref['value_idx'] = value_idx
+
+                if self.cfg.criterion.type == 'CrossEntropyLoss'\
+                        and best_gain == 1:
+                    best_gain = None
+                elif 'Regression' in self.cfg.criterion.type\
+                        and best_gain == float('inf'):
+                    best_gain = None
 
             return best_gain, client_has_max_gain, split_ref
 
