@@ -82,7 +82,8 @@ def extend_fl_setting_cfg(cfg):
     cfg.vertical = CN()
     cfg.vertical.use = False
     cfg.vertical.mode = 'order_based'  # ['order_based', 'label_based']
-    cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
+    cfg.vertical.dims = [5, 10]  # Client 1 has the first 5 features,
+    # and Client 2 has the last 5 features
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
     cfg.vertical.algo = 'lr'  # ['lr', 'xgb', 'gbdt', 'rf']
@@ -195,7 +196,7 @@ def assert_fl_setting_cfg(cfg):
        "the same time"
 
     assert not cfg.federate.merge_test_data or (
-        cfg.federate.merge_test_data and cfg.federate.mode == 'standalone'
+            cfg.federate.merge_test_data and cfg.federate.mode == 'standalone'
     ), "The operation of merging test data can only used in standalone for " \
        "efficient simulation, please change 'federate.merge_test_data' to " \
        "False or change 'federate.mode' to 'distributed'."
