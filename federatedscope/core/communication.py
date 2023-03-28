@@ -5,7 +5,6 @@ import torch.distributed as dist
 
 from collections import deque
 
-from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.proto import gRPC_comm_manager_pb2, \
     gRPC_comm_manager_pb2_grpc
 from federatedscope.core.gRPC_server import gRPCComServeFunc
