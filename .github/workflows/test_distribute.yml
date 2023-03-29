@@ -35,13 +35,13 @@ jobs:
     - name: Test Distributed (LR on toy with a unified files)
       run: |
         python scripts/distributed_scripts/gen_data.py
-        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server_no_data.yaml &
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server_no_data.yaml distribute.grpc_compression gzip &
         sleep 2
-        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml &
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml distribute.grpc_compression gzip &
         sleep 2
-        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml &
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml distribute.grpc_compression gzip &
         sleep 2
-        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml
+        python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml distribute.grpc_compression gzip
         [ $? -eq 1 ] && exit 1 || echo "Passed"
     - name: Test Distributed (LR on toy with multiple files)
       run: |

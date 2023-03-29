@@ -75,6 +75,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.distribute.grpc_max_send_message_length = 100 * 1024 * 1024
     cfg.distribute.grpc_max_receive_message_length = 100 * 1024 * 1024
     cfg.distribute.grpc_enable_http_proxy = False
+    cfg.distribute.grpc_compression = 'nocompression'  # [deflate, gzip]
 
     # ---------------------------------------------------------------------- #
     # Vertical FL related options (for demo)
@@ -262,6 +263,13 @@ def assert_fl_setting_cfg(cfg):
             raise ValueError(f'The value of vertical.feature_subsample_ratio '
                              f'must be in (0, 1.0], but got '
                              f'{cfg.vertical.feature_subsample_ratio}')
+
+    if cfg.distribute.use and cfg.distribute.grpc_compression.lower() not in [
+            'nocompression', 'deflate', 'gzip'
+    ]:
+        raise ValueError(f'The type of grpc compression is expected to be one '
+                         f'of ["nocompression", "deflate", "gzip"], but got '
+                         f'{cfg.distribute.grpc_compression}.')
 
 
 register_config("fl_setting", extend_fl_setting_cfg)

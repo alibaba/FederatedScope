@@ -164,7 +164,10 @@ class Client(BaseClient):
             server_host = kwargs['server_host']
             server_port = kwargs['server_port']
             self.comm_manager = gRPCCommManager(
-                host=host, port=port, client_num=self._cfg.federate.client_num)
+                host=host,
+                port=port,
+                client_num=self._cfg.federate.client_num,
+                cfg=self._cfg.distribute)
             logger.info('Client: Listen to {}:{}...'.format(host, port))
             self.comm_manager.add_neighbors(neighbor_id=server_id,
                                             address={
@@ -291,6 +294,18 @@ class Client(BaseClient):
             sender = message.sender
             timestamp = message.timestamp
             content = message.content
+
+            # dequantization
+            if self._cfg.quantization.method == 'uniform':
+                from federatedscope.core.compression import \
+                    symmetric_uniform_dequantization
+                if isinstance(content, list):  # multiple model
+                    content = [
+                        symmetric_uniform_dequantization(x) for x in content
+                    ]
+                else:
+                    content = symmetric_uniform_dequantization(content)
+
             # When clients share the local model, we must set strict=True to
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
@@ -393,6 +408,20 @@ class Client(BaseClient):
                         init_model=content, updated_model=model_para_all)
                 else:
                     shared_model_para = model_para_all
+
+                # quantization
+                if self._cfg.quantization.method == 'uniform':
+                    from federatedscope.core.compression import \
+                        symmetric_uniform_quantization
+                    nbits = self._cfg.quantization.nbits
+                    if isinstance(shared_model_para, list):
+                        shared_model_para = [
+                            symmetric_uniform_quantization(x, nbits)
+                            for x in shared_model_para
+                        ]
+                    else:
+                        shared_model_para = symmetric_uniform_quantization(
+                            shared_model_para, nbits)
 
                 self.comm_manager.send(
                     Message(msg_type='model_para',
