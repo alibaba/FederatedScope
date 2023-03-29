@@ -4,6 +4,8 @@ import copy
 
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
+from federatedscope.vertical_fl.Paillier import \
+            abstract_paillier
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +32,10 @@ class XGBClient(Client):
         self.msg_buffer = {'train': {}, 'eval': {}}
         self.client_num = self._cfg.federate.client_num
 
-        # TODO: the following is used for homo_evaluation,
-        #       which may be put in an if condition
-        from federatedscope.vertical_fl.Paillier import \
-            abstract_paillier
-        keys = abstract_paillier.generate_paillier_keypair(
-            n_length=self._cfg.vertical.key_size)
-        self.public_key, self.private_key = keys
+        if self._cfg.vertical.eval_protection == 'he':
+            keys = abstract_paillier.generate_paillier_keypair(
+                n_length=self._cfg.vertical.key_size)
+            self.public_key, self.private_key = keys
 
         self.feature_order = None
         self.merged_feature_order = None

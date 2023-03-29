@@ -8,7 +8,7 @@ from federatedscope.core.message import Message
 logger = logging.getLogger(__name__)
 
 
-def wrap_client_for_homo_evaluation(client):
+def wrap_client_for_he_evaluation(client):
     """
     Use PHE to perform secure evaluation.
     For more details, please refer to the following papers:

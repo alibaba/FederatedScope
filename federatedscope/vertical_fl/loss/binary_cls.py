@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn import metrics
 
 
 class BinaryClsLoss(object):
@@ -27,7 +28,6 @@ class BinaryClsLoss(object):
 
     def get_metric(self, y, y_pred):
         y_pred = self._process_y_pred(y_pred)
-        from sklearn import metrics
         auc = metrics.roc_auc_score(y, y_pred)
         y_pred = (y_pred >= 0.5).astype(np.float32)
         acc = np.sum(y_pred == y) / len(y)

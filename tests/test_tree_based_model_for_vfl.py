@@ -49,7 +49,7 @@ class XGBTest(unittest.TestCase):
 
         return backup_cfg
 
-    def set_config_for_homo_eval(self, cfg):
+    def set_config_for_he_eval(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
@@ -78,7 +78,7 @@ class XGBTest(unittest.TestCase):
         cfg.vertical.dims = [7, 14]
         cfg.vertical.algo = 'xgb'
         cfg.vertical.data_size_for_debug = 2000
-        cfg.vertical.eval = 'homo'
+        cfg.vertical.eval = 'he'
 
         cfg.trainer.type = 'verticaltrainer'
         cfg.eval.freq = 5
@@ -373,7 +373,7 @@ class XGBTest(unittest.TestCase):
         self.assertGreater(test_results['server_global_eval']['test_acc'],
                            0.79)
 
-    def test_XGB_Base_for_homo_eval(self):
+    def test_XGB_Base_for_he_eval(self):
         init_cfg = global_cfg.clone()
         backup_cfg = self.set_config_for_xgb_base(init_cfg)
         setup_seed(init_cfg.seed)
