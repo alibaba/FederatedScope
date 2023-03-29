@@ -41,6 +41,7 @@ eval:
   metrics: ['acc', 'correct', 'f1']
   split: ['test', 'val', 'train']
 hpo:
+  use: True
   scheduler: wrap_bo_gp
   num_workers: 0
   init_cand_num: 100

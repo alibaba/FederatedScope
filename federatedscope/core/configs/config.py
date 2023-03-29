@@ -158,12 +158,12 @@ class CN(CfgNode):
     def clean_unused_sub_cfgs(self):
         """
         Clean the un-used secondary-level CfgNode, whose ``.use`` \
-        attribute is ``True``
+        attribute is ``True`` except `hpo`
         """
-        for v in self.values():
+        for key, v in self.items():
             if isinstance(v, CfgNode) or isinstance(v, CN):
                 # sub-config
-                if hasattr(v, "use") and v.use is False:
+                if hasattr(v, "use") and v.use is False and key != 'hpo':
                     for k in copy.deepcopy(v).keys():
                         # delete the un-used attributes
                         if k == "use":

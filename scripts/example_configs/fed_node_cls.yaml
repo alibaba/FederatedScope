@@ -29,6 +29,7 @@ trainer:
 eval:
   metrics: ['acc', 'correct']
 hpo:
+  use: True
   scheduler: sha
   larger_better: True
   metric: 'server_global_eval.test_acc'

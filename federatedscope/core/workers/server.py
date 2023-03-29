@@ -72,6 +72,7 @@ class Server(BaseServer):
                  device='cpu',
                  strategy=None,
                  unseen_clients_id=None,
+                 *args,
                  **kwargs):
         super(Server, self).__init__(ID, state, config, model, strategy)
         # Register message handlers
@@ -80,6 +81,8 @@ class Server(BaseServer):
         # Un-configured worker
         if config is None:
             return
+
+        self.args, self.kwargs = args, kwargs
 
         self.data = data
         self.device = device
@@ -806,7 +809,7 @@ class Server(BaseServer):
                                                self._cfg.asyn.time_budget
 
             # start feature engineering
-            self.trigger_for_feat_engr(
+            self.trigger_for_train(
                 self.broadcast_model_para, {
                     'msg_type': 'model_para',
                     'sample_client_num': self.sample_client_num
@@ -819,9 +822,9 @@ class Server(BaseServer):
                 time.strftime('%Y-%m-%d %H:%M:%S',
                               time.localtime(time.time())))
 
-    def trigger_for_feat_engr(self,
-                              trigger_train_func,
-                              kwargs_for_trigger_train_func={}):
+    def trigger_for_train(self,
+                          trigger_train_func,
+                          kwargs_for_trigger_train_func={}):
         """
         Interface for feature engineering, the default operation is none
         """

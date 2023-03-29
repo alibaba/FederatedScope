@@ -144,7 +144,6 @@ def get_server_cls(cfg):
     if cfg.hpo.fedex.use:
         from federatedscope.autotune.fedex import FedExServer
         return FedExServer
-
     if cfg.hpo.fts.use:
         from federatedscope.autotune.fts import FTSServer
         return FTSServer

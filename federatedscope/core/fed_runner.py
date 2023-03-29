@@ -171,7 +171,16 @@ class BaseRunner(object):
             from federatedscope.core.workers.wrapper import wrap_swa_server
             server = wrap_swa_server(server)
         logger.info('Server has been set up ... ')
-        return self.feat_engr_wrapper_server(server)
+
+        if self.cfg.feat_engr.type:
+            server = self.feat_engr_wrapper_server(server)
+
+        if self.cfg.federate.mode == 'distributed' and self.cfg.hpo.use:
+            from federatedscope.core.workers.wrapper import \
+                wrap_autotune_server
+            server = wrap_autotune_server(server)
+
+        return server
 
     def _setup_client(self,
                       client_id=-1,
@@ -224,7 +233,15 @@ class BaseRunner(object):
         else:
             logger.info(f'Client {client_id} has been set up ... ')
 
-        return self.feat_engr_wrapper_client(client)
+        if self.cfg.feat_engr.type:
+            client = self.feat_engr_wrapper_client(client)
+
+        if self.cfg.federate.mode == 'distributed' and self.cfg.hpo.use:
+            from federatedscope.core.workers.wrapper import \
+                wrap_autotune_client
+            client = wrap_autotune_client(client)
+
+        return client
 
     def check(self):
         """

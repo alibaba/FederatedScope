@@ -19,6 +19,7 @@ model:
 fedopt:
   use: True
 hpo:
+  use: True
   scheduler: wrap_sha
   #num_workers: 1
   num_workers: 0

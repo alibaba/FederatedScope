@@ -18,9 +18,9 @@ def wrap_correlation_filter_server(worker):
     Returns:
         Wrap vfl server with correlation_filter.
     """
-    def trigger_for_feat_engr(self,
-                              trigger_train_func,
-                              kwargs_for_trigger_train_func={}):
+    def trigger_for_train(self,
+                          trigger_train_func,
+                          kwargs_for_trigger_train_func={}):
         logger.info('Start to execute correlation_filter, which requires FHE.')
 
         self.msg_buffer['feat_dim'] = {}
@@ -96,8 +96,7 @@ def wrap_correlation_filter_server(worker):
             self.trigger_train_func(**self.kwargs_for_trigger_train_func)
 
     # Bind method to instance
-    worker.trigger_for_feat_engr = types.MethodType(trigger_for_feat_engr,
-                                                    worker)
+    worker.trigger_for_train = types.MethodType(trigger_for_train, worker)
     worker.callback_funcs_for_en_feat_corrcoef = types.MethodType(
         callback_funcs_for_en_feat_corrcoef, worker)
     worker.callbacks_funcs_for_feat_dim = types.MethodType(

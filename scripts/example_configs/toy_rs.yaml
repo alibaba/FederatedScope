@@ -13,6 +13,7 @@ model:
 data:
   type: 'toy'
 hpo:
+  use: True
   num_workers: 3
   init_cand_num: 3
   ss: scripts/example_configs/toy_hpo_ss.yaml

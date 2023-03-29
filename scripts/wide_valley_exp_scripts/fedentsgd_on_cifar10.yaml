@@ -54,6 +54,7 @@ eval:
   best_res_update_round_wise_key: test_acc
   count_flops: False
 hpo:
+  use: True
   scheduler: bo_gp
   num_workers: 0
   ss: 'scripts/wide_valley_exp_scripts/search_space_for_fedentsgd.yaml'
