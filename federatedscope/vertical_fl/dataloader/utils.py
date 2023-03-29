@@ -15,8 +15,8 @@ def batch_iter(data, batch_size, shuffled=True):
     """
 
     assert 'x' in data and 'y' in data
-    data_x = data['x']
-    data_y = data['y']
+    data_x = np.asarray(data['x'])
+    data_y = np.asarray(data['y'])
     data_size = len(data_y)
     num_batches_per_epoch = math.ceil(data_size / batch_size)
 
@@ -44,8 +44,8 @@ class VerticalDataSampler(object):
                  use_full_trainset=True,
                  feature_frac=1.0):
         assert 'x' in data
-        self.data_x = data['x']
-        self.data_y = data['y'] if 'y' in data else None
+        self.data_x = np.asarray(data['x'])
+        self.data_y = np.asarray(data['y']) if 'y' in data else None
         self.data_size = self.data_x.shape[0]
         self.feature_size = self.data_x.shape[1]
         self.replace = replace

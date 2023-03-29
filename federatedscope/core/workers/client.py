@@ -373,9 +373,6 @@ class Client(BaseClient):
                         model_para[key] = model_para[key] * sample_size
                     model_para_list = self.ss_manager.secret_split(model_para)
                     model_para_list_all.append(model_para_list)
-                    # print(model_para)
-                    # print(self.ss_manager.secret_reconstruct(
-                    # model_para_list))
                 frame_idx = 0
                 for neighbor in self.comm_manager.neighbors:
                     if neighbor != self.server_id:
@@ -400,7 +397,9 @@ class Client(BaseClient):
                 self.msg_buffer['train'][self.state] = [(sample_size,
                                                          content_frame)]
             else:
-                if self._cfg.asyn.use or self._cfg.aggregator.krum.use:
+                if self._cfg.asyn.use or self._cfg.aggregator.robust_rule in \
+                        ['krum', 'normbounding', 'median', 'trimmedmean',
+                         'bulyan']:
                     # Return the model delta when using asynchronous training
                     # protocol, because the staled updated might be discounted
                     # and cause that the sum of the aggregated weights might

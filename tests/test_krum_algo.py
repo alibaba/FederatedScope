@@ -102,8 +102,8 @@ class KrumAlgoTest(unittest.TestCase):
         cfg.attack.attacker_id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
         cfg.aggregator.byzantine_node_num = 10
-        cfg.aggregator.krum.use = True
-        cfg.aggregator.krum.agg_num = 1
+        cfg.aggregator.robust_rule = 'krum'
+        cfg.aggregator.BFT_args.krum_agg_num = 1
 
         return backup_cfg
 
@@ -151,8 +151,8 @@ class KrumAlgoTest(unittest.TestCase):
         cfg.attack.attacker_id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
         cfg.aggregator.byzantine_node_num = 10
-        cfg.aggregator.krum.use = True
-        cfg.aggregator.krum.agg_num = 5
+        cfg.aggregator.robust_rule = 'krum'
+        cfg.aggregator.BFT_args.krum_agg_num = 5
 
         return backup_cfg
 

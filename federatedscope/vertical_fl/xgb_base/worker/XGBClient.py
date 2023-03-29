@@ -75,6 +75,7 @@ class XGBClient(Client):
 
     # other clients receive the data-sample information
     def callback_func_for_data_sample(self, message: Message):
+        self.state = message.state
         batch_index, sender = message.content, message.sender
         _, feature_order_info = self.trainer.fetch_train_data(
             index=batch_index)

@@ -42,6 +42,9 @@ def extend_data_cfg(cfg):
     cfg.data.test_target_transform = []
     cfg.data.test_pre_transform = []
 
+    # data.file_path takes effect when data.type = 'files'
+    cfg.data.file_path = ''
+
     # DataLoader related args
     cfg.dataloader = CN()
     cfg.dataloader.type = 'base'

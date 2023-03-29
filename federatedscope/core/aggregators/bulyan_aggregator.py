@@ -3,35 +3,31 @@ import torch
 from federatedscope.core.aggregators import ClientsAvgAggregator
 
 
-class KrumAggregator(ClientsAvgAggregator):
+class BulyanAggregator(ClientsAvgAggregator):
     """
-    Implementation of Krum/multi-Krum refer to `Machine learning with
-    adversaries: Byzantine tolerant gradient descent`
-    [Blanchard P et al., 2017]
-    (https://proceedings.neurips.cc/paper/2017/hash/
-    f4b9ec30ad9f68f89b29639786cb62ef-Abstract.html)
+    Implementation of Bulyan refers to `The Hidden Vulnerability
+    of Distributed Learning in Byzantium`
+    [Mhamdi et al., 2018]
+    (http://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a.pdf)
+
+    It combines the MultiKrum aggregator and the treamedmean aggregator
     """
     def __init__(self, model=None, device='cpu', config=None):
-        super(KrumAggregator, self).__init__(model, device, config)
+        super(BulyanAggregator, self).__init__(model, device, config)
         self.byzantine_node_num = config.aggregator.byzantine_node_num
-        self.krum_agg_num = config.aggregator.BFT_args.krum_agg_num
-        assert 2 * self.byzantine_node_num + 2 < config.federate.client_num, \
-            "it should be satisfied that 2*byzantine_node_num + 2 < client_num"
+        self.sample_client_rate = config.federate.sample_client_rate
+        assert 4 * self.byzantine_node_num + 3 <= config.federate.client_num
 
     def aggregate(self, agg_info):
         """
-        To preform aggregation with Krum aggregation rule
-
+        To preform aggregation with Median aggregation rule
         Arguments:
         agg_info (dict): the feedbacks from clients
         :returns: the aggregated results
         :rtype: dict
         """
         models = agg_info["client_feedback"]
-        avg_model = self._para_avg_with_krum(models, agg_num=self.krum_agg_num)
-
-        # When using Krum/multi-Krum aggregation, the return feedback is model
-        # delta rather than the model param
+        avg_model = self._aggre_with_bulyan(models)
         updated_model = copy.deepcopy(avg_model)
         init_model = self.model.state_dict()
         for key in avg_model:
@@ -76,15 +72,35 @@ class KrumAggregator(ClientsAvgAggregator):
         krum_scores = torch.sum(sorted_distance[:, :closest_num], axis=-1)
         return krum_scores
 
-    def _para_avg_with_krum(self, models, agg_num=1):
-
-        # each_model: (sample_size, model_para)
+    def _aggre_with_bulyan(self, models):
+        '''
+        Apply MultiKrum to select \theta (\theta <= client_num-
+        2*self.byzantine_node_num) local models
+        '''
+        init_model = self.model.state_dict()
+        global_update = copy.deepcopy(init_model)
         models_para = [each_model[1] for each_model in models]
         krum_scores = self._calculate_score(models_para)
         index_order = torch.sort(krum_scores)[1].numpy()
         reliable_models = list()
         for number, index in enumerate(index_order):
-            if number < agg_num:
+            if number < len(models) - int(
+                    2 * self.sample_client_rate * self.byzantine_node_num):
                 reliable_models.append(models[index])
-
-        return self._para_weighted_avg(models=reliable_models)
+        '''
+        Sort parameter for each coordinate of the rest \theta reliable
+        local models, and find \gamma (gamma<\theta-2*self.byzantine_num)
+        parameters closest to the median to perform averaging
+        '''
+        exluded_num = int(self.sample_client_rate * self.byzantine_node_num)
+        gamma = len(reliable_models) - 2 * exluded_num
+        for key in init_model:
+            temp = torch.stack(
+                [each_model[1][key] for each_model in reliable_models], 0)
+            pos_largest, _ = torch.topk(temp, exluded_num, 0)
+            neg_smallest, _ = torch.topk(-temp, exluded_num, 0)
+            new_stacked = torch.cat([temp, -pos_largest,
+                                     neg_smallest]).sum(0).float()
+            new_stacked /= gamma
+            global_update[key] = new_stacked
+        return global_update

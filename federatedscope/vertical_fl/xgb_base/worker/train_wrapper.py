@@ -68,7 +68,7 @@ def wrap_client_for_train(client):
                                        state=self.state,
                                        receiver=[client_id],
                                        content=(tree_num, node_num, split_ref,
-                                                split_child))
+                                                int(split_child)))
                 if client_id == self.ID:
                     self.callback_func_for_split(send_message)
                 else:
@@ -156,6 +156,7 @@ def wrap_client_for_train(client):
         client_id = message.sender
         self.msg_buffer['train'][client_id] = (local_best_gain, improved_flag,
                                                split_info)
+
         if len(self.msg_buffer['train']) == self.client_num:
             received_msg = copy.deepcopy(self.msg_buffer['train'])
             self.msg_buffer['train'].clear()
@@ -171,7 +172,7 @@ def wrap_client_for_train(client):
                                        state=self.state,
                                        receiver=[split_client_id],
                                        content=(tree_num, node_num, split_ref,
-                                                split_child))
+                                                int(split_child)))
                 if split_client_id == self.ID:
                     self.callback_func_for_split(send_message)
                 else:

@@ -54,6 +54,10 @@ class VerticalTrainer(object):
         feature_index, self.batch_x = self.dataloader.sample_feature(
             self.batch_x)
 
+        # convert 'range' to 'list'
+        #   to support gRPC protocols in distributed mode
+        batch_index = list(batch_index)
+
         # If the complete trainset is used, we only need to get the slices
         # from the complete feature order info according to the feature index,
         # rather than re-ordering the instance

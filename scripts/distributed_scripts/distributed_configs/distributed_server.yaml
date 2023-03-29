@@ -16,6 +16,7 @@ trainer:
 eval:
   freq: 10
 data:
-  type: 'toy'
+  type: 'file'
+  file_path: 'toy_data/all_data'
 model:
   type: 'lr'
