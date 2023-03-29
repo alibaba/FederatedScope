@@ -119,7 +119,7 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
                 return self._compute_for_node(tree_num, node_num + 1)
             # Calculate sum of grad and hess based on the encrypted results
             else:
-                if self.model[tree_num][node_num].grad is None:
+                if self.cfg.vertical.algo == 'rf':
                     en_label = [
                         self.public_key.encrypt(x)
                         for x in self.model[tree_num][node_num].label
@@ -153,8 +153,13 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
 
                 return 'call_for_local_gain', results
 
-        def _get_best_gain(self, tree_num, node_num, grad, hess, indicator,
-                           label):
+        def _get_best_gain(self,
+                           tree_num,
+                           node_num,
+                           grad,
+                           hess,
+                           indicator,
+                           label=None):
             # We can only get partial sum since the grad/hess is encrypted
 
             if self.merged_feature_order is None:
@@ -169,7 +174,7 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
             sum_of_indicator = list()
             sum_of_label = list()
 
-            if grad is not None:
+            if self.cfg.vertical.algo != 'rf':
                 sum_of_label = None
                 for feature_idx in range(feature_num):
                     ordered_g, ordered_h, ordered_indicator, ordered_label =\
