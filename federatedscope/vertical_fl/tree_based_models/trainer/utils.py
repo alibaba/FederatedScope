@@ -1,5 +1,5 @@
-from federatedscope.vertical_fl.trainer import VerticalTrainer, \
-    RandomForestTrainer
+from federatedscope.vertical_fl.tree_based_models.trainer \
+    import VerticalTrainer, RandomForestTrainer
 import numpy as np
 
 
@@ -18,7 +18,7 @@ def get_vertical_trainer(config, model, data, device, monitor):
                            config=config,
                            monitor=monitor)
     elif protect_object == 'feature_order':
-        from federatedscope.vertical_fl.trainer import \
+        from federatedscope.vertical_fl.tree_based_models.trainer import \
             createFeatureOrderProtectedTrainer
         return createFeatureOrderProtectedTrainer(cls=trainer_cls,
                                                   model=model,
@@ -27,7 +27,7 @@ def get_vertical_trainer(config, model, data, device, monitor):
                                                   config=config,
                                                   monitor=monitor)
     elif protect_object in ['grad_and_hess']:
-        from federatedscope.vertical_fl.trainer import \
+        from federatedscope.vertical_fl.tree_based_models.trainer import \
             createLabelProtectedTrainer
         return createLabelProtectedTrainer(cls=trainer_cls,
                                            model=model,

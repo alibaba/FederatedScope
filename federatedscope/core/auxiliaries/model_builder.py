@@ -191,8 +191,8 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in [
             'xgb_tree', 'gbdt_tree', 'random_forest'
     ]:
-        from federatedscope.vertical_fl.model.model_builder import \
-            get_tree_model
+        from federatedscope.vertical_fl.tree_based_models.model.model_builder \
+            import get_tree_model
         model = get_tree_model(model_config)
     elif model_config.type.lower() in ['atc_model']:
         from federatedscope.nlp.hetero_tasks.model import ATCModel

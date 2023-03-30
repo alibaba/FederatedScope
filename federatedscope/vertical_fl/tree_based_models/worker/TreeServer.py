@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class XGBServer(Server):
+class TreeServer(Server):
     def __init__(self,
                  ID=-1,
                  state=0,
@@ -20,7 +20,7 @@ class XGBServer(Server):
                  device='cpu',
                  strategy=None,
                  **kwargs):
-        super(XGBServer,
+        super(TreeServer,
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
 

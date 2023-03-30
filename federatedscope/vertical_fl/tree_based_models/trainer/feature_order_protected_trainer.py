@@ -1,5 +1,6 @@
 import numpy as np
-from federatedscope.vertical_fl.trainer.utils import bucketize
+from federatedscope.vertical_fl.tree_based_models.trainer.utils \
+    import bucketize
 
 
 def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
@@ -137,7 +138,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 protected_feature_order[i] = mapped_data[:, i].argsort()
 
             # add bucket in op_boost to accelerate
-            if self.bucket_num:
+            if self.bucket_num and self.bucket_num != 'None':
                 new_protected_feature_order = list()
                 bucket_size = int(np.floor(data.shape[0] / self.bucket_num))
                 split_position = []
@@ -187,7 +188,7 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
             """
             protected_feature_order = list()
             bucket_size = int(np.floor(data.shape[0] / self.bucket_num))
-            if self.epsilon is None:
+            if self.epsilon is None or self.epsilon == 'None':
                 prob_for_preserving = 1.0
             else:
                 _tmp = np.power(np.e, self.epsilon)

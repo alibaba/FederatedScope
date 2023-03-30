@@ -10,7 +10,7 @@ from federatedscope.vertical_fl.Paillier import \
 logger = logging.getLogger(__name__)
 
 
-class XGBClient(Client):
+class TreeClient(Client):
     def __init__(self,
                  ID=-1,
                  server_id=None,
@@ -23,7 +23,7 @@ class XGBClient(Client):
                  *args,
                  **kwargs):
 
-        super(XGBClient,
+        super(TreeClient,
               self).__init__(ID, server_id, state, config, data, model, device,
                              strategy, *args, **kwargs)
 

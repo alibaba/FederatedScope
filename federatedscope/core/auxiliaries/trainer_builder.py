@@ -169,8 +169,8 @@ def get_trainer(model=None,
                               only_for_eval=only_for_eval,
                               monitor=monitor)
     elif config.trainer.type.lower() in ['verticaltrainer']:
-        from federatedscope.vertical_fl.trainer.utils import \
-            get_vertical_trainer
+        from federatedscope.vertical_fl.tree_based_models.trainer.utils \
+            import get_vertical_trainer
         trainer = get_vertical_trainer(config=config,
                                        model=model,
                                        data=data,
