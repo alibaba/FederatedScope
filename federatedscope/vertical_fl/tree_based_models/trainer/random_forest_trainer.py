@@ -1,6 +1,7 @@
 import numpy as np
 
-from federatedscope.vertical_fl.trainer import VerticalTrainer
+from federatedscope.vertical_fl.tree_based_models.trainer import \
+    VerticalTrainer
 from federatedscope.vertical_fl.dataloader.utils import VerticalDataSampler
 from federatedscope.vertical_fl.loss.utils import get_vertical_loss
 

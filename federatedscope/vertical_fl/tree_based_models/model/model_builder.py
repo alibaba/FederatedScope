@@ -1,4 +1,4 @@
-from federatedscope.vertical_fl.model \
+from federatedscope.vertical_fl.tree_based_models.model \
     import MultipleXGBTrees, MultipleGBDTTrees, RandomForest
 
 

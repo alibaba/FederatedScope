@@ -1,5 +1,6 @@
 import numpy as np
-from federatedscope.vertical_fl.trainer.utils import bucketize
+from federatedscope.vertical_fl.tree_based_models.trainer.utils \
+    import bucketize
 
 
 def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
