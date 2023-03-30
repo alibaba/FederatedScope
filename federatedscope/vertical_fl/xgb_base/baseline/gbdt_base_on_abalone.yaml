@@ -5,11 +5,11 @@ federate:
   mode: standalone
   client_num: 2
 model:
-  type: xgb_tree
+  type: gbdt_tree
   lambda_: 0.1
   gamma: 0
   num_of_trees: 10
-  max_tree_depth: 3
+  max_tree_depth: 4
 data:
   root: data/
   type: abalone
@@ -28,8 +28,9 @@ train:
 vertical:
   use: True
   dims: [4, 8]
-  algo: 'xgb'
+  algo: 'gbdt'
   data_size_for_debug: 2000
+  feature_subsample_ratio: 0.5
 eval:
-  freq: 5
+  freq: 3
   best_res_update_round_wise_key: test_loss
