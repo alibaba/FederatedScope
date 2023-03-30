@@ -94,7 +94,7 @@ class VerticalTrainer(object):
         # Start to build a tree
         if node_num is None:
             if training_info is not None and \
-                    self.cfg.vertical.mode == 'order_based':
+                    self.cfg.vertical.mode == 'feature_gathering':
                 self.merged_feature_order, self.extra_info = \
                     self._parse_training_info(training_info)
             return self._compute_for_root(tree_num=tree_num)
@@ -274,7 +274,7 @@ class VerticalTrainer(object):
             return self._compute_for_node(tree_num, node_num + 1)
         # Calculate best gain
         else:
-            if self.cfg.vertical.mode == 'order_based':
+            if self.cfg.vertical.mode == 'feature_gathering':
                 improved_flag, split_ref, _ = self._get_best_gain(
                     tree_num, node_num)
                 if improved_flag:
@@ -290,7 +290,7 @@ class VerticalTrainer(object):
                 else:
                     self._set_weight_and_status(tree_num, node_num)
                     return self._compute_for_node(tree_num, node_num + 1)
-            elif self.cfg.vertical.mode == 'label_based':
+            elif self.cfg.vertical.mode == 'label_scattering':
                 results = (self.model[tree_num][node_num].grad,
                            self.model[tree_num][node_num].hess,
                            self.model[tree_num][node_num].indicator, tree_num,

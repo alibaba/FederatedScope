@@ -27,7 +27,7 @@ train:
     eta: 0.5
 vertical:
   use: True
-  mode: 'label_based'
+  mode: 'label_scattering'
   dims: [7, 14]
   algo: 'xgb'
   data_size_for_debug: 2000

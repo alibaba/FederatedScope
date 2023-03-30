@@ -5,36 +5,36 @@ federate:
   mode: standalone
   client_num: 2
 model:
-  type: random_forest
+  type: xgb_tree
   lambda_: 0.1
   gamma: 0
-  num_of_trees: 10
-  max_tree_depth: 5
+  num_of_trees: 14
+  max_tree_depth: 3
 data:
   root: data/
-  type: adult
-  splits: [1.0, 0.0]
+  type: abalone
+  splits: [0.8, 0.2]
 dataloader:
   type: raw
-  batch_size: 2000
+  batch_size: 5000
 criterion:
-  type: CrossEntropyLoss
+  type: RegressionMSELoss
 trainer:
   type: verticaltrainer
 train:
   optimizer:
     # learning rate for xgb model
-    eta: 1
+    eta: 0.19
 vertical:
   use: True
-  dims: [ 7, 14 ]
-  algo: 'rf'
-  mode: 'label_based'
-  data_size_for_debug: 2000
-  feature_subsample_ratio: 0.4
+  mode: 'label_scattering'
+  dims: [6, 10]
+  algo: 'xgb'
+  data_size_for_debug: 0
   protect_object: 'grad_and_hess'
   protect_method: 'he'
-  protect_args: [ { 'bucket_num': 50} ]
+  key_size: 512
+  protect_args: [{'bucket_num': 50}]
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss
