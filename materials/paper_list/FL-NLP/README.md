@@ -5,9 +5,7 @@ This list is constantly being updated. Feel free to contribute!
 ### 2023
 | Title | Venue | Link |
 | --- | --- | --- |
-| Privately Customizing Prefinetuning to Better Match User Data in Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2302.09042.pdf) |
 | Federated Nearest Neighbor Machine Translation | ICLR | [pdf](https://arxiv.org/pdf/2302.12211.pdf), [code](https://github.com/duyichao/FedNN-MT) |
-| A Federated Approach for Hate Speech Detection | EACL | [pdf](https://arxiv.org/pdf/2302.09243.pdf), [code](https://github.com/jaygala24/fed-hate-speech) |
 
 
 ### 2022
