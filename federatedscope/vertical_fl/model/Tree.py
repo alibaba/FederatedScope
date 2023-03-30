@@ -177,6 +177,37 @@ class DecisionTree(Tree):
         else:
             raise ValueError(f'Task type error: {self.task_type}')
 
+    def cal_gain_for_rf_label_base(self, node_num, split_idx, y, indicator):
+        y_left_children_label_sum = np.sum(y[:split_idx])
+        y_right_children_label_sum = np.sum(y[split_idx:])
+        left_children_num = np.sum(indicator[:split_idx])
+        right_children_num = np.sum(indicator[split_idx:])
+        if self.task_type == 'classification':
+            if np.sum(indicator) == np.sum(y) or np.sum(y) == 0:
+                return 0
+            total_num = np.sum(indicator)
+            left_gini = 2 * y_left_children_label_sum / left_children_num -\
+                2*(y_left_children_label_sum/left_children_num)**2
+            right_gini = 2 * (y_right_children_label_sum / right_children_num
+                              ) - 2 * (y_right_children_label_sum /
+                                       right_children_num)**2
+            return left_children_num / total_num * left_gini + \
+                right_children_num / total_num * right_gini
+        elif self.task_type == 'regression':
+            y_square_sum = np.sum(self.tree[node_num].label**2)
+            y_left_children_mean =\
+                y_left_children_label_sum / left_children_num
+            y_right_children_mean =\
+                y_right_children_label_sum / right_children_num
+
+            gain = y_square_sum -\
+                left_children_num * y_left_children_mean**2 -\
+                right_children_num * y_right_children_mean**2
+
+            return gain
+        else:
+            raise ValueError(f'Task type error: {self.task_type}')
+
     def set_task_type(self, task_type):
         self.task_type = task_type
 

@@ -154,12 +154,15 @@ class VerticalTrainer(object):
                         feature_idx,
                         grad=None,
                         hess=None,
-                        indicator=None):
+                        indicator=None,
+                        label=None):
         order = self.merged_feature_order[feature_idx]
         if grad is not None:
             ordered_g = np.asarray(grad)[order]
-        else:
+        elif self.model[tree_num][node_num].grad is not None:
             ordered_g = self.model[tree_num][node_num].grad[order]
+        else:
+            ordered_g = None
 
         if hess is not None:
             ordered_h = np.asarray(hess)[order]
@@ -175,7 +178,14 @@ class VerticalTrainer(object):
         else:
             ordered_indicator = None
 
-        return ordered_g, ordered_h, ordered_indicator
+        if label is not None:
+            ordered_label = np.asarray(label)[order]
+        elif self.model[tree_num][node_num].label is not None:
+            ordered_label = self.model[tree_num][node_num].label[order]
+        else:
+            ordered_label = None
+
+        return ordered_g, ordered_h, ordered_indicator, ordered_label
 
     def _get_best_gain(self,
                        tree_num,
@@ -213,8 +223,14 @@ class VerticalTrainer(object):
             split_position = activate_idx[:, 1:]
 
         for feature_idx in range(feature_num):
-            ordered_g, ordered_h, ordered_indicator = self._get_ordered_gh(
-                tree_num, node_num, feature_idx, grad, hess, indicator)
+            ordered_g, ordered_h, ordered_indicator, ordered_label =\
+                self._get_ordered_gh(tree_num,
+                                     node_num,
+                                     feature_idx,
+                                     grad,
+                                     hess,
+                                     indicator,
+                                     label=None)
             order = self.merged_feature_order[feature_idx]
             for value_idx in split_position[feature_idx]:
                 if self.model[tree_num].check_empty_child(
@@ -276,7 +292,8 @@ class VerticalTrainer(object):
                     return self._compute_for_node(tree_num, node_num + 1)
             elif self.cfg.vertical.mode == 'label_based':
                 results = (self.model[tree_num][node_num].grad,
-                           self.model[tree_num][node_num].hess, tree_num,
+                           self.model[tree_num][node_num].hess,
+                           self.model[tree_num][node_num].indicator, tree_num,
                            node_num)
                 return 'call_for_local_gain', results
 
