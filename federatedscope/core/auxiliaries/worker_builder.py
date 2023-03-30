@@ -58,11 +58,13 @@ def get_client_cls(cfg):
 
     if cfg.vertical.use:
         if cfg.vertical.algo == 'lr':
-            from federatedscope.vertical_fl.worker import vFLClient
+            from federatedscope.vertical_fl.linear_model.worker \
+                import vFLClient
             return vFLClient
         elif cfg.vertical.algo in ['xgb', 'gbdt', 'rf']:
-            from federatedscope.vertical_fl.xgb_base.worker import XGBClient
-            return XGBClient
+            from federatedscope.vertical_fl.tree_based_models.worker \
+                import TreeClient
+            return TreeClient
         else:
             raise ValueError(f'No client class for {cfg.vertical.algo}')
 
@@ -171,11 +173,13 @@ def get_server_cls(cfg):
 
     if cfg.vertical.use:
         if cfg.vertical.algo == 'lr':
-            from federatedscope.vertical_fl.worker import vFLServer
+            from federatedscope.vertical_fl.linear_model.worker \
+                import vFLServer
             return vFLServer
         elif cfg.vertical.algo in ['xgb', 'gbdt', 'rf']:
-            from federatedscope.vertical_fl.xgb_base.worker import XGBServer
-            return XGBServer
+            from federatedscope.vertical_fl.tree_based_models.worker \
+                import TreeServer
+            return TreeServer
         else:
             raise ValueError(f'No server class for {cfg.vertical.algo}')
 
