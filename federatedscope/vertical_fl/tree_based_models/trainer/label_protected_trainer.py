@@ -307,7 +307,7 @@ def createLabelProtectedTrainer(cls, model, data, device, config, monitor):
                                 continue
 
                             gain = self.model[
-                                tree_num].cal_gain_for_rf_label_base(
+                                tree_num].cal_gain_for_rf_label_scattering(
                                     node_num, value_idx, label, indicator)
                             if gain < best_gain:
                                 client_has_max_gain = client_id

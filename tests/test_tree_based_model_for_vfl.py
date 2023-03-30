@@ -157,7 +157,7 @@ class XGBTest(unittest.TestCase):
 
         return backup_cfg
 
-    def set_config_for_rf_label_base(self, cfg):
+    def set_config_for_rf_label_scattering(self, cfg):
         backup_cfg = cfg.clone()
 
         import torch
@@ -473,7 +473,7 @@ class XGBTest(unittest.TestCase):
 
     def test_RF_lable_Base(self):
         init_cfg = global_cfg.clone()
-        backup_cfg = self.set_config_for_rf_label_base(init_cfg)
+        backup_cfg = self.set_config_for_rf_label_scattering(init_cfg)
         setup_seed(init_cfg.seed)
         update_logger(init_cfg, True)
 
