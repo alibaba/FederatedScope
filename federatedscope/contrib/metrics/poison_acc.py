@@ -25,7 +25,8 @@ def load_poison_metrics(ctx, y_true, y_pred, y_prob, **kwargs):
 
 def call_poison_metric(types):
     if 'poison_attack_acc' in types:
-        return 'poison_attack_acc', load_poison_metrics
+        the_larger_the_better = True
+        return 'poison_attack_acc', load_poison_metrics, the_larger_the_better
 
 
 register_metric('poison_attack_acc', call_poison_metric)

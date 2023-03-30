@@ -17,11 +17,12 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 | [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
 
 ## News
+- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [02-10-2022] Our [paper](https://arxiv.org/pdf/2204.05011.pdf) elaborating on FederatedScope is accepted by VLDB'23!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [10-05-2022] Our benchmark paper for personalized FL, [pFL-Bench](https://arxiv.org/abs/2206.03655) has been accepted by NeurIPS'22, Dataset and Benchmark Track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [07-30-2022] We release FederatedScope v0.2.0! 
+- [07-30-2022] We release FederatedScope v0.2.0! 
 - [06-17-2022] We release **pFL-Bench**, a comprehensive benchmark for personalized Federated Learning (pFL), containing 10+ datasets and 20+ baselines. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench), [pdf](https://arxiv.org/abs/2206.03655)]
-- [06-17-2022] We release **FedHPO-B**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOB), [pdf](https://arxiv.org/abs/2206.03966)]
+- [06-17-2022] We release **FedHPO-Bench**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOBench), [pdf](https://arxiv.org/abs/2206.03966)]
 - [06-17-2022] We release **B-FHTL**, a benchmark suit for studying federated hetero-task learning. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/B-FHTL), [pdf](https://arxiv.org/abs/2206.03436)]
 - [06-13-2022] Our project was receiving an attack, which has been resolved. [More details](https://github.com/alibaba/FederatedScope/blob/master/doc/news/06-13-2022_Declaration_of_Emergency.txt).
 - [05-25-2022] Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!
@@ -44,6 +45,7 @@ FederatedScope
 │   ├── nlp                      # Federated learning in NLP          
 │   ├── gfl                      # Graph federated learning          
 │   ├── autotune                 # Auto-tunning for federated learning         
+│   ├── vertical_fl              # Vartical federated learning         
 │   ├── contrib                          
 │   ├── main.py           
 │   ├── ... ...          
@@ -104,7 +106,7 @@ conda activate fs
 If your backend is torch, please install torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
 
 ```bash
-conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 torchtext=0.11.1 cudatoolkit=11.3 -c pytorch -c conda-forge
 ```
 
 For users with Apple M1 chips:
@@ -119,7 +121,7 @@ Finally, after the backend is installed, you can install FederatedScope from `so
 ##### From source
 
 ```bash
-python setup.py install
+pip install .
 
 # Or (for dev mode)
 pip install -e .[dev]
@@ -268,9 +270,9 @@ As a comprehensive FL platform, FederatedScope provides the fundamental implemen
 - **Differential Privacy**: Different from the encryption algorithms that require a large amount of computation resources,  differential privacy is an economical yet flexible technique to protect privacy, which has achieved great success in database and is ever-growing in federated learning.
 - ...
 
-More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning!
+More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning! 
 
-Materials of related topics are constantly being updated, please refer to [FL-Recommendation](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Recommendation), [Federated-HPO](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_HPO), [Personalized FL](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Personalized_FL), [Federated Graph Learning](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_Graph_Learning), [FL-NLP](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-NLP), [FL-Attacker](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Attacker), [FL-Incentive-Mechanism](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Incentive) and so on. 
+Materials of related topics are constantly being updated, please refer to [FL-Recommendation](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Recommendation), [Federated-HPO](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_HPO), [Personalized FL](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Personalized_FL), [Federated Graph Learning](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_Graph_Learning), [FL-NLP](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-NLP), [FL-Attacker](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Attacker), [FL-Incentive-Mechanism](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Incentive), [FL-Fairness](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Fiarness) and so on. 
 
 ## Documentation
 
@@ -295,8 +297,11 @@ If you find FederatedScope useful for your research or development, please cite 
 @article{federatedscope,
   title = {FederatedScope: A Flexible Federated Learning Platform for Heterogeneity},
   author = {Xie, Yuexiang and Wang, Zhen and Gao, Dawei and Chen, Daoyuan and Yao, Liuyi and Kuang, Weirui and Li, Yaliang and Ding, Bolin and Zhou, Jingren},
-  journal={arXiv preprint arXiv:2204.05011},
-  year = {2022},
+  journal={Proceedings of the VLDB Endowment},
+  volume={16},
+  number={5},
+  pages={1059--1072},
+  year={2023}
 }
 ```
 More publications can be found in the [Publications](https://federatedscope.io/pub/).

@@ -1,0 +1,33 @@
+use_gpu: False
+device: 0
+backend: torch
+federate:
+  mode: standalone
+  client_num: 2
+  total_round_num: 30
+model:
+  type: lr
+  use_bias: False
+train:
+  optimizer:
+    lr: 0.5
+data:
+  root: data/
+  type: adult
+  splits: [1.0, 0.0]
+  args: [{normalization: False, standardization: True}]
+dataloader:
+  type: raw
+  batch_size: 50
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: none
+vertical:
+  use: True
+  dims: [7, 14]
+  algo: 'lr'
+  key_size: 256
+eval:
+  freq: 5
+  best_res_update_round_wise_key: test_loss

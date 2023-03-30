@@ -1,0 +1,50 @@
+client_1:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    local_update_steps: 1
+    optimizer:
+      lr: 0.001
+client_2:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    local_update_steps: 1
+    optimizer:
+      lr: 0.001
+client_3:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    local_update_steps: 1
+    optimizer:
+      lr: 0.001
+client_4:
+  model:
+    out_channels: 6
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    local_update_steps: 1
+    optimizer:
+      lr: 0.001
+client_5:
+  model:
+    out_channels: 2
+    task: graphClassification
+  criterion:
+    type: CrossEntropyLoss
+  train:
+    local_update_steps: 1
+    optimizer:
+      lr: 0.001

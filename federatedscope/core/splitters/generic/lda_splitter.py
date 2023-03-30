@@ -5,16 +5,30 @@ from federatedscope.core.splitters.utils import \
 
 
 class LDASplitter(BaseSplitter):
+    """
+    This splitter split dataset with LDA.
+
+    Args:
+        client_num: the dataset will be split into ``client_num`` pieces
+        alpha (float): Partition hyperparameter in LDA, smaller alpha \
+            generates more extreme heterogeneous scenario see \
+            ``np.random.dirichlet``
+    """
     def __init__(self, client_num, alpha=0.5):
         self.alpha = alpha
         super(LDASplitter, self).__init__(client_num)
 
     def __call__(self, dataset, prior=None, **kwargs):
-        dataset = [ds for ds in dataset]
-        label = np.array([y for x, y in dataset])
+        from torch.utils.data import Dataset, Subset
+
+        tmp_dataset = [ds for ds in dataset]
+        label = np.array([y for x, y in tmp_dataset])
         idx_slice = dirichlet_distribution_noniid_slice(label,
                                                         self.client_num,
                                                         self.alpha,
                                                         prior=prior)
-        data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
+        if isinstance(dataset, Dataset):
+            data_list = [Subset(dataset, idxs) for idxs in idx_slice]
+        else:
+            data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list

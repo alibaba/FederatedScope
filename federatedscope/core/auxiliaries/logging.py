@@ -4,11 +4,12 @@ import logging
 import os
 import re
 import time
-from datetime import datetime
+import yaml
 
 import numpy as np
+from datetime import datetime
 
-from federatedscope.core.auxiliaries.utils import logger
+logger = logging.getLogger(__name__)
 
 
 class CustomFormatter(logging.Formatter):
@@ -151,7 +152,6 @@ def init_wandb(cfg):
     tmp_cfg.clear_aux_info(
     )  # in most cases, no need to save the cfg_check_funcs via wandb
     tmp_cfg.de_arguments()
-    import yaml
     cfg_yaml = yaml.safe_load(tmp_cfg.dump())
 
     wandb.init(project=cfg.wandb.name_project,

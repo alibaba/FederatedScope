@@ -45,3 +45,19 @@ def parse_args(args=None):
         sys.exit(1)
 
     return parse_res
+
+
+def parse_client_cfg(arg_opts):
+    """
+    Arguments:
+        arg_opts: list pairs of arg.opts
+    """
+    client_cfg_opts = []
+    i = 0
+    while i < len(arg_opts):
+        if arg_opts[i].startswith('client'):
+            client_cfg_opts.append(arg_opts.pop(i))
+            client_cfg_opts.append(arg_opts.pop(i))
+        else:
+            i += 1
+    return arg_opts, client_cfg_opts

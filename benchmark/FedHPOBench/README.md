@@ -1,14 +1,14 @@
-# FedHPO-B
+# FedHPO-Bench
 
-A benchmark suite for studying federated hyperparameter optimization. FedHPO-B incorporates comprehensive FL tasks, enables efficient function evaluations, and eases continuing extensions. We also conduct extensive experiments based on FedHPO-B to benchmark a few HPO methods.
+A benchmark suite for studying federated hyperparameter optimization. FedHPO-Bench incorporates comprehensive FL tasks, enables efficient function evaluations, and eases continuing extensions. We also conduct extensive experiments based on FedHPO-B to benchmark a few HPO methods.
 
 ## Quick Start
 
-We highly recommend running FedHPO-B with conda.
+We highly recommend running FedHPO-Bench with conda.
 
 ### Step 0. Dependency
 
-* FedHPO-B is built on a stable [FederatedScope](https://github.com/alibaba/FederatedScope), please see [Installation](https://github.com/alibaba/FederatedScope#step-1-installation) for install FederatedScope.
+* FedHPO-Bench is built on a stable [FederatedScope](https://github.com/alibaba/FederatedScope), please see [Installation](https://github.com/alibaba/FederatedScope#step-1-installation) for install FederatedScope.
 
   ```bash
   git clone https://github.com/alibaba/FederatedScope.git
@@ -33,7 +33,7 @@ We highly recommend running FedHPO-B with conda.
 
 ### Step 1. Installation
 
-We recommend installing FedHPOB directly using git by:
+We recommend installing FedHPOBench directly using git by:
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
@@ -43,9 +43,9 @@ export PYTHONPATH=~/FedHPOBench:$PYTHONPATH
 
 ### Step 2. Prepare data files
 
-**Note**: If you only want to use FedHPO-B with raw mode, you can skip to **Step3**.
+**Note**: If you only want to use FedHPO-Bench with raw mode, you can skip to **Step3**.
 
-All data files are available on AliyunOSS, you need to download the data files and place them in the `~/data/tabular_data/` or `~/data/surrogate_model/`  before using FedHPO-B.
+All data files are available on AliyunOSS, you need to download the data files and place them in the `~/data/tabular_data/` or `~/data/surrogate_model/`  before using FedHPO-Bench.
 
 The naming pattern of the url of data files obeys the rule:
 
@@ -62,8 +62,8 @@ Fortunately, we provide tools to automatically convert from tabular data to surr
 ### Step3. Start running
 
 ```python
-from fedhpob.config import fhb_cfg
-from fedhpob.benchmarks import TabularBenchmark
+from fedhpobench.config import fhb_cfg
+from fedhpobench.benchmarks import TabularBenchmark
 
 benchmark = TabularBenchmark('cnn', 'femnist', 'avg')
 
@@ -99,7 +99,7 @@ We take Figure 11 as an example.
 * Then draw the figure with tools we provide, the figures will be saved in `~/figures`.
 
   ```python
-  from fedhpob.utils.draw import rank_over_time
+  from fedhpobench.utils.draw import rank_over_time
   
   rank_over_time('exp_results', 'gcn', algo='avg', loss=False)
   ```
@@ -130,11 +130,11 @@ How to use:
 
 ## Publications
 
-If you find FedHPO-B useful for your research or development, please cite the following [paper](https://arxiv.org/abs/2206.03966):
+If you find FedHPO-Bench useful for your research or development, please cite the following [paper](https://arxiv.org/abs/2206.03966):
 
 ```tex
 @article{Wang2022FedHPOBAB,
-  title={FedHPO-B: A Benchmark Suite for Federated Hyperparameter Optimization},
+  title={FedHPO-Bench: A Benchmark Suite for Federated Hyperparameter Optimization},
   author={Zhen Wang and Weirui Kuang and Ce Zhang and Bolin Ding and Yaliang Li},
   journal={ArXiv},
   year={2022},

@@ -1,7 +1,6 @@
 import os
 import logging
 from copy import deepcopy
-from contextlib import redirect_stdout
 import threading
 import math
 
@@ -13,50 +12,36 @@ from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results
+    config2cmdargs, config2str, summarize_hpo_results, log2wandb, eval_in_fs
 
 logger = logging.getLogger(__name__)
-
-
-def make_trial(trial_cfg):
-    setup_seed(trial_cfg.seed)
-    data, modified_config = get_data(config=trial_cfg.clone())
-    trial_cfg.merge_from_other_cfg(modified_config)
-    trial_cfg.freeze()
-    # TODO: enable client-wise configuration
-    Fed_runner = FedRunner(data=data,
-                           server_class=get_server_cls(trial_cfg),
-                           client_class=get_client_cls(trial_cfg),
-                           config=trial_cfg.clone())
-    results = Fed_runner.run()
-    key1, key2 = trial_cfg.hpo.metric.split('.')
-    return results[key1][key2]
 
 
 class TrialExecutor(threading.Thread):
     """This class is responsible for executing the FL procedure with
     a given trial configuration in another thread.
     """
-    def __init__(self, cfg_idx, signal, returns, trial_config):
+    def __init__(self, cfg_idx, signal, returns, trial_config, client_cfgs):
         threading.Thread.__init__(self)
 
         self._idx = cfg_idx
         self._signal = signal
         self._returns = returns
         self._trial_cfg = trial_config
+        self._client_cfgs = client_cfgs
 
     def run(self):
         setup_seed(self._trial_cfg.seed)
         data, modified_config = get_data(config=self._trial_cfg.clone())
         self._trial_cfg.merge_from_other_cfg(modified_config)
         self._trial_cfg.freeze()
-        # TODO: enable client-wise configuration
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(self._trial_cfg),
-                               client_class=get_client_cls(self._trial_cfg),
-                               config=self._trial_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(self._trial_cfg),
+                                client_class=get_client_cls(self._trial_cfg),
+                                config=self._trial_cfg.clone(),
+                                client_configs=self._client_cfgs)
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]
@@ -64,19 +49,20 @@ class TrialExecutor(threading.Thread):
         self._signal.set()
 
 
-def get_scheduler(init_cfg):
+def get_scheduler(init_cfg, client_cfgs=None):
     """To instantiate a scheduler object for conducting HPO
     Arguments:
-        init_cfg (federatedscope.core.configs.config.CN): configuration.
+        init_cfg: configuration
+        client_cfgs: client-specific configuration
     """
 
     if init_cfg.hpo.scheduler in [
             'sha', 'rs', 'bo_kde', 'bohb', 'hb', 'bo_gp', 'bo_rf'
     ]:
-        scheduler = SuccessiveHalvingAlgo(init_cfg)
+        scheduler = SuccessiveHalvingAlgo(init_cfg, client_cfgs)
     # elif init_cfg.hpo.scheduler == 'pbt':
     #     scheduler = PBT(init_cfg)
-    elif init_cfg.hpo.scheduler.startswith('wrap'):
+    elif init_cfg.hpo.scheduler.startswith('wrap', client_cfgs):
         scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 
@@ -84,15 +70,18 @@ def get_scheduler(init_cfg):
 class Scheduler(object):
     """The base class for describing HPO algorithms
     """
-    def __init__(self, cfg):
+    def __init__(self, cfg, client_cfgs=None):
         """
             Arguments:
-                cfg (federatedscope.core.configs.config.CN): dict like object,
-                where each key-value pair corresponds to a field and its
-                choices.
+                cfg (federatedscope.core.configs.config.CN): dict \
+                like object, where each key-value pair corresponds to a \
+                field and its choices.
+                client_cfgs: client-specific configuration
         """
 
         self._cfg = cfg
+        self._client_cfgs = client_cfgs
+
         # Create hpo working folder
         os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self._search_space = parse_search_space(self._cfg.hpo.ss)
@@ -160,7 +149,7 @@ class ModelFreeBase(Scheduler):
                 flags[available_worker].clear()
                 trial = TrialExecutor(i, flags[available_worker],
                                       thread_results[available_worker],
-                                      trial_cfg)
+                                      trial_cfg, self._client_cfgs)
                 trial.start()
                 threads[available_worker] = trial
 
@@ -172,34 +161,50 @@ class ModelFreeBase(Scheduler):
                     completed_trial_results = thread_results[i]
                     cfg_idx = completed_trial_results['cfg_idx']
                     perfs[cfg_idx] = completed_trial_results['perf']
+                    # TODO: Support num_worker in WandB
                     logger.info(
                         "Evaluate the {}-th config {} and get performance {}".
                         format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
                     thread_results[i].clear()
 
         else:
+            tmp_configs = []
             perfs = [None] * len(configs)
             for i, config in enumerate(configs):
+                tmp_configs.append(config)
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
-                perfs[i] = make_trial(trial_cfg)
+                results = eval_in_fs(cfg=trial_cfg,
+                                     client_cfgs=self._client_cfgs)
+                key1, key2 = trial_cfg.hpo.metric.split('.')
+                perfs[i] = results[key1][key2]
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))
-
+                if self._cfg.wandb.use:
+                    tmp_results = \
+                        summarize_hpo_results(tmp_configs,
+                                              perfs,
+                                              white_list=set(
+                                                  self._search_space.keys()),
+                                              desc=self._cfg.hpo.larger_better,
+                                              is_sorted=False)
+                    log2wandb(i, config, results, trial_cfg, tmp_results)
         return perfs
 
     def optimize(self):
         perfs = self._evaluate(self._init_configs)
-
         results = summarize_hpo_results(self._init_configs,
                                         perfs,
                                         white_list=set(
                                             self._search_space.keys()),
-                                        desc=self._cfg.hpo.larger_better)
+                                        desc=self._cfg.hpo.larger_better,
+                                        use_wandb=self._cfg.wandb.use)
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
+        results.to_csv(
+            os.path.join(self._cfg.hpo.working_folder, 'results.csv'))
         logger.info("====================================================")
 
         return results
@@ -258,12 +263,15 @@ class IterativeScheduler(ModelFreeBase):
                 current_configs,
                 current_perfs,
                 white_list=set(self._search_space.keys()),
-                desc=self._cfg.hpo.larger_better)
+                desc=self._cfg.hpo.larger_better,
+                use_wandb=self._cfg.wandb.use)
             self._stage += 1
             logger.info(
                 "========================== Stage{} =========================="
                 .format(self._stage))
             logger.info("\n{}".format(last_results))
+            last_results.to_csv(
+                os.path.join(self._cfg.hpo.working_folder, 'results.csv'))
             logger.info("====================================================")
             current_configs = self._generate_next_population(
                 current_configs, current_perfs)
@@ -286,10 +294,12 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
 
         if self._cfg.hpo.sha.budgets:
             for trial_cfg in init_configs:
-                trial_cfg[
-                    'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
-                        self._stage]
-                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
+                rnd = min(
+                    self._cfg.hpo.sha.budgets[0] *
+                    self._cfg.hpo.sha.elim_rate**self._stage,
+                    self._cfg.hpo.sha.budgets[1])
+                trial_cfg['federate.total_round_num'] = rnd
+                trial_cfg['eval.freq'] = rnd
 
         return init_configs
 
@@ -309,12 +319,14 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
             if 'federate.restore_from' not in trial_cfg:
                 trial_cfg['federate.restore_from'] = trial_cfg[
                     'federate.save_to']
-            if self._cfg.hpo.sha.budgets and self._stage < len(
-                    self._cfg.hpo.sha.budgets):
-                trial_cfg[
-                    'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
-                        self._stage]
-                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
+            rnd = min(
+                self._cfg.hpo.sha.budgets[0] *
+                self._cfg.hpo.sha.elim_rate**self._stage,
+                self._cfg.hpo.sha.budgets[1])
+            if self._cfg.hpo.sha.budgets and rnd < \
+                    self._cfg.hpo.sha.budgets[1]:
+                trial_cfg['federate.total_round_num'] = rnd
+                trial_cfg['eval.freq'] = rnd
 
         return next_population
 

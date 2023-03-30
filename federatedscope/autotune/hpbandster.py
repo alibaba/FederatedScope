@@ -8,9 +8,9 @@ import ConfigSpace as CS
 import hpbandster.core.nameserver as hpns
 from hpbandster.core.worker import Worker
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
-from hpbandster.optimizers.iterations import SuccessiveHalving
 
-from federatedscope.autotune.utils import eval_in_fs
+from federatedscope.autotune.utils import eval_in_fs, log2wandb, \
+    summarize_hpo_results
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -54,16 +54,27 @@ class MyHyperBand(HyperBand):
 
 
 class MyWorker(Worker):
-    def __init__(self, cfg, ss, sleep_interval=0, *args, **kwargs):
+    def __init__(self,
+                 cfg,
+                 ss,
+                 sleep_interval=0,
+                 client_cfgs=None,
+                 *args,
+                 **kwargs):
         super(MyWorker, self).__init__(**kwargs)
         self.sleep_interval = sleep_interval
         self.cfg = cfg
+        self.client_cfgs = client_cfgs
         self._ss = ss
         self._init_configs = []
         self._perfs = []
+        self.trial_index = 0
 
     def compute(self, config, budget, **kwargs):
-        res = eval_in_fs(self.cfg, config, int(budget))
+        results = eval_in_fs(self.cfg, config, int(budget), self.client_cfgs,
+                             self.trial_index)
+        key1, key2 = self.cfg.hpo.metric.split('.')
+        res = results[key1][key2]
         config = dict(config)
         config['federate.total_round_num'] = budget
         self._init_configs.append(config)
@@ -71,23 +82,40 @@ class MyWorker(Worker):
         time.sleep(self.sleep_interval)
         logger.info(f'Evaluate the {len(self._perfs)-1}-th config '
                     f'{config}, and get performance {res}')
-        return {'loss': float(res), 'info': res}
+        if self.cfg.wandb.use:
+            tmp_results = \
+                summarize_hpo_results(self._init_configs,
+                                      self._perfs,
+                                      white_list=set(
+                                          self._ss.keys()),
+                                      desc=self.cfg.hpo.larger_better,
+                                      is_sorted=False)
+            log2wandb(
+                len(self._perfs) - 1, config, results, self.cfg, tmp_results)
+        self.trial_index += 1
+
+        if self.cfg.hpo.larger_better:
+            return {'loss': -float(res), 'info': res}
+        else:
+            return {'loss': float(res), 'info': res}
 
     def summarize(self):
-        from federatedscope.autotune.utils import summarize_hpo_results
         results = summarize_hpo_results(self._init_configs,
                                         self._perfs,
                                         white_list=set(self._ss.keys()),
-                                        desc=self.cfg.hpo.larger_better)
+                                        desc=self.cfg.hpo.larger_better,
+                                        use_wandb=self.cfg.wandb.use)
         logger.info(
             "========================== HPO Final ==========================")
         logger.info("\n{}".format(results))
+        results.to_csv(os.path.join(self.cfg.hpo.working_folder,
+                                    'results.csv'))
         logger.info("====================================================")
 
         return results
 
 
-def run_hpbandster(cfg, scheduler):
+def run_hpbandster(cfg, scheduler, client_cfgs=None):
     config_space = scheduler._search_space
     if cfg.hpo.scheduler.startswith('wrap_'):
         ss = CS.ConfigurationSpace()
@@ -100,7 +128,8 @@ def run_hpbandster(cfg, scheduler):
                  cfg=cfg,
                  nameserver='127.0.0.1',
                  nameserver_port=ns_port,
-                 run_id=cfg.hpo.scheduler)
+                 run_id=cfg.hpo.scheduler,
+                 client_cfgs=client_cfgs)
     w.run(background=True)
     opt_kwargs = {
         'configspace': config_space,
