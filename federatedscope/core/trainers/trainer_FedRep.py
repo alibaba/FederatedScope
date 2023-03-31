@@ -7,44 +7,34 @@ from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 
 from typing import Type
 
-
 logger = logging.getLogger(__name__)
 
 
 def wrap_FedRepTrainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
-    """
-    Build a `FedRapTrainer` with a plug-in manner, by registering new functions into specific `BaseTrainer`
-    """
 
     init_FedRep_ctx(base_trainer)
 
-    base_trainer.register_hook_in_train(
-        new_hook=hook_on_fit_start_fedrep,
-        trigger="on_fit_start",
-        insert_pos=-1)
+    base_trainer.register_hook_in_train(new_hook=hook_on_fit_start_fedrep,
+                                        trigger="on_fit_start",
+                                        insert_pos=-1)
 
-    base_trainer.register_hook_in_train(
-        new_hook=hook_on_epoch_start_fedrep,
-        trigger="on_epoch_start",
-        insert_pos=-1)
+    base_trainer.register_hook_in_train(new_hook=hook_on_epoch_start_fedrep,
+                                        trigger="on_epoch_start",
+                                        insert_pos=-1)
 
     return base_trainer
 
 
-
 def init_FedRep_ctx(base_trainer):
-
 
     ctx = base_trainer.ctx
     cfg = base_trainer.cfg
-
 
     ctx.epoch_feature = cfg.personalization.epoch_feature
     ctx.epoch_linear = cfg.personalization.epoch_linear
 
     ctx.num_train_epoch = ctx.epoch_feature + ctx.epoch_linear
-
 
     ctx.epoch_number = 0
 
@@ -64,20 +54,20 @@ def init_FedRep_ctx(base_trainer):
             ctx.global_update_param.append(param)
 
 
-
-
-
 def hook_on_fit_start_fedrep(ctx):
 
     ctx.num_train_epoch = ctx.epoch_feature + ctx.epoch_linear
     ctx.epoch_number = 0
 
-    ctx.optimizer_for_feature = torch.optim.SGD(ctx.global_update_param, lr=ctx.lr_feature, momentum=0, weight_decay=ctx.weight_decay)
-    ctx.optimizer_for_linear = torch.optim.SGD(ctx.local_update_param, lr=ctx.lr_linear, momentum=0, weight_decay=ctx.weight_decay)
-    
-    '''
-    #  For the first ctx.epoch_linear epochs, only the linear classifier can be updated.
-    '''
+    ctx.optimizer_for_feature = torch.optim.SGD(ctx.global_update_param,
+                                                lr=ctx.lr_feature,
+                                                momentum=0,
+                                                weight_decay=ctx.weight_decay)
+    ctx.optimizer_for_linear = torch.optim.SGD(ctx.local_update_param,
+                                               lr=ctx.lr_linear,
+                                               momentum=0,
+                                               weight_decay=ctx.weight_decay)
+
     for name, param in ctx.model.named_parameters():
 
         if name.split(".")[0] in ctx.local_param:
@@ -89,7 +79,7 @@ def hook_on_fit_start_fedrep(ctx):
 
 
 def hook_on_epoch_start_fedrep(ctx):
-    
+
     ctx.epoch_number += 1
 
     if ctx.epoch_number == ctx.epoch_linear + 1:
@@ -102,8 +92,3 @@ def hook_on_epoch_start_fedrep(ctx):
                 param.requires_grad = True
 
         ctx.optimizer = ctx.optimizer_for_feature
-
-
-
-
-
