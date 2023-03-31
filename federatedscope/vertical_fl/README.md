@@ -3,7 +3,7 @@
 ## Linear Model
 We provide an example for training linear model in vertical federated learning:
 ```bash
-python3 ../main.py --cfg vertical_fl.yaml
+python3 ../main.py --cfg linear_model/baseline/vertical_fl.yaml
 ```
 
 You can specify customized configurations in `vertical_fl.yaml`, such as `data.type` and `federate.total_round_num`. 
@@ -52,7 +52,7 @@ criterion:
 
 # Trainer related options
 trainer:
-	# Trainer type
+  # Trainer type
   type: verticaltrainer  
   
 # vertical related options
@@ -68,14 +68,14 @@ vertical:
 
 # Evaluation related options
 eval:
-	# Frequency of evaluation
+  # Frequency of evaluation
   freq: 3
   best_res_update_round_wise_key: test_loss
 ```
 Users can specify ```model.type``` and ```vertical.algo``` to use different models. For examples,:
--  XGBoost: `model.type = xgb_tree`,and `vertical.algo = 'xgb'`
--  GBDT: `model.type = gbdt_tree`,and `vertical.algo = 'gbdt'`
--  Random Forest: `model.type = random_forest`,and `vertical.algo = 'rf'`
+-  XGBoost: `model.type = xgb_tree`, and `vertical.algo = xgb`
+-  GBDT: `model.type = gbdt_tree`, and `vertical.algo = gbdt`
+-  Random Forest: `model.type = random_forest`, and `vertical.algo = rf`
 
 ### Privacy protection algorithms 
 #### For feature-gathering model
@@ -108,7 +108,7 @@ When $lb$ and $ub$ are close, $\epsilon, \epsilon_{prt}, \epsilon_{ner}$ and $pb
 
 In `protect_args`, you can also add `bucket_num` to accelerate the training which is similar to the hist algorithm in XGBoost.
 
-The above two protection method are proposed in  "FederBoost: Private Federated Learning for
+The above two protection methods are proposed in  "FederBoost: Private Federated Learning for
 GBDT" and "OpBoost: A Vertical Federated Tree Boosting Framework Based on Order-Preserving Desensitization". 
 
 #### For label-scattering model
@@ -130,14 +130,14 @@ Specifically, the task party encrypts the label-related information (such as gra
 
 In Inference procedure, we also provide different manners. Users can specify `vertical.eval` to apply secret sharing (`ss`), homomorphic encryption (`he`), or choose to no apply protection method (`''`).
 
-`vertical.eval = ''` means the basic procedure, that is, for each tree, when task party do the inference, for each internal node, he will check the owner of the split feature, and sends a single to the owner. The owner compares the test data and the split value to get the indicator vectors for left and right children, then sends them to task party. Task party continues testing for the next node until the leaf nodes are reached.
+`vertical.eval = ''` means the basic procedure, that is, for each tree, when task party performs inference, for each internal node, he will check the owner of the split feature, and sends a single to the owner. The owner compares the test data and the split value to get the indicator vectors for left and right children, then sends them to task party. Task party continues testing for the next node until the leaf nodes are reached.
 
 `vertical.eval: 'ss'` (coming soon!) means for each tree, task party first SS the weight of each leaf node. And during inference, the indicator vectors of left and right children are also secret shared. By SS multiplication, at the end, each party will get a secret shared piece of the testing results. Then task party receives the pieces of data parties to reveal the exact result. The main advantage is that the indicator vectors are masked. 
 
-`vertical.eval: 'he'` means for each tree, each party locally get the leaf vector. Here, a leaf vector is a $0$-$1$ vector of length equals to the number of leaf node plus 1, where $0$ means that the sample must not in this leaf node and $1$ otherwise. Task party put the weight of the leaf node into the leaf vector where the corresponding coordinate has a $1$ and encrypts it by PHE and sends it to one data party. The data party  do the dot production between his own leaf vector with encrypted vector, and sends it to the next data party. The next data party dose exactly the same thing. Finally, the last data party sums up each component of the vector and sends it to task party. Task party decrypts it to get the testing result.
+`vertical.eval: 'he'` means for each tree, each party locally get the leaf vector. Here, a leaf vector is a $0-1$ vector of length equals to the number of leaf node plus 1, where $0$ means that the sample must not in this leaf node and $1$ otherwise. Task party put the weight of the leaf node into the leaf vector where the corresponding coordinate has a $1$ and encrypts it by PHE and sends it to one data party. The data party performs dot production between his own leaf vector with encrypted vector, and sends it to the next data party. The next data party dose exactly the same thing. Finally, the last data party sums up each component of the vector and sends it to task party. Task party decrypts it to get the testing result.
 
 ### Examples
-Several examples are provided in `federatedscope/vertical_fl/xgb_base/baseline/`. The following configurations (provided in `xgb_feature_order_dp_on_adult.yaml`) shows how to run XGBoost n Adult dataset, using feature-gathering tree-based model and applying differential privacy for protection.
+Several examples are provided in `federatedscope/tree_based_models/baseline/`. The following configurations (provided in `xgb_feature_gathering_dp_on_adult.yaml`) shows how to run XGBoost n Adult dataset, using feature-gathering tree-based model and applying differential privacy for protection.
 ```shell script
 use_gpu: False
 device: 0
