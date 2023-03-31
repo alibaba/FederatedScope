@@ -121,9 +121,10 @@ Finally, after the backend is installed, you can install FederatedScope from `so
 ##### From source
 
 ```bash
-pip install .
+# Editable mode
+pip install -e .
 
-# Or (for dev mode)
+# Or (developers for dev mode)
 pip install -e .[dev]
 pre-commit install
 ```
