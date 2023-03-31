@@ -7,21 +7,21 @@
 | ------------------------------------------------------------ | ---------- |---------------------------------------------
  | Privfairfl: Privacy-preserving group fairness in federated learning | arxiv | [pdf](https://arxiv.org/pdf/2205.11584v1.pdf) 
 | Fair federated learning for heterogeneous data | IKDD CODS & COMAD | [pdf](https://dl.acm.org/doi/fullHtml/10.1145/3493700.3493750)
-
+|FairVFL: A Fair Vertical Federated Learning Framework with Contrastive Adversarial Learning| NeurIPS| [pdf](https://openreview.net/pdf?id=5vVSA_cdRqe)
 
 ### 2021
 | Title                                                        | Venue      | Link                                        
 | ------------------------------------------------------------ | ---------- |---------------------------------------------
- | Addressing algorithmic disparity and performance inconsistency in federated learning| NeurIPS Workshop| [pdf](https://arxiv.org/pdf/2108.08435.pdf)
- |Enforcing fairness in private federated learning via the modified method of differential multipliers| NeurIPS Workshop| [pdf](https://arxiv.org/abs/2109.08604)
- | Fairness-aware agnostic federated learning | SDM|[pdf](https://arxiv.org/pdf/2010.05057.pdf)
- | Federated adversarial debiasing for fair and  transferable representations| KDD| [pdf](https://dl.acm.org/doi/pdf/10.1145/3447548.3467281)
+ | Addressing algorithmic disparity and performance inconsistency in federated learning| NeurIPS Workshop| [pdf](https://arxiv.org/pdf/2108.08435.pdf)|
+ |Enforcing fairness in private federated learning via the modified method of differential multipliers| NeurIPS Workshop| [pdf](https://arxiv.org/abs/2109.08604)|
+ | Fairness-aware agnostic federated learning | SDM|[pdf](https://arxiv.org/pdf/2010.05057.pdf)|
+ | Federated adversarial debiasing for fair and  transferable representations| KDD| [pdf](https://dl.acm.org/doi/pdf/10.1145/3447548.3467281)|
  
  
  ### 2019 
 | Title                                                        | Venue      | Link                                        
 | ------------------------------------------------------------ | ---------- |--------------------------------------------- 
- |Agnostic federated learning | ICML| [pdf](http://proceedings.mlr.press/v97/mohri19a/mohri19a.pdf)
+ |Agnostic federated learning | ICML| [pdf](http://proceedings.mlr.press/v97/mohri19a/mohri19a.pdf)|
  
  
  ## Fairness - Client performance parity
@@ -38,7 +38,7 @@
 | Title                                                        | Venue      | Link                                        
 | ------------------------------------------------------------ | ---------- |---------------------------------------------
 |Fedmgda+: Federated learning meets multi-objective optimization | IEEE Transactions on Network Science and Engineering| [pdf](https://arxiv.org/pdf/2006.11489.pdf)
-
+|Fairness in Federated Learning via Core-Stability | NeurIPS | [pdf](https://openreview.net/pdf?id=lKULHf7oFDo)
 
 ### 2021
 | Title                                                        | Venue      | Link                                        
