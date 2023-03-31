@@ -1,6 +1,6 @@
 Here we give some hand-on examples, and roughly show their characteristics.
 
-For more details, please see the specific configuration in each yaml files.
+For more details, please see the specific configuration in each file.
 
 | Yaml                                                | Task  | Algo     | Protect_method | Eval_protection |
 | --------------------------------------------------- | ----- | -------- | -------------- | --------------- |
