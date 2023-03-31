@@ -126,13 +126,16 @@ def get_data(config, client_cfgs=None):
 
     # Apply translator to non-FL dataset to transform it into its federated
     # counterpart
-    translator = getattr(import_module('federatedscope.core.data'),
-                         DATA_TRANS_MAP[config.data.type.lower()])(
-                             modified_config, client_cfgs)
-    data = translator(dataset)
+    if dataset is not None:
+        translator = getattr(import_module('federatedscope.core.data'),
+                             DATA_TRANS_MAP[config.data.type.lower()])(
+                                 modified_config, client_cfgs)
+        data = translator(dataset)
 
-    # Convert `StandaloneDataDict` to `ClientData` when in distribute mode
-    data = convert_data_mode(data, modified_config)
+        # Convert `StandaloneDataDict` to `ClientData` when in distribute mode
+        data = convert_data_mode(data, modified_config)
+    else:
+        data = None
 
     # Restore the user-specified seed after the data generation
     setup_seed(config.seed)
