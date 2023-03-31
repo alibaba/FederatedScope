@@ -21,20 +21,12 @@ criterion:
   type: CrossEntropyLoss
 trainer:
   type: verticaltrainer
-train:
-  optimizer:
-    # learning rate for xgb model
-    eta: 1
 vertical:
   use: True
-  dims: [ 7, 14 ]
+  dims: [7, 14]
   algo: 'rf'
-  mode: 'label_based'
   data_size_for_debug: 2000
-  feature_subsample_ratio: 0.4
-  protect_object: 'grad_and_hess'
-  protect_method: 'he'
-  protect_args: [ { 'bucket_num': 50} ]
+  feature_subsample_ratio: 0.8
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

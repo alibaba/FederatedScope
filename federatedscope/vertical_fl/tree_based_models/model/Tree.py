@@ -177,11 +177,14 @@ class DecisionTree(Tree):
         else:
             raise ValueError(f'Task type error: {self.task_type}')
 
-    def cal_gain_for_rf_label_base(self, node_num, split_idx, y, indicator):
+    def cal_gain_for_rf_label_scattering(self, node_num, split_idx, y,
+                                         indicator):
+
         y_left_children_label_sum = np.sum(y[:split_idx])
         y_right_children_label_sum = np.sum(y[split_idx:])
         left_children_num = np.sum(indicator[:split_idx])
         right_children_num = np.sum(indicator[split_idx:])
+
         if self.task_type == 'classification':
             if np.sum(indicator) == np.sum(y) or np.sum(y) == 0:
                 return 0
