@@ -66,7 +66,6 @@ def extend_training_cfg(cfg):
     cfg.finetune.lr_linear = 0.005
     cfg.finetune.weight_decay = 0.0
     cfg.finetune.local_param = []
-    
 
     # ---------------------------------------------------------------------- #
     # Gradient related options
