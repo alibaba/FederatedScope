@@ -19,6 +19,6 @@ __all__ = [
     'Trainer', 'Context', 'GeneralTorchTrainer', 'GeneralMultiModelTrainer',
     'wrap_pFedMeTrainer', 'wrap_DittoTrainer', 'FedEMTrainer',
     'wrap_fedprox_trainer', 'wrap_nbafl_trainer', 'wrap_nbafl_server',
-    'wrap_Simple_tuning_Trainer', 'wrap_FedRepTrainer',
-    'BaseTrainer', 'GeneralTFTrainer'
+    'wrap_Simple_tuning_Trainer', 'wrap_FedRepTrainer', 'BaseTrainer',
+    'GeneralTFTrainer'
 ]
