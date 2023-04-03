@@ -84,6 +84,5 @@ class Simple_tuning_Testing(unittest.TestCase):
             test_best_results["client_summarized_weighted_avg"]['test_loss'],
             1200)
 
-
 if __name__ == '__main__':
     unittest.main()
