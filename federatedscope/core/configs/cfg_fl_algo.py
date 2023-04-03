@@ -63,6 +63,13 @@ def extend_fl_algo_cfg(cfg):
     cfg.personalization.K = 5  # the local approximation steps for pFedMe
     cfg.personalization.beta = 1.0  # the average moving parameter for pFedMe
 
+    # parameters for FedRep：
+    cfg.personalization.lr_feature = 0.1  # learning rate: feature extractors
+    cfg.personalization.lr_linear = 0.1  # learning rate: linear head
+    cfg.personalization.epoch_feature = 1  # training epoch number
+    cfg.personalization.epoch_linear = 2  # training epoch number
+    cfg.personalization.weight_decay = 0.0
+
     # ---------------------------------------------------------------------- #
     # FedSage+ related options, gfl
     # ---------------------------------------------------------------------- #

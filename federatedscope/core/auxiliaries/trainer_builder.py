@@ -222,6 +222,10 @@ def get_trainer(model=None,
         # copy construct style: instance a (class A) -> instance b (class B)
         trainer = FedEMTrainer(model_nums=config.model.model_num_per_trainer,
                                base_trainer=trainer)
+    elif config.federate.method.lower() == "fedrep":
+        from federatedscope.core.trainers import wrap_FedRepTrainer
+        # wrap style: instance a (class A) -> instance a (class A)
+        trainer = wrap_FedRepTrainer(trainer)
 
     # attacker plug-in
     if 'backdoor' in config.attack.attack_method:
@@ -245,5 +249,10 @@ def get_trainer(model=None,
     if config.fedprox.use:
         from federatedscope.core.trainers import wrap_fedprox_trainer
         trainer = wrap_fedprox_trainer(trainer)
+
+    # different fine-tuning
+    if config.finetune.before_eval and config.finetune.simple_tuning:
+        from federatedscope.core.trainers import wrap_Simple_tuning_Trainer
+        trainer = wrap_Simple_tuning_Trainer(trainer)
 
     return trainer
