@@ -202,23 +202,27 @@ def createFeatureOrderProtectedTrainer(cls, model, data, device, config,
                 bucketized_feature_order = bucketize(
                     raw_feature_order[feature_idx], bucket_size,
                     self.bucket_num)
-                noisy_bucketized_feature_order = [
-                    [] for _ in range(self.bucket_num)
-                ]
 
-                # Add noise to bucketized feature order
-                for bucket_idx in range(self.bucket_num):
-                    probs = np.ones(self.bucket_num) * prob_for_moving
-                    probs[bucket_idx] = prob_for_preserving
-                    for each in bucketized_feature_order[bucket_idx]:
-                        selected_bucket_idx = np.random.choice(list(
-                            range(self.bucket_num)),
-                                                               p=probs)
-                        noisy_bucketized_feature_order[
-                            selected_bucket_idx].append(each)
+                if prob_for_preserving == 1.0:
+                    noisy_bucketized_feature_order = bucketized_feature_order
+                else:
+                    noisy_bucketized_feature_order = [
+                        [] for _ in range(self.bucket_num)
+                    ]
+
+                    # Add noise to bucketized feature order
+                    for bucket_idx in range(self.bucket_num):
+                        probs = np.ones(self.bucket_num) * prob_for_moving
+                        probs[bucket_idx] = prob_for_preserving
+                        for each in bucketized_feature_order[bucket_idx]:
+                            selected_bucket_idx = np.random.choice(list(
+                                range(self.bucket_num)),
+                                                                   p=probs)
+                            noisy_bucketized_feature_order[
+                                selected_bucket_idx].append(each)
 
                 # Save split positions (instance number within buckets)
-                # We exclude the endpoints to avoid empty sub-trees
+                # We exclude the endpoints to avoid empty subtrees
                 split_position = self.compute_extra_info(
                     data, split_position, feature_idx,
                     noisy_bucketized_feature_order, bucketized_feature_order)
