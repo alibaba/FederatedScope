@@ -56,6 +56,7 @@ class NbAFLTest(unittest.TestCase):
         cfg.nbafl.mu = 0.1
         cfg.nbafl.constant = 2.
         cfg.nbafl.epsilon = 50.
+        cfg.federate.join_in_info = ['num_sample']
 
         return backup_cfg
 
