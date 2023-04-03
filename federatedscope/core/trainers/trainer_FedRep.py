@@ -12,7 +12,12 @@ logger = logging.getLogger(__name__)
 
 def wrap_FedRepTrainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
-
+    # ---------------------------------------------------------------------- #
+    # FedRep method:
+    # https://arxiv.org/abs/2102.07078
+    # First training linear classifier and then feature extractor
+    # Linear classifier: local_param; feature extractor: global_param
+    # ---------------------------------------------------------------------- #
     init_FedRep_ctx(base_trainer)
 
     base_trainer.register_hook_in_train(new_hook=hook_on_fit_start_fedrep,

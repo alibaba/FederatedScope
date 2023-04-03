@@ -13,7 +13,12 @@ logger = logging.getLogger(__name__)
 
 def wrap_Simple_tuning_Trainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
-
+    # ---------------------------------------------------------------------- #
+    # Simple_tuning method:
+    # https://arxiv.org/abs/2302.01677
+    # Only tuning the linear classifier and freeze the feature extractor
+    # the key is to reinitialize the linear classifier
+    # ---------------------------------------------------------------------- #
     init_Simple_tuning_ctx(base_trainer)
 
     base_trainer.register_hook_in_ft(new_hook=hook_on_fit_start_simple_tuning,
