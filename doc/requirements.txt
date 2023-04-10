@@ -1,3 +1,10 @@
+-f https://download.pytorch.org/whl/torch_stable.html
+-f https://data.pyg.org/whl/torch-1.10.1+cpu.html
+torch==1.10.1+cpu
+torch-sparse==0.6.13
+torch-scatter==2.0.9
+torch-geometric==2.0.4
+torchvision==0.11.2+cpu
 colorama
 click
 filelock
@@ -13,13 +20,6 @@ sphinx
 sphinx-click
 sphinx_rtd_theme
 pandas
--f https://download.pytorch.org/whl/torch_stable.html 
-torch==1.10.1+cpu
-torch-sparse==0.6.13
-torch-scatter==2.0.9
-torch-geometric==2.0.4
--f https://download.pytorch.org/whl/torch_stable.html
-torchvision==0.11.2+cpu
 scipy==1.7.3
 wandb
 scikit-learn==1.0.2
