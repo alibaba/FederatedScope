@@ -1,2 +1,0 @@
-train.optimizer.lr: [0.01, 0.02, 0.04, 0.08]
-train.optimizer.momentum: [0.1, 0.2, 0.4, 0.8]
