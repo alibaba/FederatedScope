@@ -13,3 +13,9 @@ sphinx
 sphinx-click
 sphinx_rtd_theme
 pandas
+-f https://download.pytorch.org/whl/torch_stable.html 
+torch==1.10.1+cpu 
+-f https://download.pytorch.org/whl/torch_stable.html
+torchvision==0.11.2+cpu
+scipy
+wandb
