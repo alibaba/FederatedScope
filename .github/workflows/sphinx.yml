@@ -8,13 +8,6 @@ jobs:
     if: false == contains(github.event.pull_request.title, 'WIP')
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.9']
-        torch-version: ['1.10.1']
-        torchvision-version: ['0.11.2']
-        torchaudio-version: ['0.10.1']
     env:
       OS: ${{ matrix.os }}
       PYTHON: '3.9'
@@ -24,13 +17,6 @@ jobs:
       uses: actions/setup-python@master
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install PyTorch ${{ matrix.torch-version }}+cpu
-      run: |
-        pip install numpy typing-extensions dataclasses
-        pip install torch==${{ matrix.torch-version}}+cpu torchvision==${{matrix.torchvision-version}}+cpu torchaudio==${{matrix.torchaudio-version}}+cpu -f https://download.pytorch.org/whl/torch_stable.html
-    - name: Install FS
-      run: |
-        pip install -e .[test]
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "doc/"
