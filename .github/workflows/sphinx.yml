@@ -1,6 +1,7 @@
 name: "Pull Request Docs Check"
-on: 
-  - pull_request
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
 
 jobs:
   docs:
@@ -9,4 +10,4 @@ jobs:
     - uses: actions/checkout@v2
     - uses: ammaraskar/sphinx-action@master
       with:
-        docs-folder: "docs/"
+        docs-folder: "doc/"
