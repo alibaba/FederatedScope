@@ -1,6 +1,15 @@
 ## Federated Learning for Recommendation
 
+### 2023
+
+| Title                                                        | Venue                       | Link                                                         |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------ |
+| Privacy-Preserving Hierarchical Federated Recommendation Systems | IEEE Communications Letters | [pdf](https://ieeexplore.ieee.org/abstract/document/10044657) |
+
+ 
+
 ### 2022
+
 | Title | Venue | Link |  
 | --- | --- | --- | 
 | A Privacy-Preserving Oriented Service Recommendation Approach based on Personal Data Cloud and Federated Learning | IEEE ICWS | [pdf](https://ieeexplore.ieee.org/abstract/document/9885792) |
@@ -17,22 +26,23 @@
 | PrivateRec: Differentially Private Training and Serving for Federated News Recommendation | arXiv | [pdf](https://arxiv.org/abs/2204.08146) | 
 
 ### 2021
-| Title | Venue | Link |  
-| --- | --- | --- | 
+| Title | Venue | Link |
+| --- | --- | --- |
 | Federated Social Recommendation with Graph Neural Network | ACM TIST | [pdf](https://arxiv.org/abs/2111.10778) |
-| PREFER: Point-of-interest REcommendation with efficiency and privacy-preservation via Federated Edge leaRning | ACM IMWUT | [pdf](https://dl.acm.org/doi/abs/10.1145/3448099) | 
-| Federated Neural Collaborative Filtering | ACM KBS | [pdf](https://arxiv.org/abs/2106.04405) | 
+| PREFER: Point-of-interest REcommendation with efficiency and privacy-preservation via Federated Edge leaRning | ACM IMWUT | [pdf](https://dl.acm.org/doi/abs/10.1145/3448099) |
+| Federated Neural Collaborative Filtering | ACM KBS | [pdf](https://arxiv.org/abs/2106.04405) |
 | POI Recommendation with Federated Learning and Privacy Preserving in Cross Domain Recommendation | INFOCOM workshop | [pdf](https://ieeexplore.ieee.org/document/9484510) |
-| Fast-adapting and Privacy-preserving Federated Recommender System | VLDB Journal | [pdf](https://arxiv.org/abs/2104.00919) | 
-| FedCT: Federated Collaborative Transfer for Recommendation | SIGIR | [pdf](https://dl.acm.org/doi/abs/10.1145/3404835.3462825) | 
+| Fast-adapting and Privacy-preserving Federated Recommender System | VLDB Journal | [pdf](https://arxiv.org/abs/2104.00919) |
+| FedCT: Federated Collaborative Transfer for Recommendation | SIGIR | [pdf](https://dl.acm.org/doi/abs/10.1145/3404835.3462825) |
 | Stronger Privacy for Federated Collaborative Filtering with Implicit Feedback | RecSys | [pdf](https://arxiv.org/abs/2105.03941) |
-| A Payload Optimization Method for Federated Recommender Systems | RecSys | [pdf](https://arxiv.org/abs/2107.13078) | 
-| Fedrec++: Lossless federated recommendation with explicit feedback | AAAI | [pdf](https://ojs.aaai.org/index.php/AAAI/article/view/16546) | 
+| A Payload Optimization Method for Federated Recommender Systems | RecSys | [pdf](https://arxiv.org/abs/2107.13078) |
+| Fedrec++: Lossless federated recommendation with explicit feedback | AAAI | [pdf](https://ojs.aaai.org/index.php/AAAI/article/view/16546) |
 | Efficient-FedRec: Efficient Federated Learning Framework for Privacy-Preserving News Recommendation | EMNLP |  [pdf](https://aclanthology.org/2021.emnlp-main.223), [code](https://github.com/yjw1029/Efficient-FedRec) |
 | Uni-FedRec: A Unified Privacy-Preserving News Recommendation Framework for Model Training and Online Serving | EMNLP | [pdf]( https://aclanthology.org/2021.findings-emnlp.124.pdf), [code](https://github.com/taoqi98/UniFedRec) |
 | Practical and Secure Federated Recommendation with Personalized Masks | arXiv | [pdf](https://arxiv.org/abs/2109.02464) |
 | FedGNN: Federated Graph Neural Network for Privacy-Preserving Recommendation | arXiv | [pdf](https://arxiv.org/abs/2102.04925) |
-| Learning Federated Representations and Recommendations with Limited Negatives | arXiv | [pdf](https://arxiv.org/abs/2108.07931), [code](https://git.io/federated_dual_encoder) | 
+| Learning Federated Representations and Recommendations with Limited Negatives | arXiv | [pdf](https://arxiv.org/abs/2108.07931), [code](https://git.io/federated_dual_encoder) |
+| DeepRec: On-device Deep Learning for Privacy-Preserving Sequential Recommendation in Mobile Commerce | www | [pdf](https://dl.acm.org/doi/abs/10.1145/3442381.3449942) |
 
 ### 2020
 | Title | Venue | Link |  
