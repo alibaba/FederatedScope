@@ -52,7 +52,6 @@ setuptools.setup(
         package for package in setuptools.find_packages()
         if package.startswith(__name__)
     ],
-<<<<<<< HEAD
     install_requires=minimal_requires,
     extras_require={
         'test': test_requires,
@@ -63,13 +62,6 @@ setuptools.setup(
         'htl': benchmark_htl_requires,
         'full': full_requires
     },
-=======
-    install_requires=[
-        'torch', 'networkx', 'numpy', 'grpcio>=1.45.0', 'grpcio-tools'
-    ],
-    setup_requires=[],
-    extras_require={'yaml': ['yaml>=5.1']},
->>>>>>> 7166b48c5a7a771a63f41d0acf63e640a739e6bc
     license="Apache License 2.0",
     classifiers=[
         "Development Status :: 4 - Beta",
