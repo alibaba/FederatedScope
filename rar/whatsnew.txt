@@ -1,0 +1,513 @@
+                RAR - What's new in the latest version
+
+
+   Version 5.61
+
+   1. Fixed a crash when processing corrupt RAR archives.
+      This issue may be also associated with security risks.
+
+   
+   Version 5.60
+
+   1. "Repair" command efficiency is improved for recovery record protected
+      RAR5 archives. Now it can detect deletions and insertions of unlimited
+      size also as shuffled data including data taken from several recovery
+      record protected archives and merged into a single file in arbitrary
+      order.
+
+   2. If encoding of comment file specified in -z<file> switch is not
+      defined with -sc switch, RAR attempts to detect UTF-8, UTF-16LE
+      and UTF-16BE encodings based on the byte order mask and data
+      validity tests.
+
+   3. "Update" and "Fresh" commands ('u' and 'f' in the command line mode)
+      quit immediately if no files are to be updated. Previously they created
+      a temporary archive before quitting when updating archives with recovery
+      record or quick open information.
+
+   4. "Repair" command issues "Recovery record is corrupt" message
+      after repairing RAR5 archive containing a broken recovery record.
+      Previously such message was issued only by "Test" command
+      and "Repair" handled most of recovery record damages silently.
+
+   5. Bugs fixed:
+
+      a) fixed potential security issues when processing corrupt
+         RAR archives;
+
+      b) -tl and -tk switches did not work with archive modification
+         commands;
+
+      c) command like 'rar a arcname.rar subdir/arcname.rar' erroneously
+         issued "No files" warning and refused to add the file.
+
+
+   Version 5.50
+
+   1. RAR uses RAR 5.0 archive format by default. You can change it to
+      RAR 4.x compatible format with -ma4 command line switch.
+
+   2. Added support for 1 nanosecond file time precision on Unix platform.
+
+   3. You can specify 'f' charset value in -sc switch to use UTF-8
+      encoding. For example:
+
+      rar a -scfl arcname @filelist.txt
+
+      to read contents of filelist.txt as UTF-8 text.
+
+   4. RAR "lt" and "vt" commands display file times with nanosecond
+      precision. Such precision is used in RAR5 archives created
+      by RAR/Unix 5.50. Archives created by Windows RAR version
+      have 100ns file time precision.
+
+   5. Only '+', '-' and '1' precision modifiers are supported
+      in -ts switch now. Use '+' to store the file time with maximum
+      precision, '-' to omit the file time and '1' to store it with
+      1 second precision. Intermediate precision modes previously
+      defined with '2' and '3' modifiers are not available in RAR 5.0
+      archive format and ignored by -ts switch.
+
+   6. If a wrong password is entered when unpacking an encrypted file
+      in RAR5 archive, RAR proposes to enter a valid password
+      for same file again instead of aborting extraction.
+
+   7. Bugs fixed:
+
+      a) fixed crashes and security vulnerability when unpacking corrupt
+         RAR archives;
+
+      b) directory owners were not set when extracting RAR5 archives
+         created with -ow switch;
+
+      c) if only creation or only last access file time was stored in RAR5
+         archive with 1 second precision, such as with -ma5 -tsm- -tsa1
+         switches, this stored time was ignored when extracting.
+
+
+   Version 5.40
+
+   1. If RAR recovery volumes (.rev files) are present in the same directory
+      as usual RAR volumes, archive test command verifies .rev contents
+      after completing testing .rar files.
+
+      If you wish to test only .rev files without checking .rar volumes,
+      you can run:
+
+      rar t arcname.part1.rev
+
+   2. Previously "Synchronize archive contents" mode (-as switch) aborted
+      if some of archiving directories could not be read. Now RAR continues
+      performing the operation and preserves archived files matching
+      unreadable directories.
+
+   3. If -iver switch is specified, RAR displays the version number
+      and quits. You can run just "RAR -iver".
+   
+   4. If -p switch is used without optional <pwd> parameter,
+      a password can be also set with file redirection or pipe.
+
+      For example: rar -p myarc.rar myfiles < psw.txt
+
+   5. RAR treats 'arcname.partN' as 'arcname.partN.rar'
+      if 'arcname.partN' does not exist and 'arcname.part#.rar' exists.
+
+      For example, it is allowed to run:
+
+      RAR x arcname.part01
+
+      to start extraction from arcname.part01.rar
+
+   6. Maximum comment length for RAR archives is increased
+      from 64 to 256 KB.
+
+   7. Switch -scul can be used to process big endian UTF-16 list files
+      as well, provided that they have a correct byte order mark.
+      Previously it allowed only little endian file lists.
+
+
+
+   Version 5.30
+
+   1. Directory wildcards are allowed in RAR command line in file names to
+      archive. For example:
+
+      rar a backup c:\backup\2015*\*
+
+      Recursion is enabled automatically for such directory wildcards
+      even if -r switch is not specified.
+
+   2. New 'R' object for -sc switch defines encoding of console
+      RAR messages sent to redirected files and pipes. For example:
+
+      rar lb -scur data > list.txt
+
+      will produce Unicode list.txt with archived file names.
+
+   3. Console RAR "l" and "v" commands display file time in YYYY-MM-DD
+      format.
+
+   4. "Test" command also verifies contents of NTFS alternate data streams
+      in RAR 3.x - 5.x archives. Previously their contents was checked
+      only during extraction command.
+
+   5. Bugs fixed:
+
+      a) console RAR crashed instead of displaying an overwrite prompt
+         when attempting to add files to already existing volumes;
+
+      b) console RAR "lt" command did not display seconds in file timestamp.
+
+   
+   Version 5.21
+
+   1. While previous versions could produce RAR5 volumes of slightly
+      smaller than requested size sometimes, such situation is less
+      likely now. In most cases volume size equals to specified by user.
+
+   2. Now by default RAR skips symbolic links with absolute paths
+      in link target when extracting. You can enable creating such links
+      with -ola switch.
+
+      Such links pointing to directories outside of extraction destination
+      directory can present a security risk. Enable their extraction only
+      if you are sure that archive contents is safe, such as your own backup.
+
+   
+   Version 5.20
+
+   1. RAR can read the default set of switches from .rarrc file stored
+      in the user's home directory. Previously it was possible to
+      define only the same set of switches for all RAR command with
+      "switches=<switches>" string. Now .rarrc also allows to specify
+      separate switch sets for individual RAR commands using
+      the following syntax:
+
+      switches_<command>=<any RAR switches, separated by spaces>
+
+      For example:
+
+      switches_a=-m5 -s
+      switches_x=-o+
+
+   2. File overwrite prompt displays the size and modification time
+      for existing and new files.
+
+   3. When archiving from stdin with -si switch, RAR sets the current system
+      time to modification time of archived file. Previous version did not
+      set this time at all.
+
+   4. It is possible to use -si and -v<size> switches together. Previous
+      versions did not allow to create volumes when archiving from stdin.
+
+   
+   Version 5.11
+
+   1. Timestamp is set to extracted symlinks.
+
+   2. Bugs fixed:
+
+      a) deleting a file in RAR5 solid archive containing files stored
+         with -ver switch caused such files to lose version information.
+
+   
+   Version 5.10
+
+   1. Switch -ai can be used when creating RAR archive,
+      so predefined values, typical for file and directory,
+      are stored instead of actual attributes.
+      Previously this switch could be used only when extracting.
+
+   
+   Version 5.00
+
+   1. New RAR 5.0 archiving format. You can use -ma command line switch
+      to create RAR 5.0 archives. By default RAR creates archives
+      in 4.x format.
+
+   2. Changes in RAR 5.0 compression algorithm:
+
+      a) maximum compression dictionary size is increased up to 1 GB
+         in 64 bit RAR. 32 bit RAR version can use up to 256 MB
+         dictionary when creating an archive. Both 32 bit and 64 bit
+         versions can unpack archives with any dictionary size,
+         including 1 GB;
+
+      b) default dictionary size for RAR 5.0 is 32 MB, typically resulting
+         in higher compression ratio and lower speed than RAR 4.x 4 MB.
+         You can use -md<size> switch to change this value;
+
+      c) -md<size> switch syntax is modified to support larger dictionary
+         sizes. Append 'k', 'm' and 'g' modifiers to specify the size
+         in kilo-, mega- and gigabytes, like -md64m for 64 MB dictionary.
+         If modifiers are not present, megabytes are assumed,
+         so -md64m is equal to -md64;
+
+      d) RAR 5.0 format includes Intel IA-32 executable and delta
+         compression algorithms, but RAR 4.x text, audio, true color
+         and Itanium algorithms are not supported. These excluded algorithms
+         are not efficient for modern data types and hardware configurations;
+
+      e) RAR 5.0 decompression can utilize several CPU cores.
+         Though not to same extent as in compression algorithm,
+         it improves the decompression speed on large files
+         with poorly compressible data or when using BLAKE2 checksums.
+
+   3. Changes in RAR 5.0 archive format:
+
+      a) file times are stored as Coordinated Universal Time (UTC)
+         instead of former local time, making file exchange among
+         several time zones more straightforward;
+
+      b) file names and archive comments use UTF-8 encoding.
+   
+   4. RAR 5.0 recovery record is based on Reed-Solomon error correction
+      codes. If recovery record size is large enough, 5% and more,
+      the new error correction scheme provides much higher resistance to
+      multiple damages comparing to RAR 4.x recovery record.
+      Smaller record, such as 1 - 2%, or less random damage type would
+      result in less difference between 4.x and 5.0. For single continuous
+      damage 4.x and 5.0 efficiency is about the same.
+
+      Additionally to usual data erasures, the new recovery record
+      is able to detect deletions and insertions of much larger size
+      than in previous RAR versions. Maximum insertion size is several
+      megabytes. Maximum deletion size depends on the damage type
+      and in some cases can be as large as the recovery record size.
+      
+      Still, the best recovery performance and efficiency is achieved
+      if no deletions and insertions are present, so all data including
+      damaged sectors preserve their original positions. Thus, if you use
+      some special software to copy an archive from damaged media,
+      it is better to choose the mode, when damaged sectors are filled by
+      zeroes or any other data instead of cutting them out completely
+      from resulting file.
+
+      RAR 5.0 recovery record is more resistant to damage of recovery record
+      itself and can utilize a partially corrupt recovery record data.
+      Note, though, that "Repair" command does not fix broken blocks
+      in recovery record. Only file data are corrected. After successful
+      archive repair, you may need to create a new recovery record
+      for saved files.
+
+      New recovery record is not based on 512 byte sectors anymore 
+      and incorporates more complicated data structures. So it is impossible
+      to specify its size in sectors. For RAR 5.0 archives the parameter of
+      -rr[N] switch and rr[N] command is always treated as a percent of
+      archive size regardless of presence of % character. Typically N%
+      recovery record can repair up to N% of continuously damaged data
+      and increases the archive size by only slightly more than N%.
+      Ability to fix multiple damages is proportional to N.
+
+      We used "Screaming Fast Galois Field Arithmetic Using Intel
+      SIMD Instructions" paper by James S. Plank, Kevin M. Greenan
+      and Ethan L. Miller to improve Reed-Solomon coding performance.
+      Also we are grateful to Artem Drobanov and Bulat Ziganshin
+      for samples and ideas allowed to make Reed-Solomon coding
+      more efficient.
+
+   5. "Test" command verifies validity of RAR 5.0 recovery record.
+      Recovery record is tested after processing all archived files.
+
+      If corrupt archive contains the recovery record, it might be possible
+      to repair it even if recovery record validity test is failed.
+      "Repair" command attempts to utilize even a partially damaged
+      recovery record. So treat the negative recovery record test result
+      as a reason to re-create the archive if original files are still
+      available, but not as a reason to avoid "Repair" command.
+
+   6. Changes in RAR 5.0 encryption algorithm:
+
+      a) encryption algorithm is changed from AES-128 to AES-256 in CBC mode.
+         Key derivation function is based on PBKDF2 using HMAC-SHA256;
+
+      b) special password verification value allows to detect most of
+         wrong passwords without necessity to unpack the entire file;
+
+      c) if archive headers are not encrypted ("Encrypt file names" option
+         is off), file checksums for encrypted RAR 5.0 files are modified
+         using a special password dependent algorithm, to make impossible
+         guessing file contents based on checksums. Do not expect such
+         encrypted file checksums to match usual CRC32 and BLAKE2 values.
+   
+   7. Switch -htb allows to utilize 256 bit length BLAKE2sp hash
+      ( https://blake2.net ) instead of 32 bit CRC32 as a file checksum.
+
+      While producing slightly larger archives, BLAKE2 can be used
+      for file contents identification. If two files have the same
+      BLAKE2 value, it practically guarantees that file contents
+      is the same. BLAKE2 error detection property is also stronger
+      than in much shorter CRC32.
+
+   8. Features removed:
+
+      a) authenticity verification feature did not provide the required
+         level of reliability and was removed;
+      
+      b) switch -en (do not add "end of archive" block) is not supported
+         by RAR 5.0 archives, which always have the end of archive block.
+         This block helps RAR to safely skip external data like
+         digital signatures appended to archive;
+
+      c) old style extension based arcname.rNN volume names are not
+         supported by RAR 5.0 archives, which use only arcname.partN.rar
+         volume names;
+      
+      d) file comments are not supported anymore both in RAR 4.x
+         and RAR 5.0 archives. Console RAR 'cf' command is removed.
+         It does not affect the archive comment support, which is present
+         in both versions of archive format and is not planned for removal.
+
+   9. Switch -oh stores hard links as link instead of file. It is available
+      only for RAR 5.0 archive format.
+   
+  10. Changes in recovery volume processing in RAR 5.0 archive format:
+
+      a) maximum number of RAR+REV volumes in RAR 5.0 format is 65535
+         instead of 255;
+
+      b) recovery volume operations are faster than in RAR 4.x;
+
+      c) additionally to recovery data, RAR 5.0 REV files also store
+         service information such as checksums of protected RAR files.
+         So they are slightly larger than RAR volumes which they protect.
+         If you plan to copy individual RAR and REV files to some removable
+         media, you need to take it into account and specify RAR volume
+         size by a few kilobytes smaller than media size.
+  
+  11. Command line RAR returns the exit code 11 if it can detect that
+      user entered a wrong password. This code can be returned only
+      for RAR 5.0 archives. It is impossible to distinguish a wrong
+      password and data damage for RAR 4.x archives.
+
+  12. 'v' and 'l' commands display archived file names in the end of line,
+      not in that beginning as before. Also some fields previously
+      available in 'l' and 'v' output are now shown only by 'lt' and 'vt'.
+      
+      'vt' and 'lt' commands provide the detailed multiline information
+      for every archived file.
+
+      'vta' and 'lta' also include service headers into list.
+
+   13. UTF-16 little endian encoding is used in RAR log file rar.log,
+       so Unicode file names are stored in the log correctly.
+
+       You can use -sc<charset>g switch to change the default log file
+       encoding, such as -scag for native single byte encoding.
+
+   14. Command line 'r' (repair) command can include an optional destpath\
+       parameter defining the destination folder for repaired archive:
+
+       rar r archive.rar destpath\
+
+   
+   Version 4.20
+
+   1. Changes in RAR compression:
+
+      a) Multithreaded RAR compression is enabled by default.
+         You can disable it with -mt1 switch.
+
+         Comparing to RAR 4.11, some speed gain is possible
+         in single processor mode as well.
+
+         Speed gain depends on data type and average file size.
+         Several cores are utilized more efficiently when compressing
+         large files.
+
+      b) we had to increase memory requirements to achieve higher
+         compression speed. General RAR compression algorithm allocates
+         about 120 MB comparing to 40 MB in RAR 4.11;
+
+      c) RAR text compression algorithm cannot utilize several CPU cores
+         efficiently, so its performance in multiprocessor environment
+         is much lower than for general algorithm. Also its decompression
+         speed is much lower than in general algorithm regardless of
+         CPU number. So we decided to disable the text algorithm by default.
+
+         If you need maximum possible compression ratio for plain text data
+         regardless of speed, you can enable the text compression
+         with -mct switch.
+
+   2. RAR general decompression algorithm speed is slightly improved,
+      though not to same extent as RAR compression. RAR decompression
+      is not able to use several processor cores, so its performance
+      does not depend on a number of cores.
+
+
+   Version 4.11
+
+   1. Bugs fixed:
+
+      a) if -x*\somedir\* exclusion mask was specified when archiving 
+         and if name of current directory contained 'somedir', RAR could
+         exclude all files and stop creating an archive.
+
+
+   Version 4.10
+
+   1. Modifications of switch -ag behavior:
+
+      a) -ag can be used with all RAR commands, not just with archiving only;
+
+      b) 'N' format character behavior differs in archiving and non-archiving
+         operations. When archiving, it is incremented until the first unused
+         name is found. In non-archiving operations like extracting it selects
+         the existing archive preceding the first unused name;
+
+      c) 'I' format character allows to specify minutes regardless of presence
+         and position of 'H' (hours) in format string. It can be used
+         instead of 'M' (minutes), when you wish to place minutes before
+         hours or do not need hours at all.
+
+   2. New -log[fmt][=name] switch allows to write archive and file names
+      to log file in archiving, extracting, deleting and listing commands.
+      This switch is especially useful, when you need to further process
+      an archive created with -ag or -v switches, because -log provides
+      the archive name generated by RAR.
+  
+   3. New -@[+] switch allows to process all parameters starting from
+      '@' character either as file names (-@) or as file lists (-@+).
+
+   4. Volume size in -v<size> switch can be specified as a decimal fraction.
+      Dot (.) is used as the decimal mark. For example, -v1.5g means
+      1.5 gigabytes.
+
+   
+   Version 4.01
+
+   1. Bugs fixed:
+
+      a) "Repair" command failed to properly reconstruct structure
+         of RAR archives, which contained at least one file with packed
+         size exceeding 4 GB.
+
+         This bug did not affect the recovery record based repair.
+         It happened only if recovery record was not found and RAR
+         performed reconstruction of archive structure;
+
+      b) RAR could crash when creating a new archive with -agNNNN switch
+         if archive number in generated name was very large,
+         like a thousand or more.
+
+
+   Version 4.00
+
+   1. RAR decompression speed is improved. Depending on data type,
+      decompression can be up to 30% faster than in previous versions.
+
+      Both the general RAR algorithm and most of special RAR multimedia
+      methods benefit from this improvement. The only module of RAR
+      algorithm, which is not affected, is "Text compression" method.
+   
+   2. Changes in -x<file> switch syntax. Now you can specify a wildcard
+      exclusion mask for folders. Such mask must have the trailing '\'
+      character, like -x*tmp*\ or -x*\temp\
+
+   3. Recovery volume processing involves less disk seek operations
+      resulting in higher performance.
+
+   4. New error code 10 ("no files") is added to list of error codes.
+      This new code can be returned by archive, extract, delete
+      and repair commands. It means that RAR did not find any files
+      matched the specified file or archive mask.

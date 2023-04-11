@@ -1,0 +1,91 @@
+; File order list for solid archiving
+;
+; Here you may modify the file list which tells RAR the order in which
+; to add files to a solid archive.
+;
+; This file may contain file names, wildcards and a special entry - $default.
+; The default entry defines the position in the order list for files not
+; matched with other entries in this file. Lines beginning with the semicolon
+; symbol ';' are considered as comments and not processed.
+;
+; Place this file in the same directory as RAR.EXE.
+;
+; Tips to provide improved compression and speed of operation:
+;
+; - files containing similar information should be grouped together in the
+;   archive if possible;
+; - frequently accessed files should be placed at the beginning.
+;
+file_id.diz
+descript.ion
+read.*
+readme.*
+*.nfo
+*.doc
+*.txt
+*.htm
+*.html
+*.shtml
+*.css
+*.xsl
+*.xml
+*.js
+*.php
+*.lst
+*.log
+*.ini
+*.bat
+*.cmd
+*.h
+*.hpp
+*.c
+*.cpp
+*.java
+*.asm
+*.bas
+*.bak
+*.cue
+*.rtf
+*.hlp
+*.inf
+*.com
+*.exe
+*.dll
+*.obj
+*.lib
+*.sys
+*.drv
+*.bin
+*.bmp
+*.wav
+$default
+*.mp3
+*.mp4
+*.m4a
+*.mov
+*.avi
+*.wmv
+*.wma
+*.gif
+*.tif
+*.png
+*.jpg
+*.chm
+*.pdf
+*.cab
+*.7z
+*.arj
+*.ha
+*.lz
+*.lzh
+*.rar
+*.zip
+*.gz
+*.bz2
+*.xz
+*.jar
+*.fla
+*.flac
+*.ape
+*.bik
+*.mkv
