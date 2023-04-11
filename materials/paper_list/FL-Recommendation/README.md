@@ -5,25 +5,27 @@
 | Title                                                        | Venue                       | Link                                                         |
 | ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------ |
 | Privacy-Preserving Hierarchical Federated Recommendation Systems | IEEE Communications Letters | [pdf](https://ieeexplore.ieee.org/abstract/document/10044657) |
-
- 
+| Federated Recommendation with Additive Personalization       | arXiv                       | [pdf](https://arxiv.org/pdf/2301.09109.pdf)                  |
+| Manipulating Federated Recommender Systems: Poisoning with Synthetic Users and Its Countermeasures | arXiv                       | [pdf](https://arxiv.org/pdf/2304.03054.pdf)                  |
 
 ### 2022
 
-| Title | Venue | Link |  
-| --- | --- | --- | 
+| Title | Venue | Link |
+| --- | --- | --- |
 | A Privacy-Preserving Oriented Service Recommendation Approach based on Personal Data Cloud and Federated Learning | IEEE ICWS | [pdf](https://ieeexplore.ieee.org/abstract/document/9885792) |
 | Personalized Federated Recommendation System with Historical Parameter Clustering | JAIHC | [pdf](https://link.springer.com/article/10.1007/s12652-022-03709-z) |
 | User-Controlled Federated Matrix Factorization for Recommender Systems | JIIS | [pdf](https://link.springer.com/article/10.1007/s10844-021-00688-z) |
 | Differential Private Knowledge Transfer for Privacy-Preserving Cross-Domain Recommendation | WWW | [pdf](https://arxiv.org/pdf/2202.04893.pdf) |
-| Towards Fair Federated Recommendation Learning: Characterizing the Inter-Dependence of System and Data Heterogeneity | RecSys | [pdf](https://arxiv.org/abs/2206.02633) | 
+| Towards Fair Federated Recommendation Learning: Characterizing the Inter-Dependence of System and Data Heterogeneity | RecSys | [pdf](https://arxiv.org/abs/2206.02633) |
 | Personalized Federated Recommendation via Joint Representation Learning, User Clustering, and Model Adaptation | CIKM | [pdf](https://dl.acm.org/doi/pdf/10.1145/3511808.3557668) |
-| FedCDR: Federated Cross-Domain Recommendation for Privacy-Preserving Rating Prediction | CIKM | [pdf](https://dl.acm.org/doi/pdf/10.1145/3511808.3557320) | 
-| Cali3F: Calibrated Fast Fair Federated Recommendation System | IJCNN | [pdf](https://arxiv.org/abs/2205.13121) | 
-| Ranking-based Federated POI Recommendation with Geographic Effect | IJCNN | [pdf](https://ieeexplore.ieee.org/abstract/document/9892943) | 
-| FedCL: Federated Contrastive Learning for Privacy-Preserving Recommendation | arXiv | [pdf](https://arxiv.org/abs/2204.09850) | 
-| Federated Unlearning for On-Device Recommendation | arXiv | [pdf](https://arxiv.org/abs/2210.10958) | 
-| PrivateRec: Differentially Private Training and Serving for Federated News Recommendation | arXiv | [pdf](https://arxiv.org/abs/2204.08146) | 
+| FedCDR: Federated Cross-Domain Recommendation for Privacy-Preserving Rating Prediction | CIKM | [pdf](https://dl.acm.org/doi/pdf/10.1145/3511808.3557320) |
+| Cali3F: Calibrated Fast Fair Federated Recommendation System | IJCNN | [pdf](https://arxiv.org/abs/2205.13121) |
+| Ranking-based Federated POI Recommendation with Geographic Effect | IJCNN | [pdf](https://ieeexplore.ieee.org/abstract/document/9892943) |
+| FedCL: Federated Contrastive Learning for Privacy-Preserving Recommendation | arXiv | [pdf](https://arxiv.org/abs/2204.09850) |
+| Federated Unlearning for On-Device Recommendation | arXiv | [pdf](https://arxiv.org/abs/2210.10958) |
+| PrivateRec: Differentially Private Training and Serving for Federated News Recommendation | arXiv | [pdf](https://arxiv.org/abs/2204.08146) |
+| A Survey on Federated Recommendation Systems | IEEE TNNLS | [pdf](https://arxiv.org/pdf/2301.00767.pdf) |
+| A Comprehensive Survey on Trustworthy Recommender Systems | arXiv | [pdf](https://arxiv.org/pdf/2209.10117.pdf) |
 
 ### 2021
 | Title | Venue | Link |
@@ -45,15 +47,16 @@
 | DeepRec: On-device Deep Learning for Privacy-Preserving Sequential Recommendation in Mobile Commerce | www | [pdf](https://dl.acm.org/doi/abs/10.1145/3442381.3449942) |
 
 ### 2020
-| Title | Venue | Link |  
-| --- | --- | --- | 
-| Practical Privacy Preserving POI Recommendation | ACM TIST | [pdf](https://arxiv.org/abs/2003.02834) | 
-| Secure Federated Matrix Factorization | IEEE Intelligent Systems | [pdf](https://ieeexplore.ieee.org/abstract/document/9162459), [code](https://github.com/Di-Chai/FedMF) | 
+| Title | Venue | Link |
+| --- | --- | --- |
+| Practical Privacy Preserving POI Recommendation | ACM TIST | [pdf](https://arxiv.org/abs/2003.02834) |
+| Secure Federated Matrix Factorization | IEEE Intelligent Systems | [pdf](https://ieeexplore.ieee.org/abstract/document/9162459), [code](https://github.com/Di-Chai/FedMF) |
 | FedRec: Federated Recommendation With Explicit Feedback | IEEE Intelligent Systems | [pdf](https://ieeexplore.ieee.org/abstract/document/9170754), [code](https://csse.szu.edu.cn/staff/panwk/publications/FedRec/) |
 | Privacy-Preserving News Recommendation Model Learning | EMNLP | [pdf](https://aclanthology.org/2020.findings-emnlp.128/), [code](https://github.com/taoqi98/FedNewsRec) |
 | Federated Recommendation System via Differential Privacy | IEEE ISIT | [pdf](https://arxiv.org/abs/2005.06670) |
 | Meta Matrix Factorization for Federated Rating Predictions | SIGIR | [pdf](https://arxiv.org/abs/1910.10086), [code](https://github.com/TempSDU/MetaMF) |
-| FedFast: Going Beyond Average for Faster Training of Federated Recommender Systems | KDD | [pdf](https://dl.acm.org/doi/10.1145/3394486.3403176) | 
+| FedFast: Going Beyond Average for Faster Training of Federated Recommender Systems | KDD | [pdf](https://dl.acm.org/doi/10.1145/3394486.3403176) |
+| Federated recommendation systems | Springer | [pdf](https://link.springer.com/chapter/10.1007/978-3-030-63076-8_16) |
 
 ### 2019
 | Title | Venue | Link |  

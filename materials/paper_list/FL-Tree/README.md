@@ -13,13 +13,14 @@ This list is constantly being updated. Feel free to contribute!
 | FedGBF: An efficient vertical federated learning framework via gradient boosting and bagging    | arxiv    | [pdf](https://arxiv.org/pdf/2204.00976.pdf)                                                                           | vertical         |
 
 ### 2021
-| Title                                                                                                                   | Venue                                                  | Link                                                                                          | key words |
-|-------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------|-----------|
-| Fed-EINI: An Efficient and Interpretable Inference Framework for Decision Tree Ensembles in Vertical Federated Learning | IEEE International Conference on Big Data              | [pdf](https://arxiv.org/pdf/2105.09540.pdf)                                                   | vertical  |
- | Large-Scale Secure XGB for Vertical Federated Learning                                                                  | CIKM                                                   | [pdf](https://arxiv.org/pdf/2005.08479.pdf), [code](https://github.com/secretflow/secretflow) | vertical  |
- | SecureBoost: A Lossless Federated Learning Framework                                                                    | IEEE Intelligent Systems                               | [pdf](https://arxiv.org/pdf/1901.08755.pdf), [code](https://github.com/FederatedAI/FATE)      | vertical  |
- | An Efficient Learning Framework For Federated XGBoost Using Secret Sharing And Distributed Optimization                 | ACM Transactions on Intelligent Systems and Technology | [pdf](https://arxiv.org/pdf/2105.05717.pdf)                                                   | vertical  |
-| VF2Boost: Very Fast Vertical Federated Gradient Boosting for Cross-Enterprise Learning                                  | SIGMOD                                                 | [pdf](https://dl.acm.org/doi/abs/10.1145/3448016.3457241)                                     | vertical  |
+| Title                                                        | Venue                                                  | Link                                                         | key words |
+| ------------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------ | --------- |
+| Fed-EINI: An Efficient and Interpretable Inference Framework for Decision Tree Ensembles in Vertical Federated Learning | IEEE International Conference on Big Data              | [pdf](https://arxiv.org/pdf/2105.09540.pdf)                  | vertical  |
+| Large-Scale Secure XGB for Vertical Federated Learning       | CIKM                                                   | [pdf](https://arxiv.org/pdf/2005.08479.pdf), [code](https://github.com/secretflow/secretflow) | vertical  |
+| SecureBoost: A Lossless Federated Learning Framework         | IEEE Intelligent Systems                               | [pdf](https://arxiv.org/pdf/1901.08755.pdf), [code](https://github.com/FederatedAI/FATE) | vertical  |
+| An Efficient Learning Framework For Federated XGBoost Using Secret Sharing And Distributed Optimization | ACM Transactions on Intelligent Systems and Technology | [pdf](https://arxiv.org/pdf/2105.05717.pdf)                  | vertical  |
+| VF2Boost: Very Fast Vertical Federated Gradient Boosting for Cross-Enterprise Learning | SIGMOD                                                 | [pdf](https://dl.acm.org/doi/abs/10.1145/3448016.3457241)    | vertical  |
+| SoK: Privacy-Preserving Collaborative Tree-based Model Learning | PoPETs                                                 | [pdf](https://arxiv.org/pdf/2103.08987.pdf)                  | Survey    |
 
 ### 2020 
 | Title                                                                  | Venue | Link                                                | key words            |
