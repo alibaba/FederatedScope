@@ -36,6 +36,17 @@ class ConvNet2(Module):
         self.maxpool = MaxPool2d(2)
         self.dropout = dropout
 
+    def feature(self, x):
+        x = self.bn1(self.conv1(x)) if self.use_bn else self.conv1(x)
+        x = self.maxpool(self.relu(x))
+        x = self.bn2(self.conv2(x)) if self.use_bn else self.conv2(x)
+        x = self.maxpool(self.relu(x))
+        x = Flatten()(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.relu(self.fc1(x))
+
+        return x
+
     def forward(self, x):
         x = self.bn1(self.conv1(x)) if self.use_bn else self.conv1(x)
         x = self.maxpool(self.relu(x))
@@ -119,6 +130,8 @@ class VGG11(Module):
                  class_num=10,
                  dropout=.0):
         super(VGG11, self).__init__()
+
+        cfg = [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
 
         self.conv1 = Conv2d(in_channels, 64, 3, padding=1)
         self.bn1 = BatchNorm2d(64)

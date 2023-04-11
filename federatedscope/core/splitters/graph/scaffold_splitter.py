@@ -5,8 +5,6 @@ from rdkit import Chem
 from rdkit import RDLogger
 from rdkit.Chem.Scaffolds import MurckoScaffold
 
-from federatedscope.core.splitters import BaseSplitter
-
 logger = logging.getLogger(__name__)
 
 RDLogger.DisableLog('rdApp.*')
@@ -28,7 +26,7 @@ def gen_scaffold_split(dataset, client_num=5):
     scaffolds = {}
     for idx, data in enumerate(dataset):
         smiles = data.smiles
-        _ = Chem.MolFromSmiles(smiles)
+        mol = Chem.MolFromSmiles(smiles)
         scaffold = generate_scaffold(smiles)
         if scaffold not in scaffolds:
             scaffolds[scaffold] = [idx]
@@ -49,19 +47,15 @@ def gen_scaffold_split(dataset, client_num=5):
     return [splits[ID] for ID in range(client_num)]
 
 
-class ScaffoldSplitter(BaseSplitter):
-    """
-    Split molecular via scaffold. This splitter will sort all moleculars, and \
-    split them into several parts.
-
-    Arguments:
-        client_num (int): Split data into client_num of pieces.
-    """
+class ScaffoldSplitter:
     def __init__(self, client_num):
-        super(ScaffoldSplitter, self).__init__(client_num)
+        self.client_num = client_num
 
-    def __call__(self, dataset, **kwargs):
+    def __call__(self, dataset):
         dataset = [ds for ds in dataset]
         idx_slice = gen_scaffold_split(dataset)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}()'

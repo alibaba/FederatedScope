@@ -5,12 +5,14 @@ early_stop:
 seed: 1
 federate:
   mode: standalone
+  local_update_steps: 30
   total_round_num: 200
   sample_client_rate: 0.2
   client_num: 300
 data:
   root: data/
   type: synthetic
+  batch_size: 64
   subsample: 1.0
 personalization:
   local_update_steps: 30
@@ -19,11 +21,9 @@ model:
   model_num_per_trainer: 3
   type: lr
   out_channels: 2
-train:
-  local_update_steps: 30
-  optimizer:
-    lr: 0.01
-    weight_decay: 0.0
+optimizer:
+  lr: 0.01
+  weight_decay: 0.0
 criterion:
   type: CrossEntropyLoss
 trainer:

@@ -1,10 +1,8 @@
 import torch
 from copy import deepcopy
 
-from federatedscope.core.trainers.enums import LIFECYCLE
-from federatedscope.core.trainers.context import CtxVar
 from federatedscope.gfl.loss.vat import VATLoss
-from federatedscope.core.trainers import GeneralTorchTrainer
+from federatedscope.core.trainers.trainer import GeneralTorchTrainer
 
 
 class FLITTrainer(GeneralTorchTrainer):
@@ -58,22 +56,21 @@ class FLITTrainer(GeneralTorchTrainer):
 
         weightloss = lossLocalLabel + torch.relu(lossLocalLabel -
                                                  lossGlobalLabel.detach())
-        if ctx.weight_denomaitor is None:
+        if ctx.weight_denomaitor == None:
             ctx.weight_denomaitor = weightloss.mean(dim=0,
                                                     keepdim=True).detach()
         else:
-            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * \
-                                    ctx.weight_denomaitor + (
-                                            -self.cfg.flitplus.factor_ema +
-                                            1) * weightloss.mean(
-                                            keepdim=True, dim=0).detach()
+            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * ctx.weight_denomaitor + (
+                1 - self.cfg.flitplus.factor_ema) * weightloss.mean(
+                    dim=0, keepdim=True).detach()
+
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (lossLocalLabel)
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
+        ctx.y_true = label
+        ctx.y_prob = pred
 
 
 class FLITPlusTrainer(FLITTrainer):
@@ -108,17 +105,14 @@ class FLITPlusTrainer(FLITTrainer):
                                                       lossGlobalLabel.detach())
         weightloss_vat = (lossLocalVAT +
                           torch.relu(lossLocalVAT - lossGlobalVAT.detach()))
-        weightloss = self.cfg.flitplus.lambdavat * \
-            weightloss_vat + weightloss_loss
-        if ctx.weight_denomaitor is None:
+        weightloss = weightloss_loss + self.cfg.flitplus.lambdavat * weightloss_vat
+        if ctx.weight_denomaitor == None:
             ctx.weight_denomaitor = weightloss.mean(dim=0,
                                                     keepdim=True).detach()
         else:
-            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * \
-                                    ctx.weight_denomaitor + (
-                                            -self.cfg.flitplus.factor_ema +
-                                            1) * weightloss.mean(
-                                            keepdim=True, dim=0).detach()
+            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * ctx.weight_denomaitor + (
+                1 - self.cfg.flitplus.factor_ema) * weightloss.mean(
+                    dim=0, keepdim=True).detach()
 
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (
@@ -127,8 +121,8 @@ class FLITPlusTrainer(FLITTrainer):
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
+        ctx.y_true = label
+        ctx.y_prob = pred
 
 
 class FedFocalTrainer(GeneralTorchTrainer):
@@ -165,23 +159,21 @@ class FedFocalTrainer(GeneralTorchTrainer):
 
         lossLocalLabel = ctx.criterion(pred, label)
         weightloss = lossLocalLabel
-        if ctx.weight_denomaitor is None:
+        if ctx.weight_denomaitor == None:
             ctx.weight_denomaitor = weightloss.mean(dim=0,
                                                     keepdim=True).detach()
         else:
-            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * \
-                                    ctx.weight_denomaitor + (
-                                            -self.cfg.flitplus.factor_ema +
-                                            1) * weightloss.mean(
-                                            keepdim=True, dim=0).detach()
+            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * ctx.weight_denomaitor + (
+                1 - self.cfg.flitplus.factor_ema) * weightloss.mean(
+                    dim=0, keepdim=True).detach()
 
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (lossLocalLabel)
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
+        ctx.y_true = label
+        ctx.y_prob = pred
 
 
 class FedVATTrainer(GeneralTorchTrainer):
@@ -223,17 +215,14 @@ class FedVATTrainer(GeneralTorchTrainer):
         if len(label.size()) == 0:
             label = label.unsqueeze(0)
         lossLocalLabel = ctx.criterion(pred, label)
-        weightloss = lossLocalLabel + self.cfg.flitplus.lambdavat * \
-            lossLocalVAT
-        if ctx.weight_denomaitor is None:
+        weightloss = lossLocalLabel + self.cfg.flitplus.lambdavat * lossLocalVAT
+        if ctx.weight_denomaitor == None:
             ctx.weight_denomaitor = weightloss.mean(dim=0,
                                                     keepdim=True).detach()
         else:
-            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * \
-                                    ctx.weight_denomaitor + (
-                                            -self.cfg.flitplus.factor_ema +
-                                            1) * weightloss.mean(
-                                            keepdim=True, dim=0).detach()
+            ctx.weight_denomaitor = self.cfg.flitplus.factor_ema * ctx.weight_denomaitor + (
+                1 - self.cfg.flitplus.factor_ema) * weightloss.mean(
+                    dim=0, keepdim=True).detach()
 
         loss = (1 - torch.exp(-weightloss / (ctx.weight_denomaitor + 1e-7)) +
                 1e-7)**self.cfg.flitplus.tmpFed * (
@@ -242,8 +231,8 @@ class FedVATTrainer(GeneralTorchTrainer):
         ctx.loss_batch = loss.mean()
 
         ctx.batch_size = len(label)
-        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
+        ctx.y_true = label
+        ctx.y_prob = pred
 
 
 def record_initialization_local(ctx):

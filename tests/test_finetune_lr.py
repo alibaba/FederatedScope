@@ -2,10 +2,9 @@
 import unittest
 
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.utils import setup_seed
-from federatedscope.core.auxiliaries.logging import update_logger
+from federatedscope.core.auxiliaries.utils import setup_seed, update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.auxiliaries.runner_builder import get_runner
+from federatedscope.core.fed_runner import FedRunner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -26,8 +25,8 @@ class ToyLRTest(unittest.TestCase):
         cfg.data.type = 'toy'
         cfg.trainer.type = 'general'
         cfg.model.type = 'lr'
-        cfg.finetune.before_eval = True
-        cfg.finetune.local_update_steps = 5
+        cfg.trainer.finetune.before_eval = True
+        cfg.trainer.finetune.steps = 5
 
         return backup_cfg
 
@@ -35,17 +34,17 @@ class ToyLRTest(unittest.TestCase):
         init_cfg = global_cfg.clone()
         backup_cfg = self.set_config_standalone(init_cfg)
         setup_seed(init_cfg.seed)
-        update_logger(init_cfg, True)
+        update_logger(init_cfg)
 
         data, modified_config = get_data(init_cfg.clone())
         init_cfg.merge_from_other_cfg(modified_config)
 
         self.assertIsNotNone(data)
 
-        Fed_runner = get_runner(data=data,
-                                server_class=get_server_cls(init_cfg),
-                                client_class=get_client_cls(init_cfg),
-                                config=init_cfg.clone())
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(init_cfg),
+                               client_class=get_client_cls(init_cfg),
+                               config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)

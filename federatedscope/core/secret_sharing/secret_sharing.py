@@ -4,6 +4,7 @@ try:
     import torch
 except ImportError:
     torch = None
+from math import fmod
 
 
 class SecretSharing(ABC):
@@ -21,13 +22,11 @@ class SecretSharing(ABC):
 
 class AdditiveSecretSharing(SecretSharing):
     """
-    AdditiveSecretSharing class, which can split a number into frames and
-    recover it by summing up
+    AdditiveSecretSharing class, which can split a number into frames and recover it by summing up
     """
     def __init__(self, shared_party_num, size=60):
         super(SecretSharing, self).__init__()
-        assert shared_party_num > 1, "AdditiveSecretSharing require " \
-                                     "shared_party_num > 1"
+        assert shared_party_num > 1, "AdditiveSecretSharing require shared_party_num > 1"
         self.shared_party_num = shared_party_num
         self.maximum = 2**size
         self.mod_number = 2 * self.maximum + 1
@@ -58,8 +57,7 @@ class AdditiveSecretSharing(SecretSharing):
 
         secret = self.float2fixedpoint(secret)
         secret_seq = np.random.randint(low=0, high=self.mod_number, size=shape)
-        # last_seq = self.mod_funs(secret - self.mod_funs(np.sum(secret_seq,
-        # axis=0)))
+        #last_seq = self.mod_funs(secret - self.mod_funs(np.sum(secret_seq, axis=0)))
         last_seq = self.mod_funs(secret -
                                  self.mod_funs(np.sum(secret_seq, axis=0)))
 

@@ -1,48 +1,35 @@
+from torch.utils.data import DataLoader
+
 from federatedscope.nlp.dataset.leaf_nlp import LEAF_NLP
-from federatedscope.nlp.dataset.leaf_twitter import LEAF_TWITTER
 from federatedscope.nlp.dataset.leaf_synthetic import LEAF_SYNTHETIC
 from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
 def load_nlp_dataset(config=None):
-    """
-    Return the dataset of ``shakespeare``, ``subreddit``, ``twitter``, \
-    or ``synthetic``.
-
-    Args:
-        config: configurations for FL, see ``federatedscope.core.configs``
-
-    Returns:
-        FL dataset dict, with ``client_id`` as key.
-
-    Note:
-      ``load_nlp_dataset()`` will return a dict as shown below:
-        ```
-        {'client_id': {'train': dataset, 'test': dataset, 'val': dataset}}
-        ```
+    r"""
+    return {
+                'client_id': {
+                    'train': DataLoader(),
+                    'test': DataLoader(),
+                    'val': DataLoader()
+                }
+            }
     """
     splits = config.data.splits
 
     path = config.data.root
     name = config.data.type.lower()
-    transforms_funcs, _, _ = get_transform(config, 'torchtext')
+    batch_size = config.data.batch_size
+    transforms_funcs = get_transform(config, 'torchtext')
 
-    if name in ['shakespeare', 'subreddit']:
+    if name in ['shakespeare', 'subreddit', 'twitter']:
         dataset = LEAF_NLP(root=path,
                            name=name,
                            s_frac=config.data.subsample,
                            tr_frac=splits[0],
                            val_frac=splits[1],
-                           seed=config.seed,
+                           seed=1234,
                            **transforms_funcs)
-    elif name == 'twitter':
-        dataset = LEAF_TWITTER(root=path,
-                               name='twitter',
-                               s_frac=config.data.subsample,
-                               tr_frac=splits[0],
-                               val_frac=splits[1],
-                               seed=config.seed,
-                               **transforms_funcs)
     elif name == 'synthetic':
         dataset = LEAF_SYNTHETIC(root=path)
     else:
@@ -53,8 +40,24 @@ def load_nlp_dataset(config=None):
     config.merge_from_list(['federate.client_num', client_num])
 
     # get local dataset
-    data_dict = dict()
-    for client_idx in range(1, client_num + 1):
-        data_dict[client_idx] = dataset[client_idx - 1]
+    data_local_dict = dict()
+    for client_idx in range(client_num):
+        dataloader = {
+            'train': DataLoader(dataset[client_idx]['train'],
+                                batch_size,
+                                shuffle=config.data.shuffle,
+                                num_workers=config.data.num_workers),
+            'test': DataLoader(dataset[client_idx]['test'],
+                               batch_size,
+                               shuffle=False,
+                               num_workers=config.data.num_workers)
+        }
+        if 'val' in dataset[client_idx]:
+            dataloader['val'] = DataLoader(dataset[client_idx]['val'],
+                                           batch_size,
+                                           shuffle=False,
+                                           num_workers=config.data.num_workers)
 
-    return data_dict, config
+        data_local_dict[client_idx + 1] = dataloader
+
+    return data_local_dict, config

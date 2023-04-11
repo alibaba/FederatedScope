@@ -10,58 +10,11 @@
 
 FederatedScope is a comprehensive federated learning platform that provides convenient usage and flexible customization for various federated learning tasks in both academia and industry.  Based on an event-driven architecture, FederatedScope integrates rich collections of functionalities to satisfy the burgeoning demands from federated learning, and aims to build up an easy-to-use platform for promoting learning safely and effectively.
 
-A detailed tutorial is provided on our website: [federatedscope.io](https://federatedscope.io/)
-
-You can try FederatedScope via [FederatedScope Playground](https://try.federatedscope.io/) or [Google Colab](https://colab.research.google.com/github/alibaba/FederatedScope).
-
-| [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
+A detailed tutorial is provided on our [website](https://federatedscope.io/).
 
 ## News
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [02-10-2022] Our [paper](https://arxiv.org/pdf/2204.05011.pdf) elaborating on FederatedScope is accepted by VLDB'23!
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [10-05-2022] Our benchmark paper for personalized FL, [pFL-Bench](https://arxiv.org/abs/2206.03655) has been accepted by NeurIPS'22, Dataset and Benchmark Track!
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
-- [07-30-2022] We release FederatedScope v0.2.0! 
-- [06-17-2022] We release **pFL-Bench**, a comprehensive benchmark for personalized Federated Learning (pFL), containing 10+ datasets and 20+ baselines. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/pFL-Bench), [pdf](https://arxiv.org/abs/2206.03655)]
-- [06-17-2022] We release **FedHPO-Bench**, a benchmark suite for studying federated hyperparameter optimization. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/FedHPOBench), [pdf](https://arxiv.org/abs/2206.03966)]
-- [06-17-2022] We release **B-FHTL**, a benchmark suit for studying federated hetero-task learning. [[code](https://github.com/alibaba/FederatedScope/tree/master/benchmark/B-FHTL), [pdf](https://arxiv.org/abs/2206.03436)]
-- [06-13-2022] Our project was receiving an attack, which has been resolved. [More details](https://github.com/alibaba/FederatedScope/blob/master/doc/news/06-13-2022_Declaration_of_Emergency.txt).
 - [05-25-2022] Our paper [FederatedScope-GNN](https://arxiv.org/abs/2204.05562) has been accepted by KDD'2022!
 - [05-06-2022] We release FederatedScope v0.1.0! 
-
-## Code Structure
-```
-FederatedScope
-├── federatedscope
-│   ├── core           
-│   |   ├── workers              # Behaviors of participants (i.e., server and clients)
-│   |   ├── trainers             # Details of local training
-│   |   ├── aggregators          # Details of federated aggregation
-│   |   ├── configs              # Customizable configurations
-│   |   ├── monitors             # The monitor module for logging and demonstrating  
-│   |   ├── communication.py     # Implementation of communication among participants   
-│   |   ├── fed_runner.py        # The runner for building and running an FL course
-│   |   ├── ... ..
-│   ├── cv                       # Federated learning in CV        
-│   ├── nlp                      # Federated learning in NLP          
-│   ├── gfl                      # Graph federated learning          
-│   ├── autotune                 # Auto-tunning for federated learning         
-│   ├── vertical_fl              # Vartical federated learning         
-│   ├── contrib                          
-│   ├── main.py           
-│   ├── ... ...          
-├── scripts                      # Scripts for reproducing existing algorithms
-├── benchmark                    # We release several benchmarks for convenient and fair comparisons
-├── doc                          # For automatic documentation
-├── enviornment                  # Installation requirements and provided docker files
-├── materials                    # Materials of related topics (e.g., paper lists)
-│   ├── notebook                        
-│   ├── paper_list                                        
-│   ├── tutorial                                       
-│   ├── ... ...                                      
-├── tests                        # Unittest modules for continuous integration
-├── LICENSE
-└── setup.py
-```
 
 ## Quick Start
 
@@ -69,70 +22,39 @@ We provide an end-to-end example for users to start running a standard FL course
 
 ### Step 1. Installation
 
-First of all, users need to clone the source code and install the required packages (we suggest python version >= 3.9). You can choose between the following two installation methods (via docker or conda) to install FederatedScope.
+First of all, users need to clone the source code and install the required packages (we suggest python version >= 3.9).
 
 ```bash
 git clone https://github.com/alibaba/FederatedScope.git
 cd FederatedScope
 ```
-#### Use Docker
-
-You can build docker image and run with docker env (cuda 11 and torch 1.10):
-
+You can install the dependencies from the requirement file:
 ```
-docker build -f environment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
+# For minimal version
+conda install --file enviroment/requirements-torch1.10.txt -c pytorch -c conda-forge -c nvidia
+
+# For application version
+conda install --file enviroment/requirements-torch1.10-application.txt -c pytorch -c conda-forge -c nvidia -c pyg
+```
+or build docker image and run with docker env (cuda 11 and torch 1.10):
+```
+docker build -f enviroment/docker_files/federatedscope-torch1.10.Dockerfile -t alibaba/federatedscope:base-env-torch1.10 .
 docker run --gpus device=all --rm -it --name "fedscope" -w $(pwd) alibaba/federatedscope:base-env-torch1.10 /bin/bash
 ```
 If you need to run with down-stream tasks such as graph FL, change the requirement/docker file name into another one when executing the above commands:
 ```
-# environment/requirements-torch1.10.txt -> 
-environment/requirements-torch1.10-application.txt
+# enviroment/requirements-torch1.10.txt -> 
+enviroment/requirements-torch1.10-application.txt
 
-# environment/docker_files/federatedscope-torch1.10.Dockerfile ->
-environment/docker_files/federatedscope-torch1.10-application.Dockerfile
+# enviroment/docker_files/federatedscope-torch1.10.Dockerfile ->
+enviroment/docker_files/federatedscope-torch1.10-application.Dockerfile
 ```
 Note: You can choose to use cuda 10 and torch 1.8 via changing `torch1.10` to `torch1.8`.
-The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/environment/docker_files).
+The docker images are based on the nvidia-docker. Please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine. See more details [here](https://github.com/alibaba/FederatedScope/tree/master/enviroment/docker_files).
 
-#### Use Conda
-
-We recommend using a new virtual environment to install FederatedScope:
-
+Finally, after all the dependencies are installed, run:
 ```bash
-conda create -n fs python=3.9
-conda activate fs
-```
-
-If your backend is torch, please install torch in advance ([torch-get-started](https://pytorch.org/get-started/locally/)). For example, if your cuda version is 11.3 please execute the following command:
-
-```bash
-conda install -y pytorch=1.10.1 torchvision=0.11.2 torchaudio=0.10.1 torchtext=0.11.1 cudatoolkit=11.3 -c pytorch -c conda-forge
-```
-
-For users with Apple M1 chips:
-```bash
-conda install pytorch torchvision torchaudio -c pytorch
-# Downgrade torchvision to avoid segmentation fault
-python -m pip install torchvision==0.11.3
-```
-
-Finally, after the backend is installed, you can install FederatedScope from `source`:
-
-##### From source
-
-```bash
-# Editable mode
-pip install -e .
-
-# Or (developers for dev mode)
-pip install -e .[dev]
-pre-commit install
-```
-
-Now, you have successfully installed the minimal version of FederatedScope. (**Optinal**) For application version including graph, nlp and speech, run:
-
-```bash
-bash environment/extra_dependencies_torch1.10-application.sh
+python setup.py install
 ```
 
 ### Step 2. Prepare datasets
@@ -165,19 +87,19 @@ Note that FederatedScope provides a unified interface for both standalone mode a
 
 The standalone mode in FederatedScope means to simulate multiple participants (servers and clients) in a single device, while participants' data are isolated from each other and their models might be shared via message passing. 
 
-Here we demonstrate how to run a standard FL task with FederatedScope, with setting `cfg.data.type = 'FEMNIST'`and `cfg.model.type = 'ConvNet2'` to run vanilla FedAvg for an image classification task. Users can customize training configurations, such as `cfg.federated.total_round_num`, `cfg.dataloader.batch_size`, and `cfg.train.optimizer.lr`, in the configuration (a .yaml file), and run a standard FL task as: 
+Here we demonstrate how to run a standard FL task with FederatedScope, with setting `cfg.data.type = 'FEMNIST'`and `cfg.model.type = 'ConvNet2'` to run vanilla FedAvg for an image classification task. Users can customize training configurations, such as `cfg.federated.total_round_num`, `cfg.data.batch_size`, and `cfg.optimizer.lr`, in the configuration (a .yaml file), and run a standard FL task as: 
 
 ```bash
 # Run with default configurations
-python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml
+python federatedscope/main.py --cfg federatedscope/example_configs/femnist.yaml
 # Or with custom configurations
-python federatedscope/main.py --cfg scripts/example_configs/femnist.yaml federate.total_round_num 50 dataloader.batch_size 128
+python federatedscope/main.py --cfg federatedscope/example_configs/femnist.yaml federated.total_round_num 50 data.batch_size 128
 ```
 
 Then you can observe some monitored metrics during the training process as:
 
 ```
-INFO: Server has been set up ...
+INFO: Server #0 has been set up ...
 INFO: Model meta-info: <class 'federatedscope.cv.model.cnn.ConvNet2'>.
 ... ...
 INFO: Client has been set up ...
@@ -190,10 +112,10 @@ INFO: {'Role': 'Client #6', 'Round': 0, 'Results_raw': {'train_loss': 209.438838
 INFO: {'Role': 'Client #9', 'Round': 0, 'Results_raw': {'train_loss': 208.83140087127686, 'train_acc': 0.0, 'train_total': 50, 'train_loss_regular': 0.0, 'train_avg_loss': 4.1766280174255375}}
 INFO: ----------- Starting a new training round (Round #1) -------------
 ... ...
-INFO: Server: Training is finished! Starting evaluation.
+INFO: Server #0: Training is finished! Starting evaluation.
 INFO: Client #1: (Evaluation (test set) at Round #20) test_loss is 163.029045
 ... ...
-INFO: Server: Final evaluation is finished! Starting merging results.
+INFO: Server #0: Final evaluation is finished! Starting merging results.
 ... ...
 ```
 
@@ -203,43 +125,43 @@ The distributed mode in FederatedScope denotes running multiple procedures to bu
 
 To run with distributed mode, you only need to:
 
-- Prepare isolated data file and set up `cfg.data.file_path = PATH/TO/DATA` for each participant;
+- Prepare isolated data file and set up `cfg.distribute.data_file = PATH/TO/DATA` for each participant;
 - Change `cfg.federate.model = 'distributed'`, and specify the role of each participant  by `cfg.distributed.role = 'server'/'client'`.
-- Set up a valid address by `cfg.distribute.server_host/client_host = x.x.x.x` and `cfg.distribute.server_port/client_port = xxxx`. (Note that for a server, you need to set up `server_host` and `server_port` for listening messages, while for a client, you need to set up `client_host` and `client_port` for listening as well as `server_host` and `server_port` for joining in an FL course)
+- Set up a valid address by `cfg.distribute.host = x.x.x.x` and `cfg.distribute.port = xxxx`. (Note that for a server, you need to set up server_host/server_port for listening messge, while for a client, you need to set up client_host/client_port for listening and server_host/server_port for sending join-in applications when building up an FL course)
 
 We prepare a synthetic example for running with distributed mode:
 
 ```bash
 # For server
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_server.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
 
 # For clients
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_client_1.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_client_2.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python main.py --cfg federatedscope/example_configs/distributed_client_3.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
 ```
 
-An executable example with generated toy data can be run with (a script can be found in `scripts/run_distributed_lr.sh`):
+An executable example with generated toy data can be run with:
 ```bash
 # Generate the toy data
-python scripts/distributed_scripts/gen_data.py
+python scripts/gen_data.py
 
 # Firstly start the server that is waiting for clients to join in
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml data.file_path toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_server.yaml distribute.data_file toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
 
 # Start the client #1 (with another process)
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml data.file_path toy_data/client_1_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50052
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_1.yaml distribute.data_file toy_data/client_1_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50052
 # Start the client #2 (with another process)
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml data.file_path toy_data/client_2_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50053
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_2.yaml distribute.data_file toy_data/client_2_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50053
 # Start the client #3 (with another process)
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml data.file_path toy_data/client_3_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50054
+python federatedscope/main.py --cfg federatedscope/example_configs/distributed_client_3.yaml distribute.data_file toy_data/client_3_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50054
 ```
 
 And you can observe the results as (the IP addresses are anonymized with 'x.x.x.x'):
 
 ```
-INFO: Server: Listen to x.x.x.x:xxxx...
-INFO: Server has been set up ...
+INFO: Server #0: Listen to x.x.x.x:xxxx...
+INFO: Server #0 has been set up ...
 Model meta-info: <class 'federatedscope.core.lr.LogisticRegression'>.
 ... ...
 INFO: Client: Listen to x.x.x.x:xxxx...
@@ -251,10 +173,10 @@ INFO: Model meta-info: <class 'federatedscope.core.lr.LogisticRegression'>.
 {'Role': 'Client #1', 'Round': 0, 'Results_raw': {'train_total': 64, 'train_loss': 290.9668884277344, 'train_avg_loss': 4.54635763168335}}
 ----------- Starting a new training round (Round #1) -------------
 ... ...
-INFO: Server: Training is finished! Starting evaluation.
+INFO: Server #0: Training is finished! Starting evaluation.
 INFO: Client #1: (Evaluation (test set) at Round #20) test_loss is 30.387419
 ... ...
-INFO: Server: Final evaluation is finished! Starting merging results.
+INFO: Server #0: Final evaluation is finished! Starting merging results.
 ... ...
 ```
 
@@ -271,9 +193,9 @@ As a comprehensive FL platform, FederatedScope provides the fundamental implemen
 - **Differential Privacy**: Different from the encryption algorithms that require a large amount of computation resources,  differential privacy is an economical yet flexible technique to protect privacy, which has achieved great success in database and is ever-growing in federated learning.
 - ...
 
-More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning! 
+More supports are coming soon! We have prepared a [tutorial](https://federatedscope.io/) to provide more details about how to utilize FederatedScope to enjoy your journey of Federated Learning!
 
-Materials of related topics are constantly being updated, please refer to [FL-Recommendation](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Recommendation), [Federated-HPO](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_HPO), [Personalized FL](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Personalized_FL), [Federated Graph Learning](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_Graph_Learning), [FL-NLP](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-NLP), [FL-Attacker](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Attacker), [FL-Incentive-Mechanism](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Incentive), [FL-Fairness](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Fiarness) and so on. 
+Materials of related topics are constantly being updated, please refer to [FL-Recommendation](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-Recommendation), [Federated-HPO](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_HPO), [Personalized FL](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Personalized_FL), [Federated Graph Learning](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/Federated_Graph_Learning), [FL-NLP](https://github.com/alibaba/FederatedScope/tree/master/materials/paper_list/FL-NLP), and so on. 
 
 ## Documentation
 
@@ -286,8 +208,6 @@ make html
 
 We put the API references on our [website](https://federatedscope.io/refs/index).
 
-Besides, we provide documents for [executable scripts](https://github.com/alibaba/FederatedScope/tree/master/scripts) and [customizable configurations](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/core/configs).
-
 ## License
 
 FederatedScope is released under Apache License 2.0.
@@ -297,33 +217,17 @@ If you find FederatedScope useful for your research or development, please cite 
 ```
 @article{federatedscope,
   title = {FederatedScope: A Flexible Federated Learning Platform for Heterogeneity},
-  author = {Xie, Yuexiang and Wang, Zhen and Gao, Dawei and Chen, Daoyuan and Yao, Liuyi and Kuang, Weirui and Li, Yaliang and Ding, Bolin and Zhou, Jingren},
-  journal={Proceedings of the VLDB Endowment},
-  volume={16},
-  number={5},
-  pages={1059--1072},
-  year={2023}
+  author = {Xie, Yuexiang and Wang, Zhen and Chen, Daoyuan and Gao, Dawei and Yao, Liuyi and Kuang, Weirui and Li, Yaliang and Ding, Bolin and Zhou, Jingren},
+  journal={arXiv preprint arXiv:2204.05011},
+  year = {2022},
 }
 ```
-More publications can be found in the [Publications](https://federatedscope.io/pub/).
+More publications can be found in the [Publications](https://federatedscope.io/year-archive/).
 
 ## Contributing
 
-We **greatly appreciate** any contribution to FederatedScope! We provide a developer version of FederatedScope with additional pre-commit hooks to perform commit checks compared to the official version:
+We **greatly appreciate** any contribution to FederatedScope! You can refer to [Contributing to FederatedScope](https://federatedscope.io/docs/contributor/) for more details.
 
-```bash
-# Install the developer version
-pip install -e .[dev]
-pre-commit install
+Welcome to join in our [Slack channel](https://federatedscopeteam.slack.com/archives/C03E5LGQH7S), or DingDing group (please scan the following QR code) for discussion.
 
-# Or switch to the developer version from the official version
-pip install pre-commit
-pre-commit install
-pre-commit run --all-files
-```
-
-You can refer to [Contributing to FederatedScope](https://federatedscope.io/docs/contributor/) for more details.
-
-Welcome to join in our [Slack channel](https://join.slack.com/t/federatedscopeteam/shared_invite/zt-1apmfjqmc-hvpYbsWJdm7D93wPNXbqww), or DingDing group (please scan the following QR code) for discussion.
-
-<img width="150" src="https://img.alicdn.com/imgextra/i2/O1CN01NSWjlJ1q8bliVtjRp_!!6000000005451-0-tps-924-926.jpg" width="400" alt="federatedscope-logo">
+<img width="150" src="https://img.alicdn.com/imgextra/i4/O1CN01heXHpf1zuXhcOCgGF_!!6000000006774-2-tps-860-861.png" width="400" alt="federatedscope-logo">

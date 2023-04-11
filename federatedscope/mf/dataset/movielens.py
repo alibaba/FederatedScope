@@ -2,11 +2,8 @@ import os
 import pickle
 import logging
 
-from torchvision.datasets.utils import check_integrity, \
-    download_and_extract_archive, calculate_md5
+from torchvision.datasets.utils import check_integrity, download_and_extract_archive, calculate_md5
 import pandas as pd
-from tqdm import tqdm
-import scipy.sparse as sp
 from numpy.random import shuffle
 from scipy.sparse import coo_matrix
 from scipy.sparse import csc_matrix
@@ -25,22 +22,12 @@ class VMFDataset:
         shuffle(id_item)
         items_per_client = np.array_split(id_item, num_client)
         data = dict()
-        train_ratings_all, test_ratings_all = [], []
-        for clientId, items in tqdm(enumerate(items_per_client)):
+        for clientId, items in enumerate(items_per_client):
             client_ratings = ratings[:, items]
             train_ratings, test_ratings = self._split_train_test_ratings(
                 client_ratings, test_portion)
             data[clientId + 1] = {"train": train_ratings, "test": test_ratings}
-            train_ratings_all.append(train_ratings)
-            test_ratings_all.append(test_ratings)
-        # Server holds all
-        data[0] = {
-            "train": sp.hstack(train_ratings_all).tocsc(),
-            "test": sp.hstack(test_ratings_all).tocsc()
-        }
-        with open(self.processed_data, 'wb') as f:
-            pickle.dump(data, f)
-        return data
+        self.data = data
 
 
 class HMFDataset:
@@ -53,22 +40,12 @@ class HMFDataset:
         shuffle(id_user)
         users_per_client = np.array_split(id_user, num_client)
         data = dict()
-        train_ratings_all, test_ratings_all = [], []
-        for cliendId, users in tqdm(enumerate(users_per_client)):
+        for cliendId, users in enumerate(users_per_client):
             client_ratings = ratings[users, :]
             train_ratings, test_ratings = self._split_train_test_ratings(
                 client_ratings, test_portion)
             data[cliendId + 1] = {"train": train_ratings, "test": test_ratings}
-            train_ratings_all.append(train_ratings)
-            test_ratings_all.append(test_ratings)
-        # Server holds all
-        data[0] = {
-            "train": sp.vstack(train_ratings_all).tocsc(),
-            "test": sp.vstack(test_ratings_all).tocsc()
-        }
-        with open(self.processed_data, 'wb') as f:
-            pickle.dump(data, f)
-        return data
+        self.data = data
 
 
 class MovieLensData(object):
@@ -97,16 +74,20 @@ class MovieLensData(object):
                                "You can use download=True to download it")
 
         ratings = self._load_meta()
+        self._split_n_clients_rating(ratings, num_client, 1 - train_portion)
 
-        self.processed_data = os.path.join(self.root, self.base_folder,
-                                           'processed_data.pkl')
-        if os.path.exists(self.processed_data):
-            with open(self.processed_data, 'rb') as f:
-                self.data = pickle.load(f)
-        else:
-            logger.info(f"Processing data into {num_client} parties.")
-            self.data = self._split_n_clients_rating(ratings, num_client,
-                                                     1 - train_portion)
+    def _split_n_clients_rating(self, ratings: csc_matrix, num_client: int,
+                                test_portion: float):
+        id_item = np.arange(self.n_item)
+        shuffle(id_item)
+        items_per_client = np.array_split(id_item, num_client)
+        data = dict()
+        for clientId, items in enumerate(items_per_client):
+            client_ratings = ratings[:, items]
+            train_ratings, test_ratings = self._split_train_test_ratings(
+                client_ratings, test_portion)
+            data[clientId + 1] = {"train": train_ratings, "test": test_ratings}
+        self.data = data
 
     def _split_train_test_ratings(self, ratings: csc_matrix,
                                   test_portion: float):
@@ -127,26 +108,22 @@ class MovieLensData(object):
         train_ratings, test_ratings = train.tocsc(), test.tocsc()
         return train_ratings, test_ratings
 
-    def _read_raw(self):
-        fpath = os.path.join(self.root, self.base_folder, self.filename,
-                             self.raw_file)
-        data = pd.read_csv(fpath,
-                           sep="::",
-                           engine="python",
-                           usecols=[0, 1, 2],
-                           names=["userId", "movieId", "rating"],
-                           dtype={
-                               "userId": np.int32,
-                               "movieId": np.int32,
-                               "rating": np.float32
-                           })
-        return data
-
     def _load_meta(self):
         meta_path = os.path.join(self.root, self.base_folder, "ratings.pkl")
         if not os.path.exists(meta_path):
-            logger.info("Processing ratings.")
-            data = self._read_raw()
+            logger.info("Processing data into {} parties.")
+            fpath = os.path.join(self.root, self.base_folder, self.filename,
+                                 self.raw_file)
+            data = pd.read_csv(fpath,
+                               sep="::",
+                               engine="python",
+                               usecols=[0, 1, 2],
+                               names=["userId", "movieId", "rating"],
+                               dtype={
+                                   "userId": np.int32,
+                                   "movieId": np.int32,
+                                   "rating": np.float32
+                               })
             # Map idx
             unique_id_item, unique_id_user = np.sort(
                 data["movieId"].unique()), np.sort(data["userId"].unique())
@@ -198,14 +175,13 @@ class MovieLens1M(MovieLensData):
 
     Arguments:
         root (str): Root directory of dataset where directory
-            ``MoviesLen1M`` exists or will be saved to if download is
-            set to True.
+            ``MoviesLen1M`` exists or will be saved to if download is set to True.
         config (callable): Parameters related to matrix factorization.
         train_size (float, optional): The proportion of training data.
         test_size (float, optional): The proportion of test data.
-        download  (bool, optional): If true, downloads the dataset from the
-        internet and puts it in root directory. If dataset is already
-        downloaded, it is not downloaded again.
+        download  (bool, optional): If true, downloads the dataset from the internet and
+            puts it in root directory. If dataset is already downloaded, it is not
+            downloaded again.
 
     """
     base_folder = 'MovieLens1M'
@@ -225,15 +201,12 @@ class MovieLens10M(MovieLensData):
 
     Arguments:
         root (str): Root directory of dataset where directory
-            ``MoviesLen1M`` exists or will be saved to if download is
-            set to True.
+            ``MoviesLen1M`` exists or will be saved to if download is set to True.
         config (callable): Parameters related to matrix factorization.
         train_size (float, optional): The proportion of training data.
         test_size (float, optional): The proportion of test data.
-        download  (bool, optional): If true, downloads the dataset from the
-        internet and
-            puts it in root directory. If dataset is already downloaded,
-            it is not
+        download  (bool, optional): If true, downloads the dataset from the internet and
+            puts it in root directory. If dataset is already downloaded, it is not
             downloaded again.
 
     """

@@ -1,0 +1,77 @@
+use_gpu: True
+device: 3
+early_stop:
+  patience: 0
+seed: 2333
+federate:
+  mode: standalone
+  local_update_steps: 2
+  batch_or_epoch: epoch
+  total_round_num: 1000
+  sample_client_rate: 0.1
+  # unseen_clients_rate: 0.2
+  client_num: 100
+personalization:
+  K: 5
+  beta: 1.0
+  local_param:
+  - bn
+  - norms
+  local_update_steps: 2
+  lr: 0.1
+  regular_weight: 0.1
+  share_non_trainable_para: false
+data:
+  seed: 2333  
+  dataset: ['train', 'val', 'test', 'poison']
+  root: data/
+  type: 'CIFAR10@torchvision'
+  splits: [1.0, 0.0, 0.0]
+  batch_size: 32
+  num_workers: 0
+  # transform: [['ToTensor']]
+  transform: [['ToTensor']]
+  args: [{'download': True}]
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.5}]
+model:
+  type: resnet18
+  hidden: 512
+  out_channels: 10
+  dropout: 0.0
+optimizer:
+  lr: 0.5
+  weight_decay: 0.0
+grad:
+  grad_clip: -1.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  best_res_update_round_wise_key: 'test_loss'
+  freq: 1
+  # split: ['test']
+  # metrics: ['acc', 'correct', 'poison_attack_acc']
+  split: ['test','poison']
+  metrics: ['acc', 'correct']
+attack:
+  setting: 'fix'
+  freq: 10
+  # insert_round: 300
+  attack_method: 'backdoor'
+  attacker_id: 45
+  label_type: 'dirty'
+  trigger_type: edge
+  edge_num: 500
+  poison_ratio: 0.5
+  target_label_ind: 9
+  self_opt: False
+  self_lr: 0.1
+  self_epoch: 6
+  scale_poisoning: False
+  scale_para: 5.0
+  pgd_poisoning: False
+  mean: [0.4914, 0.4822, 0.4465]
+  std: [0.2023, 0.1994, 0.2010]
+expname: bench_fedbn_edge_bb_L

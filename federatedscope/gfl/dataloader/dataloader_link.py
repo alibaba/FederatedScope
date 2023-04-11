@@ -1,28 +1,61 @@
 import torch
 
-from torch_geometric.utils import add_self_loops, remove_self_loops, \
-    to_undirected
+from torch_geometric.data import Data
+from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.auxiliaries.transform_builder import get_transform
 
 
+def raw2loader(raw_data, config=None):
+    """Transform a graph into either dataloader for graph-sampling-based mini-batch training
+    or still a graph for full-batch training.
+    Arguments:
+        raw_data (PyG.Data): a raw graph.
+    :returns:
+        sampler (object): a Dict containing loader and subgraph_sampler or still a PyG.Data object.
+    """
+
+    if config.data.loader == '':
+        sampler = raw_data
+    elif config.data.loader == 'graphsaint-rw':
+        loader = GraphSAINTRandomWalkSampler(
+            raw_data,
+            batch_size=config.data.batch_size,
+            walk_length=config.data.graphsaint.walk_length,
+            num_steps=config.data.graphsaint.num_steps,
+            sample_coverage=0)
+        subgraph_sampler = NeighborSampler(raw_data.edge_index,
+                                           sizes=[-1],
+                                           batch_size=4096,
+                                           shuffle=False,
+                                           num_workers=config.data.num_workers)
+        sampler = dict(data=raw_data,
+                       train=loader,
+                       val=subgraph_sampler,
+                       test=subgraph_sampler)
+    else:
+        raise TypeError('Unsupported DataLoader Type {}'.format(
+            config.data.loader))
+
+    return sampler
+
+
 def load_linklevel_dataset(config=None):
     r"""
     :returns:
-        data_dict
+        data_local_dict
     :rtype:
         (Dict): dict{'client_id': Data()}
     """
     path = config.data.root
     name = config.data.type.lower()
 
-    # TODO: remove splitter
     # Splitter
     splitter = get_splitter(config)
 
     # Transforms
-    transforms_funcs, _, _ = get_transform(config, 'torch_geometric')
+    transforms_funcs = get_transform(config, 'torch_geometric')
 
     if name in ['epinions', 'ciao']:
         from federatedscope.gfl.dataset.recsys import RecSys
@@ -50,18 +83,11 @@ def load_linklevel_dataset(config=None):
     config.merge_from_list(['federate.client_num', client_num])
 
     # get local dataset
-    data_dict = dict()
+    data_local_dict = dict()
 
-    for client_idx in range(1, len(dataset) + 1):
-        local_data = dataset[client_idx - 1]
-        data_dict[client_idx] = local_data
-        # To undirected and add self-loop
-        data_dict[client_idx] = {
-            'data': local_data,
-            'train': [local_data],
-            'val': [local_data],
-            'test': [local_data]
-        }
+    for client_idx in range(len(dataset)):
+        local_data = raw2loader(dataset[client_idx], config)
+        data_local_dict[client_idx + 1] = local_data
 
     if global_dataset is not None:
         # Recode train & valid & test mask for global data
@@ -72,8 +98,11 @@ def load_linklevel_dataset(config=None):
         global_edge_index = torch.LongTensor([[], []])
         global_edge_type = torch.LongTensor([])
 
-        for client_data in data_dict.values():
-            client_subgraph = client_data['data']
+        for client_sampler in data_local_dict.values():
+            if isinstance(client_sampler, Data):
+                client_subgraph = client_sampler
+            else:
+                client_subgraph = client_sampler['data']
             orig_index = torch.zeros_like(client_subgraph.edge_index)
             orig_index[0] = client_subgraph.index_orig[
                 client_subgraph.edge_index[0]]
@@ -94,10 +123,6 @@ def load_linklevel_dataset(config=None):
         global_graph.test_edge_mask = test_edge_mask
         global_graph.edge_index = global_edge_index
         global_graph.edge_type = global_edge_type
-        data_dict[0] = data_dict[0] = {
-            'data': global_graph,
-            'train': [global_graph],
-            'val': [global_graph],
-            'test': [global_graph]
-        }
-    return data_dict, config
+        data_local_dict[0] = raw2loader(global_graph, config)
+
+    return data_local_dict, config

@@ -1,20 +1,17 @@
 import torch
 import logging
-import copy
 
 from torch_geometric.loader import NeighborSampler
 
 from federatedscope.core.message import Message
-from federatedscope.core.workers.server import Server
-from federatedscope.core.workers.client import Client
-from federatedscope.core.auxiliaries.utils import merge_dict_of_results
-from federatedscope.core.data import ClientData
+from federatedscope.core.worker.server import Server
+from federatedscope.core.worker.client import Client
+from federatedscope.core.auxiliaries.utils import merge_dict
 
 from federatedscope.gfl.trainer.nodetrainer import NodeMiniBatchTrainer
 from federatedscope.gfl.model.fedsageplus import LocalSage_Plus, FedSage_Plus
 from federatedscope.gfl.fedsageplus.utils import GraphMender, HideGraph
-from federatedscope.gfl.fedsageplus.trainer import LocalGenTrainer, \
-    FedGenTrainer
+from federatedscope.gfl.fedsageplus.trainer import LocalGenTrainer, FedGenTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +32,13 @@ class FedSagePlusServer(Server):
         FedSage+ consists of three of training stages.
         Stage1: 0, local pre-train for generator.
         Stage2: -> 2 * fedgen_epoch, federated training for generator.
-        Stage3: -> 2 * fedgen_epoch + total_round_num: federated training
-        for GraphSAGE Classifier
+        Stage3: -> 2 * fedgen_epoch + total_round_num: federated training for GraphSAGE Classifier
         """
         super(FedSagePlusServer,
               self).__init__(ID, state, config, data, model, client_num,
                              total_round_num, device, strategy, **kwargs)
 
-        assert self.model_num == 1, "Not supported multi-model for " \
-                                    "FedSagePlusServer"
+        assert self.model_num == 1, "Not supported multi-model for FedSagePlusServer"
 
         # If state < fedgen_epoch and state % 2 == 0:
         #     Server receive [model, embedding, label]
@@ -67,7 +62,8 @@ class FedSagePlusServer(Server):
             for key in self._cfg.federate.join_in_info:
                 assert key in info
             self.join_in_info[sender] = info
-            logger.info('Server: Client #{:d} has joined in !'.format(sender))
+            logger.info('Server #{:d}: Client #{:d} has joined in !'.format(
+                self.ID, sender))
         else:
             self.join_in_client_num += 1
             sender, address = message.sender, message.content
@@ -104,7 +100,7 @@ class FedSagePlusServer(Server):
                         state=self.state))
 
     def callback_funcs_gradient(self, message: Message):
-        round, _, content = message.state, message.sender, message.content
+        round, sender, content = message.state, message.sender, message.content
         gen_grad, ID = content
         # For a new round
         if round not in self.msg_buffer['train'].keys():
@@ -135,8 +131,7 @@ class FedSagePlusServer(Server):
         # Transmit model and embedding to get gradient back
         if self.check_buffer(
                 self.state, self.client_num
-        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
-                % 2 == 0:
+        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state % 2 == 0:
             # FedGen: we should wait for all messages
             for sender in self.msg_buffer['train'][self.state]:
                 content = self.msg_buffer['train'][self.state][sender]
@@ -148,15 +143,15 @@ class FedSagePlusServer(Server):
                             receiver=receiver_IDs,
                             state=self.state + 1,
                             content=[gen_para, embedding, label, sender]))
-                logger.info(f'\tServer: Transmit gen_para to'
-                            f' {receiver_IDs} @{self.state//2}.')
+                logger.info(
+                    f'\tServer #{self.ID}: Transmit gen_para to {receiver_IDs} @{self.state//2}.'
+                )
             self.state += 1
 
         # Sum up gradient client-wisely and send back
         if self.check_buffer(
                 self.state, self.client_num
-        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state\
-                % 2 == 1 and self.grad_cnt == self.client_num * (
+        ) and self.state < self._cfg.fedsageplus.fedgen_epoch and self.state % 2 == 1 and self.grad_cnt == self.client_num * (
                 self.client_num - 1):
             for ID in self.msg_buffer['train'][self.state]:
                 grad = self.msg_buffer['train'][self.state][ID]
@@ -193,9 +188,12 @@ class FedSagePlusServer(Server):
                     msg_list.append(train_msg_buffer[client_id])
 
                 # Trigger the monitor here (for training)
-                self._monitor.calc_model_metric(self.model.state_dict(),
-                                                msg_list,
-                                                rnd=self.state)
+                if 'dissim' in self._cfg.eval.monitoring:
+                    B_val = self._monitor.calc_blocal_dissim(
+                        self.model.load_state_dict(), msg_list)
+                    formatted_logs = self._monitor.format_eval_res(
+                        B_val, rnd=self.state, role='Server #')
+                    logger.info(formatted_logs)
 
                 # Aggregate
                 agg_info = {
@@ -207,33 +205,33 @@ class FedSagePlusServer(Server):
                 self.aggregator.update(result)
 
                 self.state += 1
-                if self.state % self._cfg.eval.freq == 0 and self.state != \
-                        self.total_round_num:
+                if self.state % self._cfg.eval.freq == 0 and self.state != self.total_round_num:
                     #  Evaluate
                     logger.info(
-                        'Server : Starting evaluation at round {:d}.'.format(
-                            self.state))
+                        'Server #{:d}: Starting evaluation at round {:d}.'.
+                        format(self.ID, self.state))
                     self.eval()
 
                 if self.state < self.total_round_num:
                     # Move to next round of training
                     logger.info(
-                        f'----------- Starting a new training round(Round '
-                        f'#{self.state}) -------------')
+                        '----------- Starting a new training round (Round #{:d}) -------------'
+                        .format(self.state))
                     self.broadcast_model_para(
                         msg_type='model_para',
                         sample_client_num=self.sample_client_num)
                 else:
                     # Final Evaluate
-                    logger.info('Server: Training is finished! Starting '
-                                'evaluation.')
+                    logger.info(
+                        'Server #{:d}: Training is finished! Starting evaluation.'
+                        .format(self.ID))
                     self.eval()
 
             else:  # in the evaluation process
                 # Get all the message & aggregate
                 formatted_eval_res = self.merge_eval_results_from_all_clients()
-                self.history_results = merge_dict_of_results(
-                    self.history_results, formatted_eval_res)
+                self.history_results = merge_dict(self.history_results,
+                                                  formatted_eval_res)
                 self.check_and_save()
 
 
@@ -253,17 +251,10 @@ class FedSagePlusClient(Client):
               self).__init__(ID, server_id, state, config, data, model, device,
                              strategy, *args, **kwargs)
         self.data = data
-        self.hide_data = HideGraph(self._cfg.fedsageplus.hide_portion)(
-            data['data'])
-        # Convert to `ClientData`
-        self.hide_data = ClientData(self._cfg,
-                                    train=[self.hide_data],
-                                    val=[self.hide_data],
-                                    test=[self.hide_data],
-                                    data=self.hide_data)
+        self.hide_data = HideGraph(self._cfg.fedsageplus.hide_portion)(data)
         self.device = device
         self.sage_batch_size = 64
-        self.gen = LocalSage_Plus(data['data'].x.shape[-1],
+        self.gen = LocalSage_Plus(data.x.shape[-1],
                                   self._cfg.model.out_channels,
                                   hidden=self._cfg.model.hidden,
                                   gen_hidden=self._cfg.fedsageplus.gen_hidden,
@@ -284,7 +275,7 @@ class FedSagePlusClient(Client):
         self.register_handlers('setup', self.callback_funcs_for_setup_fedsage)
 
     def callback_funcs_for_local_pre_train(self, message: Message):
-        round, sender, _ = message.state, message.sender, message.content
+        round, sender, content = message.state, message.sender, message.content
         # Local pre-train
         logger.info(f'\tClient #{self.ID} pre-train start...')
         for i in range(self._cfg.fedsageplus.loc_epoch):
@@ -309,17 +300,15 @@ class FedSagePlusClient(Client):
                     sender=self.ID,
                     receiver=[sender],
                     state=self.state,
-                    content=[
-                        gen_para, embedding, self.hide_data['data'].num_missing
-                    ]))
+                    content=[gen_para, embedding, self.hide_data.num_missing]))
         logger.info(f'\tClient #{self.ID} send gen_para to Server #{sender}.')
 
     def callback_funcs_for_gen_para(self, message: Message):
         round, sender, content = message.state, message.sender, message.content
         gen_para, embedding, label, ID = content
 
-        gen_grad = self.trainer_fedgen.cal_grad(self.data['data'], gen_para,
-                                                embedding, label)
+        gen_grad = self.trainer_fedgen.cal_grad(self.data, gen_para, embedding,
+                                                label)
         self.state = round
         self.comm_manager.send(
             Message(msg_type='gradient',
@@ -342,37 +331,32 @@ class FedSagePlusClient(Client):
                     sender=self.ID,
                     receiver=[sender],
                     state=self.state,
-                    content=[
-                        gen_para, embedding, self.hide_data['data'].num_missing
-                    ]))
+                    content=[gen_para, embedding, self.hide_data.num_missing]))
         logger.info(f'\tClient #{self.ID}: send gen_para to Server #{sender}.')
 
     def callback_funcs_for_setup_fedsage(self, message: Message):
-        round, sender, _ = message.state, message.sender, message.content
-        self.filled_data = GraphMender(
-            model=self.fedgen,
-            impaired_data=self.hide_data['data'].cpu(),
-            original_data=self.data['data'])
+        round, sender, content = message.state, message.sender, message.content
+        self.filled_data = GraphMender(model=self.fedgen,
+                                       impaired_data=self.hide_data.cpu(),
+                                       original_data=self.data)
         subgraph_sampler = NeighborSampler(
             self.filled_data.edge_index,
             sizes=[-1],
             batch_size=4096,
             shuffle=False,
-            num_workers=self._cfg.dataloader.num_workers)
+            num_workers=self._cfg.data.num_workers)
         fill_dataloader = {
             'data': self.filled_data,
-            'train': NeighborSampler(
-                self.filled_data.edge_index,
-                node_idx=self.filled_data.train_idx,
-                sizes=self._cfg.dataloader.sizes,
-                batch_size=self.sage_batch_size,
-                shuffle=self._cfg.dataloader.shuffle,
-                num_workers=self._cfg.dataloader.num_workers),
+            'train': NeighborSampler(self.filled_data.edge_index,
+                                     node_idx=self.filled_data.train_idx,
+                                     sizes=self._cfg.data.sizes,
+                                     batch_size=self.sage_batch_size,
+                                     shuffle=self._cfg.data.shuffle,
+                                     num_workers=self._cfg.data.num_workers),
             'val': subgraph_sampler,
             'test': subgraph_sampler
         }
-        self._cfg.merge_from_list(
-            ['dataloader.batch_size', self.sage_batch_size])
+        self._cfg.merge_from_list(['data.batch_size', self.sage_batch_size])
         self.trainer_clf = NodeMiniBatchTrainer(self.clf,
                                                 fill_dataloader,
                                                 self.device,
@@ -396,9 +380,6 @@ class FedSagePlusClient(Client):
         self.trainer_clf.update(content)
         self.state = round
         sample_size, clf_para, results = self.trainer_clf.train()
-        if self._cfg.federate.share_local_model and not \
-                self._cfg.federate.online_aggr:
-            clf_para = copy.deepcopy(clf_para)
         logger.info(
             self._monitor.format_eval_res(results,
                                           rnd=self.state,

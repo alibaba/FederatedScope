@@ -4,11 +4,9 @@ import torch
 
 from rdkit import Chem
 from rdkit import RDLogger
-from federatedscope.core.splitters.utils import \
-    dirichlet_distribution_noniid_slice
-from federatedscope.core.splitters.graph.scaffold_splitter import \
-    generate_scaffold
-from federatedscope.core.splitters import BaseSplitter
+from rdkit.Chem.Scaffolds import MurckoScaffold
+from federatedscope.core.splitters.utils import dirichlet_distribution_noniid_slice
+from federatedscope.core.splitters.graph.scaffold_splitter import generate_scaffold
 
 logger = logging.getLogger(__name__)
 
@@ -16,15 +14,14 @@ RDLogger.DisableLog('rdApp.*')
 
 
 class GenFeatures:
-    r"""Implementation of ``CanonicalAtomFeaturizer`` and
-    ``CanonicalBondFeaturizer`` in DGL. \
+    r"""Implementation of 'CanonicalAtomFeaturizer' and 'CanonicalBondFeaturizer' in DGL.
     Source: https://lifesci.dgl.ai/_modules/dgllife/utils/featurizers.html
 
     Arguments:
         data: PyG.data in PyG.dataset.
 
     Returns:
-        PyG.data: data passing featurizer.
+        data: PyG.data, data passing featurizer.
 
     """
     def __init__(self):
@@ -53,7 +50,7 @@ class GenFeatures:
             Chem.rdchem.BondStereo.STEREOTRANS,
         ]
 
-    def __call__(self, data, **kwargs):
+    def __call__(self, data):
         mol = Chem.MolFromSmiles(data.smiles)
 
         xs = []
@@ -126,7 +123,7 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     scaffolds = {}
     for idx, data in enumerate(dataset):
         smiles = data.smiles
-        _ = Chem.MolFromSmiles(smiles)
+        mol = Chem.MolFromSmiles(smiles)
         scaffold = generate_scaffold(smiles)
         if scaffold not in scaffolds:
             scaffolds[scaffold] = [idx]
@@ -150,23 +147,19 @@ def gen_scaffold_lda_split(dataset, client_num=5, alpha=0.1):
     return idx_slice
 
 
-class ScaffoldLdaSplitter(BaseSplitter):
-    """
-    First adopt scaffold splitting and then assign the samples to \
-    clients according to Latent Dirichlet Allocation.
+class ScaffoldLdaSplitter:
+    r"""First adopt scaffold splitting and then assign the samples to clients according to Latent Dirichlet Allocation.
 
     Arguments:
         dataset (List or PyG.dataset): The molecular datasets.
-        alpha (float): Partition hyperparameter in LDA, smaller alpha \
-            generates more extreme heterogeneous scenario see \
-            ``np.random.dirichlet``
+        alpha (float): Partition hyperparameter in LDA, smaller alpha generates more extreme heterogeneous scenario.
 
     Returns:
-         List(List(PyG.data)): data_list of split dataset via scaffold split.
+        data_list (List(List(PyG.data))): Splited dataset via scaffold split.
 
     """
     def __init__(self, client_num, alpha):
-        super(ScaffoldLdaSplitter, self).__init__(client_num)
+        self.client_num = client_num
         self.alpha = alpha
 
     def __call__(self, dataset):
@@ -180,3 +173,6 @@ class ScaffoldLdaSplitter(BaseSplitter):
                                            self.alpha)
         data_list = [[dataset[idx] for idx in idxs] for idxs in idx_slice]
         return data_list
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}()'

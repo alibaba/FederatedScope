@@ -3,44 +3,28 @@ import federatedscope.register as register
 
 
 def get_transform(config, package):
-    """
-    This function is to build transforms applying to dataset.
+    r"""
 
     Args:
-        config: ``CN`` from ``federatedscope/core/configs/config.py``
-        package: one of package from \
-        ``['torchvision', 'torch_geometric', 'torchtext', 'torchaudio']``
+        config: `CN` from `federatedscope/core/configs/config.py`
+        package: one of package from ['torchvision', 'torch_geometric', 'torchtext', 'torchaudio']
 
     Returns:
-        Dict of transform functions.
+        dict of transform functions.
+
     """
     transform_funcs = {}
     for name in ['transform', 'target_transform', 'pre_transform']:
         if config.data[name]:
             transform_funcs[name] = config.data[name]
 
-    val_transform_funcs = {}
-    for name in ['val_transform', 'val_target_transform', 'val_pre_transform']:
-        suf_name = name.split('val_')[1]
-        if config.data[name]:
-            val_transform_funcs[suf_name] = config.data[name]
-
-    test_transform_funcs = {}
-    for name in [
-            'test_transform', 'test_target_transform', 'test_pre_transform'
-    ]:
-        suf_name = name.split('test_')[1]
-        if config.data[name]:
-            test_transform_funcs[suf_name] = config.data[name]
-
-    # Transform are all `[]`, do not import package and return dict with
-    # None value
-    if len(transform_funcs) == 0 and len(val_transform_funcs) == 0 and len(
-            test_transform_funcs) == 0:
-        return {}, {}, {}
-
+    # Transform are all None, do not import package and return dict with None value
+    if not transform_funcs:
+        return transform_funcs
+    #
     transforms = getattr(import_module(package), 'transforms')
 
+    #
     def convert(trans):
         # Recursively converting expressions to functions
         if isinstance(trans[0], str):
@@ -64,20 +48,7 @@ def get_transform(config, package):
                 return transform
 
     # return composed transform or return list of transform
-    if transform_funcs:
-        for key in transform_funcs:
-            transform_funcs[key] = convert(config.data[key])
-
-    if val_transform_funcs:
-        for key in val_transform_funcs:
-            val_transform_funcs[key] = convert(config.data[key])
-    else:
-        val_transform_funcs = transform_funcs
-
-    if test_transform_funcs:
-        for key in test_transform_funcs:
-            test_transform_funcs[key] = convert(config.data[key])
-    else:
-        test_transform_funcs = transform_funcs
-
-    return transform_funcs, val_transform_funcs, test_transform_funcs
+    for key in transform_funcs:
+        transform_funcs[key] = convert(config.data[key])
+    #
+    return transform_funcs

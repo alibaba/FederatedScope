@@ -6,31 +6,28 @@ from torch_geometric.utils import to_networkx, from_networkx
 import numpy as np
 import networkx as nx
 
-from federatedscope.core.splitters import BaseSplitter
-
 EPSILON = 1e-5
 
 
-class RandomSplitter(BaseTransform, BaseSplitter):
-    """
+class RandomSplitter(BaseTransform):
+    r"""
     Split Data into small data via random sampling.
-
+    
     Args:
         client_num (int): Split data into client_num of pieces.
-        sampling_rate (str): Samples of the unique nodes for each client, \
-            eg. ``'0.2,0.2,0.2'``
-        overlapping_rate(float): Additional samples of overlapping data, \
-            eg. ``'0.4'``
-        drop_edge(float): Drop edges (drop_edge / client_num) for each \
-            client within overlapping part.
+        sampling_rate (str): Samples of the unique nodes for each client, eg. '0.2,0.2,0.2'.
+        overlapping_rate(float): Additional samples of overlapping data, eg. '0.4'
+        drop_edge(float): Drop edges (drop_edge / client_num) for each client whthin overlapping part.
+        
     """
     def __init__(self,
                  client_num,
                  sampling_rate=None,
                  overlapping_rate=0,
                  drop_edge=0):
-        BaseSplitter.__init__(self, client_num)
+
         self.ovlap = overlapping_rate
+
         if sampling_rate is not None:
             self.sampling_rate = np.array(
                 [float(val) for val in sampling_rate.split(',')])
@@ -41,17 +38,19 @@ class RandomSplitter(BaseTransform, BaseSplitter):
 
         if len(self.sampling_rate) != client_num:
             raise ValueError(
-                f'The client_num ({client_num}) should be equal to the '
-                f'lenghth of sampling_rate and overlapping_rate.')
+                f'The client_num ({client_num}) should be equal to the lenghth of sampling_rate and overlapping_rate.'
+            )
 
         if abs((sum(self.sampling_rate) + self.ovlap) - 1) > EPSILON:
             raise ValueError(
-                f'The sum of sampling_rate:{self.sampling_rate} and '
-                f'overlapping_rate({self.ovlap}) should be 1.')
+                f'The sum of sampling_rate:{self.sampling_rate} and overlapping_rate({self.ovlap}) should be 1.'
+            )
 
+        self.client_num = client_num
         self.drop_edge = drop_edge
 
-    def __call__(self, data, **kwargs):
+    def __call__(self, data, prior):
+
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,
@@ -102,3 +101,6 @@ class RandomSplitter(BaseTransform, BaseSplitter):
             graphs.append(from_networkx(sub_g))
 
         return graphs
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.client_num})'

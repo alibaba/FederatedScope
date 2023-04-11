@@ -1,3 +1,4 @@
+import sys
 import json
 import numpy as np
 from federatedscope.core.proto import gRPC_comm_manager_pb2
@@ -5,15 +6,12 @@ from federatedscope.core.proto import gRPC_comm_manager_pb2
 
 class Message(object):
     """
-    The data exchanged during an FL course are abstracted as 'Message' in
-    FederatedScope.
+    The data exchanged during an FL course are abstracted as 'Message' in FederatedScope.
     A message object includes:
-        msg_type: The type of message, which is used to trigger the
-        corresponding handlers of server/client
+        msg_type: The type of message, which is used to trigger the corresponding handlers of server/client
         sender: The sender's ID
         receiver: The receiver's ID
-        state: The training round of the message, which is determined by
-        the sender and used to filter out the outdated messages.
+        state: The training round of the message, which is determined by the sender and used to filter out the outdated messages.
         strategy: redundant attribute
     """
     def __init__(self,
@@ -21,18 +19,14 @@ class Message(object):
                  sender=0,
                  receiver=0,
                  state=0,
-                 content='None',
-                 timestamp=0,
-                 strategy=None,
-                 serial_num=0):
+                 content=None,
+                 strategy=None):
         self._msg_type = msg_type
         self._sender = sender
         self._receiver = receiver
         self._state = state
         self._content = content
-        self._timestamp = timestamp
         self._strategy = strategy
-        self.serial_num = serial_num
 
     @property
     def msg_type(self):
@@ -75,30 +69,12 @@ class Message(object):
         self._content = value
 
     @property
-    def timestamp(self):
-        return self._timestamp
-
-    @timestamp.setter
-    def timestamp(self, value):
-        assert isinstance(value, int) or isinstance(value, float), \
-            "We only support an int or a float value for timestamp"
-        self._timestamp = value
-
-    @property
     def strategy(self):
         return self._strategy
 
     @strategy.setter
     def strategy(self, value):
         self._strategy = value
-
-    def __lt__(self, other):
-        if self.timestamp != other.timestamp:
-            return self.timestamp < other.timestamp
-        elif self.state != other.state:
-            return self.state < other.state
-        else:
-            return self.serial_num < other.serial_num
 
     def transform_to_list(self, x):
         if isinstance(x, list) or isinstance(x, tuple):
@@ -123,7 +99,6 @@ class Message(object):
             'receiver': self.receiver,
             'state': self.state,
             'content': self.content,
-            'timestamp': self.timestamp,
             'strategy': self.strategy,
         }
         return json.dumps(json_msg)
@@ -135,27 +110,17 @@ class Message(object):
         self.receiver = json_msg['receiver']
         self.state = json_msg['state']
         self.content = json_msg['content']
-        self.timestamp = json_msg['timestamp']
         self.strategy = json_msg['strategy']
 
     def create_by_type(self, value, nested=False):
         if isinstance(value, dict):
-            if isinstance(list(value.keys())[0], str):
-                m_dict = gRPC_comm_manager_pb2.mDict_keyIsString()
-                key_type = 'string'
-            else:
-                m_dict = gRPC_comm_manager_pb2.mDict_keyIsInt()
-                key_type = 'int'
-
+            m_dict = gRPC_comm_manager_pb2.mDict()
             for key in value.keys():
                 m_dict.dict_value[key].MergeFrom(
                     self.create_by_type(value[key], nested=True))
             if nested:
                 msg_value = gRPC_comm_manager_pb2.MsgValue()
-                if key_type == 'string':
-                    msg_value.dict_msg_stringkey.MergeFrom(m_dict)
-                else:
-                    msg_value.dict_msg_intkey.MergeFrom(m_dict)
+                msg_value.dict_msg.MergeFrom(m_dict)
                 return msg_value
             else:
                 return m_dict
@@ -196,11 +161,7 @@ class Message(object):
         if isinstance(value, list) or isinstance(value, tuple):
             msg_value.list_msg.MergeFrom(self.create_by_type(value))
         elif isinstance(value, dict):
-            if isinstance(list(value.keys())[0], str):
-                msg_value.dict_msg_stringkey.MergeFrom(
-                    self.create_by_type(value))
-            else:
-                msg_value.dict_msg_intkey.MergeFrom(self.create_by_type(value))
+            msg_value.dict_msg.MergeFrom(self.create_by_type(value))
         else:
             msg_value.single_msg.MergeFrom(self.create_by_type(value))
 
@@ -219,8 +180,6 @@ class Message(object):
             self.build_msg_value(self.msg_type))
         splited_msg.msg['content'].MergeFrom(self.build_msg_value(
             self.content))
-        splited_msg.msg['timestamp'].MergeFrom(
-            self.build_msg_value(self.timestamp))
         return splited_msg
 
     def _parse_msg(self, value):
@@ -229,8 +188,7 @@ class Message(object):
             return self._parse_msg(getattr(value, value.WhichOneof("type")))
         elif isinstance(value, gRPC_comm_manager_pb2.mList):
             return [self._parse_msg(each) for each in value.list_value]
-        elif isinstance(value, gRPC_comm_manager_pb2.mDict_keyIsString) or \
-                isinstance(value, gRPC_comm_manager_pb2.mDict_keyIsInt):
+        elif isinstance(value, gRPC_comm_manager_pb2.mDict):
             return {
                 k: self._parse_msg(value.dict_value[k])
                 for k in value.dict_value
@@ -244,7 +202,6 @@ class Message(object):
         self.msg_type = self._parse_msg(received_msg['msg_type'])
         self.state = self._parse_msg(received_msg['state'])
         self.content = self._parse_msg(received_msg['content'])
-        self.timestamp = self._parse_msg(received_msg['timestamp'])
 
     def count_bytes(self):
         """

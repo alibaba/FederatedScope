@@ -1,9 +1,9 @@
 def wrap_attacker_trainer(base_trainer, config):
     '''Wrap the trainer for attack client.
     Args:
-        base_trainer (core.trainers.GeneralTorchTrainer): the trainer that
-        will be wrapped;
-        config (federatedscope.core.configs.config.CN): the configure;
+        base_trainer (core.trainers.GeneralTorchTrainer): \
+            the trainer that will be wrapped;
+        config (yacs.config.CfgNode): the configure;
 
     :returns:
         The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
@@ -18,9 +18,6 @@ def wrap_attacker_trainer(base_trainer, config):
     elif config.attack.attack_method.lower() == 'backdoor':
         from federatedscope.attack.trainer import wrap_backdoorTrainer
         return wrap_backdoorTrainer(base_trainer)
-    elif config.attack.attack_method.lower() == 'gaussian_noise':
-        from federatedscope.attack.trainer import wrap_GaussianAttackTrainer
-        return wrap_GaussianAttackTrainer(base_trainer)
     else:
         raise ValueError('Trainer {} is not provided'.format(
             config.attack.attack_method))

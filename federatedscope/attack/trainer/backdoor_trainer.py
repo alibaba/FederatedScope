@@ -5,6 +5,7 @@ import numpy as np
 import copy
 
 from federatedscope.core.trainers import GeneralTorchTrainer
+from federatedscope.attack.auxiliary.poisoning_dataset import load_poisoned_dataset_edgeset, load_poisoned_dataset_pixel
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
 logger = logging.getLogger(__name__)
@@ -12,12 +13,36 @@ logger = logging.getLogger(__name__)
 
 def wrap_backdoorTrainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
+    '''
+    Warp the trainer for backdoor attack:
+
+    poisoning data:
+        edge-case triggers
+        semantic triggers
+        pixel-wise triggers: badnet, blended(HK), sig, wanet, clean-label (narcissus)
+
+    poisoning model:
+        black-box attacks
+        PGD training
+        local regularization
+
+    Args:
+        base_trainer: Type: core.trainers.GeneralTorchTrainer
+
+    :returns:
+        The wrapped trainer; Type: core.trainers.GeneralTorchTrainer
+
+    '''
 
     # ---------------- attribute-level plug-in -----------------------
-    base_trainer.ctx.target_label_ind \
-                = base_trainer.cfg.attack.target_label_ind
+    # for pFL, we need to know the type of used methods.
+    base_trainer.ctx.federate_method = base_trainer.cfg.federate.method
+    base_trainer.ctx.target_label_ind = base_trainer.cfg.attack.target_label_ind
     base_trainer.ctx.trigger_type = base_trainer.cfg.attack.trigger_type
     base_trainer.ctx.label_type = base_trainer.cfg.attack.label_type
+    '''
+    You can add trigger type: edge-case triggers and semantic triggers.
+    '''
 
     # ---- action-level plug-in -------
 
@@ -35,10 +60,7 @@ def wrap_backdoorTrainer(
                                             trigger='on_fit_end',
                                             insert_pos=0)
 
-    scale_poisoning = base_trainer.cfg.attack.scale_poisoning
-    pgd_poisoning = base_trainer.cfg.attack.pgd_poisoning
-
-    if scale_poisoning or pgd_poisoning:
+    if base_trainer.cfg.attack.scale_poisoning or base_trainer.cfg.attack.pgd_poisoning:
 
         base_trainer.register_hook_in_train(
             new_hook=hook_on_fit_start_init_local_model,
@@ -85,8 +107,20 @@ def wrap_backdoorTrainer(
 
 def hook_on_fit_start_init_local_opt(ctx):
 
-    ctx.original_epoch = ctx["num_train_epoch"]
-    ctx["num_train_epoch"] = ctx.self_epoch
+    # need to check for ditto method
+    # ctx.original_optimizer = ctx.optimizer
+
+    if ctx.federate_method.lower() == "ditto_zy" or ctx.federate_method.lower(
+    ) == "ditto":
+        ctx.original_epoch = ctx["num_train_epoch"]
+        ctx["num_train_epoch"] = ctx.self_epoch + ctx.num_train_epoch_for_local_model
+
+    elif ctx.federate_method.lower() == "fedrep":
+        ctx.original_epoch = ctx["num_train_epoch"]
+        ctx["num_train_epoch"] = ctx.self_epoch + ctx.epoch_linear
+    else:
+        ctx.original_epoch = ctx["num_train_epoch"]
+        ctx["num_train_epoch"] = ctx.self_epoch
 
 
 def hook_on_fit_end_reset_opt(ctx):
@@ -96,8 +130,7 @@ def hook_on_fit_end_reset_opt(ctx):
 
 def hook_on_fit_start_init_local_model(ctx):
 
-    # the original global model
-    ctx.original_model = copy.deepcopy(ctx.model)
+    ctx.original_model = copy.deepcopy(ctx.model)  # the original global model
 
 
 def hook_on_fit_end_scale_poisoning(ctx):
@@ -107,11 +140,10 @@ def hook_on_fit_end_scale_poisoning(ctx):
 
     v = torch.nn.utils.parameters_to_vector(ctx.original_model.parameters())
     logger.info("the Norm of the original global model: {}".format(
-        torch.norm(v).item()))
+        torch.norm(v)))
 
     v = torch.nn.utils.parameters_to_vector(ctx.model.parameters())
-    logger.info("Attacker before scaling : Norm = {}".format(
-        torch.norm(v).item()))
+    logger.info("Attacker before scaling : Norm = {}".format(torch.norm(v)))
 
     ctx.original_model = list(ctx.original_model.parameters())
 
@@ -120,10 +152,9 @@ def hook_on_fit_end_scale_poisoning(ctx):
                       ) * scale_para + ctx.original_model[idx]
 
     v = torch.nn.utils.parameters_to_vector(ctx.model.parameters())
-    logger.info("Attacker after scaling : Norm = {}".format(
-        torch.norm(v).item()))
+    logger.info("Attacker after scaling : Norm = {}".format(torch.norm(v)))
 
-    logger.info('finishing model scaling poisoning attack')
+    logger.info('finishing model scaling poisoning attack'.format())
 
 
 def hook_on_fit_start_init_local_pgd(ctx):
@@ -131,14 +162,12 @@ def hook_on_fit_start_init_local_pgd(ctx):
     ctx.original_optimizer = ctx.optimizer
     ctx.original_epoch = ctx["num_train_epoch"]
     ctx["num_train_epoch"] = ctx.self_epoch
-    ctx.optimizer = torch.optim.SGD(ctx.model.parameters(), lr=ctx.pgd_lr)
-    # looks like adversary needs same lr to hide with others
+    ctx.optimizer = torch.optim.SGD(ctx.model.parameters(), \
+                                    lr=ctx.pgd_lr, momentum=0.9, weight_decay=1e-4)
 
 
 def hook_on_batch_end_project_grad(ctx):
-    '''
-    after every 10 iters, we project update on the predefined norm ball.
-    '''
+
     eps = ctx.pgd_eps
     project_frequency = 10
     ctx.batch_index += 1
@@ -146,8 +175,7 @@ def hook_on_batch_end_project_grad(ctx):
     w_vec = parameters_to_vector(w)
     model_original_vec = parameters_to_vector(
         list(ctx.original_model.parameters()))
-    # make sure you project on last iteration otherwise,
-    # high LR pushes you really far
+    # make sure you project on last iteration otherwise, high LR pushes you really far
     if (ctx.batch_index % project_frequency
             == 0) and (torch.norm(w_vec - model_original_vec) > eps):
         # project back into norm ball
@@ -158,15 +186,14 @@ def hook_on_batch_end_project_grad(ctx):
 
 
 def hook_on_epoch_end_project_grad(ctx):
-    '''
-    after the whole epoch, we project the update on the predefined norm ball.
-    '''
+
     ctx.batch_index = 0
     eps = ctx.pgd_eps
     w = list(ctx.model.parameters())
     w_vec = parameters_to_vector(w)
     model_original_vec = parameters_to_vector(
         list(ctx.original_model.parameters()))
+    # make sure you project on last iteration otherwise, high LR pushes you really far
     if (torch.norm(w_vec - model_original_vec) > eps):
         # project back into norm ball
         w_proj_vec = eps * (w_vec - model_original_vec) / torch.norm(
@@ -177,4 +204,4 @@ def hook_on_epoch_end_project_grad(ctx):
 
 def hook_on_fit_end_reset_pgd(ctx):
 
-    ctx.optimizer = ctx.original_optimizer
+    pass

@@ -147,22 +147,31 @@ def PreActResNet152():
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self, in_planes, planes, stride=1, norm='bn'):
         super(BasicBlock, self).__init__()
+        self.norm = norm
+
         self.conv1 = nn.Conv2d(in_planes,
                                planes,
                                kernel_size=3,
                                stride=stride,
                                padding=1,
                                bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
+
+        self.bn1 = nn.BatchNorm2d(
+            planes) if self.norm == 'bn' else nn.GroupNorm(
+                64, planes, affine=True)
+
         self.conv2 = nn.Conv2d(planes,
                                planes,
                                kernel_size=3,
                                stride=1,
                                padding=1,
                                bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
+
+        self.bn2 = nn.BatchNorm2d(
+            planes) if self.norm == 'bn' else nn.GroupNorm(
+                64, planes, affine=True)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -171,9 +180,12 @@ class BasicBlock(nn.Module):
                           self.expansion * planes,
                           kernel_size=1,
                           stride=stride,
-                          bias=False), nn.BatchNorm2d(self.expansion * planes))
+                          bias=False),
+                nn.BatchNorm2d(self.expansion * planes) if self.norm == 'bn'
+                else nn.GroupNorm(64, self.expansion * planes, affine=True))
 
     def forward(self, x):
+        #
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
@@ -184,22 +196,35 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self, in_planes, planes, stride=1, norm='bn'):
         super(Bottleneck, self).__init__()
+
+        self.norm = norm
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
+
+        self.bn1 = nn.BatchNorm2d(
+            planes) if self.norm == 'bn' else nn.GroupNorm(
+                64, planes, affine=True)
+
         self.conv2 = nn.Conv2d(planes,
                                planes,
                                kernel_size=3,
                                stride=stride,
                                padding=1,
                                bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
+
+        self.bn2 = nn.BatchNorm2d(
+            planes) if self.norm == 'bn' else nn.GroupNorm(
+                64, planes, affine=True)
+
         self.conv3 = nn.Conv2d(planes,
                                self.expansion * planes,
                                kernel_size=1,
                                bias=False)
-        self.bn3 = nn.BatchNorm2d(self.expansion * planes)
+
+        self.bn3 = nn.BatchNorm2d(
+            self.expansion * planes) if self.norm == 'bn' else nn.GroupNorm(
+                64, self.expansion * planes, affine=True)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -208,7 +233,9 @@ class Bottleneck(nn.Module):
                           self.expansion * planes,
                           kernel_size=1,
                           stride=stride,
-                          bias=False), nn.BatchNorm2d(self.expansion * planes))
+                          bias=False),
+                nn.BatchNorm2d(self.expansion * planes) if self.norm == 'bn'
+                else nn.GroupNorm(64, self.expansion * planes, affine=True))
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
@@ -220,8 +247,10 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes=10, norm='bn'):
         super(ResNet, self).__init__()
+
+        self.norm = norm
         self.in_planes = 64
 
         self.conv1 = nn.Conv2d(3,
@@ -230,20 +259,51 @@ class ResNet(nn.Module):
                                stride=1,
                                padding=1,
                                bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        if self.norm == 'bn':
+            self.bn1 = nn.BatchNorm2d(64)
+        elif self.norm == 'gn':
+            self.bn1 = nn.GroupNorm(64, 64, affine=True)
+
+        self.layer1 = self._make_layer(block,
+                                       64,
+                                       num_blocks[0],
+                                       stride=1,
+                                       norm=self.norm)
+        self.layer2 = self._make_layer(block,
+                                       128,
+                                       num_blocks[1],
+                                       stride=2,
+                                       norm=self.norm)
+        self.layer3 = self._make_layer(block,
+                                       256,
+                                       num_blocks[2],
+                                       stride=2,
+                                       norm=self.norm)
+        self.layer4 = self._make_layer(block,
+                                       512,
+                                       num_blocks[3],
+                                       stride=2,
+                                       norm=self.norm)
         self.linear = nn.Linear(512 * block.expansion, num_classes)
 
-    def _make_layer(self, block, planes, num_blocks, stride):
+    def _make_layer(self, block, planes, num_blocks, stride, norm):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_planes, planes, stride))
+            layers.append(block(self.in_planes, planes, stride, norm))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
+
+    def feature(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = F.avg_pool2d(out, 4)
+        out = out.view(out.size(0), -1)
+
+        return out
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
@@ -259,6 +319,10 @@ class ResNet(nn.Module):
 
 def ResNet18():
     return ResNet(BasicBlock, [2, 2, 2, 2])
+
+
+def ResNet18_GN():
+    return ResNet(BasicBlock, [2, 2, 2, 2], norm='gn')
 
 
 def ResNet34():
@@ -286,10 +350,17 @@ def preact_resnet(model_config):
 
 
 def resnet(model_config):
-    if '18' in model_config.type:
+
+    if '18' in model_config.type and 'gn' in model_config.type:
+        net = ResNet18_GN()
+    elif '18' in model_config.type and 'ln' not in model_config.type and 'in' not in model_config.type:
         net = ResNet18()
-    elif '50' in model_config.type:
+        #
+    elif '50' in model_config.type and 'ln' not in model_config.type and 'in' not in model_config.type:
         net = ResNet50()
+    else:
+        net = None
+    #
     return net
 
 

@@ -5,6 +5,8 @@ early_stop:
 seed: 2
 federate:
   mode: standalone
+  local_update_steps: 3
+  batch_or_epoch: epoch
   total_round_num: 300
   sample_client_rate: 0.2
 data:
@@ -14,7 +16,7 @@ data:
   batch_size: 64
   subsample: 0.05
   num_workers: 0
-  transform: [['ToTensor'], ['Normalize', {'mean': [0.9637], 'std': [0.1592]}]]
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
 model:
   type: convnet2
   hidden: 2048
@@ -23,12 +25,9 @@ personalization:
   local_update_steps: 3
   lr: 0.5
   regular_weight: 1
-train:
-  batch_or_epoch: epoch
-  local_update_steps: 3
-  optimizer:
-    lr: 0.5
-    weight_decay: 0.0
+optimizer:
+  lr: 0.5
+  weight_decay: 0.0
 grad:
   grad_clip: 5.0
 criterion:

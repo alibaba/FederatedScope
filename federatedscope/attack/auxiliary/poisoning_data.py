@@ -1,12 +1,16 @@
+from asyncio.log import logger
 import torch
+import torch.utils.data as data
 from PIL import Image
 import numpy as np
+from torchvision.datasets import MNIST, EMNIST, CIFAR10
+from torchvision.datasets import DatasetFolder
 from torchvision import transforms
 from federatedscope.core.auxiliaries.transform_builder import get_transform
 from federatedscope.attack.auxiliary.backdoor_utils import selectTrigger
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from federatedscope.attack.auxiliary.backdoor_utils import normalize
-from federatedscope.core.trainers.enums import MODE
+import matplotlib
 import pickle
 import logging
 import os
@@ -16,48 +20,48 @@ logger = logging.getLogger(__name__)
 
 def load_poisoned_dataset_edgeset(data, ctx, mode):
 
-    transforms_funcs, _, _ = get_transform(ctx, 'torchvision')['transform']
-    load_path = ctx.attack.edge_path
+    transforms_funcs = get_transform(ctx, 'torchvision')['transform']
+
     if "femnist" in ctx.data.type:
-        if mode == MODE.TRAIN:
-            train_path = os.path.join(load_path,
-                                      "poisoned_edgeset_fraction_0.1")
-            with open(train_path, "rb") as saved_data_file:
+        if mode == 'train':
+            file_name = os.path.join(ctx.data.root,
+                                     'poisoned_edgeset_fraction_0.1')
+            with open(file_name, "rb") as saved_data_file:
                 poisoned_edgeset = torch.load(saved_data_file)
             num_dps_poisoned_dataset = len(poisoned_edgeset)
 
             for ii in range(num_dps_poisoned_dataset):
                 sample, label = poisoned_edgeset[ii]
-                # (channel, height, width) = sample.shape #(c,h,w)
                 sample = sample.numpy().transpose(1, 2, 0)
-                data[mode].dataset.append((transforms_funcs(sample), label))
 
-        if mode == MODE.TEST or mode == MODE.VAL:
+                data['train'].dataset.append((transforms_funcs(sample), label))
+
+        if mode == 'test':
             poison_testset = list()
-            test_path = os.path.join(load_path, 'ardis_test_dataset.pt')
-            with open(test_path) as saved_data_file:
+            file_name = os.path.join(ctx.data.root, 'ardis_test_dataset.pt')
+            with open(file_name, "rb") as saved_data_file:
                 poisoned_edgeset = torch.load(saved_data_file)
             num_dps_poisoned_dataset = len(poisoned_edgeset)
 
             for ii in range(num_dps_poisoned_dataset):
                 sample, label = poisoned_edgeset[ii]
-                # (channel, height, width) = sample.shape #(c,h,w)
                 sample = sample.numpy().transpose(1, 2, 0)
                 poison_testset.append((transforms_funcs(sample), label))
-            data['poison_' + mode] = DataLoader(
-                poison_testset,
-                batch_size=ctx.dataloader.batch_size,
-                shuffle=False,
-                num_workers=ctx.dataloader.num_workers)
+            data['poison'] = DataLoader(poison_testset,
+                                        batch_size=ctx.data.batch_size,
+                                        shuffle=False,
+                                        num_workers=ctx.data.num_workers)
 
     elif "CIFAR10" in ctx.data.type:
-        target_label = int(ctx.attack.target_label_ind)
+        target_label = 9
         label = target_label
+
         num_poisoned = ctx.attack.edge_num
-        if mode == MODE.TRAIN:
-            train_path = os.path.join(load_path,
-                                      'southwest_images_new_train.pkl')
-            with open(train_path, 'rb') as train_f:
+
+        if mode == 'train':
+            file_name = os.path.join(ctx.data.root,
+                                     'southwest_images_new_train.pkl')
+            with open(file_name, 'rb') as train_f:
                 saved_southwest_dataset_train = pickle.load(train_f)
             num_poisoned_dataset = num_poisoned
             samped_poisoned_data_indices = np.random.choice(
@@ -69,27 +73,26 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
 
             for ii in range(num_poisoned_dataset):
                 sample = saved_southwest_dataset_train[ii]
-                data[mode].dataset.append((transforms_funcs(sample), label))
+                data['train'].dataset.append((transforms_funcs(sample), label))
 
             logger.info('adding {:d} edge-cased samples in CIFAR-10'.format(
                 num_poisoned))
 
-        if mode == MODE.TEST or mode == MODE.VAL:
+        if mode == 'test':
             poison_testset = list()
-            test_path = os.path.join(load_path,
+            file_name = os.path.join(ctx.data.root,
                                      'southwest_images_new_test.pkl')
-            with open(test_path, 'rb') as test_f:
+            with open(file_name, 'rb') as test_f:
                 saved_southwest_dataset_test = pickle.load(test_f)
             num_poisoned_dataset = len(saved_southwest_dataset_test)
 
             for ii in range(num_poisoned_dataset):
                 sample = saved_southwest_dataset_test[ii]
                 poison_testset.append((transforms_funcs(sample), label))
-            data['poison_' + mode] = DataLoader(
-                poison_testset,
-                batch_size=ctx.dataloader.batch_size,
-                shuffle=False,
-                num_workers=ctx.dataloader.num_workers)
+            data['poison'] = DataLoader(poison_testset,
+                                        batch_size=ctx.data.batch_size,
+                                        shuffle=False,
+                                        num_workers=ctx.data.num_workers)
 
     else:
         raise RuntimeError(
@@ -98,7 +101,8 @@ def load_poisoned_dataset_edgeset(data, ctx, mode):
     return data
 
 
-def addTrigger(dataset,
+def addTrigger(ctx,
+               dataset,
                target_label,
                inject_portion,
                mode,
@@ -107,16 +111,15 @@ def addTrigger(dataset,
                trig_w,
                trigger_type,
                label_type,
-               surrogate_model=None,
-               load_path=None):
+               surrogate_model=None):
 
+    cnt_all = int(len(dataset) * inject_portion)
     height = dataset[0][0].shape[-2]
     width = dataset[0][0].shape[-1]
     trig_h = int(trig_h * height)
     trig_w = int(trig_w * width)
-
     if 'wanet' in trigger_type:
-        cross_portion = 2  # default val following the original paper
+        cross_portion = 2
         perm_then = np.random.permutation(
             len(dataset
                 ))[0:int(len(dataset) * inject_portion * (1 + cross_portion))]
@@ -129,32 +132,39 @@ def addTrigger(dataset,
             len(dataset))[0:int(len(dataset) * inject_portion)]
 
     dataset_ = list()
+    '''
+    need to specify the form of (x, y) from dataset
+    Now, the form of x is torch.tensor [0:1] (channel, height, width) 
+    return the x : np.array [0:255], (height, width, channel)
+    '''
+
+    ii = 0
     for i in range(len(dataset)):
         data = dataset[i]
 
         if label_type == 'dirty':
-            # all2one attack
-            if mode == MODE.TRAIN:
+            if mode == 'train':
                 img = np.array(data[0]).transpose(1, 2, 0) * 255.0
                 img = np.clip(img.astype('uint8'), 0, 255)
                 height = img.shape[0]
                 width = img.shape[1]
+                if data[1] == 0 or data[1] == 1:
+                    ii += 1
 
                 if i in perm:
-                    img = selectTrigger(img, height, width, distance, trig_h,
-                                        trig_w, trigger_type, load_path)
-
+                    img = selectTrigger(ctx, img, height, width, distance,
+                                        trig_h, trig_w, trigger_type)
                     dataset_.append((img, target_label))
 
                 elif 'wanet' in trigger_type and i in perm_cross:
-                    img = selectTrigger(img, width, height, distance, trig_w,
-                                        trig_h, 'wanetTriggerCross', load_path)
+                    img = selectTrigger(ctx, img, width, height, distance,
+                                        trig_w, trig_h, 'wanetTriggerCross')
                     dataset_.append((img, data[1]))
 
                 else:
                     dataset_.append((img, data[1]))
 
-            if mode == MODE.TEST or mode == MODE.VAL:
+            if mode == 'test':
                 if data[1] == target_label:
                     continue
 
@@ -163,8 +173,8 @@ def addTrigger(dataset,
                 height = img.shape[0]
                 width = img.shape[1]
                 if i in perm:
-                    img = selectTrigger(img, width, height, distance, trig_w,
-                                        trig_h, trigger_type, load_path)
+                    img = selectTrigger(ctx, img, width, height, distance,
+                                        trig_w, trig_h, trigger_type)
                     dataset_.append((img, target_label))
                 else:
                     dataset_.append((img, data[1]))
@@ -180,61 +190,48 @@ def load_poisoned_dataset_pixel(data, ctx, mode):
     trigger_type = ctx.attack.trigger_type
     label_type = ctx.attack.label_type
     target_label = int(ctx.attack.target_label_ind)
-    transforms_funcs = get_transform(ctx, 'torchvision')[0]['transform']
+    transforms_funcs = get_transform(ctx, 'torchvision')['transform']
 
-    if "femnist" in ctx.data.type or "CIFAR10" in ctx.data.type:
+    if "femnist" in ctx.data.type:
         inject_portion_train = ctx.attack.poison_ratio
+        target_label = torch.tensor(int(ctx.attack.target_label_ind)).long()
+
+    elif "CIFAR10" in ctx.data.type:
+        inject_portion_train = ctx.attack.poison_ratio
+        target_label = int(ctx.attack.target_label_ind)
+
     else:
         raise RuntimeError(
             'Now, we only support the FEMNIST and CIFAR-10 datasets')
 
     inject_portion_test = 1.0
 
-    load_path = ctx.attack.trigger_path
-
-    if mode == MODE.TRAIN:
-        poisoned_dataset = addTrigger(data[mode].dataset,
-                                      target_label,
-                                      inject_portion_train,
-                                      mode=mode,
-                                      distance=1,
-                                      trig_h=0.1,
-                                      trig_w=0.1,
-                                      trigger_type=trigger_type,
-                                      label_type=label_type,
-                                      load_path=load_path)
+    if mode == 'train':
+        poisoned_dataset = addTrigger(ctx, data['train'].dataset, target_label, inject_portion_train, \
+            mode = 'train', distance=1, trig_h = 0.1, trig_w = 0.1, \
+                trigger_type = trigger_type, label_type = label_type)
         num_dps_poisoned_dataset = len(poisoned_dataset)
         for iii in range(num_dps_poisoned_dataset):
             sample, label = poisoned_dataset[iii]
             poisoned_dataset[iii] = (transforms_funcs(sample), label)
 
-        data[mode] = DataLoader(poisoned_dataset,
-                                batch_size=ctx.dataloader.batch_size,
-                                shuffle=True,
-                                num_workers=ctx.dataloader.num_workers)
+        data['train'] = DataLoader(poisoned_dataset,
+                                   batch_size=ctx.data.batch_size,
+                                   shuffle=True,
+                                   num_workers=ctx.data.num_workers)
 
-    if mode == MODE.TEST or mode == MODE.VAL:
-        poisoned_dataset = addTrigger(data[mode].dataset,
-                                      target_label,
-                                      inject_portion_test,
-                                      mode=mode,
-                                      distance=1,
-                                      trig_h=0.1,
-                                      trig_w=0.1,
-                                      trigger_type=trigger_type,
-                                      label_type=label_type,
-                                      load_path=load_path)
+    if mode == 'test':
+        poisoned_dataset = addTrigger(ctx, data[mode].dataset, target_label, inject_portion_test, mode = mode, \
+            distance=1, trig_h = 0.1, trig_w = 0.1, trigger_type = trigger_type, label_type = label_type)
         num_dps_poisoned_dataset = len(poisoned_dataset)
         for iii in range(num_dps_poisoned_dataset):
             sample, label = poisoned_dataset[iii]
-            # (channel, height, width) = sample.shape #(c,h,w)
             poisoned_dataset[iii] = (transforms_funcs(sample), label)
 
-        data['poison_' + mode] = DataLoader(
-            poisoned_dataset,
-            batch_size=ctx.dataloader.batch_size,
-            shuffle=False,
-            num_workers=ctx.dataloader.num_workers)
+        data['poison'] = DataLoader(poisoned_dataset,
+                                    batch_size=ctx.data.batch_size,
+                                    shuffle=False,
+                                    num_workers=ctx.data.num_workers)
 
     return data
 
@@ -247,7 +244,7 @@ def add_trans_normalize(data, ctx):
     for key in data:
         num_dataset = len(data[key].dataset)
         mean, std = ctx.attack.mean, ctx.attack.std
-        if "CIFAR10" in ctx.data.type and key == MODE.TRAIN:
+        if "CIFAR10" in ctx.data.type and key == 'train':
             transforms_list = []
             transforms_list.append(transforms.RandomHorizontalFlip())
             transforms_list.append(transforms.ToTensor())
@@ -262,9 +259,8 @@ def add_trans_normalize(data, ctx):
                                           data[key].dataset[iii][1])
         else:
             for iii in range(num_dataset):
-                data[key].dataset[iii] = (normalize(data[key].dataset[iii][0],
-                                                    mean, std),
-                                          data[key].dataset[iii][1])
+                data[key].dataset[iii] = (normalize(data[key].dataset[iii][0], mean, std), \
+                    data[key].dataset[iii][1])
 
     return data
 
@@ -284,12 +280,36 @@ def poisoning(data, ctx):
     for i in range(1, len(data) + 1):
         if i == ctx.attack.attacker_id:
             logger.info(50 * '-')
-            logger.info('start poisoning at Client: {}'.format(i))
+            logger.info('start poisoning!!!!!!')
             logger.info(50 * '-')
-            data[i] = select_poisoning(data[i], ctx, mode=MODE.TRAIN)
-        data[i] = select_poisoning(data[i], ctx, mode=MODE.TEST)
-        if data[i].get(MODE.VAL):
-            data[i] = select_poisoning(data[i], ctx, mode=MODE.VAL)
+            data[i] = select_poisoning(data[i], ctx, mode='train')
+        data[i] = select_poisoning(data[i], ctx, mode='test')
+
+        if 'cifar' in ctx.data.type.lower():
+            class_num_train = torch.zeros(10)
+            class_num_test = torch.zeros(10)
+        else:
+            class_num_train = torch.zeros(62)
+            class_num_test = torch.zeros(62)
+
+        for jj in data[i]['train'].dataset:
+            ind = jj[1]
+            class_num_train[ind] += 1
+        print('training: the {} client'.format(i))
+        print(class_num_train)
+        print('the training number of client {}: {}'.format(
+            i,
+            class_num_train.sum().item()))
+
+        for jj in data[i]['test'].dataset:
+            ind = jj[1]
+            class_num_test[ind] += 1
+        print('testing: the {} client'.format(i))
+        print(class_num_test)
+        print('the testing number of client {}: {}'.format(
+            i,
+            class_num_test.sum().item()))
+
         data[i] = add_trans_normalize(data[i], ctx)
-        logger.info('finishing the clean and {} poisoning data processing \
-                for Client {:d}'.format(ctx.attack.trigger_type, i))
+        logger.info('finishing the clean and {} poisoning data processing for Client {:d}'\
+            .format(ctx.attack.trigger_type, i))

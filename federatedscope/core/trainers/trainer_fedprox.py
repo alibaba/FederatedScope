@@ -1,16 +1,12 @@
-from typing import Type
-
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
-from federatedscope.core.trainers.trainer_nbafl import \
-    _hook_record_initialization, _hook_del_initialization
+from typing import Type
+from copy import deepcopy
 
 
 def wrap_fedprox_trainer(
         base_trainer: Type[GeneralTorchTrainer]) -> Type[GeneralTorchTrainer]:
-    """Implementation of fedprox refer to `Federated Optimization in
-    Heterogeneous Networks` [Tian Li, et al., 2020]
-        (https://proceedings.mlsys.org/paper/2020/ \
-        file/38af86134b65d0f10fe33d30dd76442e-Paper.pdf)
+    """Implementation of fedprox refer to `Federated Optimization in Heterogeneous Networks` [Tian Li, et al., 2020]
+        (https://proceedings.mlsys.org/paper/2020/file/38af86134b65d0f10fe33d30dd76442e-Paper.pdf)
 
     """
 
@@ -18,19 +14,19 @@ def wrap_fedprox_trainer(
     init_fedprox_ctx(base_trainer)
 
     # ---------------- action-level plug-in -----------------------
-    base_trainer.register_hook_in_train(new_hook=_hook_record_initialization,
+    base_trainer.register_hook_in_train(new_hook=record_initialization,
                                         trigger='on_fit_start',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=_hook_record_initialization,
+    base_trainer.register_hook_in_eval(new_hook=record_initialization,
                                        trigger='on_fit_start',
                                        insert_pos=-1)
 
-    base_trainer.register_hook_in_train(new_hook=_hook_del_initialization,
+    base_trainer.register_hook_in_train(new_hook=del_initialization,
                                         trigger='on_fit_end',
                                         insert_pos=-1)
 
-    base_trainer.register_hook_in_eval(new_hook=_hook_del_initialization,
+    base_trainer.register_hook_in_eval(new_hook=del_initialization,
                                        trigger='on_fit_end',
                                        insert_pos=-1)
 
@@ -49,6 +45,26 @@ def init_fedprox_ctx(base_trainer):
     cfg.regularizer.mu = cfg.fedprox.mu
     cfg.freeze()
 
-    from federatedscope.core.auxiliaries.regularizer_builder import \
-        get_regularizer
+    from federatedscope.core.auxiliaries.regularizer_builder import get_regularizer
     ctx.regularizer = get_regularizer(cfg.regularizer.type)
+
+
+# ------------------------------------------------------------------------ #
+# Additional functions for FedProx algorithm
+# ------------------------------------------------------------------------ #
+
+
+# Trainer
+def record_initialization(ctx):
+    """Record the initialized weights within local updates
+
+    """
+    ctx.weight_init = deepcopy(
+        [_.data.detach() for _ in ctx.model.parameters()])
+
+
+def del_initialization(ctx):
+    """Clear the variable to avoid memory leakage
+
+    """
+    ctx.weight_init = None

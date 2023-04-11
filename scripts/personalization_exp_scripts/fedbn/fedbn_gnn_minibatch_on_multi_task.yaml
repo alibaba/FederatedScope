@@ -5,6 +5,7 @@ early_stop:
 federate:
   mode: 'standalone'
   make_global_eval: False
+  local_update_steps: 16
   total_round_num: 400
   share_local_model: False
 data:
@@ -19,12 +20,10 @@ model:
 personalization:
   # local_param: ['encoder_atom', 'encoder', 'clf']   # to handle size-different pre & post layers
   local_param: [ 'encoder_atom', 'encoder', 'clf', 'norms' ]  # pre, post + FedBN
-train:
-  local_update_steps: 16
-  optimizer:
-    lr: 0.25
-    weight_decay: 0.0005
-    type: SGD
+optimizer:
+  lr: 0.25
+  weight_decay: 0.0005
+  type: SGD
 criterion:
   type: CrossEntropyLoss
 trainer:

@@ -3,9 +3,6 @@ from federatedscope.core.trainers import GeneralTorchTrainer
 
 
 class CVTrainer(GeneralTorchTrainer):
-    """
-    ``CVTrainer`` is the same as ``core.trainers.GeneralTorchTrainer``.
-    """
     pass
 
 

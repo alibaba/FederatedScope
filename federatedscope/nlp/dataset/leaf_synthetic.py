@@ -8,7 +8,7 @@ import os.path as osp
 from sklearn.utils import shuffle
 from torch.utils.data import Dataset
 
-from federatedscope.core.data.utils import save_local_data
+from federatedscope.core.auxiliaries.utils import save_local_data
 from federatedscope.cv.dataset.leaf import LEAF
 
 
@@ -23,11 +23,10 @@ def softmax(x):
 
 
 class LEAF_SYNTHETIC(LEAF):
-    """SYNTHETIC dataset from "Federated Multi-Task Learning
-    under a Mixture of Distributions"
-
+    """SYNTHETIC dataset from "Federated Multi-Task Learning under a Mixture of Distributions"
+    
     Source: https://github.com/omarfoq/FedEM/tree/main/data/synthetic
-
+    
     Arguments:
         root (str): root path.
         name (str): name of dataset, `SYNTHETIC`.
@@ -39,7 +38,7 @@ class LEAF_SYNTHETIC(LEAF):
         noise_level (float): proportion of noise, default=0.1.
         alpha (float): alpha of LDA, default=0.4.
         box (list): box of `x`, default=(-1.0, 1.0).
-
+    
     """
     def __init__(self,
                  root,
@@ -109,9 +108,9 @@ class LEAF_SYNTHETIC(LEAF):
             index (int): Index
 
         :returns:
-            dict: {'train':[(x, target)],
-                   'test':[(x, target)],
-                   'val':[(x, target)]}
+            dict: {'train':[(x, target)], 
+                   'test':[(x, target)], 
+                   'val':[(x, target)]} 
             where target is the target class.
         """
         text_dict = {}
@@ -155,9 +154,8 @@ class LEAF_SYNTHETIC(LEAF):
                           component_id]
             noise = np.random.normal(size=latent_variable_count[component_id],
                                      scale=self.noise_level)
-            y[current_index:current_index +
-              latent_variable_count[component_id]] = np.round(
-                  sigmoid(y_hat + noise)).astype(int)
+            y[current_index: current_index + latent_variable_count[component_id]] = \
+                np.round(sigmoid(y_hat + noise)).astype(int)
 
         return shuffle(x.astype(np.float32), y.astype(np.int64))
 

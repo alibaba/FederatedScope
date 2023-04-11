@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from sklearn.model_selection import train_test_split
 
-from federatedscope.core.data.utils import save_local_data, download_url
+from federatedscope.core.auxiliaries.utils import save_local_data, download_url
 from federatedscope.cv.dataset.leaf import LEAF
 from federatedscope.nlp.dataset.utils import *
 
@@ -20,9 +20,9 @@ from federatedscope.nlp.dataset.utils import *
 class LEAF_NLP(LEAF):
     """
     LEAF NLP dataset from
-
+    
     leaf.cmu.edu
-
+    
     Arguments:
         root (str): root path.
         name (str): name of dataset, ‘shakespeare’ or ‘xxx’.
@@ -42,7 +42,6 @@ class LEAF_NLP(LEAF):
                  seed=123,
                  transform=None,
                  target_transform=None):
-        # TODO: remove twitter
         self.s_frac = s_frac
         self.tr_frac = tr_frac
         self.val_frac = val_frac
@@ -90,9 +89,9 @@ class LEAF_NLP(LEAF):
             index (int): Index
 
         :returns:
-            dict: {'train':[(text, target)],
-                   'test':[(text, target)],
-                   'val':[(text, target)]}
+            dict: {'train':[(text, target)], 
+                   'test':[(text, target)], 
+                   'val':[(text, target)]} 
             where target is the target class.
         """
         text_dict = {}
@@ -102,7 +101,6 @@ class LEAF_NLP(LEAF):
             texts, targets = data[key]
             for idx in range(targets.shape[0]):
                 text = texts[idx]
-                target = targets[idx]
 
                 if self.transform is not None:
                     text = self.transform(text)
@@ -110,7 +108,7 @@ class LEAF_NLP(LEAF):
                 if self.target_transform is not None:
                     target = self.target_transform(target)
 
-                text_dict[key].append((text, target))
+                text_dict[key].append((text, targets[idx]))
 
         return text_dict
 
@@ -161,7 +159,7 @@ class LEAF_NLP(LEAF):
                 data_y_by_seq.extend(l['target_tokens'])
                 mask_by_seq.extend(l['count_tokens'])
 
-            data, targets, _ = data_x_by_seq, data_y_by_seq, mask_by_seq
+            data, targets, mask = data_x_by_seq, data_y_by_seq, mask_by_seq
 
             data = token_to_ids(data, vocab)
             targets = token_to_ids(targets, vocab)
@@ -212,7 +210,7 @@ class LEAF_NLP(LEAF):
                     data = torch.LongTensor(np.stack(data))
                     targets = torch.LongTensor(np.stack(targets))
                 else:
-                    data = torch.LongTensor(data)
+                    data = torch.Longtensor(data)
                     targets = torch.LongTensor(targets)
 
                 if self.name == 'subreddit':
@@ -247,8 +245,7 @@ class LEAF_NLP(LEAF):
                                 train_test_split(
                                     test_data,
                                     test_targets,
-                                    train_size=self.val_frac / (
-                                            1.-self.tr_frac),
+                                    train_size=self.val_frac / (1.-self.tr_frac),
                                     random_state=self.seed
                                 )
                         except:

@@ -1,27 +1,27 @@
 import torch
 
 from torch_geometric.transforms import BaseTransform
-from torch_geometric.utils import to_networkx, from_networkx
+from torch_geometric.utils import to_networkx, to_undirected, from_networkx
 
 import networkx as nx
 import community as community_louvain
 
-from federatedscope.core.splitters import BaseSplitter
 
-
-class LouvainSplitter(BaseTransform, BaseSplitter):
-    """
+class LouvainSplitter(BaseTransform):
+    r"""
     Split Data into small data via louvain algorithm.
-
+    
     Args:
-        client_num (int): Split data into ``client_num`` of pieces.
-        delta (int): The gap between the number of nodes on each client.
+        client_num (int): Split data into client_num of pieces.
+        delta (int): The gap between the number of nodes on the each client.
+        
     """
     def __init__(self, client_num, delta=20):
+        self.client_num = client_num
         self.delta = delta
-        BaseSplitter.__init__(self, client_num)
 
-    def __call__(self, data, **kwargs):
+    def __call__(self, data):
+
         data.index_orig = torch.arange(data.num_nodes)
         G = to_networkx(
             data,
@@ -57,6 +57,7 @@ class LouvainSplitter(BaseTransform, BaseSplitter):
         orderedc2n = sorted(orderedc2n, key=lambda x: len(x[1]), reverse=True)
 
         client_node_idx = {idx: [] for idx in range(self.client_num)}
+        client_list = [idx for idx in range(self.client_num)]
         idx = 0
         for (cluster, node_list) in orderedc2n:
             while len(node_list) + len(
@@ -71,3 +72,6 @@ class LouvainSplitter(BaseTransform, BaseSplitter):
             graphs.append(from_networkx(nx.subgraph(G, nodes)))
 
         return graphs
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.client_num})'

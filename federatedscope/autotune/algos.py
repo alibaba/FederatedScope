@@ -1,47 +1,60 @@
 import os
 import logging
 from copy import deepcopy
+from contextlib import redirect_stdout
 import threading
 import math
 
 import ConfigSpace as CS
+from yacs.config import CfgNode as CN
 import yaml
 import numpy as np
 
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
-    get_server_cls
-from federatedscope.core.auxiliaries.runner_builder import get_runner
-from federatedscope.autotune.utils import parse_search_space, \
-    config2cmdargs, config2str, summarize_hpo_results, log2wandb, eval_in_fs
+from federatedscope.core.auxiliaries.worker_builder import get_client_cls, get_server_cls
+from federatedscope.core.fed_runner import FedRunner
+from federatedscope.autotune.utils import parse_search_space, config2cmdargs, config2str, summarize_hpo_results
 
 logger = logging.getLogger(__name__)
 
 
+def make_trial(trial_cfg):
+    setup_seed(trial_cfg.seed)
+    data, modified_config = get_data(config=trial_cfg.clone())
+    trial_cfg.merge_from_other_cfg(modified_config)
+    trial_cfg.freeze()
+    # TODO: enable client-wise configuration
+    Fed_runner = FedRunner(data=data,
+                           server_class=get_server_cls(trial_cfg),
+                           client_class=get_client_cls(trial_cfg),
+                           config=trial_cfg.clone())
+    results = Fed_runner.run()
+    key1, key2 = trial_cfg.hpo.metric.split('.')
+    return results[key1][key2]
+
+
 class TrialExecutor(threading.Thread):
-    """This class is responsible for executing the FL procedure with
-    a given trial configuration in another thread.
+    """This class is responsible for executing the FL procedure with a given trial configuration in another thread.
     """
-    def __init__(self, cfg_idx, signal, returns, trial_config, client_cfgs):
+    def __init__(self, cfg_idx, signal, returns, trial_config):
         threading.Thread.__init__(self)
 
         self._idx = cfg_idx
         self._signal = signal
         self._returns = returns
         self._trial_cfg = trial_config
-        self._client_cfgs = client_cfgs
 
     def run(self):
         setup_seed(self._trial_cfg.seed)
         data, modified_config = get_data(config=self._trial_cfg.clone())
         self._trial_cfg.merge_from_other_cfg(modified_config)
         self._trial_cfg.freeze()
-        Fed_runner = get_runner(data=data,
-                                server_class=get_server_cls(self._trial_cfg),
-                                client_class=get_client_cls(self._trial_cfg),
-                                config=self._trial_cfg.clone(),
-                                client_configs=self._client_cfgs)
+        # TODO: enable client-wise configuration
+        Fed_runner = FedRunner(data=data,
+                               server_class=get_server_cls(self._trial_cfg),
+                               client_class=get_client_cls(self._trial_cfg),
+                               config=self._trial_cfg.clone())
         results = Fed_runner.run()
         key1, key2 = self._trial_cfg.hpo.metric.split('.')
         self._returns['perf'] = results[key1][key2]
@@ -49,20 +62,19 @@ class TrialExecutor(threading.Thread):
         self._signal.set()
 
 
-def get_scheduler(init_cfg, client_cfgs=None):
-    """To instantiate a scheduler object for conducting HPO
+def get_scheduler(init_cfg):
+    """To instantiate an scheduler object for conducting HPO
     Arguments:
-        init_cfg: configuration
-        client_cfgs: client-specific configuration
+        init_cfg (yacs.Node): configuration.
     """
 
-    if init_cfg.hpo.scheduler in [
-            'sha', 'rs', 'bo_kde', 'bohb', 'hb', 'bo_gp', 'bo_rf'
-    ]:
-        scheduler = SuccessiveHalvingAlgo(init_cfg, client_cfgs)
-    # elif init_cfg.hpo.scheduler == 'pbt':
-    #     scheduler = PBT(init_cfg)
-    elif init_cfg.hpo.scheduler.startswith('wrap', client_cfgs):
+    if init_cfg.hpo.scheduler == 'rs':
+        scheduler = ModelFreeBase(init_cfg)
+    elif init_cfg.hpo.scheduler == 'sha':
+        scheduler = SuccessiveHalvingAlgo(init_cfg)
+    elif init_cfg.hpo.scheduler == 'pbt':
+        scheduler = PBT(init_cfg)
+    elif init_cfg.hpo.scheduler == 'wrap_sha':
         scheduler = SHAWrapFedex(init_cfg)
     return scheduler
 
@@ -70,20 +82,13 @@ def get_scheduler(init_cfg, client_cfgs=None):
 class Scheduler(object):
     """The base class for describing HPO algorithms
     """
-    def __init__(self, cfg, client_cfgs=None):
+    def __init__(self, cfg):
         """
             Arguments:
-                cfg (federatedscope.core.configs.config.CN): dict \
-                like object, where each key-value pair corresponds to a \
-                field and its choices.
-                client_cfgs: client-specific configuration
+                cfg (yacs.Node): dict like object, where each key-value pair corresponds to a field and its choices.
         """
 
         self._cfg = cfg
-        self._client_cfgs = client_cfgs
-
-        # Create hpo working folder
-        os.makedirs(self._cfg.hpo.working_folder, exist_ok=True)
         self._search_space = parse_search_space(self._cfg.hpo.ss)
 
         self._init_configs = self._setup()
@@ -96,14 +101,12 @@ class Scheduler(object):
         raise NotImplementedError
 
     def _evaluate(self, configs):
-        """To evaluate (i.e., conduct the FL procedure) for a given
-        collection of configurations.
+        """To evaluate (i.e., conduct the FL procedure) for a given collection of configurations.
         """
         raise NotImplementedError
 
     def optimize(self):
-        """To optimize the hyperparameters, that is, executing the HPO
-        algorithm and then returning the results.
+        """To optimize the hyperparameters, that is, executing the HPO algorithm and then returning the results.
         """
         raise NotImplementedError
 
@@ -149,7 +152,7 @@ class ModelFreeBase(Scheduler):
                 flags[available_worker].clear()
                 trial = TrialExecutor(i, flags[available_worker],
                                       thread_results[available_worker],
-                                      trial_cfg, self._client_cfgs)
+                                      trial_cfg)
                 trial.start()
                 threads[available_worker] = trial
 
@@ -161,58 +164,44 @@ class ModelFreeBase(Scheduler):
                     completed_trial_results = thread_results[i]
                     cfg_idx = completed_trial_results['cfg_idx']
                     perfs[cfg_idx] = completed_trial_results['perf']
-                    # TODO: Support num_worker in WandB
                     logger.info(
                         "Evaluate the {}-th config {} and get performance {}".
                         format(cfg_idx, configs[cfg_idx], perfs[cfg_idx]))
                     thread_results[i].clear()
 
         else:
-            tmp_configs = []
             perfs = [None] * len(configs)
             for i, config in enumerate(configs):
-                tmp_configs.append(config)
                 trial_cfg = self._cfg.clone()
                 trial_cfg.merge_from_list(config2cmdargs(config))
-                results = eval_in_fs(cfg=trial_cfg,
-                                     client_cfgs=self._client_cfgs)
-                key1, key2 = trial_cfg.hpo.metric.split('.')
-                perfs[i] = results[key1][key2]
+                perfs[i] = make_trial(trial_cfg)
                 logger.info(
                     "Evaluate the {}-th config {} and get performance {}".
                     format(i, config, perfs[i]))
-                if self._cfg.wandb.use:
-                    tmp_results = \
-                        summarize_hpo_results(tmp_configs,
-                                              perfs,
-                                              white_list=set(
-                                                  self._search_space.keys()),
-                                              desc=self._cfg.hpo.larger_better,
-                                              is_sorted=False)
-                    log2wandb(i, config, results, trial_cfg, tmp_results)
+
         return perfs
 
     def optimize(self):
         perfs = self._evaluate(self._init_configs)
+
         results = summarize_hpo_results(self._init_configs,
                                         perfs,
                                         white_list=set(
                                             self._search_space.keys()),
-                                        desc=self._cfg.hpo.larger_better,
-                                        use_wandb=self._cfg.wandb.use)
+                                        desc=self._cfg.hpo.larger_better)
         logger.info(
-            "========================== HPO Final ==========================")
+            "====================================== HPO Final ========================================"
+        )
         logger.info("\n{}".format(results))
-        results.to_csv(
-            os.path.join(self._cfg.hpo.working_folder, 'results.csv'))
-        logger.info("====================================================")
+        logger.info(
+            "====================================================================================="
+        )
 
         return results
 
 
 class IterativeScheduler(ModelFreeBase):
-    """The base class for HPO algorithms that divide the whole optimization
-    procedure into iterations.
+    """The base class for HPO algorithms that divide the whole optimization procedure into iterations.
     """
     def _setup(self):
         self._stage = 0
@@ -223,8 +212,7 @@ class IterativeScheduler(ModelFreeBase):
 
         Arguments:
             configs (list): each element is a trial configuration.
-            last_results (DataFrame): each row corresponds to a specific
-            configuration as well as its latest performance.
+            last_results (DataFrame): each row corresponds to a specific configuration as well as its latest performance.
         :returns: whether to terminate.
         :rtype: bool
         """
@@ -263,16 +251,15 @@ class IterativeScheduler(ModelFreeBase):
                 current_configs,
                 current_perfs,
                 white_list=set(self._search_space.keys()),
-                desc=self._cfg.hpo.larger_better,
-                use_wandb=self._cfg.wandb.use)
+                desc=self._cfg.hpo.larger_better)
             self._stage += 1
             logger.info(
-                "========================== Stage{} =========================="
+                "====================================== Stage{} ========================================"
                 .format(self._stage))
             logger.info("\n{}".format(last_results))
-            last_results.to_csv(
-                os.path.join(self._cfg.hpo.working_folder, 'results.csv'))
-            logger.info("====================================================")
+            logger.info(
+                "======================================================================================="
+            )
             current_configs = self._generate_next_population(
                 current_configs, current_perfs)
 
@@ -280,9 +267,7 @@ class IterativeScheduler(ModelFreeBase):
 
 
 class SuccessiveHalvingAlgo(IterativeScheduler):
-    """Successive Halving Algorithm (SHA) tailored to FL setting, where,
-    in each iteration, just a limited number of communication rounds are
-    allowed for each trial.
+    """Successive Halving Algorithm (SHA) tailored to FL setting, where, in each iteration, just a limited number of communication rounds are allowed for each trial.
     """
     def _setup(self):
         init_configs = super(SuccessiveHalvingAlgo, self)._setup()
@@ -294,12 +279,10 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
 
         if self._cfg.hpo.sha.budgets:
             for trial_cfg in init_configs:
-                rnd = min(
-                    self._cfg.hpo.sha.budgets[0] *
-                    self._cfg.hpo.sha.elim_rate**self._stage,
-                    self._cfg.hpo.sha.budgets[1])
-                trial_cfg['federate.total_round_num'] = rnd
-                trial_cfg['eval.freq'] = rnd
+                trial_cfg[
+                    'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
+                        self._stage]
+                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
 
         return init_configs
 
@@ -319,14 +302,12 @@ class SuccessiveHalvingAlgo(IterativeScheduler):
             if 'federate.restore_from' not in trial_cfg:
                 trial_cfg['federate.restore_from'] = trial_cfg[
                     'federate.save_to']
-            rnd = min(
-                self._cfg.hpo.sha.budgets[0] *
-                self._cfg.hpo.sha.elim_rate**self._stage,
-                self._cfg.hpo.sha.budgets[1])
-            if self._cfg.hpo.sha.budgets and rnd < \
-                    self._cfg.hpo.sha.budgets[1]:
-                trial_cfg['federate.total_round_num'] = rnd
-                trial_cfg['eval.freq'] = rnd
+            if self._cfg.hpo.sha.budgets and self._stage < len(
+                    self._cfg.hpo.sha.budgets):
+                trial_cfg[
+                    'federate.total_round_num'] = self._cfg.hpo.sha.budgets[
+                        self._stage]
+                trial_cfg['eval.freq'] = self._cfg.hpo.sha.budgets[self._stage]
 
         return next_population
 
@@ -377,7 +358,7 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
         return neighbor
 
     def _setup(self):
-        # self._cache_yaml()
+        #self._cache_yaml()
         init_configs = super(SHAWrapFedex, self)._setup()
         new_init_configs = []
         for idx, trial_cfg in enumerate(init_configs):
@@ -412,12 +393,8 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
 
 
 # TODO: refactor PBT to enable async parallel
-# class PBT(IterativeScheduler):
-#    """Population-based training (the full paper "Population Based Training
-#    of Neural Networks" can be found at https://arxiv.org/abs/1711.09846)
-#    tailored to FL setting, where, in each iteration, just a limited number
-#    of communication rounds are allowed for each trial (We will provide the
-#    asynchornous version later).
+#class PBT(IterativeScheduler):
+#    """Population-based training (the full paper "Population Based Training of Neural Networks" can be found at https://arxiv.org/abs/1711.09846)  tailored to FL setting, where, in each iteration, just a limited number of communication rounds are allowed for each trial (We will provide the asynchornous version later).
 #    """
 #    def _setup(self, raw_search_space):
 #        _ = super(PBT, self)._setup(raw_search_space)
@@ -428,14 +405,12 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
 #                sample_size=global_cfg.hpo.sha.elim_rate**
 #                global_cfg.hpo.sha.elim_round_num)
 #        elif global_cfg.hpo.init_strategy == 'grid':
-#            init_configs = grid_search(raw_search_space, \
-#                sample_size=global_cfg.hpo.sha.elim_rate \
-#                **global_cfg.hpo.sha.elim_round_num)
+#            init_configs = grid_search(raw_search_space,
+#                                       sample_size=global_cfg.hpo.sha.elim_rate
+#                                       **global_cfg.hpo.sha.elim_round_num)
 #        else:
 #            raise ValueError(
-#                "SHA needs to use random/grid search to pick {} configs
-#                from the search space as initial candidates, but `{}` is
-#                specified as `hpo.init_strategy`"
+#                "SHA needs to use random/grid search to pick {} configs from the search space as initial candidates, but `{}` is specified as `hpo.init_strategy`"
 #                .format(
 #                    global_cfg.hpo.sha.elim_rate**
 #                    global_cfg.hpo.sha.elim_round_num,
@@ -473,8 +448,7 @@ class SHAWrapFedex(SuccessiveHalvingAlgo):
 #                # explore
 #                for k in new_cfg:
 #                    if isinstance(new_cfg[k], float):
-#                        # according to the exploration strategy of the PBT
-#                        paper
+#                        # according to the exploration strategy of the PBT paper
 #                        new_cfg[k] *= float(np.random.choice([0.8, 1.2]))
 #            else:
 #                new_cfg['federate.restore_from'] = configs[i][

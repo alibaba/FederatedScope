@@ -1,20 +1,19 @@
 import numpy as np
 
-from torch_geometric.transforms import BaseTransform
-from federatedscope.core.splitters import BaseSplitter
 
-
-class RandChunkSplitter(BaseTransform, BaseSplitter):
-    """
-    Split graph-level dataset via random chunk strategy.
-
-    Arguments:
-        dataset (List or PyG.dataset): The graph-level datasets.
-    """
+class RandChunkSplitter:
     def __init__(self, client_num):
-        BaseSplitter.__init__(self, client_num)
+        self.client_num = client_num
 
-    def __call__(self, dataset, **kwargs):
+    def __call__(self, dataset):
+        r"""Split dataset via random chunk.
+        
+        Arguments:
+            dataset (List or PyG.dataset): The datasets.
+            
+        Returns:
+            data_list (List(List(PyG.data))): Splited dataset via random chunk split.
+        """
         data_list = []
         dataset = [ds for ds in dataset]
         num_graph = len(dataset)
@@ -31,3 +30,6 @@ class RandChunkSplitter(BaseTransform, BaseSplitter):
             data_list[client_idx].append(graph)
 
         return data_list
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}()'

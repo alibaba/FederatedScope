@@ -1,9 +1,7 @@
 import numpy
 from wandb.wandb_torch import torch
 
-from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
-from federatedscope.core.trainers.context import CtxVar
 from federatedscope.mf.dataloader.dataloader import MFDataLoader
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.register import register_trainer
@@ -22,8 +20,8 @@ class MFTrainer(GeneralTorchTrainer):
         device (str): device.
     """
     def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
-        modes
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
+
         """
         init_dict = dict()
         if isinstance(data, dict):
@@ -46,36 +44,58 @@ class MFTrainer(GeneralTorchTrainer):
 
     def _hook_on_fit_end(self, ctx):
         results = {
-            f"{ctx.cur_mode}_avg_loss": ctx.loss_batch_total / ctx.num_samples,
-            f"{ctx.cur_mode}_total": ctx.num_samples
+            f"{ctx.cur_mode}_avg_loss": ctx.get("loss_batch_total_{}".format(
+                ctx.cur_mode)) /
+            ctx.get("num_samples_{}".format(ctx.cur_mode)),
+            f"{ctx.cur_mode}_total": ctx.get("num_samples_{}".format(
+                ctx.cur_mode))
         }
         setattr(ctx, 'eval_metrics', results)
 
-    def _hook_on_batch_forward(self, ctx):
-        indices, ratings = ctx.data_batch
-        pred, label = ctx.model(indices, ratings)
-        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
-
-        ctx.batch_size = len(ratings)
-
     def _hook_on_batch_end(self, ctx):
         # update statistics
-        ctx.num_samples += ctx.batch_size
-        ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
-        ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
+        setattr(
+            ctx, "loss_batch_total_{}".format(ctx.cur_mode),
+            ctx.get("loss_batch_total_{}".format(ctx.cur_mode)) +
+            ctx.loss_batch.item() * ctx.batch_size)
+
+        if ctx.get("loss_regular", None) is None or ctx.loss_regular == 0:
+            loss_regular = 0.
+        else:
+            loss_regular = ctx.loss_regular.item()
+        setattr(
+            ctx, "loss_regular_total_{}".format(ctx.cur_mode),
+            ctx.get("loss_regular_total_{}".format(ctx.cur_mode)) +
+            loss_regular)
+        setattr(
+            ctx, "num_samples_{}".format(ctx.cur_mode),
+            ctx.get("num_samples_{}".format(ctx.cur_mode)) + ctx.batch_size)
+
+        # clean temp ctx
+        ctx.data_batch = None
+        ctx.batch_size = None
+        ctx.loss_task = None
+        ctx.loss_batch = None
+        ctx.loss_regular = None
+        ctx.y_true = None
+        ctx.y_prob = None
+
+    def _hook_on_batch_forward(self, ctx):
+        indices, ratings = ctx.data_batch
+        pred, label, ratio = ctx.model(indices, ratings)
+        ctx.loss_batch = ctx.criterion(pred, label) * ratio
+
+        ctx.batch_size = len(ratings)
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
             logger.warning(
-                f"The trainer {type(self)} does contain a valid monitor, "
-                f"this may be caused by "
-                f"initializing trainer subclasses without passing a valid "
-                f"monitor instance."
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
 
-        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample \
-                == 0:
+        if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 indices, ratings = ctx.data_batch
@@ -89,26 +109,21 @@ class MFTrainer(GeneralTorchTrainer):
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums
                     logger.warning(
-                        "the flops_per_batch is multiplied by internal model "
-                        "nums as self.mirrored_models=True."
-                        "if this is not the case you want, "
-                        "please customize the count hook")
+                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, please customize the count hook"
+                    )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
             except:
-                logger.warning(
-                    "current flop count implementation is for general "
-                    "NodeFullBatchTrainer case: "
+                logger.error(
+                    "current flop count implementation is for general NodeFullBatchTrainer case: "
                     "1) the ctx.model takes tuple (indices, ratings) as input."
-                    "Please check the forward format or implement your own "
-                    "flop_count function")
-                self.ctx.monitor.flops_per_sample = -1  # warning at the
-                # first failure
+                    "Please check the forward format or implement your own flop_count function"
+                )
 
         # by default, we assume the data has the same input shape,
         # thus simply multiply the flops to avoid redundant forward
-        self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * \
-            ctx.batch_size
+        self.ctx.monitor.total_flops += self.ctx.monitor.flops_per_sample * ctx.batch_size
 
 
 def call_mf_trainer(trainer_type):

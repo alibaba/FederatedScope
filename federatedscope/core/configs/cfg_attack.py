@@ -4,27 +4,24 @@ from federatedscope.register import register_config
 
 def extend_attack_cfg(cfg):
 
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     # attack
-    # ---------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
     cfg.attack = CN()
     cfg.attack.attack_method = ''
-    # for gan_attack
+    # for gan_attack and backdoor attack
     cfg.attack.target_label_ind = -1
     cfg.attack.attacker_id = -1
 
     # for backdoor attack
 
-    cfg.attack.edge_path = 'edge_data/'
-    cfg.attack.trigger_path = 'trigger/'
     cfg.attack.setting = 'fix'
     cfg.attack.freq = 10
     cfg.attack.insert_round = 100000
-    cfg.attack.mean = [0.9637]
-    cfg.attack.std = [0.1592]
+    cfg.attack.mean = [0.1307]
+    cfg.attack.std = [0.3081]
     cfg.attack.trigger_type = 'edge'
     cfg.attack.label_type = 'dirty'
-    # dirty, clean_label, dirty-label attack is all2one attack.
     cfg.attack.edge_num = 100
     cfg.attack.poison_ratio = 0.5
     cfg.attack.scale_poisoning = False
@@ -35,6 +32,15 @@ def extend_attack_cfg(cfg):
     cfg.attack.self_opt = False
     cfg.attack.self_lr = 0.05
     cfg.attack.self_epoch = 6
+
+    # defense:
+
+    cfg.attack.norm_clip = False
+    cfg.attack.norm_clip_value = 5.0
+    cfg.attack.dp_noise = -1.0
+    cfg.attack.krum = False
+    cfg.attack.multi_krum = False
+
     # Note: the mean and std should be the list type.
 
     # for reconstruct_opt
@@ -52,8 +58,6 @@ def extend_attack_cfg(cfg):
 
     # for gradient Ascent --- MIA attack
     cfg.attack.inject_round = 0
-    cfg.attack.mia_simulate_in_round = 20
-    cfg.attack.mia_is_simulate_in = False
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_attack_cfg)

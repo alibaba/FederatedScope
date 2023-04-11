@@ -1,5 +1,4 @@
-from federatedscope.attack.auxiliary.utils import get_classifier, \
-    get_passive_PIA_auxiliary_dataset
+from federatedscope.attack.auxiliary.utils import get_classifier, get_passive_PIA_auxiliary_dataset
 import torch
 import numpy as np
 import copy
@@ -12,9 +11,8 @@ logger = logging.getLogger(__name__)
 
 class PassivePropertyInference():
     '''
-    This is an implementation of the passive property inference
-    （algorithm 3 in Exploiting Unintended Feature Leakage
-    in Collaborative Learning: https://arxiv.org/pdf/1805.04049.pdf
+    This is an implementation of the passive property inference （algorithm 3）in Exploiting Unintended Feature Leakage in Collaborative Learning:
+    https://arxiv.org/pdf/1805.04049.pdf
     '''
     def __init__(self,
                  classier: str,
@@ -26,8 +24,7 @@ class PassivePropertyInference():
                  fl_type_optimizer,
                  fl_lr,
                  batch_size=100):
-        # self.auxiliary_dataset['x']: n * d_feature; x is the parameter
-        # updates
+        # self.auxiliary_dataset['x']: n * d_feature; x is the parameter updates
         # self.auxiliary_dataset['y']: n * 1; y is the
         self.dataset_prop_classifier = {"x": None, 'prop': None}
 
@@ -75,8 +72,8 @@ class PassivePropertyInference():
         previous_para = model.state_dict()
         self.current_model_para = previous_para
         for _ in range(local_runs):
-            x_batch_prop, y_batch_prop, x_batch_nprop, y_batch_nprop = \
-                self._get_batch(self.auxiliary_dataset)
+            x_batch_prop, y_batch_prop, x_batch_nprop, y_batch_nprop = self._get_batch(
+                self.auxiliary_dataset)
             para_update_prop = self._get_parameter_updates(
                 model, previous_para, x_batch_prop, y_batch_prop)
             prop = torch.tensor([[1]]).to(torch.device(self.device))
@@ -91,6 +88,8 @@ class PassivePropertyInference():
 
         model = copy.deepcopy(model)
         # get last phase model parameters
+        # print(model)
+        model = model.to(torch.device(self.device))
         model.load_state_dict(previous_para, strict=False)
 
         optimizer = get_optimizer(type=self.fl_type_optimizer,
@@ -108,7 +107,9 @@ class PassivePropertyInference():
                                                self.grad_clip)
             optimizer.step()
 
-        para_prop = model.state_dict()
+        para_prop = model.cpu().state_dict()
+        # print('update: ')
+        # print(para_prop)
 
         updates_prop = torch.hstack([
             (previous_para[name] - para_prop[name]).flatten().cpu()

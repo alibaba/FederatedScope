@@ -1,13 +1,14 @@
 import torch
 
 from torch.utils.data import DataLoader
+from torch_geometric.loader import DataLoader as PyGDataLoader
+from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
-from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
+from federatedscope.core.auxiliaries.ReIterator import ReIterator
 
 import logging
 
@@ -36,32 +37,28 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
             insert_pos=-1)
 
     def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
-        modes
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
+
         """
         init_dict = dict()
-        if isinstance(data, dict):
+        if isinstance(data, Data):
             for mode in ["train", "val", "test"]:
-                graph_data = data['data']
-                edges = graph_data.edge_index.T[graph_data[MODE2MASK[mode]]]
+                edges = data.edge_index.T[data[MODE2MASK[mode]]]
                 # Use an index loader
-                index_loader = DataLoader(
-                    range(edges.size(0)),
-                    self.cfg.dataloader.batch_size,
-                    shuffle=self.cfg.dataloader.shuffle
-                    if mode == 'train' else False,
-                    drop_last=self.cfg.dataloader.drop_last
-                    if mode == 'train' else False)
+                index_loader = DataLoader(range(edges.size(0)),
+                                          self.cfg.data.batch_size,
+                                          shuffle=self.cfg.data.shuffle
+                                          if mode == 'train' else False,
+                                          drop_last=self.cfg.data.drop_last
+                                          if mode == 'train' else False)
                 init_dict["{}_loader".format(mode)] = index_loader
                 init_dict["num_{}_data".format(mode)] = edges.size(0)
                 init_dict["{}_data".format(mode)] = None
         else:
-            raise TypeError("Type of data should be dict.")
+            raise TypeError("Type of data should be PyG data.")
         return init_dict
 
     def _hook_on_epoch_start_data2device(self, ctx):
-        if isinstance(ctx.data, dict):
-            ctx.data = ctx.data['data']
         ctx.data = ctx.data.to(ctx.device)
         # For handling different dict key
         if "input_edge_index" in ctx.data:
@@ -73,9 +70,9 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         data = ctx.data
         perm = ctx.data_batch
-        mask = ctx.data[MODE2MASK[ctx.cur_split]]
+        mask = ctx.data[MODE2MASK[ctx.cur_data_split]]
         edges = data.edge_index.T[mask]
-        if ctx.cur_split in ['train', 'val']:
+        if ctx.cur_data_split in ['train', 'val']:
             h = ctx.model((data.x, ctx.input_edge_index))
         else:
             h = ctx.model((data.x, data.edge_index))
@@ -85,25 +82,23 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
         ctx.loss_batch = ctx.criterion(pred, label)
 
         ctx.batch_size = len(label)
-        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
+        ctx.y_true = label
+        ctx.y_prob = pred
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         if not isinstance(self.ctx.monitor, Monitor):
             logger.warning(
-                f"The trainer {type(self)} does contain a valid monitor, "
-                f"this may be caused by initializing trainer subclasses "
-                f"without passing a valid monitor instance."
+                f"The trainer {type(self)} does contain a valid monitor, this may be caused by "
+                f"initializing trainer subclasses without passing a valid monitor instance."
                 f"Plz check whether this is you want.")
             return
 
-        if self.cfg.eval.count_flops and self.ctx.monitor.flops_per_sample \
-                == 0:
+        if self.ctx.monitor.flops_per_sample == 0:
             # calculate the flops_per_sample
             try:
                 data = ctx.data
                 from fvcore.nn import FlopCountAnalysis
-                if ctx.cur_split in ['train', 'val']:
+                if ctx.cur_data_split in ['train', 'val']:
                     flops_one_batch = FlopCountAnalysis(
                         ctx.model, (data.x, ctx.input_edge_index)).total()
                 else:
@@ -112,23 +107,18 @@ class LinkFullBatchTrainer(GeneralTorchTrainer):
                 if self.model_nums > 1 and ctx.mirrored_models:
                     flops_one_batch *= self.model_nums
                     logger.warning(
-                        "the flops_per_batch is multiplied by "
-                        "internal model nums as self.mirrored_models=True."
-                        "if this is not the case you want, "
-                        "please customize the count hook.")
+                        "the flops_per_batch is multiplied by internal model nums as self.mirrored_models=True."
+                        "if this is not the case you want, please customize the count hook"
+                    )
                 self.ctx.monitor.track_avg_flops(flops_one_batch,
                                                  ctx.batch_size)
             except:
-                logger.warning(
-                    "current flop count implementation is for general "
-                    "NodeFullBatchTrainer case: "
+                logger.error(
+                    "current flop count implementation is for general NodeFullBatchTrainer case: "
                     "1) the ctx.model takes the "
-                    "tuple (data.x, data.edge_index) or tuple (data.x, "
-                    "ctx.input_edge_index) as input."
-                    "Please check the forward format or implement your own "
-                    "flop_count function")
-                # warning at the first failure
-                self.ctx.monitor.flops_per_sample = -1
+                    "tuple (data.x, data.edge_index) or tuple (data.x, ctx.input_edge_index) as input."
+                    "Please check the forward format or implement your own flop_count function"
+                )
 
 
 class LinkMiniBatchTrainer(GeneralTorchTrainer):
@@ -136,8 +126,8 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
         # Support GraphSAGE with GraphSAINTRandomWalkSampler in train ONLY!
     """
     def parse_data(self, data):
-        """Populate "{}_data", "{}_loader" and "num_{}_data" for different
-        modes
+        """Populate "{}_data", "{}_loader" and "num_{}_data" for different modes
+
         """
         init_dict = dict()
         if isinstance(data, dict):
@@ -160,7 +150,7 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
                                 data.get(mode)
                             ]
                             init_dict["num_{}_data".format(
-                                mode)] = self.cfg.dataloader.batch_size
+                                mode)] = self.cfg.data.batch_size
                     else:
                         raise TypeError("Type {} is not supported.".format(
                             type(data.get(mode))))
@@ -169,18 +159,18 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
         return init_dict
 
     def _hook_on_batch_forward(self, ctx):
-        if ctx.cur_split == 'train':
+        if ctx.cur_data_split == 'train':
             batch = ctx.data_batch.to(ctx.device)
-            mask = batch[MODE2MASK[ctx.cur_split]]
+            mask = batch[MODE2MASK[ctx.cur_data_split]]
             edges = batch.edge_index.T[mask].T
             h = ctx.model((batch.x, edges))
             pred = ctx.model.link_predictor(h, edges)
             label = batch.edge_type[mask]
             ctx.batch_size = torch.sum(
-                ctx.data_batch[MODE2MASK[ctx.cur_split]]).item()
+                ctx.data_batch[MODE2MASK[ctx.cur_data_split]]).item()
         else:
             # For inference
-            mask = ctx.data['data'][MODE2MASK[ctx.cur_split]]
+            mask = ctx.data['data'][MODE2MASK[ctx.cur_data_split]]
             subgraph_loader = ctx.data_batch
             h = ctx.model.gnn.inference(ctx.data['data'].x, subgraph_loader,
                                         ctx.device).to(ctx.device)
@@ -188,17 +178,17 @@ class LinkMiniBatchTrainer(GeneralTorchTrainer):
             pred = []
 
             for perm in DataLoader(range(edges.size(0)),
-                                   self.cfg.dataloader.batch_size):
+                                   self.cfg.data.batch_size):
                 edge = edges[perm].T
                 pred += [ctx.model.link_predictor(h, edge).squeeze()]
             pred = torch.cat(pred, dim=0)
             label = ctx.data['data'].edge_type[mask].to(ctx.device)
             ctx.batch_size = torch.sum(
-                ctx.data['data'][MODE2MASK[ctx.cur_split]]).item()
+                ctx.data['data'][MODE2MASK[ctx.cur_data_split]]).item()
 
-        ctx.loss_batch = CtxVar(ctx.criterion(pred, label), LIFECYCLE.BATCH)
-        ctx.y_true = CtxVar(label, LIFECYCLE.BATCH)
-        ctx.y_prob = CtxVar(pred, LIFECYCLE.BATCH)
+        ctx.loss_batch = ctx.criterion(pred, label)
+        ctx.y_true = label
+        ctx.y_prob = pred
 
 
 def call_link_level_trainer(trainer_type):
@@ -207,7 +197,7 @@ def call_link_level_trainer(trainer_type):
     elif trainer_type == 'linkminibatch_trainer':
         trainer_builder = LinkMiniBatchTrainer
     else:
-        trainer_builder = None
+        raise ValueError
 
     return trainer_builder
 

@@ -11,13 +11,11 @@ MFDATA_CLASS_DICT = {
     "vflmovielens1m": "VFLMovieLens1M",
     "vflmovielens10m": "VFLMovieLens10M",
     "hflmovielens1m": "HFLMovieLens1M",
-    "hflmovielens10m": "HFLMovieLens10M",
-    'vflnetflix': "VFLNetflix",
-    'hflnetflix': "HFLNetflix"
+    "hflmovielens10m": "HFLMovieLens10M"
 }
 
 
-def load_mf_dataset(config=None, client_cfgs=None):
+def load_mf_dataset(config=None):
     """Return the dataset of matrix factorization
 
     Format:
@@ -32,29 +30,37 @@ def load_mf_dataset(config=None, client_cfgs=None):
     """
     if config.data.type.lower() in MFDATA_CLASS_DICT:
         # Dataset
-        if config.data.type.lower() in ['vflnetflix', 'hflnetflix']:
-            mpath = "federatedscope.mf.dataset.netflix"
-        else:
-            mpath = "federatedscope.mf.dataset.movielens"
-        dataset = getattr(importlib.import_module(mpath),
-                          MFDATA_CLASS_DICT[config.data.type.lower()])(
-                              root=config.data.root,
-                              num_client=config.federate.client_num,
-                              train_portion=config.data.splits[0],
-                              download=True)
+        dataset = getattr(
+            importlib.import_module("federatedscope.mf.dataset.movielens"),
+            MFDATA_CLASS_DICT[config.data.type.lower()])(
+                root=config.data.root,
+                num_client=config.federate.client_num,
+                train_portion=config.data.splits[0],
+                download=True)
     else:
         raise NotImplementedError("Dataset {} is not implemented.".format(
             config.data.type))
 
-    data_dict = collections.defaultdict(dict)
-    for client_idx, data in dataset.data.items():
-        data_dict[client_idx] = data
+    data_local_dict = collections.defaultdict(dict)
+    for id_client, data in dataset.data.items():
+        data_local_dict[id_client]["train"] = MFDataLoader(
+            data["train"],
+            shuffle=config.data.shuffle,
+            batch_size=config.data.batch_size,
+            drop_last=config.data.drop_last,
+            theta=config.sgdmf.theta)
+        data_local_dict[id_client]["test"] = MFDataLoader(
+            data["test"],
+            shuffle=False,
+            batch_size=config.data.batch_size,
+            drop_last=config.data.drop_last,
+            theta=config.sgdmf.theta)
 
     # Modify config
     config.merge_from_list(['model.num_user', dataset.n_user])
     config.merge_from_list(['model.num_item', dataset.n_item])
 
-    return data_dict, config
+    return data_local_dict, config
 
 
 class MFDataLoader(object):
