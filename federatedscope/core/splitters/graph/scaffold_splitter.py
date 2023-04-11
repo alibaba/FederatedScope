@@ -1,6 +1,5 @@
 import logging
 import numpy as np
-
 from rdkit import Chem
 from rdkit import RDLogger
 from rdkit.Chem.Scaffolds import MurckoScaffold
@@ -8,7 +7,6 @@ from rdkit.Chem.Scaffolds import MurckoScaffold
 logger = logging.getLogger(__name__)
 
 RDLogger.DisableLog('rdApp.*')
-
 
 def generate_scaffold(smiles, include_chirality=False):
     """return scaffold string of target molecule"""
@@ -45,7 +43,6 @@ def gen_scaffold_split(dataset, client_num=5):
     # Split data to list
     splits = np.array_split(scaffold_idxs, client_num)
     return [splits[ID] for ID in range(client_num)]
-
 
 class ScaffoldSplitter:
     def __init__(self, client_num):
