@@ -5,7 +5,7 @@ on:
 
 jobs:
   docs:
-    if: false == contains(github.event.pull_request.title, 'WIP')
+    if: true == contains(github.event.pull_request.title, 'DOC')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
