@@ -1,6 +1,13 @@
 [flake8]
 exclude =
   doc/source/conf.py
+  scripts/*
+  materials/*
+  tests/*
+  benchmark/B-FHTL/*
+  benchmark/pFL-Bench/*
+  demo/*
+  federatedscope/core/proto/gRPC_comm_manager_pb2.py
 max-line-length = 79
 inline-quotes = "
 ignore =
@@ -10,7 +17,16 @@ ignore =
   E126
   E226
   E24
+  E402
   E704
+  E712
+  E713
+  E722
+  E731
+  F401
+  F403
+  F405
+  F841
   W503
   W504
   W605
