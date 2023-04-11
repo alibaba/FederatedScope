@@ -17,12 +17,12 @@ jobs:
       uses: actions/setup-python@master
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: ammaraskar/sphinx-action@master
-      name: Generate Documentation
+    - name: Generate Documentation
+      uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "doc/"
-    - uses: actions/upload-artifact@v3
-      name: Upload Documentation
+    - name: Upload Documentation
+      uses: actions/upload-artifact@v3
       with:
         name: APIReference
         path: doc/build/html/
