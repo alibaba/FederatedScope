@@ -54,7 +54,7 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.attack.setting = 'fix'
         cfg.attack.freq = 2
         cfg.attack.label_type = 'dirty'
-        cfg.attack.trigger_type = 'grid'
+        cfg.attack.trigger_type = 'gridTrigger'
         cfg.attack.target_label_ind = 1
         cfg.attack.mean = [0.1307]
         cfg.attack.std = [0.3081]
