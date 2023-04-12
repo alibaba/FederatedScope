@@ -110,8 +110,7 @@ def hook_on_fit_start_init_local_opt(ctx):
     # need to check for ditto method
     # ctx.original_optimizer = ctx.optimizer
 
-    if ctx.federate_method.lower() == "ditto_zy" or ctx.federate_method.lower(
-    ) == "ditto":
+    if ctx.federate_method.lower() == "ditto":
         ctx.original_epoch = ctx["num_train_epoch"]
         ctx["num_train_epoch"] = ctx.self_epoch + ctx.num_train_epoch_for_local_model
 

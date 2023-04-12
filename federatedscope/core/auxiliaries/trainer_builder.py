@@ -124,10 +124,6 @@ def get_trainer(model=None,
         from federatedscope.core.trainers import wrap_DittoTrainer
         # wrap style: instance a (class A) -> instance a (class A)
         trainer = wrap_DittoTrainer(trainer)
-    elif config.federate.method.lower() == "ditto_zy":
-        from federatedscope.core.trainers import wrap_Ditto_zy_Trainer
-        # wrap style: instance a (class A) -> instance a (class A)
-        trainer = wrap_Ditto_zy_Trainer(trainer)
     elif config.federate.method.lower() == "fedem":
         from federatedscope.core.trainers import FedEMTrainer
         # copy construct style: instance a (class A) -> instance b (class B)
