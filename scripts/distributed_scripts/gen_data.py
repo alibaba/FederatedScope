@@ -100,6 +100,9 @@ def generate_data(client_num=3,
                 } if data[client_idx]['test'] is not None else None
                 pickle.dump(save_client_data, f)
 
+        with open('toy_data/all_data', 'wb') as f:
+            pickle.dump(data, f)
+
     return data
 
 

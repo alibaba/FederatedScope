@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
 
     if isinstance(data_representative, dict):
         if 'x' in data_representative:
-            shape = data_representative['x'].shape
+            shape = np.asarray(data_representative['x']).shape
             if len(shape) == 1:  # (batch, ) = (batch, 1)
                 return 1
             else:
@@ -121,7 +122,9 @@ def get_model(model_config, local_data=None, backend='torch'):
         ``mf.model.model_builder.get_mfnet()``
         ===================================  ==============================
     """
-    if local_data is not None:
+    if model_config.type.lower() in ['xgb_tree', 'gbdt_tree', 'random_forest']:
+        input_shape = None
+    elif local_data is not None:
         input_shape = get_shape_from_data(local_data, model_config, backend)
     else:
         input_shape = model_config.input_shape
@@ -188,8 +191,8 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in [
             'xgb_tree', 'gbdt_tree', 'random_forest'
     ]:
-        from federatedscope.vertical_fl.model.model_builder import \
-            get_tree_model
+        from federatedscope.vertical_fl.tree_based_models.model.model_builder \
+            import get_tree_model
         model = get_tree_model(model_config)
     elif model_config.type.lower() in ['atc_model']:
         from federatedscope.nlp.hetero_tasks.model import ATCModel

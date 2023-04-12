@@ -65,6 +65,9 @@ class Client(BaseClient):
                  *args,
                  **kwargs):
         super(Client, self).__init__(ID, state, config, model, strategy)
+
+        self.data = data
+
         # Register message handlers
         self._register_default_handlers()
 
@@ -164,7 +167,10 @@ class Client(BaseClient):
             server_host = kwargs['server_host']
             server_port = kwargs['server_port']
             self.comm_manager = gRPCCommManager(
-                host=host, port=port, client_num=self._cfg.federate.client_num)
+                host=host,
+                port=port,
+                client_num=self._cfg.federate.client_num,
+                cfg=self._cfg.distribute)
             logger.info('Client: Listen to {}:{}...'.format(host, port))
             self.comm_manager.add_neighbors(neighbor_id=server_id,
                                             address={
@@ -291,6 +297,18 @@ class Client(BaseClient):
             sender = message.sender
             timestamp = message.timestamp
             content = message.content
+
+            # dequantization
+            if self._cfg.quantization.method == 'uniform':
+                from federatedscope.core.compression import \
+                    symmetric_uniform_dequantization
+                if isinstance(content, list):  # multiple model
+                    content = [
+                        symmetric_uniform_dequantization(x) for x in content
+                    ]
+                else:
+                    content = symmetric_uniform_dequantization(content)
+
             # When clients share the local model, we must set strict=True to
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
@@ -358,9 +376,6 @@ class Client(BaseClient):
                         model_para[key] = model_para[key] * sample_size
                     model_para_list = self.ss_manager.secret_split(model_para)
                     model_para_list_all.append(model_para_list)
-                    # print(model_para)
-                    # print(self.ss_manager.secret_reconstruct(
-                    # model_para_list))
                 frame_idx = 0
                 for neighbor in self.comm_manager.neighbors:
                     if neighbor != self.server_id:
@@ -385,7 +400,9 @@ class Client(BaseClient):
                 self.msg_buffer['train'][self.state] = [(sample_size,
                                                          content_frame)]
             else:
-                if self._cfg.asyn.use or self._cfg.aggregator.krum.use:
+                if self._cfg.asyn.use or self._cfg.aggregator.robust_rule in \
+                        ['krum', 'normbounding', 'median', 'trimmedmean',
+                         'bulyan']:
                     # Return the model delta when using asynchronous training
                     # protocol, because the staled updated might be discounted
                     # and cause that the sum of the aggregated weights might
@@ -394,6 +411,20 @@ class Client(BaseClient):
                         init_model=content, updated_model=model_para_all)
                 else:
                     shared_model_para = model_para_all
+
+                # quantization
+                if self._cfg.quantization.method == 'uniform':
+                    from federatedscope.core.compression import \
+                        symmetric_uniform_quantization
+                    nbits = self._cfg.quantization.nbits
+                    if isinstance(shared_model_para, list):
+                        shared_model_para = [
+                            symmetric_uniform_quantization(x, nbits)
+                            for x in shared_model_para
+                        ]
+                    else:
+                        shared_model_para = symmetric_uniform_quantization(
+                            shared_model_para, nbits)
 
                 self.comm_manager.send(
                     Message(msg_type='model_para',
@@ -438,10 +469,11 @@ class Client(BaseClient):
                                  self._cfg.dataloader.batch_size
                 else:
                     num_sample = self._cfg.train.local_update_steps * \
-                                 len(self.data['train'])
+                                 len(self.trainer.data.train_data)
                 join_in_info['num_sample'] = num_sample
                 if self._cfg.trainer.type == 'nodefullbatch_trainer':
-                    join_in_info['num_sample'] = self.data['data'].x.shape[0]
+                    join_in_info['num_sample'] = \
+                        self.trainer.data.train_data.x.shape[0]
             elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \

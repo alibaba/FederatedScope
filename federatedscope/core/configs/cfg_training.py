@@ -60,6 +60,13 @@ def extend_training_cfg(cfg):
     cfg.finetune.scheduler.type = ''
     cfg.finetune.scheduler.warmup_ratio = 0.0
 
+    # simple-tuning
+    cfg.finetune.simple_tuning = False  # use simple tuning, default: False
+    cfg.finetune.epoch_linear = 10  # training epoch number, default: 10
+    cfg.finetune.lr_linear = 0.005  # learning rate for training linear head
+    cfg.finetune.weight_decay = 0.0
+    cfg.finetune.local_param = []  # tuning parameters list
+
     # ---------------------------------------------------------------------- #
     # Gradient related options
     # ---------------------------------------------------------------------- #

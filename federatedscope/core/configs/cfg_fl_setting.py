@@ -75,14 +75,17 @@ def extend_fl_setting_cfg(cfg):
     cfg.distribute.grpc_max_send_message_length = 100 * 1024 * 1024
     cfg.distribute.grpc_max_receive_message_length = 100 * 1024 * 1024
     cfg.distribute.grpc_enable_http_proxy = False
+    cfg.distribute.grpc_compression = 'nocompression'  # [deflate, gzip]
 
     # ---------------------------------------------------------------------- #
     # Vertical FL related options (for demo)
     # ---------------------------------------------------------------------- #
     cfg.vertical = CN()
     cfg.vertical.use = False
-    cfg.vertical.mode = 'order_based'  # ['order_based', 'label_based']
-    cfg.vertical.dims = [5, 10]  # TODO: we need to explain dims
+    cfg.vertical.mode = 'feature_gathering'
+    # ['feature_gathering', 'label_scattering']
+    cfg.vertical.dims = [5, 10]  # Client 1 has the first 5 features,
+    # and Client 2 has the last 5 features
     cfg.vertical.encryption = 'paillier'
     cfg.vertical.key_size = 3072
     cfg.vertical.algo = 'lr'  # ['lr', 'xgb', 'gbdt', 'rf']
@@ -95,6 +98,7 @@ def extend_fl_setting_cfg(cfg):
     # Default values for 'dp': {'bucket_num':100, 'epsilon':None}
     # Default values for 'op_boost': {'algo':'global', 'lower_bound':1,
     #                                 'upper_bound':100, 'epsilon':2}
+    cfg.vertical.eval_protection = ''  # ['', 'he']
     cfg.vertical.data_size_for_debug = 0  # use a subset for debug in vfl,
     # 0 indicates using the entire dataset (disable debug mode)
 
@@ -195,7 +199,7 @@ def assert_fl_setting_cfg(cfg):
        "the same time"
 
     assert not cfg.federate.merge_test_data or (
-        cfg.federate.merge_test_data and cfg.federate.mode == 'standalone'
+            cfg.federate.merge_test_data and cfg.federate.mode == 'standalone'
     ), "The operation of merging test data can only used in standalone for " \
        "efficient simulation, please change 'federate.merge_test_data' to " \
        "False or change 'federate.mode' to 'distributed'."
@@ -262,6 +266,13 @@ def assert_fl_setting_cfg(cfg):
             raise ValueError(f'The value of vertical.feature_subsample_ratio '
                              f'must be in (0, 1.0], but got '
                              f'{cfg.vertical.feature_subsample_ratio}')
+
+    if cfg.distribute.use and cfg.distribute.grpc_compression.lower() not in [
+            'nocompression', 'deflate', 'gzip'
+    ]:
+        raise ValueError(f'The type of grpc compression is expected to be one '
+                         f'of ["nocompression", "deflate", "gzip"], but got '
+                         f'{cfg.distribute.grpc_compression}.')
 
 
 register_config("fl_setting", extend_fl_setting_cfg)

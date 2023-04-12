@@ -17,8 +17,9 @@ Here we present recent works on the attacks in FL.
 | Title                                                        | Venue      | Link                                        |
 | ------------------------------------------------------------ | ---------- |---------------------------------------------|
  | Robbing the Fed: Directly Obtaining Private Data in Federated Learning with Modified Models| ICLR | [pdf](https://openreview.net/pdf?id=fwzUgo0FM9v) |
-
-
+ |Fishing for User Data in Large-Batch Federated Learning via Gradient Magnification |Arxiv | [pdf](https://arxiv.org/pdf/2202.00580.pdf)|
+ |Bayesian Framework for Gradient Leakage|[pdf](https://openreview.net/pdf?id=f2lrIbGx3x7)|
+ |Auditing Privacy Defenses in Federated Learning via Generative Gradient Leakage|CVPR|[pdf](https://openaccess.thecvf.com/content/CVPR2022/papers/Li_Auditing_Privacy_Defenses_in_Federated_Learning_via_Generative_Gradient_Leakage_CVPR_2022_paper.pdf)|
 
 
 ## 2021
@@ -100,6 +101,8 @@ Here we present recent works on the attacks in FL.
 | Title | Venue | Link |
 | --- | --- | --- |
 |Learning to Attack Federated Learning: A Model-based Reinforcement Learning Attack Framework|NeurIPS|[pdf](https://openreview.net/pdf?id=4OHRr7gmhd4)|
+|Poisoning Deep Learning Based Recommender Model in Federated Learning Scenarios | IJCAI |[pdf](https://www.ijcai.org/proceedings/2022/0306.pdf)
+
 
 ## 2021
 | Title | Venue | Link |
@@ -110,4 +113,6 @@ Here we present recent works on the attacks in FL.
 | Title | Venue | Link |
 | --- | --- | --- |
 |Local Model Poisoning Attacks to Byzantine-Robust Federated Learning|USENIX SCEURITY|[pdf](https://www.usenix.org/system/files/sec20summer_fang_prepub.pdf)|
-|Fall of Empires: Breaking Byzantine-tolerant SGD by  Inner Product Manipulation|UAI|[pdf](http://proceedings.mlr.press/v115/xie20a/xie20a.pdf)|
+|Fall of Empires: Breaking Byzantine-tolerant SGD by Inner Product Manipulation|UAI|[pdf](http://proceedings.mlr.press/v115/xie20a/xie20a.pdf)|
+
+

@@ -17,6 +17,7 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 | [Code Structure](#code-structure) | [Quick Start](#quick-start) | [Advanced](#advanced) | [Documentation](#documentation) | [Publications](#publications) | [Contributing](#contributing) | 
 
 ## News
+- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [04-03-2023] We release FederatedScope v0.3.0!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [02-10-2022] Our [paper](https://arxiv.org/pdf/2204.05011.pdf) elaborating on FederatedScope is accepted by VLDB'23!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [10-05-2022] Our benchmark paper for personalized FL, [pFL-Bench](https://arxiv.org/abs/2206.03655) has been accepted by NeurIPS'22, Dataset and Benchmark Track!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [08-18-2022] Our KDD 2022 [paper](https://arxiv.org/abs/2204.05562) on federated graph learning receives the KDD Best Paper Award for ADS track!
@@ -121,9 +122,10 @@ Finally, after the backend is installed, you can install FederatedScope from `so
 ##### From source
 
 ```bash
-pip install .
+# Editable mode
+pip install -e .
 
-# Or (for dev mode)
+# Or (developers for dev mode)
 pip install -e .[dev]
 pre-commit install
 ```
@@ -202,7 +204,7 @@ The distributed mode in FederatedScope denotes running multiple procedures to bu
 
 To run with distributed mode, you only need to:
 
-- Prepare isolated data file and set up `cfg.distribute.data_file = PATH/TO/DATA` for each participant;
+- Prepare isolated data file and set up `cfg.data.file_path = PATH/TO/DATA` for each participant;
 - Change `cfg.federate.model = 'distributed'`, and specify the role of each participant  by `cfg.distributed.role = 'server'/'client'`.
 - Set up a valid address by `cfg.distribute.server_host/client_host = x.x.x.x` and `cfg.distribute.server_port/client_port = xxxx`. (Note that for a server, you need to set up `server_host` and `server_port` for listening messages, while for a client, you need to set up `client_host` and `client_port` for listening as well as `server_host` and `server_port` for joining in an FL course)
 
@@ -210,12 +212,12 @@ We prepare a synthetic example for running with distributed mode:
 
 ```bash
 # For server
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx
 
 # For clients
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml distribute.data_file 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml data.file_path 'PATH/TO/DATA' distribute.server_host x.x.x.x distribute.server_port xxxx distribute.client_host x.x.x.x distribute.client_port xxxx
 ```
 
 An executable example with generated toy data can be run with (a script can be found in `scripts/run_distributed_lr.sh`):
@@ -224,14 +226,14 @@ An executable example with generated toy data can be run with (a script can be f
 python scripts/distributed_scripts/gen_data.py
 
 # Firstly start the server that is waiting for clients to join in
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml distribute.data_file toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml data.file_path toy_data/server_data distribute.server_host 127.0.0.1 distribute.server_port 50051
 
 # Start the client #1 (with another process)
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml distribute.data_file toy_data/client_1_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50052
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_1.yaml data.file_path toy_data/client_1_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50052
 # Start the client #2 (with another process)
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml distribute.data_file toy_data/client_2_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50053
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_2.yaml data.file_path toy_data/client_2_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50053
 # Start the client #3 (with another process)
-python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml distribute.data_file toy_data/client_3_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50054
+python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_client_3.yaml data.file_path toy_data/client_3_data distribute.server_host 127.0.0.1 distribute.server_port 50051 distribute.client_host 127.0.0.1 distribute.client_port 50054
 ```
 
 And you can observe the results as (the IP addresses are anonymized with 'x.x.x.x'):
