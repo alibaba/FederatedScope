@@ -47,10 +47,12 @@ def wrap_DittoTrainer(
     base_trainer.register_hook_in_train(new_hook=_hook_on_batch_end_flop_count,
                                         trigger="on_batch_end",
                                         insert_pos=-1)
+    
     base_trainer.register_hook_in_eval(
         new_hook=hook_on_fit_start_switch_local_model,
         trigger="on_fit_start",
         insert_pos=0)
+    
     base_trainer.register_hook_in_eval(
         new_hook=hook_on_fit_end_switch_global_model,
         trigger="on_fit_end",
@@ -64,6 +66,8 @@ def wrap_DittoTrainer(
                                        insert_pos=-1)
 
     return base_trainer
+
+
 
 
 def init_Ditto_ctx(base_trainer):
@@ -101,6 +105,8 @@ def init_Ditto_ctx(base_trainer):
         ctx.num_train_epoch += ctx.num_train_epoch_for_local_model
 
 
+
+
 def hook_on_fit_start_set_regularized_para(ctx):
     # set the compared model data for local personalized model
     ctx.global_model.to(ctx.device)
@@ -124,15 +130,18 @@ def hook_on_fit_start_set_regularized_para(ctx):
         compared_global_model_para)
 
 
+
 def _hook_on_fit_start_clean(ctx):
-    # remove the unnecessary optimizer
+
     del ctx.optimizer
     ctx.num_samples_local_model_train = 0
+
 
 
 def _hook_on_batch_end_flop_count(ctx):
 
     ctx.monitor.total_flops += ctx.monitor.total_model_size / 2
+
 
 
 def hook_on_batch_forward_cnt_num(ctx):
