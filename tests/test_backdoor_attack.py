@@ -24,8 +24,8 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.early_stop.patience = 0
         cfg.federate.mode = 'standalone'
         cfg.federate.batch_or_epoch = 'epoch'
-        cfg.federate.local_update_steps = 20
-        cfg.federate.total_round_num = 20
+        cfg.federate.local_update_steps = 10
+        cfg.federate.total_round_num = 40
         cfg.federate.sample_client_num = 5
         cfg.federate.client_num = 10
 
@@ -52,7 +52,7 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.attack.attacker_id = 1
         cfg.attack.inject_round = 0
         cfg.attack.setting = 'fix'
-        cfg.attack.freq = 1
+        cfg.attack.freq = 2
         cfg.attack.label_type = 'dirty'
         cfg.attack.trigger_type = 'grid'
         cfg.attack.target_label_ind = 1
