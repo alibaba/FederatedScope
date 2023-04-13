@@ -5,7 +5,6 @@ import numpy as np
 import copy
 
 from federatedscope.core.trainers import GeneralTorchTrainer
-from federatedscope.attack.auxiliary.poisoning_dataset import load_poisoned_dataset_edgeset, load_poisoned_dataset_pixel
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
 logger = logging.getLogger(__name__)

@@ -13,8 +13,6 @@ from federatedscope.core.auxiliaries.dataloader_builder import WrapDataset
 from federatedscope.core.auxiliaries.dataloader_builder import get_dataloader
 from federatedscope.core.auxiliaries.ReIterator import ReIterator
 
-# from federatedscope.attack.auxiliary.poisoning_dataset import load_poisoned_dataset_edgeset, load_poisoned_dataset_pixel
-
 logger = logging.getLogger(__name__)
 
 
