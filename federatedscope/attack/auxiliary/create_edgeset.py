@@ -8,11 +8,13 @@ from torchvision import transforms
 
 from PIL import Image
 
+
 import os
 import sys
 import logging
 import pickle
 import copy
+
 
 
 def create_ardis_poisoned_dataset(base_label=7, target_label=1, fraction=0.1):
@@ -86,6 +88,8 @@ def create_ardis_poisoned_dataset(base_label=7, target_label=1, fraction=0.1):
     return poisoned_edgeset
 
 
+
+
 def create_ardis_test_dataset(base_label=7, target_label=1):
 
     ardis_images = np.loadtxt(
@@ -118,6 +122,8 @@ def create_ardis_test_dataset(base_label=7, target_label=1):
                                                  poisoned_labels.size()))
 
     return ardis_test_dataset
+
+
 
 
 if __name__ == '__main__':
