@@ -25,6 +25,7 @@ def create_ardis_poisoned_dataset(base_label=7, target_label=1, fraction=0.1):
     ardis_labels=np.loadtxt('/mnt/zeyuqin/FederatedScope/data/ARDIS/ARDIS_train_labels.csv', \
                             dtype='float')
 
+
     ardis_images = ardis_images.reshape(ardis_images.shape[0], 28,
                                         28).astype('float32')
 
@@ -89,7 +90,6 @@ def create_ardis_poisoned_dataset(base_label=7, target_label=1, fraction=0.1):
 
 
 
-
 def create_ardis_test_dataset(base_label=7, target_label=1):
 
     ardis_images = np.loadtxt(
@@ -122,7 +122,6 @@ def create_ardis_test_dataset(base_label=7, target_label=1):
                                                  poisoned_labels.size()))
 
     return ardis_test_dataset
-
 
 
 
