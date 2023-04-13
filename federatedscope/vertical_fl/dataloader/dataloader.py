@@ -52,10 +52,16 @@ def load_vertical_data(config=None, generate=False):
         theta = np.random.uniform(low=-1.0, high=1.0, size=(total_dims, 1))
         x = np.random.choice([-1.0, 1.0, -2.0, 2.0, -3.0, 3.0],
                              size=(INSTANCE_NUM, total_dims))
-        y = np.asarray([
-            1.0 if x >= 0 else -1.0
-            for x in np.reshape(np.matmul(x, theta), -1)
-        ])
+        if config.vertical.algo == 'nn':
+            y = np.asarray([
+                1.0 if x >= 0 else 0
+                for x in np.reshape(np.matmul(x, theta), -1)
+            ])
+        else:
+            y = np.asarray([
+                1.0 if x >= 0 else -1.0
+                for x in np.reshape(np.matmul(x, theta), -1)
+            ])
 
         train_num = int(TRAIN_SPLIT * INSTANCE_NUM)
         test_data = {'theta': theta, 'x': x[train_num:], 'y': y[train_num:]}

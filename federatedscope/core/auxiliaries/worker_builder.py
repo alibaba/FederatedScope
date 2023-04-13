@@ -65,6 +65,9 @@ def get_client_cls(cfg):
             from federatedscope.vertical_fl.tree_based_models.worker \
                 import TreeClient
             return TreeClient
+        elif cfg.vertical.algo == 'nn':
+            from federatedscope.vertical_fl.nn_model.worker import nnClient
+            return nnClient
         else:
             raise ValueError(f'No client class for {cfg.vertical.algo}')
 
@@ -180,6 +183,9 @@ def get_server_cls(cfg):
             from federatedscope.vertical_fl.tree_based_models.worker \
                 import TreeServer
             return TreeServer
+        elif cfg.vertical.algo == 'nn':
+            from federatedscope.vertical_fl.nn_model.worker import nnServer
+            return nnServer
         else:
             raise ValueError(f'No server class for {cfg.vertical.algo}')
 
