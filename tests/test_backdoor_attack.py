@@ -18,8 +18,9 @@ class Backdoor_Attack(unittest.TestCase):
         import torch
         cfg.use_gpu = torch.cuda.is_available()
         cfg.device = 0
-        cfg.eval.freq = 1
-        cfg.eval.metrics = ['acc', 'correct', 'poison_attack_acc']
+        cfg.eval.freq = 2
+        cfg.eval.metrics = ['acc', 'correct']
+        cfg.eval.split = ['test', 'val', 'poison']
 
         cfg.early_stop.patience = 0
         cfg.federate.mode = 'standalone'
@@ -30,6 +31,7 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.federate.client_num = 10
 
         cfg.data.root = 'test_data/'
+        cfg.data.dataset = ['train', 'val', 'test', 'poison']
         cfg.data.type = 'femnist'
         cfg.data.splits = [0.6, 0.2, 0.2]
         cfg.data.batch_size = 32
@@ -41,8 +43,9 @@ class Backdoor_Attack(unittest.TestCase):
         cfg.model.hidden = 2048
         cfg.model.out_channels = 62
 
-        cfg.optimizer.lr = 0.01
+        cfg.optimizer.lr = 0.1
         cfg.optimizer.weight_decay = 0.0
+        cfg.grad.grad_clip = -1.0
 
         cfg.criterion.type = 'CrossEntropyLoss'
         cfg.trainer.type = 'cvtrainer'
@@ -50,14 +53,19 @@ class Backdoor_Attack(unittest.TestCase):
 
         cfg.attack.attack_method = 'backdoor'
         cfg.attack.attacker_id = 1
-        cfg.attack.inject_round = 0
         cfg.attack.setting = 'fix'
+        cfg.attack.poison_ratio = 0.5
         cfg.attack.freq = 2
         cfg.attack.label_type = 'dirty'
         cfg.attack.trigger_type = 'gridTrigger'
         cfg.attack.target_label_ind = 1
-        cfg.attack.mean = [0.1307]
-        cfg.attack.std = [0.3081]
+        cfg.attack.self_opt= False
+        cfg.attack.self_lr= 0.1
+        cfg.attack.self_epoch= 6
+        cfg.attack.scale_poisoning= False
+        cfg.attack.scale_para= 5.0
+        cfg.attack.mean= [0.1307]
+        cfg.attack.std= [0.3081]
 
         return backup_cfg
 
@@ -82,7 +90,7 @@ class Backdoor_Attack(unittest.TestCase):
         # TODO: use a resonable metric
         self.assertGreater(
             test_best_results["client_summarized_weighted_avg"]
-            ['test_poison_attack_acc'], 0.2)
+            ['poison_acc'], 0.2)
         # print(Fed_runner.client.keys())
         target_data_loss = Fed_runner.client[
             init_cfg.attack.attacker_id].trainer.ctx.target_data_loss
