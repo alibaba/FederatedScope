@@ -8,7 +8,7 @@ def extend_data_cfg(cfg):
     # ------------------------------------------------------------------------ #
     cfg.data = CN()
 
-    cfg.data.seed = ''
+    cfg.data.seed = 1
     cfg.data.root = 'data'
     cfg.data.type = 'toy'
     cfg.data.args = []  # args for external dataset, eg. [{'download': True}]
