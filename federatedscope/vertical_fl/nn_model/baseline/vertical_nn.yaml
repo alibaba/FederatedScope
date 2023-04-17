@@ -2,13 +2,13 @@ use_gpu: False
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 200
+  total_round_num: 30
 model:
   type: lr
   use_bias: False
 train:
   optimizer:
-    lr: 0.05
+    lr: 0.1
 data:
   type: synthetic_vfl_data
   args: [{normalization: True, standardization: False}]
@@ -25,5 +25,5 @@ vertical:
 trainer:
   type: none
 eval:
-  freq: 1
+  freq: 5
   best_res_update_round_wise_key: test_loss
