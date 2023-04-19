@@ -2,16 +2,17 @@ use_gpu: False
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 30
+  total_round_num: 40
 model:
-  type: lr
+  type: nn
   use_bias: False
 train:
   optimizer:
-    lr: 0.1
+    lr: 0.7
 data:
+  root: data/
   type: synthetic_vfl_data
-  args: [{normalization: True, standardization: False}]
+  args: [{normalization: False, standardization: False}]
 criterion:
   type: CrossEntropyLoss
 dataloader:
@@ -20,10 +21,11 @@ dataloader:
 vertical:
   use: True
   dims: [5, 10]
+  output_layer: [2, 2]
   key_size: 256
   algo: 'nn'
 trainer:
-  type: none
+  type: nntrainer
 eval:
-  freq: 5
+  freq: 3
   best_res_update_round_wise_key: test_loss

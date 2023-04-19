@@ -67,6 +67,12 @@ def load_vertical_data(config=None, generate=False):
         test_data = {'theta': theta, 'x': x[train_num:], 'y': y[train_num:]}
         data = dict()
 
+        test_data_1 = test_data.copy()
+        test_data_1['x'] = x[train_num:, :config.vertical.dims[0]]
+        test_data_1['y'] = None
+        test_data_2 = test_data.copy()
+        test_data_2['x'] = x[train_num:, config.vertical.dims[0]:]
+
         # For Server
         data[0] = dict()
         data[0]['train'] = None
@@ -77,7 +83,7 @@ def load_vertical_data(config=None, generate=False):
         data[1] = dict()
         data[1]['train'] = {'x': x[:train_num, :config.vertical.dims[0]]}
         data[1]['val'] = None
-        data[1]['test'] = test_data
+        data[1]['test'] = test_data_1
 
         # For Client #2
         data[2] = dict()
@@ -86,6 +92,6 @@ def load_vertical_data(config=None, generate=False):
             'y': y[:train_num]
         }
         data[2]['val'] = None
-        data[2]['test'] = test_data
+        data[2]['test'] = test_data_2
 
         return data, config

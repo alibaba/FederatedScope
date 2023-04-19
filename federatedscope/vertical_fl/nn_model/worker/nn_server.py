@@ -34,27 +34,6 @@ class nnServer(Server):
         self.public_key, self.private_key = \
             abstract_paillier.generate_paillier_keypair(n_length=cfg_key_size)
         self.vertical_dims = config.vertical.dims
-        self._init_data_related_var()
-
-        self.register_handlers('model', self.callback_func_for_model)
-
-    def sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
-
-    def _init_data_related_var(self):
-        self.dims = [0] + self.vertical_dims
-        self.model = get_model(self._cfg.model, self.data)
-        self.theta = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
-        self.test_x = self.data['test']['x']
-        self.test_y = self.data['test']['y']
-
-        self.test_x = self.test_x[:, :]
-        self.test_x = torch.from_numpy(self.test_x)
-        self.test_x = self.test_x.to(torch.float32)
-
-        self.test_y = np.vstack(self.test_y).reshape(-1, 1)
-        self.test_y = torch.from_numpy(self.test_y)
-        self.test_y = self.test_y.to(torch.float32)
 
     def trigger_for_start(self):
         if self.check_client_join_in():
@@ -68,22 +47,3 @@ class nnServer(Server):
                     receiver=[each for each in self.comm_manager.neighbors],
                     state=self.state,
                     content='None'))
-
-    def callback_func_for_model(self, message: Message):
-        self.model_dict[message.sender] = message.content
-
-        if len(self.model_dict) == 2:
-            # print(self.dims)
-            # print(self.test_x[:, :self.dims[1]])
-            a1 = self.model_dict[1](self.test_x[:, :self.dims[1]])
-
-            a2 = self.model_dict[2][0](self.test_x[:, self.dims[1]:])
-            a = torch.cat((a1, a2), 1)
-            y_hat = self.model_dict[2][1](a)
-            self.model_dict = dict()
-            # print(y_hat)
-            # print(self.test_y)
-            loss = torch.mean((self.test_y - y_hat)**2)
-            y_hat = (y_hat >= 0.5)
-            acc = torch.sum(y_hat == self.test_y) / len(self.test_y)
-            print(loss, acc)

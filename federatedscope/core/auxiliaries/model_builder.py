@@ -197,6 +197,8 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in ['atc_model']:
         from federatedscope.nlp.hetero_tasks.model import ATCModel
         model = ATCModel(model_config)
+    elif model_config.type.lower() in ['nn']:
+        model = None
     else:
         raise ValueError('Model {} is not provided'.format(model_config.type))
 
