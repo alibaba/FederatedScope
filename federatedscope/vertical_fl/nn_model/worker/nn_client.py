@@ -2,8 +2,9 @@ import numpy as np
 import logging
 
 import torch
-from torch import nn, optim
+from torch import nn
 from torch.autograd import Variable
+from sklearn import metrics
 
 from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
@@ -160,9 +161,10 @@ class nnClient(Client):
 
     def callback_funcs_for_continue(self, message: Message):
 
-        self.state += 1
-        if self.state % self._cfg.eval.freq == 0 and self.state != \
-                self._cfg.federate.total_round_num:
+        if (self.state+1) % self._cfg.eval.freq == 0 and \
+                (self.state+1) != self._cfg.federate.total_round_num:
+            self.eval_middle_result_dict[self.ID] = self.trainer.bottom_model(
+                self.test_x)
             self.comm_manager.send(
                 Message(msg_type='eval',
                         sender=self.ID,
@@ -172,9 +174,9 @@ class nnClient(Client):
                         ],
                         state=self.state,
                         content='None'))
-            self.eval_middle_result_dict[self.ID] = self.trainer.bottom_model(
-                self.test_x)
-        elif self.state < self._cfg.federate.total_round_num:
+
+        elif self.state + 1 < self._cfg.federate.total_round_num:
+            self.state += 1
             self.start_a_new_training_round()
         else:
             self.comm_manager.send(
@@ -211,14 +213,37 @@ class nnClient(Client):
 
             y_hat = self.trainer.top_model(eval_middle_result)
 
-            criterion = nn.MSELoss()
-            test_loss = criterion(y_hat, self.test_y)
+            test_loss = self.trainer.criterion(y_hat, self.test_y)
+
+            auc = metrics.roc_auc_score(
+                self.test_y.reshape(-1).detach().numpy(),
+                y_hat.reshape(-1).detach().numpy())
             y_hat = (y_hat >= 0.5)
-            # print(y_hat)
-            # print(self.test_y)
-            # y_hat = torch.Tensor([1 if x[0] >= 0.5 else 0 for x in y_hat])
 
             acc = torch.sum(y_hat == self.test_y) / len(self.test_y)
-            print("test loss", test_loss, "test acc", acc)
+
+            self.metrics = {
+                'test_loss': test_loss.detach().numpy(),
+                "test_auc": auc,
+                "test_acc": acc.numpy(),
+                'test_total': len(self.test_y)
+            }
+
+            self._monitor.update_best_result(self.best_results,
+                                             self.metrics,
+                                             results_type='server_global_eval')
+
+            formatted_logs = self._monitor.format_eval_res(
+                self.metrics,
+                rnd=self.state,
+                role='Server #',
+                forms=self._cfg.eval.report)
+
+            logger.info(formatted_logs)
+
+            # print("test loss:",
+            #       test_loss.detach().numpy(), "test auc:", auc, "test acc:",
+            #       acc.numpy())
             if self.state + 1 < self._cfg.federate.total_round_num:
+                self.state += 1
                 self.start_a_new_training_round()

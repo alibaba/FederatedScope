@@ -2,7 +2,7 @@ use_gpu: False
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 40
+  total_round_num: 50
 model:
   type: nn
   use_bias: False
@@ -24,8 +24,10 @@ vertical:
   output_layer: [2, 2]
   key_size: 256
   algo: 'nn'
+  protect_method: 'dp'
+  protect_args: [{'algo': 'Laplace', 'para': 0.01}]   # [{'algo': 'Bernoulli', 'para': 0}]
 trainer:
   type: nntrainer
 eval:
-  freq: 3
+  freq: 5
   best_res_update_round_wise_key: test_loss
