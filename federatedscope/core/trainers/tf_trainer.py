@@ -213,6 +213,8 @@ class GeneralTFTrainer(Trainer):
         setattr(ctx, 'eval_metrics', results)
 
     def update(self, model_parameters, strict=False):
+        # TODO: Fix TF in Distributed mode
+        # 1) `pickle.loads((base64.b64decode(enc_tensor)))` to restore
         self.ctx.model.load_state_dict(model_parameters, strict=strict)
 
     def save_model(self, path, cur_round=-1):

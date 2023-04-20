@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+import base64
 import random
 import signal
 import pickle
@@ -92,12 +93,15 @@ def merge_dict_of_results(dict1, dict2):
 
 
 def param2tensor(param):
+    # TODO: make it work in `message`
     if isinstance(param, list):
         param = torch.FloatTensor(param)
     elif isinstance(param, int):
         param = torch.tensor(param, dtype=torch.long)
     elif isinstance(param, float):
         param = torch.tensor(param, dtype=torch.float)
+    elif isinstance(param, str):
+        param = pickle.loads((base64.b64decode(param)))
     return param
 
 

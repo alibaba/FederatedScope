@@ -539,7 +539,8 @@ class Monitor(object):
             'Round': rnd,
             'Results_model_metric': model_metric_dict
         }
-        logger.info(formatted_log)
+        if len(model_metric_dict.keys()):
+            logger.info(formatted_log)
 
         return model_metric_dict
 
