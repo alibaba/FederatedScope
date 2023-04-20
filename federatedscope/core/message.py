@@ -1,6 +1,12 @@
 import json
+import pickle
+import base64
 import numpy as np
 from federatedscope.core.proto import gRPC_comm_manager_pb2
+
+
+def b64serializer(x):
+    return base64.b64encode(pickle.dumps(x))
 
 
 class Message(object):
@@ -33,6 +39,7 @@ class Message(object):
         self._timestamp = timestamp
         self._strategy = strategy
         self.serial_num = serial_num
+        self.param_serializer = b64serializer
 
     @property
     def msg_type(self):
@@ -109,7 +116,10 @@ class Message(object):
             return x
         else:
             if hasattr(x, 'tolist'):
-                return x.tolist()
+                if self.msg_type == 'model_para':
+                    return self.param_serializer(x)
+                else:
+                    return x.tolist()
             else:
                 return x
 
@@ -174,7 +184,7 @@ class Message(object):
             m_single = gRPC_comm_manager_pb2.mSingle()
             if type(value) in [int, np.int32]:
                 m_single.int_value = value
-            elif type(value) in [str]:
+            elif type(value) in [str, bytes]:
                 m_single.str_value = value
             elif type(value) in [float, np.float32]:
                 m_single.float_value = value
