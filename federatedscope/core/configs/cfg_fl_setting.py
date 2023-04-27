@@ -72,8 +72,8 @@ def extend_fl_setting_cfg(cfg):
     # data_idx = -1 means that the whole dataset is owned by the participant.
     # when data_idx is other invalid values excepted for -1, we randomly
     # sample the data_idx for simulation
-    cfg.distribute.grpc_max_send_message_length = 100 * 1024 * 1024
-    cfg.distribute.grpc_max_receive_message_length = 100 * 1024 * 1024
+    cfg.distribute.grpc_max_send_message_length = 300 * 1024 * 1024  # 300M
+    cfg.distribute.grpc_max_receive_message_length = 300 * 1024 * 1024  # 300M
     cfg.distribute.grpc_enable_http_proxy = False
     cfg.distribute.grpc_compression = 'nocompression'  # [deflate, gzip]
 

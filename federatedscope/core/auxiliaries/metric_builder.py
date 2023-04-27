@@ -54,4 +54,7 @@ def get_metric(types):
         if res is not None:
             name, metric, the_larger_the_better = res
             metrics[name] = metric, the_larger_the_better
+    for key in types:
+        if key not in metrics.keys():
+            logger.warning(f'eval.metrics `{key}` method not found!')
     return metrics
