@@ -23,7 +23,7 @@ vertical:
   output_layer: [2, 2]
   algo: 'nn'
   protect_method: 'dp'
-  protect_args: [{'algo': 'Bernoulli', 'para': 0}]  # [{'algo': 'Laplace', 'para': 0.01}]
+  protect_args: [{'algo': 'Bernoulli', 'para': 0.1}]  # [{'algo': 'Laplace', 'para': 0.01}]
 trainer:
   type: nntrainer
 eval:
