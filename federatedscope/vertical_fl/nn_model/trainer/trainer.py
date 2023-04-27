@@ -74,14 +74,11 @@ class nnTrainer(object):
     def train_bottom(self):
         self.middle_result = self.bottom_model(self.batch_x)
         middle_result = self.middle_result.data  # detach().requires_grad_()
-        # print(middle_result)
         return middle_result
 
     def train_top(self, input_):
 
         train_loss, grad = self.protect_grad(input_)
-        # print(input_.grad)
-        # input()
         self.top_model_opt.step()
 
         grad_list = []
@@ -114,6 +111,8 @@ class nnTrainer(object):
         fake_grad = 0
         algo = None
         para = None
+        # The following protect method is proposed in
+        # "Differentially Private Label Protection in Split Learning"
         if self.cfg.vertical.protect_method == 'dp':
             args = self.cfg.vertical.protect_args[0] if len(
                 self.cfg.vertical.protect_args) > 0 else {}

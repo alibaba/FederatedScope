@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class nnServer(Server):
-    """
-
-    """
     def __init__(self,
                  ID=-1,
                  state=0,

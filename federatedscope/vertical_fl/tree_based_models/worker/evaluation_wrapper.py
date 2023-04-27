@@ -174,8 +174,6 @@ def wrap_server_for_evaluation(server):
                 sorted(buffer['feature_importance'].items(),
                        key=lambda x: x[0]))
             self.metrics = buffer['metrics']
-            print(self.best_results)
-            print(self.metrics)
             self._monitor.update_best_result(self.best_results,
                                              self.metrics,
                                              results_type='server_global_eval')

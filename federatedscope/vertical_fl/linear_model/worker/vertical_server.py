@@ -5,6 +5,7 @@ from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import abstract_paillier
 from federatedscope.core.auxiliaries.model_builder import get_model
+from sklearn import metrics
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +124,13 @@ class vFLServer(Server):
         test_y = self.data['test']['y']
         loss = np.mean(
             np.log(1 + np.exp(-test_y * np.matmul(test_x, self.theta))))
-        acc = np.mean((test_y * np.matmul(test_x, self.theta)) > 0)
+        y_hat = np.matmul(test_x, self.theta)
+        auc = metrics.roc_auc_score(test_y, y_hat)
+        acc = np.mean((test_y * y_hat) > 0)
 
-        return {'test_loss': loss, 'test_acc': acc, 'test_total': len(test_y)}
+        return {
+            'test_loss': loss,
+            'test_acc': acc,
+            'test_auc': auc,
+            'test_total': len(test_y)
+        }

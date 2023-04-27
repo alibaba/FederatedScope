@@ -13,9 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class nnClient(Client):
-    """
-
-    """
     def __init__(self,
                  ID=-1,
                  server_id=None,
@@ -140,17 +137,7 @@ class nnClient(Client):
 
     def callback_func_for_grad(self, message: Message):
         grad = message.content
-        # print("==========")
-        # print(grad)
-        # # grad = torch.from_numpy(grad)
-        # print('-----')
         self.trainer.bottom_model_backward(grad)
-        # print(self.a)
-        # print(grad)
-        # input()
-        # self.a.backward(grad)
-        # print(self.bottom_model[0].weight.grad)
-        # self.bottom_model_opt.step()
 
         self.comm_manager.send(
             Message(msg_type='continue',
@@ -241,9 +228,6 @@ class nnClient(Client):
 
             logger.info(formatted_logs)
 
-            # print("test loss:",
-            #       test_loss.detach().numpy(), "test auc:", auc, "test acc:",
-            #       acc.numpy())
             if self.state + 1 < self._cfg.federate.total_round_num:
                 self.state += 1
                 self.start_a_new_training_round()

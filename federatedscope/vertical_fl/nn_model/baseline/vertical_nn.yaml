@@ -2,7 +2,7 @@ use_gpu: False
 federate:
   mode: standalone
   client_num: 2
-  total_round_num: 50
+  total_round_num: 30
 model:
   type: nn
   use_bias: False
@@ -12,7 +12,6 @@ train:
 data:
   root: data/
   type: synthetic_vfl_data
-  args: [{normalization: False, standardization: False}]
 criterion:
   type: CrossEntropyLoss
 dataloader:
@@ -22,10 +21,9 @@ vertical:
   use: True
   dims: [5, 10]
   output_layer: [2, 2]
-  key_size: 256
   algo: 'nn'
   protect_method: 'dp'
-  protect_args: [{'algo': 'Laplace', 'para': 0.01}]   # [{'algo': 'Bernoulli', 'para': 0}]
+  protect_args: [{'algo': 'Bernoulli', 'para': 0}]  # [{'algo': 'Laplace', 'para': 0.01}]
 trainer:
   type: nntrainer
 eval:

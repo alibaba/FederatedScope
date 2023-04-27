@@ -128,19 +128,6 @@ class Blog(object):
                                      os.path.join(self.root, self.base_folder),
                                      filename=self.url.split('/')[-1])
 
-        # normalization
-
-    def normalization(self, data):
-        _range = np.max(data) - np.min(data)
-        return (data - np.min(data)) / _range
-
-        # standardization
-
-    def standardization(self, data):
-        mu = np.mean(data, axis=0)
-        sigma = np.std(data, axis=0)
-        return (data - mu) / sigma
-
     def _partition_data(self):
         x = self.data_dict['train'][:, :self.feature_partition[-1]]
         y = self.data_dict['train'][:, self.feature_partition[-1]]
@@ -150,14 +137,6 @@ class Blog(object):
 
         test_x = test_data['x']
         test_y = test_data['y']
-
-        if self.args['normalization']:
-            x = self.normalization(x)
-            test_data['x'] = self.normalization(test_data['x'])
-
-        if self.args['standardization']:
-            x = self.standardization(x)
-            test_data['x'] = self.standardization(test_data['x'])
 
         self.data = dict()
         for i in range(self.num_of_clients + 1):
