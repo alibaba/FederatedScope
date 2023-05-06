@@ -22,7 +22,7 @@ def extend_data_cfg(cfg):
     # idx 0) holds all data, useful in global training/evaluation case
     cfg.data.subsample = 1.0
     cfg.data.splits = [0.8, 0.1, 0.1]  # Train, valid, test splits
-    cfg.data.consistent_label_distribution = False  # If True, the label
+    cfg.data.consistent_label_distribution = True  # If True, the label
     # distributions of train/val/test set over clients will be kept
     # consistent during splitting
     cfg.data.cSBM_phi = [0.5, 0.5, 0.5]
