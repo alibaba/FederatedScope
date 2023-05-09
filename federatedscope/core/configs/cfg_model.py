@@ -52,8 +52,13 @@ def extend_model_cfg(cfg):
     # ---------------------------------------------------------------------- #
     # LLM related options
     # ---------------------------------------------------------------------- #
-    cfg.model.llm = CN()
-    cfg.model.llm.tok_len = 128
+    # TODO: move to new file
+    cfg.llm = CN()
+    cfg.llm.tok_len = 128
+
+    cfg.llm.dataset = CN()
+    cfg.llm.dataset.source = ['question']  # Filter dataset
+    cfg.llm.dataset.target = ['answers']  # Filter dataset
 
     # ---------------------------------------------------------------------- #
     # Criterion related options

@@ -1,7 +1,5 @@
 import copy
 
-from transformers import AutoModelForCausalLM
-
 MODEL_CACHE = {}
 
 
@@ -42,6 +40,8 @@ def enable_adapter(model, adapter, package, **kwargs):
 
 
 def get_model_from_huggingface(model_name, llm_config, **kwargs):
+    from transformers import AutoModelForCausalLM
+
     if model_name in MODEL_CACHE:
         model = copy.deepcopy(MODEL_CACHE[model_name])
     else:
@@ -52,12 +52,12 @@ def get_model_from_huggingface(model_name, llm_config, **kwargs):
 
 
 def get_model_from_modelscope(model_name, llm_config, **kwargs):
-    import modelscope
+    from modelscope.models import Model
 
     if model_name in MODEL_CACHE:
         model = copy.deepcopy(MODEL_CACHE[model_name])
     else:
-        model = modelscope.load(model_name)
+        model = Model.from_pretrained(model_name)
         MODEL_CACHE[model_name] = model
     # model.resize_token_embeddings(llm_config.tok_len)
     return model
@@ -65,6 +65,7 @@ def get_model_from_modelscope(model_name, llm_config, **kwargs):
 
 def get_model(model_config, **kwargs):
     model_name, model_hub = model_config.type.split('@')
+    # TODO: make llm independent
     llm_config = model_config.llm
 
     if model_hub == 'huggingface_llm':
