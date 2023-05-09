@@ -25,8 +25,9 @@ app_requires = [
     'openml==0.12.2'
 ]
 
-llm_requires = ['tokenizers==0.13.3', 'transformers==4.28.1',
-                'adapter-transformers==3.2.1']
+llm_requires = [
+    'tokenizers==0.13.3', 'transformers==4.28.1', 'adapter-transformers==3.2.1'
+]
 
 benchmark_hpo_requires = [
     'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.3.3', 'optuna==2.10.0'
