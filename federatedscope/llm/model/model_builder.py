@@ -28,12 +28,12 @@ def enable_adapter(model, adapter, package, **kwargs):
         """
         AdapterHub: https://docs.adapterhub.ml/model_overview.html
         Support methods:
-            Bottleneck Adapters	
-            Prefix Tuning	
-            LoRA	
-            Compacter	
-            Adapter Fusion	
-            Invertible Adapters	
+            Bottleneck Adapters
+            Prefix Tuning
+            LoRA
+            Compacter
+            Adapter Fusion
+            Invertible Adapters
             Parallel block
         """
         raise NotImplementedError
