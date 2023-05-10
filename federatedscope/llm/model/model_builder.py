@@ -59,14 +59,12 @@ def get_model_from_modelscope(model_name, llm_config, **kwargs):
     else:
         model = Model.from_pretrained(model_name)
         MODEL_CACHE[model_name] = model
-    # model.resize_token_embeddings(llm_config.tok_len)
     return model
 
 
-def get_model(model_config, **kwargs):
+def get_model(model_config, llm_config, **kwargs):
     model_name, model_hub = model_config.type.split('@')
     # TODO: make llm independent
-    llm_config = model_config.llm
 
     if model_hub == 'huggingface_llm':
         model = get_model_from_huggingface(model_name=model_name,
