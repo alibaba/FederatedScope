@@ -84,19 +84,23 @@ def load_llm_dataset(config=None):
                               tok_len=config.llm.tok_len)
 
     dataset = load_dataset(dataset_name, cache_dir=config.data.root)
-    print(dataset.column_names.keys())
 
-    train_encoded_dataset = encode_dataset(dataset['train'],
-                                           tokenizer,
-                                           source=config.llm.dataset.source,
-                                           target=config.llm.dataset.target,
-                                           tok_len=config.llm.tok_len)
-    val_encoded_dataset = encode_dataset(dataset['validation'],
-                                         tokenizer,
-                                         source=config.llm.dataset.source,
-                                         target=config.llm.dataset.target,
-                                         tok_len=config.llm.tok_len)
-    return dict(train=train_encoded_dataset, val=val_encoded_dataset)
+    train_dataset = dataset['train']
+    val_dataset, test_dataset = dataset['validation'].train_test_split(
+        test_size=config.data.splits[1] / sum(config.data.splits[1:]),
+        shuffle=True,
+        seed=config.seed).values()
+
+    encoded_datasets = [
+        encode_dataset(x,
+                       tokenizer,
+                       source=config.llm.dataset.source,
+                       target=config.llm.dataset.target,
+                       tok_len=config.llm.tok_len)
+        for x in [train_dataset, val_dataset, test_dataset]
+    ]
+
+    return encoded_datasets
 
 
 if __name__ == '__main__':
@@ -104,6 +108,8 @@ if __name__ == '__main__':
     from federatedscope.core.configs.config import CN
 
     config = CN()
+    config.seed = 42
+
     config.model = CN()
     config.model.type = 'gpt2@huggingface_llm'
 
@@ -117,5 +123,6 @@ if __name__ == '__main__':
     config.data = CN()
     config.data.root = 'data'
     config.data.type = 'squad@llm'
+    config.data.splits = [0, 0.5, 0.5]
 
-    dataset = load_llm_dataset(config)
+    train_dataset, val_dataset, test_dataset = load_llm_dataset(config)
