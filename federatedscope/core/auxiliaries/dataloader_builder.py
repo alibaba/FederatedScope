@@ -83,5 +83,15 @@ def get_dataloader(dataset, config, split='train'):
             # edge_index of raw graph
             dataset = dataset[0].edge_index
     filtered_args = filter_dict(loader_cls.__init__, raw_args)
+
+    if config.data.type.lower().endswith('@llm'):
+        from federatedscope.llm.dataloader import get_tokenizer, \
+            LLMDataCollator
+        model_name, _ = config.model.type.split('@')
+        tokenizer, _ = get_tokenizer(model_name, config.data.root,
+                                     config.llm.tok_len)
+        data_collator = LLMDataCollator(tokenizer=tokenizer)
+        filtered_args['collate_fn'] = data_collator
+
     dataloader = loader_cls(dataset, **filtered_args)
     return dataloader

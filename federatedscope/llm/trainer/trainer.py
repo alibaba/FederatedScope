@@ -1,12 +1,46 @@
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
+from federatedscope.core.trainers.context import CtxVar
+from federatedscope.core.trainers.enums import LIFECYCLE
+from federatedscope.core.auxiliaries.utils import param2tensor, \
+    merge_param_dict
 
 
 class LLMTrainer(GeneralTorchTrainer):
-    """
-    TODO: implement this
-    """
-    pass
+    def update(self, model_parameters, strict=False):
+        # TODO: enable adapter
+        """
+            Called by the FL client to update the model parameters
+        Arguments:
+            model_parameters (dict): PyTorch Module object's state_dict.
+        """
+        for key in model_parameters:
+            model_parameters[key] = param2tensor(model_parameters[key])
+        # Due to lazy load, we merge two state dict
+        merged_param = merge_param_dict(self.ctx.model.state_dict().copy(),
+                                        self._param_filter(model_parameters))
+        self.ctx.model.load_state_dict(merged_param, strict=strict)
+
+    def _hook_on_batch_forward(self, ctx):
+        input_ids = ctx.data_batch['input_ids'].to(ctx.device)
+        labels = ctx.data_batch['labels'].to(ctx.device)
+
+        outputs = ctx.model.forward(input_ids, labels=labels)
+
+        logits = outputs.logits
+        loss = outputs.loss
+
+        ctx.y_true = CtxVar(labels, LIFECYCLE.BATCH)
+        ctx.y_prob = CtxVar(logits, LIFECYCLE.BATCH)
+
+        ctx.loss_batch = CtxVar(loss, LIFECYCLE.BATCH)
+        ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+
+    def _hook_on_fit_end(self, ctx):
+        # TODO: enable other metrics in
+        #  https://crfm-helm.readthedocs.io/en/latest/metrics/
+        setattr(ctx, 'eval_metrics',
+                {f'{ctx.cur_split}_loss': ctx.loss_batch_total})
 
 
 def call_llm_trainer(trainer_type):
@@ -16,82 +50,3 @@ def call_llm_trainer(trainer_type):
 
 
 register_trainer('llmtrainer', call_llm_trainer)
-
-if __name__ == '__main__':
-    # Test cases
-
-    import transformers
-    from federatedscope.core.configs.config import CN
-    from federatedscope.llm.dataloader.dataloader import load_llm_dataset
-    from federatedscope.llm.model.model_builder import \
-        get_model_from_huggingface
-
-    config = CN()
-    config.seed = 42
-
-    config.model = CN()
-    config.model.type = 'gpt2@huggingface_llm'
-
-    config.llm = CN()
-    config.llm.tok_len = 1000
-
-    config.llm.dataset = CN()
-    config.llm.dataset.source = ['question']
-    config.llm.dataset.target = ['question', 'answers']
-
-    config.data = CN()
-    config.data.root = 'data'
-    config.data.type = 'alpaca_data.json@llm'
-    config.data.splits = [0, 0.5, 0.5]
-
-    dataset, data_collator, tokenizer, num_new_tokens = \
-        load_llm_dataset(config)
-
-    model = get_model_from_huggingface(model_name='gpt2',
-                                       llm_config=config.llm)
-
-    model.resize_token_embeddings(len(tokenizer))
-    if num_new_tokens > 0:
-        input_embeddings = model.get_input_embeddings().weight.data
-        output_embeddings = model.get_output_embeddings().weight.data
-
-        input_embeddings_avg = input_embeddings[:-num_new_tokens].mean(
-            dim=0, keepdim=True)
-        output_embeddings_avg = output_embeddings[:-num_new_tokens].mean(
-            dim=0, keepdim=True)
-
-        input_embeddings[-num_new_tokens:] = input_embeddings_avg
-        output_embeddings[-num_new_tokens:] = output_embeddings_avg
-
-    import torch
-    import numpy as np
-
-    # TODO: make trainer compatible fs_trainer
-    from torch.utils.data import DataLoader
-
-    train_dataloader = DataLoader(dataset,
-                                  batch_size=8,
-                                  shuffle=True,
-                                  num_workers=0,
-                                  collate_fn=data_collator,
-                                  drop_last=True)
-
-    epochs = 5
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=0.0001)
-    losses = []
-    model.train()
-    model.to('cuda:0')
-    for i in range(epochs):
-        for batch_idx, item in enumerate(train_dataloader):
-            input_ids = item['input_ids'].to('cuda:0')
-            labels = item['labels'].to('cuda:0')
-            optimizer.zero_grad()
-            outputs = model.forward(input_ids, labels=labels)
-            logits = outputs.logits
-            loss = outputs.loss
-            losses.append(loss.mean().item())
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.1)
-            optimizer.step()
-            if batch_idx % 1000 == 0:
-                print(np.mean(losses))

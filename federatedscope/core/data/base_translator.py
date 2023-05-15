@@ -119,7 +119,8 @@ class BaseDataTranslator:
                 except:
                     logger.warning(
                         'Cannot access train label distribution for '
-                        'splitter.')
+                        'splitter, split dataset without considering train '
+                        'label.')
         if len(val) > 0:
             split_val = self.splitter(val, prior=train_label_distribution)
         if len(test) > 0:

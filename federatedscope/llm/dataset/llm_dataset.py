@@ -1,3 +1,5 @@
+# TODO: add copyright: https://github.com/tatsu-lab/stanford_alpaca
+
 import json
 import copy
 import logging
