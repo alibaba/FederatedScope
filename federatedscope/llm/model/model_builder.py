@@ -39,7 +39,7 @@ def enable_adapter(model, adapter, package, **kwargs):
     return model
 
 
-def get_model_from_huggingface(model_name, llm_config, **kwargs):
+def get_model_from_huggingface(model_name):
     from transformers import AutoModelForCausalLM
 
     if model_name in MODEL_CACHE:
@@ -47,11 +47,10 @@ def get_model_from_huggingface(model_name, llm_config, **kwargs):
     else:
         model = AutoModelForCausalLM.from_pretrained(model_name)
         MODEL_CACHE[model_name] = model
-    # model.resize_token_embeddings(llm_config.tok_len)
     return model
 
 
-def get_model_from_modelscope(model_name, llm_config, **kwargs):
+def get_model_from_modelscope(model_name):
     from modelscope.models import Model
 
     if model_name in MODEL_CACHE:
@@ -62,28 +61,33 @@ def get_model_from_modelscope(model_name, llm_config, **kwargs):
     return model
 
 
-def get_model(model_config, llm_config, **kwargs):
-    model_name, model_hub = model_config.type.split('@')
-    # TODO: make llm independent
+def get_llm(config):
+    from federatedscope.llm.dataloader import get_tokenizer
 
+    model_config = config.model
+    model_name, model_hub = model_config.type.split('@')
     if model_hub == 'huggingface_llm':
-        model = get_model_from_huggingface(model_name=model_name,
-                                           llm_config=llm_config)
+        model = get_model_from_huggingface(model_name=model_name)
     elif model_hub == 'modelscope_llm':
-        model = get_model_from_modelscope(model_name=model_name,
-                                          llm_config=llm_config)
+        model = get_model_from_modelscope(model_name=model_name)
     else:
         raise NotImplementedError(f'Not support LLM {model_name} in'
                                   f' {model_hub}.')
+
+    # Resize LLM model based on settings
+    tokenizer, num_new_tokens = \
+        get_tokenizer(model_name, config.data.root, config.llm.tok_len)
+    model.resize_token_embeddings(len(tokenizer))
+    if num_new_tokens > 0:
+        input_embeddings = model.get_input_embeddings().weight.data
+        output_embeddings = model.get_output_embeddings().weight.data
+
+        input_embeddings_avg = input_embeddings[:-num_new_tokens].mean(
+            dim=0, keepdim=True)
+        output_embeddings_avg = output_embeddings[:-num_new_tokens].mean(
+            dim=0, keepdim=True)
+
+        input_embeddings[-num_new_tokens:] = input_embeddings_avg
+        output_embeddings[-num_new_tokens:] = output_embeddings_avg
+
     return model
-
-
-if __name__ == '__main__':
-    # Test cases
-    from federatedscope.core.configs.config import CN
-
-    llm_config = CN()
-    llm_config.tok_len = 128
-
-    model = get_model_from_huggingface(model_name='gpt2',
-                                       llm_config=llm_config)
