@@ -58,8 +58,6 @@ def get_tokenizer(model_name, cache_dir, tok_len=128):
 
 def load_llm_dataset(config=None, **kwargs):
     model_name, _ = config.model.type.split('@')
-
-    # Resize the model
     tokenizer, num_new_tokens = \
         get_tokenizer(model_name, config.data.root, config.llm.tok_len)
 
@@ -69,7 +67,4 @@ def load_llm_dataset(config=None, **kwargs):
     fp = os.path.join(config.data.root, dataset_name)
     dataset = LLMDataset(fp, tokenizer)
 
-    # Move to Dataloader
-    # data_collator = LLMDataCollator(tokenizer=tokenizer)
-
-    return dataset, config  # data_collator, tokenizer, num_new_tokens
+    return dataset, config

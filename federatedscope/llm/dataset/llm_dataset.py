@@ -1,4 +1,7 @@
-# TODO: add copyright: https://github.com/tatsu-lab/stanford_alpaca
+"""
+Some code snippets are borrowed from the open-sourced stanford_alpaca (
+    https://github.com/tatsu-lab/stanford_alpaca)
+"""
 
 import json
 import copy
@@ -33,7 +36,6 @@ PROMPT_DICT = {
 
 
 class LLMDataset(Dataset):
-    """Dataset for supervised fine-tuning."""
     def __init__(self, data_path, tokenizer):
         super(LLMDataset, self).__init__()
         with open(data_path, 'r') as f:
@@ -57,7 +59,6 @@ class LLMDataset(Dataset):
         self.labels = data_dict["labels"]
 
     def _tokenize_fn(self, strings, tokenizer):
-        """Tokenize a list of strings."""
         tokenized_list = [
             tokenizer(
                 text,
@@ -82,7 +83,6 @@ class LLMDataset(Dataset):
         )
 
     def preprocess(self, sources, targets, tokenizer):
-        """Preprocess the data by tokenizing."""
         examples = [s + t for s, t in zip(sources, targets)]
         examples_tokenized, sources_tokenized = [
             self._tokenize_fn(strings, tokenizer)
