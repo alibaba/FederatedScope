@@ -93,12 +93,12 @@ def get_shape_from_data(data, model_config, backend='torch'):
             return shape
 
 
-def get_model(model_config, local_data=None, backend='torch'):
+def get_model(config, local_data=None, backend='torch'):
     """
     This function builds an instance of model to be trained.
 
     Arguments:
-        model_config: ``cfg.model``, a submodule of ``cfg``
+        config: ``cfg``
         local_data: the model to be instantiated is responsible for the \
         given data
         backend: chosen from ``torch`` and ``tensorflow``
@@ -122,7 +122,11 @@ def get_model(model_config, local_data=None, backend='torch'):
         ``mf.model.model_builder.get_mfnet()``
         ===================================  ==============================
     """
-    if model_config.type.lower() in ['xgb_tree', 'gbdt_tree', 'random_forest']:
+    model_config = config.model
+
+    if model_config.type.lower() in \
+            ['xgb_tree', 'gbdt_tree', 'random_forest'] or \
+            model_config.type.lower().endswith('_llm'):
         input_shape = None
     elif local_data is not None:
         input_shape = get_shape_from_data(local_data, model_config, backend)
@@ -180,6 +184,9 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower().endswith('transformers'):
         from federatedscope.nlp.model import get_transformer
         model = get_transformer(model_config, input_shape)
+    elif model_config.type.lower().endswith('_llm'):
+        from federatedscope.llm.model import get_llm
+        model = get_llm(config)
     elif model_config.type.lower() in [
             'gcn', 'sage', 'gpr', 'gat', 'gin', 'mpnn'
     ]:

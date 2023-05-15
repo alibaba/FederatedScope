@@ -68,38 +68,8 @@ def load_llm_dataset(config=None, **kwargs):
     dataset_name, _ = config.data.type.split('@')
     fp = os.path.join(config.data.root, dataset_name)
     dataset = LLMDataset(fp, tokenizer)
-    data_collator = LLMDataCollator(tokenizer=tokenizer)
 
-    return dataset, data_collator, tokenizer, num_new_tokens
+    # Move to Dataloader
+    # data_collator = LLMDataCollator(tokenizer=tokenizer)
 
-
-if __name__ == '__main__':
-    # Test cases
-    from federatedscope.core.configs.config import CN
-
-    config = CN()
-    config.seed = 42
-
-    config.model = CN()
-    config.model.type = 'gpt2@huggingface_llm'
-
-    config.llm = CN()
-    config.llm.tok_len = 1000
-
-    config.llm.dataset = CN()
-    config.llm.dataset.source = ['instruction', input]
-    config.llm.dataset.target = ['output']
-
-    config.data = CN()
-    config.data.root = 'data'
-    config.data.type = 'alpaca_data.json@llm'
-    config.data.splits = [0, 0.5, 0.5]
-
-    dataset, data_collator, tokenizer, num_new_tokens = \
-        load_llm_dataset(config)
-
-    cnt = 10
-    for i, data in enumerate(dataset):
-        print(data)
-        if cnt < i:
-            break
+    return dataset, config  # data_collator, tokenizer, num_new_tokens
