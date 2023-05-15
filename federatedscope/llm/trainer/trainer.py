@@ -19,12 +19,11 @@ register_trainer('llmtrainer', call_llm_trainer)
 
 if __name__ == '__main__':
     # Test cases
-
     import transformers
     from federatedscope.core.configs.config import CN
     from federatedscope.llm.dataloader.dataloader import load_llm_dataset
     from federatedscope.llm.model.model_builder import \
-        get_model_from_huggingface
+        get_model_from_huggingface, enable_adapter
 
     config = CN()
     config.seed = 42
@@ -80,6 +79,10 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params=model.parameters(), lr=0.0001)
     losses = []
     model.train()
+
+    model = enable_adapter(model, 'lora', 'adapterhub')
+    model.train_adapter(["lora_adapter"])
+
     model.to('cuda:0')
     for i in range(epochs):
         for batch_idx, item in enumerate(train_dataloader):
