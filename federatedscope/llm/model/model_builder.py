@@ -47,7 +47,7 @@ def get_model_from_huggingface(model_name, llm_config, **kwargs):
     else:
         model = AutoModelForCausalLM.from_pretrained(model_name)
         MODEL_CACHE[model_name] = model
-    model.resize_token_embeddings(llm_config.tok_len)
+    # model.resize_token_embeddings(llm_config.tok_len)
     return model
 
 
