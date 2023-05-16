@@ -19,7 +19,10 @@ class FSChatBot(object):
 
         try:
             ckpt = torch.load(config.federate.save_to, map_location='cpu')
-            self.model.load_state_dict(ckpt)
+            if 'model' and 'cur_round' in ckpt:
+                self.model.load_state_dict(ckpt['model'])
+            else:
+                self.model.load_state_dict(ckpt)
         except Exception as error:
             print(f"{error}, will use raw model.")
 
@@ -34,41 +37,32 @@ class FSChatBot(object):
         source = {'instruction': input_text}
         return PROMPT_DICT['prompt_no_input'].format_map(source)
 
-    def _format_output(self, response_tokens):
-        return "".join(response_tokens).replace('Ġ', ' ').replace('Ċ', ' ')
-
-    def predict(self, input_text, use_history=True):
-        input_text = self._build_prompt(input_text)
+    def predict(self, input_text, use_history=True, use_prompt=False):
+        if use_prompt:
+            input_text = self._build_prompt(input_text)
         text_ids = self.tokenizer.encode(input_text, add_special_tokens=False)
         self.history.append(text_ids)
         input_ids = [self.tokenizer.bos_token_id]
         if use_history:
-            for history_id, history_utr in enumerate(
-                    self.history[-self.max_history_len:]):
-                input_ids.extend(history_utr)
+            for history_ctx in self.history[-self.max_history_len:]:
+                input_ids.extend(history_ctx)
                 input_ids.append(self.tokenizer.eos_token_id)
         else:
             input_ids.extend(text_ids)
             input_ids.append(self.tokenizer.eos_token_id)
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).cuda()
-        response = []
-        for _ in range(self.max_len):
-            outputs = self.model(input_ids=input_ids)
-            logits = outputs.logits
-            next_token_logits = logits[0, -1, :]
-            next_token_logits[self.tokenizer.convert_tokens_to_ids(
-                '[UNK]')] = -float('Inf')
-            next_token = torch.multinomial(F.softmax(next_token_logits,
-                                                     dim=-1),
-                                           num_samples=1)
-            if next_token == self.tokenizer.sep_token_id:
-                break
-            response.append(next_token.item())
-            input_ids = torch.cat((input_ids, next_token.unsqueeze(0)), dim=1)
-        self.history.append(response)
-        response_tokens = self.tokenizer.convert_ids_to_tokens(response)
-        return self._format_output(response_tokens)
+        response = self.model.generate(input_ids,
+                                       max_length=self.max_len,
+                                       num_beams=5,
+                                       no_repeat_ngram_size=2,
+                                       early_stopping=True)
+
+        self.history.append(response[0].tolist())
+        response_tokens = \
+            self.tokenizer.decode(response[0][input_ids.shape[1]:],
+                                  skip_special_tokens=True)
+        return response_tokens
 
     def clear(self):
         self.history = []
@@ -98,7 +92,7 @@ def main():
             chat_bot.clear()
             print(welcome)
             continue
-        print(chat_bot.predict(input_text))
+        print(f'\nFSBot: {chat_bot.predict(input_text)}')
 
 
 if __name__ == "__main__":

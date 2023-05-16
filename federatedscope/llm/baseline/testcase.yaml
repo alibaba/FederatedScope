@@ -4,7 +4,7 @@ early_stop:
   patience: 10
 federate:
   mode: standalone
-  client_num: 3
+  client_num: 1
   total_round_num: 100
   save_to: "gpt2.ckpt"
   share_local_model: True
@@ -16,6 +16,8 @@ data:
   splitter: 'iid'
 llm:
   tok_len: 1000
+  chat:
+    max_len: 1000
 dataloader:
   batch_size: 8
 model:
