@@ -39,7 +39,6 @@ class FSChatBot(object):
 
     def predict(self, input_text, use_history=True):
         input_text = self._build_prompt(input_text)
-        print(input_text)
         text_ids = self.tokenizer.encode(input_text, add_special_tokens=False)
         self.history.append(text_ids)
         input_ids = [self.tokenizer.bos_token_id]

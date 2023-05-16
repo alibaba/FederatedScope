@@ -11,7 +11,7 @@ federate:
 data:
   root: data/
   type: 'alpaca_data.json@llm'
-  splits: [0.6,0.2,0.2]
+  splits: [0.98,0.01,0.01]
   splitter: 'iid'
 llm:
   tok_len: 1000
