@@ -1,4 +1,7 @@
 import torch
+import transformers
+
+transformers.logging.set_verbosity(40)
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
