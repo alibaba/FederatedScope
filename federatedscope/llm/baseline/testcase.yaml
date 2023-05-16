@@ -19,8 +19,8 @@ dataloader:
 model:
   type: 'gpt2@huggingface_llm'
 adapter:
-  use: False
-  args: [{'adapter_package': 'adapterhub', 'adapter_method':'bottleneck'}]
+  use: True
+  args: [{'adapter_package': 'adapterhub', 'adapter_method':'lora'}]
 train:
   local_update_steps: 10
   optimizer:

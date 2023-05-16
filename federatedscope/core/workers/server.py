@@ -795,15 +795,21 @@ class Server(BaseServer):
                 ]
             else:
                 if self._cfg.backend == 'torch':
+                    # For llm lora, there will be an error:
+                    # AttributeError: Can't pickle local object
+                    #   'LoRA.__init__.<locals>.<lambda>'
                     try:
                         model_size = sys.getsizeof(pickle.dumps(
                             self.models[0])) / 1024.0 * 8.
                     except AttributeError:
-                        # For llm lora, there will be an error:
-                        # AttributeError: Can't pickle local object
-                        #   'LoRA.__init__.<locals>.<lambda>'
                         model_size = sys.getsizeof(
-                            self.models[0]) / 1024.0 * 8.
+                            pickle.dumps(self.model.base_model)) / 1024.0 * 8.
+                        logger.warning("When applying adapterhub.lora, "
+                                       "there will be an error: "
+                                       "Can't pickle local object "
+                                       "'LoRA.__init__.<locals>.<lambda>', "
+                                       "thus we only get the size of"
+                                       "base model without out lora")
                 else:
                     # TODO: calculate model size for TF Model
                     model_size = 1.0
