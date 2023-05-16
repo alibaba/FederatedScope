@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
@@ -37,26 +36,25 @@ class FSChatBot(object):
         source = {'instruction': input_text}
         return PROMPT_DICT['prompt_no_input'].format_map(source)
 
-    def predict(self, input_text, use_history=True, use_prompt=False):
+    def predict(self, input_text, use_history=True, use_prompt=True):
         if use_prompt:
             input_text = self._build_prompt(input_text)
         text_ids = self.tokenizer.encode(input_text, add_special_tokens=False)
         self.history.append(text_ids)
-        input_ids = [self.tokenizer.bos_token_id]
+        input_ids = []
         if use_history:
             for history_ctx in self.history[-self.max_history_len:]:
                 input_ids.extend(history_ctx)
-                input_ids.append(self.tokenizer.eos_token_id)
         else:
             input_ids.extend(text_ids)
-            input_ids.append(self.tokenizer.eos_token_id)
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).cuda()
         response = self.model.generate(input_ids,
                                        max_length=self.max_len,
                                        num_beams=5,
                                        no_repeat_ngram_size=2,
-                                       early_stopping=True)
+                                       early_stopping=True,
+                                       temperature=0.5)
 
         self.history.append(response[0].tolist())
         response_tokens = \
