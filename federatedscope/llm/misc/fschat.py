@@ -36,7 +36,7 @@ class FSChatBot(object):
         source = {'instruction': input_text}
         return PROMPT_DICT['prompt_no_input'].format_map(source)
 
-    def predict(self, input_text, use_history=True, use_prompt=False):
+    def predict(self, input_text, use_history=True, use_prompt=True):
         if use_prompt:
             input_text = self._build_prompt(input_text)
         text_ids = self.tokenizer.encode(input_text, add_special_tokens=False)
