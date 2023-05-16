@@ -42,7 +42,7 @@ class AdapterModel(nn.Module):
             # model = get_peft_model(model, peft_config)
             from peft import get_peft_model
             if adapter == 'lora':
-                # //TODO: fix error
+                # TODO: fix error
                 from peft import LoraConfig
                 peft_config = LoraConfig(r=8, lora_alpha=32, lora_dropout=0.1)
                 model = get_peft_model(model, peft_config)
