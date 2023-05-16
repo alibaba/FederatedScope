@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
