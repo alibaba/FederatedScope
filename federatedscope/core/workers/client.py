@@ -142,8 +142,14 @@ class Client(BaseClient):
             self.comm_bandwidth = None
 
         if self._cfg.backend == 'torch':
-            self.model_size = sys.getsizeof(pickle.dumps(
-                self.model)) / 1024.0 * 8.  # kbits
+            try:
+                self.model_size = sys.getsizeof(pickle.dumps(
+                    self.model)) / 1024.0 * 8.  # kbits
+            except AttributeError:
+                # For llm lora, there will be an error:
+                # AttributeError: Can't pickle local object
+                #   'LoRA.__init__.<locals>.<lambda>'
+                self.model_size = sys.getsizeof(self.model) / 1024.0 * 8.
         else:
             # TODO: calculate model size for TF Model
             self.model_size = 1.0

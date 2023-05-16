@@ -1,0 +1,35 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 10
+federate:
+  mode: standalone
+  client_num: 3
+  total_round_num: 100
+  sample_client_num: 10
+data:
+  root: data/
+  type: 'alpaca_data.json@llm'
+  splits: [0.6,0.2,0.2]
+  splitter: 'iid'
+llm:
+  tok_len: 1000
+dataloader:
+  batch_size: 5
+model:
+  type: 'gpt2@huggingface_llm'
+adapter:
+  use: False
+  args: [{'adapter_package': 'adapterhub', 'adapter_method':'bottleneck'}]
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: llmtrainer
+eval:
+  freq: 1
+  metrics: ['loss']

@@ -19,7 +19,7 @@ class IIDSplitter(BaseSplitter):
         length = len(dataset)
         index = [x for x in range(length)]
         np.random.shuffle(index)
-        idx_slice = np.split_array(dataset, self.client_num)
+        idx_slice = np.array_split(np.array(index), self.client_num)
         if isinstance(dataset, Dataset):
             data_list = [Subset(dataset, idxs) for idxs in idx_slice]
         else:
