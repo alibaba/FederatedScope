@@ -42,21 +42,20 @@ class FSChatBot(object):
             input_text = self._build_prompt(input_text)
         text_ids = self.tokenizer.encode(input_text, add_special_tokens=False)
         self.history.append(text_ids)
-        input_ids = [self.tokenizer.bos_token_id]
+        input_ids = []
         if use_history:
             for history_ctx in self.history[-self.max_history_len:]:
                 input_ids.extend(history_ctx)
-                input_ids.append(self.tokenizer.eos_token_id)
         else:
             input_ids.extend(text_ids)
-            input_ids.append(self.tokenizer.eos_token_id)
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).cuda()
         response = self.model.generate(input_ids,
                                        max_length=self.max_len,
                                        num_beams=5,
                                        no_repeat_ngram_size=2,
-                                       early_stopping=True)
+                                       early_stopping=True,
+                                       temperature=0.5)
 
         self.history.append(response[0].tolist())
         response_tokens = \
