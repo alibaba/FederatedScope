@@ -824,7 +824,7 @@ class FedRunner(object):
         if self.mode == 'standalone':
             if self.server_id in self.data:
                 server_data = self.data[self.server_id]
-                model = get_model(self.cfg.model,
+                model = get_model(self.cfg,
                                   server_data,
                                   backend=self.cfg.backend)
             else:

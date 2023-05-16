@@ -114,14 +114,12 @@ class StandaloneMultiGPURunner(StandaloneRunner):
     def _get_server_args(self, resource_info=None, client_resource_info=None):
         if self.server_id in self.data:
             server_data = self.data[self.server_id]
-            model = get_model(self.cfg.model,
-                              server_data,
-                              backend=self.cfg.backend)
+            model = get_model(self.cfg, server_data, backend=self.cfg.backend)
         else:
             server_data = None
             data_representative = self.data[1]
             model = get_model(
-                self.cfg.model, data_representative, backend=self.cfg.backend
+                self.cfg, data_representative, backend=self.cfg.backend
             )  # get the model according to client's data if the server
             # does not own data
         kw = {
@@ -204,12 +202,12 @@ class ServerRunner(Runner):
         self.config.freeze()
         if self.rank in data:
             self.data = data[self.rank] if self.rank in data else data[1]
-            model = get_model(self.config.model,
+            model = get_model(self.config,
                               self.data,
                               backend=self.config.backend)
         else:
             self.data = None
-            model = get_model(self.config.model,
+            model = get_model(self.config,
                               data[1],
                               backend=self.config.backend)
         kw = {
@@ -325,7 +323,7 @@ class ClientRunner(Runner):
         self.config.merge_from_other_cfg(modified_cfg)
         self.config.freeze()
         self.shared_model = get_model(
-            self.config.model,
+            self.config,
             self.data[self.base_client_id],
             backend=self.config.backend
         ) if self.config.federate.share_local_model else None
@@ -352,7 +350,7 @@ class ClientRunner(Runner):
                 config=client_specific_config,
                 data=client_data,
                 model=self.shared_model
-                or get_model(client_specific_config.model,
+                or get_model(client_specific_config,
                              client_data,
                              backend=self.config.backend),
                 device=self.device,

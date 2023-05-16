@@ -46,7 +46,7 @@ class vFLServer(Server):
 
     def _init_data_related_var(self):
         self.dims = [0] + self.vertical_dims
-        self.model = get_model(self._cfg.model, self.data)
+        self.model = get_model(self._cfg, self.data)
         self.theta = self.model.state_dict()['fc.weight'].numpy().reshape(-1)
 
     def trigger_for_start(self):
