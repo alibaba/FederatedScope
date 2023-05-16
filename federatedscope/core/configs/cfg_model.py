@@ -56,9 +56,9 @@ def extend_model_cfg(cfg):
     cfg.llm = CN()
     cfg.llm.tok_len = 128
 
-    cfg.llm.dataset = CN()
-    cfg.llm.dataset.source = ['question']  # Filter dataset
-    cfg.llm.dataset.target = ['answers']  # Filter dataset
+    cfg.llm.chat = CN()
+    cfg.llm.chat.max_history_len = 10
+    cfg.llm.chat.max_len = 100
 
     # ---------------------------------------------------------------------- #
     # Criterion related options
