@@ -81,7 +81,7 @@ def raw_cost(**kwargs):
 
 def get_info(cfg, configuration, fidelity, data):
     cfg = merge_cfg(cfg, configuration, fidelity)
-    model = get_model(cfg.model, list(data.values())[0])
+    model = get_model(cfg, list(data.values())[0])
     model_size = sum([param.nelement() for param in model.parameters()])
     return cfg, model_size
 

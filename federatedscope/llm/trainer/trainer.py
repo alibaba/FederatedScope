@@ -39,8 +39,13 @@ class LLMTrainer(GeneralTorchTrainer):
     def _hook_on_fit_end(self, ctx):
         # TODO: enable other metrics in
         #  https://crfm-helm.readthedocs.io/en/latest/metrics/
-        setattr(ctx, 'eval_metrics',
-                {f'{ctx.cur_split}_loss': ctx.loss_batch_total})
+        eval_results = {
+            f'{ctx.cur_split}_loss': ctx.loss_batch_total,
+            f'{ctx.cur_split}_total': ctx.num_samples,
+            f'{ctx.cur_split}_avg_loss': ctx.loss_batch_total /
+            float(ctx.num_samples),
+        }
+        setattr(ctx, 'eval_metrics', eval_results)
 
 
 def call_llm_trainer(trainer_type):
