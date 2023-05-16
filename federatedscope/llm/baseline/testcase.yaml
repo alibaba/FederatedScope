@@ -6,8 +6,9 @@ federate:
   mode: standalone
   client_num: 3
   total_round_num: 100
-  sample_client_num: 10
   save_to: "gpt2.ckpt"
+  share_local_model: True
+  online_aggr: True
 data:
   root: data/
   type: 'alpaca_data.json@llm'
@@ -16,11 +17,12 @@ data:
 llm:
   tok_len: 1000
 dataloader:
-  batch_size: 5
+  batch_size: 8
 model:
   type: 'gpt2@huggingface_llm'
 train:
   local_update_steps: 10
+  batch_or_epoch: batch
   optimizer:
     lr: 0.001
     weight_decay: 0.0
@@ -29,5 +31,5 @@ criterion:
 trainer:
   type: llmtrainer
 eval:
-  freq: 1
+  freq: 10
   metrics: ['loss']
