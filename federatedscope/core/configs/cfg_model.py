@@ -55,6 +55,7 @@ def extend_model_cfg(cfg):
     # TODO: move to new file
     cfg.llm = CN()
     cfg.llm.tok_len = 128
+    cfg.llm.use_accelerator = False
 
     cfg.llm.chat = CN()
     cfg.llm.chat.max_history_len = 10
