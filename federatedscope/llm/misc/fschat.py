@@ -28,6 +28,8 @@ class FSChatBot(object):
         except Exception as error:
             print(f"{error}, will use raw model.")
 
+        print(type(self.model.state_dict()))
+
         self.model.half().cuda()
         self.model = self.model.eval()
 

@@ -5,8 +5,8 @@ early_stop:
 federate:
   mode: standalone
   client_num: 1
-  total_round_num: 100
-  save_to: "gpt2.ckpt"
+  total_round_num: 200
+  save_to: "gpt2_new.ckpt"
   share_local_model: True
   online_aggr: True
 data:
@@ -33,5 +33,5 @@ criterion:
 trainer:
   type: llmtrainer
 eval:
-  freq: 10
+  freq: 50
   metrics: ['loss']
