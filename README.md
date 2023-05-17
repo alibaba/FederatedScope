@@ -20,7 +20,7 @@ You can try FederatedScope via [FederatedScope Playground](https://try.federated
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [05-17-2023] Our paper [FS-REAL](https://arxiv.org/abs/2303.13363) has been accepted by KDD'2023!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [05-17-2023] Our paper [Revisiting Personalized Federated Learning: Robustness Against Backdoor Attacks](https://arxiv.org/abs/2302.01677) has been accepted by KDD'2023!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [05-17-2023] Our paper [Communication Efficient and Differentially Private Logistic Regression under the Distributed Setting]() has been accepted by KDD'2023!
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [04-25-2023] Our paper [Efficient Personalized Federated Learning via Sparse Model-Adaptation](https://arxiv.org/abs/2305.02776) has been accepted by ICML'2023!
+- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [04-25-2023] Our paper [pFedGate](https://arxiv.org/abs/2305.02776) has been accepted by ICML'2023!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [04-25-2023] Our benchmark paper for FedHPO [FedHPO-Bench](https://arxiv.org/abs/2206.03966) has been accepted by ICML'2023!
 - ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [04-03-2023] We release FederatedScope v0.3.0!
 - [02-10-2022] Our [paper](https://arxiv.org/pdf/2204.05011.pdf) elaborating on FederatedScope is accepted by VLDB'23!
