@@ -156,11 +156,12 @@ class GeneralTorchTrainer(Trainer):
     def _hook_on_data_parallel_init(self, ctx):
         """
         Note:
-          The modified attributes and according operations are shown below:
+          The modified attributes and according operations are shown below,
+           further modifications should be made to `ctx.model` other object:
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.model``                       Make it `torch.nn.DataParallel`
+            ``ctx.model``                       Wrap ``nn.Module` to `nn.DataParallel`
             ==================================  ===========================
         """
         if isinstance(ctx.model, torch.nn.DataParallel):
