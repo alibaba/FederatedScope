@@ -161,7 +161,8 @@ class GeneralTorchTrainer(Trainer):
             ==================================  ===========================
             Attribute                           Operation
             ==================================  ===========================
-            ``ctx.model``                       Wrap ``nn.Module` to `nn.DataParallel`
+            ``ctx.model``                       Wrap ``nn.Module` to \
+            `nn.DataParallel`
             ==================================  ===========================
         """
         if isinstance(ctx.model, torch.nn.DataParallel):
