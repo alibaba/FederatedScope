@@ -154,6 +154,15 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
     def _hook_on_data_parallel_init(self, ctx):
+        """
+        Note:
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.model``                       Make it `torch.nn.DataParallel`
+            ==================================  ===========================
+        """
         if isinstance(ctx.model, torch.nn.DataParallel):
             return
 
