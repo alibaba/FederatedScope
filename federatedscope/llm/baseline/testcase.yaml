@@ -24,7 +24,7 @@ model:
   type: 'gpt2@huggingface_llm'
 adapter:
   use: True
-  args: [{'adapter_package': 'peft', 'adapter_method':'lora'}]
+  args: [{'adapter_package': 'adapterhub', 'adapter_method':'lora'}]
 train:
   local_update_steps: 10
   batch_or_epoch: batch

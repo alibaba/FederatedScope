@@ -1,5 +1,6 @@
 import torch.nn as nn
 import copy
+from collections import OrderedDict
 
 
 def enable_adapter(model, package, adapter, **kwargs):
@@ -168,4 +169,13 @@ class AdapterModel(nn.Module):
             return self.adapted_model.load_state_dict(state_dict, strict=False)
 
     def get_trainable_state_dict(self, model):
-        return {k: v for k, v in model.named_parameters() if v.requires_grad}
+        grad_params = []
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                grad_params.append(name)
+        model_state_dict = model.state_dict()
+        new_state_dict = OrderedDict()
+        for k, v in model_state_dict.items():
+            if k in grad_params:
+                new_state_dict[k] = v
+        return new_state_dict
