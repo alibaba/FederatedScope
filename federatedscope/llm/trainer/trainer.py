@@ -7,20 +7,6 @@ from federatedscope.core.auxiliaries.utils import param2tensor, \
 
 
 class LLMTrainer(GeneralTorchTrainer):
-    def update(self, model_parameters, strict=False):
-        # TODO: enable adapter
-        """
-            Called by the FL client to update the model parameters
-        Arguments:
-            model_parameters (dict): PyTorch Module object's state_dict.
-        """
-        for key in model_parameters:
-            model_parameters[key] = param2tensor(model_parameters[key])
-        # Due to lazy load, we merge two state dict
-        merged_param = merge_param_dict(self.ctx.model.state_dict().copy(),
-                                        self._param_filter(model_parameters))
-        self.ctx.model.load_state_dict(merged_param, strict=strict)
-
     def _hook_on_batch_forward(self, ctx):
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['labels'].to(ctx.device)
