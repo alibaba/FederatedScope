@@ -32,6 +32,7 @@ def extend_training_cfg(cfg):
 
     cfg.train.local_update_steps = 1
     cfg.train.batch_or_epoch = 'batch'
+    cfg.train.data_para_dids = []  # `torch.nn.DataParallel` devices
 
     cfg.train.optimizer = CN(new_allowed=True)
     cfg.train.optimizer.type = 'SGD'
