@@ -98,6 +98,7 @@ def enable_adapter(model, package, adapter, **kwargs):
         elif adapter == 'union':
             from transformers.adapters import AdapterConfig, ConfigUnion
 
+            # TODO: configure these args in cfg
             config = ConfigUnion(
                 AdapterConfig(mh_adapter=True,
                               output_adapter=False,

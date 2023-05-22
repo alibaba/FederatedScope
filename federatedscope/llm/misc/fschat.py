@@ -146,8 +146,6 @@ def eval_test():
                         if 'correct' in answer[opt]['tags']:
                             answers.append(opt)
                             correct = ['A', 'B', 'C', 'D'][opt]
-                    # print(item['request']['prompt'])
-                    #         print(op, end=' ')
                     res = model.predict(input_text=questions[-1],
                                         use_history=False,
                                         use_prompt=False)
@@ -156,8 +154,6 @@ def eval_test():
                     if res.strip()[0] == correct:
                         correct_num += 1
                         temp_correct_num += 1
-                    # elif res.strip()[0] not in 'ABCD':
-                    #     correct_num += 0
 
                     temp_total_num += 1
                     total_num += 1
@@ -169,9 +165,6 @@ def eval_test():
             print('temp_total num:', temp_total_num)
         except Exception as error:
             print(error)
-        # print(file)
-        # print('temp_correct num:', temp_correct_num)
-        # print('temp_total num:', temp_total_num)
 
     print(correct_num)
     print(total_num)
