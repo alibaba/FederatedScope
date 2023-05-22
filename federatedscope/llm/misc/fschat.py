@@ -113,8 +113,7 @@ def eval_test():
 
     model = FSChatBot(init_cfg)
 
-    # ROOT = '/home/bingchen/shared/'
-    ROOT = '../..'
+    ROOT = '../shared/'
     target_file = 'scenario_state.json'
 
     files = os.listdir(ROOT)
@@ -179,4 +178,4 @@ def eval_test():
 
 
 if __name__ == "__main__":
-    eval_test()
+    main()
