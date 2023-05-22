@@ -1,63 +1,16 @@
 import copy
-
-MODEL_CACHE = {}
-
-
-def enable_adapter(model, adapter, package, **kwargs):
-    if package == 'peft':
-        """
-        PEFT: https://github.com/huggingface/peft
-        Support methods:
-            LoRA
-            Prefix Tuning
-            P-Tuning
-            Prompt Tuning
-            AdaLoRA
-        """
-        # from peft import get_peft_model, TaskType
-        #
-        # config = getattr(import_module('peft'), f'{adapter}Config')
-        # peft_config = config(task_type=TaskType.SEQ_2_SEQ_LM, **kwargs)
-        # model = get_peft_model(model, peft_config)
-
-        raise NotImplementedError
-
-    elif package == 'adapterhub':
-        """
-        AdapterHub: https://docs.adapterhub.ml/model_overview.html
-        Support methods:
-            Bottleneck Adapters
-            Prefix Tuning
-            LoRA
-            Compacter
-            Adapter Fusion
-            Invertible Adapters
-            Parallel block
-        """
-        raise NotImplementedError
-
-    return model
+from federatedscope.llm.model.adapter_builder import AdapterModel
 
 
 def get_model_from_huggingface(model_name):
     from transformers import AutoModelForCausalLM
-
-    if model_name in MODEL_CACHE:
-        model = copy.deepcopy(MODEL_CACHE[model_name])
-    else:
-        model = AutoModelForCausalLM.from_pretrained(model_name)
-        MODEL_CACHE[model_name] = model
+    model = AutoModelForCausalLM.from_pretrained(model_name)
     return model
 
 
 def get_model_from_modelscope(model_name):
     from modelscope.models import Model
-
-    if model_name in MODEL_CACHE:
-        model = copy.deepcopy(MODEL_CACHE[model_name])
-    else:
-        model = Model.from_pretrained(model_name)
-        MODEL_CACHE[model_name] = model
+    model = Model.from_pretrained(model_name)
     return model
 
 
@@ -89,5 +42,15 @@ def get_llm(config):
 
         input_embeddings[-num_new_tokens:] = input_embeddings_avg
         output_embeddings[-num_new_tokens:] = output_embeddings_avg
+
+    use_adapter = config.adapter.use
+    if use_adapter:
+        adapter_package = config.adapter.args[0]['adapter_package']
+        adapter_method = config.adapter.args[0]['adapter_method']
+    else:
+        adapter_package = None
+        adapter_method = None
+
+    model = AdapterModel(model, use_adapter, adapter_package, adapter_method)
 
     return model

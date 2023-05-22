@@ -21,7 +21,11 @@ llm:
 dataloader:
   batch_size: 8
 model:
-  type: 'gpt2@huggingface_llm'
+#  type: 'gpt2@huggingface_llm'
+  type: 'decapoda-research/llama-7b-hf@huggingface_llm'
+adapter:
+  use: True
+  args: [{'adapter_package': 'peft', 'adapter_method':'lora'}]
 train:
   local_update_steps: 10
   batch_or_epoch: batch

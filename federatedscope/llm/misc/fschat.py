@@ -1,4 +1,10 @@
 import torch
+import transformers
+import json
+from tqdm import tqdm
+import os
+
+transformers.logging.set_verbosity(40)
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
@@ -91,6 +97,84 @@ def main():
             print(welcome)
             continue
         print(f'\nFSBot: {chat_bot.predict(input_text)}')
+
+
+def eval_test():
+    init_cfg = global_cfg.clone()
+    args = parse_args()
+
+    if args.cfg_file:
+        init_cfg.merge_from_file(args.cfg_file)
+    cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
+    init_cfg.merge_from_list(cfg_opt)
+
+    update_logger(init_cfg, clear_before_add=True)
+    setup_seed(init_cfg.seed)
+
+    model = FSChatBot(init_cfg)
+
+    ROOT = '../shared/'
+    target_file = 'scenario_state.json'
+
+    files = os.listdir(ROOT)
+
+    tmp = []
+    for s in files:
+        if 'mmlu' in s:
+            tmp.append(s)
+    files = tmp
+    total_num = 0
+    correct_num = 0
+    for file in files:
+        temp_correct_num = 0
+        temp_total_num = 0
+        try:
+            with open(os.path.join(ROOT, file, target_file), 'r') as f:
+                data = json.load(f)
+                questions = []
+                answers = []
+
+                for i in tqdm(range(len(data['request_states']))):
+                    item = data['request_states'][i]
+                    questions.append(item['request']['prompt'])
+
+                    answer = data['request_states'][i]['instance'][
+                        'references']
+
+                    correct = None
+                    for opt in range(len(answer)):
+                        if 'correct' in answer[opt]['tags']:
+                            answers.append(opt)
+                            correct = ['A', 'B', 'C', 'D'][opt]
+                    # print(item['request']['prompt'])
+                    #         print(op, end=' ')
+                    res = model.predict(input_text=questions[-1],
+                                        use_history=False,
+                                        use_prompt=False)
+                    print(questions[-1])
+                    print(res)
+                    if res.strip()[0] == correct:
+                        correct_num += 1
+                        temp_correct_num += 1
+                    # elif res.strip()[0] not in 'ABCD':
+                    #     correct_num += 0
+
+                    temp_total_num += 1
+                    total_num += 1
+                    print(file)
+                    print('temp_correct num:', temp_correct_num)
+                    print('temp_total num:', temp_total_num)
+            print(file)
+            print('temp_correct num:', temp_correct_num)
+            print('temp_total num:', temp_total_num)
+        except Exception as error:
+            print(error)
+        # print(file)
+        # print('temp_correct num:', temp_correct_num)
+        # print('temp_total num:', temp_total_num)
+
+    print(correct_num)
+    print(total_num)
 
 
 if __name__ == "__main__":
