@@ -28,7 +28,6 @@ def enable_adapter(model, package, adapter, **kwargs):
             model = get_peft_model(model, peft_config)
         # elif adapter == 'prefix':
         #     from peft import PrefixEncoder, PrefixTuningConfig
-        #
         #     peft_config = PrefixTuningConfig(
         #         peft_type="PREFIX_TUNING",
         #         task_type="SEQ_2_SEQ_LM",
