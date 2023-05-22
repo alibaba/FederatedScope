@@ -1,4 +1,3 @@
-import copy
 from federatedscope.llm.model.adapter_builder import AdapterModel
 
 
@@ -43,10 +42,10 @@ def get_llm(config):
         input_embeddings[-num_new_tokens:] = input_embeddings_avg
         output_embeddings[-num_new_tokens:] = output_embeddings_avg
 
-    use_adapter = config.adapter.use
+    use_adapter = config.llm.adapter.use
     if use_adapter:
-        adapter_package = config.adapter.args[0]['adapter_package']
-        adapter_method = config.adapter.args[0]['adapter_method']
+        adapter_package = config.llm.adapter.args[0]['adapter_package']
+        adapter_method = config.llm.adapter.args[0]['adapter_method']
     else:
         adapter_package = None
         adapter_method = None
