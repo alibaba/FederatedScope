@@ -2,7 +2,8 @@
 The **pFL-Bench** is a comprehensive benchmark for personalized Federated Learning (pFL), which contains more than 10 diverse datasets, 20 competitive pFL baselines, and systematic evaluation with highlighted benefits and potential of pFL. See more details in our [paper](https://arxiv.org/abs/2206.03655).
 
 
-This repository includes the experimental data, environments, scripts and codes of **pFL-Bench**. We welcome contributions of new pFL methods and datasets to keep pFL-Bench up-to-date and to evolve it! See more details about contribution [here](https://github.com/alibaba/FederatedScope#contributing).
+This repository mainly includes the experimental data, environments, scripts and codes of **pFL-Bench**. We welcome contributions of new pFL methods and datasets to keep pFL-Bench up-to-date and to evolve it! See more details about contribution [here](https://github.com/alibaba/FederatedScope#contributing). 
+Recently, our new proposed method for efficient pFL, [pFedGate](https://arxiv.org/abs/2305.02776) has been accepted to ICML'23. We provide its initial implementation [here](https://github.com/yxdyc/pFedGate) and will add it and more efficient pFL methods into our benchmark.
 
 **NOTICE:** We are working on seamlessly and consistently fusing the new features in pFL-Bench into the *FederatedScope*. However, since the underling package *FederatedScope* is still being continuously and actively updated, the results can be a little different to the ones in our paper.
 To fully reproduce the experimental results reported in the paper, please use the code versioned by this [branch](https://github.com/alibaba/FederatedScope/tree/Feature/pfl_bench) on which the experiments were conducted at the time.
