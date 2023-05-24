@@ -31,7 +31,7 @@ class OffsiteTuningServer(Server):
                               kwargs_for_trigger_train_func={}):
         compress_strategy = self._cfg.llm.offsite_tuning.strategy
 
-        # TODO: move to __init__ and replace self.model
+        # TODO: move to `__init__` and replace `self.model`
         adapter_model = \
             generate_emulator_and_adapter(self.model,
                                           strategy=compress_strategy)

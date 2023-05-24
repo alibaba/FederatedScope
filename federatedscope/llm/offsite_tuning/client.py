@@ -3,6 +3,7 @@ import logging
 from federatedscope.core.message import Message
 from federatedscope.core.workers.client import Client
 from federatedscope.core.auxiliaries.utils import deb64serializer
+from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +31,12 @@ class OffsiteTuningClient(Client):
                                [None])
 
     def callback_funcs_for_emulator_and_adapter(self, message: Message):
-        # Init model and trainer and start first round
-
-        self.state, content = message.state, message.content
-
-        logger.info(f'Client {self.ID}: Converting emulator and adapter.')
-        adapter_model = deb64serializer(content)
-
-        # TODO: Init model & trainer
-        ...
+        logger.info(f'Client {self.ID}: Emulator and adapter received.')
+        adapter_model = deb64serializer(message.content)
+        self._model = adapter_model
+        self.trainer = get_trainer(model=adapter_model,
+                                   data=self.data,
+                                   device=self.device,
+                                   config=self._cfg,
+                                   is_attacker=self.is_attacker,
+                                   monitor=self._monitor)
