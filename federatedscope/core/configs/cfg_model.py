@@ -60,6 +60,10 @@ def extend_model_cfg(cfg):
     cfg.llm.chat.max_history_len = 10
     cfg.llm.chat.max_len = 100
 
+    cfg.llm.offsite_tuning = CN()
+    cfg.llm.offsite_tuning.use = False
+    cfg.llm.offsite_tuning.strategy = 'drop_layer'
+
     # ---------------------------------------------------------------------- #
     # Criterion related options
     # ---------------------------------------------------------------------- #
