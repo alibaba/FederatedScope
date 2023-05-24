@@ -25,10 +25,8 @@ def enable_adapter(model, package, adapter, **kwargs):
             from peft import LoraConfig
             peft_config = LoraConfig(r=8, lora_alpha=32, lora_dropout=0.1)
             model = get_peft_model(model, peft_config)
-
         else:
-            raise NameError(
-                f"There is no adapter named {adapter} in {package}")
+            raise NotImplementedError
 
     elif package == 'adapterhub':
         """
@@ -150,10 +148,7 @@ class AdapterModel(nn.Module):
             return self.adapted_model.state_dict()
 
     def load_state_dict(self, state_dict, strict=False):
-        if self.use_adapter:
-            return self.adapted_model.load_state_dict(state_dict, strict=False)
-        else:
-            return self.adapted_model.load_state_dict(state_dict, strict=False)
+        return self.adapted_model.load_state_dict(state_dict, strict=False)
 
     def get_trainable_state_dict(self, model):
         grad_params = []
