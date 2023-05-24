@@ -156,7 +156,7 @@ class Client(BaseClient):
                                "Can't pickle local object "
                                "'LoRA.__init__.<locals>.<lambda>', "
                                "thus we only get the size of "
-                               "base model without out lora")
+                               "base model without lora")
         else:
             # TODO: calculate model size for TF Model
             self.model_size = 1.0

@@ -100,6 +100,7 @@ def main():
 
 
 def eval_test():
+    # TODO: we will remove the prints in this function later
     init_cfg = global_cfg.clone()
     args = parse_args()
 
@@ -128,6 +129,7 @@ def eval_test():
     for file in files:
         temp_correct_num = 0
         temp_total_num = 0
+        ans = []
         try:
             with open(os.path.join(ROOT, file, target_file), 'r') as f:
                 data = json.load(f)
@@ -151,6 +153,7 @@ def eval_test():
                                         use_prompt=False)
                     print(questions[-1])
                     print(res)
+                    ans.append(res)
                     if res.strip()[0] == correct:
                         correct_num += 1
                         temp_correct_num += 1
@@ -158,8 +161,9 @@ def eval_test():
                     temp_total_num += 1
                     total_num += 1
                     print(file)
-                    print('temp_correct num:', temp_correct_num)
-                    print('temp_total num:', temp_total_num)
+                    print(ans)
+                    # print('temp_correct num:', temp_correct_num)
+                    # print('temp_total num:', temp_total_num)
             print(file)
             print('temp_correct num:', temp_correct_num)
             print('temp_total num:', temp_total_num)
@@ -171,4 +175,4 @@ def eval_test():
 
 
 if __name__ == "__main__":
-    main()
+    eval_test()

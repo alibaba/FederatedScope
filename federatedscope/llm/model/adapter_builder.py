@@ -22,23 +22,10 @@ def enable_adapter(model, package, adapter, **kwargs):
         # model = get_peft_model(model, peft_config)
         from peft import get_peft_model
         if adapter == 'lora':
-            # TODO: fix error
             from peft import LoraConfig
             peft_config = LoraConfig(r=8, lora_alpha=32, lora_dropout=0.1)
             model = get_peft_model(model, peft_config)
-        # elif adapter == 'prefix':
-        #     from peft import PrefixEncoder, PrefixTuningConfig
-        #     peft_config = PrefixTuningConfig(
-        #         peft_type="PREFIX_TUNING",
-        #         task_type="SEQ_2_SEQ_LM",
-        #         num_virtual_tokens=20,
-        #         token_dim=768,
-        #         num_transformer_submodules=1,
-        #         num_attention_heads=12,
-        #         num_layers=12,
-        #         encoder_hidden_size=768,
-        #     )
-        #     model = get_peft_model(model, peft_config)
+
         else:
             raise NameError(
                 f"There is no adapter named {adapter} in {package}")
@@ -144,7 +131,7 @@ class AdapterModel(nn.Module):
         self.adapter_package = adapter_package
         self.adapter_method = adapter_method
         if self.use_adapter:
-            self.adapted_model = enable_adapter(copy.deepcopy(self.base_model),
+            self.adapted_model = enable_adapter(self.base_model,
                                                 self.adapter_package,
                                                 self.adapter_method)
         else:
