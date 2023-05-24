@@ -92,6 +92,10 @@ def merge_dict_of_results(dict1, dict2):
     return dict1
 
 
+def b64serializer(x):
+    return base64.b64encode(pickle.dumps(x))
+
+
 def deb64serializer(x):
     return pickle.loads((base64.b64decode(x)))
 
