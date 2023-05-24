@@ -92,6 +92,10 @@ def merge_dict_of_results(dict1, dict2):
     return dict1
 
 
+def deb64serializer(x):
+    return pickle.loads((base64.b64decode(x)))
+
+
 def param2tensor(param):
     # TODO: make it work in `message`
     if isinstance(param, list):
@@ -101,7 +105,7 @@ def param2tensor(param):
     elif isinstance(param, float):
         param = torch.tensor(param, dtype=torch.float)
     elif isinstance(param, str):
-        param = pickle.loads((base64.b64decode(param)))
+        param = deb64serializer(param)
     return param
 
 
