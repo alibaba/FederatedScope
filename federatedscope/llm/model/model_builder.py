@@ -1,15 +1,15 @@
 import copy
-# MODEL_CACHE = {}
+
 from federatedscope.llm.model.model_adapter import AdapterModel
 
 
 def get_model_from_huggingface(model_name):
-    from transformers import AutoModelForCausalLM
+    from transformers import AutoModelForCausalLM, DebertaModel
 
     # if model_name in MODEL_CACHE:
     #     model = copy.deepcopy(MODEL_CACHE[model_name])
     # else:
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = DebertaModel.from_pretrained(model_name)
     #     MODEL_CACHE[model_name] = model
     return model
 
