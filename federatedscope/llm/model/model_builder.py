@@ -39,18 +39,22 @@ def enable_adapter(model, adapter, package, **kwargs):
     return model
 
 
-def get_model_from_huggingface(model_name):
+def get_model_from_huggingface(model_name, config):
     from transformers import AutoModelForCausalLM
 
     if model_name in MODEL_CACHE:
         model = copy.deepcopy(MODEL_CACHE[model_name])
     else:
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        if config.llm.accelerator.use:
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name, device_map="auto", offload_folder="offload")
+        else:
+            model = AutoModelForCausalLM.from_pretrained(model_name)
         MODEL_CACHE[model_name] = model
     return model
 
 
-def get_model_from_modelscope(model_name):
+def get_model_from_modelscope(model_name, config):
     from modelscope.models import Model
 
     if model_name in MODEL_CACHE:
@@ -67,9 +71,10 @@ def get_llm(config):
     model_config = config.model
     model_name, model_hub = model_config.type.split('@')
     if model_hub == 'huggingface_llm':
-        model = get_model_from_huggingface(model_name=model_name)
+        model = get_model_from_huggingface(model_name=model_name,
+                                           config=config)
     elif model_hub == 'modelscope_llm':
-        model = get_model_from_modelscope(model_name=model_name)
+        model = get_model_from_modelscope(model_name=model_name, config=config)
     else:
         raise NotImplementedError(f'Not support LLM {model_name} in'
                                   f' {model_hub}.')

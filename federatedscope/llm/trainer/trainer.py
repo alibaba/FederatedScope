@@ -1,5 +1,6 @@
+import copy
 import torch
-from accelerate import Accelerator
+from accelerate import Accelerator, dispatch_model
 
 from federatedscope.core.trainers.enums import MODE
 from federatedscope.register import register_trainer
@@ -13,12 +14,15 @@ from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 class LLMTrainer(GeneralTorchTrainer):
     def __init__(self, *args, **kwargs):
         super(LLMTrainer, self).__init__(*args, **kwargs)
-        self.ctx.use_acc = self.ctx.cfg.llm.use_accelerator
-        if self.ctx.use_acc:
+        self.use_accelerator = self.ctx.cfg.llm.accelerator.use
+        if self.use_accelerator:
             self.accelerator = Accelerator()
+            self.device_map = copy.deepcopy(self.ctx.model.hf_device_map)
 
     def _hook_on_fit_start_init(self, ctx):
-        if not self.ctx.use_acc:
+        if self.use_accelerator:
+            ctx.model = dispatch_model(ctx.model, self.device_map)
+        else:
             ctx.model.to(ctx.device)
 
         if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
@@ -36,7 +40,7 @@ class LLMTrainer(GeneralTorchTrainer):
 
     def _hook_on_epoch_start(self, ctx):
         super(LLMTrainer, self)._hook_on_epoch_start(ctx)
-        if self.ctx.use_acc:
+        if self.use_accelerator:
             ctx.model, ctx.optimizer, loader = \
                 self.accelerator.prepare(ctx.model,
                                          ctx.optimizer,
@@ -61,7 +65,7 @@ class LLMTrainer(GeneralTorchTrainer):
 
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
-        if self.ctx.use_acc:
+        if self.use_accelerator:
             self.accelerator.backward(ctx.loss_task)
         else:
             ctx.loss_task.backward()
