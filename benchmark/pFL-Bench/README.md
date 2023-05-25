@@ -112,3 +112,22 @@ wandb login --host=http://xx.xx.xx.xx:8080/
 ```
 
 3. connect the machine and develop your pFL algorithm
+
+
+# License
+Our codes were released with Apache-2.0 License. Please kindly cite our papers (and the respective papers of the methods used) if our work is useful for you:
+```
+@inproceedings{chen2022pflbench,
+  title={p{FL}-Bench: A Comprehensive Benchmark for Personalized Federated Learning},
+  author={Daoyuan Chen and Dawei Gao and Weirui Kuang and Yaliang Li and Bolin Ding},
+  booktitle={Thirty-sixth Conference on Neural Information Processing Systems Datasets and Benchmarks Track},
+  year={2022},
+}
+
+@inproceedings{chen2023pFedGate,
+  title={Efficient Personalized Federated Learning via Sparse Model-Adaptation},
+  author={Daoyuan Chen and Liuyi Yao and Dawei Gao and Bolin Ding and Yaliang Li},
+  booktitle={International Conference on Machine Learning},
+  year={2023},
+}
+```
