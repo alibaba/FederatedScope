@@ -1,5 +1,4 @@
 import torch.nn as nn
-import copy
 from collections import OrderedDict
 
 
@@ -15,11 +14,6 @@ def enable_adapter(model, package, adapter, **kwargs):
             Prompt Tuning
             AdaLoRA
         """
-        # from peft import get_peft_model, TaskType
-        #
-        # config = getattr(import_module('peft'), f'{adapter}Config')
-        # peft_config = config(task_type=TaskType.SEQ_2_SEQ_LM, **kwargs)
-        # model = get_peft_model(model, peft_config)
         from peft import get_peft_model
         if adapter == 'lora':
             from peft import LoraConfig

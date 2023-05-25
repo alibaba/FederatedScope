@@ -142,21 +142,8 @@ class Client(BaseClient):
             self.comm_bandwidth = None
 
         if self._cfg.backend == 'torch':
-            # For llm lora, there will be an error:
-            # AttributeError: Can't pickle local object
-            #   'LoRA.__init__.<locals>.<lambda>'
-            try:
-                self.model_size = sys.getsizeof(pickle.dumps(
-                    self.model)) / 1024.0 * 8.  # kbits
-            except AttributeError:
-                self.model_size = sys.getsizeof(
-                    pickle.dumps(self.model.base_model)) / 1024.0 * 8.
-                logger.warning("When applying adapterhub.lora, "
-                               "there will be an error: "
-                               "Can't pickle local object "
-                               "'LoRA.__init__.<locals>.<lambda>', "
-                               "thus we only get the size of "
-                               "base model without lora")
+            self.model_size = sys.getsizeof(pickle.dumps(
+                self.model)) / 1024.0 * 8.  # kbits
         else:
             # TODO: calculate model size for TF Model
             self.model_size = 1.0

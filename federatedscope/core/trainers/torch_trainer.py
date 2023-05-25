@@ -154,10 +154,7 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
 
     def _hook_on_fit_start_numerical_precision(self, ctx):
-        # TODO: LLaMA is too large, thus we need to process half() function.
-        # Maybe we should add it to cfg file to decide whether to use or not?
-        if self.cfg.model.type == \
-                'decapoda-research/llama-7b-hf@huggingface_llm':
+        if self.cfg.train.is_enable_half:
             ctx.model = ctx.model.half()
 
     def _hook_on_fit_start_init(self, ctx):

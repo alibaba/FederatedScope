@@ -7,12 +7,6 @@ def get_model_from_huggingface(model_name):
     return model
 
 
-def get_model_from_modelscope(model_name):
-    from modelscope.models import Model
-    model = Model.from_pretrained(model_name)
-    return model
-
-
 def get_llm(config):
     from federatedscope.llm.dataloader import get_tokenizer
 
@@ -20,8 +14,6 @@ def get_llm(config):
     model_name, model_hub = model_config.type.split('@')
     if model_hub == 'huggingface_llm':
         model = get_model_from_huggingface(model_name=model_name)
-    elif model_hub == 'modelscope_llm':
-        model = get_model_from_modelscope(model_name=model_name)
     else:
         raise NotImplementedError(f'Not support LLM {model_name} in'
                                   f' {model_hub}.')

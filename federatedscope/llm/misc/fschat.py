@@ -55,12 +55,15 @@ class FSChatBot(object):
             input_ids.extend(text_ids)
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).cuda()
-        response = self.model.generate(input_ids,
-                                       max_length=self.max_len,
-                                       num_beams=5,
-                                       no_repeat_ngram_size=2,
-                                       early_stopping=True,
-                                       temperature=0.5)
+
+        response = self.model.generate(
+            input_ids,
+            max_length=self.max_len,
+            num_beams=4,
+            no_repeat_ngram_size=2,
+            early_stopping=True,
+            temperature=0.0,
+        )
 
         self.history.append(response[0].tolist())
         response_tokens = \
@@ -129,7 +132,8 @@ def eval_test():
     for file in files:
         temp_correct_num = 0
         temp_total_num = 0
-        ans = []
+        # ans = []
+        choice = []
         try:
             with open(os.path.join(ROOT, file, target_file), 'r') as f:
                 data = json.load(f)
@@ -138,32 +142,46 @@ def eval_test():
 
                 for i in tqdm(range(len(data['request_states']))):
                     item = data['request_states'][i]
-                    questions.append(item['request']['prompt'])
+                    questions.append(
+                        item['request']['prompt'].split('\n\n')[-1])
 
+                    print(item['request']['prompt'].split('\n\n')[-1])
                     answer = data['request_states'][i]['instance'][
                         'references']
 
                     correct = None
                     for opt in range(len(answer)):
                         if 'correct' in answer[opt]['tags']:
-                            answers.append(opt)
+                            # answers.append(opt)
                             correct = ['A', 'B', 'C', 'D'][opt]
+                            answers.append(correct)
+
                     res = model.predict(input_text=questions[-1],
                                         use_history=False,
                                         use_prompt=False)
+                    print('------- question is -------')
                     print(questions[-1])
-                    print(res)
-                    ans.append(res)
+                    # print('------- res is  -------')
+                    # print(res)
+
+                    # ans.append(res)
+                    choice.append(res.strip()[0])
                     if res.strip()[0] == correct:
                         correct_num += 1
                         temp_correct_num += 1
 
                     temp_total_num += 1
                     total_num += 1
+                    print('------- file name is  -------')
                     print(file)
-                    print(ans)
-                    # print('temp_correct num:', temp_correct_num)
-                    # print('temp_total num:', temp_total_num)
+                    # print('------- total res is  -------')
+                    # print(ans)
+                    print('--------total choice is -------')
+                    print(choice)
+                    print('------- total ture answer is -')
+                    print(answers)
+                    print('temp_correct num:', temp_correct_num)
+                    print('temp_total num:', temp_total_num)
             print(file)
             print('temp_correct num:', temp_correct_num)
             print('temp_total num:', temp_total_num)
@@ -176,3 +194,4 @@ def eval_test():
 
 if __name__ == "__main__":
     eval_test()
+    # main()
