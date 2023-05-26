@@ -1,27 +1,9 @@
-import copy
-
-from federatedscope.llm.model.model_adapter import AdapterModel
+from federatedscope.llm.model.adapter_builder import AdapterModel
 
 
 def get_model_from_huggingface(model_name):
-    from transformers import AutoModelForCausalLM, DebertaModel
-
-    # if model_name in MODEL_CACHE:
-    #     model = copy.deepcopy(MODEL_CACHE[model_name])
-    # else:
-    model = DebertaModel.from_pretrained(model_name)
-    #     MODEL_CACHE[model_name] = model
-    return model
-
-
-def get_model_from_modelscope(model_name):
-    from modelscope.models import Model
-
-    # if model_name in MODEL_CACHE:
-    #     model = copy.deepcopy(MODEL_CACHE[model_name])
-    # else:
-    model = Model.from_pretrained(model_name)
-    #     MODEL_CACHE[model_name] = model
+    from transformers import AutoModelForCausalLM
+    model = AutoModelForCausalLM.from_pretrained(model_name)
     return model
 
 
@@ -32,8 +14,6 @@ def get_llm(config):
     model_name, model_hub = model_config.type.split('@')
     if model_hub == 'huggingface_llm':
         model = get_model_from_huggingface(model_name=model_name)
-    elif model_hub == 'modelscope_llm':
-        model = get_model_from_modelscope(model_name=model_name)
     else:
         raise NotImplementedError(f'Not support LLM {model_name} in'
                                   f' {model_hub}.')
@@ -54,14 +34,8 @@ def get_llm(config):
         input_embeddings[-num_new_tokens:] = input_embeddings_avg
         output_embeddings[-num_new_tokens:] = output_embeddings_avg
 
-    use_adapter = config.adapter.use
-    if use_adapter:
-        adapter_package = config.adapter.args[0]['adapter_package']
-        adapter_method = config.adapter.args[0]['adapter_method']
-    else:
-        adapter_package = None
-        adapter_method = None
+    use_adapter = config.llm.adapter.use
 
-    model = AdapterModel(model, use_adapter, adapter_package, adapter_method)
+    model = AdapterModel(model, use_adapter, config.llm.adapter.args[0])
 
     return model

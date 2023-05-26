@@ -1,14 +1,12 @@
 use_gpu: True
-device: 0
+device: 4
 early_stop:
   patience: 10
 federate:
-  mode: standalone
-  client_num: 1
-  total_round_num: 200
-  save_to: "gpt2.ckpt"
-  share_local_model: True
-  online_aggr: True
+  mode: 'distributed'
+  client_num: 3
+  total_round_num: 500
+  save_to: "llama.ckpt"
 data:
   root: data/
   type: 'alpaca_data.json@llm'
@@ -19,21 +17,20 @@ llm:
   chat:
     max_len: 1000
   adapter:
-    use: True
-    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora' } ]
+    use: False
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
 dataloader:
-  batch_size: 8
+  batch_size: 1
 model:
-  type: 'gpt2@huggingface_llm'
-adapter:
-  use: True
-  args: [{'adapter_package': 'peft', 'adapter_method':'lora'}]
+  type: 'decapoda-research/llama-7b-hf@huggingface_llm'
+#  type: 'gpt2@huggingface_llm'
 train:
   local_update_steps: 10
   batch_or_epoch: batch
   optimizer:
-    lr: 0.001
+    lr: 0.01
     weight_decay: 0.0
+  is_enable_half: True
 criterion:
   type: CrossEntropyLoss
 trainer:

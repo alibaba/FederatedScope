@@ -55,12 +55,15 @@ class FSChatBot(object):
             input_ids.extend(text_ids)
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).cuda()
-        response = self.model.generate(input_ids,
-                                       max_length=self.max_len,
-                                       num_beams=5,
-                                       no_repeat_ngram_size=2,
-                                       early_stopping=True,
-                                       temperature=0.5)
+
+        response = self.model.generate(
+            input_ids,
+            max_length=self.max_len,
+            num_beams=4,
+            no_repeat_ngram_size=2,
+            early_stopping=True,
+            temperature=0.0,
+        )
 
         self.history.append(response[0].tolist())
         response_tokens = \
@@ -96,10 +99,11 @@ def main():
             chat_bot.clear()
             print(welcome)
             continue
-        print(f'\nFSBot: {chat_bot.predict(input_text, use_history=False)}')
+        print(f'\nFSBot: {chat_bot.predict(input_text)}')
 
 
 def eval_test():
+    # TODO: we will remove the prints in this function later
     init_cfg = global_cfg.clone()
     args = parse_args()
 
@@ -113,8 +117,7 @@ def eval_test():
 
     model = FSChatBot(init_cfg)
 
-    # ROOT = '/home/bingchen/shared/'
-    ROOT = '../..'
+    ROOT = '../shared/'
     target_file = 'scenario_state.json'
 
     files = os.listdir(ROOT)
@@ -127,8 +130,12 @@ def eval_test():
     total_num = 0
     correct_num = 0
     for file in files:
+        print('------- file name is  -------')
+        print(file)
         temp_correct_num = 0
         temp_total_num = 0
+        # ans = []
+        choice = []
         try:
             with open(os.path.join(ROOT, file, target_file), 'r') as f:
                 data = json.load(f)
@@ -137,7 +144,8 @@ def eval_test():
 
                 for i in tqdm(range(len(data['request_states']))):
                     item = data['request_states'][i]
-                    questions.append(item['request']['prompt'])
+                    questions.append(
+                        item['request']['prompt'].split('\n\n')[-1])
 
                     answer = data['request_states'][i]['instance'][
                         'references']
@@ -145,24 +153,29 @@ def eval_test():
                     correct = None
                     for opt in range(len(answer)):
                         if 'correct' in answer[opt]['tags']:
-                            answers.append(opt)
                             correct = ['A', 'B', 'C', 'D'][opt]
-                    # print(item['request']['prompt'])
-                    #         print(op, end=' ')
+                            answers.append(correct)
+
                     res = model.predict(input_text=questions[-1],
                                         use_history=False,
                                         use_prompt=False)
-                    print(questions)
+                    print('------- question is -------')
+                    print(questions[-1])
+                    print('------- res is  -------')
                     print(res)
+
+                    choice.append(res.strip()[0])
                     if res.strip()[0] == correct:
                         correct_num += 1
                         temp_correct_num += 1
-                    # elif res.strip()[0] not in 'ABCD':
-                    #     correct_num += 0
 
                     temp_total_num += 1
                     total_num += 1
-                    print(file)
+
+                    print('--------total choice is -------')
+                    print(choice)
+                    print('------- total ture answer is -')
+                    print(answers)
                     print('temp_correct num:', temp_correct_num)
                     print('temp_total num:', temp_total_num)
             print(file)
@@ -170,13 +183,11 @@ def eval_test():
             print('temp_total num:', temp_total_num)
         except Exception as error:
             print(error)
-        # print(file)
-        # print('temp_correct num:', temp_correct_num)
-        # print('temp_total num:', temp_total_num)
 
     print(correct_num)
     print(total_num)
 
 
 if __name__ == "__main__":
-    eval_test()
+    # eval_test()
+    main()

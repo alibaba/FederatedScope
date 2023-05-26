@@ -42,6 +42,9 @@ def extend_training_cfg(cfg):
     cfg.train.scheduler.type = ''
     cfg.train.scheduler.warmup_ratio = 0.0
 
+    # when model is too large, users can use half-precision model
+    cfg.train.is_enable_half = False
+
     # ---------------------------------------------------------------------- #
     # Finetune related options
     # ---------------------------------------------------------------------- #
