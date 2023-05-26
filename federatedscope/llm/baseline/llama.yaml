@@ -1,11 +1,11 @@
 use_gpu: True
-device: 4
+device: 0
 early_stop:
   patience: 10
 federate:
-  mode: 'distributed'
+  mode: standalone
   client_num: 3
-  total_round_num: 500
+  total_round_num: 200
   save_to: "llama.ckpt"
 data:
   root: data/
