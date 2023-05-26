@@ -36,6 +36,8 @@ def get_llm(config):
 
     use_adapter = config.llm.adapter.use
 
-    model = AdapterModel(model, use_adapter, config.llm.adapter.args[0])
+    args = config.llm.adapter.args[0] if len(
+        config.llm.adapter.args[0]) > 0 else {}
+    model = AdapterModel(model, use_adapter, **args)
 
     return model

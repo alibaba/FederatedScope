@@ -115,8 +115,8 @@ def enable_adapter(model, package, adapter, **kwargs):
 
 class AdapterModel(nn.Module):
     def __init__(self, model, use_adapter=False, *args, **kwargs):
+        super().__init__()
 
-        super().__init__(*args, **kwargs)
         self.base_model = model
         self.use_adapter = use_adapter
         self.adapted_model = None
