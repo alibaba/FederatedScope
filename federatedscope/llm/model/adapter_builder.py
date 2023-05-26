@@ -114,20 +114,11 @@ def enable_adapter(model, package, adapter, **kwargs):
 
 
 class AdapterModel(nn.Module):
-    def __init__(self,
-                 model,
-                 use_adapter=False,
-                 adapter_package=None,
-                 adapter_method=None,
-                 *args,
-                 **kwargs):
+    def __init__(self, model, use_adapter=False, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
         self.base_model = model
         self.use_adapter = use_adapter
-        self.adapter_package = adapter_package
-        self.adapter_method = adapter_method
-
         self.adapted_model = None
 
         if self.use_adapter:
@@ -138,8 +129,6 @@ class AdapterModel(nn.Module):
                                                 adapter_method, **kwargs)
         else:
             self.adapted_model = model
-
-        print(self.adapted_model)
 
     def forward(self, *args, **kwargs):
         return self.adapted_model.forward(*args, **kwargs)
