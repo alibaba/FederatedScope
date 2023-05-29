@@ -1,0 +1,39 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 10
+federate:
+  mode: standalone
+  client_num: 1
+  total_round_num: 200
+  save_to: "llama.ckpt"
+data:
+  root: data/
+  type: 'alpaca_data.json@llm'
+  splits: [0.98,0.01,0.01]
+  splitter: 'iid'
+llm:
+  tok_len: 1000
+  chat:
+    max_len: 1000
+  adapter:
+    use: True
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
+dataloader:
+  batch_size: 1
+model:
+  type: 'decapoda-research/llama-7b-hf@huggingface_llm'
+train:
+  local_update_steps: 10
+  batch_or_epoch: batch
+  optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  is_enable_half: True
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: llmtrainer
+eval:
+  freq: 50
+  metrics: ['loss']
