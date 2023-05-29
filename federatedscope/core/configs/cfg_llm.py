@@ -32,6 +32,13 @@ def extend_llm_cfg(cfg):
     cfg.llm.adapter.use = False
     cfg.llm.adapter.args = []
 
+    # ---------------------------------------------------------------------- #
+    # Offsite-tuning related options
+    # ---------------------------------------------------------------------- #
+    cfg.llm.offsite_tuning = CN()
+    cfg.llm.offsite_tuning.use = False
+    cfg.llm.offsite_tuning.strategy = 'drop_layer'
+
 
 def assert_llm_cfg(cfg):
     pass
