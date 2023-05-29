@@ -32,7 +32,7 @@ class OffsiteTuningClient(Client):
 
     def callback_funcs_for_emulator_and_adapter(self, message: Message):
         logger.info(f'Client {self.ID}: Emulator and adapter received.')
-        adapter_model = deb64serializer(message.content)
+        adapter_model = deb64serializer(message.content, tool='dill')
         self._model = adapter_model
         self.trainer = get_trainer(model=adapter_model,
                                    data=self.data,

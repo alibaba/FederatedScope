@@ -2,10 +2,9 @@ import gc
 import logging
 import torch
 import torch.nn as nn
-# TODO: Use `federatedscope.llm.model.AdapterModule`
-from torch.nn import Module as AdapterModule
 
 from transformers import (GPT2LMHeadModel, LlamaForCausalLM)
+from federatedscope.llm.model.adapter_builder import AdapterModel
 
 logger = logging.getLogger(__name__)
 
@@ -60,31 +59,33 @@ def add_epilogue(module, epilogue=None):
     return module
 
 
-def model_drop_layer(model, drop_ratio=0.5, **kwargs):
-    def get_llm_layers(model):
+def model_drop_layer(adapter_model, drop_ratio=0.5, **kwargs):
+    def get_llm_layers(adapter_model):
+        model = adapter_model.model
+        # TODO: support model LLM
         if isinstance(model, GPT2LMHeadModel):
-            layers = model.transformer.h
+            layers = adapter_model.model.transformer.h
         elif isinstance(model, LlamaForCausalLM):
-            layers = model.layers.h
+            layers = adapter_model.model.layers.h
         else:
             logger.warning(f'Model drop layer might cause '
                            f'error with unknown LLM {model}')
-            layers = model.transformer.h
+            layers = adapter_model.model.transformer.h
         return layers
 
-    layers = get_llm_layers(model)
+    layers = get_llm_layers(adapter_model)
     new_model = nn.ModuleList()
 
     num_new_layers = round(len(layers) * (1 - drop_ratio))
 
-    stride = (len(layers) - 1) * (num_new_layers - 1)
+    stride = (len(layers) - 1) / (num_new_layers - 1)
 
     for i in range(num_new_layers):
         idx = round(i * stride)
-        logger.info(f"Adding layer {idx} to student")
+        logger.info(f"Adding layer {idx} to emulator")
         new_model.append(layers[idx])
 
-    raise new_model
+    return new_model
 
 
 def model_pruning(model, ratio=0.5, **kwargs):
@@ -99,39 +100,28 @@ def model_distillation(model, **kwargs):
     raise NotImplementedError
 
 
-def merge_emulator_and_adapter(emulator, adapter):
-    # TODO: Implement this
-    # model.emulator = emulator
-    # model.adapter = adapter
-    # model.forward = ...
-    ...
+COMP_FUNC_MAPPING = {
+    'drop_layer': model_drop_layer,
+    'pruning': model_pruning,
+    'quantization': model_quantization,
+    'distillation': model_distillation
+}
 
 
-def generate_emulator_and_adapter(model: AdapterModule,
+def generate_emulator_and_adapter(model: AdapterModel,
                                   strategy='drop_layer',
                                   **kwargs):
-    # TODO: Delete this line
-    return model
-
-    COMP_FUNC_MAP = {
-        'drop_layer': model_drop_layer,
-        'pruning': model_pruning,
-        'quantization': model_quantization,
-        'distillation': model_distillation
-    }
-    # TODO: update with `federatedscope.llm.model.AdapterModule` enabled
-    # base_model = model.base_model
-    base_model = model
-    emulator = COMP_FUNC_MAP[strategy](base_model, **kwargs)
+    emulator = COMP_FUNC_MAPPING[strategy](model, **kwargs)
 
     for param in emulator.parameters():
         param.data = param.data.float()
         param.requires_grad = False
 
-    # TODO: Implement this
-    new_model = merge_emulator_and_adapter(emulator, model.adapter)
+    # Enable offsite-tuning adapter
+    add_prologue(emulator[0], None)
+    add_epilogue(emulator[-1], None)
 
     gc.collect()
     torch.cuda.empty_cache()
 
-    return new_model
+    return model

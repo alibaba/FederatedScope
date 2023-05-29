@@ -35,7 +35,7 @@ class OffsiteTuningServer(Server):
                               trigger_train_func,
                               kwargs_for_trigger_train_func={}):
         logger.info('Server: Converting emulator and adapter...')
-        emulator_and_adapter = b64serializer(self._model)
+        emulator_and_adapter = b64serializer(self._model, tool='dill')
 
         self.comm_manager.send(
             Message(msg_type='emulator_and_adapter',

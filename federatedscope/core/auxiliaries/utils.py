@@ -1,3 +1,4 @@
+import dill
 import logging
 import math
 import os
@@ -92,12 +93,22 @@ def merge_dict_of_results(dict1, dict2):
     return dict1
 
 
-def b64serializer(x):
-    return base64.b64encode(pickle.dumps(x))
+def b64serializer(x, tool='pickle'):
+    if tool == 'pickle':
+        return base64.b64encode(pickle.dumps(x))
+    elif tool == 'dill':
+        return base64.b64encode(dill.dumps(x))
+    else:
+        raise NotImplementedError('Choose from `pickle` or `dill`')
 
 
-def deb64serializer(x):
-    return pickle.loads((base64.b64decode(x)))
+def deb64serializer(x, tool='pickle'):
+    if tool == 'pickle':
+        return pickle.loads((base64.b64decode(x)))
+    elif tool == 'dill':
+        return dill.loads((base64.b64decode(x)))
+    else:
+        raise NotImplementedError('Choose from `pickle` or `dill`')
 
 
 def param2tensor(param):

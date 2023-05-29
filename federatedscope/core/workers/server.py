@@ -5,7 +5,6 @@ import sys
 
 import numpy as np
 import pickle
-import time
 
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message

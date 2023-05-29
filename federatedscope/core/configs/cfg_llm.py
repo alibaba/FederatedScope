@@ -30,7 +30,7 @@ def extend_llm_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.llm.adapter = CN()
     cfg.llm.adapter.use = False
-    cfg.llm.adapter.args = []
+    cfg.llm.adapter.args = [{}]
 
     # ---------------------------------------------------------------------- #
     # Offsite-tuning related options
