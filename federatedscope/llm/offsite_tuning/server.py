@@ -24,9 +24,16 @@ class OffsiteTuningServer(Server):
                  **kwargs):
         compress_strategy = config.llm.offsite_tuning.strategy
         self.raw_model = model
+        emulator_l = config.llm.offsite_tuning.emu_l
+        emulator_r = config.llm.offsite_tuning.emu_r
+        offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
         logger.info('Server: Generating emulator and adapter...')
-        adap_model = generate_emulator_and_adapter(model,
-                                                   strategy=compress_strategy)
+        adap_model = \
+            generate_emulator_and_adapter(model,
+                                          strategy=compress_strategy,
+                                          emulator_l=emulator_l,
+                                          emulator_r=emulator_r,
+                                          **offsite_tuning_kwargs)
         super(OffsiteTuningServer,
               self).__init__(ID, state, config, data, adap_model, client_num,
                              total_round_num, device, strategy, **kwargs)

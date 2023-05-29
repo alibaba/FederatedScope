@@ -38,6 +38,9 @@ def extend_llm_cfg(cfg):
     cfg.llm.offsite_tuning = CN()
     cfg.llm.offsite_tuning.use = False
     cfg.llm.offsite_tuning.strategy = 'drop_layer'
+    cfg.llm.offsite_tuning.kwargs = [{}]
+    cfg.llm.offsite_tuning.emu_l = 1
+    cfg.llm.offsite_tuning.emu_r = 10
 
 
 def assert_llm_cfg(cfg):
