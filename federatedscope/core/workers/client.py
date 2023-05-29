@@ -142,8 +142,12 @@ class Client(BaseClient):
             self.comm_bandwidth = None
 
         if self._cfg.backend == 'torch':
-            self.model_size = sys.getsizeof(pickle.dumps(
-                self.model)) / 1024.0 * 8.  # kbits
+            try:
+                self.model_size = sys.getsizeof(pickle.dumps(
+                    self.model)) / 1024.0 * 8.  # kbits
+            except Exception as error:
+                self.model_size = 1.0
+                logger.warning(f'{error} in calculate model size.')
         else:
             # TODO: calculate model size for TF Model
             self.model_size = 1.0

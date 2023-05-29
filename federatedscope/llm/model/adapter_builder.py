@@ -39,9 +39,8 @@ def enable_adapter(model, package, adapter, **kwargs):
             Invertible Adapters
             Parallel block
         """
-        # TODO: maybe we need to merge the following adapters rightly
-        #   and when supporting adapterhub, we will move the following
-        #   parameters in yaml file for the users' convenient
+        # TODO:  After supporting adapterhub, we will move the following
+        #   parameters in yaml file for users' convenient
         if adapter == 'lora':
             from transformers.adapters import LoRAConfig
 

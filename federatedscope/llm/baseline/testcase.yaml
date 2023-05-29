@@ -5,10 +5,10 @@ early_stop:
 federate:
   mode: standalone
   client_num: 1
-  total_round_num: 100
+  total_round_num: 200
   save_to: "gpt2.ckpt"
-  share_local_model: True
-  online_aggr: True
+  share_local_model: False
+  online_aggr: False
 data:
   root: data/
   type: 'alpaca_data.json@llm'
@@ -18,8 +18,10 @@ llm:
   tok_len: 1000
   chat:
     max_len: 1000
+  accelerator:
+    use: True
 dataloader:
-  batch_size: 8
+  batch_size: 1
 model:
   type: 'gpt2@huggingface_llm'
 train:
