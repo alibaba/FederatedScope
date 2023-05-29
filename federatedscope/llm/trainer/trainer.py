@@ -66,6 +66,7 @@ class LLMTrainer(GeneralTorchTrainer):
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
         if self.use_accelerator:
+            # TODO: enable `accelerator.accumulate(model)`
             self.accelerator.backward(ctx.loss_task)
         else:
             ctx.loss_task.backward()
