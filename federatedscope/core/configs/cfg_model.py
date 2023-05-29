@@ -50,21 +50,6 @@ def extend_model_cfg(cfg):
     cfg.model.contrast_temp = 1.0
 
     # ---------------------------------------------------------------------- #
-    # LLM related options
-    # ---------------------------------------------------------------------- #
-    # TODO: move to new file
-    cfg.llm = CN()
-    cfg.llm.tok_len = 128
-
-    cfg.llm.accelerator = CN()
-    # Use accelerator will enable model sharding
-    cfg.llm.accelerator.use = False
-
-    cfg.llm.chat = CN()
-    cfg.llm.chat.max_history_len = 10
-    cfg.llm.chat.max_len = 100
-
-    # ---------------------------------------------------------------------- #
     # Criterion related options
     # ---------------------------------------------------------------------- #
     cfg.criterion = CN()

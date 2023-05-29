@@ -102,6 +102,10 @@ def extend_fl_setting_cfg(cfg):
     cfg.vertical.data_size_for_debug = 0  # use a subset for debug in vfl,
     # 0 indicates using the entire dataset (disable debug mode)
 
+    cfg.adapter = CN()
+    cfg.adapter.use = False
+    cfg.adapter.args = []
+
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)
 

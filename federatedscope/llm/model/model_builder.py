@@ -1,42 +1,7 @@
+from federatedscope.llm.model.adapter_builder import AdapterModel
 import copy
 
 MODEL_CACHE = {}
-
-
-def enable_adapter(model, adapter, package, **kwargs):
-    if package == 'peft':
-        """
-        PEFT: https://github.com/huggingface/peft
-        Support methods:
-            LoRA
-            Prefix Tuning
-            P-Tuning
-            Prompt Tuning
-            AdaLoRA
-        """
-        # from peft import get_peft_model, TaskType
-        #
-        # config = getattr(import_module('peft'), f'{adapter}Config')
-        # peft_config = config(task_type=TaskType.SEQ_2_SEQ_LM, **kwargs)
-        # model = get_peft_model(model, peft_config)
-
-        raise NotImplementedError
-
-    elif package == 'adapterhub':
-        """
-        AdapterHub: https://docs.adapterhub.ml/model_overview.html
-        Support methods:
-            Bottleneck Adapters
-            Prefix Tuning
-            LoRA
-            Compacter
-            Adapter Fusion
-            Invertible Adapters
-            Parallel block
-        """
-        raise NotImplementedError
-
-    return model
 
 
 def get_model_from_huggingface(model_name, config):
@@ -94,5 +59,11 @@ def get_llm(config):
 
         input_embeddings[-num_new_tokens:] = input_embeddings_avg
         output_embeddings[-num_new_tokens:] = output_embeddings_avg
+
+    use_adapter = config.llm.adapter.use
+
+    args = config.llm.adapter.args[0] if len(
+        config.llm.adapter.args[0]) > 0 else {}
+    model = AdapterModel(model, use_adapter, **args)
 
     return model
