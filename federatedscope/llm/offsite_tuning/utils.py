@@ -4,9 +4,44 @@ import logging
 import torch
 import torch.nn as nn
 
+from transformers import (
+    OPTForCausalLM,
+    GPT2LMHeadModel,
+    BloomForCausalLM,
+)
 from federatedscope.llm.model.adapter_builder import AdapterModel
 
 logger = logging.getLogger(__name__)
+
+
+def get_layers(adapter_model):
+    if isinstance(adapter_model.model, OPTForCausalLM):
+        layers = adapter_model.model.model.decoder.layers
+    elif isinstance(adapter_model.model, GPT2LMHeadModel):
+        layers = adapter_model.model.transformer.h
+    elif isinstance(adapter_model.model, BloomForCausalLM):
+        layers = adapter_model.model.transformer.h
+    else:
+        # TODO: support more LLM
+        logger.warning(f'Model {type(adapter_model.model)} not support, '
+                       f'use default setting.')
+        layers = adapter_model.model.transformer.h
+    return layers
+
+
+def set_layers(adapter_model, layers):
+    if isinstance(adapter_model.model, OPTForCausalLM):
+        adapter_model.model.model.decoder.layers = layers
+    elif isinstance(adapter_model.model, GPT2LMHeadModel):
+        adapter_model.model.transformer.h = layers
+    elif isinstance(adapter_model.model, BloomForCausalLM):
+        adapter_model.model.transformer.h = layers
+    else:
+        # TODO: support more LLM
+        logger.warning(f'Model {type(adapter_model.model)} not support, '
+                       f'use default setting.')
+        adapter_model.model.transformer.h = layers
+    return adapter_model
 
 
 def model_drop_layer(layers, drop_ratio=0.5, **kwargs):
@@ -49,8 +84,7 @@ def generate_emulator_and_adapter(model: AdapterModel,
                                   emulator_r=10,
                                   **kwargs):
     l, r = emulator_l, emulator_r
-    # TODO: support more LLM
-    layers = model.model.transformer.h
+    layers = get_layers(model)
 
     emulator = COMP_FUNC_MAPPING[strategy](layers[l:r], **kwargs)
 
@@ -58,20 +92,22 @@ def generate_emulator_and_adapter(model: AdapterModel,
         param.data = param.data.float()
         param.requires_grad = False
 
-    emulator_adapter = nn.ModuleList()
+    emulator_and_adapter = nn.ModuleList()
+
+    # Adapter before Emulator
     for idx in range(l):
-        emulator_adapter.append(layers[idx])
+        emulator_and_adapter.append(layers[idx])
 
+    # Emulator
     for idx in range(len(emulator)):
-        emulator_adapter.append(emulator[idx])
+        emulator_and_adapter.append(emulator[idx])
 
+    # Adapter after Emulator
     for idx in range(r, len(layers)):
-        emulator_adapter.append(layers[idx])
+        emulator_and_adapter.append(layers[idx])
 
     new_model = copy.deepcopy(model)
-
-    # TODO: support more LLM
-    new_model.model.transformer.h = emulator_adapter
+    new_model = set_layers(new_model, emulator_and_adapter)
 
     gc.collect()
     torch.cuda.empty_cache()
