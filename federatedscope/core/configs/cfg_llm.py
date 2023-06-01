@@ -30,7 +30,17 @@ def extend_llm_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.llm.adapter = CN()
     cfg.llm.adapter.use = False
-    cfg.llm.adapter.args = []
+    cfg.llm.adapter.args = [{}]
+
+    # ---------------------------------------------------------------------- #
+    # Offsite-tuning related options
+    # ---------------------------------------------------------------------- #
+    cfg.llm.offsite_tuning = CN()
+    cfg.llm.offsite_tuning.use = False
+    cfg.llm.offsite_tuning.strategy = 'drop_layer'
+    cfg.llm.offsite_tuning.kwargs = [{}]
+    cfg.llm.offsite_tuning.emu_l = 1  # Index of emulator layer left
+    cfg.llm.offsite_tuning.emu_r = 10  # Index of emulator layer right
 
 
 def assert_llm_cfg(cfg):

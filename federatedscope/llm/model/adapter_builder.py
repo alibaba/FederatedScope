@@ -118,42 +118,46 @@ class AdapterModel(nn.Module):
     def __init__(self, model, use_adapter=False, *args, **kwargs):
         super().__init__()
 
-        self.base_model = model
-        self.use_adapter = use_adapter
-        self.adapted_model = None
-
-        if self.use_adapter:
+        self.model = None
+        if use_adapter:
             adapter_package = kwargs.pop('adapter_package', 'peft')
             adapter_method = kwargs.pop('adapter_method', 'lora')
 
-            self.adapted_model = enable_adapter(model, adapter_package,
-                                                adapter_method, **kwargs)
+            self.model = enable_adapter(model, adapter_package, adapter_method,
+                                        **kwargs)
         else:
-            self.adapted_model = model
+            self.model = model
 
     def forward(self, *args, **kwargs):
-        return self.adapted_model.forward(*args, **kwargs)
+        return self.model.forward(*args, **kwargs)
 
     def generate(self, *args, **kwargs):
-        return self.adapted_model.generate(*args, **kwargs)
+        return self.model.generate(*args, **kwargs)
 
     def state_dict(self, return_trainable=True):
         if return_trainable:
-            return self.get_trainable_state_dict(self.adapted_model)
+            return self.get_trainable_state_dict()
         else:
-            return self.adapted_model.state_dict()
+            return self.model.state_dict()
 
     def load_state_dict(self, state_dict, strict=False):
-        return self.adapted_model.load_state_dict(state_dict, strict=False)
+        return self.model.load_state_dict(state_dict, strict=False)
 
-    def get_trainable_state_dict(self, model):
+    def get_trainable_state_dict(self):
         grad_params = []
-        for name, param in model.named_parameters():
+        for name, param in self.model.named_parameters():
             if param.requires_grad:
                 grad_params.append(name)
-        model_state_dict = model.state_dict()
+        model_state_dict = self.model.state_dict()
         new_state_dict = OrderedDict()
         for k, v in model_state_dict.items():
             if k in grad_params:
                 new_state_dict[k] = v
         return new_state_dict
+
+    def hf_device_map(self):
+        return self.model.hf_device_map
+
+    # TODO: Fix `__getattr__`
+    # def __getattr__(self, item):
+    #     return getattr(self.model, item)

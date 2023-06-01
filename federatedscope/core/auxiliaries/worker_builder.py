@@ -105,6 +105,13 @@ def get_client_cls(cfg):
             add_atk_method_to_Client_GradAscent
         logger.info("=========== add method to current client class ")
         client_class = add_atk_method_to_Client_GradAscent(client_class)
+
+    if cfg.llm.offsite_tuning.use:
+        from federatedscope.llm.offsite_tuning.client import \
+            OffsiteTuningClient
+        logger.info("=========== Using offsite_tuning ===========")
+        return OffsiteTuningClient
+
     return client_class
 
 
@@ -206,5 +213,11 @@ def get_server_cls(cfg):
         server_class = GlobalContrastFLServer
     else:
         server_class = Server
+
+    if cfg.llm.offsite_tuning.use:
+        from federatedscope.llm.offsite_tuning.server import \
+            OffsiteTuningServer
+        logger.info("=========== Using offsite_tuning ===========")
+        return OffsiteTuningServer
 
     return server_class
