@@ -102,7 +102,7 @@ def b64serializer(x, tool='pickle'):
         raise NotImplementedError('Choose from `pickle` or `dill`')
 
 
-def deb64serializer(x, tool='pickle'):
+def b64deserializer(x, tool='pickle'):
     if tool == 'pickle':
         return pickle.loads((base64.b64decode(x)))
     elif tool == 'dill':
@@ -121,7 +121,7 @@ def param2tensor(param):
     elif isinstance(param, float):
         param = torch.tensor(param, dtype=torch.float)
     elif isinstance(param, str):
-        param = deb64serializer(param)
+        param = b64deserializer(param)
     return param
 
 

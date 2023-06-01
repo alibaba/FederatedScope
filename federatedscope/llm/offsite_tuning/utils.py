@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 def get_layers(adapter_model):
+    """
+    Modified from the official implementation:
+    https://github.com/mit-han-lab/offsite-tuning/tree/main
+    """
     if isinstance(adapter_model.model, OPTForCausalLM):
         layers = adapter_model.model.model.decoder.layers
     elif isinstance(adapter_model.model, GPT2LMHeadModel):
