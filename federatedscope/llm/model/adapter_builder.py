@@ -127,6 +127,7 @@ class AdapterModel(nn.Module):
                                         **kwargs)
         else:
             self.model = model
+        self.hf_device_map = self.model.hf_device_map
 
     def forward(self, *args, **kwargs):
         return self.model.forward(*args, **kwargs)
@@ -154,9 +155,6 @@ class AdapterModel(nn.Module):
             if k in grad_params:
                 new_state_dict[k] = v
         return new_state_dict
-
-    def hf_device_map(self):
-        return self.model.hf_device_map
 
     # TODO: Fix `__getattr__`
     # def __getattr__(self, item):
