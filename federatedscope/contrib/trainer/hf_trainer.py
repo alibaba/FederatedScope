@@ -1,7 +1,7 @@
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import BaseTrainer
 
-# An example for converting torch training process to FS training process
+# An example for converting huggingface training process to FS training process
 
 # Refer to `federatedscope.core.trainers.BaseTrainer` for interface.
 
