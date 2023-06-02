@@ -1,4 +1,5 @@
 import os
+import json
 import torch
 import transformers
 
@@ -65,6 +66,24 @@ def load_llm_dataset(config=None, **kwargs):
     # Example: config.data.type: xxx.json@llm
     dataset_name, _ = config.data.type.split('@')
     fp = os.path.join(config.data.root, dataset_name)
-    dataset = LLMDataset(fp, tokenizer)
+    if dataset_name.endswith('.json'):
+        with open(fp, 'r', encoding="utf-8") as f:
+            list_data_dict = json.load(f)
+    elif dataset_name.endswith('.jsonl'):
+        list_data_dict = []
+        with open(fp, 'r', encoding="utf-8") as f:
+            for line in f:
+                item = json.loads(line)
+                if 'databricks-dolly-15k' in dataset_name:
+                    new_item = dict(instruction=item['instruction'],
+                                    input=item['context'],
+                                    output=item['response'],
+                                    category=item['category'])
+                    item = new_item
+                list_data_dict.append(item)
+    else:
+        raise ValueError(f'Not support data type {dataset_name}.')
+
+    dataset = LLMDataset(list_data_dict, tokenizer)
 
     return dataset, config
