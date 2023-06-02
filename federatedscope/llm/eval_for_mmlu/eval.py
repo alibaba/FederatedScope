@@ -1,3 +1,4 @@
+# ref: https://github.com/hendrycks/test/blob/master/evaluate_flan.py
 import os
 import torch
 import numpy as np
@@ -6,16 +7,12 @@ from federatedscope.llm.eval_for_mmlu.categories import \
      subcategories, categories
 import json
 import transformers
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from accelerate import accelerator
 
 from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.llm.misc.fschat import FSChatBot
-
-# This file is adapted from https://github.com/hendrycks/test
 
 transformers.logging.set_verbosity(40)
 
@@ -66,22 +63,11 @@ def eval(subject, model, tokenizer, dev_df, test_df):
 
         input_ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
 
-        # if using model from hugging face,
-        #    and device_map="auto", use the following
-        # input_ids = tokenizer(
-        #     prompt, return_tensors = "pt").input_ids.to(model.device)
-
         while input_ids.shape[-1] > 2048:
             k -= 1
             train_prompt = gen_prompt(dev_df, subject, k)
             prompt = train_prompt + prompt_end
             input_ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
-
-            # if using model from hugging face,
-            #    and device_map="auto", use the following
-            # input_ids = tokenizer(
-            #   prompt,
-            #   return_tensors="pt").input_ids.to(model.device)
 
         label = test_df.iloc[i, test_df.shape[1] - 1]
 
@@ -123,22 +109,11 @@ def main():
     update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
-    # use your finetuned model (saved as .ckpt) by yaml file
+    # load your finetuned model (saved as xxx.ckpt)
+    #    in yaml file federate.save_to
     fschatbot = FSChatBot(init_cfg)
     tokenizer = fschatbot.tokenizer
     model = fschatbot.model
-
-    # use model from huggingface or your full model from a directory
-    # model_name = 'decapoda-research/llama-7b-hf'
-    # model = AutoModelForCausalLM.from_pretrained(
-    #     model_name,
-    #     torch_dtype=torch.float16,
-    #     load_in_8bit=False,
-    #     low_cpu_mem_usage=True,
-    #     device_map="auto",
-    # )
-    # tokenizer = AutoTokenizer.from_pretrained(model_name)
-    # model.eval()
 
     subjects = sorted([
         f.split("_test.csv")[0]

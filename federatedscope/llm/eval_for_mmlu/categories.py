@@ -1,3 +1,4 @@
+# ref: https://github.com/hendrycks/test/blob/master/evaluate_flan.py
 subcategories = {
     "abstract_algebra": ["math"],
     "anatomy": ["health"],
