@@ -6,7 +6,7 @@ federate:
   mode: standalone
   client_num: 1
   total_round_num: 200
-  save_to: "llama_mmlu.ckpt"
+  save_to: "llama.ckpt"
 data:
   root: data/
   type: 'alpaca_data.json@llm'
