@@ -26,14 +26,18 @@ class HFTrainer(BaseTrainer):
         tokenizer, _ = get_tokenizer(model_name, config.data.root,
                                      config.llm.tok_len)
         data_collator = LLMDataCollator(tokenizer=tokenizer)
-        training_args = \
-            TrainingArguments(
-                "hf-trainer",
-                num_train_epochs=config.train.local_update_steps,
-                report_to=None,
-            )
+
+        training_kwargs = {}
+        if config.train.batch_or_epoch == 'batch':
+            training_kwargs['max_steps'] = config.train.local_update_steps
+        else:
+            training_kwargs['num_train_epochs'] = \
+                config.train.local_update_steps
+
+        training_args = TrainingArguments("hf-trainer", **training_kwargs)
+
         self.trainer = Trainer(
-            model=model,
+            model=model.model,
             args=training_args,
             train_dataset=data["train"].dataset,
             eval_dataset=data["train"].dataset,
@@ -46,9 +50,11 @@ class HFTrainer(BaseTrainer):
         self.model.train()
 
         self.trainer.train()
-        loss = self.trainer.state.log_history[-1]['loss']
-        step = self.trainer.state.log_history[-1]['step']
-        num_examples = step * self.cfg.dataloader.batch_size
+
+        log = self.trainer.state.log_history[-1]
+        loss, step = log['train_loss'], log['step']
+
+        num_examples = int(step * self.cfg.dataloader.batch_size)
 
         return num_examples, self.model.cpu().state_dict(), \
             {'loss_total': loss, 'avg_loss': loss/float(
@@ -59,10 +65,9 @@ class HFTrainer(BaseTrainer):
         self.model.eval()
         metric = self.trainer.evaluate(
             eval_dataset=self.data[target_data_split_name].dataset)
-        print(metric)
 
-        total_loss = 1.0
-        num_samples = 2
+        total_loss = metric['eval_loss']
+        num_samples = len(self.data[target_data_split_name].dataset)
 
         return {
             f'{target_data_split_name}_loss': total_loss,
