@@ -5,6 +5,7 @@ Some code snippets are borrowed from the open-sourced stanford_alpaca (
 
 import copy
 import logging
+import pandas as pd
 
 from enum import Enum
 from torch.utils.data import Dataset
@@ -56,6 +57,13 @@ class LLMDataset(Dataset):
         self.input_ids = data_dict["input_ids"]
         self.labels = data_dict["labels"]
 
+        categories = [
+            example['category'] if 'category' in example else None
+            for example in list_data_dict
+        ]
+        df = pd.DataFrame(categories, columns=["category"])
+        self.categories = list(pd.Categorical(df["category"]).codes)
+
     def _tokenize_fn(self, strings, tokenizer):
         tokenized_list = [
             tokenizer(
@@ -97,4 +105,6 @@ class LLMDataset(Dataset):
         return len(self.input_ids)
 
     def __getitem__(self, i):
-        return dict(input_ids=self.input_ids[i], labels=self.labels[i])
+        return dict(input_ids=self.input_ids[i],
+                    labels=self.labels[i],
+                    categories=self.categories[i])

@@ -22,7 +22,12 @@ class LDASplitter(BaseSplitter):
         from torch.utils.data import Dataset, Subset
 
         tmp_dataset = [ds for ds in dataset]
-        label = np.array([y for x, y in tmp_dataset])
+        if isinstance(tmp_dataset[0], tuple):
+            label = np.array([y for x, y in tmp_dataset])
+        elif isinstance(tmp_dataset[0], dict):
+            label = np.array([x['categories'] for x in tmp_dataset])
+        else:
+            raise TypeError(f'Unsupported data formats {type(tmp_dataset[0])}')
         idx_slice = dirichlet_distribution_noniid_slice(label,
                                                         self.client_num,
                                                         self.alpha,
