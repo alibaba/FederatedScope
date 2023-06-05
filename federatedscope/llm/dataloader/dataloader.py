@@ -105,8 +105,6 @@ def load_llm_dataset(config=None, **kwargs):
     tokenizer, num_new_tokens = \
         get_tokenizer(model_name, config.data.root, config.llm.tok_len)
 
-    # The data format is supposed to be a json file
-    # Example: config.data.type: xxx.json@llm
     dataset_name, _ = config.data.type.split('@')
 
     if dataset_name.endswith('.json'):
