@@ -51,8 +51,11 @@ class LLMTrainer(GeneralTorchTrainer):
     def _hook_on_batch_forward(self, ctx):
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['labels'].to(ctx.device)
+        attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
 
-        outputs = ctx.model.forward(input_ids, labels=labels)
+        outputs = ctx.model(input_ids=input_ids,
+                            labels=labels,
+                            attention_mask=attention_mask)
 
         logits = outputs.logits
         loss = outputs.loss
