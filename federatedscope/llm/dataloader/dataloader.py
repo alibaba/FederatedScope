@@ -113,7 +113,7 @@ def load_llm_dataset(config=None, **kwargs):
     elif dataset_name.endswith('.jsonl'):
         fp = os.path.join(config.data.root, dataset_name)
         list_data_dict = load_jsonl(fp)
-    elif dataset_name == 'alpaca':
+    elif dataset_name.lower() == 'alpaca':
         fp = os.path.join(config.data.root, 'alpaca_data.json')
         download_url(
             'https://raw.githubusercontent.com/tatsu-lab'
@@ -121,7 +121,7 @@ def load_llm_dataset(config=None, **kwargs):
             '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
             'alpaca_data.json', config.data.root)
         list_data_dict = load_json(fp)
-    elif dataset_name == 'dolly-15k':
+    elif dataset_name.lower() == 'dolly-15k':
         fp = os.path.join(config.data.root, 'databricks-dolly-15k.jsonl')
         download_url(
             'https://raw.githubusercontent.com/databrickslabs'
@@ -132,6 +132,17 @@ def load_llm_dataset(config=None, **kwargs):
                                     input='context',
                                     output='response',
                                     category='category')
+    elif dataset_name.lower() == 'gsm8k':
+        fp = os.path.join(config.data.root, 'gsm8k_train.jsonl')
+        if not os.path.exists(fp):
+            download_url(
+                'https://raw.githubusercontent.com/openai/grade-school-math'
+                '/3101c7d5072418e28b9008a6636bde82a006892c/'
+                'grade_school_math/data/train.jsonl', config.data.root)
+            os.rename(os.path.join(config.data.root, 'train.jsonl'), fp)
+        list_data_dict = load_jsonl(fp,
+                                    instruction='question',
+                                    output='answer')
     else:
         raise ValueError(f'Not support data type {dataset_name}.')
 
