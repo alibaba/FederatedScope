@@ -1,9 +1,11 @@
 import os
+import json
 import torch
 import transformers
 
 from dataclasses import dataclass
 from federatedscope.llm.dataset.llm_dataset import DefaultToken, LLMDataset
+from federatedscope.core.data.utils import download_url
 
 
 @dataclass
@@ -56,15 +58,94 @@ def get_tokenizer(model_name, cache_dir, tok_len=128):
     return tokenizer, num_new_tokens
 
 
+def load_json(file_path,
+              instruction='instruction',
+              input='input',
+              output='output',
+              category='category'):
+    # Format: [{'instruction': ..., 'input': ..., 'output':...}]
+    with open(file_path, 'r', encoding="utf-8") as f:
+        list_data_dict = json.load(f)
+
+    # Replace key
+    new_list_data_dict = []
+    for item in list_data_dict:
+        new_item = dict(
+            instruction=item[instruction] if instruction in item else None,
+            input=item[input] if input in item else None,
+            output=item[output] if output in output else None,
+            category=item[category] if category in item else None)
+        new_list_data_dict.append(new_item)
+    return new_list_data_dict
+
+
+def load_jsonl(file_path,
+               instruction='instruction',
+               input='input',
+               output='output',
+               category='category'):
+    # Format of each line:
+    # {'instruction': ..., 'input': ..., 'output':...}
+    list_data_dict = []
+    with open(file_path, 'r', encoding="utf-8") as f:
+        for line in f:
+            item = json.loads(line)
+            new_item = dict(
+                instruction=item[instruction] if instruction in item else None,
+                input=item[input] if input in item else None,
+                output=item[output] if output in output else None,
+                category=item[category] if category in item else None)
+            item = new_item
+            list_data_dict.append(item)
+    return list_data_dict
+
+
 def load_llm_dataset(config=None, **kwargs):
     model_name, _ = config.model.type.split('@')
     tokenizer, num_new_tokens = \
         get_tokenizer(model_name, config.data.root, config.llm.tok_len)
 
-    # The data format is supposed to be a json file
-    # Example: config.data.type: xxx.json@llm
     dataset_name, _ = config.data.type.split('@')
-    fp = os.path.join(config.data.root, dataset_name)
-    dataset = LLMDataset(fp, tokenizer)
+
+    if dataset_name.endswith('.json'):
+        fp = os.path.join(config.data.root, dataset_name)
+        list_data_dict = load_json(fp)
+    elif dataset_name.endswith('.jsonl'):
+        fp = os.path.join(config.data.root, dataset_name)
+        list_data_dict = load_jsonl(fp)
+    elif dataset_name.lower() == 'alpaca':
+        fp = os.path.join(config.data.root, 'alpaca_data.json')
+        download_url(
+            'https://raw.githubusercontent.com/tatsu-lab'
+            '/stanford_alpaca/'
+            '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
+            'alpaca_data.json', config.data.root)
+        list_data_dict = load_json(fp)
+    elif dataset_name.lower() == 'dolly-15k':
+        fp = os.path.join(config.data.root, 'databricks-dolly-15k.jsonl')
+        download_url(
+            'https://raw.githubusercontent.com/databrickslabs'
+            '/dolly/d000e3030970379aabbf6d291f50ffdd3b715b64'
+            '/data/databricks-dolly-15k.jsonl', config.data.root)
+        list_data_dict = load_jsonl(fp,
+                                    instruction='instruction',
+                                    input='context',
+                                    output='response',
+                                    category='category')
+    elif dataset_name.lower() == 'gsm8k':
+        fp = os.path.join(config.data.root, 'gsm8k_train.jsonl')
+        if not os.path.exists(fp):
+            download_url(
+                'https://raw.githubusercontent.com/openai/grade-school-math'
+                '/3101c7d5072418e28b9008a6636bde82a006892c/'
+                'grade_school_math/data/train.jsonl', config.data.root)
+            os.rename(os.path.join(config.data.root, 'train.jsonl'), fp)
+        list_data_dict = load_jsonl(fp,
+                                    instruction='question',
+                                    output='answer')
+    else:
+        raise ValueError(f'Not support data type {dataset_name}.')
+
+    dataset = LLMDataset(list_data_dict, tokenizer)
 
     return dataset, config

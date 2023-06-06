@@ -128,6 +128,7 @@ class AdapterModel(nn.Module):
                                         **kwargs)
         else:
             self.model = model
+        # ...
         self.hf_device_map = infer_auto_device_map(self.model)
 
     def forward(self, *args, **kwargs):

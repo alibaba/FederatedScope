@@ -75,6 +75,9 @@ def get_splitter(config):
     elif config.data.splitter == 'iid':
         from federatedscope.core.splitters.generic import IIDSplitter
         splitter = IIDSplitter(client_num)
+    elif config.data.splitter == 'meta':
+        from federatedscope.core.splitters.generic import MetaSplitter
+        splitter = MetaSplitter(client_num)
     else:
         logger.warning(f'Splitter {config.data.splitter} not found or not '
                        f'used.')

@@ -3,9 +3,9 @@ Some code snippets are borrowed from the open-sourced stanford_alpaca (
     https://github.com/tatsu-lab/stanford_alpaca)
 """
 
-import json
 import copy
 import logging
+import pandas as pd
 
 from enum import Enum
 from torch.utils.data import Dataset
@@ -35,11 +35,10 @@ PROMPT_DICT = {
 }
 
 
+# TODO: support LDA when 'category' in keys
 class LLMDataset(Dataset):
-    def __init__(self, data_path, tokenizer):
+    def __init__(self, list_data_dict, tokenizer):
         super(LLMDataset, self).__init__()
-        with open(data_path, 'r') as f:
-            list_data_dict = json.load(f)
 
         prompt_input, prompt_no_input = PROMPT_DICT[
             "prompt_input"], PROMPT_DICT["prompt_no_input"]
@@ -57,6 +56,13 @@ class LLMDataset(Dataset):
 
         self.input_ids = data_dict["input_ids"]
         self.labels = data_dict["labels"]
+
+        categories = [
+            example['category'] if 'category' in example else None
+            for example in list_data_dict
+        ]
+        df = pd.DataFrame(categories, columns=["category"])
+        self.categories = list(pd.Categorical(df["category"]).codes)
 
     def _tokenize_fn(self, strings, tokenizer):
         tokenized_list = [
@@ -99,4 +105,6 @@ class LLMDataset(Dataset):
         return len(self.input_ids)
 
     def __getitem__(self, i):
-        return dict(input_ids=self.input_ids[i], labels=self.labels[i])
+        return dict(input_ids=self.input_ids[i],
+                    labels=self.labels[i],
+                    categories=self.categories[i])

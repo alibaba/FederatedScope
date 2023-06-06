@@ -1,22 +1,18 @@
+import random
 import numpy as np
+
 from federatedscope.core.splitters import BaseSplitter
-from federatedscope.core.splitters.utils import \
-    dirichlet_distribution_noniid_slice
 
 
-class LDASplitter(BaseSplitter):
+class MetaSplitter(BaseSplitter):
     """
-    This splitter split dataset with LDA.
+    This splitter split dataset with meta information with LLM dataset.
 
     Args:
         client_num: the dataset will be split into ``client_num`` pieces
-        alpha (float): Partition hyperparameter in LDA, smaller alpha \
-            generates more extreme heterogeneous scenario see \
-            ``np.random.dirichlet``
     """
-    def __init__(self, client_num, alpha=0.5):
-        self.alpha = alpha
-        super(LDASplitter, self).__init__(client_num)
+    def __init__(self, client_num, **kwargs):
+        super(MetaSplitter, self).__init__(client_num)
 
     def __call__(self, dataset, prior=None, **kwargs):
         from torch.utils.data import Dataset, Subset
@@ -28,10 +24,22 @@ class LDASplitter(BaseSplitter):
             label = np.array([x['categories'] for x in tmp_dataset])
         else:
             raise TypeError(f'Unsupported data formats {type(tmp_dataset[0])}')
-        idx_slice = dirichlet_distribution_noniid_slice(label,
-                                                        self.client_num,
-                                                        self.alpha,
-                                                        prior=prior)
+
+        # Split by categories
+        categories = set(label)
+        idx_slice = []
+        for cat in categories:
+            idx_slice.append(np.where(np.array(label) == cat)[0].tolist())
+        random.shuffle(idx_slice)
+
+        # Merge to client_num pieces
+        new_idx_slice = []
+        for i in range(len(categories)):
+            if i < self.client_num:
+                new_idx_slice.append(idx_slice[i])
+            else:
+                new_idx_slice[i % self.client_num] += idx_slice[i]
+
         if isinstance(dataset, Dataset):
             data_list = [Subset(dataset, idxs) for idxs in idx_slice]
         else:

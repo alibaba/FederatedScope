@@ -8,7 +8,7 @@ federate:
   save_to: "gpt2_new.ckpt"
 data:
   root: data/
-  type: 'alpaca_data.json@llm'
+  type: 'alpaca@llm'
   splits: [0.98,0.01,0.01]
   splitter: 'iid'
 distribute:
