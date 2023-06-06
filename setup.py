@@ -38,7 +38,7 @@ benchmark_htl_requires = ['learn2learn']
 full_requires = org_requires + benchmark_hpo_requires + \
                 benchmark_htl_requires + app_requires
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding='UTF-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
