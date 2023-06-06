@@ -81,6 +81,11 @@ class LLMTrainer(GeneralTorchTrainer):
         if ctx.scheduler is not None:
             ctx.scheduler.step()
 
+    def _hook_on_batch_end(self, ctx):
+        ctx.num_samples += ctx.batch_size
+        ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
+        ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
+
     def _hook_on_fit_end(self, ctx):
         eval_results = {
             f'{ctx.cur_split}_loss': ctx.loss_batch_total,

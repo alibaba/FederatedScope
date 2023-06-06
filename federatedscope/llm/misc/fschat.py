@@ -1,8 +1,5 @@
 import torch
 import transformers
-import json
-from tqdm import tqdm
-import os
 
 transformers.logging.set_verbosity(40)
 
@@ -31,7 +28,10 @@ class FSChatBot(object):
         except Exception as error:
             print(f"{error}, will use raw model.")
 
-        self.model.half().cuda()
+        if config.train.is_enable_half:
+            self.model.half().cuda()
+        else:
+            self.model.cuda()
         self.model = self.model.eval()
 
         self.max_history_len = config.llm.chat.max_history_len
@@ -99,92 +99,5 @@ def main():
         print(f'\nFSBot: {chat_bot.predict(input_text)}')
 
 
-def eval_test():
-    # TODO: we will remove the prints in this function later
-    init_cfg = global_cfg.clone()
-    args = parse_args()
-
-    if args.cfg_file:
-        init_cfg.merge_from_file(args.cfg_file)
-    cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
-    init_cfg.merge_from_list(cfg_opt)
-
-    update_logger(init_cfg, clear_before_add=True)
-    setup_seed(init_cfg.seed)
-
-    model = FSChatBot(init_cfg)
-
-    ROOT = '../shared/'
-    target_file = 'scenario_state.json'
-
-    files = os.listdir(ROOT)
-
-    tmp = []
-    for s in files:
-        if 'mmlu' in s:
-            tmp.append(s)
-    files = tmp
-    total_num = 0
-    correct_num = 0
-    for file in files:
-        print('------- file name is  -------')
-        print(file)
-        temp_correct_num = 0
-        temp_total_num = 0
-        # ans = []
-        choice = []
-        try:
-            with open(os.path.join(ROOT, file, target_file), 'r') as f:
-                data = json.load(f)
-                questions = []
-                answers = []
-
-                for i in tqdm(range(len(data['request_states']))):
-                    item = data['request_states'][i]
-                    questions.append(
-                        item['request']['prompt'].split('\n\n')[-1])
-
-                    answer = data['request_states'][i]['instance'][
-                        'references']
-
-                    correct = None
-                    for opt in range(len(answer)):
-                        if 'correct' in answer[opt]['tags']:
-                            correct = ['A', 'B', 'C', 'D'][opt]
-                            answers.append(correct)
-
-                    res = model.predict(input_text=questions[-1],
-                                        use_history=False,
-                                        use_prompt=False)
-                    print('------- question is -------')
-                    print(questions[-1])
-                    print('------- res is  -------')
-                    print(res)
-
-                    choice.append(res.strip()[0])
-                    if res.strip()[0] == correct:
-                        correct_num += 1
-                        temp_correct_num += 1
-
-                    temp_total_num += 1
-                    total_num += 1
-
-                    print('--------total choice is -------')
-                    print(choice)
-                    print('------- total ture answer is -')
-                    print(answers)
-                    print('temp_correct num:', temp_correct_num)
-                    print('temp_total num:', temp_total_num)
-            print(file)
-            print('temp_correct num:', temp_correct_num)
-            print('temp_total num:', temp_total_num)
-        except Exception as error:
-            print(error)
-
-    print(correct_num)
-    print(total_num)
-
-
 if __name__ == "__main__":
-    # eval_test()
     main()
