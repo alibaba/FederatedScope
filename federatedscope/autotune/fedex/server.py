@@ -173,7 +173,7 @@ class FedExServer(Server):
 
         # determine index
         if self._stop_exploration:
-            cfg_idx = [theta.argmax() for theta in thetas]
+            cfg_idx = [int(theta.argmax()) for theta in thetas]
         else:
             cfg_idx = [
                 np.random.choice(len(theta), p=theta) for theta in thetas
