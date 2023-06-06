@@ -17,14 +17,6 @@ def extend_llm_cfg(cfg):
     cfg.llm.chat.max_history_len = 10
     cfg.llm.chat.max_len = 100
 
-    cfg.llm.accelerator = CN()
-    # Use accelerator will enable model sharding
-    cfg.llm.accelerator.use = False
-
-    cfg.llm.chat = CN()
-    cfg.llm.chat.max_history_len = 10
-    cfg.llm.chat.max_len = 100
-
     # ---------------------------------------------------------------------- #
     # Adapters for LLM
     # ---------------------------------------------------------------------- #
