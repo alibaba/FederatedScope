@@ -47,6 +47,10 @@ if __name__ == '__main__':
                                   client_cfgs=client_cfgs)
     init_cfg.merge_from_other_cfg(modified_cfg)
 
+    if init_cfg.federate.client_idx != 0:
+        init_cfg.federate.client_num = 1
+        data = {1: data[init_cfg.federate.client_idx]}
+
     init_cfg.freeze()
 
     runner = get_runner(data=data,
