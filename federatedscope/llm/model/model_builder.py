@@ -1,33 +1,16 @@
 from federatedscope.llm.model.adapter_builder import AdapterModel
-import copy
-
-MODEL_CACHE = {}
 
 
 def get_model_from_huggingface(model_name, config):
     from transformers import AutoModelForCausalLM
 
-    if model_name in MODEL_CACHE:
-        model = copy.deepcopy(MODEL_CACHE[model_name])
-    else:
-        if config.llm.accelerator.use:
-            model = AutoModelForCausalLM.from_pretrained(
-                model_name, device_map="auto", offload_folder="offload")
-        else:
-            model = AutoModelForCausalLM.from_pretrained(model_name)
-        MODEL_CACHE[model_name] = model
-    return model
+    return AutoModelForCausalLM.from_pretrained(model_name)
 
 
 def get_model_from_modelscope(model_name, config):
     from modelscope.models import Model
 
-    if model_name in MODEL_CACHE:
-        model = copy.deepcopy(MODEL_CACHE[model_name])
-    else:
-        model = Model.from_pretrained(model_name)
-        MODEL_CACHE[model_name] = model
-    return model
+    return Model.from_pretrained(model_name)
 
 
 def get_llm(config):

@@ -3,7 +3,7 @@ import os
 import torch
 import numpy as np
 import pandas as pd
-from federatedscope.llm.eval_for_mmlu.categories import \
+from federatedscope.llm.eval.eval_for_mmlu.categories import \
      subcategories, categories
 import json
 import transformers

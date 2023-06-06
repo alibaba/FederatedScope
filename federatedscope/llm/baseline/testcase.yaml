@@ -18,8 +18,6 @@ llm:
   tok_len: 1000
   chat:
     max_len: 1000
-  accelerator:
-    use: True
 dataloader:
   batch_size: 1
 model:
