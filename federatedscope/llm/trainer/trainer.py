@@ -1,12 +1,7 @@
-import torch
-
-from federatedscope.core.trainers.enums import MODE
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 
 
 class LLMTrainer(GeneralTorchTrainer):
