@@ -1,11 +1,14 @@
 import os
 import json
+import logging
 import torch
 import transformers
 
 from dataclasses import dataclass
 from federatedscope.llm.dataset.llm_dataset import DefaultToken, LLMDataset
 from federatedscope.core.data.utils import download_url
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
