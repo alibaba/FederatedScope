@@ -18,6 +18,7 @@ class FSChatBot(object):
         self.tokenizer, _ = get_tokenizer(model_name, config.data.root,
                                           config.llm.tok_len)
         self.model = get_llm(config)
+        self.device = f'cuda:{config.device}'
 
         try:
             ckpt = torch.load(config.federate.save_to, map_location='cpu')
@@ -29,9 +30,9 @@ class FSChatBot(object):
             print(f"{error}, will use raw model.")
 
         if config.train.is_enable_half:
-            self.model.half().to(f'cuda:{config.device}')
+            self.model.half().to(self.device)
         else:
-            self.model.to(f'cuda:{config.device}')
+            self.model.to(self.device)
         self.model = self.model.eval()
 
         self.max_history_len = config.llm.chat.max_history_len
@@ -54,7 +55,7 @@ class FSChatBot(object):
         else:
             input_ids.extend(text_ids)
         input_ids = torch.tensor(input_ids).long()
-        input_ids = input_ids.unsqueeze(0).cuda()
+        input_ids = input_ids.unsqueeze(0).to(self.device)
         response = self.model.generate(input_ids,
                                        max_length=self.max_len,
                                        num_beams=4,
