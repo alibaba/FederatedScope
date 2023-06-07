@@ -124,6 +124,13 @@ def load_llm_dataset(config=None, **kwargs):
             '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
             'alpaca_data.json', config.data.root)
         list_data_dict = load_json(fp)
+    elif dataset_name.lower() == 'alpaca_cleaned':
+        fp = os.path.join(config.data.root, 'alpaca_data_cleaned.json')
+        download_url(
+            'https://raw.githubusercontent.com/gururise/AlpacaDataCleaned/'
+            'a7d629079a95c2e4b7ec7dfe55087fbd18d9eba8/'
+            'alpaca_data_cleaned.json', config.data.root)
+        list_data_dict = load_json(fp)
     elif dataset_name.lower() == 'dolly-15k':
         fp = os.path.join(config.data.root, 'databricks-dolly-15k.jsonl')
         download_url(

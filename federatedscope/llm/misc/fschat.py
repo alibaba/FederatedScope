@@ -29,9 +29,9 @@ class FSChatBot(object):
             print(f"{error}, will use raw model.")
 
         if config.train.is_enable_half:
-            self.model.half().cuda()
+            self.model.half().to(f'cuda:{config.device}')
         else:
-            self.model.cuda()
+            self.model.to(f'cuda:{config.device}')
         self.model = self.model.eval()
 
         self.max_history_len = config.llm.chat.max_history_len
