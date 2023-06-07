@@ -141,7 +141,6 @@ def main():
 
     answers = []
     for sample in tqdm(list_data_dict):
-        # TODO: build prompt
         input_text = build_prompt(sample['instruction'], N_SHOT)
         model_completion = fschatbot.predict(input_text,
                                              use_history=False,
