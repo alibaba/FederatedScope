@@ -32,8 +32,6 @@ train:
   optimizer:
     lr: 0.00002
   is_enable_half: True
-grad:
-  grad_clip: 5
 criterion:
   type: CrossEntropyLoss
 trainer:

@@ -6,7 +6,7 @@ federate:
   mode: standalone
   client_num: 3
   total_round_num: 500
-  save_to: "llama_dolly_fed_30*500.ckpt"
+  save_to: "llama_dolly_fed_30*500_0.001.ckpt"
   save_freq: 100
   share_local_model: False
   online_aggr: False
@@ -31,7 +31,7 @@ train:
   local_update_steps: 30
   batch_or_epoch: batch
   optimizer:
-    lr: 0.00002
+    lr: 0.001
   is_enable_half: True
 grad:
   grad_clip: 5
