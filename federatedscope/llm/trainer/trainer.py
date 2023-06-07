@@ -24,7 +24,7 @@ class LLMTrainer(GeneralTorchTrainer):
         if torch.isnan(loss):
             ctx.skip_this_batch = CtxVar(True, LIFECYCLE.BATCH)
             # Set to `0` to avoid NaN of whole local update
-            loss = torch.tensor(torch.tensor(0))
+            loss = torch.tensor(0)
         else:
             ctx.skip_this_batch = CtxVar(False, LIFECYCLE.BATCH)
 
