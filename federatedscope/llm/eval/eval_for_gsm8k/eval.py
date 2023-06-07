@@ -37,7 +37,7 @@ def extract_answer(completion):
 def is_correct(model_answer, answer):
     gt_answer = extract_answer(answer)
     assert gt_answer != INVALID_ANS
-    return model_answer == int(gt_answer)
+    return str(model_answer) == str(gt_answer)
 
 
 def create_demo_text(n_shot=8, cot_flag=True):
