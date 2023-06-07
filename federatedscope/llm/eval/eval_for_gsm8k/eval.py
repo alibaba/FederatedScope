@@ -37,7 +37,7 @@ def extract_answer(completion):
 def is_correct(model_answer, answer):
     gt_answer = extract_answer(answer)
     assert gt_answer != INVALID_ANS
-    return str(model_answer) == str(gt_answer)
+    return model_answer == gt_answer
 
 
 def create_demo_text(n_shot=8, cot_flag=True):
@@ -185,7 +185,7 @@ def main():
                                              use_history=False,
                                              use_prompt=False)
         model_answer = clean_answer(model_completion)
-        is_cor = is_correct(model_completion, sample['output'])
+        is_cor = is_correct(model_answer, sample['output'])
         answers.append(is_cor)
         print(f'Question: {sample["instruction"]}\n\n'
               f'Answers: {extract_answer(sample["output"])}\n\n'
