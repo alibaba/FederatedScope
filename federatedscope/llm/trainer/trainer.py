@@ -23,8 +23,8 @@ class LLMTrainer(GeneralTorchTrainer):
 
         if torch.isnan(loss):
             ctx.skip_this_batch = CtxVar(True, LIFECYCLE.BATCH)
-            # Set to `0` to avoid NaN of whole local update
-            loss = torch.tensor(0)
+            logger.warning('Skip the batch due to the loss is NaN, '
+                           'it may be caused by exceeding the precision.')
         else:
             ctx.skip_this_batch = CtxVar(False, LIFECYCLE.BATCH)
 
@@ -37,8 +37,6 @@ class LLMTrainer(GeneralTorchTrainer):
     def _hook_on_batch_backward(self, ctx):
         ctx.optimizer.zero_grad()
         if ctx.skip_this_batch:
-            logger.warning('Skip the batch due to the loss is NaN, '
-                           'it may be caused by exceeding the precision.')
             return
 
         ctx.loss_task.backward()
@@ -52,6 +50,9 @@ class LLMTrainer(GeneralTorchTrainer):
             ctx.scheduler.step()
 
     def _hook_on_batch_end(self, ctx):
+        if ctx.skip_this_batch:
+            return
+
         ctx.num_samples += ctx.batch_size
         ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
         ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
