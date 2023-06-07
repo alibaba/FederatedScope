@@ -24,7 +24,8 @@ class LLMTrainer(GeneralTorchTrainer):
         if torch.isnan(loss):
             ctx.skip_this_batch = CtxVar(True, LIFECYCLE.BATCH)
             logger.warning('Skip the batch due to the loss is NaN, '
-                           'it may be caused by exceeding the precision.')
+                           'it may be caused by exceeding the precision or '
+                           'invalid labels.')
         else:
             ctx.skip_this_batch = CtxVar(False, LIFECYCLE.BATCH)
 
