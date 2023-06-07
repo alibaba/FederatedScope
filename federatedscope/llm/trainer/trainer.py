@@ -1,7 +1,11 @@
+import torch
+import logging
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE
+
+logger = logging.getLogger(__name__)
 
 
 class LLMTrainer(GeneralTorchTrainer):
@@ -17,11 +21,35 @@ class LLMTrainer(GeneralTorchTrainer):
         logits = outputs.logits
         loss = outputs.loss
 
+        if torch.isnan(loss):
+            ctx.skip_this_batch = CtxVar(True, LIFECYCLE.BATCH)
+            # Set to `0` to avoid NaN of whole local update
+            loss = torch.tensor(torch.tensor(0))
+        else:
+            ctx.skip_this_batch = CtxVar(False, LIFECYCLE.BATCH)
+
         ctx.y_true = CtxVar(labels, LIFECYCLE.BATCH)
         ctx.y_prob = CtxVar(logits, LIFECYCLE.BATCH)
 
         ctx.loss_batch = CtxVar(loss, LIFECYCLE.BATCH)
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+
+    def _hook_on_batch_backward(self, ctx):
+        ctx.optimizer.zero_grad()
+        if ctx.skip_this_batch:
+            logger.warning('Skip the batch due to the loss is NaN, '
+                           'it may be caused by exceeding the precision.')
+            return
+
+        ctx.loss_task.backward()
+
+        if ctx.grad_clip > 0:
+            torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
+                                           ctx.grad_clip)
+
+        ctx.optimizer.step()
+        if ctx.scheduler is not None:
+            ctx.scheduler.step()
 
     def _hook_on_batch_end(self, ctx):
         ctx.num_samples += ctx.batch_size
