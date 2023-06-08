@@ -15,7 +15,7 @@ data:
 llm:
   tok_len: 1000
   chat:
-    max_len: 1000
+    max_len: 2000
   adapter:
     use: True
     args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
