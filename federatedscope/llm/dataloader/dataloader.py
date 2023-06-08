@@ -153,6 +153,9 @@ def load_llm_dataset(config=None, **kwargs):
         list_data_dict = load_jsonl(fp,
                                     instruction='question',
                                     output='answer')
+        for i in range(len(list_data_dict)):
+            list_data_dict[i]['output'] = \
+                list_data_dict[i]['output'].replace('####', 'The answer is')
     else:
         raise ValueError(f'Not support data type {dataset_name}.')
 

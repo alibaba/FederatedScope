@@ -57,7 +57,7 @@ class FSChatBot(object):
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).to(self.device)
         response = self.model.generate(input_ids,
-                                       max_length=self.max_len,
+                                       max_new_tokens=self.max_len,
                                        num_beams=4,
                                        no_repeat_ngram_size=2,
                                        early_stopping=True,

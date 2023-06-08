@@ -20,7 +20,8 @@ ANS_RE = re.compile(r"#### (\-?[0-9\.\,]+)")
 INVALID_ANS = "[invalid]"
 
 N_SHOT = 8
-COT_FALG = True
+COT_FLAG = True
+DEBUG = False
 
 
 def extract_answer(completion):
@@ -116,19 +117,28 @@ def create_demo_text(n_shot=8, cot_flag=True):
     demo_text = ""
     for i in range(n_shot):
         if cot_flag:
-            demo_text += "Q: " + question[i] + "\nA: " + chain[i] + " " + \
-                         "The answer is" + " " + answer[i] + ".\n\n"
+            demo_text += "Question: " + question[i] + "\nAnswer: " \
+                         "Let's think step by step\n" + chain[i] + " " + \
+                         "The answer is  " + answer[i] + ".\n\n"
         else:
-            demo_text += "Q: " + question[i] + "\nA: " + \
-                         "The answer is" + " " + answer[i] + ".\n\n"
+            demo_text += "Question: " + question[i] + "\nAnswer: " + \
+                         "The answer is " + answer[i] + ".\n\n"
     return demo_text
 
 
-def build_prompt(input_text, n_shot, cot_flag):
-    input_text_prompt = "The following are math questions (with answers).\n\n "
+def build_prompt(input_text, n_shot, cot_flag, with_task_des=False):
+    if with_task_des:
+        input_text_prompt = \
+            'The following are math questions (with arabic numerals ' \
+            'answers).\n\n'
+    else:
+        input_text_prompt = ''
     input_text_prompt += create_demo_text(n_shot, cot_flag)
 
-    input_text_prompt = input_text_prompt + "Q: " + input_text + "\nA: "
+    input_text_prompt = \
+        input_text_prompt + "Question: " + input_text + "\nAnswer: "
+    if cot_flag:
+        input_text_prompt += "Let's think step by step\n"
     return input_text_prompt
 
 
@@ -148,6 +158,11 @@ def clean_answer(model_pred):
         pred = pred[0]
     else:
         pred = pred[-1]
+
+    # (For arithmetic tasks) if a word ends with period, it will be omitted ...
+    if pred[-1] == ".":
+        pred = pred[:-1]
+
     return pred
 
 
@@ -180,13 +195,15 @@ def main():
 
     answers = []
     for sample in tqdm(list_data_dict):
-        input_text = build_prompt(sample['instruction'], N_SHOT, COT_FALG)
+        input_text = build_prompt(sample['instruction'], N_SHOT, COT_FLAG)
         model_completion = fschatbot.predict(input_text,
                                              use_history=False,
                                              use_prompt=False)
         model_answer = clean_answer(model_completion)
         is_cor = is_correct(model_answer, sample['output'])
         answers.append(is_cor)
+        if DEBUG:
+            print(f'Full input_text:\n{input_text}\n\n')
         print(f'Question: {sample["instruction"]}\n\n'
               f'Answers: {extract_answer(sample["output"])}\n\n'
               f'Model Answers: {model_answer}\n\n'
