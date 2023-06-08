@@ -1,6 +1,7 @@
 import os
 import gzip
 import json
+import random
 import logging
 import torch
 import transformers
@@ -168,18 +169,30 @@ def load_llm_dataset(config=None, **kwargs):
         logger.info('Loading code search net data file...')
         try:
             for language in tqdm(CSN_FILE_NUM_DICT.keys()):
+                sub_list_data_dict = []
                 for file_index in range(CSN_FILE_NUM_DICT[language]['train']):
                     fp = \
                         os.path.join(config.data.root, language,
                                      'final', 'jsonl', 'train',
                                      f'{language}_train_{file_index}.jsonl.gz')
-                    list_data_dict += load_jsonl(
+                    tmp_list_data_dict = load_jsonl(
                         fp,
                         instruction='docstring',
                         output='code',
                         category='language',
                         is_gzip=True,
                     )
+                    sub_list_data_dict += tmp_list_data_dict
+                # Subsample
+                raw_size = len(sub_list_data_dict)
+                num_subsample = int(raw_size * config.data.subsample)
+                sub_list_data_dict = random.sample(sub_list_data_dict,
+                                                   num_subsample)
+                logger.info(f"Subsample "
+                            f"{sub_list_data_dict[0]['category']} with "
+                            f"rate {config.data.subsample}: "
+                            f"the sample size is # {num_subsample} "
+                            f"(the raw size is {raw_size}).")
             # Modify instruction with specific language
             for sample in list_data_dict:
                 sample['instruction'] = \
