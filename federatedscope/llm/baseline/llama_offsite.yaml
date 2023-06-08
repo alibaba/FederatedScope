@@ -1,0 +1,41 @@
+use_gpu: True
+device: 1
+early_stop:
+  patience: 10
+federate:
+  mode: standalone
+  client_num: 1
+  total_round_num: 200
+  save_to: "llama.offsite_tuning.ckpt"
+  share_local_model: False
+  online_aggr: False
+data:
+  root: data/
+  type: 'alpaca@llm'
+  splits: [0.98,0.01,0.01]
+  splitter: 'iid'
+llm:
+  tok_len: 1000
+  chat:
+    max_len: 1000
+  offsite_tuning:
+    use: True
+    emu_r: 100
+dataloader:
+  batch_size: 1
+model:
+  type: 'decapoda-research/llama-7b-hf@huggingface_llm'
+  # type: 'gpt2@huggingface_llm'
+train:
+  local_update_steps: 10
+  batch_or_epoch: batch
+  optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: llmtrainer
+eval:
+  freq: 20
+  metrics: ['loss']

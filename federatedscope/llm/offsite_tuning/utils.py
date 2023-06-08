@@ -4,11 +4,8 @@ import logging
 import torch
 import torch.nn as nn
 
-from transformers import (
-    OPTForCausalLM,
-    GPT2LMHeadModel,
-    BloomForCausalLM,
-)
+from transformers import (OPTForCausalLM, GPT2LMHeadModel, BloomForCausalLM,
+                          LlamaForCausalLM)
 from federatedscope.llm.model.adapter_builder import AdapterModel
 
 logger = logging.getLogger(__name__)
@@ -25,6 +22,8 @@ def get_layers(adapter_model):
         layers = adapter_model.model.transformer.h
     elif isinstance(adapter_model.model, BloomForCausalLM):
         layers = adapter_model.model.transformer.h
+    elif isinstance(adapter_model.model, LlamaForCausalLM):
+        layers = adapter_model.model.model.layers
     else:
         # TODO: support more LLM
         logger.warning(f'Model {type(adapter_model.model)} not support, '
@@ -40,6 +39,8 @@ def set_layers(adapter_model, layers):
         adapter_model.model.transformer.h = layers
     elif isinstance(adapter_model.model, BloomForCausalLM):
         adapter_model.model.transformer.h = layers
+    elif isinstance(adapter_model.model, LlamaForCausalLM):
+        adapter_model.model.model.layers = layers
     else:
         # TODO: support more LLM
         logger.warning(f'Model {type(adapter_model.model)} not support, '
@@ -85,10 +86,10 @@ COMP_FUNC_MAPPING = {
 def generate_emulator_and_adapter(model: AdapterModel,
                                   strategy='drop_layer',
                                   emulator_l=1,
-                                  emulator_r=10,
+                                  emulator_r=1000,
                                   **kwargs):
-    l, r = emulator_l, emulator_r
     layers = get_layers(model)
+    l, r = max(emulator_l, 1), min(emulator_r, len(layers) - 1)
 
     emulator = COMP_FUNC_MAPPING[strategy](layers[l:r], **kwargs)
 
