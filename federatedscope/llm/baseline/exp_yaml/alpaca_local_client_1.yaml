@@ -15,8 +15,7 @@ data:
   root: data/
   type: 'alpaca@llm'
   splits: [0.998,0.001,0.001]
-  splitter: 'lda'
-  splitter_args: [{'alpha': 0.5}]
+  splitter: 'iid'
 llm:
   tok_len: 1000
   chat:
