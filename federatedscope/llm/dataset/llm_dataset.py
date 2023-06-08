@@ -37,11 +37,13 @@ PROMPT_DICT = {
 
 # TODO: support LDA when 'category' in keys
 class LLMDataset(Dataset):
-    def __init__(self, list_data_dict, tokenizer):
+    def __init__(self,
+                 list_data_dict,
+                 tokenizer,
+                 prompt_input=PROMPT_DICT["prompt_input"],
+                 prompt_no_input=PROMPT_DICT["prompt_no_input"]):
         super(LLMDataset, self).__init__()
 
-        prompt_input, prompt_no_input = PROMPT_DICT[
-            "prompt_input"], PROMPT_DICT["prompt_no_input"]
         sources = [
             prompt_input.format_map(example) if example.get("input", "") != ""
             else prompt_no_input.format_map(example)
