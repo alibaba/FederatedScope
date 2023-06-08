@@ -6,11 +6,11 @@ federate:
   mode: standalone
   client_num: 3
   total_round_num: 500
-  save_to: "llama.ckpt"
+  save_to: "llama_fed_30*500.ckpt"
 data:
   root: data/
   type: 'alpaca@llm'
-  splits: [0.98,0.01,0.01]
+  splits: [0.998,0.001,0.001]
   splitter: 'iid'
 llm:
   tok_len: 1000

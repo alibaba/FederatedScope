@@ -7,15 +7,16 @@ federate:
   client_num: 3
   client_idx_for_local_train: 3
   total_round_num: 500
-  save_to: "llama_gsm_c3_30*500.ckpt"
+  save_to: "llama_alpaca_c1_30*500.ckpt"
   save_freq: 100
   share_local_model: False
   online_aggr: False
 data:
   root: data/
-  type: 'gsm8k@llm'
+  type: 'alpaca@llm'
   splits: [0.998,0.001,0.001]
-  splitter: 'iid'
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.5}]
 llm:
   tok_len: 1000
   chat:
