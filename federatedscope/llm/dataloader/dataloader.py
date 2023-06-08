@@ -186,8 +186,8 @@ def load_llm_dataset(config=None, **kwargs):
                 # Subsample
                 raw_size = len(sub_list_data_dict)
                 num_subsample = int(raw_size * config.data.subsample)
-                sub_list_data_dict = random.sample(sub_list_data_dict,
-                                                   num_subsample)
+                list_data_dict += random.sample(sub_list_data_dict,
+                                                num_subsample)
                 logger.info(f"Subsample "
                             f"{sub_list_data_dict[0]['category']} with "
                             f"rate {config.data.subsample}: "
