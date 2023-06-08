@@ -1,4 +1,5 @@
 import os
+import gzip
 import json
 import logging
 import torch
@@ -86,11 +87,13 @@ def load_jsonl(file_path,
                instruction='instruction',
                input='input',
                output='output',
-               category='category'):
+               category='category',
+               is_gzip=False):
     # Format of each line:
     # {'instruction': ..., 'input': ..., 'output':...}
     list_data_dict = []
-    with open(file_path, 'r', encoding="utf-8") as f:
+    open_func = open if not is_gzip else gzip.open
+    with open_func(file_path, 'r') as f:
         for line in f:
             item = json.loads(line)
             new_item = dict(
@@ -156,6 +159,36 @@ def load_llm_dataset(config=None, **kwargs):
         for i in range(len(list_data_dict)):
             list_data_dict[i]['output'] = \
                 list_data_dict[i]['output'].replace('####', 'The answer is')
+    elif dataset_name.lower() == 'code_search_net':
+        from tqdm import tqdm
+        from federatedscope.llm.dataset.code_search_net import \
+            CSN_FILE_NUM_DICT
+
+        list_data_dict = []
+        logger.info('Loading code search net data file...')
+        try:
+            for language in tqdm(CSN_FILE_NUM_DICT.keys()):
+                for file_index in range(CSN_FILE_NUM_DICT[language]['train']):
+                    fp = \
+                        os.path.join(config.data.root, language,
+                                     'final', 'jsonl', 'train',
+                                     f'{language}_train_{file_index}.jsonl.gz')
+                    list_data_dict += load_jsonl(
+                        fp,
+                        instruction='docstring',
+                        output='code',
+                        category='language',
+                        is_gzip=True,
+                    )
+            # Modify instruction with specific language
+            for sample in list_data_dict:
+                sample['instruction'] = \
+                    sample['category'] + ' ' + sample['instruction']
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                'Data not found! Please run `python '
+                'federatedscope/llm/dataset/code_search_net.py` '
+                'to download data.')
     else:
         raise ValueError(f'Not support data type {dataset_name}.')
 
