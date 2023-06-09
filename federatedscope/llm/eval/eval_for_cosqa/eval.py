@@ -77,19 +77,21 @@ SAMPLES = [{
 
 
 def build_prompt(sample, n_shot):
-    input_text_prompt = \
-        'The following are document, code and label determine whether the ' \
-        'code implements the function of the text.\n\n'
+    input_text_prompt = 'Input: a piece of code and a document ' \
+                        'Output: 0 or 1 indicating the degree of ' \
+                        'matching between the code and the document, ' \
+                        'with 0 indicating a mismatch ' \
+                        'and 1 indicating a match.\n\n'
 
     index_list = list(range(len(SAMPLES)))
     random.shuffle(index_list)
     for i in index_list[:n_shot]:
         input_text_prompt += f"Document: {SAMPLES[i]['doc']}\n" \
                              f"Code: {SAMPLES[i]['code']}\n" \
-                             f"Label: {SAMPLES[i]['label']}\n\n"
+                             f"Score: {SAMPLES[i]['label']}\n\n"
     input_text_prompt += f"Document: {sample['instruction']}\n" \
                          f"Code: {sample['output']}\n" \
-                         f"Label: "
+                         f"Score: "
 
     return input_text_prompt
 
@@ -160,7 +162,7 @@ def main():
         acc = np.mean(cors)
 
         print(f"Num of total question: {len(cors)}\n"
-              f"Prob: {probs}\n"
+              f"Prob: {probs} {cor}\n"
               f"Average accuracy {acc}\n\n")
 
 
