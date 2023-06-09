@@ -49,7 +49,7 @@ def gen_prompt(train_df, subject, k=-1):
 
 
 @torch.no_grad()
-def eval(subject, model, tokenizer, dev_df, test_df):
+def eval(subject, model, tokenizer, dev_df, test_df, device):
     cors = []
     all_probs = []
     answers = choices[:test_df.shape[1] - 2]
@@ -61,13 +61,14 @@ def eval(subject, model, tokenizer, dev_df, test_df):
         train_prompt = gen_prompt(dev_df, subject, k)
         prompt = train_prompt + prompt_end
 
-        input_ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
+        input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
 
         while input_ids.shape[-1] > 2048:
             k -= 1
             train_prompt = gen_prompt(dev_df, subject, k)
             prompt = train_prompt + prompt_end
-            input_ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
+            input_ids = tokenizer(prompt,
+                                  return_tensors="pt").input_ids.to(device)
 
         label = test_df.iloc[i, test_df.shape[1] - 1]
 
@@ -114,6 +115,7 @@ def main():
     fschatbot = FSChatBot(init_cfg)
     tokenizer = fschatbot.tokenizer
     model = fschatbot.model
+    device = fschatbot.device
 
     subjects = sorted([
         f.split("_test.csv")[0]
@@ -145,7 +147,8 @@ def main():
                                            subject + "_test.csv"),
                               header=None)
 
-        cors, acc, probs = eval(subject, model, tokenizer, dev_df, test_df)
+        cors, acc, probs = eval(subject, model, tokenizer, dev_df, test_df,
+                                device)
         subcats = subcategories[subject]
         for subcat in subcats:
             subcat_cors[subcat].append(cors)
