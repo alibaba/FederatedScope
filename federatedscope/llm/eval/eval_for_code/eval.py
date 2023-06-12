@@ -162,12 +162,15 @@ def main():
         input_text = build_prompt(sample, n_shot)
         label = sample['output']
 
-        while len(input_text) > 2048 and n_shot > 0:
+        while len(input_text) > 1024 and n_shot > 0:
             n_shot -= 1
             input_text = build_prompt(sample, n_shot)
 
         input_ids = \
-            tokenizer(input_text, return_tensors="pt").input_ids.to(device)
+            tokenizer(input_text, return_tensors="pt",
+                      max_length=tokenizer.model_max_length).input_ids.to(
+                device)
+        print(input_ids.shape)
         logits = model(input_ids=input_ids).logits[0, -1]
         probs = (torch.nn.functional.softmax(
             torch.tensor([

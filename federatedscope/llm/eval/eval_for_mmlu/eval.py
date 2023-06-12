@@ -61,9 +61,13 @@ def eval(subject, model, tokenizer, dev_df, test_df, device):
         train_prompt = gen_prompt(dev_df, subject, k)
         prompt = train_prompt + prompt_end
 
-        input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
+        input_ids = tokenizer(
+            prompt,
+            return_tensors="pt",
+            max_length=tokenizer.model_max_length,
+        ).input_ids.to(device)
 
-        while input_ids.shape[-1] > 2048:
+        while input_ids.shape[-1] > 1024:
             k -= 1
             train_prompt = gen_prompt(dev_df, subject, k)
             prompt = train_prompt + prompt_end
