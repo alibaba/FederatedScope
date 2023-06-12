@@ -10,11 +10,12 @@ from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.data.utils import download_url
-from federatedscope.llm.dataloader.dataloader import load_json
+from federatedscope.llm.dataloader.dataloader import load_json, load_jsonl
 from federatedscope.llm.misc.fschat import FSChatBot
 
 transformers.logging.set_verbosity(40)
 
+EVAL_DATA = 'code_search_net'  # code_search_net
 N_SHOT = 5
 SAMPLES = [{
     "idx": "cosqa-train-0",
@@ -77,8 +78,8 @@ SAMPLES = [{
 
 
 def build_prompt(sample, n_shot):
-    input_text_prompt = 'Input: a piece of code and a document ' \
-                        'Output: 0 or 1 indicating the degree of ' \
+    input_text_prompt = 'Input: a piece of code and a document\n' \
+                        'Output: 0 or 1 score indicating the degree of ' \
                         'matching between the code and the document, ' \
                         'with 0 indicating a mismatch ' \
                         'and 1 indicating a match.\n\n'
@@ -89,8 +90,9 @@ def build_prompt(sample, n_shot):
         input_text_prompt += f"Document: {SAMPLES[i]['doc']}\n" \
                              f"Code: {SAMPLES[i]['code']}\n" \
                              f"Score: {SAMPLES[i]['label']}\n\n"
-    input_text_prompt += f"Document: {sample['instruction']}\n" \
-                         f"Code: {sample['output']}\n" \
+    input_text_prompt += f"Document:{sample['category']}" \
+                         f" {sample['instruction']}\n" \
+                         f"Code: {sample['input']}\n" \
                          f"Score: "
 
     return input_text_prompt
@@ -117,24 +119,48 @@ def main():
     device = fschatbot.device
 
     # Get test file
-    fp = os.path.join(init_cfg.data.root, 'cosqa-dev.json')
-    if not os.path.exists(fp):
-        download_url(
-            'https://github.com/microsoft/CodeXGLUE/raw/'
-            'd67dd5c73b9c433307d7df5f9faab2af9f5d1742/'
-            'Text-Code/NL-code-search-WebQuery/CoSQA/cosqa-dev.json',
-            init_cfg.data.root)
-
-    list_data_dict = load_json(fp,
-                               instruction='doc',
-                               output='code',
-                               category='label')
+    if EVAL_DATA == 'cosqa':
+        fp = os.path.join(init_cfg.data.root, 'cosqa-dev.json')
+        if not os.path.exists(fp):
+            download_url(
+                'https://github.com/microsoft/CodeXGLUE/raw/'
+                'd67dd5c73b9c433307d7df5f9faab2af9f5d1742/'
+                'Text-Code/NL-code-search-WebQuery/CoSQA/cosqa-dev.json',
+                init_cfg.data.root)
+        list_data_dict = load_json(fp,
+                                   instruction='doc',
+                                   input='code',
+                                   output='label')
+        for sample in list_data_dict:
+            sample['category'] = 'python'
+    elif EVAL_DATA == 'code_search_net':
+        fp = os.path.join(init_cfg.data.root, 'csn_test.jsonl')
+        if not os.path.exists(fp):
+            raise FileNotFoundError('Run `python '
+                                    'federatedscope/llm/'
+                                    'dataset/code_search_net.py` '
+                                    'to build test file')
+        list_data_dict = load_jsonl(fp,
+                                    instruction='instruction',
+                                    input='input',
+                                    output='output',
+                                    category='category')
+    else:
+        raise ValueError(EVAL_DATA)
 
     labels, preds, cors = [], [], []
+    category = None
     for sample in tqdm(list_data_dict):
+        if sample['category'] != category:
+            print(f"==============={category}===============\n"
+                  f"Num of total question: {len(cors)}\n"
+                  f"Average accuracy {np.mean(cors)}\n\n")
+            category = sample['category']
+            labels, preds, cors = [], [], []
+
         n_shot = N_SHOT
         input_text = build_prompt(sample, n_shot)
-        label = sample['category']
+        label = sample['output']
 
         while len(input_text) > 2048 and n_shot > 0:
             n_shot -= 1
@@ -158,12 +184,6 @@ def main():
         labels.append(label)
         preds.append(pred)
         cors.append(cor)
-
-        acc = np.mean(cors)
-
-        print(f"Num of total question: {len(cors)}\n"
-              f"Prob: {probs} {cor}\n"
-              f"Average accuracy {acc}\n\n")
 
 
 if __name__ == "__main__":

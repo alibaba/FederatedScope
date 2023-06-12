@@ -78,7 +78,7 @@ def load_json(file_path,
         new_item = dict(
             instruction=item[instruction] if instruction in item else None,
             input=item[input] if input in item else None,
-            output=item[output] if output in output else None,
+            output=item[output] if output in item else None,
             category=item[category] if category in item else None)
         new_list_data_dict.append(new_item)
     return new_list_data_dict
@@ -100,7 +100,7 @@ def load_jsonl(file_path,
             new_item = dict(
                 instruction=item[instruction] if instruction in item else None,
                 input=item[input] if input in item else None,
-                output=item[output] if output in output else None,
+                output=item[output] if output in item else None,
                 category=item[category] if category in item else None)
             item = new_item
             list_data_dict.append(item)
