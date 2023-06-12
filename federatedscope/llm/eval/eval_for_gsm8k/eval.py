@@ -199,7 +199,7 @@ def main():
         input_text = build_prompt(sample['instruction'], n_shot, COT_FLAG)
 
         # Avoid input too long
-        while len(input_text) > 2048 and n_shot > 0:
+        while len(input_text) > 1024 and n_shot > 0:
             n_shot -= 1
             input_text = build_prompt(sample['instruction'], n_shot, COT_FLAG)
 
