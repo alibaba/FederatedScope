@@ -187,6 +187,11 @@ def main():
         preds.append(pred)
         cors.append(cor)
 
+    # Print final
+    print(f"==============={category}===============\n"
+          f"Num of total question: {len(cors)}\n"
+          f"Average accuracy {np.mean(cors)}\n\n")
+
 
 if __name__ == "__main__":
     main()
