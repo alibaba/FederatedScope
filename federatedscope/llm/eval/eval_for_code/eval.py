@@ -170,7 +170,6 @@ def main():
             tokenizer(input_text, return_tensors="pt",
                       max_length=tokenizer.model_max_length).input_ids.to(
                 device)
-        print(input_ids.shape)
         logits = model(input_ids=input_ids).logits[0, -1]
         probs = (torch.nn.functional.softmax(
             torch.tensor([
