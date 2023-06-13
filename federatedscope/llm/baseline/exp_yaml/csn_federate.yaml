@@ -14,7 +14,7 @@ data:
   splitter: 'meta'
   subsample: 0.05
 llm:
-  tok_len: 1000
+  tok_len: 650
   chat:
     max_len: 1000
   adapter:
