@@ -69,6 +69,24 @@ class FSChatBot(object):
                                   skip_special_tokens=True)
         return response_tokens
 
+    def generate(self, input_text, generate_kwargs={}):
+        input_text = self.tokenizer(
+            input_text,
+            padding=False,
+            add_special_tokens=True,
+            return_tensors="pt",
+        )
+        input_ids = input_text.input_ids.to(self.device)
+        attention_mask = input_text.attention_mask.to(self.device)
+
+        response = self.model.generate(input_ids=input_ids,
+                                       attention_mask=attention_mask,
+                                       **generate_kwargs)
+        response = \
+            self.tokenizer.decode(response[0][input_ids.shape[1]:],
+                                  skip_special_tokens=True)
+        return response
+
     def clear(self):
         self.history = []
 

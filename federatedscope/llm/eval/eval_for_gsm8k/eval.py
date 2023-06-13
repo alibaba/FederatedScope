@@ -22,10 +22,10 @@ INVALID_ANS = "[invalid]"
 N_SHOT = 8
 COT_FLAG = True
 DEBUG = False
+ANSWER_TRIGGER = "The answer is"
 
 
-def extract_answer(completion):
-    # extract answer from data
+def extract_answer_from_output(completion):
     match = ANS_RE.search(completion)
     if match:
         match_str = match.group(1).strip()
@@ -36,7 +36,7 @@ def extract_answer(completion):
 
 
 def is_correct(model_answer, answer):
-    gt_answer = extract_answer(answer)
+    gt_answer = extract_answer_from_output(answer)
     assert gt_answer != INVALID_ANS
     return model_answer == gt_answer
 
@@ -117,36 +117,30 @@ def create_demo_text(n_shot=8, cot_flag=True):
     demo_text = ""
     for i in range(n_shot):
         if cot_flag:
-            demo_text += "Question: " + question[i] + "\nAnswer: " \
-                         "Let's think step by step\n" + chain[i] + " " + \
-                         "The answer is  " + answer[i] + ".\n\n"
+            demo_text += "Q: " + question[i] + "\nA: " + chain[i] + " " + \
+                         ANSWER_TRIGGER + " " + answer[i] + ".\n\n"
         else:
             demo_text += "Question: " + question[i] + "\nAnswer: " + \
-                         "The answer is " + answer[i] + ".\n\n"
+                         ANSWER_TRIGGER + " " + answer[i] + ".\n\n"
     return demo_text
 
 
-def build_prompt(input_text, n_shot, cot_flag, with_task_des=False):
-    if with_task_des:
-        input_text_prompt = \
-            'The following are math questions (with arabic numerals ' \
-            'answers).\n\n'
-    else:
-        input_text_prompt = ''
-    input_text_prompt += create_demo_text(n_shot, cot_flag)
-
-    input_text_prompt = \
-        input_text_prompt + "Question: " + input_text + "\nAnswer: "
-    if cot_flag:
-        input_text_prompt += "Let's think step by step\n"
+def build_prompt(input_text, n_shot, cot_flag):
+    demo = create_demo_text(n_shot, cot_flag)
+    input_text_prompt = demo + "Q: " + input_text + "\n" + "A:"
     return input_text_prompt
 
 
 def clean_answer(model_pred):
     model_pred = model_pred.lower()
-    preds = model_pred.split("the answer is")
+    preds = model_pred.split(ANSWER_TRIGGER.lower())
     answer_flag = True if len(preds) > 1 else False
-    pred = preds[-1]
+    if answer_flag:
+        # Pick first answer with flag
+        pred = preds[1]
+    else:
+        # Pick last number without flag
+        pred = preds[-1]
 
     pred = pred.replace(",", "")
     pred = [s for s in re.findall(r'-?\d+\.?\d*', pred)]
@@ -155,8 +149,10 @@ def clean_answer(model_pred):
         return INVALID_ANS
 
     if answer_flag:
+        # choose the first element in list
         pred = pred[0]
     else:
+        # choose the last element in list
         pred = pred[-1]
 
     # (For arithmetic tasks) if a word ends with period, it will be omitted ...
@@ -196,16 +192,15 @@ def main():
     answers = []
     for sample in tqdm(list_data_dict):
         input_text = build_prompt(sample['instruction'], N_SHOT, COT_FLAG)
-        model_completion = fschatbot.predict(input_text,
-                                             use_history=False,
-                                             use_prompt=False)
+        generate_kwargs = dict(max_new_tokens=512, top_p=0.95, temperature=0.8)
+        model_completion = fschatbot.generate(input_text, generate_kwargs)
         model_answer = clean_answer(model_completion)
         is_cor = is_correct(model_answer, sample['output'])
         answers.append(is_cor)
         if DEBUG:
             print(f'Full input_text:\n{input_text}\n\n')
         print(f'Question: {sample["instruction"]}\n\n'
-              f'Answers: {extract_answer(sample["output"])}\n\n'
+              f'Answers: {extract_answer_from_output(sample["output"])}\n\n'
               f'Model Answers: {model_answer}\n\n'
               f'Model Completion: {model_completion}\n\n'
               f'Is correct: {is_cor}\n\n')
