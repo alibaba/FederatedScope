@@ -115,7 +115,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
 
     # Concatenate demonstration examples ...
     demo_text = ""
-    for i in range(n_shot):
+    for i in index_list[:n_shot]:
         if cot_flag:
             demo_text += "Q: " + question[i] + "\nA: " + chain[i] + " " + \
                          ANSWER_TRIGGER + " " + answer[i] + ".\n\n"
@@ -182,9 +182,9 @@ def main():
     fp = os.path.join(init_cfg.data.root, 'gsm8k_test.jsonl')
     if not os.path.exists(fp):
         download_url(
-            'https://raw.githubusercontent.com/openai/grade-school'
-            '-math/master/grade_school_math/data/test.jsonl',
-            init_cfg.data.root)
+            'https://raw.githubusercontent.com/openai/'
+            'grade-school-math/2909d34ef28520753df82a2234c357259d254aa8/'
+            'grade_school_math/data/test.jsonl', init_cfg.data.root)
         os.rename(os.path.join(init_cfg.data.root, 'test.jsonl'), fp)
 
     list_data_dict = load_jsonl(fp, instruction='question', output='answer')
