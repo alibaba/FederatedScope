@@ -115,7 +115,7 @@ def create_demo_text(n_shot=8, cot_flag=True):
 
     # Concatenate demonstration examples ...
     demo_text = ""
-    for i in range(n_shot):
+    for i in index_list[:n_shot]:
         if cot_flag:
             demo_text += "Question: " + question[i] + "\nAnswer: " \
                          "Let's think step by step\n" + chain[i] + " " + \
@@ -186,16 +186,23 @@ def main():
     fp = os.path.join(init_cfg.data.root, 'gsm8k_test.jsonl')
     if not os.path.exists(fp):
         download_url(
-            'https://raw.githubusercontent.com/openai/grade-school'
-            '-math/master/grade_school_math/data/test.jsonl',
-            init_cfg.data.root)
+            'https://raw.githubusercontent.com/openai/'
+            'grade-school-math/2909d34ef28520753df82a2234c357259d254aa8/'
+            'grade_school_math/data/test.jsonl', init_cfg.data.root)
         os.rename(os.path.join(init_cfg.data.root, 'test.jsonl'), fp)
 
     list_data_dict = load_jsonl(fp, instruction='question', output='answer')
 
     answers = []
     for sample in tqdm(list_data_dict):
-        input_text = build_prompt(sample['instruction'], N_SHOT, COT_FLAG)
+        n_shot = N_SHOT
+        input_text = build_prompt(sample['instruction'], n_shot, COT_FLAG)
+
+        # Avoid input too long
+        while len(input_text) > 1024 and n_shot > 0:
+            n_shot -= 1
+            input_text = build_prompt(sample['instruction'], n_shot, COT_FLAG)
+
         model_completion = fschatbot.predict(input_text,
                                              use_history=False,
                                              use_prompt=False)

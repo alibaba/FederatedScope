@@ -19,6 +19,7 @@ class FSChatBot(object):
                                           config.llm.tok_len)
         self.model = get_llm(config)
         self.device = f'cuda:{config.device}'
+        self.add_special_tokens = True
 
         try:
             ckpt = torch.load(config.federate.save_to, map_location='cpu')
