@@ -8,6 +8,7 @@ federate:
   client_idx_for_local_train: 5
   total_round_num: 500
   save_to: "llama_csn_c5_30*500.ckpt"
+  save_freq: 100
 data:
   root: data/
   type: 'code_search_net@llm'

@@ -7,6 +7,7 @@ federate:
   client_num: 6
   total_round_num: 500
   save_to: "llama_csn_fed_30*500.ckpt"
+  save_freq: 100
 data:
   root: data/
   type: 'code_search_net@llm'
