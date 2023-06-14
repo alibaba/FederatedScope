@@ -7,7 +7,8 @@ import torch
 import transformers
 
 from dataclasses import dataclass
-from federatedscope.llm.dataset.llm_dataset import DefaultToken, LLMDataset
+from federatedscope.llm.dataset.llm_dataset import DefaultToken, LLMDataset,\
+    CODE_PROMPTS_DICT
 from federatedscope.core.data.utils import download_url
 
 logger = logging.getLogger(__name__)
@@ -184,6 +185,7 @@ def load_llm_dataset(config=None, **kwargs):
                     tmp_list_data_dict = load_jsonl(
                         fp,
                         instruction='docstring',
+                        input='language',
                         output='code',
                         category='language',
                         is_gzip=True,
@@ -208,22 +210,10 @@ def load_llm_dataset(config=None, **kwargs):
                 'Data not found! Please run `python '
                 'federatedscope/llm/dataset/code_search_net.py` '
                 'to download data.')
-        dataset = LLMDataset(list_data_dict, tokenizer)
+        dataset = LLMDataset(list_data_dict, tokenizer,
+                             CODE_PROMPTS_DICT['prompt_input'],
+                             CODE_PROMPTS_DICT['prompt_no_input'])
     elif dataset_name.lower() == 'rosetta_alpaca':
-        codealpaca_prompts = {
-            "prompt_input": (
-                "Below is an instruction that describes a task, paired with "
-                "an input that provides further context. "
-                "Write a response that appropriately completes the "
-                "request.\n\n"
-                "### Instruction:\n{instruction}\n\n### Input:\n{"
-                "input}\n\n### Output:"),
-            "prompt_no_input": (
-                "Below is an instruction that describes a task. "
-                "Write a response that appropriately completes the "
-                "request.\n\n"
-                "### Instruction:\n{instruction}\n\n### Output:"),
-        }
         fp = os.path.join(config.data.root, 'rosetta_alpaca.json')
         download_url(
             'https://github.com/sahil280114/'
@@ -235,8 +225,8 @@ def load_llm_dataset(config=None, **kwargs):
                                    output='output',
                                    category='input')
         dataset = LLMDataset(list_data_dict, tokenizer,
-                             codealpaca_prompts['prompt_input'],
-                             codealpaca_prompts['prompt_no_input'])
+                             CODE_PROMPTS_DICT['prompt_input'],
+                             CODE_PROMPTS_DICT['prompt_no_input'])
     else:
         raise ValueError(f'Not support data type {dataset_name}.')
 

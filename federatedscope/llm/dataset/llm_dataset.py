@@ -34,6 +34,20 @@ PROMPT_DICT = {
         "### Instruction:\n{instruction}\n\n### Response:"),
 }
 
+CODE_PROMPTS_DICT = {
+    "prompt_input": (
+        "Below is an instruction that describes a task, paired with "
+        "an input that provides further context. "
+        "Write a response that appropriately completes the "
+        "request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Input:\n{"
+        "input}\n\n### Output:"),
+    "prompt_no_input": ("Below is an instruction that describes a task. "
+                        "Write a response that appropriately completes the "
+                        "request.\n\n"
+                        "### Instruction:\n{instruction}\n\n### Output:"),
+}
+
 
 # TODO: support LDA when 'category' in keys
 class LLMDataset(Dataset):
