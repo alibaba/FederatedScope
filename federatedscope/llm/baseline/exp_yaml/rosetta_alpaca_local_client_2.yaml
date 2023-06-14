@@ -14,7 +14,6 @@ data:
   type: 'rosetta_alpaca@llm'
   splits: [0.998,0.001,0.001]
   splitter: 'meta'
-  subsample: 0.05
 llm:
   tok_len: 650
   chat:
