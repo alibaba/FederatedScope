@@ -224,9 +224,7 @@ def load_llm_dataset(config=None, **kwargs):
                                    input='input',
                                    output='output',
                                    category='input')
-        dataset = LLMDataset(list_data_dict, tokenizer,
-                             CODE_PROMPTS_DICT['prompt_input'],
-                             CODE_PROMPTS_DICT['prompt_no_input'])
+        dataset = LLMDataset(list_data_dict, tokenizer)
     else:
         raise ValueError(f'Not support data type {dataset_name}.')
 
