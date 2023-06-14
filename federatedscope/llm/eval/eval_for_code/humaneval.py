@@ -15,8 +15,8 @@ from federatedscope.llm.misc.fschat import FSChatBot
 
 transformers.logging.set_verbosity(40)
 
-DEBUG = True
-NUM_ANSWERS_PER_QUESTION = 3
+DEBUG = False
+NUM_ANSWERS_PER_QUESTION = 5
 
 
 def clean_answer(code):
@@ -28,6 +28,9 @@ def clean_answer(code):
     code = code.split("\n\n")[0]
     # 2. remove everything after the "def "
     code = code.split("def ")[0]
+    # 3. add a space to avoid `unindent` error
+    if code.startswith('   '):
+        code = ' ' + code
     return code
 
 
@@ -77,7 +80,11 @@ def main():
             generation_config=generation_config,
             max_new_tokens=128,
         )
-        model_completions = fschatbot.generate(input_text, generate_kwargs)
+        try:
+            model_completions = fschatbot.generate(input_text, generate_kwargs)
+        except torch.cuda.OutOfMemoryError as error:
+            print(error)
+            model_completions = ['' for _ in range(NUM_ANSWERS_PER_QUESTION)]
 
         for i, completion in enumerate(model_completions):
             completion = clean_answer(completion)
