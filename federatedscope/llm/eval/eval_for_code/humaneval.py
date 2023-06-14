@@ -16,7 +16,19 @@ from federatedscope.llm.misc.fschat import FSChatBot
 transformers.logging.set_verbosity(40)
 
 DEBUG = True
-NUM_ANSWERS_PER_QUESTION = 10
+NUM_ANSWERS_PER_QUESTION = 3
+
+
+def clean_answer(code):
+    """
+    Borrow from: https://github.com/FSoft-AI4Code/CodeCapybara
+    """
+
+    # 1. remove everything after "\n\n"
+    code = code.split("\n\n")[0]
+    # 2. remove everything after the "def "
+    code = code.split("def ")[0]
+    return code
 
 
 @torch.no_grad()
@@ -54,23 +66,26 @@ def main():
     answers = []
     for sample in tqdm(list_data_dict):
         input_text = sample['instruction']
-        generation_config = GenerationConfig(temperature=0.1,
-                                             top_k=40,
-                                             top_p=0.75)
+        generation_config = GenerationConfig(
+            temperature=0.1,
+            top_k=40,
+            top_p=0.75,
+            do_sample=True,
+            num_return_sequences=NUM_ANSWERS_PER_QUESTION,
+        )
         generate_kwargs = dict(
             generation_config=generation_config,
-            max_new_tokens=256,
-            num_beams=NUM_ANSWERS_PER_QUESTION,
-            num_return_sequences=NUM_ANSWERS_PER_QUESTION,
+            max_new_tokens=128,
         )
         model_completions = fschatbot.generate(input_text, generate_kwargs)
 
         for i, completion in enumerate(model_completions):
+            completion = clean_answer(completion)
             answers.append(
                 dict(task_id=sample['category'], completion=completion))
             if DEBUG:
                 print(f"task_id: {sample['category']},\n"
-                      f"completion {i + 1}: {completion}\n\n")
+                      f"completion {i + 1}:\n{completion}\n\n")
 
     # Save as samples.jsonl for eval pass@k score
     # Run `evaluate_functional_correctness samples.jsonl`
