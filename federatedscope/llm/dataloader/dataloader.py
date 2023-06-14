@@ -1,5 +1,7 @@
 import os
+import gzip
 import json
+import random
 import logging
 import torch
 import transformers
@@ -76,7 +78,7 @@ def load_json(file_path,
         new_item = dict(
             instruction=item[instruction] if instruction in item else None,
             input=item[input] if input in item else None,
-            output=item[output] if output in output else None,
+            output=item[output] if output in item else None,
             category=item[category] if category in item else None)
         new_list_data_dict.append(new_item)
     return new_list_data_dict
@@ -86,17 +88,19 @@ def load_jsonl(file_path,
                instruction='instruction',
                input='input',
                output='output',
-               category='category'):
+               category='category',
+               is_gzip=False):
     # Format of each line:
     # {'instruction': ..., 'input': ..., 'output':...}
     list_data_dict = []
-    with open(file_path, 'r', encoding="utf-8") as f:
+    open_func = open if not is_gzip else gzip.open
+    with open_func(file_path, 'r') as f:
         for line in f:
             item = json.loads(line)
             new_item = dict(
                 instruction=item[instruction] if instruction in item else None,
                 input=item[input] if input in item else None,
-                output=item[output] if output in output else None,
+                output=item[output] if output in item else None,
                 category=item[category] if category in item else None)
             item = new_item
             list_data_dict.append(item)
@@ -113,9 +117,11 @@ def load_llm_dataset(config=None, **kwargs):
     if dataset_name.endswith('.json'):
         fp = os.path.join(config.data.root, dataset_name)
         list_data_dict = load_json(fp)
+        dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.endswith('.jsonl'):
         fp = os.path.join(config.data.root, dataset_name)
         list_data_dict = load_jsonl(fp)
+        dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'alpaca':
         fp = os.path.join(config.data.root, 'alpaca_data.json')
         download_url(
@@ -124,6 +130,7 @@ def load_llm_dataset(config=None, **kwargs):
             '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
             'alpaca_data.json', config.data.root)
         list_data_dict = load_json(fp)
+        dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'alpaca_cleaned':
         fp = os.path.join(config.data.root, 'alpaca_data_cleaned.json')
         download_url(
@@ -131,6 +138,7 @@ def load_llm_dataset(config=None, **kwargs):
             'a7d629079a95c2e4b7ec7dfe55087fbd18d9eba8/'
             'alpaca_data_cleaned.json', config.data.root)
         list_data_dict = load_json(fp)
+        dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'dolly-15k':
         fp = os.path.join(config.data.root, 'databricks-dolly-15k.jsonl')
         download_url(
@@ -142,6 +150,7 @@ def load_llm_dataset(config=None, **kwargs):
                                     input='context',
                                     output='response',
                                     category='category')
+        dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'gsm8k':
         fp = os.path.join(config.data.root, 'gsm8k_train.jsonl')
         if not os.path.exists(fp):
@@ -156,9 +165,64 @@ def load_llm_dataset(config=None, **kwargs):
         for i in range(len(list_data_dict)):
             list_data_dict[i]['output'] = \
                 list_data_dict[i]['output'].replace('####', 'The answer is')
+        dataset = LLMDataset(list_data_dict, tokenizer)
+    elif dataset_name.lower() == 'code_search_net':
+        from tqdm import tqdm
+        from federatedscope.llm.dataset.code_search_net import \
+            CSN_FILE_NUM_DICT
+
+        list_data_dict = []
+        logger.info('Loading code search net data file...')
+        try:
+            for language in tqdm(CSN_FILE_NUM_DICT.keys()):
+                sub_list_data_dict = []
+                for file_index in range(CSN_FILE_NUM_DICT[language]['train']):
+                    fp = \
+                        os.path.join(config.data.root, language,
+                                     'final', 'jsonl', 'train',
+                                     f'{language}_train_{file_index}.jsonl.gz')
+                    tmp_list_data_dict = load_jsonl(
+                        fp,
+                        instruction='docstring',
+                        input='language',
+                        output='code',
+                        category='language',
+                        is_gzip=True,
+                    )
+                    sub_list_data_dict += tmp_list_data_dict
+                # Subsample
+                raw_size = len(sub_list_data_dict)
+                num_subsample = int(raw_size * config.data.subsample)
+                list_data_dict += random.sample(sub_list_data_dict,
+                                                num_subsample)
+                logger.info(f"Subsample "
+                            f"{sub_list_data_dict[0]['category']} with "
+                            f"rate {config.data.subsample}: "
+                            f"the sample size is # {num_subsample} "
+                            f"(the raw size is {raw_size}).")
+            # Modify instruction with specific language
+            for sample in list_data_dict:
+                sample['instruction'] = \
+                    sample['category'] + ' ' + sample['instruction']
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                'Data not found! Please run `python '
+                'federatedscope/llm/dataset/code_search_net.py` '
+                'to download data.')
+        dataset = LLMDataset(list_data_dict, tokenizer)
+    elif dataset_name.lower() == 'rosetta_alpaca':
+        fp = os.path.join(config.data.root, 'rosetta_alpaca.json')
+        download_url(
+            'https://github.com/sahil280114/'
+            'codealpaca/raw/master/data/'
+            'rosetta_alpaca.json', config.data.root)
+        list_data_dict = load_json(fp,
+                                   instruction='instruction',
+                                   input='input',
+                                   output='output',
+                                   category='input')
+        dataset = LLMDataset(list_data_dict, tokenizer)
     else:
         raise ValueError(f'Not support data type {dataset_name}.')
-
-    dataset = LLMDataset(list_data_dict, tokenizer)
 
     return dataset, config
