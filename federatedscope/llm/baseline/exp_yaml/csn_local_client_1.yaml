@@ -4,17 +4,19 @@ early_stop:
   patience: 0
 federate:
   mode: standalone
-  client_num: 3
+  client_num: 6
+  client_idx_for_local_train: 1
   total_round_num: 500
-  save_to: "llama_alpaca_fed_30*500.ckpt"
+  save_to: "llama_csn_c1_30*500.ckpt"
   save_freq: 100
 data:
   root: data/
-  type: 'alpaca@llm'
+  type: 'code_search_net@llm'
   splits: [0.998,0.001,0.001]
-  splitter: 'iid'
+  splitter: 'meta'
+  subsample: 0.05
 llm:
-  tok_len: 1000
+  tok_len: 650
   chat:
     max_len: 1000
   adapter:
@@ -28,7 +30,7 @@ train:
   local_update_steps: 30
   batch_or_epoch: batch
   optimizer:
-    lr: 0.0003
+    lr: 0.001
     weight_decay: 0.0
   is_enable_half: True
 criterion:
