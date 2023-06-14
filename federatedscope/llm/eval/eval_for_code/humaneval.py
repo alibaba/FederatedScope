@@ -23,7 +23,6 @@ def clean_answer(code):
     """
     Borrow from: https://github.com/FSoft-AI4Code/CodeCapybara
     """
-
     def pad_spaces(s, num=4):
         n = 0
         while n < len(s) and s[n] == " ":
