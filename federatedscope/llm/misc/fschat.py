@@ -1,3 +1,4 @@
+import sys
 import torch
 import transformers
 
@@ -35,6 +36,8 @@ class FSChatBot(object):
         else:
             self.model.to(self.device)
         self.model = self.model.eval()
+        if torch.__version__ >= "2" and sys.platform != "win32":
+            self.model = torch.compile(self.model)
 
         self.max_history_len = config.llm.chat.max_history_len
         self.max_len = config.llm.chat.max_len
@@ -70,6 +73,7 @@ class FSChatBot(object):
                                   skip_special_tokens=True)
         return response_tokens
 
+    @torch.no_grad()
     def generate(self, input_text, generate_kwargs={}):
         input_text = self.tokenizer(
             input_text,
@@ -80,13 +84,19 @@ class FSChatBot(object):
         input_ids = input_text.input_ids.to(self.device)
         attention_mask = input_text.attention_mask.to(self.device)
 
-        response = self.model.generate(input_ids=input_ids,
-                                       attention_mask=attention_mask,
-                                       **generate_kwargs)
-        response = \
-            self.tokenizer.decode(response[0][input_ids.shape[1]:],
-                                  skip_special_tokens=True)
-        return response
+        output_ids = self.model.generate(input_ids=input_ids,
+                                         attention_mask=attention_mask,
+                                         **generate_kwargs)
+        response = []
+        for i in range(output_ids.shape[0]):
+            response.append(
+                self.tokenizer.decode(output_ids[i][input_ids.shape[1]:],
+                                      skip_special_tokens=True,
+                                      ignore_tokenization_space=True))
+
+        if len(response) > 1:
+            return response
+        return response[0]
 
     def clear(self):
         self.history = []
