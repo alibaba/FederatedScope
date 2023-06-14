@@ -7,8 +7,7 @@ import torch
 import transformers
 
 from dataclasses import dataclass
-from federatedscope.llm.dataset.llm_dataset import DefaultToken, LLMDataset,\
-    CODE_PROMPTS_DICT
+from federatedscope.llm.dataset.llm_dataset import DefaultToken, LLMDataset
 from federatedscope.core.data.utils import download_url
 
 logger = logging.getLogger(__name__)
@@ -210,9 +209,7 @@ def load_llm_dataset(config=None, **kwargs):
                 'Data not found! Please run `python '
                 'federatedscope/llm/dataset/code_search_net.py` '
                 'to download data.')
-        dataset = LLMDataset(list_data_dict, tokenizer,
-                             CODE_PROMPTS_DICT['prompt_input'],
-                             CODE_PROMPTS_DICT['prompt_no_input'])
+        dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'rosetta_alpaca':
         fp = os.path.join(config.data.root, 'rosetta_alpaca.json')
         download_url(
