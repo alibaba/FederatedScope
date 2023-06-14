@@ -24,13 +24,20 @@ def clean_answer(code):
     Borrow from: https://github.com/FSoft-AI4Code/CodeCapybara
     """
 
+    def pad_spaces(s, num=4):
+        n = 0
+        while n < len(s) and s[n] == " ":
+            n += 1
+        if n != num:
+            s = " " * num + s[n:]
+        return s
+
     # 1. remove everything after "\n\n"
     code = code.split("\n\n")[0]
     # 2. remove everything after the "def "
     code = code.split("def ")[0]
-    # 3. add a space to avoid `unindent` error
-    if code.startswith('   '):
-        code = ' ' + code
+    # 3. pad to four space to avoid `unindent` error
+    code = pad_spaces(code, 4)
     return code
 
 
