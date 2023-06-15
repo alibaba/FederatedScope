@@ -7,7 +7,7 @@ federate:
   client_num: 3
   client_idx_for_local_train: 2
   total_round_num: 500
-  save_to: "llama_rosetta_alpaca_c1_30*500.ckpt"
+  save_to: "llama_rosetta_alpaca_c2_30*500.ckpt"
   save_freq: 100
 data:
   root: data/
