@@ -392,11 +392,11 @@ class Trainer(BaseTrainer):
 
         trainable_filter = lambda p: True if \
             self.cfg.personalization.share_non_trainable_para else \
-            lambda p: p in self.ctx.trainable_para_names
+            p in self.ctx.trainable_para_names
         keyword_filter = filter_by_specified_keywords
         return dict(
             filter(
-                lambda elem: trainable_filter(elem[1]) and keyword_filter(
+                lambda elem: trainable_filter(elem[0]) and keyword_filter(
                     elem[0], filter_keywords), state_dict.items()))
 
     def save_model(self, path, cur_round=-1):
