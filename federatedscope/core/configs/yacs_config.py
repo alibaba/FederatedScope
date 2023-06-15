@@ -533,6 +533,10 @@ def _merge_a_into_b(a, b, root, key_list):
         else:
             if root.key_is_deprecated(full_key):
                 continue
+            elif k in [
+                    '__cfg_check_funcs__', '__help_info__', 'is_ready_for_run'
+            ]:
+                continue
             elif root.key_is_renamed(full_key):
                 root.raise_key_rename_error(full_key)
             else:
@@ -573,6 +577,23 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
             return True, to_type(replacement)
         else:
             return False, None
+
+    # int <-> list, forced replacement
+    # To allow single <-> multiple cases
+    # A usecase: By default, we have cfg.attack.attacker_id = -1 to
+    # denote that there exists no attacker in the simulated FL course.
+    # We can easily change it to cfg.attack.attacker_id = 1 to conduct
+    # experiments with one attacker client#1. However, when we want
+    # multiple attackersvia  setting cfg.attack.attacker_id = [1,2,3],
+    # an error would be raised by yacs since the default value
+    # (-1, type int) could be replaced with [1,2,3] ()type list).
+    # This error motivates me to add such a forced replacement rule
+    # to support both single and multiple attackers here.
+    # TODO: a better solucation?
+    if replacement_type == int and original_type == list:
+        return replacement
+    if replacement_type == list and original_type == int:
+        return replacement
 
     # Conditionally casts
     # list <-> tuple

@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
 
     if isinstance(data_representative, dict):
         if 'x' in data_representative:
-            shape = data_representative['x'].shape
+            shape = np.asarray(data_representative['x']).shape
             if len(shape) == 1:  # (batch, ) = (batch, 1)
                 return 1
             else:
@@ -121,7 +122,9 @@ def get_model(model_config, local_data=None, backend='torch', role='client'):
         ``mf.model.model_builder.get_mfnet()``
         ===================================  ==============================
     """
-    if local_data is not None:
+    if model_config.type.lower() in ['xgb_tree', 'gbdt_tree', 'random_forest']:
+        input_shape = None
+    elif local_data is not None:
         input_shape = get_shape_from_data(local_data, model_config, backend)
     else:
         input_shape = model_config.input_shape
@@ -185,11 +188,17 @@ def get_model(model_config, local_data=None, backend='torch', role='client'):
     elif model_config.type.lower() in ['vmfnet', 'hmfnet']:
         from federatedscope.mf.model.model_builder import get_mfnet
         model = get_mfnet(model_config, input_shape)
+    elif model_config.type.lower() in [
+            'xgb_tree', 'gbdt_tree', 'random_forest'
+    ]:
+        from federatedscope.vertical_fl.tree_based_models.model.model_builder \
+            import get_tree_model
+        model = get_tree_model(model_config)
     elif model_config.type.lower() in ['atc_model']:
         from federatedscope.nlp.hetero_tasks.model import ATCModel
         model = ATCModel(model_config)
     elif model_config.type.lower() in ['pl_model']:
-        from federatedscope.nlp.prompt_learning.model import PLModel
+        from federatedscope.nlp.prompt_tuning.model import PLModel
         model = PLModel(model_config, role=role)
     else:
         raise ValueError('Model {} is not provided'.format(model_config.type))

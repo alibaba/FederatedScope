@@ -1,21 +1,25 @@
 # Attacks in FL
-## Privacy Attacks in FL
+Here we present recent works on the attacks in FL.
+
+|[Survey](#survey)|[Privacy Attacks](#privacy-attacks-in-fl)|[Backdoor Attacks](#backdoor-attacks-in-fl)|[Untargeted Attacks](#untargeted-attacks-in-fl)|
+
 
 ## Survey
 | Title                                                        | Venue      | Link                                        | Year
 | ------------------------------------------------------------ | ---------- |---------------------------------------------|-----------|
  | A Survey on Gradient Inversion: Attacks, Defenses and Future Directions | arxiv | [pdf](https://arxiv.org/pdf/2206.07284.pdf) | 2022 |
  | Threats to Federated Learning: A Survey | arxiv|  [pdf](https://arxiv.org/pdf/2003.02133.pdf) | 2020 |
+ 
 
-
-
+## Privacy Attacks in FL
 
 ## 2022
 | Title                                                        | Venue      | Link                                        |
 | ------------------------------------------------------------ | ---------- |---------------------------------------------|
  | Robbing the Fed: Directly Obtaining Private Data in Federated Learning with Modified Models| ICLR | [pdf](https://openreview.net/pdf?id=fwzUgo0FM9v) |
-
-
+ |Fishing for User Data in Large-Batch Federated Learning via Gradient Magnification |Arxiv | [pdf](https://arxiv.org/pdf/2202.00580.pdf)|
+ |Bayesian Framework for Gradient Leakage|[pdf](https://openreview.net/pdf?id=f2lrIbGx3x7)|
+ |Auditing Privacy Defenses in Federated Learning via Generative Gradient Leakage|CVPR|[pdf](https://openaccess.thecvf.com/content/CVPR2022/papers/Li_Auditing_Privacy_Defenses_in_Federated_Learning_via_Generative_Gradient_Leakage_CVPR_2022_paper.pdf)|
 
 
 ## 2021
@@ -90,5 +94,25 @@
 | Title | Venue | Link |
 | --- | --- | --- |
 |Targeted Backdoor Attacks on Deep Learning Systems Using Data Poisoning |arxiv|[pdf](https://arxiv.org/pdf/1712.05526.pdf)|
+
+
+## Untargeted Attacks in FL
+## 2022
+| Title | Venue | Link |
+| --- | --- | --- |
+|Learning to Attack Federated Learning: A Model-based Reinforcement Learning Attack Framework|NeurIPS|[pdf](https://openreview.net/pdf?id=4OHRr7gmhd4)|
+|Poisoning Deep Learning Based Recommender Model in Federated Learning Scenarios | IJCAI |[pdf](https://www.ijcai.org/proceedings/2022/0306.pdf)
+
+
+## 2021
+| Title | Venue | Link |
+| --- | --- | --- |
+|Manipulating the byzantine: Optimizing model poisoning attacks and defenses for federated learning|NDSS|[pdf](https://par.nsf.gov/servlets/purl/10286354)|
+
+## 2020
+| Title | Venue | Link |
+| --- | --- | --- |
+|Local Model Poisoning Attacks to Byzantine-Robust Federated Learning|USENIX SCEURITY|[pdf](https://www.usenix.org/system/files/sec20summer_fang_prepub.pdf)|
+|Fall of Empires: Breaking Byzantine-tolerant SGD by Inner Product Manipulation|UAI|[pdf](http://proceedings.mlr.press/v115/xie20a/xie20a.pdf)|
 
 

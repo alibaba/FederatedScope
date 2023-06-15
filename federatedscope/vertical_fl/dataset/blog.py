@@ -11,7 +11,7 @@ from torchvision.datasets.utils import download_and_extract_archive
 logger = logging.getLogger(__name__)
 
 
-class Blog:
+class Blog(object):
     """
     BlogFeedback Data Set
     (https://archive.ics.uci.edu/ml/datasets/BlogFeedback)
@@ -38,7 +38,6 @@ class Blog:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘blog’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -46,7 +45,9 @@ class Blog:
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -56,23 +57,23 @@ class Blog:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         super(Blog, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.tr_frac = tr_frac
         self.feature_partition = feature_partition
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -101,11 +102,17 @@ class Blog:
             else:
                 test_data = np.concatenate((test_data, f_data), axis=0)
 
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(train_data), self.data_size_for_debug)
+            np.random.shuffle(train_data)
+            train_data = train_data[:subset_size]
+
         self.data_dict['train'] = train_data
         self.data_dict['test'] = test_data
 
     def _read_raw(self, file_path):
         data = pd.read_csv(file_path, header=None, usecols=list(range(281)))
+        data = data.fillna(method='ffill')
         data = data.values
         return data
 

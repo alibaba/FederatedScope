@@ -9,7 +9,7 @@ from torchvision.datasets.utils import download_and_extract_archive
 logger = logging.getLogger(__name__)
 
 
-class Adult:
+class Adult(object):
     """
     Adult Data Set
     (https://archive.ics.uci.edu/ml/datasets/adult)
@@ -24,7 +24,6 @@ class Adult:
 
     Arguments:
         root (str): root path
-        name (str): name of dataset, ‘adult’ or ‘xxx’
         num_of_clients(int): number of clients
         feature_partition(list): the number of features
                                     partitioned to each client
@@ -32,7 +31,9 @@ class Adult:
         args (dict): set Ture or False to decide whether
                      to normalize or standardize the data or not,
                      e.g., {'normalization': False, 'standardization': False}
-        algo(str): the running model, 'lr' or 'xgb'
+        algo(str): the running model, 'lr'/'xgb'/'gbdt'/'rf'
+        debug_size(int): use a subset for debug,
+                                  0 for using entire dataset
         download (bool): indicator to download dataset
         seed: a random seed
     """
@@ -42,23 +43,23 @@ class Adult:
 
     def __init__(self,
                  root,
-                 name,
                  num_of_clients,
                  feature_partition,
                  args,
                  algo=None,
                  tr_frac=0.8,
+                 debug_size=0,
                  download=True,
                  seed=123):
         super(Adult, self).__init__()
         self.root = root
-        self.name = name
         self.num_of_clients = num_of_clients
         self.tr_frac = tr_frac
         self.feature_partition = feature_partition
         self.seed = seed
         self.args = args
         self.algo = algo
+        self.data_size_for_debug = debug_size
         self.data_dict = {}
         self.data = {}
 
@@ -73,6 +74,10 @@ class Adult:
         train_data = self._read_raw(train_file)
         test_data = self._read_raw(test_file)
         train_data, test_data = self._process(train_data, test_data)
+        if self.data_size_for_debug != 0:
+            subset_size = min(len(train_data), self.data_size_for_debug)
+            np.random.shuffle(train_data)
+            train_data = train_data[:subset_size]
         self._partition_data(train_data, test_data)
 
     def _read_raw(self, file_path):
@@ -105,6 +110,8 @@ class Adult:
 
         train_set = combined_set[:train_set.shape[0]]
         test_set = combined_set[train_set.shape[0]:]
+        train_set = train_set.values
+        test_set = test_set.values
         return train_set, test_set
 
     # normalization
@@ -119,8 +126,6 @@ class Adult:
         return (data - mu) / sigma
 
     def _partition_data(self, train_set, test_set):
-        train_set = train_set.values
-        test_set = test_set.values
         x, y = train_set[:, :-1], train_set[:, -1]
         test_x, test_y = test_set[:, :-1], test_set[:, -1]
 

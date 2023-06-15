@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import setuptools
 
 __name__ = 'federatedscope'
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 URL = 'https://github.com/alibaba/FederatedScope'
 
 minimal_requires = [
@@ -34,7 +34,7 @@ benchmark_htl_requires = ['learn2learn']
 full_requires = org_requires + benchmark_hpo_requires + \
                 benchmark_htl_requires + app_requires
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding='UTF-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(

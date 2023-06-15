@@ -20,7 +20,7 @@
 |Toward an Automated Auction Framework for Wireless Federated Learning Services Market|IEEE Trans. Mob. Comput|[pdf](https://arxiv.org/pdf/1912.06370.pdf)|
 |FAIR: Quality-Aware Federated Learning with Precise User Incentive and Model Aggregation|INFOCOM|[pdf](https://www.cs.sjtu.edu.cn/~yichao/assets/publications/infocom21_deng.pdf)|
 |DeepChain: Auditable and Privacy-Preserving Deep Learning with Blockchain-Based Incentive|TDSC|[pdf](https://eprint.iacr.org/2018/679.pdf)|
-
+|An Incentive Mechanism for Cross-Silo Federated Learning: A Public Goods Perspective| INFOCOM | [pdf](https://people.ece.ubc.ca/vincentw/C/TW-INFOCOM-2021.pdf)|
 
 ## 2020
 | Title                                                        | Venue      | Link                                        |

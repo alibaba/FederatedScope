@@ -22,14 +22,14 @@ def extend_data_cfg(cfg):
     # idx 0) holds all data, useful in global training/evaluation case
     cfg.data.subsample = 1.0
     cfg.data.splits = [0.8, 0.1, 0.1]  # Train, valid, test splits
-    cfg.data.consistent_label_distribution = False  # If True, the label
+    cfg.data.consistent_label_distribution = True  # If True, the label
     # distributions of train/val/test set over clients will be kept
     # consistent during splitting
     cfg.data.cSBM_phi = [0.5, 0.5, 0.5]
 
     cfg.data.transform = [
     ]  # transform for x, eg. [['ToTensor'], ['Normalize', {'mean': [
-    # 0.1307], 'std': [0.3081]}]]
+    # 0.9637], 'std': [0.1592]}]]
     cfg.data.target_transform = []  # target_transform for y, use as above
     cfg.data.pre_transform = [
     ]  # pre_transform for `torch_geometric` dataset, use as above
@@ -41,6 +41,9 @@ def extend_data_cfg(cfg):
     cfg.data.test_transform = []
     cfg.data.test_target_transform = []
     cfg.data.test_pre_transform = []
+
+    # data.file_path takes effect when data.type = 'files'
+    cfg.data.file_path = ''
 
     # DataLoader related args
     cfg.dataloader = CN()
@@ -96,7 +99,7 @@ def extend_data_cfg(cfg):
 
     cfg.feat_engr.secure.dp = CN()  # under dev
 
-    # prompt learning
+    # prompt tuning
     cfg.data.dataset_name = ''
     cfg.data.train_frac = 0.9
     cfg.data.num_train_per_client = -1

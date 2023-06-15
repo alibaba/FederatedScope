@@ -4,6 +4,8 @@ cd ..
 
 echo "Test distributed mode with LR..."
 
+python scripts/distributed_scripts/gen_data.py
+
 ### server owns global test data
 python federatedscope/main.py --cfg scripts/distributed_scripts/distributed_configs/distributed_server.yaml &
 ### server doesn't own data

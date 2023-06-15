@@ -16,8 +16,9 @@ def extend_training_cfg(cfg):
     cfg.trainer.sam.eta = .0
 
     cfg.trainer.local_entropy = CN()
-    cfg.trainer.local_entropy.gamma = 1e-4
-    cfg.trainer.local_entropy.eps = 1e-3
+    cfg.trainer.local_entropy.gamma = 0.03
+    cfg.trainer.local_entropy.inc_factor = 1.0
+    cfg.trainer.local_entropy.eps = 1e-4
     cfg.trainer.local_entropy.alpha = 0.75
 
     # atc (TODO: merge later)
@@ -31,6 +32,7 @@ def extend_training_cfg(cfg):
 
     cfg.train.local_update_steps = 1
     cfg.train.batch_or_epoch = 'batch'
+    cfg.train.data_para_dids = []  # `torch.nn.DataParallel` devices
 
     cfg.train.optimizer = CN(new_allowed=True)
     cfg.train.optimizer.type = 'SGD'
@@ -60,6 +62,13 @@ def extend_training_cfg(cfg):
     cfg.finetune.scheduler = CN(new_allowed=True)
     cfg.finetune.scheduler.type = ''
     cfg.finetune.scheduler.warmup_ratio = 0.0
+
+    # simple-tuning
+    cfg.finetune.simple_tuning = False  # use simple tuning, default: False
+    cfg.finetune.epoch_linear = 10  # training epoch number, default: 10
+    cfg.finetune.lr_linear = 0.005  # learning rate for training linear head
+    cfg.finetune.weight_decay = 0.0
+    cfg.finetune.local_param = []  # tuning parameters list
 
     # ---------------------------------------------------------------------- #
     # Gradient related options

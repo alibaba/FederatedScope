@@ -1,9 +1,0 @@
-train:
-  batch_or_epoch: batch
-  optimizer:
-    type: AdamW
-    lr: 5e-3
-    weight_decay: 0.01
-  scheduler:
-    type: warmup_step
-    warmup_ratio: 0.1

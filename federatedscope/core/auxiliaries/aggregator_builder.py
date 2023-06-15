@@ -58,7 +58,18 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
         from federatedscope.core.aggregators import ClientsAvgAggregator, \
             OnlineClientsAvgAggregator, ServerClientsInterpolateAggregator, \
             FedOptAggregator, NoCommunicationAggregator, \
-            AsynClientsAvgAggregator
+            AsynClientsAvgAggregator, KrumAggregator, \
+            MedianAggregator, TrimmedmeanAggregator, \
+            BulyanAggregator,  NormboundingAggregator
+
+    STR2AGG = {
+        'fedavg': ClientsAvgAggregator,
+        'krum': KrumAggregator,
+        'median': MedianAggregator,
+        'bulyan': BulyanAggregator,
+        'trimmedmean': TrimmedmeanAggregator,
+        'normbounding': NormboundingAggregator
+    }
 
     if method.lower() in constants.AGGREGATOR_TYPE:
         aggregator_type = constants.AGGREGATOR_TYPE[method.lower()]
@@ -88,9 +99,16 @@ def get_aggregator(method, model=None, device=None, online=False, config=None):
                                             device=device,
                                             config=config)
         else:
-            return ClientsAvgAggregator(model=model,
-                                        device=device,
-                                        config=config)
+            if config.aggregator.robust_rule not in STR2AGG:
+                logger.warning(
+                    f'The specified {config.aggregator.robust_rule} aggregtion\
+                    rule has not been supported, the vanilla fedavg algorithm \
+                    will be used instead.')
+            return STR2AGG.get(config.aggregator.robust_rule,
+                               ClientsAvgAggregator)(model=model,
+                                                     device=device,
+                                                     config=config)
+
     elif aggregator_type == 'server_clients_interpolation':
         return ServerClientsInterpolateAggregator(
             model=model,

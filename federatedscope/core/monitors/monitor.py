@@ -19,6 +19,7 @@ except ImportError:
     torch = None
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 global_all_monitors = [
 ]  # used in standalone mode, to merge sys metric results for all workers
@@ -538,7 +539,8 @@ class Monitor(object):
             'Round': rnd,
             'Results_model_metric': model_metric_dict
         }
-        logger.info(formatted_log)
+        if len(model_metric_dict.keys()):
+            logger.info(formatted_log)
 
         return model_metric_dict
 

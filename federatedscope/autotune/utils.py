@@ -130,11 +130,36 @@ def config2str(config):
     return name
 
 
+def arm2dict(kvs):
+    """
+    Arguments:
+        kvs (dict): key is hyperparameter name in the form aaa.bb.cccc,
+                    and value is the choice.
+    Returns:
+        config (dict): the same specification for creating a cfg node.
+    """
+
+    results = dict()
+
+    for k, v in kvs.items():
+        names = k.split('.')
+        cur_level = results
+        for i in range(len(names) - 1):
+            ln = names[i]
+            if ln not in cur_level:
+                cur_level[ln] = dict()
+            cur_level = cur_level[ln]
+        cur_level[names[-1]] = v
+
+    return results
+
+
 def summarize_hpo_results(configs,
                           perfs,
                           white_list=None,
                           desc=False,
-                          use_wandb=False):
+                          use_wandb=False,
+                          is_sorted=True):
     if white_list is not None:
         cols = list(white_list) + ['performance']
     else:
@@ -149,7 +174,8 @@ def summarize_hpo_results(configs,
             ] + [result])
         else:
             d.append([trial_cfg[k] for k in trial_cfg] + [result])
-    d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
+    if is_sorted:
+        d = sorted(d, key=lambda ele: ele[-1], reverse=desc)
     df = pd.DataFrame(d, columns=cols)
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.max_columns', None)
@@ -212,15 +238,13 @@ def parse_logs(file_list):
     plt.close()
 
 
-def eval_in_fs(cfg, config, budget, client_cfgs=None):
+def eval_in_fs(cfg, config=None, budget=0, client_cfgs=None, trial_index=0):
     """
-
     Args:
         cfg: fs cfg
         config: sampled trial CS.Configuration
         budget: budget round for this trial
         client_cfgs: client-wise cfg
-
     Returns:
         The best results returned from FedRunner
     """
@@ -232,35 +256,38 @@ def eval_in_fs(cfg, config, budget, client_cfgs=None):
     from federatedscope.core.auxiliaries.runner_builder import get_runner
     from os.path import join as osp
 
-    if isinstance(config, CS.Configuration):
-        config = dict(config)
-    # Add FedEx related keys to config
-    if 'hpo.table.idx' in config.keys():
-        idx = config['hpo.table.idx']
-        config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
-                                     f"{idx}_tmp_grid_search_space.yaml")
-        config['federate.save_to'] = osp(cfg.hpo.working_folder,
-                                         f"idx_{idx}.pth")
-        config['federate.restore_from'] = osp(cfg.hpo.working_folder,
-                                              f"idx_{idx}.pth")
     # Global cfg
     trial_cfg = cfg.clone()
-    # specify the configuration of interest
-    trial_cfg.merge_from_list(config2cmdargs(config))
-    # specify the budget
-    trial_cfg.merge_from_list(
-        ["federate.total_round_num",
-         int(budget), "eval.freq",
-         int(budget)])
+
+    if config:
+        if isinstance(config, CS.Configuration):
+            config = dict(config)
+        # Add FedEx related keys to config
+        if 'hpo.table.idx' in config.keys():
+            idx = config['hpo.table.idx']
+            config['hpo.fedex.ss'] = osp(cfg.hpo.working_folder,
+                                         f"{idx}_tmp_grid_search_space.yaml")
+            config['federate.save_to'] = osp(cfg.hpo.working_folder,
+                                             f"idx_{idx}.pth")
+            config['federate.restore_from'] = osp(cfg.hpo.working_folder,
+                                                  f"idx_{idx}.pth")
+        config['hpo.trial_index'] = trial_index
+        # specify the configuration of interest
+        trial_cfg.merge_from_list(config2cmdargs(config))
+
+    if budget:
+        # specify the budget
+        trial_cfg.merge_from_list(["federate.total_round_num", int(budget)])
+
     setup_seed(trial_cfg.seed)
     data, modified_config = get_data(config=trial_cfg.clone())
     trial_cfg.merge_from_other_cfg(modified_config)
     trial_cfg.freeze()
-    fed_runner = get_runner(data=data,
-                            server_class=get_server_cls(trial_cfg),
+    fed_runner = get_runner(server_class=get_server_cls(trial_cfg),
                             client_class=get_client_cls(trial_cfg),
                             config=trial_cfg.clone(),
-                            client_configs=client_cfgs)
+                            client_configs=client_cfgs,
+                            data=data)
     results = fed_runner.run()
 
     return results

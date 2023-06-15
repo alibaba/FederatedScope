@@ -5,11 +5,12 @@ import sys
 
 import numpy as np
 import pickle
+import time
 
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    StandaloneDDPCommManager, gRPCCommManager
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
@@ -19,6 +20,7 @@ from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Server(BaseServer):
@@ -88,7 +90,8 @@ class Server(BaseServer):
             self._cfg.early_stop.improve_indicator_mode,
             self._monitor.the_larger_the_better)
 
-        if self._cfg.federate.share_local_model:
+        if self._cfg.federate.share_local_model \
+                and not self._cfg.federate.process_num > 1:
             # put the model to the specified device
             model.to(device)
         # Build aggregator
@@ -129,10 +132,10 @@ class Server(BaseServer):
 
         if self._cfg.federate.make_global_eval:
             # set up a trainer for conducting evaluation in server
-            assert self.model is not None
+            assert self.models is not None
             assert self.data is not None
             self.trainer = get_trainer(
-                model=self.model,
+                model=self.models[0],
                 data=self.data,
                 device=self.device,
                 config=self._cfg,
@@ -195,15 +198,23 @@ class Server(BaseServer):
         self.msg_buffer = {'train': dict(), 'eval': dict()}
         self.staled_msg_buffer = list()
         if self.mode == 'standalone':
-            comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor)
+            comm_queue = kwargs.get('shared_comm_queue', None)
+            if self._cfg.federate.process_num > 1:
+                id2comm = kwargs.get('id2comm', None)
+                self.comm_manager = StandaloneDDPCommManager(
+                    comm_queue=comm_queue,
+                    monitor=self._monitor,
+                    id2comm=id2comm)
+            else:
+                self.comm_manager = StandaloneCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
         elif self.mode == 'distributed':
             host = kwargs['host']
             port = kwargs['port']
             self.comm_manager = gRPCCommManager(host=host,
                                                 port=port,
-                                                client_num=client_num)
+                                                client_num=client_num,
+                                                cfg=self._cfg.distribute)
             logger.info('Server: Listen to {}:{}...'.format(host, port))
 
         # inject noise before broadcast
@@ -322,7 +333,6 @@ class Server(BaseServer):
             if not check_eval_result:
                 # Receiving enough feedback in the training process
                 aggregated_num = self._perform_federated_aggregation()
-
                 self.state += 1
                 if self.state % self._cfg.eval.freq == 0 and self.state != \
                         self.total_round_num:
@@ -351,6 +361,8 @@ class Server(BaseServer):
             else:
                 # Receiving enough feedback in the evaluation process
                 self._merge_and_format_eval_results()
+                if self.state >= self.total_round_num:
+                    self.is_finish = True
 
         else:
             move_on_flag = False
@@ -445,7 +457,7 @@ class Server(BaseServer):
                 staleness.append((client_id, self.state - state))
 
             # Trigger the monitor here (for training)
-            self._monitor.calc_model_metric(self.model.state_dict(),
+            self._monitor.calc_model_metric(self.models[0].state_dict(),
                                             msg_list,
                                             rnd=self.state)
 
@@ -653,7 +665,21 @@ class Server(BaseServer):
             model_para = [{} if skip_broadcast else model.state_dict()
                           for model in self.models]
         else:
-            model_para = {} if skip_broadcast else self.model.state_dict()
+            model_para = {} if skip_broadcast else self.models[0].state_dict()
+
+        # quantization
+        if msg_type == 'model_para' and not skip_broadcast and \
+                self._cfg.quantization.method == 'uniform':
+            from federatedscope.core.compression import \
+                symmetric_uniform_quantization
+            nbits = self._cfg.quantization.nbits
+            if self.model_num > 1:
+                model_para = [
+                    symmetric_uniform_quantization(x, nbits)
+                    for x in model_para
+                ]
+            else:
+                model_para = symmetric_uniform_quantization(model_para, nbits)
 
         # We define the evaluation happens at the end of an epoch
         rnd = self.state - 1 if msg_type == 'evaluate' else self.state
@@ -758,7 +784,7 @@ class Server(BaseServer):
         """
 
         if self.check_client_join_in():
-            if self._cfg.federate.use_ss:
+            if self._cfg.federate.use_ss or self._cfg.vertical.use:
                 self.broadcast_client_address()
 
             # get sampler
@@ -770,7 +796,7 @@ class Server(BaseServer):
             else:
                 if self._cfg.backend == 'torch':
                     model_size = sys.getsizeof(pickle.dumps(
-                        self.model)) / 1024.0 * 8.
+                        self.models[0])) / 1024.0 * 8.
                 else:
                     # TODO: calculate model size for TF Model
                     model_size = 1.0
@@ -837,7 +863,7 @@ class Server(BaseServer):
         if self.model_num > 1:
             model_para = [model.state_dict() for model in self.models]
         else:
-            model_para = self.model.state_dict()
+            model_para = self.models[0].state_dict()
 
         self._monitor.finish_fl()
 
@@ -905,6 +931,20 @@ class Server(BaseServer):
         timestamp = message.timestamp
         content = message.content
         self.sampler.change_state(sender, 'idle')
+
+        # dequantization
+        if self._cfg.quantization.method == 'uniform':
+            from federatedscope.core.compression import \
+                symmetric_uniform_dequantization
+            if isinstance(content[1], list):  # multiple model
+                sample_size = content[0]
+                quant_model = [
+                    symmetric_uniform_dequantization(x) for x in content[1]
+                ]
+            else:
+                sample_size = content[0]
+                quant_model = symmetric_uniform_dequantization(content[1])
+            content = (sample_size, quant_model)
 
         # update the currency timestamp according to the received message
         assert timestamp >= self.cur_timestamp  # for test

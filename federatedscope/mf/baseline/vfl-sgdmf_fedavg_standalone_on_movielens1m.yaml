@@ -27,6 +27,8 @@ trainer:
 eval:
   freq: 2000
   metrics: []
+  best_res_update_round_wise_key: test_avg_loss
+  count_flops: False
 sgdmf:
   use: True
   epsilon: 4.

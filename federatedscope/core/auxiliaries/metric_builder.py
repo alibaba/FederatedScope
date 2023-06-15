@@ -1,7 +1,5 @@
 import logging
 import federatedscope.register as register
-from federatedscope.nlp.hetero_tasks.metric import *
-from federatedscope.nlp.prompt_learning.metric import *
 
 logger = logging.getLogger(__name__)
 
@@ -55,4 +53,7 @@ def get_metric(types):
         if res is not None:
             name, metric, the_larger_the_better = res
             metrics[name] = metric, the_larger_the_better
+    for key in types:
+        if key not in metrics.keys():
+            logger.warning(f'eval.metrics `{key}` method not found!')
     return metrics

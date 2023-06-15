@@ -34,8 +34,8 @@ class NbAFLTest(unittest.TestCase):
         cfg.data.transform = [['ToTensor'],
                               [
                                   'Normalize', {
-                                      'mean': [0.1307],
-                                      'std': [0.3081]
+                                      'mean': [0.9637],
+                                      'std': [0.1592]
                                   }
                               ]]
 
@@ -56,6 +56,7 @@ class NbAFLTest(unittest.TestCase):
         cfg.nbafl.mu = 0.1
         cfg.nbafl.constant = 2.
         cfg.nbafl.epsilon = 50.
+        cfg.federate.join_in_info = ['num_sample']
 
         return backup_cfg
 

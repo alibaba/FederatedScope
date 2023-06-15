@@ -17,6 +17,12 @@ distribute:
   client_port: 50053
   role: 'client'
   data_idx: 2
+model:
+  type: xgb_tree
+  lambda_: 0.1
+  gamma: 0
+  num_of_trees: 10
+  max_tree_depth: 3
 data:
   root: data/
   type: credit
@@ -24,23 +30,19 @@ data:
 dataloader:
   type: raw
   batch_size: 2000
-model:
-  type: lr
-train:
-  optimizer:
-    bin_num: 100
-    lambda_: 0.1
-    gamma: 0
-    num_of_trees: 10
-    max_tree_depth: 3
-xgb_base:
-  use: True
-  use_bin: True
-  dims: [5, 10]
 criterion:
   type: CrossEntropyLoss
 trainer:
-  type: none
+  type: verticaltrainer
+train:
+  optimizer:
+    # learning rate for xgb model
+    eta: 0.5
+vertical:
+  use: True
+  dims: [5, 10]
+  algo: 'xgb'
+  data_size_for_debug: 2000
 eval:
   freq: 3
   best_res_update_round_wise_key: test_loss

@@ -2,12 +2,28 @@
 This list is constantly being updated. Feel free to contribute!
 
 
+### 2023
+| Title | Venue | Link |
+| --- | --- | --- |
+| Federated Nearest Neighbor Machine Translation | ICLR | [pdf](https://arxiv.org/pdf/2302.12211.pdf), [code](https://github.com/duyichao/FedNN-MT) |
+
+
 ### 2022
 | Title | Venue | Link |
 | --- | --- | --- |
+| When Federated Learning Meets Pre-trained Language Models' Parameter-Efficient Tuning Methods | arXiv | [pdf](https://arxiv.org/pdf/2212.10025.pdf), [code](https://github.com/iezhuozhuo/FedETuning/tree/deltaTuning) |
+| FewFedWeight: Few-shot Federated Learning Framework across Multiple NLP Tasks | arXiv | [pdf](https://arxiv.org/pdf/2212.08354.pdf) |
+| Federated NLP in Few-shot Scenarios | arXiv | [pdf](https://arxiv.org/pdf/2212.05974.pdf) |
+| Collaborating Heterogeneous Natural Language Processing Tasks via Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2212.05789.pdf), [code](https://github.com/alibaba/FederatedScope/tree/master/federatedscope/nlp/hetero_tasks) |
+| Federated Neural Topic Models | arXiv | [pdf](https://arxiv.org/pdf/2212.02269.pdf), [code](https://github.com/Nemesis1303/gFedNTM) |
+| AUG-FedPrompt: Practical Few-shot Federated NLP with Data-augmented Prompts | arXiv | [pdf](https://arxiv.org/pdf/2212.00192.pdf) |
+| Federated Multilingual Models for Medical Transcript Analysis | arXiv | [pdf](https://arxiv.org/pdf/2211.09722.pdf) |
+| FedPC: Federated Learning for Language Generation with Personal and Context Preference Embeddings | arXiv | [pdf](https://arxiv.org/pdf/2210.03766.pdf) |
 | FedPrompt: Communication-Efficient and Privacy Preserving Prompt Tuning in Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2208.12268.pdf) |
+| Training Large-Vocabulary Neural Language Models by Private Federated Learning for Resource-Constrained Devices | arXiv | [pdf](https://arxiv.org/pdf/2207.08988.pdf) |
 | Fair NLP Models with Differentially Private Text Encoders | arXiv | [pdf](https://arxiv.org/pdf/2205.06135.pdf), [code](https://github.com/saist1993/DPNLP) |
 | FedQAS: Privacy-aware Machine Reading Comprehension with Federated Learning | arXiv | [pdf](https://arxiv.org/pdf/2202.04742.pdf), [code](https://github.com/aitmlouk/FEDn-client-FedQAS-tf) |
+| A Federated Approach to Predicting Emojis in Hindi Tweets | EMNLP | [pdf](https://arxiv.org/pdf/2211.06401.pdf), [code](https://github.com/deep1401/fedmoji) |
 | Backdoor Attacks in Federated Learning by Rare Embeddings and Gradient Ensembling | EMNLP | [pdf](https://arxiv.org/pdf/2204.14017.pdf) |
 | Dim-Krum: Backdoor-Resistant Federated Learning for NLP with Dimension-wise Krum-Based Aggregation | EMNLP Findings | [pdf](https://arxiv.org/pdf/2210.06894.pdf) |
 | Federated Continual Learning for Text Classification via Selective Inter-client Transfer | EMNLP Findings | [pdf](https://arxiv.org/pdf/2210.06101.pdf), [code](https://github.com/RaiPranav/FCL-FedSeIT) |
