@@ -950,16 +950,15 @@ class Server(BaseServer):
         if isinstance(content[1], list):  # multiple model
             sample_size = content[0]
             re_completed_model = [
-                copy.deepcopy(self.models[i].state_dict()) for i in len(content[1])
+                copy.deepcopy(self.models[i].state_dict()) for i in range(len(content[1]))
             ]
-            for i in len(content[1]):
+            for i in range(len(content[1])):
                 re_completed_model[i].update(content[1][i])
         else:
             sample_size = content[0]
             re_completed_model = copy.deepcopy(self.models[0].state_dict())
             re_completed_model.update(content[1])
         content = (sample_size, re_completed_model)
-        logger.info("In callback_func_model_para")
 
         # update the currency timestamp according to the received message
         assert timestamp >= self.cur_timestamp  # for test
