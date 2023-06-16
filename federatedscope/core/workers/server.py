@@ -521,6 +521,9 @@ class Server(BaseServer):
         To Save the best evaluation results.
         """
 
+        if self._cfg.federate.save_to != '':
+            self.aggregator.save_model(f'final_{self._cfg.federate.save_to}',
+                                       self.state)
         formatted_best_res = self._monitor.format_eval_res(
             results=self.best_results,
             rnd="Final",
@@ -604,6 +607,9 @@ class Server(BaseServer):
                     results_type="unseen_client_best_individual"
                     if merge_type == "unseen" else "client_best_individual")
                 if update_best_this_round:
+                    # When the frequency of evaluations is high,
+                    # the frequency of writing to disk in the early stages
+                    # may also be high
                     if self._cfg.federate.save_to != '':
                         self.aggregator.save_model(self._cfg.federate.save_to,
                                                    self.state)
