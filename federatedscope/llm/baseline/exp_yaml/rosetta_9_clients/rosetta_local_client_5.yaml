@@ -12,7 +12,7 @@ federate:
 data:
   root: data/
   type: 'rosetta_alpaca@llm'
-  splits: [0.98,0.01,0.01]
+  splits: [0.89,0.1,0.01]
   splitter: 'meta'
 llm:
   tok_len: 650
@@ -39,4 +39,4 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
-  best_res_update_round_wise_key: train_loss
+  best_res_update_round_wise_key: val_loss
