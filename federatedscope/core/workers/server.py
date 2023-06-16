@@ -522,7 +522,8 @@ class Server(BaseServer):
         """
 
         if self._cfg.federate.save_to != '':
-            self.aggregator.save_model(self._cfg.federate.save_to, self.state)
+            self.aggregator.save_model(f'final_{self._cfg.federate.save_to}',
+                                       self.state)
         formatted_best_res = self._monitor.format_eval_res(
             results=self.best_results,
             rnd="Final",
@@ -600,11 +601,18 @@ class Server(BaseServer):
                             del formatted_logs[key]
                 logger.info(formatted_logs)
                 formatted_logs_all_set.update(formatted_logs)
-                self._monitor.update_best_result(
+                update_best_this_round = self._monitor.update_best_result(
                     self.best_results,
                     metrics_all_clients,
                     results_type="unseen_client_best_individual"
                     if merge_type == "unseen" else "client_best_individual")
+                if update_best_this_round:
+                    # When the frequency of evaluations is high,
+                    # the frequency of writing to disk in the early stages
+                    # may also be high
+                    if self._cfg.federate.save_to != '':
+                        self.aggregator.save_model(self._cfg.federate.save_to,
+                                                   self.state)
                 self._monitor.save_formatted_results(formatted_logs)
                 for form in self._cfg.eval.report:
                     if form != "raw":
