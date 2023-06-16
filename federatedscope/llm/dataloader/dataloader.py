@@ -221,6 +221,12 @@ def load_llm_dataset(config=None, **kwargs):
                                    input='input',
                                    output='output',
                                    category='input')
+        # Remove 'x86-64 Assembl' if splitter is `meta` due to the number of
+        # samples is too small.
+        if config.data.splitter == 'meta':
+            list_data_dict = [
+                i for i in list_data_dict if i['category'] != 'X86-64 Assembly'
+            ]
         dataset = LLMDataset(list_data_dict, tokenizer)
     else:
         raise ValueError(f'Not support data type {dataset_name}.')
