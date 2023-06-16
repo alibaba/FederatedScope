@@ -43,6 +43,12 @@ class OffsiteTuningServer(Server):
         super(OffsiteTuningServer,
               self).__init__(ID, state, config, data, adap_model, client_num,
                              total_round_num, device, strategy, **kwargs)
+        self.raw_model_trainer = get_trainer(model=self.raw_model,
+                                             data=self.data,
+                                             device=self.device,
+                                             config=self._cfg,
+                                             only_for_eval=True,
+                                             monitor=self._monitor)
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,
@@ -59,25 +65,17 @@ class OffsiteTuningServer(Server):
         trigger_train_func(**kwargs_for_trigger_train_func)
 
     def eval(self):
-        # Update the raw model with the new adaptors
-        self.raw_model.load_state_dict(self.model.state_dict(), strict=False)
-
-        if self._cfg.federate.make_global_eval:
-            # make the evaluation on raw model first
-            raw_model_trainer = get_trainer(model=self.raw_model,
-                                            data=self.data,
-                                            device=self.device,
-                                            config=self._cfg,
-                                            is_attacker=self.is_attacker,
-                                            monitor=self._monitor)
-            raw_metrics = {}
-            for split in self._cfg.eval.split:
-                metrics = raw_model_trainer.evaluate(
-                    target_data_split_name=split)
-                raw_metrics.update(**metrics)
-            for key, value in raw_metrics.items():
+        # Update the raw model with the new adapters
+        self.raw_model_trainer.update(self.model.state_dict(), strict=False)
+        # make the evaluation on raw model at the server first
+        raw_metrics = {}
+        for split in self._cfg.eval.split:
+            metrics = self.raw_model_trainer.evaluate(
+                target_data_split_name=split)
+            for key, value in metrics.items():
                 raw_metrics['plugin.' + key] = value
 
+        if self._cfg.federate.make_global_eval:
             # By default, the evaluation is conducted one-by-one for all
             # internal models;
             # for other cases such as ensemble, override the eval function
@@ -88,9 +86,8 @@ class OffsiteTuningServer(Server):
                 for split in self._cfg.eval.split:
                     eval_metrics = trainer.evaluate(
                         target_data_split_name=split)
-                    metrics.update(**eval_metrics)
-                for key, value in metrics.items():
-                    metrics['emulator.' + key] = value
+                    for key, value in eval_metrics.items():
+                        metrics['emulator.' + key] = value
                 metrics.update(**raw_metrics)
                 formatted_eval_res = self._monitor.format_eval_res(
                     metrics,
@@ -108,22 +105,31 @@ class OffsiteTuningServer(Server):
                 logger.info(formatted_eval_res)
             self.check_and_save()
         else:
-            # broadcast two models for evaluation
-            raw_model = b64serializer(self.raw_model, tool='dill')
-            skip_broadcast = self._cfg.federate.method in ["local", "global"]
-            model_para = [raw_model] + \
-                         [{} if skip_broadcast else model.state_dict()
-                          for model in self.models]
+            super().eval()
+            self.raw_metrics = raw_metrics
 
-            rnd = self.state - 1
+    def callback_funcs_for_metrics(self, message: Message):
+        """
+        The handling function for receiving the evaluation results, \
+        which triggers ``check_and_move_on`` (perform aggregation when \
+        enough feedback has been received).
 
-            self.comm_manager.send(
-                Message(msg_type='eval_offsite_tuning',
-                        sender=self.ID,
-                        receiver=list(self.comm_manager.neighbors.keys()),
-                        state=min(rnd, self.total_round_num),
-                        timestamp=self.cur_timestamp,
-                        content=model_para))
-            if self._cfg.federate.online_aggr:
-                for idx in range(self.model_num):
-                    self.aggregators[idx].reset()
+        Arguments:
+            message: The received message
+        """
+
+        rnd = message.state
+        sender = message.sender
+        content = message.content
+
+        if rnd not in self.msg_buffer['eval'].keys():
+            self.msg_buffer['eval'][rnd] = dict()
+
+        # The content received from the clients is the result of emulator
+        self.msg_buffer['eval'][rnd][sender] = {
+            'emulator.' + key: value
+            for key, value in content.items()
+        }
+        self.msg_buffer['eval'][rnd][sender].update(**self.raw_metrics)
+
+        return self.check_and_move_on(check_eval_result=True)

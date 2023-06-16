@@ -20,7 +20,8 @@ llm:
     max_len: 1000
   offsite_tuning:
     use: True
-    emu_r: 100
+    emu_l: 2
+    emu_r: 30
 dataloader:
   batch_size: 1
 model:
@@ -38,4 +39,4 @@ trainer:
 eval:
   freq: 10
   metrics: ['loss']
-  best_res_update_round_wise_key: 'emulator.val_loss'
+  best_res_update_round_wise_key: 'val_loss'
