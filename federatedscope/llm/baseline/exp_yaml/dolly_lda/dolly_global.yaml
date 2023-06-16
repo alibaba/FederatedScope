@@ -4,23 +4,25 @@ early_stop:
   patience: 0
 federate:
   mode: standalone
-  client_num: 3
-  client_idx_for_local_train: 2
+  client_num: 1
   total_round_num: 500
-  save_to: "llama_rosetta_c2_30*500.ckpt"
+  save_to: "llama_dolly_global_30*500.ckpt"
   save_freq: 100
+  share_local_model: False
+  online_aggr: False
 data:
   root: data/
-  type: 'rosetta_alpaca@llm'
+  type: 'dolly-15k@llm'
   splits: [0.998,0.001,0.001]
-  splitter: 'meta'
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.5}]
 llm:
   tok_len: 650
   chat:
     max_len: 1000
   adapter:
     use: True
-    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 16, 'lora_dropout': 0.05 } ]
 dataloader:
   batch_size: 1
 model:
@@ -29,8 +31,7 @@ train:
   local_update_steps: 30
   batch_or_epoch: batch
   optimizer:
-    lr: 0.001
-    weight_decay: 0.0
+    lr: 0.0003
   is_enable_half: True
 criterion:
   type: CrossEntropyLoss

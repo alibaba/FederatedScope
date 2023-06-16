@@ -39,3 +39,4 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
+  best_res_update_round_wise_key: val_loss

@@ -4,15 +4,17 @@ early_stop:
   patience: 0
 federate:
   mode: standalone
-  client_num: 3
-  client_idx_for_local_train: 2
+  client_num: 8
+  client_idx_for_local_train: 6
   total_round_num: 500
-  save_to: "llama_rosetta_c2_30*500.ckpt"
+  save_to: "llama_dolly_meta_c6_30*500_0.001_32_0.1.ckpt"
   save_freq: 100
+  share_local_model: False
+  online_aggr: False
 data:
   root: data/
-  type: 'rosetta_alpaca@llm'
-  splits: [0.998,0.001,0.001]
+  type: 'dolly-15k@llm'
+  splits: [0.89,0.1,0.01]
   splitter: 'meta'
 llm:
   tok_len: 650
@@ -30,7 +32,6 @@ train:
   batch_or_epoch: batch
   optimizer:
     lr: 0.001
-    weight_decay: 0.0
   is_enable_half: True
 criterion:
   type: CrossEntropyLoss

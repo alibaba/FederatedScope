@@ -4,9 +4,9 @@ early_stop:
   patience: 0
 federate:
   mode: standalone
-  client_num: 1
+  client_num: 3
   total_round_num: 500
-  save_to: "llama_dolly_global_30*500.ckpt"
+  save_to: "llama_dolly_fed_30*500.ckpt"
   save_freq: 100
   share_local_model: False
   online_aggr: False
@@ -40,4 +40,4 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
-  best_res_update_round_wise_key: train_loss
+  best_res_update_round_wise_key: val_loss
