@@ -5,9 +5,9 @@ early_stop:
 federate:
   mode: standalone
   client_num: 3
-  client_idx_for_local_train: 2
+  client_idx_for_local_train: 1
   total_round_num: 500
-  save_to: "llama_rosetta_alpaca_c1_30*500.ckpt"
+  save_to: "llama_rosetta_c1_30*500.ckpt"
   save_freq: 100
 data:
   root: data/
@@ -39,3 +39,4 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
+  best_res_update_round_wise_key: train_loss

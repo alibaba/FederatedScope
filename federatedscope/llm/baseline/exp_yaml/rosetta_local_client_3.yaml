@@ -5,8 +5,9 @@ early_stop:
 federate:
   mode: standalone
   client_num: 3
+  client_idx_for_local_train: 3
   total_round_num: 500
-  save_to: "llama_rosetta_alpaca_fed_30*500.ckpt"
+  save_to: "llama_rosetta_c3_30*500.ckpt"
   save_freq: 100
 data:
   root: data/
