@@ -16,12 +16,11 @@ SERVER_PREFIX_LEN=40
 CLIENT_PREFIX_LEN=40
 NUM_CLIENT=10
 NUM_SERVER_LAYERS=48
-NUM_CLIENT_LAYERS=48
+NUM_CLIENT_LAYERS=1
 CLIENT_START_LAYER_ID=0
 NUM_CLIENT_LAYERS_PER_CELL=1
 LR=5e-3
 EPS=1e-4
-NON_IID_SPLIT=False
 MAKE_GLOBAL_TRAIN=True
 SHARE_CLIENT_LAYER_PARAM=False
 PL_INIT_KD=False
@@ -32,7 +31,6 @@ DEBUG=False
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name arc_challenge \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \
@@ -61,7 +59,6 @@ CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name arc_easy \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \
@@ -90,7 +87,6 @@ CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name openbookqa \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \
@@ -119,7 +115,6 @@ CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name web_questions \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \
@@ -148,7 +143,6 @@ CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name hellaswag \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \
@@ -177,7 +171,6 @@ CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name piqa \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \
@@ -206,7 +199,6 @@ CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name sciq \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \
@@ -235,7 +227,6 @@ CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
 CUDA_VISIBLE_DEVICES=$DEVICE python ../../main.py \
   --cfg $CFG \
   data.dataset_name race \
-  data.non_iid_split $NON_IID_SPLIT \
   data.batch_size $BATCH_SIZE \
   data.max_seq_len $MAX_SEQ_LEN \
   grad.grad_accum_count $GRAD_ACCUM \

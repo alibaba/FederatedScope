@@ -1,0 +1,74 @@
+name: UnitTests for Prompt Tuning
+
+on:
+  schedule:
+    - cron: '0 8 * * 0'
+
+jobs:
+  run:
+    if: (false == contains(github.event.pull_request.title, 'WIP') && github.repository == 'alibaba/FederatedScope')
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.9']
+        torch-version: ['1.10.1']
+        torchvision-version: ['0.11.2']
+        torchaudio-version: ['0.10.1']
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: '3.9'
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@master
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install PyTorch ${{ matrix.torch-version }}+cpu
+      run: |
+        pip install numpy typing-extensions dataclasses
+        pip install torch==${{ matrix.torch-version}}+cpu torchvision==${{matrix.torchvision-version}}+cpu torchaudio==${{matrix.torchaudio-version}}+cpu -f https://download.pytorch.org/whl/torch_stable.html
+    - name: Install FS
+      run: |
+        pip install -e .[test]
+    - name: Install Transformers
+      run: |
+        pip install transformers==4.21.0
+    - name: Install Datasets
+      run: |
+        pip install datasets
+    - name: Install lm-eval
+      run: |
+        pip install lm-eval
+    - name: Test Prompt Tuning
+      run: |
+        python ../../main.py \
+          --cfg federatedscope/nlp/prompt_tuning/baseline/config_alter_train.yaml \
+          data.dataset_name arc_challenge \
+          data.batch_size 1 \
+          data.max_seq_len 32 \
+          grad.grad_accum_count 1 \
+          federate.client_num 2 \
+          federate.total_round_num 2 \
+          federate.make_global_train True \
+          federate.pl_init_kd True \
+          federate.pl_kd_cfg_file federatedscope/nlp/prompt_tuning/baseline/config_init_kd_test.yaml \
+          federate.pl_global_cfg_file federatedscope/nlp/prompt_tuning/baseline/config_global.2.yaml \
+          model.use_fp16 True \
+          model.model_type facebook/opt-1.3b \
+          model.use_prefix_prj False \
+          model.server_prefix_len 4 \
+          model.client_prefix_len 4 \
+          model.num_server_layers 24 \
+          model.num_client_layers 24 \
+          model.share_client_layer_param True \
+          model.client_start_layer_id 0 \
+          model.num_client_layers_per_cell 1 \
+          train.optimizer.lr 5e-4 \
+          train.optimizer.eps 1e-4 \
+          train.local_update_steps 2 \
+          outdir exp/arc_challenge \
+          data.is_debug True \
+
+        [ $? -eq 1 ] && exit 1 || echo "Passed"
