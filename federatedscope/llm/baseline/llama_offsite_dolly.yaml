@@ -1,19 +1,21 @@
 use_gpu: True
-device: 1
+device: 2
 early_stop:
   patience: 10
 federate:
   mode: standalone
-  client_num: 1
+  client_num: 2
+  sample_client_rate: 1.0
   total_round_num: 1000
-  save_to: "llama.offsite_tuning.ckpt"
+  save_to: "llama.dolly.offsite_tuning.ckpt"
   share_local_model: False
   online_aggr: False
 data:
   root: data/
-  type: 'alpaca@llm'
+  type: 'dolly-15k@llm'
   splits: [0.98,0.01,0.01]
-  splitter: 'iid'
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.05}]
 llm:
   tok_len: 1000
   chat:
@@ -38,5 +40,6 @@ trainer:
   type: llmtrainer
 eval:
   freq: 10
-  metrics: ['loss']
+  metrics: ['loss', 'acc']
+  report: ['avg', 'weighted_avg']
   best_res_update_round_wise_key: 'val_loss'
