@@ -45,6 +45,9 @@ def extend_training_cfg(cfg):
 
     # when model is too large, users can use half-precision model
     cfg.train.is_enable_half = False
+        
+    # check whether model uses accelerator
+    cfg.train.use_accelerator = False
 
     # ---------------------------------------------------------------------- #
     # Finetune related options
