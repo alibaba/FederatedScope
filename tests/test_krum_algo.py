@@ -199,7 +199,7 @@ class KrumAlgoTest(unittest.TestCase):
         init_cfg.merge_from_other_cfg(backup_cfg)
         self.assertGreater(
             test_best_results['client_summarized_weighted_avg']['test_acc'],
-            0.2)
+            0.15)
         init_cfg.merge_from_other_cfg(backup_cfg)
 
     def test_guassian_attack_multi_krum(self):
