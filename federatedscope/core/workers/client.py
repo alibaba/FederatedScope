@@ -202,7 +202,7 @@ class Client(BaseClient):
         for model_index in range(len(init_model)):
             model_delta = copy.deepcopy(init_model[model_index])
             for key in init_model[model_index].keys():
-                if key not in updated_model:
+                if key not in updated_model[model_index].keys():
                     continue
                 model_delta[key] = updated_model[model_index][
                     key] - init_model[model_index][key]
