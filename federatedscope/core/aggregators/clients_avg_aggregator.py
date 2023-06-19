@@ -129,6 +129,8 @@ class OnlineClientsAvgAggregator(ClientsAvgAggregator):
         if isinstance(content, tuple):
             sample_size, model_params = content
             for key in self.maintained:
+                if key not in model_params:
+                    continue
                 # if model_params[key].device != self.maintained[key].device:
                 #    model_params[key].to(self.maintained[key].device)
                 self.maintained[key] = (self.cnt * self.maintained[key] +
