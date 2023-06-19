@@ -134,6 +134,19 @@ class Server(BaseServer):
             # set up a trainer for conducting evaluation in server
             assert self.models is not None
             assert self.data is not None
+
+            if self._cfg.backend == 'torch':
+                import torch.nn as nn
+                # Set BN track_running_stats to False
+                for name, module in model.named_modules():
+                    if isinstance(module, nn.BatchNorm2d):
+                        module.track_running_stats = False
+            elif self._cfg.backend == 'tensorflow':
+                # TODO: implement this
+                pass
+            else:
+                raise ValueError(f'Unknown backend named {self._cfg.backend}.')
+
             self.trainer = get_trainer(
                 model=self.models[0],
                 data=self.data,
@@ -684,6 +697,8 @@ class Server(BaseServer):
         # We define the evaluation happens at the end of an epoch
         rnd = self.state - 1 if msg_type == 'evaluate' else self.state
 
+        # TODO: Is it really necessary to send the full model parameters
+        #  instead of trainable parameters?
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
