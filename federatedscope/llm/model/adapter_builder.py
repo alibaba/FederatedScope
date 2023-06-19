@@ -17,13 +17,20 @@ def enable_adapter(model, package, adapter, **kwargs):
         from peft import get_peft_model
         if adapter == 'lora':
             from peft import LoraConfig
-            r = kwargs.get('lora_r', 8)
+            r = kwargs.get('r', 8)
             lora_alpha = kwargs.get('lora_alpha', 32)
             lora_dropout = kwargs.get('lora_dropout', 0.1)
+            target_modules = kwargs.get('target_modules', None)
             peft_config = LoraConfig(r=r,
+                                     target_modules=target_modules,
                                      lora_alpha=lora_alpha,
                                      lora_dropout=lora_dropout)
+            print("using peft config:", peft_config)
+            print("target_modules", target_modules)
             model = get_peft_model(model, peft_config)
+
+            print("Trainable parameters:")
+            model.print_trainable_parameters()
         else:
             raise NotImplementedError
 
