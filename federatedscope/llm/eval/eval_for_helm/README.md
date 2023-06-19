@@ -1,0 +1,1 @@
+docker build -f federatedscope-torch2.0-helm.Dockerfile -t alibaba/federatedscope:helm .
