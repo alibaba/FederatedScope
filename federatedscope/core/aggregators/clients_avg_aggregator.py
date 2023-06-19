@@ -71,6 +71,9 @@ class ClientsAvgAggregator(Aggregator):
             for i in range(len(models)):
                 local_sample_size, local_model = models[i]
 
+                if key not in local_model:
+                    continue
+
                 if self.cfg.federate.ignore_weight:
                     weight = 1.0 / len(models)
                 elif self.cfg.federate.use_ss:
