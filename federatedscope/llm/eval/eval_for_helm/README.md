@@ -6,7 +6,7 @@
 
 * Download Helm evaluation dataset
 
-  * `wget ?????/helm_data.zip -O ${PATH_TO_HELM_DATA}/helm_data.zip`
+  * `wget https://${NOT_AVAILABLE_NOW}/helm_data.zip -O ${PATH_TO_HELM_DATA}/helm_data.zip`
   * `unzip ${PATH_TO_HELM_DATA}/helm_data.zip`
 
 * Prepare FS and related `ckpt` and `yaml`
@@ -44,3 +44,6 @@
   * `pip install -e .[llm]`
 
 * Start to evaluate
+
+  * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite test -m 100 --local -n 1 --yaml federatedscope/llm/baseline/llama.yaml`
+
