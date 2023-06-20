@@ -1,5 +1,7 @@
 import torch.nn as nn
 from collections import OrderedDict
+import logging
+
 
 
 def enable_adapter(model, package, adapter, **kwargs):
@@ -25,12 +27,9 @@ def enable_adapter(model, package, adapter, **kwargs):
                                      target_modules=target_modules,
                                      lora_alpha=lora_alpha,
                                      lora_dropout=lora_dropout)
-            print("using peft config:", peft_config)
-            print("target_modules", target_modules)
+            logger = logging.getLogger(__name__)
+            logger.info('using peft config:', peft_config)
             model = get_peft_model(model, peft_config)
-
-            print("Trainable parameters:")
-            model.print_trainable_parameters()
         else:
             raise NotImplementedError
 
