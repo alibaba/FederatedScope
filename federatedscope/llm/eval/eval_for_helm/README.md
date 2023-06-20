@@ -43,6 +43,10 @@
 
   * `pip install -e .[llm]`
 
+* Move to helm
+
+  * `cd /root/helm`
+
 * Start to evaluate
 
   * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite test -m 100 --local -n 1 --yaml federatedscope/llm/baseline/llama.yaml`
