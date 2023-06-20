@@ -55,8 +55,6 @@ llm_requires = [
     'accelerate==0.20.3',
     'peft==0.3.0',
     'sentencepiece==0.1.99',
-    'pytorch>=2.0.0',
-    'deepspeed==0.9.4',
 ]
 
 benchmark_hpo_requires = [
