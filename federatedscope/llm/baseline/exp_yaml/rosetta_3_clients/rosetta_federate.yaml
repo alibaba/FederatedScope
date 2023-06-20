@@ -6,19 +6,20 @@ federate:
   mode: standalone
   client_num: 3
   total_round_num: 500
-  save_to: "llama.ckpt"
+  save_to: "llama_rosetta_fed_30*500.ckpt"
+  save_freq: 100
 data:
   root: data/
-  type: 'alpaca@llm'
-  splits: [0.98,0.01,0.01]
-  splitter: 'iid'
+  type: 'rosetta_alpaca@llm'
+  splits: [0.998,0.001,0.001]
+  splitter: 'meta'
 llm:
-  tok_len: 1000
+  tok_len: 650
   chat:
-    max_len: 2000
+    max_len: 1000
   adapter:
     use: True
-    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 16, 'lora_dropout': 0.05 } ]
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
 dataloader:
   batch_size: 1
 model:
@@ -27,7 +28,7 @@ train:
   local_update_steps: 30
   batch_or_epoch: batch
   optimizer:
-    lr: 0.0003
+    lr: 0.001
     weight_decay: 0.0
   is_enable_half: True
 criterion:
@@ -37,3 +38,4 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
+  best_res_update_round_wise_key: val_loss
