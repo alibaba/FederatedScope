@@ -4,10 +4,6 @@
 # based on the nvidia-docker
 # NOTE: please pre-install the NVIDIA drivers and `nvidia-docker2` in the host machine,
 # see details in https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
-ARG HELM_SOURCE=https://github.com/DavdGao/helm.git
-ARG HELM_BRANCH=main
-ARG FS_SOURCE=https://github.com/alibaba/FederatedScope.git
-ARG FS_BRANCH=dev/llm
 ARG ROOT_CONTAINER=nvidia/cuda:11.7.0-runtime-ubuntu20.04
 
 FROM $ROOT_CONTAINER
@@ -42,7 +38,4 @@ RUN conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-c
     && conda clean -a -y
 
 # Install helm
-RUN pip install -e git+${HELM_SOURCE}@${HELM_BRANCH}#egg=crfm-helm
-
-# Install fs
-RUN pip install -e git+${FS_SOURCE}@${FS_BRANCH}#egg=federatedscope
+RUN pip install -e git+https://github.com/qbc2016/helm.git@helm_for_fs#egg=crfm-helm
