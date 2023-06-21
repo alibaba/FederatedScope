@@ -70,6 +70,7 @@
   * `benchmark_output` -> `~/helm_fs/src/crfm-helm/benchmark_output`
   * `nltk_data` -> `~/nltk_data`
   * `prompt_construction_settings.json` - > `/tmp/prompt_construction_settings.json`
+  * In `~/helm_fs/src/crfm-helm/benchmark_output`, do `mkdir runs`
 * Move ckpt and yaml
 * Start to evaluate
   * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite test -m 100 --local -n 1 --yaml federatedscope/llm/baseline/llama.yaml --ckpt_dir xxxx --skip-completed-runs --local-path xxx`
