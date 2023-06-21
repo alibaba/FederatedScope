@@ -33,9 +33,5 @@ RUN source activate
 RUN conda update -y conda \
     && conda config --add channels conda-forge
 
-# Install torch
-RUN conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=11.7 -c pytorch -c nvidia \
-    && conda clean -a -y
-
 # Install helm
 RUN pip install -e git+https://github.com/qbc2016/helm.git@helm_for_fs#egg=crfm-helm
