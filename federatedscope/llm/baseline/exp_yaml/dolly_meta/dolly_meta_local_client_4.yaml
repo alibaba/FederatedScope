@@ -14,7 +14,7 @@ federate:
 data:
   root: data/
   type: 'dolly-15k@llm'
-  splits: [0.89,0.1,0.01]
+  splits: [0.99, 0.0, 0.01]
   splitter: 'meta'
 llm:
   tok_len: 650
@@ -40,4 +40,5 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
-  best_res_update_round_wise_key: val_loss
+  split: ['test']
+  best_res_update_round_wise_key: test_loss
