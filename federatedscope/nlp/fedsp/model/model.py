@@ -96,7 +96,7 @@ class MyGPT2Attention(GPT2Attention):
         return attn_output, attn_weights
 
 
-class PLModel(nn.Module):
+class FedSPModel(nn.Module):
     def __init__(self, config, role):
         super().__init__()
         from transformers import AutoModelForCausalLM

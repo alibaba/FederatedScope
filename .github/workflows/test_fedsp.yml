@@ -1,4 +1,4 @@
-name: UnitTests for Prompt Tuning
+name: UnitTests for FedSP
 
 on:
   schedule:
@@ -44,7 +44,7 @@ jobs:
     - name: Test Prompt Tuning
       run: |
         python ../../main.py \
-          --cfg federatedscope/nlp/prompt_tuning/baseline/config_alter_train.yaml \
+          --cfg federatedscope/nlp/fedsp/baseline/config_alter_train.yaml \
           data.dataset_name arc_challenge \
           data.batch_size 1 \
           data.max_seq_len 32 \
@@ -53,8 +53,8 @@ jobs:
           federate.total_round_num 2 \
           federate.make_global_train True \
           federate.pl_init_kd True \
-          federate.pl_kd_cfg_file federatedscope/nlp/prompt_tuning/baseline/config_init_kd_test.yaml \
-          federate.pl_global_cfg_file federatedscope/nlp/prompt_tuning/baseline/config_global.2.yaml \
+          federate.pl_kd_cfg_file federatedscope/nlp/fedsp/baseline/config_init_kd_test.yaml \
+          federate.pl_global_cfg_file federatedscope/nlp/fedsp/baseline/config_global.2.yaml \
           model.use_fp16 True \
           model.model_type facebook/opt-1.3b \
           model.use_prefix_prj False \

@@ -13,14 +13,14 @@ from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import lifecycle, CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE, MODE
 from federatedscope.core.trainers.utils import filter_by_specified_keywords
-from federatedscope.nlp.prompt_tuning.trainer.utils import AverageMeter, \
+from federatedscope.nlp.fedsp.trainer.utils import AverageMeter, \
     merge_param_dict
-from federatedscope.nlp.prompt_tuning.dataset.utils import setup_tokenizer
+from federatedscope.nlp.fedsp.dataset.utils import setup_tokenizer
 
 logger = logging.getLogger(__name__)
 
 
-class PLTrainer(GeneralTorchTrainer):
+class FedSPTrainer(GeneralTorchTrainer):
     def __init__(self,
                  model,
                  data,

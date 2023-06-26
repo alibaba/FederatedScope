@@ -5,8 +5,8 @@ import torch.distributed as dist
 from tqdm import tqdm
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
-from federatedscope.nlp.prompt_tuning.dataset.dataset import PLDataProcessor
-from federatedscope.nlp.prompt_tuning.dataset.utils import DatasetDict, \
+from federatedscope.nlp.fedsp.dataset.dataset import PLDataProcessor
+from federatedscope.nlp.fedsp.dataset.utils import DatasetDict, \
     setup_tokenizer
 
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
@@ -42,7 +42,7 @@ def extend_cfg(config):
     return config
 
 
-def load_pl_data(config):
+def load_fedsp_data(config):
     if config.use_ddp:
         dist.init_process_group(backend='nccl')
         torch.cuda.set_device(dist.get_rank())

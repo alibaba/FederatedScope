@@ -197,9 +197,9 @@ def get_model(model_config, local_data=None, backend='torch', role='client'):
     elif model_config.type.lower() in ['atc_model']:
         from federatedscope.nlp.hetero_tasks.model import ATCModel
         model = ATCModel(model_config)
-    elif model_config.type.lower() in ['pl_model']:
-        from federatedscope.nlp.prompt_tuning.model import PLModel
-        model = PLModel(model_config, role=role)
+    elif model_config.type.lower() in ['fedsp_model']:
+        from federatedscope.nlp.fedsp.model import FedSPModel
+        model = FedSPModel(model_config, role=role)
     else:
         raise ValueError('Model {} is not provided'.format(model_config.type))
 

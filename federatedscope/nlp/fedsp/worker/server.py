@@ -13,15 +13,15 @@ from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results
 from federatedscope.core.workers import Server
-from federatedscope.nlp.prompt_tuning.dataset.utils import setup_tokenizer
-from federatedscope.nlp.prompt_tuning.trainer.utils import merge_param_dict
-from federatedscope.nlp.prompt_tuning.model.model import LMEvalModel
+from federatedscope.nlp.fedsp.dataset.utils import setup_tokenizer
+from federatedscope.nlp.fedsp.trainer.utils import merge_param_dict
+from federatedscope.nlp.fedsp.model.model import LMEvalModel
 
 logger = logging.getLogger(__name__)
 LM_EVAL_TASK_NAME_MAPPING = {'web_questions': 'webqs'}
 
 
-class PLServer(Server):
+class FedSPServer(Server):
     def __init__(self,
                  ID=-1,
                  state=0,
@@ -34,17 +34,17 @@ class PLServer(Server):
                  strategy=None,
                  unseen_clients_id=None,
                  **kwargs):
-        super(PLServer, self).__init__(ID=ID,
-                                       state=state,
-                                       config=config,
-                                       data=data,
-                                       model=model,
-                                       client_num=client_num,
-                                       total_round_num=total_round_num,
-                                       device=device,
-                                       strategy=strategy,
-                                       unseen_clients_id=unseen_clients_id,
-                                       **kwargs)
+        super().__init__(ID=ID,
+                         state=state,
+                         config=config,
+                         data=data,
+                         model=model,
+                         client_num=client_num,
+                         total_round_num=total_round_num,
+                         device=device,
+                         strategy=strategy,
+                         unseen_clients_id=unseen_clients_id,
+                         **kwargs)
 
         self.local_rank = dist.get_rank() if self._cfg.use_ddp else 0
         if self._cfg.federate.pl_init_kd:

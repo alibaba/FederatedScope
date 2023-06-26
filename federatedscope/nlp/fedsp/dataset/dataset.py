@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from itertools import chain
 from datasets import load_dataset
-from federatedscope.nlp.prompt_tuning.dataset.utils import \
+from federatedscope.nlp.fedsp.dataset.utils import \
     NUM_DEBUG, map_dataset_name_and_config
 
 logger = logging.getLogger(__name__)

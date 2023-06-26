@@ -94,9 +94,9 @@ def load_dataset(config, client_cfgs=None):
         from federatedscope.nlp.hetero_tasks.dataloader import \
             load_heteroNLP_data
         dataset, modified_config = load_heteroNLP_data(config, client_cfgs)
-    elif 'pl_data' in config.data.type.lower():
-        from federatedscope.nlp.prompt_tuning.dataloader import load_pl_data
-        dataset, modified_config = load_pl_data(config)
+    elif 'fedsp_data' in config.data.type.lower():
+        from federatedscope.nlp.fedsp.dataloader import load_fedsp_data
+        dataset, modified_config = load_fedsp_data(config)
     elif '@' in config.data.type.lower():
         from federatedscope.core.data.utils import load_external_data
         dataset, modified_config = load_external_data(config)

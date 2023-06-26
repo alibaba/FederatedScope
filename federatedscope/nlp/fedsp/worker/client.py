@@ -6,7 +6,7 @@ from federatedscope.core.workers import Client
 logger = logging.getLogger(__name__)
 
 
-class PLClient(Client):
+class FedSPClient(Client):
     def __init__(self,
                  ID=-1,
                  server_id=None,
