@@ -697,8 +697,6 @@ class Server(BaseServer):
         # We define the evaluation happens at the end of an epoch
         rnd = self.state - 1 if msg_type == 'evaluate' else self.state
 
-        # TODO: Is it really necessary to send the full model parameters
-        #  instead of trainable parameters?
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
