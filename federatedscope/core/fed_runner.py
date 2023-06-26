@@ -338,9 +338,13 @@ class StandaloneRunner(BaseRunner):
         self.client = dict()
         # assume the client-wise data are consistent in their input&output
         # shape
-        self._shared_client_model = get_model(
-            self.cfg, self.data[1], backend=self.cfg.backend
-        ) if self.cfg.federate.share_local_model else None
+        if self.cfg.federate.online_aggr:
+            self._shared_client_model = get_model(
+                self.cfg, self.data[1], backend=self.cfg.backend
+            ) if self.cfg.federate.share_local_model else None
+        else:
+            self._shared_client_model = self.server.model \
+                if self.cfg.federate.share_local_model else None
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id,
