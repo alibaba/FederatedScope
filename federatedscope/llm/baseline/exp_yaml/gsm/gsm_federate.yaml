@@ -8,7 +8,7 @@ federate:
   total_round_num: 500
   save_to: "llama_gsm_fed_30*500.ckpt"
   save_freq: 100
-  share_local_model: False
+  share_local_model: True
   online_aggr: False
 data:
   root: data/
@@ -30,7 +30,7 @@ train:
   local_update_steps: 30
   batch_or_epoch: batch
   optimizer:
-    lr: 0.0003
+    lr: 0.005
   is_enable_half: True
 criterion:
   type: CrossEntropyLoss

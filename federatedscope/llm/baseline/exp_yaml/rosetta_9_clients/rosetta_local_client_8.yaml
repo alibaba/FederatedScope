@@ -7,7 +7,7 @@ federate:
   client_num: 9
   client_idx_for_local_train: 8
   total_round_num: 500
-  save_to: "llama_rosetta_9_c8_30*500_0.001_32_0.1.ckpt"
+  save_to: "llama_rosetta_9_c8_30*500_0.001_64_0.1.ckpt"
   save_freq: 100
 data:
   root: data/
@@ -20,7 +20,7 @@ llm:
     max_len: 1000
   adapter:
     use: True
-    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 64, 'lora_dropout': 0.1 } ]
 dataloader:
   batch_size: 1
 model:

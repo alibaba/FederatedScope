@@ -8,6 +8,8 @@ federate:
   total_round_num: 500
   save_to: "llama_csn_fed_30*500.ckpt"
   save_freq: 100
+  share_local_model: True
+  online_aggr: False
 data:
   root: data/
   type: 'code_search_net@llm'
