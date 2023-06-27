@@ -27,8 +27,6 @@ def enable_adapter(model, package, adapter, **kwargs):
                                      target_modules=target_modules,
                                      lora_alpha=lora_alpha,
                                      lora_dropout=lora_dropout)
-            logger = logging.getLogger(__name__)
-            logger.info('using peft config:', peft_config)
             model = get_peft_model(model, peft_config)
         else:
             raise NotImplementedError
