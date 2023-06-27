@@ -1,3 +1,4 @@
+import gc
 import logging
 
 from federatedscope.core.message import Message
@@ -29,6 +30,12 @@ class OffsiteTuningClient(Client):
               self).__init__(ID, server_id, state, config, data, model, device,
                              strategy, *args, **kwargs)
 
+        # Delete the stored client's model
+        delattr(self, '_model')
+        delattr(self, 'trainer')
+        gc.collect()
+        self.trainer = None
+
     def _register_default_handlers(self):
         super(OffsiteTuningClient, self)._register_default_handlers()
         self.register_handlers('emulator_and_adapter',
@@ -38,6 +45,8 @@ class OffsiteTuningClient(Client):
     def callback_funcs_for_emulator_and_adapter(self, message: Message):
         logger.info(f'Client {self.ID}: Emulator and adapter received.')
         adapter_model = b64deserializer(message.content, tool='dill')
+
+        # Define new model upon received
         self._model = adapter_model
         self.trainer = get_trainer(model=adapter_model,
                                    data=self.data,
