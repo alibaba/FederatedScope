@@ -4,6 +4,8 @@ from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE
+from federatedscope.core.monitors.monitor import Monitor
+from federatedscope.llm.model.adapter_builder import AdapterModel
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +68,66 @@ class LLMTrainer(GeneralTorchTrainer):
             float(ctx.num_samples),
         }
         setattr(ctx, 'eval_metrics', eval_results)
+
+    def _hook_on_batch_forward_flop_count(self, ctx):
+        """
+        The monitoring hook to calculate the flops during the fl course
+
+        Note:
+          For customized cases that the forward process is not only \
+          based on ctx.model, please override this function (inheritance \
+          case) or replace this hook (plug-in case)
+
+          The modified attributes and according operations are shown below:
+            ==================================  ===========================
+            Attribute                           Operation
+            ==================================  ===========================
+            ``ctx.monitor``                     Track average flops
+            ==================================  ===========================
+        """
+        if not isinstance(ctx.monitor, Monitor):
+            logger.warning(
+                f"The trainer {type(self)} does contain a valid monitor, "
+                f"this may be caused by initializing trainer subclasses "
+                f"without passing a valid monitor instance."
+                f"Please check whether this is you want.")
+            return
+
+        if self.cfg.eval.count_flops and ctx.monitor.flops_per_sample == 0:
+            # calculate the flops_per_sample
+            try:
+                input_ids = ctx.data_batch['input_ids'].to(ctx.device)
+                labels = ctx.data_batch['labels'].to(ctx.device)
+                attention_mask = ctx.data_batch['attention_mask'].to(
+                    ctx.device)
+                from fvcore.nn import FlopCountAnalysis
+                if isinstance(ctx.model, AdapterModel):
+                    flops_one_batch = FlopCountAnalysis(
+                        ctx.model.model,
+                        inputs=(input_ids, attention_mask)).total()
+                else:
+                    flops_one_batch = FlopCountAnalysis(
+                        ctx.model, inputs=(input_ids, attention_mask)).total()
+                ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
+            except Exception as e:
+                logger.info(e)
+                # Raise warning at the first failure
+                logger.warning(
+                    "current flop count implementation is for general LLM "
+                    "trainer case: "
+                    "1) ctx.data_batch contains [input_ids, labels, "
+                    "attn_mask]; and 2) the ctx.model takes first two "
+                    "arguments should be and attention_mask. "
+                    "If ctx.model is an adapter model, the model in 2) has "
+                    "been replaced by ctx.model.model. "
+                    "Please check the forward format or implement your own "
+                    "flop_count function")
+                ctx.monitor.flops_per_sample = -1
+
+        # by default, we assume the data has the same input shape,
+        # thus simply multiply the flops to avoid redundant forward
+        ctx.monitor.total_flops += ctx.monitor.flops_per_sample * \
+            ctx.batch_size
 
 
 def call_llm_trainer(trainer_type):
