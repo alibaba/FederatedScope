@@ -6,9 +6,9 @@ federate:
   mode: standalone
   client_num: 8
   total_round_num: 500
-  save_to: "llama_dolly_meta_fed_30*500_0.001_32_0.1.ckpt"
+  save_to: "llama_dolly_meta_fed_30*500_0.0005_64_0.1.ckpt"
   save_freq: 100
-  share_local_model: False
+  share_local_model: True
   online_aggr: False
 data:
   root: data/
@@ -21,7 +21,7 @@ llm:
     max_len: 1000
   adapter:
     use: True
-    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 64, 'lora_dropout': 0.1 } ]
 dataloader:
   batch_size: 1
 model:
@@ -30,7 +30,7 @@ train:
   local_update_steps: 30
   batch_or_epoch: batch
   optimizer:
-    lr: 0.001
+    lr: 0.005
   is_enable_half: True
 criterion:
   type: CrossEntropyLoss
