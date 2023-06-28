@@ -1,4 +1,5 @@
 import sys
+import logging
 import torch
 import transformers
 
@@ -14,6 +15,8 @@ from federatedscope.llm.offsite_tuning.utils import \
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 
+logger = logging.getLogger(__name__)
+
 
 class FSChatBot(object):
     def __init__(self, config):
@@ -22,7 +25,7 @@ class FSChatBot(object):
                                           config.llm.tok_len)
         self.model = get_llm(config)
         if config.llm.offsite_tuning.use:
-            print('===============use offsite tuning===============')
+            logger.info('===============use offsite tuning===============')
             # We use offsite-tuning in this experiment
             # Use adapter model instead
             compress_strategy = config.llm.offsite_tuning.strategy
