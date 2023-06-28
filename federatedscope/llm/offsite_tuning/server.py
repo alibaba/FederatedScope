@@ -29,7 +29,6 @@ class OffsiteTuningServer(Server):
                  strategy=None,
                  **kwargs):
         compress_strategy = config.llm.offsite_tuning.strategy
-        self.raw_model = model
         emulator_l = config.llm.offsite_tuning.emu_l
         emulator_r = config.llm.offsite_tuning.emu_r
         offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
@@ -40,6 +39,7 @@ class OffsiteTuningServer(Server):
                                           emulator_l=emulator_l,
                                           emulator_r=emulator_r,
                                           **offsite_tuning_kwargs)
+        self.raw_model = model
         super(OffsiteTuningServer,
               self).__init__(ID, state, config, data, adap_model, client_num,
                              total_round_num, device, strategy, **kwargs)
@@ -66,7 +66,11 @@ class OffsiteTuningServer(Server):
 
     def eval(self):
         # Update the raw model with the new adapters
-        self.raw_model_trainer.update(self.model.state_dict(), strict=False)
+        new_raw_model_state_dict = self.raw_model.state_dict()
+        for key, value in zip(self.raw_model.state_dict().keys(),
+                              self.model.state_dict().values()):
+            new_raw_model_state_dict[key] = value
+        self.raw_model_trainer.update(new_raw_model_state_dict, strict=False)
         # make the evaluation on raw model at the server first
         raw_metrics = {}
         for split in self._cfg.eval.split:

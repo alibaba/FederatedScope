@@ -1,4 +1,5 @@
 import sys
+import logging
 import torch
 import transformers
 
@@ -9,8 +10,12 @@ from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.llm.dataloader.dataloader import get_tokenizer
 from federatedscope.llm.model.model_builder import get_llm
 from federatedscope.llm.dataset.llm_dataset import PROMPT_DICT
+from federatedscope.llm.offsite_tuning.utils import \
+    generate_emulator_and_adapter
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
+
+logger = logging.getLogger(__name__)
 
 
 class FSChatBot(object):
@@ -19,6 +24,21 @@ class FSChatBot(object):
         self.tokenizer, _ = get_tokenizer(model_name, config.data.root,
                                           config.llm.tok_len)
         self.model = get_llm(config)
+        if config.llm.offsite_tuning.use:
+            logger.info('===============use offsite tuning===============')
+            # We use offsite-tuning in this experiment
+            # Use adapter model instead
+            compress_strategy = config.llm.offsite_tuning.strategy
+            emulator_l = config.llm.offsite_tuning.emu_l
+            emulator_r = config.llm.offsite_tuning.emu_r
+            offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
+            self.model = \
+                generate_emulator_and_adapter(self.model,
+                                              strategy=compress_strategy,
+                                              emulator_l=emulator_l,
+                                              emulator_r=emulator_r,
+                                              **offsite_tuning_kwargs)
+
         self.device = f'cuda:{config.device}'
         self.add_special_tokens = True
 

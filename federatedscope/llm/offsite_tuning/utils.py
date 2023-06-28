@@ -91,11 +91,13 @@ def generate_emulator_and_adapter(model: AdapterModel,
     layers = get_layers(model)
     l, r = max(emulator_l, 1), min(emulator_r, len(layers) - 1)
 
-    emulator = COMP_FUNC_MAPPING[strategy](layers[l:r], **kwargs)
+    # Set the to-compress part untrainable
+    for layer in layers[l:r]:
+        for param in layer.parameters():
+            param.data = param.data.float()
+            param.requires_grad = False
 
-    for param in emulator.parameters():
-        param.data = param.data.float()
-        param.requires_grad = False
+    emulator = COMP_FUNC_MAPPING[strategy](layers[l:r], **kwargs)
 
     emulator_and_adapter = nn.ModuleList()
 
