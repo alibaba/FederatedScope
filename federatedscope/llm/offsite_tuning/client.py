@@ -3,8 +3,7 @@ import logging
 
 from federatedscope.core.message import Message
 from federatedscope.core.workers.client import Client
-from federatedscope.core.auxiliaries.utils import b64deserializer, \
-    merge_dict_of_results
+from federatedscope.core.auxiliaries.utils import b64deserializer
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 
 logger = logging.getLogger(__name__)
