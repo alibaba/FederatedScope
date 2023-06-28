@@ -20,8 +20,6 @@ class LLMTrainer(GeneralTorchTrainer):
 
         logits = outputs.logits
         loss = outputs.loss
-        print(logits, loss)
-        print(input_ids, labels, attention_mask)
 
         if torch.isnan(loss):
             ctx.skip_this_batch = CtxVar(True, LIFECYCLE.BATCH)
