@@ -54,14 +54,28 @@ class OffsiteTuningServer(Server):
                               trigger_train_func,
                               kwargs_for_trigger_train_func={}):
         logger.info('Server: Converting emulator and adapter...')
-        emulator_and_adapter = b64serializer(self._model, tool='dill')
+        if self._cfg.federate.mode == 'standalone' and \
+                self._cfg.federate.share_local_model:
+            logger.info('Server: `share_local_model` mode enabled, '
+                        'emulator_and_adapter is built in FedRunner.')
+            self.comm_manager.send(
+                Message(msg_type='emulator_and_adapter',
+                        sender=self.ID,
+                        receiver=list(
+                            self.comm_manager.get_neighbors().keys()),
+                        timestamp=self.cur_timestamp,
+                        content=None))
+        else:
+            emulator_and_adapter = b64serializer(self._model, tool='dill')
 
-        self.comm_manager.send(
-            Message(msg_type='emulator_and_adapter',
-                    sender=self.ID,
-                    receiver=list(self.comm_manager.get_neighbors().keys()),
-                    timestamp=self.cur_timestamp,
-                    content=emulator_and_adapter))
+            self.comm_manager.send(
+                Message(msg_type='emulator_and_adapter',
+                        sender=self.ID,
+                        receiver=list(
+                            self.comm_manager.get_neighbors().keys()),
+                        timestamp=self.cur_timestamp,
+                        content=emulator_and_adapter))
+
         trigger_train_func(**kwargs_for_trigger_train_func)
 
     def eval(self):

@@ -403,7 +403,8 @@ class Server(BaseServer):
             self.state = self.total_round_num + 1
 
         if self.state != self.total_round_num and \
-                self.state % self._cfg.federate.save_freq == 0:
+                self.state % self._cfg.federate.save_freq == 0 and \
+                self._cfg.federate.save_freq > 0:
             path = f'{self.state}_' + self._cfg.federate.save_to
             self.aggregator.save_model(path, self.state)
 
