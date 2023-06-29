@@ -28,12 +28,16 @@ class OffsiteTuningClient(Client):
         super(OffsiteTuningClient,
               self).__init__(ID, server_id, state, config, data, model, device,
                              strategy, *args, **kwargs)
-
-        # Delete the stored client's model
-        delattr(self, '_model')
-        delattr(self, 'trainer')
-        gc.collect()
-        self.trainer = None
+        if self._cfg.federate.mode == 'standalone' and \
+                self._cfg.federate.share_local_model:
+            # self.model is emulator_and_adapter, so we do nothing
+            pass
+        else:
+            # Delete the stored client's model
+            delattr(self, '_model')
+            delattr(self, 'trainer')
+            gc.collect()
+            self.trainer = None
 
     def _register_default_handlers(self):
         super(OffsiteTuningClient, self)._register_default_handlers()
@@ -42,14 +46,19 @@ class OffsiteTuningClient(Client):
                                [None])
 
     def callback_funcs_for_emulator_and_adapter(self, message: Message):
-        logger.info(f'Client {self.ID}: Emulator and adapter received.')
-        adapter_model = b64deserializer(message.content, tool='dill')
+        if self._cfg.federate.mode == 'standalone' and \
+                self._cfg.federate.share_local_model:
+            logger.info(f'Client {self.ID}: `share_local_model` mode '
+                        f'enabled, emulator and adapter built from FedRunner.')
+        else:
+            logger.info(f'Client {self.ID}: Emulator and adapter received.')
+            adapter_model = b64deserializer(message.content, tool='dill')
 
-        # Define new model upon received
-        self._model = adapter_model
-        self.trainer = get_trainer(model=adapter_model,
-                                   data=self.data,
-                                   device=self.device,
-                                   config=self._cfg,
-                                   is_attacker=self.is_attacker,
-                                   monitor=self._monitor)
+            # Define new model upon received
+            self._model = adapter_model
+            self.trainer = get_trainer(model=adapter_model,
+                                       data=self.data,
+                                       device=self.device,
+                                       config=self._cfg,
+                                       is_attacker=self.is_attacker,
+                                       monitor=self._monitor)
