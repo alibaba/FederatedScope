@@ -3,7 +3,6 @@ from collections import OrderedDict
 import logging
 
 
-
 def enable_adapter(model, package, adapter, **kwargs):
     adapter = adapter.lower()
     if package == 'peft':
