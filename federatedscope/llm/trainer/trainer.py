@@ -14,8 +14,6 @@ from federatedscope.core.monitors.monitor import Monitor
 from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
 from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.llm.model.adapter_builder import AdapterModel
-from federatedscope.core.auxiliaries.utils import param2tensor, \
-    merge_param_dict
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +27,17 @@ class LLMTrainer(GeneralTorchTrainer):
     def _hook_on_fit_start_init(self, ctx):
         if ctx.cfg.llm.deepspeed.use:
             # Enable deepspeed
+            # TODO: save ctx.optimizer and ctx.scheduler
+            # TODO: should clients share the same `ctx.model_engine`?
             assert deepspeed is not None, "Please install deepspeed."
-            ctx.model_engine, ctx.optimizer, _, ctx.scheduler = \
-                deepspeed.initialize(
-                    config=ctx.cfg.llm.deepspeed.ds_config,
-                    model=ctx.model,
-                    model_parameters=filter(lambda p: p.requires_grad,
-                                            ctx.model.parameters()),
-                )
+            if not hasattr(ctx, 'model_engine'):
+                ctx.model_engine, ctx.optimizer, _, ctx.scheduler = \
+                    deepspeed.initialize(
+                        config=ctx.cfg.llm.deepspeed.ds_config,
+                        model=ctx.model,
+                        model_parameters=filter(lambda p: p.requires_grad,
+                                                ctx.model.parameters()),
+                    )
             ctx.device = ctx.model_engine.local_rank
             if ctx.cfg.train.is_enable_half:
                 ctx.fp16 = ctx.model_engine.fp16_enabled()
