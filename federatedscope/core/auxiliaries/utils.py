@@ -177,3 +177,7 @@ def get_resource_info(filename):
     with open(filename, 'br') as f:
         device_info = pickle.load(f)
     return device_info
+
+
+def get_ds_rank():
+    return int(os.environ.get("RANK", "0"))

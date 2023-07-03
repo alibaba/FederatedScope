@@ -1,3 +1,4 @@
+import json
 import logging
 
 from federatedscope.core.configs.config import CN
@@ -16,6 +17,14 @@ def extend_llm_cfg(cfg):
     cfg.llm.chat = CN()
     cfg.llm.chat.max_history_len = 10
     cfg.llm.chat.max_len = 100
+
+    # ---------------------------------------------------------------------- #
+    # Deepspeed related options
+    # ---------------------------------------------------------------------- #
+    cfg.llm.deepspeed = CN()
+    cfg.llm.deepspeed.use = False
+    cfg.llm.deepspeed.rank = 0
+    cfg.llm.deepspeed.ds_config = ''
 
     # ---------------------------------------------------------------------- #
     # Adapters for LLM
