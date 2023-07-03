@@ -31,9 +31,7 @@ if __name__ == '__main__':
 
     if init_cfg.llm.deepspeed.use:
         import deepspeed
-        import logging
 
-        logger = logging.getLogger(__name__)
         deepspeed.init_distributed()
         init_cfg.llm.deepspeed.rank = get_ds_rank()
 
