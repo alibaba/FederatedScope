@@ -204,4 +204,8 @@ def get_model(model_config, local_data=None, backend='torch'):
 
 
 def get_trainable_para_names(model):
-    return set(dict(list(model.named_parameters())).keys())
+    grad_params = set()
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            grad_params.add(name)
+    return grad_params

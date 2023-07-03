@@ -31,6 +31,9 @@ def hook_on_batch_backward_generate_gaussian_noise_gradient(ctx):
     ctx.optimizer.zero_grad()
     ctx.loss_task.backward()
 
+    if ctx.grad_clip > 0:
+        torch.nn.utils.clip_grad_norm_(ctx.model.parameters(), ctx.grad_clip)
+
     grad_values = list()
     for name, param in ctx.model.named_parameters():
         if 'bn' not in name:
