@@ -17,9 +17,14 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+data/
 downloads/
+exp/
 eggs/
 .eggs/
+helm-eval/
+opacus/
+z_eval_result/
 lib/
 lib64/
 parts/
@@ -137,3 +142,11 @@ dmypy.json
 .idea/
 
 **/.DS_Store
+
+#evaluation results and checkpoints
+*.jsonl
+*.json
+*.txt
+*.ckpt
+*.ipynb
+nohup.out
