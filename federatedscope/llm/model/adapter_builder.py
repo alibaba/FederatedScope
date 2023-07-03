@@ -134,11 +134,11 @@ class AdapterModel(nn.Module):
     def generate(self, *args, **kwargs):
         return self.model.generate(*args, **kwargs)
 
-    def state_dict(self, return_trainable=True):
+    def state_dict(self, return_trainable=True, *args, **kwargs):
         if return_trainable:
             return self.get_trainable_state_dict()
         else:
-            return self.model.state_dict()
+            return self.model.state_dict(*args, **kwargs)
 
     def load_state_dict(self, state_dict, strict=False):
         return self.model.load_state_dict(state_dict, strict=False)
