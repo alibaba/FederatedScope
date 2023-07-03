@@ -26,7 +26,7 @@ llm:
 dataloader:
   batch_size: 1
 model:
-  type: 'decapoda-research/llama-7b-hf@huggingface_llm'
+  type: 'gpt2@huggingface_llm'# 'decapoda-research/llama-7b-hf@huggingface_llm'
 train:
   local_update_steps: 30
   batch_or_epoch: batch
@@ -39,3 +39,4 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
+  count_flops: False
