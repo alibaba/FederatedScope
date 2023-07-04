@@ -41,17 +41,19 @@ RUN conda install -y pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorc
 RUN cd /root \
 		&& git clone -b dev/llm https://github.com/alibaba/FederatedScope.git \
 		&& cd /root/FederatedScope \
-		&& pip install -e .[llm]
+		&& pip install -e .[llm] \
+		&& pip cache purge
 
-# Prepare dataset
+# Prepare datas
 RUN mkdir /root/FederatedScope/data \
 		&& cd /root/FederatedScope/data \
 		&& wget https://raw.githubusercontent.com/databrickslabs/dolly/d000e3030970379aabbf6d291f50ffdd3b715b64/data/databricks-dolly-15k.jsonl \
 		&& wget https://raw.githubusercontent.com/openai/grade-school-math/3101c7d5072418e28b9008a6636bde82a006892c/grade_school_math/data/train.jsonl -O gsm8k_train.jsonl \
 		&& wget https://raw.githubusercontent.com/openai/grade-school-math/2909d34ef28520753df82a2234c357259d254aa8/grade_school_math/data/test.jsonl -O gsm8k_test.jsonl \
-		&& wget https://github.com/sahil280114/codealpaca/raw/master/data/rosetta_alpaca.json
+		&& wget https://raw.githubusercontent.com/sahil280114/codealpaca/d269da106a579a623a654529b3cb91b5dfa9c72f/data/rosetta_alpaca.json
 
 # Prepare Evaluation
 RUN cd /root/FederatedScope \
 		&& git clone https://github.com/openai/human-eval \
-		&& pip install -e human-eval
+		&& pip install -e human-eval \
+		&& pip cache purge
