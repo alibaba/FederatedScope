@@ -1,3 +1,4 @@
+# deepspeed federatedscope/main.py --cfg federatedscope/llm/baseline/deepspeed/llama_ds.yaml
 use_gpu: True
 device: 0
 early_stop:
@@ -6,7 +7,7 @@ federate:
   mode: standalone
   client_num: 1
   total_round_num: 500
-  save_to: "llama.ckpt"
+  save_to: "llama_ds.ckpt"
   share_local_model: True
 data:
   root: data/
@@ -17,13 +18,16 @@ llm:
   tok_len: 1000
   chat:
     max_len: 2000
+  adapter:
+    use: True
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
   deepspeed:
     use: True
     ds_config: 'federatedscope/llm/baseline/deepspeed/ds_config.json'
 dataloader:
   batch_size: 1
 model:
-  type: 'decapoda-research/llama-7b-hf@huggingface_llm'
+  type: 'decapoda-research/llama-13b-hf@huggingface_llm'
 train:
   local_update_steps: 30
   batch_or_epoch: batch

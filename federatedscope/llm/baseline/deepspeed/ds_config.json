@@ -1,7 +1,7 @@
 {
    "train_batch_size": 4,
    "steps_per_print": 2000,
-  "fp16": {"enabled": true},
+   "fp16": {"enabled": true},
    "optimizer": {
      "type": "Adam",
      "params": {
