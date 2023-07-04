@@ -34,5 +34,6 @@ RUN conda update -y conda \
     && conda config --add channels conda-forge
 
 # Install helm
-cd /root/helm_fs
+RUN mkdir /root/helm_fs \
+    && cd /root/helm_fs
 RUN pip install -e git+https://github.com/qbc2016/helm.git@helm_for_fs#egg=crfm-helm
