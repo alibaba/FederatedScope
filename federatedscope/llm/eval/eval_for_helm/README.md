@@ -3,7 +3,7 @@
 ## Docker
 
 * Build images:
-  * Build from Dockerfile: `docker build -f federatedscope-torch2.0-helm.Dockerfile -t alibaba/federatedscope:fs_helm .`
+  * Build from Dockerfile: `docker build -f federatedscope-torch2.0-helm.Dockerfile -t fsteam/federatedscope:fs_helm .`
   * Pull from docker hub: `docker pull fsteam/federatedscope:fs_helm`
 
 * Download Helm evaluation dataset
@@ -25,7 +25,7 @@
   -v "${PATH_TO_FS}:/root/FederatedScope" \
   -v "${PATH_TO_CACHE}:/root/.cache" \
   -w '/root/FederatedScope' \
-  --name "helm_fs" alibaba/federatedscope:fs_helm /bin/bash
+  --name "helm_fs" fsteam/federatedscope:fs_helm /bin/bash
   ```
 
   Example for a root user:
@@ -38,7 +38,7 @@
   -v "/root/helm_fs/FederatedScope:/root/FederatedScope" \
   -v "/root/.cache:/root/.cache" \
   -w '/root/FederatedScope' \
-  --name "helm_fs" alibaba/federatedscope:fs_helm /bin/bash
+  --name "helm_fs" fsteam/federatedscope:fs_helm /bin/bash
   ```
 
 * Install FS in container
