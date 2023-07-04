@@ -213,9 +213,10 @@ def load_llm_dataset(config=None, **kwargs):
     elif dataset_name.lower() == 'rosetta_alpaca':
         fp = os.path.join(config.data.root, 'rosetta_alpaca.json')
         download_url(
-            'https://github.com/sahil280114/'
-            'codealpaca/raw/master/data/'
-            'rosetta_alpaca.json', config.data.root)
+            'https://raw.githubusercontent.com/'
+            'sahil280114/codealpaca/'
+            'd269da106a579a623a654529b3cb91b5dfa9c72f/'
+            'data/rosetta_alpaca.json', config.data.root)
         list_data_dict = load_json(fp,
                                    instruction='instruction',
                                    input='input',
