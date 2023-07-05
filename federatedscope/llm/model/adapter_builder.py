@@ -14,27 +14,27 @@ def enable_adapter(model, package, adapter, **kwargs):
             Prompt Tuning
             AdaLoRA
         """
-        from peft import get_peft_model
+        from peft import get_peft_model, TaskType
         if adapter == 'lora':
-            from peft import LoraConfig, TaskType
+            from peft import LoraConfig
             peft_config = LoraConfig(task_type=TaskType.CAUSAL_LM, **kwargs)
             model = get_peft_model(model, peft_config)
         elif adapter == 'prefix':
-            from peft import PrefixTuningConfig, TaskType
+            from peft import PrefixTuningConfig
             peft_config = PrefixTuningConfig(
                 task_type=TaskType.CAUSAL_LM,
                 **kwargs
             )
             model = get_peft_model(model, peft_config)
         elif adapter == 'prompt':
-            from peft import PromptTuningConfig, TaskType
+            from peft import PromptTuningConfig
             peft_config = PromptTuningConfig(
                 task_type=TaskType.CAUSAL_LM,
                 **kwargs
             )
             model = get_peft_model(model, peft_config)
         elif adapter == 'p-tuning':
-            from peft import PromptEncoderConfig, TaskType
+            from peft import PromptEncoderConfig
             peft_config = PromptEncoderConfig(task_type=TaskType.CAUSAL_LM, **kwargs)
             model = get_peft_model(model, peft_config)
         else:
