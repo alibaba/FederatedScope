@@ -4,8 +4,11 @@ from federatedscope.llm.model.adapter_builder import AdapterModel
 def get_model_from_huggingface(model_name, config):
     from transformers import AutoModelForCausalLM
 
-    return AutoModelForCausalLM.from_pretrained(model_name,
-                                                cache_dir=config.data.root)
+    kwargs = {}
+    if len(config.llm.cache.model):
+        kwargs['cache_dir'] = config.llm.cache.model
+
+    return AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
 
 
 def get_model_from_modelscope(model_name, config):
