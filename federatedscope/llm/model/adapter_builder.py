@@ -15,41 +15,27 @@ def enable_adapter(model, package, adapter, **kwargs):
             AdaLoRA
         """
         from peft import get_peft_model
-        #TODO: refactor the args in yaml for using adatper
         if adapter == 'lora':
-            from peft import LoraConfig
-            r = kwargs.get('r', 8)
-            lora_alpha = kwargs.get('lora_alpha', 32)
-            lora_dropout = kwargs.get('lora_dropout', 0.1)
-            peft_config = LoraConfig(r=r,
-                                     lora_alpha=lora_alpha,
-                                     lora_dropout=lora_dropout)
-
+            from peft import LoraConfig, TaskType
+            peft_config = LoraConfig(task_type=TaskType.CAUSAL_LM, **kwargs)
             model = get_peft_model(model, peft_config)
         elif adapter == 'prefix':
             from peft import PrefixTuningConfig, TaskType
-            num_virtual_tokens = kwargs.get('num_virtual_tokens', 20)
             peft_config = PrefixTuningConfig(
                 task_type=TaskType.CAUSAL_LM,
-                num_virtual_tokens=num_virtual_tokens,
+                **kwargs
             )
             model = get_peft_model(model, peft_config)
-
         elif adapter == 'prompt':
             from peft import PromptTuningConfig, TaskType
-            num_virtual_tokens = kwargs.get('num_virtual_tokens', 20)
             peft_config = PromptTuningConfig(
                 task_type=TaskType.CAUSAL_LM,
-                num_virtual_tokens=num_virtual_tokens,
+                **kwargs
             )
             model = get_peft_model(model, peft_config)
         elif adapter == 'p-tuning':
             from peft import PromptEncoderConfig, TaskType
-            num_virtual_tokens = kwargs.get('num_virtual_tokens', 8)
-            encoder_hidden_size = kwargs.get('encoder_hidden_size', 128)
-            peft_config = PromptEncoderConfig(task_type=TaskType.CAUSAL_LM,
-                                              num_virtual_tokens=num_virtual_tokens,
-                                              encoder_hidden_size=encoder_hidden_size)
+            peft_config = PromptEncoderConfig(task_type=TaskType.CAUSAL_LM, **kwargs)
             model = get_peft_model(model, peft_config)
         else:
             raise NotImplementedError
