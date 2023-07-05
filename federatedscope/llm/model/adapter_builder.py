@@ -21,21 +21,18 @@ def enable_adapter(model, package, adapter, **kwargs):
             model = get_peft_model(model, peft_config)
         elif adapter == 'prefix':
             from peft import PrefixTuningConfig
-            peft_config = PrefixTuningConfig(
-                task_type=TaskType.CAUSAL_LM,
-                **kwargs
-            )
+            peft_config = PrefixTuningConfig(task_type=TaskType.CAUSAL_LM,
+                                             **kwargs)
             model = get_peft_model(model, peft_config)
         elif adapter == 'prompt':
             from peft import PromptTuningConfig
-            peft_config = PromptTuningConfig(
-                task_type=TaskType.CAUSAL_LM,
-                **kwargs
-            )
+            peft_config = PromptTuningConfig(task_type=TaskType.CAUSAL_LM,
+                                             **kwargs)
             model = get_peft_model(model, peft_config)
         elif adapter == 'p-tuning':
             from peft import PromptEncoderConfig
-            peft_config = PromptEncoderConfig(task_type=TaskType.CAUSAL_LM, **kwargs)
+            peft_config = PromptEncoderConfig(task_type=TaskType.CAUSAL_LM,
+                                              **kwargs)
             model = get_peft_model(model, peft_config)
         else:
             raise NotImplementedError
