@@ -158,8 +158,8 @@ def init_wandb(cfg):
                entity=cfg.wandb.name_user,
                config=cfg_yaml,
                group=dataset_name,
-               job_type=method_name,
-               name=exp_name,
+               job_type=exp_name,
+               name=method_name,
                notes=f"{method_name}, {exp_name}")
 
 

@@ -465,7 +465,8 @@ class StandaloneRunner(BaseRunner):
         server_msg_cache = list()
         while True:
             if len(self.shared_comm_queue) > 0:
-                msg = self.shared_comm_queue.popleft()
+                # msg = self.shared_comm_queue.popleft()
+                msg = self.shared_comm_queue[0]
                 if not self.cfg.vertical.use and msg.receiver == [
                         self.server_id
                 ]:
@@ -475,10 +476,13 @@ class StandaloneRunner(BaseRunner):
                     msg.serial_num = self.serial_num_for_msg
                     self.serial_num_for_msg += 1
                     heapq.heappush(server_msg_cache, msg)
+                    self.shared_comm_queue.popleft()
                 else:
                     self._handle_msg(msg)
+                    self.shared_comm_queue.popleft()
             elif len(server_msg_cache) > 0:
-                msg = heapq.heappop(server_msg_cache)
+                # msg = heapq.heappop(server_msg_cache)
+                msg = server_msg_cache[0]
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
                         == 'time_up':
                     # When the timestamp of the received message beyond
@@ -487,10 +491,13 @@ class StandaloneRunner(BaseRunner):
                     # the cache
                     if self.server.trigger_for_time_up(msg.timestamp):
                         heapq.heappush(server_msg_cache, msg)
+                        heapq.heappop(server_msg_cache)
                     else:
                         self._handle_msg(msg)
+                        heapq.heappop(server_msg_cache)
                 else:
                     self._handle_msg(msg)
+                    heapq.heappop(server_msg_cache)
             else:
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
                         == 'time_up':
