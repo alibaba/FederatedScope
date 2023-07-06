@@ -177,3 +177,8 @@ def get_resource_info(filename):
     with open(filename, 'br') as f:
         device_info = pickle.load(f)
     return device_info
+
+
+def add_prefix_to_path(prefix, path):
+    directory, file = os.path.split(path)
+    return os.path.join(directory, prefix + file)

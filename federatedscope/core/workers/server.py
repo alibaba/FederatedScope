@@ -13,7 +13,7 @@ from federatedscope.core.communication import StandaloneCommManager, \
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
-    Timeout, merge_param_dict
+    Timeout, merge_param_dict, add_prefix_to_path
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
@@ -91,6 +91,8 @@ class Server(BaseServer):
 
         if self._cfg.federate.share_local_model \
                 and not self._cfg.federate.process_num > 1:
+            if self._cfg.train.is_enable_half:
+                model = model.half()
             # put the model to the specified device
             model.to(device)
         # Build aggregator
@@ -405,7 +407,8 @@ class Server(BaseServer):
         if self.state != self.total_round_num and \
                 self.state % self._cfg.federate.save_freq == 0 and \
                 self._cfg.federate.save_freq > 0:
-            path = f'{self.state}_' + self._cfg.federate.save_to
+            path = add_prefix_to_path(f'{self.state}_',
+                                      self._cfg.federate.save_to)
             self.aggregator.save_model(path, self.state)
 
         if should_stop or self.state == self.total_round_num:
@@ -526,10 +529,11 @@ class Server(BaseServer):
         """
         To Save the best evaluation results.
         """
-
+        # Save final round model
         if self._cfg.federate.save_to != '':
-            self.aggregator.save_model(f'final_{self._cfg.federate.save_to}',
-                                       self.state)
+            self.aggregator.save_model(
+                add_prefix_to_path('final_', self._cfg.federate.save_to),
+                self.state)
         formatted_best_res = self._monitor.format_eval_res(
             results=self.best_results,
             rnd="Final",
