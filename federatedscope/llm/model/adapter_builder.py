@@ -36,6 +36,7 @@ def enable_adapter(model, package, adapter, **kwargs):
             model = get_peft_model(model, peft_config)
         else:
             raise NotImplementedError
+        model.print_trainable_parameters()
 
     elif package == 'adapterhub':
         """
@@ -135,7 +136,6 @@ class AdapterModel(nn.Module):
 
             self.model = enable_adapter(model, adapter_package, adapter_method,
                                         **kwargs)
-            self.model.print_trainable_parameters()
         else:
             self.model = model
 
