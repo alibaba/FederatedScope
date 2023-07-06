@@ -135,6 +135,7 @@ class AdapterModel(nn.Module):
 
             self.model = enable_adapter(model, adapter_package, adapter_method,
                                         **kwargs)
+            self.model.print_trainable_parameters()
         else:
             self.model = model
 
