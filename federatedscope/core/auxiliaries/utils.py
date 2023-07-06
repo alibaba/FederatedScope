@@ -181,4 +181,4 @@ def get_resource_info(filename):
 
 def add_prefix_to_path(path, prefix):
     directory, file = os.path.split(path)
-    return os.path.join(dir, prefix + file)
+    return os.path.join(directory, prefix + file)
