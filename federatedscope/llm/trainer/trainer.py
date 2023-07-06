@@ -85,6 +85,11 @@ class LLMTrainer(GeneralTorchTrainer):
             ``ctx.monitor``                     Track average flops
             ==================================  ===========================
         """
+
+        # The process may occupy a large amount of video memory
+        # if the garbage collection is not triggered in time
+        # when there is plenty of video memory left. Set
+        # `eval.count_flops = False` to avoid this.
         if not isinstance(ctx.monitor, Monitor):
             logger.warning(
                 f"The trainer {type(self)} does contain a valid monitor, "

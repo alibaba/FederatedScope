@@ -91,6 +91,8 @@ class Server(BaseServer):
 
         if self._cfg.federate.share_local_model \
                 and not self._cfg.federate.process_num > 1:
+            if self._cfg.train.is_enable_half:
+                model = model.half()
             # put the model to the specified device
             model.to(device)
         # Build aggregator
