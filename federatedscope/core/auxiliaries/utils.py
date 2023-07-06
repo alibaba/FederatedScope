@@ -179,6 +179,6 @@ def get_resource_info(filename):
     return device_info
 
 
-def add_prefix_to_path(path, prefix):
+def add_prefix_to_path(prefix, path):
     directory, file = os.path.split(path)
     return os.path.join(directory, prefix + file)
