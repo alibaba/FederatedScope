@@ -51,10 +51,13 @@
 
 * Start to evaluate
 
-  * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite ${SUITE_NAME} -m 100 --local -n 1`
-    
-    The above code will evaluate the model `decapoda-research/llama-7b-hf` and save the results in `${SUITE_NAME}`. 
-  * If you want to test your own trained `ckpt` for `decapoda-research/llama-7b-hf`, please add parameters `--yaml /path/to/xxx.yaml` and `--ckpt_dir /dir/of/saved/ckpt`
+  * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite ${SUITE_NAME} -m 100 --local -n 1 --skip-completed-runs --local-path xxx` 
+    * The above code will evaluate the model `decapoda-research/llama-7b-hf` and save the results in `/benchmark_output/runs/${SUITE_NAME}`. 
+    * `-m 100` means that there will be 100 items in each task.
+    * `--skip-completed-runs` means that when restarted, it will skip the completed test sets. It is recommended to add this if you no dot want to waste your time for the completed tasks.
+    * `--local-path xxx` means the directory to put cache files, default value is `prod_env`. It will always use it when you run a new task. It is recommended that before running a new task, delete it or assign a new name to it.
+    * If you want to test your own trained `ckpt` for `decapoda-research/llama-7b-hf`, please add parameters `--yaml /path/to/xxx.yaml`. If you want to modify the configurations in `yaml`, just add parameters similar to the behaviors in FS. For example, add `federate.save_to xxxx.ckpt` to change the ckpt.
+* Launch webserver to view results
   * `bash evaluaton/setup_server.sh -n ${SUITE_NAME} -p ${PORT}`
 
     Run the above code and view the results on port `${PORT}`.
@@ -80,18 +83,16 @@
   * In `~/helm_fs/src/crfm-helm/benchmark_output`, do `mkdir runs`
 * Move ckpt and yaml
 * Start to evaluate
-  * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite test -m 100 --local -n 1 --yaml federatedscope/llm/baseline/llama.yaml --ckpt_dir xxxx --skip-completed-runs --local-path xxx`
-    * If the program terminated due to network issues, --skip-completed-runs means that when restart, it will skip the completed test sets. It is recommended to add this all the time.
-    * --local-path xxx means the directory to put cache files, default value is prod_env. It will always use it when you run a new task. It is recommended that before running a new task, delete it or assign a new name to it.
+  * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite ${SUITE_NAME} -m 100 --local -n 1 --skip-completed-runs --local-path xxx`
 * Launch webserver to view results
-  * In ~/helm_fs/src/crfm-helm/evaluation/setup_server.sh, set
-    * `SUITE_NAME=${suite}`
+  * In `~/helm_fs/src/crfm-helm/evaluation/setup_server.sh`, set
+    * `SUITE_NAME=${SUITE_NAME}`
     * `PATH_HELM=~/helm_fs/src/crfm-helm`
     * `PATH_HELM=~/helm_fs/src/crfm-helm`
     * `root/miniconda3/bin/python -> ${which python}`
-  * `bash evaluation/setup_server.sh`
+  * `bash evaluation/setup_server.sh -n ${SUITE_NAME} -p ${PORT}`
     * Remark: Actually, it will show the result of the last task. If you want to see the result of another task, say, the suite name is result_of_exp1, add `?suite=result_of_exp1`after the port address.
 
-Remark: For the second run of decapoda-research/llama-7b-hf, it not work, in ~/helm_fs/src/crfm-helm/data/decapoda-research--llama-7b-hf/snapshots/xxxx/tokenizer_config.json, change
+Remark: For the second run of `decapoda-research/llama-7b-hf`, if not work, in ~/helm_fs/src/crfm-helm/data/decapoda-research--llama-7b-hf/snapshots/xxxx/tokenizer_config.json, change
 
 "tokenizer_class": "LLaMATokenizer" -> "tokenizer_class": "LlamaTokenizer"
