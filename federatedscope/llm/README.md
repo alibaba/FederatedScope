@@ -161,7 +161,7 @@ In general, we use instruction SFT following [Alpaca](https://github.com/tatsu-l
 
 #### Evaluation tools
 
-We use evaluate model domain capability of fine-tuned models with easy-to-use evaluation tools.
+We evaluate model domain capability of fine-tuned models with easy-to-use evaluation tools.
 
 ```bash
 FederatedScope
