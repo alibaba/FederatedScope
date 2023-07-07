@@ -204,10 +204,10 @@ We support federated fine-tuning not only for open-source LLMs, but also for clo
 
 To make the federate fine-tuning efficient, we adopt a series of multi-card acceleration operators.
 
-| Methods        | Source                                                       | How to use                       | Note                                          |
-| -------------- | ------------------------------------------------------------ | -------------------------------- | --------------------------------------------- |
-| `DataParallel` | [Link](https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html) | `cfg.train.data_para_dids=[0,1]` | -                                             |
-| DeepSpeed      | [Link](https://github.com/microsoft/DeepSpeed)               | Coming soon                      | Use `nvcc - V` to make sure `CUDA` installed. |
+| Methods               | Source                                                       | How to use                       | Note                                          |
+| --------------------- | ------------------------------------------------------------ | -------------------------------- | --------------------------------------------- |
+| torch.nn.DataParallel | [Link](https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html) | `cfg.train.data_para_dids=[0,1]` | -                                             |
+| DeepSpeed             | [Link](https://github.com/microsoft/DeepSpeed)               | Coming soon                      | Use `nvcc - V` to make sure `CUDA` installed. |
 
 ## FAQ
 
