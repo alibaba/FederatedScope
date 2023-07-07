@@ -8,7 +8,7 @@
 
 * Download Helm evaluation dataset
 
-  * `wget https://${NOT_AVAILABLE_NOW}/helm_data.zip -O ${PATH_TO_HELM_DATA}/helm_data.zip`
+  * `wget https://federatedscope.oss-cn-beijing.aliyuncs.com/helm_data.zip -O ${PATH_TO_HELM_DATA}/helm_data.zip`
   * `unzip ${PATH_TO_HELM_DATA}/helm_data.zip`
 
 * Prepare FS and related `ckpt` and `yaml`
@@ -76,11 +76,13 @@
   * `git clone -b dev/llm https://github.com/alibaba/FederatedScope.git`
   * `cd FederatedScope`
   * `pip install -e .[llm]`
-* Unzip `helm_data.zip` and move data
+* Download and unzip Helm evaluation dataset
+  * `wget https://federatedscope.oss-cn-beijing.aliyuncs.com/helm_data.zip -O ${PATH_TO_HELM_DATA}/helm_data.zip`
+  * `unzip ${PATH_TO_HELM_DATA}/helm_data.zip`
+* Move files
   * `benchmark_output` -> `~/helm_fs/src/crfm-helm/benchmark_output`
   * `nltk_data` -> `~/nltk_data`
   * `prompt_construction_settings.json` - > `/tmp/prompt_construction_settings.json`
-  * In `~/helm_fs/src/crfm-helm/benchmark_output`, do `mkdir runs`
 * Move ckpt and yaml
 * Start to evaluate
   * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite ${SUITE_NAME} -m 100 --local -n 1 --skip-completed-runs --local-path xxx`
