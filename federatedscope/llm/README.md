@@ -109,7 +109,7 @@ model:
 
 # Train related options
 train:
-	# Number of local update steps
+  # Number of local update steps
   local_update_steps: 30
   # `batch` or `epoch` for local_update_steps
   batch_or_epoch: batch
@@ -124,12 +124,12 @@ train:
 
 # Trainer related options
 trainer:
-	# Trainer type
+  # Trainer type
   type: llmtrainer
 
 # Evaluation related options
 eval:
-	# Frequency of evaluation
+  # Frequency of evaluation
   freq: 50
   # Evaluation metrics
   metrics: ['loss']
