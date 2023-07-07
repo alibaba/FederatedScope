@@ -68,7 +68,7 @@ federate:
 
 # Dataset related options
 data:
-	# Root directory where the data stored
+  # Root directory where the data stored
   root: data/
   # Dataset name
   type: 'rosetta_alpaca@llm'
@@ -115,7 +115,7 @@ train:
   batch_or_epoch: batch
   # Optimizer related options
   optimizer:
-  	# Learning rate
+    # Learning rate
     lr: 0.003
     # Weight decay
     weight_decay: 0.0
