@@ -36,6 +36,7 @@ def enable_adapter(model, package, adapter, **kwargs):
             model = get_peft_model(model, peft_config)
         else:
             raise NotImplementedError
+        model.print_trainable_parameters()
 
     elif package == 'adapterhub':
         """
