@@ -188,7 +188,7 @@ With the help of parameter-efficient fine-tuning methods, federally fine-tuning 
 | Methods       | Source                                                       | Example for `llm.adapter.args`                               |
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | LoRA          | [Link](https://arxiv.org/abs/2106.09685)                     | `[ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]` |
-| Prefix Tuning | [Link](https://aclanthology.org/2021.acl-long.353/), [Link](https://arxiv.org/pdf/2110.07602.pdf) | `[{'adapter_package': 'peft', 'adapter_method': 'prefix', 'prefix_projection': 'False', 'num_virtual_tokens': 20}]` |
+| Prefix Tuning | [Link](https://aclanthology.org/2021.acl-long.353/), [Link](https://arxiv.org/pdf/2110.07602.pdf) | `[{'adapter_package': 'peft', 'adapter_method': 'prefix', 'prefix_projection': False, 'num_virtual_tokens': 20}]` |
 | P-Tuning      | [Link](https://arxiv.org/abs/2103.10385)                     | `[{'adapter_package': 'peft', 'adapter_method': 'p-tuning', 'encoder_reparameterization_type': 'MLP', 'encoder_dropout': 0.1, 'num_virtual_tokens': 20}]` |
 | Prompt Tuning | [Link](https://arxiv.org/abs/2104.08691)                     | `[{'adapter_package': 'peft', 'adapter_method': 'prompt', 'prompt_tuning_init': 'RANDOM', 'num_virtual_tokens': 20}]` |
 
