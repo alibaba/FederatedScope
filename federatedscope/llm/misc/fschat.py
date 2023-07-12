@@ -52,9 +52,9 @@ class FSChatBot(object):
             print(f"{error}, will use raw model.")
 
         if config.train.is_enable_half:
-            self.model.half().to(self.device)
-        else:
-            self.model.to(self.device)
+            self.model.half()
+
+        self.model = self.model.to(self.device)
         self.model = self.model.eval()
         if torch.__version__ >= "2" and sys.platform != "win32":
             self.model = torch.compile(self.model)
@@ -80,7 +80,7 @@ class FSChatBot(object):
             input_ids.extend(text_ids)
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).to(self.device)
-        response = self.model.generate(input_ids,
+        response = self.model.generate(input_ids=input_ids,
                                        max_new_tokens=self.max_len,
                                        num_beams=4,
                                        no_repeat_ngram_size=2,
