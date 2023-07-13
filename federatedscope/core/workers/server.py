@@ -678,11 +678,23 @@ class Server(BaseServer):
                                      self.models[model_idx_i])
 
         skip_broadcast = self._cfg.federate.method in ["local", "global"]
-        if self.model_num > 1:
-            model_para = [{} if skip_broadcast else model.state_dict()
-                          for model in self.models]
+        if self._cfg.federate.share_local_model and not \
+                self._cfg.federate.online_aggr:
+            if self.model_num > 1:
+                model_para = [
+                    {} if skip_broadcast else copy.deepcopy(model.state_dict())
+                    for model in self.models
+                ]
+            else:
+                model_para = {} if skip_broadcast else copy.deepcopy(
+                    self.models[0].state_dict())
         else:
-            model_para = {} if skip_broadcast else self.models[0].state_dict()
+            if self.model_num > 1:
+                model_para = [{} if skip_broadcast else model.state_dict()
+                              for model in self.models]
+            else:
+                model_para = {} if skip_broadcast else self.models[
+                    0].state_dict()
 
         # quantization
         if msg_type == 'model_para' and not skip_broadcast and \
