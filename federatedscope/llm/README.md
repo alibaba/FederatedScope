@@ -1,6 +1,6 @@
 # FederatedScope-LLM
 
-FederatedScope-LLM (FS-LLM) is a unified, comprehensive and efficient package for federated large language model. We provide a hands-on tutorial here, while for more detailed tutorial, please refer to [TO-BE-RELEASED]().
+FederatedScope-LLM (FS-LLM) is an efficient package for federated large language model. We provide a hands-on tutorial here, while for more detailed tutorial, please refer to [TO-BE-RELEASED]().
 
 ## Quick Start
 
@@ -137,7 +137,7 @@ eval:
   best_res_update_round_wise_key: val_loss
 ```
 
-### DataZoo
+### Fine-tuning Datasets
 
 In general, we use instruction SFT following [Alpaca](https://github.com/tatsu-lab/stanford_alpaca) team. And in standalone mode, all dataset can be split into several clients with spesific `splitter` (i.e., `lda`, `meta`, `iid`) and `federate.num_client`. 
 
@@ -179,7 +179,7 @@ How to use:
 
 For example, to evaluate the model fine-tuned with `python federatedscope/main.py --cfg sft_gsm8k.yaml`, you can run `python federatedscope/llm/eval/eval_for_gsm8k/eval.py --cfg sft_gsm8k.yaml` in the `eval_for_gsm8k` directory. For other usages, please refer to the `README.md` file in each subdirectory.
 
-### AlgoZoo
+### Agorithms
 
 #### Parameter-Efficient Fine-Tuning
 
@@ -216,3 +216,5 @@ To make the federate fine-tuning efficient, we adopt a series of multi-card acce
   - Possible reason 2: Due to the enabling of `train.is_enable_half`, numerical overflow may occur. This usually happens when setting the `optimizer.type` to `Adam`, since the default `eps` is `1e-8` but `fp16` requires at least `1e-5`.
 - `ValueError: Tokenizer class LLaMATokenizer does not exist or is not currently imported. `
   - This is a problem with `transformers`, you can fix it in your local file. Replace `LLaMATokenizer` with `LlamaTokenizer` in `PATH_TO_DATA_ROOT/MODEL_REPO/snapshots/..../tokenizer_config.json`
+- `OutOfMemoryError: CUDA out of memory.`
+  - Torch's garbage collection mechanism may not be timely resulting in OOM, please set `cfg.eval.count_flops` to `False`.
