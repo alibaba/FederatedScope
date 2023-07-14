@@ -37,3 +37,4 @@ trainer:
 eval:
   freq: 50
   metrics: ['loss']
+  count_flops: False
