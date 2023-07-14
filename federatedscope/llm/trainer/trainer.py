@@ -115,7 +115,12 @@ class LLMTrainer(GeneralTorchTrainer):
                         ctx.model, inputs=(input_ids, attention_mask)).total()
                 ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
             except Exception as e:
-                logger.info(e)
+                logger.warning("When using count flops functions, torch's "
+                               "garbage collection mechanism may not be "
+                               "timely resulting in OOM, please set "
+                               "`cfg.eval.count_flops` to `False` "
+                               "to avoid error or warning like this.")
+                logger.error(e)
                 # Raise warning at the first failure
                 logger.warning(
                     "current flop count implementation is for general LLM "
