@@ -33,8 +33,8 @@ def clean_answer(code):
 
     # 1. remove the special char \u00a0
     code = code.replace('\u00a0', '')
-    # 2. remove everything after "\n\n"
-    code = code.split("\n\n")[0]
+    # # 2. remove everything after "\n\n"
+    # code = code.split("\n\n")[0]
     # 3. remove everything after the following stop sequences
     # Reference: https://github.com/openai/human-eval
     for stop_seq in ['\nclass', '\ndef', '\n#', '\nif', '\nprint', '\nassert']:
