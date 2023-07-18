@@ -33,11 +33,13 @@ def clean_answer(code):
 
     # 1. remove the special char \u00a0
     code = code.replace('\u00a0', '')
-    # 2. remove everything after the following stop sequences
+    # 2. remove everything after "\n\n"
+    code = code.split("\n\n")[0]
+    # 3. remove everything after the following stop sequences
     # Reference: https://github.com/openai/human-eval
-    for stop_seq in ['\nclass', '\ndef', '\n#', '\nif', '\nprint']:
+    for stop_seq in ['\nclass', '\ndef', '\n#', '\nif', '\nprint', '\nassert']:
         code = code.split(stop_seq)[0]
-    # 3. pad to four space to avoid `unindent` error
+    # 4. pad to four space to avoid `unindent` error
     code = pad_spaces(code, 4)
     return code
 
@@ -55,12 +57,10 @@ def main():
     update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
-    init_cfg.freeze()
-
     # load your finetuned model (saved as xxx.ckpt)
     #    in yaml file federate.save_to
     fschatbot = FSChatBot(init_cfg)
-    out_file = os.path.join(init_cfg.outdir, 'humaneval_answer.jsonl')
+    out_file = f'{init_cfg.federate.save_to}_humaneval_answer.jsonl'
 
     # Get test file
     fp = os.path.join(init_cfg.data.root, 'HumanEval.jsonl.gz')
