@@ -14,6 +14,66 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 logger = logging.getLogger(__name__)
 
 
+def add_prologue(module, prologue):
+    """
+    This function is borrowed from offsite-tuning:
+    https://github.com/mit-han-lab/offsite-tuning/blob/main/offsite_tuning
+    /utils.py
+    """
+    module.old_forward = module.forward
+    module.prologue = prologue
+
+    def new_forward(self):
+        def lambda_forward(*args, **kwargs):
+            self.input_args = args
+            self.input_kwargs = kwargs
+            if self.prologue is not None:
+                x = self.prologue(args[0])
+            else:
+                x = args[0]
+            args = (x, ) + args[1:]
+            return self.old_forward(*args, **kwargs)
+
+        return lambda_forward
+
+    module.forward = new_forward(module)
+    return module
+
+
+def add_epilogue(module, epilogue):
+    """
+    This function is borrowed from offsite-tuning:
+    https://github.com/mit-han-lab/offsite-tuning/blob/main/offsite_tuning
+    /utils.py
+    """
+    module.old_forward = module.forward
+    module.epilogue = epilogue
+
+    def new_forward(self):
+        def lambda_forward(*args, **kwargs):
+            output = self.old_forward(*args, **kwargs)
+            if isinstance(output, tuple):
+                x = output[0]
+            else:
+                x = output
+
+            if self.epilogue is not None:
+                x = self.epilogue(x)
+
+            if isinstance(output, tuple):
+                output = (x, ) + output[1:]
+            else:
+                output = x
+
+            self.cached_output = x
+            return output
+
+        return lambda_forward
+
+    module.forward = new_forward(module)
+    return module
+
+
 def get_layers(adapter_model):
     """
     Modified from the official implementation:
@@ -50,6 +110,8 @@ def set_layers(adapter_model, layers):
                        f'use default setting.')
         adapter_model.model.transformer.h = layers
     adapter_model.student = layers
+    add_prologue(adapter_model.student[0], None)
+    add_epilogue(adapter_model.student[-1], None)
     adapter_model.student_l = adapter_model.student[0]
     adapter_model.student_r = adapter_model.student[-1]
     return adapter_model
@@ -177,6 +239,8 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
                     map_location='cpu')
                 adap_model.load_state_dict(ckpt['model'], strict=False)
                 logger.info("Restored the model from ckpt")
+                logger.warning(
+                    "Please make sure the dtype of model keep the same.")
                 # Make student un-trainable
                 for layer in adap_model.student:
                     for param in layer.parameters():

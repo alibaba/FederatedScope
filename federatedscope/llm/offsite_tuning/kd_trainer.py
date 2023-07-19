@@ -13,18 +13,11 @@ def get_kd_loss(raw_model, adap_model):
     https://github.com/mit-han-lab/offsite-tuning/blob/main/offsite_tuning
     /utils.py
     """
-    args = adap_model.student_l.input_args
     kwargs = adap_model.student_l.input_kwargs
-    output_teacher = args[0].to(torch.float16)
+    args = adap_model.student_l.input_args
+    output_teacher = args[0]
     args = list(args[1:])
-    for i, arg in enumerate(args):
-        if torch.is_tensor(arg) and arg.dtype == torch.float32:
-            args[i] = arg.to(torch.float16)
     args = tuple(args)
-
-    for k, v in kwargs.items():
-        if torch.is_tensor(v) and v.dtype == torch.float32:
-            kwargs[k] = v.to(torch.float16)
 
     with torch.no_grad():
         raw_model.teacher.eval()
@@ -58,9 +51,15 @@ class KDTrainer(LLMTrainer):
         self.kd_loss_weight = \
             config.llm.offsite_tuning.emu_align.train.kd_loss_weight
 
+    def _hook_on_fit_start_numerical_precision(self, ctx):
+        super(KDTrainer, self)._hook_on_fit_start_numerical_precision(ctx)
+        if self.cfg.train.is_enable_half:
+            ctx.model = ctx.raw_model.half()
+
     def train(self, target_data_split_name="train", hooks_set=None):
         num_samples, model_para_all, eval_metrics = \
             super(KDTrainer, self).train(target_data_split_name, hooks_set)
+        logger.info("Finish alignment, move raw model to cpu.")
         self.ctx.raw_model.cpu()
         return num_samples, model_para_all, eval_metrics
 
