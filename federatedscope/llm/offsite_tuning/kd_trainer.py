@@ -13,8 +13,8 @@ def get_kd_loss(raw_model, adap_model):
     https://github.com/mit-han-lab/offsite-tuning/blob/main/offsite_tuning
     /utils.py
     """
-    kwargs = adap_model.student_l.input_kwargs
     args = adap_model.student_l.input_args
+    kwargs = adap_model.student_l.input_kwargs
     output_teacher = args[0].to(torch.float16)
     args = list(args[1:])
     for i, arg in enumerate(args):

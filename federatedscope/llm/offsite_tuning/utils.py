@@ -177,6 +177,10 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
                     map_location='cpu')
                 adap_model.load_state_dict(ckpt['model'], strict=False)
                 logger.info("Restored the model from ckpt")
+                # Make student un-trainable
+                for layer in adap_model.student:
+                    for param in layer.parameters():
+                        param.requires_grad = False
                 does_train_emulator = False
         except Exception as error:
             logger.error(error)
@@ -208,12 +212,12 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
     kd_trainer.train()
     logger.info('Alignment finished!')
 
+    # Save aligned model
+    adap_model.save_model(cfg.llm.offsite_tuning.emu_align.save_to)
+
     # Make student un-trainable
     for layer in adap_model.student:
         for param in layer.parameters():
             param.requires_grad = False
-
-    # Save aligned model
-    adap_model.save_model(cfg.llm.offsite_tuning.emu_align.save_to)
 
     return adap_model
