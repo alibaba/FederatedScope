@@ -60,8 +60,9 @@ class OffsiteTuningServer(Server):
                                              device=self.device,
                                              config=self._cfg,
                                              only_for_eval=True,
-                                             monitor=copy.deepcopy(
-                                                 self._monitor))
+                                             monitor=Monitor(
+                                                 self._cfg,
+                                                 monitored_object=self))
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,
