@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from collections import OrderedDict
 
@@ -165,6 +166,10 @@ class AdapterModel(nn.Module):
             if k in grad_params:
                 new_state_dict[k] = v
         return new_state_dict
+
+    def save_model(self, path, state=0):
+        ckpt = {'cur_round': state, 'model': self.model.state_dict()}
+        torch.save(ckpt, path)
 
     # TODO: Fix `__getattr__`
     # def __getattr__(self, item):
