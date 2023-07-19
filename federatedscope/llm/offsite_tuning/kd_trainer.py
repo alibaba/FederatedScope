@@ -54,7 +54,7 @@ class KDTrainer(LLMTrainer):
     def _hook_on_fit_start_numerical_precision(self, ctx):
         super(KDTrainer, self)._hook_on_fit_start_numerical_precision(ctx)
         if self.cfg.train.is_enable_half:
-            ctx.model = ctx.raw_model.half()
+            ctx.raw_model = ctx.raw_model.half()
 
     def train(self, target_data_split_name="train", hooks_set=None):
         num_samples, model_para_all, eval_metrics = \
