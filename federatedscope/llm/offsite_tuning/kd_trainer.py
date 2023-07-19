@@ -52,11 +52,17 @@ class KDTrainer(LLMTrainer):
                  monitor=None):
         super(KDTrainer, self).__init__(adapter_model, data, device, config,
                                         only_for_eval, monitor)
-        self.ctx.raw_model = raw_model
+        self.ctx.raw_model = raw_model.to(device)
         self.lm_loss_weight = \
             config.llm.offsite_tuning.emu_align.train.lm_loss_weight
         self.kd_loss_weight = \
             config.llm.offsite_tuning.emu_align.train.kd_loss_weight
+
+    def train(self, target_data_split_name="train", hooks_set=None):
+        num_samples, model_para_all, eval_metrics = \
+            super(KDTrainer, self).train(target_data_split_name, hooks_set)
+        self.ctx.raw_model.cpu()
+        return num_samples, model_para_all, eval_metrics
 
     def _hook_on_batch_forward(self, ctx):
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
@@ -68,9 +74,9 @@ class KDTrainer(LLMTrainer):
                             attention_mask=attention_mask)
 
         logits = outputs.logits
-        kd_loss = get_kd_loss(ctx.raw_model, ctx.model)
-        loss = self.lm_loss_weight * outputs.loss + \
-            self.kd_loss_weight * kd_loss
+        kd_loss = self.kd_loss_weight * get_kd_loss(ctx.raw_model, ctx.model)
+        lm_loss = self.lm_loss_weight * outputs.loss
+        loss = kd_loss + lm_loss
 
         if torch.isnan(loss):
             ctx.skip_this_batch = CtxVar(True, LIFECYCLE.BATCH)
@@ -85,3 +91,5 @@ class KDTrainer(LLMTrainer):
 
         ctx.loss_batch = CtxVar(loss, LIFECYCLE.BATCH)
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
+
+        logger.info(f'lm_loss: {lm_loss.item()}, kd loss: {kd_loss.item()}')

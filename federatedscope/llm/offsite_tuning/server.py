@@ -46,8 +46,7 @@ class OffsiteTuningServer(Server):
             adap_model = align_student_with_teacher(raw_model=model,
                                                     adap_model=adap_model,
                                                     cfg=config,
-                                                    data=self.data,
-                                                    device=self.device,
+                                                    device=device,
                                                     monitor=Monitor(
                                                         config,
                                                         monitored_object=self))

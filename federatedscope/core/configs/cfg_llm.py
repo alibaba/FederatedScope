@@ -48,6 +48,13 @@ def extend_llm_cfg(cfg):
     cfg.llm.offsite_tuning.emu_align.use = False
     cfg.llm.offsite_tuning.emu_align.restore_from = ''
     cfg.llm.offsite_tuning.emu_align.save_to = ''
+
+    # Server held-out data
+    cfg.llm.offsite_tuning.emu_align.data = CN()
+    cfg.llm.offsite_tuning.emu_align.data.root = 'data'
+    cfg.llm.offsite_tuning.emu_align.data.type = 'alpaca@llm'
+    cfg.llm.offsite_tuning.emu_align.data.splits = [0.8, 0.1, 0.1]
+
     cfg.llm.offsite_tuning.emu_align.train = CN()
     cfg.llm.offsite_tuning.emu_align.train.local_update_steps = 10
     cfg.llm.offsite_tuning.emu_align.train.batch_or_epoch = 'batch'
