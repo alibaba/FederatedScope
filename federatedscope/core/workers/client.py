@@ -10,7 +10,7 @@ from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
-    calculate_time_cost
+    calculate_time_cost, add_prefix_to_path
 from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
@@ -551,9 +551,17 @@ class Client(BaseClient):
                 forms=['raw'],
                 return_raw=True)
             logger.info(formatted_eval_res)
-            self._monitor.update_best_result(self.best_results,
-                                             formatted_eval_res['Results_raw'],
-                                             results_type=f"client #{self.ID}")
+            update_best_this_round = self._monitor.update_best_result(
+                self.best_results,
+                formatted_eval_res['Results_raw'],
+                results_type=f"client #{self.ID}",
+            )
+
+            if update_best_this_round and self._cfg.federate.save_client_model:
+                path = add_prefix_to_path(f'client_{self.ID}_',
+                                          self._cfg.federate.save_to)
+                self.trainer.save_model(path, self.state)
+
             self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check(self.history_results[
