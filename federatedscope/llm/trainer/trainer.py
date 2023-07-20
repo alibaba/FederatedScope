@@ -69,6 +69,14 @@ class LLMTrainer(GeneralTorchTrainer):
         }
         setattr(ctx, 'eval_metrics', eval_results)
 
+        if ctx.cfg.llm.adapter.mv_to_cpu:
+            # Move trainable part to cpu
+            for p in ctx.model.parameters():
+                if p.requires_grad:
+                    p.data = p.to('cpu')
+                    if p.grad is not None:
+                        p.grad.data = p.grad.to('cpu')
+
     def _hook_on_batch_forward_flop_count(self, ctx):
         """
         The monitoring hook to calculate the flops during the fl course

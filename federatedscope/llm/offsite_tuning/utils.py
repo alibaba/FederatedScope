@@ -302,14 +302,17 @@ def wrap_offsite_tuning_for_eval(model, config):
                                       emulator_r=emulator_r,
                                       **offsite_tuning_kwargs)
     # Load kd model if ckpt exits
-    if config.llm.offsite_tuning.emu_align.restore_from != '':
-        try:
-            ckpt = torch.load(config.llm.offsite_tuning.emu_align.restore_from,
-                              map_location='cpu')
-            adap_model.load_state_dict(ckpt['model'], strict=False)
-            logger.info("Restored the adapter and emulator from ckpt")
-        except Exception as error:
-            logger.warning(error)
+    if config.llm.offsite_tuning.emu_align.use:
+        if config.llm.offsite_tuning.emu_align.restore_from != '':
+            try:
+                ckpt = torch.load(
+                    config.llm.offsite_tuning.emu_align.restore_from,
+                    map_location='cpu',
+                )
+                adap_model.load_state_dict(ckpt['model'], strict=False)
+                logger.info("Restored the adapter and emulator from ckpt")
+            except Exception as error:
+                logger.warning(error)
 
     if config.llm.offsite_tuning.eval_type == 'emu':
         model = adap_model

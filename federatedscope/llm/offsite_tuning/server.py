@@ -93,18 +93,23 @@ class OffsiteTuningServer(Server):
 
     def eval(self):
         # Update the raw model with the new adapters
-        new_raw_model_state_dict = self.raw_model.state_dict()
-        for key, value in zip(self.raw_model.state_dict().keys(),
-                              self.model.state_dict().values()):
-            new_raw_model_state_dict[key] = value
-        self.raw_model_trainer.update(new_raw_model_state_dict, strict=False)
-        # make the evaluation on raw model at the server first
-        raw_metrics = {}
-        for split in self._cfg.eval.split:
-            metrics = self.raw_model_trainer.evaluate(
-                target_data_split_name=split)
-            for key, value in metrics.items():
-                raw_metrics['plugin.' + key] = value
+        if self._cfg.llm.offsite_tuning.eval_type == 'full':
+            self.model.to('cpu')
+            new_raw_model_state_dict = self.raw_model.state_dict()
+            for key, value in zip(self.raw_model.state_dict().keys(),
+                                  self.model.state_dict().values()):
+                new_raw_model_state_dict[key] = value
+            self.raw_model_trainer.update(new_raw_model_state_dict,
+                                          strict=False)
+            # make the evaluation on raw model at the server first
+            raw_metrics = {}
+            for split in self._cfg.eval.split:
+                metrics = self.raw_model_trainer.evaluate(
+                    target_data_split_name=split)
+                for key, value in metrics.items():
+                    raw_metrics['plugin.' + key] = value
+            # Move to cpu
+            self.raw_model.to('cpu')
 
         if self._cfg.federate.make_global_eval:
             # By default, the evaluation is conducted one-by-one for all

@@ -32,6 +32,9 @@ def extend_llm_cfg(cfg):
     cfg.llm.adapter = CN()
     cfg.llm.adapter.use = False
     cfg.llm.adapter.args = [{}]
+    # Move adapter to `cpu` after training, which can save memory but cost
+    # more time.
+    cfg.llm.adapter.mv_to_cpu = False
 
     # ---------------------------------------------------------------------- #
     # Offsite-tuning related options
