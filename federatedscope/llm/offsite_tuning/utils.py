@@ -238,7 +238,7 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
                     cfg.llm.offsite_tuning.emu_align.restore_from,
                     map_location='cpu')
                 adap_model.load_state_dict(ckpt['model'], strict=False)
-                logger.info("Restored the model from ckpt")
+                logger.info("Restored the adapter and emulator from ckpt")
                 logger.warning(
                     "Please make sure the dtype of model keep the same.")
                 # Make student un-trainable
@@ -285,3 +285,43 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
             param.requires_grad = False
 
     return adap_model
+
+
+def wrap_offsite_tuning_for_eval(model, config):
+    logger.info('===============use offsite tuning===============')
+    # We use offsite-tuning in this experiment
+    # Use adapter model instead
+    compress_strategy = config.llm.offsite_tuning.strategy
+    emulator_l = config.llm.offsite_tuning.emu_l
+    emulator_r = config.llm.offsite_tuning.emu_r
+    offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
+    adap_model = \
+        generate_emulator_and_adapter(model,
+                                      strategy=compress_strategy,
+                                      emulator_l=emulator_l,
+                                      emulator_r=emulator_r,
+                                      **offsite_tuning_kwargs)
+    # Load kd model if ckpt exits
+    if config.llm.offsite_tuning.emu_align.restore_from != '':
+        try:
+            ckpt = torch.load(config.llm.offsite_tuning.emu_align.restore_from,
+                              map_location='cpu')
+            adap_model.load_state_dict(ckpt['model'], strict=False)
+            logger.info("Restored the adapter and emulator from ckpt")
+        except Exception as error:
+            logger.warning(error)
+
+    if config.llm.offsite_tuning.eval_type == 'emu':
+        model = adap_model
+    elif config.llm.offsite_tuning.eval_type == 'full':
+        new_model_state_dict = model.state_dict()
+        for key, value in zip(model.state_dict().keys(),
+                              adap_model.state_dict().values()):
+            new_model_state_dict[key] = value
+        model.load_state_dict(new_model_state_dict, strict=False)
+        del adap_model
+    else:
+        raise NotImplementedError(
+            '`config.llm.offsite_tuning.eval_type` should be one '
+            'of `["emu", "full"]`.')
+    return model

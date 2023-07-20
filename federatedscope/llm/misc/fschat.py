@@ -10,8 +10,6 @@ from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.llm.dataloader.dataloader import get_tokenizer
 from federatedscope.llm.model.model_builder import get_llm
 from federatedscope.llm.dataset.llm_dataset import PROMPT_DICT
-from federatedscope.llm.offsite_tuning.utils import \
-    generate_emulator_and_adapter
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 
@@ -25,32 +23,9 @@ class FSChatBot(object):
                                           config.llm.tok_len)
         self.model = get_llm(config)
         if config.llm.offsite_tuning.use:
-            logger.info('===============use offsite tuning===============')
-            # We use offsite-tuning in this experiment
-            # Use adapter model instead
-            compress_strategy = config.llm.offsite_tuning.strategy
-            emulator_l = config.llm.offsite_tuning.emu_l
-            emulator_r = config.llm.offsite_tuning.emu_r
-            offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
-            self.adap_model = \
-                generate_emulator_and_adapter(self.model,
-                                              strategy=compress_strategy,
-                                              emulator_l=emulator_l,
-                                              emulator_r=emulator_r,
-                                              **offsite_tuning_kwargs)
-            if config.llm.offsite_tuning.eval_type == 'emu':
-                self.model = self.adap_model
-            elif config.llm.offsite_tuning.eval_type == 'full':
-                new_model_state_dict = self.model.state_dict()
-                for key, value in zip(self.model.state_dict().keys(),
-                                      self.adap_model.state_dict().values()):
-                    new_model_state_dict[key] = value
-                self.model.load_state_dict(new_model_state_dict, strict=False)
-                del self.adap_model
-            else:
-                raise NotImplementedError(
-                    '`config.llm.offsite_tuning.eval_type` should be one '
-                    'of `["emu", "full"]`.')
+            from federatedscope.llm.offsite_tuning.utils import \
+                wrap_offsite_tuning_for_eval
+            self.model = wrap_offsite_tuning_for_eval(self.model, config)
 
         self.device = f'cuda:{config.device}'
         self.add_special_tokens = True
