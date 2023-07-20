@@ -124,7 +124,7 @@ def _hook_on_fit_start_set_local_para_tmp(ctx):
     # set the compared model data, then the optimizer will find approximate
     # model using trainer.cfg.personalization.lr
     compared_global_model_para = [{
-        "params": list(ctx.pFedMe_local_model_param_tmp)
+        "params": ctx.pFedMe_local_model_param_tmp
     }]
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
 
@@ -210,7 +210,7 @@ def _hook_on_epoch_end_update_local(ctx):
     # set the compared model data, then the optimizer will find approximate
     # model using trainer.cfg.personalization.lr
     compared_global_model_para = [{
-        "params": list(ctx.pFedMe_local_model_param_tmp)
+        "params": ctx.pFedMe_local_model_param_tmp
     }]
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
 
