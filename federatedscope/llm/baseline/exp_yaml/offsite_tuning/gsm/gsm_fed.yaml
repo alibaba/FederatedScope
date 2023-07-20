@@ -53,7 +53,7 @@ criterion:
 trainer:
   type: llmtrainer
 eval:
-  freq: 1
+  freq: 50
   metrics: ['loss']
   best_res_update_round_wise_key: val_loss
   count_flops: False

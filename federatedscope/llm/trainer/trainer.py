@@ -69,8 +69,9 @@ class LLMTrainer(GeneralTorchTrainer):
         }
         setattr(ctx, 'eval_metrics', eval_results)
 
+        # TODO: make this as a hook function
+        # Move trainable part to `cpu`, which can save memory but cost time
         if ctx.cfg.llm.adapter.mv_to_cpu:
-            # Move trainable part to cpu
             for p in ctx.model.parameters():
                 if p.requires_grad:
                     p.data = p.to('cpu')
