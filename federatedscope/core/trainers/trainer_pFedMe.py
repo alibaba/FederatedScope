@@ -1,8 +1,22 @@
 import copy
+try:
+    import torch
+except ImportError:
+    torch = None
 
 from federatedscope.core.trainers.torch_trainer import GeneralTorchTrainer
 from federatedscope.core.optimizer import wrap_regularized_optimizer
 from typing import Type
+
+
+def get_trainable_parameter_list(model):
+    copied_param = []
+    for param in model.parameters():
+        if param.requires_grad:
+            copied_param.append(copy.deepcopy(param))
+        else:
+            copied_param.append(None)
+    return copied_param
 
 
 def wrap_pFedMeTrainer(
@@ -81,7 +95,7 @@ def init_pFedMe_ctx(base_trainer):
     # the local_model_tmp is used to be the referenced parameter when
     # finding the approximate \theta in paper
     # will be copied from model every run_routine
-    ctx.pFedMe_local_model_tmp = None
+    ctx.pFedMe_local_model_param_tmp = None
 
 
 def _hook_on_fit_start_set_local_para_tmp(ctx):
@@ -95,7 +109,7 @@ def _hook_on_fit_start_set_local_para_tmp(ctx):
         ``wrap_regularized_optimizer`` and set compared parameter group
         ``ctx.pFedMe_outer_lr``             Initialize to \
         ``ctx.cfg.train.optimizer.lr``
-        ``ctx.pFedMe_local_model_tmp``      Copy from ``ctx.model``
+        ``ctx.pFedMe_local_model_param_tmp``      Copy from ``ctx.model``
         ==================================  ===========================
     """
     # the optimizer used in pFedMe is based on Moreau Envelopes regularization
@@ -106,12 +120,11 @@ def _hook_on_fit_start_set_local_para_tmp(ctx):
     for g in ctx.optimizer.param_groups:
         g['lr'] = ctx.cfg.personalization.lr
     ctx.pFedMe_outer_lr = ctx.cfg.train.optimizer.lr
-
-    ctx.pFedMe_local_model_tmp = copy.deepcopy(ctx.model)
+    ctx.pFedMe_local_model_param_tmp = get_trainable_parameter_list(ctx.model)
     # set the compared model data, then the optimizer will find approximate
     # model using trainer.cfg.personalization.lr
     compared_global_model_para = [{
-        "params": list(ctx.pFedMe_local_model_tmp.parameters())
+        "params": list(ctx.pFedMe_local_model_param_tmp)
     }]
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
 
@@ -181,22 +194,23 @@ def _hook_on_epoch_end_update_local(ctx):
         Attribute                           Operation
         ==================================  ===========================
         ``ctx.model``                       Update parameters by \
-        ``ctx.pFedMe_local_model_tmp``
+        ``ctx.pFedMe_local_model_param_tmp``
         ``ctx.optimizer``                   Set compared parameter group
         ==================================  ===========================
     """
     # update local weight after finding approximate theta
-    for client_param, local_para_tmp in zip(
-            ctx.model.parameters(), ctx.pFedMe_local_model_tmp.parameters()):
-        local_para_tmp.data = local_para_tmp.data - \
-                              ctx.optimizer.regular_weight * \
-                              ctx.pFedMe_outer_lr * (local_para_tmp.data -
-                                                     client_param.data)
+    for client_param, local_para_tmp in zip(ctx.model.parameters(),
+                                            ctx.pFedMe_local_model_param_tmp):
+        if client_param.requires_grad:
+            local_para_tmp.data = local_para_tmp.data - \
+                                  ctx.optimizer.regular_weight * \
+                                  ctx.pFedMe_outer_lr * (local_para_tmp.data -
+                                                         client_param.data)
 
     # set the compared model data, then the optimizer will find approximate
     # model using trainer.cfg.personalization.lr
     compared_global_model_para = [{
-        "params": list(ctx.pFedMe_local_model_tmp.parameters())
+        "params": list(ctx.pFedMe_local_model_param_tmp)
     }]
     ctx.optimizer.set_compared_para_group(compared_global_model_para)
 
@@ -209,12 +223,13 @@ def _hook_on_fit_end_update_local(ctx):
         Attribute                           Operation
         ==================================  ===========================
         ``ctx.model``                       Update parameters by
-        ``ctx.pFedMe_local_model_tmp``
-        ``ctx.pFedMe_local_model_tmp``      Delete
+        ``ctx.pFedMe_local_model_param_tmp``
+        ``ctx.pFedMe_local_model_param_tmp`` Delete
         ==================================  ===========================
     """
     for param, local_para_tmp in zip(ctx.model.parameters(),
-                                     ctx.pFedMe_local_model_tmp.parameters()):
-        param.data = local_para_tmp.data
+                                     ctx.pFedMe_local_model_param_tmp):
+        if param.requires_grad:
+            param.data = local_para_tmp.data
 
-    del ctx.pFedMe_local_model_tmp
+    del ctx.pFedMe_local_model_param_tmp
