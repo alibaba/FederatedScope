@@ -1,4 +1,3 @@
-import copy
 import logging
 
 from federatedscope.core.message import Message

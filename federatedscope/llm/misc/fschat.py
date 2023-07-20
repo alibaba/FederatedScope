@@ -32,12 +32,25 @@ class FSChatBot(object):
             emulator_l = config.llm.offsite_tuning.emu_l
             emulator_r = config.llm.offsite_tuning.emu_r
             offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
-            self.model = \
+            self.adap_model = \
                 generate_emulator_and_adapter(self.model,
                                               strategy=compress_strategy,
                                               emulator_l=emulator_l,
                                               emulator_r=emulator_r,
                                               **offsite_tuning_kwargs)
+            if config.llm.offsite_tuning.eval_type == 'emu':
+                self.model = self.adap_model
+            elif config.llm.offsite_tuning.eval_type == 'full':
+                new_model_state_dict = self.model.state_dict()
+                for key, value in zip(self.model.state_dict().keys(),
+                                      self.adap_model.state_dict().values()):
+                    new_model_state_dict[key] = value
+                self.model.load_state_dict(new_model_state_dict, strict=False)
+                del self.adap_model
+            else:
+                raise NotImplementedError(
+                    '`config.llm.offsite_tuning.eval_type` should be one '
+                    'of `["emu", "full"]`.')
 
         self.device = f'cuda:{config.device}'
         self.add_special_tokens = True
