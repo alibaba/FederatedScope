@@ -32,12 +32,12 @@ llm:
       restore_from: 'aligned_llama_dolly_fed_ot.ckpt'
       save_to: 'aligned_llama_dolly_fed_ot.ckpt'
       train:
-        local_update_steps: '500'
+        local_update_steps: 500
         batch_or_epoch: 'batch'
         lm_loss_weight: 0.1
         kd_loss_weight: 0.9
         optimizer:
-          lr: 0.01
+          lr: 0.005
 dataloader:
   batch_size: 1
 model:

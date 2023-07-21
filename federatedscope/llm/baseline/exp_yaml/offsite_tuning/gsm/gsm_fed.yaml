@@ -37,7 +37,7 @@ llm:
         lm_loss_weight: 0.1
         kd_loss_weight: 0.9
         optimizer:
-          lr: 0.01
+          lr: 0.005
 dataloader:
   batch_size: 1
 model:
