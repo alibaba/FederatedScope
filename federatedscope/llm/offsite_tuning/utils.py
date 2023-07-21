@@ -325,6 +325,6 @@ def wrap_offsite_tuning_for_eval(model, config):
         del adap_model
     else:
         raise NotImplementedError(
-            '`config.llm.offsite_tuning.eval_type` should be one '
-            'of `["emu", "full"]`.')
+            '`config.llm.offsite_tuning.eval_type` should be chosen from '
+            '`["emu", "full"]`.')
     return model
