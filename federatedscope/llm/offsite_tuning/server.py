@@ -142,7 +142,8 @@ class OffsiteTuningServer(Server):
             self.check_and_save()
         else:
             super().eval()
-            self.raw_metrics = raw_metrics
+            if self._cfg.llm.offsite_tuning.eval_type == 'full':
+                self.raw_metrics = raw_metrics
 
     def callback_funcs_for_metrics(self, message: Message):
         """
