@@ -40,6 +40,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.restore_from = ''
     cfg.federate.save_to = ''
     cfg.federate.save_freq = -1
+    cfg.federate.save_client_model = False
     cfg.federate.join_in_info = [
     ]  # The information requirements (from server) for join_in
     cfg.federate.sampler = 'uniform'  # the strategy for sampling client
