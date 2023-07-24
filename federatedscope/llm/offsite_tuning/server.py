@@ -167,6 +167,7 @@ class OffsiteTuningServer(Server):
             'emulator.' + key: value
             for key, value in content.items()
         }
-        self.msg_buffer['eval'][rnd][sender].update(**self.raw_metrics)
+        if self._cfg.llm.offsite_tuning.eval_type == 'full':
+            self.msg_buffer['eval'][rnd][sender].update(**self.raw_metrics)
 
         return self.check_and_move_on(check_eval_result=True)
