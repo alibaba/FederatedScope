@@ -107,7 +107,8 @@ class Server(BaseServer):
                                f' {self._cfg.federate.restore_from}.')
             else:
                 _ = self.aggregator.load_model(self._cfg.federate.restore_from)
-                logger.info("Restored the model from {}-th round's ckpt")
+                logger.info(f"Restored the model from "
+                            f"{self._cfg.federate.restore_from}")
 
         if int(config.model.model_num_per_trainer) != \
                 config.model.model_num_per_trainer or \
