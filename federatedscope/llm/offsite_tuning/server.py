@@ -3,11 +3,12 @@ import logging
 from federatedscope.core.message import Message
 from federatedscope.core.auxiliaries.utils import b64serializer, \
     merge_dict_of_results
+from federatedscope.core.monitors.monitor import Monitor
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.workers.server import Server
 
 from federatedscope.llm.offsite_tuning.utils import \
-    generate_emulator_and_adapter
+    generate_emulator_and_adapter, align_student_with_teacher
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,16 @@ class OffsiteTuningServer(Server):
                                           emulator_l=emulator_l,
                                           emulator_r=emulator_r,
                                           **offsite_tuning_kwargs)
+        # Emulator alignment
+        if config.llm.offsite_tuning.emu_align.use:
+            adap_model = align_student_with_teacher(raw_model=model,
+                                                    adap_model=adap_model,
+                                                    cfg=config,
+                                                    device=device,
+                                                    monitor=Monitor(
+                                                        config,
+                                                        monitored_object=self))
+
         self.raw_model = model
         super(OffsiteTuningServer,
               self).__init__(ID, state, config, data, adap_model, client_num,
@@ -48,7 +59,9 @@ class OffsiteTuningServer(Server):
                                              device=self.device,
                                              config=self._cfg,
                                              only_for_eval=True,
-                                             monitor=self._monitor)
+                                             monitor=Monitor(
+                                                 self._cfg,
+                                                 monitored_object=self))
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,
@@ -80,18 +93,23 @@ class OffsiteTuningServer(Server):
 
     def eval(self):
         # Update the raw model with the new adapters
-        new_raw_model_state_dict = self.raw_model.state_dict()
-        for key, value in zip(self.raw_model.state_dict().keys(),
-                              self.model.state_dict().values()):
-            new_raw_model_state_dict[key] = value
-        self.raw_model_trainer.update(new_raw_model_state_dict, strict=False)
-        # make the evaluation on raw model at the server first
-        raw_metrics = {}
-        for split in self._cfg.eval.split:
-            metrics = self.raw_model_trainer.evaluate(
-                target_data_split_name=split)
-            for key, value in metrics.items():
-                raw_metrics['plugin.' + key] = value
+        if self._cfg.llm.offsite_tuning.eval_type == 'full':
+            self.model.to('cpu')
+            new_raw_model_state_dict = self.raw_model.state_dict()
+            for key, value in zip(self.raw_model.state_dict().keys(),
+                                  self.model.state_dict().values()):
+                new_raw_model_state_dict[key] = value
+            self.raw_model_trainer.update(new_raw_model_state_dict,
+                                          strict=False)
+            # make the evaluation on raw model at the server first
+            raw_metrics = {}
+            for split in self._cfg.eval.split:
+                metrics = self.raw_model_trainer.evaluate(
+                    target_data_split_name=split)
+                for key, value in metrics.items():
+                    raw_metrics['plugin.' + key] = value
+            # Move to cpu
+            self.raw_model.to('cpu')
 
         if self._cfg.federate.make_global_eval:
             # By default, the evaluation is conducted one-by-one for all
@@ -124,7 +142,8 @@ class OffsiteTuningServer(Server):
             self.check_and_save()
         else:
             super().eval()
-            self.raw_metrics = raw_metrics
+            if self._cfg.llm.offsite_tuning.eval_type == 'full':
+                self.raw_metrics = raw_metrics
 
     def callback_funcs_for_metrics(self, message: Message):
         """
@@ -148,6 +167,7 @@ class OffsiteTuningServer(Server):
             'emulator.' + key: value
             for key, value in content.items()
         }
-        self.msg_buffer['eval'][rnd][sender].update(**self.raw_metrics)
+        if self._cfg.llm.offsite_tuning.eval_type == 'full':
+            self.msg_buffer['eval'][rnd][sender].update(**self.raw_metrics)
 
         return self.check_and_move_on(check_eval_result=True)
