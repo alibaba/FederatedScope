@@ -22,22 +22,23 @@ class FSChatBot(object):
         self.tokenizer, _ = get_tokenizer(model_name, config.data.root,
                                           config.llm.tok_len)
         self.model = get_llm(config)
-        if config.llm.offsite_tuning.use:
-            from federatedscope.llm.offsite_tuning.utils import \
-                wrap_offsite_tuning_for_eval
-            self.model = wrap_offsite_tuning_for_eval(self.model, config)
 
         self.device = f'cuda:{config.device}'
         self.add_special_tokens = True
 
-        try:
-            ckpt = torch.load(config.federate.save_to, map_location='cpu')
-            if 'model' and 'cur_round' in ckpt:
-                self.model.load_state_dict(ckpt['model'])
-            else:
-                self.model.load_state_dict(ckpt)
-        except Exception as error:
-            print(f"{error}, will use raw model.")
+        if config.llm.offsite_tuning.use:
+            from federatedscope.llm.offsite_tuning.utils import \
+                wrap_offsite_tuning_for_eval
+            self.model = wrap_offsite_tuning_for_eval(self.model, config)
+        else:
+            try:
+                ckpt = torch.load(config.federate.save_to, map_location='cpu')
+                if 'model' and 'cur_round' in ckpt:
+                    self.model.load_state_dict(ckpt['model'])
+                else:
+                    self.model.load_state_dict(ckpt)
+            except Exception as error:
+                print(f"{error}, will use raw model.")
 
         if config.train.is_enable_half:
             self.model.half()

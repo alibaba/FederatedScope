@@ -49,6 +49,9 @@ class OffsiteTuningServer(Server):
                                                     monitor=Monitor(
                                                         config,
                                                         monitored_object=self))
+        # No need for this attr
+        if hasattr(adap_model, 'teacher'):
+            del adap_model.teacher
 
         self.raw_model = model
         super(OffsiteTuningServer,
