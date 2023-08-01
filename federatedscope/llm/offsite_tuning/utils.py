@@ -302,7 +302,8 @@ def wrap_offsite_tuning_for_eval(model, config):
                                       emulator_r=emulator_r,
                                       **offsite_tuning_kwargs)
     # Load kd model if ckpt exits
-    if config.llm.offsite_tuning.emu_align.use:
+    if config.llm.offsite_tuning.emu_align.use and \
+            config.llm.offsite_tuning.eval_type == 'emu':
         if config.llm.offsite_tuning.emu_align.restore_from != '':
             try:
                 ckpt = torch.load(
@@ -313,6 +314,15 @@ def wrap_offsite_tuning_for_eval(model, config):
                 logger.info("Restored the adapter and emulator from ckpt")
             except Exception as error:
                 logger.warning(error)
+
+    try:
+        ckpt = torch.load(config.federate.save_to, map_location='cpu')
+        if 'model' and 'cur_round' in ckpt:
+            adap_model.load_state_dict(ckpt['model'])
+        else:
+            adap_model.load_state_dict(ckpt)
+    except Exception as error:
+        print(f"{error}, will use raw model.")
 
     if config.llm.offsite_tuning.eval_type == 'emu':
         model = adap_model
