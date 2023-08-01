@@ -277,6 +277,7 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
     logger.info('Alignment finished!')
 
     # Save aligned model
+    del adap_model.teacher
     adap_model.save_model(cfg.llm.offsite_tuning.emu_align.save_to)
 
     # Make student un-trainable
@@ -323,10 +324,11 @@ def wrap_offsite_tuning_for_eval(model, config):
         else:
             adap_model.load_state_dict(ckpt)
     except Exception as error:
-        print(f"{error}, will use raw model.")
+        logger.warning(f"{error}, will use raw model.")
 
     if config.llm.offsite_tuning.eval_type == 'emu':
         model = adap_model
+        del model.teacher
     elif config.llm.offsite_tuning.eval_type == 'full':
         # Raw model load adapter from adapter_and_emulator
         new_model_state_dict = model.state_dict()
