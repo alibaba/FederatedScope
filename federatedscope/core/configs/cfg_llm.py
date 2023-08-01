@@ -54,6 +54,7 @@ def extend_llm_cfg(cfg):
     cfg.llm.offsite_tuning.emu_align.use = False
     cfg.llm.offsite_tuning.emu_align.restore_from = ''
     cfg.llm.offsite_tuning.emu_align.save_to = ''
+    cfg.llm.offsite_tuning.emu_align.exit_after_align = False
 
     # Server held-out data
     cfg.llm.offsite_tuning.emu_align.data = CN()
