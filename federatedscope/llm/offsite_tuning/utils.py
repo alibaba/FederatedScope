@@ -315,6 +315,7 @@ def wrap_offsite_tuning_for_eval(model, config):
             except Exception as error:
                 logger.warning(error)
 
+    # Load ckpt for eval
     try:
         ckpt = torch.load(config.federate.save_to, map_location='cpu')
         if 'model' and 'cur_round' in ckpt:
@@ -327,6 +328,7 @@ def wrap_offsite_tuning_for_eval(model, config):
     if config.llm.offsite_tuning.eval_type == 'emu':
         model = adap_model
     elif config.llm.offsite_tuning.eval_type == 'full':
+        # Raw model load adapter from adapter_and_emulator
         new_model_state_dict = model.state_dict()
         for key, value in zip(model.state_dict().keys(),
                               adap_model.state_dict().values()):
