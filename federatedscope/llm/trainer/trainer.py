@@ -63,7 +63,7 @@ class LLMTrainer(GeneralTorchTrainer):
     def _hook_on_fit_end(self, ctx):
         avg_loss = 0 if float(
             ctx.num_samples) == 0 else ctx.loss_batch_total / float(
-            ctx.num_samples)
+                ctx.num_samples)
         eval_results = {
             f'{ctx.cur_split}_loss': ctx.loss_batch_total,
             f'{ctx.cur_split}_total': ctx.num_samples,
