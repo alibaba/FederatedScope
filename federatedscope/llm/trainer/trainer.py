@@ -3,7 +3,7 @@ import logging
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.trainers.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import MODE, LIFECYCLE
 from federatedscope.core.monitors.monitor import Monitor
 from federatedscope.llm.model.adapter_builder import AdapterModel
 
@@ -54,6 +54,11 @@ class LLMTrainer(GeneralTorchTrainer):
 
     def _hook_on_batch_end(self, ctx):
         if ctx.skip_this_batch:
+            # Retry with new data in train and finetune
+            if ctx.cur_mode == MODE.TRAIN:
+                self._run_batch(self.hooks_in_train, run_step=1)
+            elif ctx.cur_mode == MODE.FINETUNE:
+                self._run_batch(self.hooks_in_ft, run_step=1)
             return
 
         ctx.num_samples += ctx.batch_size
