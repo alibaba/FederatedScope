@@ -95,7 +95,7 @@ def get_layers(adapter_model):
     return layers
 
 
-def set_layers(adapter_model, layers):
+def set_layers(adapter_model, layers, emu_l=0, emu_r=-1):
     if isinstance(adapter_model.model, OPTForCausalLM):
         adapter_model.model.model.decoder.layers = layers
     elif isinstance(adapter_model.model, GPT2LMHeadModel):
@@ -109,7 +109,8 @@ def set_layers(adapter_model, layers):
         logger.warning(f'Model {type(adapter_model.model)} not support, '
                        f'use default setting.')
         adapter_model.model.transformer.h = layers
-    adapter_model.student = layers
+    adapter_model.student = layers[emu_l:emu_r]
+    adapter_model.adapter = layers[:emu_l] + layers[emu_r:]
     add_prologue(adapter_model.student[0], None)
     add_epilogue(adapter_model.student[-1], None)
     adapter_model.student_l = adapter_model.student[0]
@@ -165,7 +166,7 @@ def generate_emulator_and_adapter(model: AdapterModel,
             param.data = param.data.float()
             param.requires_grad = False
     # Set teacher model
-    model.teacher = layers[l:r]
+    model.teacher = layers[l:r]  # Ref for old model
 
     emulator = COMP_FUNC_MAPPING[strategy](layers[l:r], **kwargs)
 
@@ -185,12 +186,23 @@ def generate_emulator_and_adapter(model: AdapterModel,
 
     new_model = copy.deepcopy(model)
     # Set student model
-    new_model = set_layers(new_model, emulator_and_adapter)
+    new_model = set_layers(new_model, emulator_and_adapter, l, r)
 
     gc.collect()
     torch.cuda.empty_cache()
 
     return new_model
+
+
+def convert_layers_train_state(layers, is_trainable=True):
+    if is_trainable:
+        for layer in layers:
+            for param in layer.parameters():
+                param.requires_grad = True
+    else:
+        for layer in layers:
+            for param in layer.parameters():
+                param.requires_grad = False
 
 
 def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
@@ -249,15 +261,18 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
         except Exception as error:
             logger.error(error)
 
+    # Case1: Load ckpt, so we do not need to train student
     if not does_train_emulator:
         return adap_model
 
+    # Case2: Restore fail or '', start to train student
     new_cfg = build_cfg_for_alignment(cfg)
 
+    # Make adapter un-trainable
+    convert_layers_train_state(adap_model.adapter, is_trainable=False)
+
     # Make student trainable
-    for layer in adap_model.student:
-        for param in layer.parameters():
-            param.requires_grad = True
+    convert_layers_train_state(adap_model.student, is_trainable=True)
 
     # Loading held-out data
     logger.info('Loading held-out dataset for alignment...')
@@ -280,10 +295,11 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
     del adap_model.teacher
     adap_model.save_model(cfg.llm.offsite_tuning.emu_align.save_to)
 
+    # Make adapter trainable
+    convert_layers_train_state(adap_model.adapter, is_trainable=True)
+
     # Make student un-trainable
-    for layer in adap_model.student:
-        for param in layer.parameters():
-            param.requires_grad = False
+    convert_layers_train_state(adap_model.student, is_trainable=False)
 
     return adap_model
 
