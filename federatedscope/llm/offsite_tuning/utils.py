@@ -264,7 +264,7 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
     if not does_train_emulator:
         return adap_model
 
-    # Case2: Restore fail or '', start to train student
+    # Case2: Restore fail or not assigned, start to train student
     new_cfg = build_cfg_for_alignment(cfg)
 
     # Make adapter un-trainable
