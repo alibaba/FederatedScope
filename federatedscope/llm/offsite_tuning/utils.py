@@ -254,9 +254,8 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
                 logger.warning(
                     "Please make sure the dtype of model keep the same.")
                 # Make student un-trainable
-                for layer in adap_model.student:
-                    for param in layer.parameters():
-                        param.requires_grad = False
+                convert_layers_train_state(adap_model.student,
+                                           is_trainable=False)
                 does_train_emulator = False
         except Exception as error:
             logger.error(error)
