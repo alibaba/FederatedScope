@@ -9,8 +9,6 @@ This repository includes the implementation of its FL server, the FL clients run
 - `FsOnAndroid`:   Codes for FL clients in FS-REAL.   
 - `FSDevice_Scripts`:   Codes for running scripts and simulation tools.
 
-*The full codes are coming soon!*
-
 ## Guidance
 
 ### Preparation
