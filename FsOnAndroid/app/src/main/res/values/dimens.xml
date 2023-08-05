@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--divider-->
+    <dimen name="padding">10dp</dimen>
+    <dimen name="margin">15dp</dimen>
+
+    <!--font size-->
+    <dimen name="fontsz_title">20dp</dimen>
+    <dimen name="fontsz_normal">15dp</dimen>
+
+    <!--height-->
+    <dimen name="textView_height">50dp</dimen>
+    <dimen name="button_height">50dp</dimen>
+    <dimen name="progress_bar_height">15dp</dimen>
+    <dimen name="list_header_height">30dp</dimen>
+    <dimen name="list_item_height">50dp</dimen>
+
+    <!--shadow-->
+    <dimen name="elevation">1dp</dimen>
+
+    <!--duration-->
+    <item name="duration_anim_activity" type="dimen" format="integer">500</item>
+</resources>

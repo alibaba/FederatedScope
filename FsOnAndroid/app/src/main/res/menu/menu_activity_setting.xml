@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:title="Setting"
+        android:id="@+id/action_bar_setting"
+        android:orderInCategory="0"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_action_setting"/>
+
+
+</menu>

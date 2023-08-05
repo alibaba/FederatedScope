@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+package fscomm;
+
+option java_package = 'com.example.fsandroid.protos';
+option java_multiple_files = true;
+option java_generic_services = true;
+
+service gRPCComServeFunc {
+  // both server and client
+  rpc sendMessage (MessageRequest) returns (MessageResponse) {}
+  // client upload model for aggregation
+  rpc uploadMnnModel (FileRequest) returns (google.protobuf.Empty) {}
+  // server broadcast model for training
+  rpc sendMnnModel4Train(FileRequest) returns (google.protobuf.Empty) {}
+  // server broadcast model for test
+  rpc sendMnnModel4Test(FileRequest) returns (google.protobuf.Empty) {}
+}
+
+message FileRequest {
+  FileInfo info = 1;
+  bytes chunk = 2;
+}
+
+message FileInfo {
+  int32 sender = 1;
+  int32 state = 2;
+  int32 n_sample = 3;
+  string timestamp = 4;
+  repeated int32 client_id = 5;
+}
+
+message MessageRequest{
+  map<string, MsgValue> msg = 1;
+}
+
+message MsgValue{
+  oneof type {
+    mSingle single_msg = 1;
+    mList list_msg = 2;
+    mDict_keyIsString dict_msg_stringkey = 3;
+    mDict_keyIsInt dict_msg_intkey = 4;
+  }
+}
+
+message mSingle{
+  oneof type {
+    float float_value = 1;
+    int32 int_value = 2;
+    string str_value = 3;
+  }
+}
+
+message mList{
+  repeated MsgValue list_value = 1;
+}
+
+message mDict_keyIsString{
+  map<string, MsgValue> dict_value = 1;
+}
+
+message mDict_keyIsInt{
+  map<int32, MsgValue> dict_value = 1;
+}
+
+message MessageResponse{
+  string msg = 1;
+}

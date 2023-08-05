@@ -1,0 +1,27 @@
+namespace MetalCache;
+attribute "priority";
+table TensorInfo {
+    shape:[int];
+}
+table OpInfo {
+    name:string;
+    type:int;
+    inputs:[TensorInfo];
+    outputs:[TensorInfo];
+}
+
+table Autotuning {
+    key:string;
+    threadSize:[uint];
+
+    groupNum:[uint];
+    groupSize:[uint];
+    timeCost:uint;
+}
+
+table Cache {
+    tunings:[Autotuning];
+    tuned:[OpInfo];
+}
+
+root_type Cache;

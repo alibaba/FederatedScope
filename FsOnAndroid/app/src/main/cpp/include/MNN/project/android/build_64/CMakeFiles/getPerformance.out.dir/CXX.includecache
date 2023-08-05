@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../../../include/MNN/MNNDefine.h
+assert.h
+-
+stdio.h
+-
+TargetConditionals.h
+-
+android/log.h
+-
+syslog.h
+-
+
+../../../source/core/Macro.h
+MNN/MNNDefine.h
+-
+
+/home/admin/gaodawei.gdw/FSDevice/MNN/tools/cpp/getPerformance.cpp
+string.h
+-
+chrono
+-
+cstdint
+-
+vector
+-
+stdlib.h
+-
+MNN/MNNDefine.h
+-
+core/Macro.h
+/home/admin/gaodawei.gdw/FSDevice/MNN/tools/cpp/core/Macro.h
+arm_neon.h
+-
+

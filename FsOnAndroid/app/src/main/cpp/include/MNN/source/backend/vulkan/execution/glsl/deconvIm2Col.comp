@@ -1,0 +1,76 @@
+#version 440 core
+layout(std430) buffer;
+
+layout(set=0, binding=0) writeonly mediump uniform image2D uOutput;
+layout(set=0, binding=1) uniform mediump sampler2D uInput;
+layout(set=0, binding=2) uniform mediump sampler2D uBias;
+
+layout(set=0, binding=3) readonly uniform constBuffer {
+    ivec2 pad;
+    ivec2 kernelSize;
+    ivec2 stride;
+    ivec2 dilate;
+    ivec4 inputSize;
+    ivec4 outputSize;
+    ivec4 offset;
+} uConstant;
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+#define UP_DIV(x, y) (((x)+(y)-1)/(y))
+
+void main()
+{
+    ivec3 posTmp = ivec3(gl_GlobalInvocationID);
+    ivec3 pos;
+    pos.x = posTmp.x % uConstant.outputSize.x;
+    int subIndex = posTmp.x / uConstant.outputSize.x;
+    pos.y = subIndex % uConstant.outputSize.y;
+    pos.z = subIndex / uConstant.outputSize.y;
+    ivec3 inputSize = uConstant.inputSize.xyz;
+    ivec3 outputSize = uConstant.outputSize.xyz;
+    int fz = pos.z % uConstant.outputSize.z;
+    int sb = pos.z / uConstant.outputSize.z;
+
+    if (pos.x < uConstant.outputSize.x && pos.y < uConstant.outputSize.y && sb < uConstant.outputSize.w)
+    {
+        ivec2 oxy = pos.xy + uConstant.pad;
+
+        vec4 color = texelFetch(uBias, ivec2(fz, 0), 0);
+        for (int fy=0; fy<uConstant.kernelSize.y; ++fy)
+        {
+            int sy = oxy.y - fy*uConstant.dilate.y;
+            int y = sy / uConstant.stride.y;
+            if (sy % uConstant.stride.y == 0 && y == clamp(y, 0, inputSize.y-1))
+            {
+                for (int fx=0; fx<uConstant.kernelSize.x; ++fx)
+                {
+                    int sx = oxy.x - fx*uConstant.dilate.x;
+                    int x = sx / uConstant.stride.x;
+                    if (sx % uConstant.stride.x == 0 && x == clamp(x, 0, inputSize.x-1))
+                    {
+                        int destX = 0
+                            + fx
+                            + fy*uConstant.kernelSize.x
+                            + fz*uConstant.kernelSize.x * uConstant.kernelSize.y
+                            ;
+                        int destYOrigin = x + y*inputSize.x + sb*inputSize.x*inputSize.y;
+                        int destY = destYOrigin / 4;
+                        int destXOffset = destYOrigin % 4;
+
+                        //Transpose
+                        color += texelFetch(uInput, ivec2(4*destX+destXOffset, destY), 0);
+                    }
+                }
+            }
+        }
+#ifdef RELU
+        color = max(color, vec4(0));
+#endif
+#ifdef RELU6
+        color = clamp(color, vec4(0), vec4(6));
+#endif
+
+        imageStore(uOutput, ivec2(pos.x + fz*uConstant.outputSize.x, pos.y + sb*uConstant.outputSize.y), color);
+    }
+}

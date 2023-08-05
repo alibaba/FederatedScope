@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/admin/gaodawei.gdw/FSDevice/MNN/tools/cpp/checkDir.cpp
+assert.h
+-
+stdio.h
+-
+cmath
+-
+fstream
+-
+string
+-
+vector
+-
+Windows.h
+-
+dirent.h
+-
+sys/stat.h
+-
+

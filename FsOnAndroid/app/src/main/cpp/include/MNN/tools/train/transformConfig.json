@@ -1,0 +1,17 @@
+{
+    "Train": true,
+    "Loss": {
+        "op": "output"
+    },
+    "Optimizor": {
+        "OnlyUpdateOps":[],
+        "NoUpdateOps":[],
+        "type": "SGD"
+    },
+    "Debug": {
+        "L2Norm": []
+    },
+    "Shape": {
+        "input": [1, 3, 224, 224]
+    }
+}

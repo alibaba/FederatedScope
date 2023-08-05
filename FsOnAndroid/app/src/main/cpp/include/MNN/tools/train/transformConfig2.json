@@ -1,0 +1,11 @@
+{
+    "Train": true,
+    "Optimizor": {
+        "OnlyUpdateOps":[],
+        "NoUpdateOps":[],
+        "type": "SGD"
+    },
+    "Debug": {
+        "L2Norm": []
+    }
+}

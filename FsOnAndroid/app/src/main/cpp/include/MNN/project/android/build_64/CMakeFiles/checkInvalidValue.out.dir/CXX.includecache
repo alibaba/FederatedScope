@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/admin/gaodawei.gdw/FSDevice/MNN/tools/cpp/checkInvalidValue.cpp
+assert.h
+-
+stdio.h
+-
+cmath
+-
+fstream
+-
+string
+-
+vector
+-
+stdlib.h
+-
+Windows.h
+-
+dirent.h
+-
+sys/stat.h
+-
+

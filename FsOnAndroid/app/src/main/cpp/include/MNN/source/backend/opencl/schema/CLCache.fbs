@@ -1,0 +1,33 @@
+namespace CLCache;
+attribute "priority";
+table TensorInfo {
+    shape:[int];
+}
+table OpInfo {
+    name:string;
+    type:int;
+    inputs:[TensorInfo];
+    outputs:[TensorInfo];
+}
+
+table Shader {
+    buffer:[byte];
+    program:string;
+    kernel:string;
+    buildInfo:string;
+}
+
+table Autotuning {
+    key:string;
+    gloablSize:[uint];
+    localSize:[uint];
+    timeCost:uint;
+}
+
+table Cache {
+    programs:[Shader];
+    tunings:[Autotuning];
+    tuned:[OpInfo];
+}
+
+root_type Cache;

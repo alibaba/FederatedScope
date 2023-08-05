@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android" android:duration="@dimen/duration_anim_activity">
+    <translate android:fromXDelta="-20%p" android:toXDelta="0%p"/>
+</set>

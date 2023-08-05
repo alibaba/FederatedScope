@@ -1,0 +1,12 @@
+# The Lib Prefix
+if (UNIX)
+  set(LIB_PFX "lib")
+  if (APPLE)
+    set(LIB_EXT ".dylib")
+  else ()
+    set(LIB_EXT ".so")
+  endif ()
+else (UNIX)
+  set(LIB_PFX "")
+  set(LIB_EXT ".dll")
+endif (UNIX)
