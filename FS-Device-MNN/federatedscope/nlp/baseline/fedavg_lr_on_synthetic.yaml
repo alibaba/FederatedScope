@@ -1,0 +1,29 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 5
+federate:
+  mode: standalone
+  total_round_num: 200
+  sample_client_rate: 0.2
+  client_num: 300
+data:
+  root: data/
+  type: synthetic
+  batch_size: 64
+  subsample: 1.0
+model:
+  type: lr
+  out_channels: 2
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 0.1
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nlptrainer
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']

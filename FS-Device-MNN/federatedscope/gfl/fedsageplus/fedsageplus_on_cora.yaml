@@ -1,0 +1,35 @@
+use_gpu: True
+device: 0
+federate:
+  mode: standalone
+  make_global_eval: True
+  client_num: 3
+  total_round_num: 100
+  method: fedsageplus
+train:
+  batch_or_epoch: epoch
+data:
+  root: data/
+  type: 'cora'
+  splitter: 'louvain'
+  batch_size: 1
+model:
+  type: sage
+  hidden: 64
+  dropout: 0.5
+  out_channels: 7
+fedsageplus:
+  num_pred: 5
+  gen_hidden: 64
+  hide_portion: 0.5
+  fedgen_epoch: 20
+  loc_epoch: 1
+  a: 1.0
+  b: 1.0
+  c: 1.0
+criterion:
+  type: 'CrossEntropyLoss'
+trainer:
+  type: nodefullbatch_trainer
+eval:
+  metrics: ['acc', 'correct']

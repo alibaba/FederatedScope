@@ -1,0 +1,33 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 1000
+federate:
+  mode: standalone
+  total_round_num: 100
+  client_num: 5
+data:
+  root: data/
+  type: HFLMovieLens1M
+  batch_size: 64
+  num_workers: 0
+model:
+  type: HMFNet
+  hidden: 20
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 1.
+criterion:
+  type: MSELoss
+trainer:
+  type: mftrainer
+eval:
+  freq: 2000
+  metrics: []
+sgdmf:
+  use: True
+  epsilon: 2.
+  delta: 0.5
+  R: 5.
+  theta: -1

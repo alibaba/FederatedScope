@@ -1,0 +1,31 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 20
+  improve_indicator_mode: mean
+federate:
+  mode: 'standalone'
+  make_global_eval: True
+  total_round_num: 400
+  client_num: 5
+data:
+  root: data/
+  type: hiv
+  splitter: scaffold
+model:
+  type: gcn
+  hidden: 64
+  out_channels: 2
+  task: graph
+train:
+  local_update_steps: 16
+  optimizer:
+    lr: 0.25
+    weight_decay: 0.0005
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: graphminibatch_trainer
+eval:
+  freq: 5
+  metrics: ['acc', 'correct', 'roc_auc']

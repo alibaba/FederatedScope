@@ -1,0 +1,33 @@
+use_gpu: True
+device: 0
+federate:
+  mode: 'standalone'
+  make_global_eval: True
+  total_round_num: 30
+  client_num: 4
+  sample_client_num: 3
+data:
+  root: data/
+  splitter: scaffold_lda
+  batch_size: 64
+  transform: ['AddSelfLoops']
+  splitter_args: [{'alpha': 0.1}]
+model:
+  type: mpnn
+  hidden: 64
+  task: graph
+  out_channels: 2
+flitplus:
+  tmpFed: 0.5
+  factor_ema: 0.8
+train:
+  local_update_steps: 333
+  optimizer:
+    type: 'Adam'
+    lr: 0.0001
+    weight_decay: 0.00001
+criterion:
+  type: CrossEntropyLoss
+eval:
+  freq: 50
+  metrics: ['roc_auc']

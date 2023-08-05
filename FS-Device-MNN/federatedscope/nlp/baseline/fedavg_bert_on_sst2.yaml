@@ -1,0 +1,35 @@
+use_gpu: True
+device: 2
+federate:
+  mode: standalone
+  total_round_num: 40
+  client_num: 5
+  share_local_model: True
+  online_aggr: True
+  sample_client_rate: 1.0
+data:
+  root: 'glue'
+  type: 'sst2@huggingface_datasets'
+  args: [{'max_len': 512}]
+  batch_size: 128
+  splitter: 'lda'
+  splitter_args: [{'alpha': 0.5}]
+  num_workers: 0
+model:
+  type: 'google/bert_uncased_L-2_H-128_A-2@transformers'
+  task: 'SequenceClassification'
+  out_channels: 2
+train:
+  local_update_steps: 1
+  batch_or_epoch: 'epoch'
+  optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+criterion:
+  type: 'CrossEntropyLoss'
+trainer:
+  type: 'nlptrainer'
+eval:
+  freq: 2
+  metrics: ['acc', 'correct', 'f1']
+  split: ['val', 'train']

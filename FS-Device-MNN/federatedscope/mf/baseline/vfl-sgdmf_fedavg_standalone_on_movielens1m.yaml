@@ -1,0 +1,33 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 200
+federate:
+  mode: standalone
+  total_round_num: 20
+  client_num: 5
+data:
+  root: data/
+  type: VFLMovieLens1M
+  batch_size: 8
+  num_workers: 0
+model:
+  type: VMFNet
+  hidden: 20
+train:
+  local_update_steps: 50
+  optimizer:
+    lr: 0.5
+criterion:
+  type: MSELoss
+trainer:
+  type: mftrainer
+eval:
+  freq: 2000
+  metrics: []
+sgdmf:
+  use: True
+  epsilon: 4.
+  delta: 0.75
+  R: 5.
+  theta: -1

@@ -1,0 +1,33 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 10
+federate:
+  mode: standalone
+  total_round_num: 100
+  sample_client_num: 10
+data:
+  root: data/
+  type: celeba
+  splits: [0.6,0.2,0.2]
+  batch_size: 5
+  subsample: 0.1
+  num_workers: 0
+  transform: [['ToTensor'], ['Normalize', {'mean': [0.1307], 'std': [0.3081]}]]
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 2
+  dropout: 0.0
+train:
+  local_update_steps: 10
+  optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: cvtrainer
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']

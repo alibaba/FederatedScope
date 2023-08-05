@@ -1,0 +1,31 @@
+use_gpu: True
+expname: 'FEMNIST_GeneralFL'
+outdir: '../exp'
+federate:
+  client_num: 3596
+  sample_client_rate: -1
+  sample_client_num: 500
+  mode: 'distributed'
+  total_round_num: 200
+  min_received_num: 100
+  agg_time_budget: 60
+distribute:
+  use: True
+  server_host: '0.0.0.0'
+  server_port: 50050
+  role: 'server'
+eval:
+  freq: 300
+  report: ['weighted_avg', 'fairness', 'raw']
+  best_res_update_round_wise_key: 'val_acc'
+early_stop:
+  patience: 5
+  delta: 0.
+  the_smaller_the_better: False
+data:
+  type: 'femnist'
+model:
+  type: 'convnet2'
+  hidden: 1024
+  out_channels: 62
+  input_shape: (1, 28, 28)

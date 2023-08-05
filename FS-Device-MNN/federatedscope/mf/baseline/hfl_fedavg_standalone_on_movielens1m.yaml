@@ -1,0 +1,27 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 100
+federate:
+  mode: standalone
+  total_round_num: 100
+  client_num: 5
+data:
+  root: data/
+  type: HFLMovieLens1M
+  batch_size: 64
+  num_workers: 0
+model:
+  type: HMFNet
+  hidden: 20
+train:
+  local_update_steps: 50
+  optimizer:
+    lr: 1.
+criterion:
+  type: MSELoss
+trainer:
+  type: mftrainer
+eval:
+  freq: 100
+  metrics: []

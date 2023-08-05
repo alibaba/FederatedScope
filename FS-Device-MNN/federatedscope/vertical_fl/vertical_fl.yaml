@@ -1,0 +1,22 @@
+use_gpu: False
+federate:
+  mode: standalone
+  client_num: 2
+  total_round_num: 30
+model:
+  type: lr
+  use_bias: False
+train:
+  optimizer:
+    lr: 0.05
+data:
+  type: vertical_fl_data
+  batch_size: 50
+vertical:
+  use: True
+  key_size: 256
+trainer:
+  type: none
+eval:
+  freq: 5
+  best_res_update_round_wise_key: test_loss

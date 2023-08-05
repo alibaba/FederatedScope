@@ -1,0 +1,31 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 100
+  improve_indicator_mode: mean
+federate:
+  mode: standalone
+  make_global_eval: True
+  total_round_num: 400
+data:
+  root: data/
+  loader: graphsaint-rw
+  batch_size: 256
+  type: dblp_conf
+model:
+  type: sage
+  hidden: 1024
+  out_channels: 4
+  task: node
+train:
+  local_update_steps: 16
+  optimizer:
+    lr: 0.05
+    weight_decay: 0.0005
+    type: SGD
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: nodeminibatch_trainer
+eval:
+  metrics: ['acc', 'correct']

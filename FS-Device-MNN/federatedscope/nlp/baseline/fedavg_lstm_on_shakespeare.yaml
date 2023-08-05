@@ -1,0 +1,35 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 10
+federate:
+  mode: standalone
+  total_round_num: 1000
+  sample_client_rate: 0.2
+data:
+  root: data/
+  type: shakespeare
+  batch_size: 64
+  subsample: 0.2
+  num_workers: 0
+  splits: [0.6,0.2,0.2]
+model:
+  type: lstm
+  in_channels: 80
+  out_channels: 80
+  embed_size: 8
+  hidden: 256
+  dropout: 0.0
+train:
+  local_update_steps: 1
+  batch_or_epoch: epoch
+  optimizer:
+    lr: 0.8
+    weight_decay: 0.0
+criterion:
+  type: character_loss
+trainer:
+  type: nlptrainer
+eval:
+  freq: 10
+  metrics: ['acc', 'correct']
