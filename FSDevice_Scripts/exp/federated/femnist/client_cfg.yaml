@@ -1,0 +1,23 @@
+data:
+  batch_size: 16
+  root: "/data/user/0/com.example.fsandroid/files/"
+  type: "femnist"
+distribute:
+  device_port: 50078
+  report_host: ""
+  report_port: 50078
+  server_host: ""
+  server_port: 50051
+model:
+  type: "ConvNet2"
+optimizer:
+  lr: 0.001
+  momentum: 0.0
+  weight_decay: 0.0
+task:
+  criterion: "CrossEntropyLoss"
+  type: "classification"
+  category: 62
+train:
+  auto_start: true
+  local_update_steps: 1

@@ -1,0 +1,18 @@
+workdir: "exp/federated/femnist"
+sampler: "fix"
+server:
+  host: "xxx.xxx.xxx.xxx"
+  port: 50050
+  workdir: "/root/FS-Device"
+  user: ""
+  passwd: ""
+machine:
+  host_path: "exp/federated/femnist/machines.txt"
+  workdir: "/root/FS-Device"
+  user: ""
+  passwd: ""
+fl:
+  n_client: 503
+  cfg_path: "exp/federated/femnist/client_cfg.yaml"
+  apk_path: "material/apk/fsandroid/debug/app-debug.apk"
+  avd_path: "material/avd/test_x86.zip"
