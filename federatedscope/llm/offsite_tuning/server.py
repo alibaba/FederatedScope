@@ -1,3 +1,4 @@
+import os
 import logging
 
 from federatedscope.core.message import Message
@@ -49,6 +50,8 @@ class OffsiteTuningServer(Server):
                                                     monitor=Monitor(
                                                         config,
                                                         monitored_object=self))
+            if config.llm.offsite_tuning.emu_align.exit_after_align:
+                os._exit(0)
         # No need for this attr
         if hasattr(adap_model, 'teacher'):
             del adap_model.teacher

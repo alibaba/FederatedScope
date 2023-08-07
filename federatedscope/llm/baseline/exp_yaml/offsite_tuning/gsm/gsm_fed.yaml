@@ -34,10 +34,10 @@ llm:
       train:
         local_update_steps: 500
         batch_or_epoch: 'batch'
-        lm_loss_weight: 0.1
-        kd_loss_weight: 0.9
+        lm_loss_weight: 0.0
+        kd_loss_weight: 1.0
         optimizer:
-          lr: 0.001
+          lr: 0.0001
 dataloader:
   batch_size: 1
 model:
