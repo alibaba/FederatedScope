@@ -2,6 +2,8 @@ import sys
 import logging
 import torch
 import transformers
+import os
+import gc
 
 transformers.logging.set_verbosity(40)
 
@@ -18,29 +20,57 @@ logger = logging.getLogger(__name__)
 
 class FSChatBot(object):
     def __init__(self, config):
-        model_name, _ = config.model.type.split('@')
-        self.tokenizer, _ = get_tokenizer(model_name, config.data.root,
-                                          config.llm.tok_len)
-        self.model = get_llm(config)
+        self.config = config
 
         self.device = f'cuda:{config.device}'
         self.add_special_tokens = True
 
-        if config.llm.offsite_tuning.use:
-            from federatedscope.llm.offsite_tuning.utils import \
-                wrap_offsite_tuning_for_eval
-            self.model = wrap_offsite_tuning_for_eval(self.model, config)
-        else:
-            try:
-                ckpt = torch.load(config.federate.save_to, map_location='cpu')
+        self.prefix = ['']
+        self.dirname, self.filename = os.path.split(config.federate.save_to)
+        self.next_model()
+
+    def next_model(self):
+        if hasattr(self, 'model'):
+            delattr(self, 'model')
+            gc.collect()
+
+        model_name, _ = self.config.model.type.split('@')
+        self.tokenizer, _ = get_tokenizer(model_name, self.config.data.root,
+                                          self.config.llm.tok_len)
+        self.model = get_llm(self.config)
+
+        self.curpfx = None
+        for pre in self.prefix:
+            if os.path.exists(os.path.join(self.dirname, pre + self.filename)):
+                self.curpfx = pre
+                break
+
+        # Load model from the checkpoints
+        if self.curpfx is not None:
+            ckpt_path = os.path.join(self.dirname, self.curpfx + self.filename)
+            if self.config.llm.offsite_tuning.use:
+                from federatedscope.llm.offsite_tuning.utils import \
+                    wrap_offsite_tuning_for_eval
+                self.model = wrap_offsite_tuning_for_eval(
+                    self.model, self.config, ckpt_path)
+            else:
+                ckpt = torch.load(ckpt_path, map_location='cpu')
                 if 'model' and 'cur_round' in ckpt:
                     self.model.load_state_dict(ckpt['model'])
+                    logger.info(
+                        f"Load with the model of Round {ckpt['cur_round']}")
                 else:
                     self.model.load_state_dict(ckpt)
-            except Exception as error:
-                print(f"{error}, will use raw model.")
+            logger.info(f'Model loads from the checkpoint {ckpt_path}')
 
-        if config.train.is_enable_half:
+            # remove the prefix up to the current one
+            self.prefix = self.prefix[self.prefix.index(self.curpfx) + 1:]
+        elif len(self.prefix) > 1:
+            logger.info("will use raw model.")
+        else:
+            raise ValueError('No more model is able to us')
+
+        if self.config.train.is_enable_half:
             self.model.half()
 
         self.model = self.model.to(self.device)
@@ -48,8 +78,8 @@ class FSChatBot(object):
         if torch.__version__ >= "2" and sys.platform != "win32":
             self.model = torch.compile(self.model)
 
-        self.max_history_len = config.llm.chat.max_history_len
-        self.max_len = config.llm.chat.max_len
+        self.max_history_len = self.config.llm.chat.max_history_len
+        self.max_len = self.config.llm.chat.max_len
         self.history = []
 
     def _build_prompt(self, input_text):
@@ -123,8 +153,8 @@ def main():
     setup_seed(init_cfg.seed)
 
     chat_bot = FSChatBot(init_cfg)
-    welcome = "Welcome to FSChatBot，" \
-              "`clear` to clear history，" \
+    welcome = "Welcome to FSChatBot, " \
+              "`clear` to clear history, " \
               "`quit` to end chat."
     print(welcome)
     while True:
