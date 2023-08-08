@@ -55,14 +55,15 @@ class OffsiteTuningServer(Server):
         super(OffsiteTuningServer,
               self).__init__(ID, state, config, data, adap_model, client_num,
                              total_round_num, device, strategy, **kwargs)
-        self.raw_model_trainer = get_trainer(model=self.raw_model,
-                                             data=self.data,
-                                             device=self.device,
-                                             config=self._cfg,
-                                             only_for_eval=True,
-                                             monitor=Monitor(
-                                                 self._cfg,
-                                                 monitored_object=self))
+        if self._cfg.llm.offsite_tuning.eval_type == 'full':
+            self.raw_model_trainer = get_trainer(model=self.raw_model,
+                                                 data=self.data,
+                                                 device=self.device,
+                                                 config=self._cfg,
+                                                 only_for_eval=True,
+                                                 monitor=Monitor(
+                                                     self._cfg,
+                                                     monitored_object=self))
 
     def trigger_for_feat_engr(self,
                               trigger_train_func,
