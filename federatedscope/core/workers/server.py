@@ -621,8 +621,7 @@ class Server(BaseServer):
                 self._monitor.save_formatted_results(formatted_logs)
 
                 update_prior = -1  # Bigger the higher priority
-                update_prior_list = ['weighted_avg', 'avg',
-                                     'fairness'].reverse()
+                update_prior_list = ['fairness', 'avg', 'weighted_avg']
                 update_best_this_round = False
                 for form in self._cfg.eval.report:
                     if form in update_prior_list:
@@ -639,7 +638,7 @@ class Server(BaseServer):
                                 results_type=f"unseen_client_summarized_{form}"
                                 if merge_type == "unseen" else
                                 f"client_summarized_{form}")
-                        if update_prior >= update_prior_tmp:
+                        if update_prior_tmp >= update_prior:
                             update_prior = update_prior_tmp
                             update_best_this_round = update_best_this_round_tmp
                 if update_best_this_round:
