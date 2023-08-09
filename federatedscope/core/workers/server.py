@@ -612,11 +612,36 @@ class Server(BaseServer):
                             del formatted_logs[key]
                 logger.info(formatted_logs)
                 formatted_logs_all_set.update(formatted_logs)
-                update_best_this_round = self._monitor.update_best_result(
+                self._monitor.update_best_result(
                     self.best_results,
                     metrics_all_clients,
                     results_type="unseen_client_best_individual"
                     if merge_type == "unseen" else "client_best_individual")
+
+                self._monitor.save_formatted_results(formatted_logs)
+
+                update_prior = -1  # Bigger the higher priority
+                update_prior_list = ['weighted_avg', 'avg',
+                                     'fairness'].reverse()
+                update_best_this_round = False
+                for form in self._cfg.eval.report:
+                    if form in update_prior_list:
+                        update_prior_tmp = update_prior_list.index(form)
+                    else:
+                        update_prior_tmp = -1
+                    if form != "raw":
+                        metric_name = form + "_unseen" if merge_type == \
+                                                          "unseen" else form
+                        update_best_this_round_tmp = \
+                            self._monitor.update_best_result(
+                                self.best_results,
+                                formatted_logs[f"Results_{metric_name}"],
+                                results_type=f"unseen_client_summarized_{form}"
+                                if merge_type == "unseen" else
+                                f"client_summarized_{form}")
+                        if update_prior >= update_prior_tmp:
+                            update_prior = update_prior_tmp
+                            update_best_this_round = update_best_this_round_tmp
                 if update_best_this_round:
                     # When the frequency of evaluations is high,
                     # the frequency of writing to disk in the early stages
@@ -624,17 +649,6 @@ class Server(BaseServer):
                     if self._cfg.federate.save_to != '':
                         self.aggregator.save_model(self._cfg.federate.save_to,
                                                    self.state)
-                self._monitor.save_formatted_results(formatted_logs)
-                for form in self._cfg.eval.report:
-                    if form != "raw":
-                        metric_name = form + "_unseen" if merge_type == \
-                                                          "unseen" else form
-                        self._monitor.update_best_result(
-                            self.best_results,
-                            formatted_logs[f"Results_{metric_name}"],
-                            results_type=f"unseen_client_summarized_{form}"
-                            if merge_type == "unseen" else
-                            f"client_summarized_{form}")
 
         return formatted_logs_all_set
 
