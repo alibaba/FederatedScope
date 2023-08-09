@@ -9,7 +9,7 @@ from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.workers.server import Server
 
 from federatedscope.llm.offsite_tuning.utils import \
-    generate_emulator_and_adapter, align_student_with_teacher
+    generate_adap_model, align_student_with_teacher
 
 logger = logging.getLogger(__name__)
 
@@ -30,17 +30,8 @@ class OffsiteTuningServer(Server):
                  device='cpu',
                  strategy=None,
                  **kwargs):
-        compress_strategy = config.llm.offsite_tuning.strategy
-        emulator_l = config.llm.offsite_tuning.emu_l
-        emulator_r = config.llm.offsite_tuning.emu_r
-        offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
         logger.info('Server: Generating emulator and adapter...')
-        adap_model = \
-            generate_emulator_and_adapter(model,
-                                          strategy=compress_strategy,
-                                          emulator_l=emulator_l,
-                                          emulator_r=emulator_r,
-                                          **offsite_tuning_kwargs)
+        adap_model = generate_adap_model(model, config.llm.offsite_tuning)
         # Emulator alignment
         if config.llm.offsite_tuning.emu_align.use:
             adap_model = align_student_with_teacher(raw_model=model,
@@ -54,7 +45,11 @@ class OffsiteTuningServer(Server):
                 os._exit(0)
         # No need for this attr
         if hasattr(adap_model, 'teacher'):
+            import gc
+            import torch
             del adap_model.teacher
+            gc.collect()
+            torch.cuda.empty_cache()
 
         self.raw_model = model
         super(OffsiteTuningServer,

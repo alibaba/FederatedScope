@@ -95,7 +95,7 @@ def get_layers(adapter_model):
     return layers
 
 
-def set_layers(adapter_model, layers, emu_l=0, emu_r=-1):
+def set_layers(adapter_model, layers):
     if isinstance(adapter_model.model, OPTForCausalLM):
         adapter_model.model.model.decoder.layers = layers
     elif isinstance(adapter_model.model, GPT2LMHeadModel):
@@ -109,12 +109,6 @@ def set_layers(adapter_model, layers, emu_l=0, emu_r=-1):
         logger.warning(f'Model {type(adapter_model.model)} not support, '
                        f'use default setting.')
         adapter_model.model.transformer.h = layers
-    adapter_model.student = layers[emu_l:emu_r]
-    adapter_model.adapter = layers[:emu_l] + layers[emu_r:]
-    add_prologue(adapter_model.student[0], None)
-    add_epilogue(adapter_model.student[-1], None)
-    adapter_model.student_l = adapter_model.student[0]
-    adapter_model.student_r = adapter_model.student[-1]
     return adapter_model
 
 
@@ -152,13 +146,31 @@ COMP_FUNC_MAPPING = {
 }
 
 
+def generate_adap_model(model: AdapterModel, offsite_tuning_cfg):
+    if offsite_tuning_cfg.strategy in COMP_FUNC_MAPPING.keys():
+        compress_strategy = offsite_tuning_cfg.strategy
+        emulator_l = offsite_tuning_cfg.emu_l
+        emulator_r = offsite_tuning_cfg.emu_r
+        emu_align = offsite_tuning_cfg.emu_align.use
+        offsite_tuning_kwargs = offsite_tuning_cfg.kwargs[0]
+        return generate_emulator_and_adapter(model,
+                                             strategy=compress_strategy,
+                                             emulator_l=emulator_l,
+                                             emulator_r=emulator_r,
+                                             emulator_alignment=emu_align,
+                                             **offsite_tuning_kwargs)
+    else:
+        raise NotImplementedError
+
+
 def generate_emulator_and_adapter(model: AdapterModel,
                                   strategy='drop_layer',
-                                  emulator_l=1,
+                                  emulator_l=0,
                                   emulator_r=1000,
+                                  emulator_alignment=False,
                                   **kwargs):
     layers = get_layers(model)
-    l, r = max(emulator_l, 1), min(emulator_r, len(layers) - 1)
+    l, r = max(emulator_l, 0), min(emulator_r, len(layers) - 1)
 
     # Set the to-compress part untrainable
     for layer in layers[l:r]:
@@ -186,7 +198,14 @@ def generate_emulator_and_adapter(model: AdapterModel,
 
     new_model = copy.deepcopy(model)
     # Set student model
-    new_model = set_layers(new_model, emulator_and_adapter, l, r)
+    new_model = set_layers(new_model, emulator_and_adapter)
+
+    if emulator_alignment:
+        new_model.student = layers
+        add_prologue(new_model.student[0], None)
+        add_epilogue(new_model.student[-1], None)
+        new_model.student_l = new_model.student[0]
+        new_model.student_r = new_model.student[-1]
 
     gc.collect()
     torch.cuda.empty_cache()
@@ -303,20 +322,11 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
     return adap_model
 
 
-def wrap_offsite_tuning_for_eval(model, config):
+def wrap_offsite_tuning_for_eval(model, config, ckpt_path=None):
     logger.info('===============use offsite tuning===============')
     # We use offsite-tuning in this experiment
     # Use adapter model instead
-    compress_strategy = config.llm.offsite_tuning.strategy
-    emulator_l = config.llm.offsite_tuning.emu_l
-    emulator_r = config.llm.offsite_tuning.emu_r
-    offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
-    adap_model = \
-        generate_emulator_and_adapter(model,
-                                      strategy=compress_strategy,
-                                      emulator_l=emulator_l,
-                                      emulator_r=emulator_r,
-                                      **offsite_tuning_kwargs)
+    adap_model = generate_adap_model(model, config.llm.offsite_tuning)
     # Load kd model if ckpt exits
     if config.llm.offsite_tuning.emu_align.use and \
             config.llm.offsite_tuning.eval_type == 'emu':
@@ -333,9 +343,12 @@ def wrap_offsite_tuning_for_eval(model, config):
 
     # Load ckpt for eval
     try:
-        ckpt = torch.load(config.federate.save_to, map_location='cpu')
+        if ckpt_path is None:
+            ckpt_path = config.federate.save_to
+        ckpt = torch.load(ckpt_path, map_location='cpu')
         if 'model' and 'cur_round' in ckpt:
             adap_model.load_state_dict(ckpt['model'])
+            logger.info(f"Load with the model of Round {ckpt['cur_round']}")
         else:
             adap_model.load_state_dict(ckpt)
     except Exception as error:
@@ -343,7 +356,8 @@ def wrap_offsite_tuning_for_eval(model, config):
 
     if config.llm.offsite_tuning.eval_type == 'emu':
         model = adap_model
-        del model.teacher
+        if hasattr(model, 'teacher'):
+            del model.teacher
     elif config.llm.offsite_tuning.eval_type == 'full':
         # Raw model load adapter from adapter_and_emulator
         new_model_state_dict = model.state_dict()
