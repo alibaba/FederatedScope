@@ -175,10 +175,12 @@ def generate_emulator_and_adapter(model: AdapterModel,
     # Adapter before Emulator
     for idx in range(l):
         emulator_and_adapter.append(layers[idx])
+    emu_l = l
 
     # Emulator
     for idx in range(len(emulator)):
         emulator_and_adapter.append(emulator[idx])
+    emu_r = emu_l + len(emulator)
 
     # Adapter after Emulator
     for idx in range(r, len(layers)):
@@ -188,7 +190,7 @@ def generate_emulator_and_adapter(model: AdapterModel,
     new_model = copy.deepcopy(model)
     new_emulator_and_adapter = copy.deepcopy(emulator_and_adapter)
     # Set student model
-    new_model = set_layers(new_model, new_emulator_and_adapter, l, r)
+    new_model = set_layers(new_model, new_emulator_and_adapter, emu_l, emu_r)
 
     gc.collect()
     torch.cuda.empty_cache()
