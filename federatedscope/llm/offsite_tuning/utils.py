@@ -184,9 +184,11 @@ def generate_emulator_and_adapter(model: AdapterModel,
     for idx in range(r, len(layers)):
         emulator_and_adapter.append(layers[idx])
 
+    # Need keep raw model when kd applied
     new_model = copy.deepcopy(model)
+    new_emulator_and_adapter = copy.deepcopy(emulator_and_adapter)
     # Set student model
-    new_model = set_layers(new_model, emulator_and_adapter, l, r)
+    new_model = set_layers(new_model, new_emulator_and_adapter, l, r)
 
     gc.collect()
     torch.cuda.empty_cache()
