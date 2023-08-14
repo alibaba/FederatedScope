@@ -1,0 +1,38 @@
+use_gpu: True
+device: 3
+early_stop:
+  patience: 10
+federate:
+  mode: standalone
+  client_num: 1
+  total_round_num: 200
+  save_to: "gpt2.ckpt"
+  share_local_model: False
+  online_aggr: False
+data:
+  root: data/
+  type: 'alpaca@llm'
+  splits: [0.98,0.01,0.01]
+  splitter: 'iid'
+llm:
+  tok_len: 1000
+  chat:
+    max_len: 1000
+dataloader:
+  batch_size: 1
+model:
+  type: 'gpt2@huggingface_llm'
+train:
+  local_update_steps: 10
+  batch_or_epoch: batch
+  optimizer:
+    type: LOMO
+    lr: 0.0001
+    weight_decay: 0.0
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: llmtrainer
+eval:
+  freq: 1
+  metrics: ['loss']
