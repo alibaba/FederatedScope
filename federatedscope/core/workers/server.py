@@ -648,8 +648,7 @@ class Server(BaseServer):
                     # When the frequency of evaluations is high,
                     # the frequency of writing to disk in the early stages
                     # may also be high
-                    if self._cfg.federate.save_to != '' and self.ds_rank(
-                    ) == 0:
+                    if self._cfg.federate.save_to != '' and self.ds_rank == 0:
                         self.aggregator.save_model(self._cfg.federate.save_to,
                                                    self.state)
 
