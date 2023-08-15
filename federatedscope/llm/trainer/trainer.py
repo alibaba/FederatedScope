@@ -118,13 +118,24 @@ class LLMTrainer(GeneralTorchTrainer):
         ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
 
     def _hook_on_fit_end(self, ctx):
+        avg_loss = 0 if float(
+            ctx.num_samples) == 0 else ctx.loss_batch_total / float(
+                ctx.num_samples)
         eval_results = {
             f'{ctx.cur_split}_loss': ctx.loss_batch_total,
             f'{ctx.cur_split}_total': ctx.num_samples,
-            f'{ctx.cur_split}_avg_loss': ctx.loss_batch_total /
-            float(ctx.num_samples),
+            f'{ctx.cur_split}_avg_loss': avg_loss,
         }
         setattr(ctx, 'eval_metrics', eval_results)
+
+        # TODO: make this as a hook function
+        # Move trainable part to `cpu`, which can save memory but cost time
+        if ctx.cfg.llm.adapter.mv_to_cpu:
+            for p in ctx.model.parameters():
+                if p.requires_grad:
+                    p.data = p.to('cpu')
+                    if p.grad is not None:
+                        p.grad.data = p.grad.to('cpu')
 
     def _hook_on_batch_forward_flop_count(self, ctx):
         """
@@ -142,6 +153,11 @@ class LLMTrainer(GeneralTorchTrainer):
             ``ctx.monitor``                     Track average flops
             ==================================  ===========================
         """
+
+        # The process may occupy a large amount of video memory
+        # if the garbage collection is not triggered in time
+        # when there is plenty of video memory left. Set
+        # `eval.count_flops = False` to avoid this.
         if not isinstance(ctx.monitor, Monitor):
             logger.warning(
                 f"The trainer {type(self)} does contain a valid monitor, "
@@ -167,6 +183,11 @@ class LLMTrainer(GeneralTorchTrainer):
                         ctx.model, inputs=(input_ids, attention_mask)).total()
                 ctx.monitor.track_avg_flops(flops_one_batch, ctx.batch_size)
             except Exception as e:
+                logger.warning("When using count flops functions, torch's "
+                               "garbage collection mechanism may not be "
+                               "timely resulting in OOM, please set "
+                               "`cfg.eval.count_flops` to `False` "
+                               "to avoid error or warning like this.")
                 logger.error(e)
                 # Raise warning at the first failure
                 logger.warning(

@@ -10,8 +10,6 @@ from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.llm.dataloader.dataloader import get_tokenizer
 from federatedscope.llm.model.model_builder import get_llm
 from federatedscope.llm.dataset.llm_dataset import PROMPT_DICT
-from federatedscope.llm.offsite_tuning.utils import \
-    generate_emulator_and_adapter
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 
@@ -24,37 +22,28 @@ class FSChatBot(object):
         self.tokenizer, _ = get_tokenizer(model_name, config.data.root,
                                           config.llm.tok_len)
         self.model = get_llm(config)
-        if config.llm.offsite_tuning.use:
-            logger.info('===============use offsite tuning===============')
-            # We use offsite-tuning in this experiment
-            # Use adapter model instead
-            compress_strategy = config.llm.offsite_tuning.strategy
-            emulator_l = config.llm.offsite_tuning.emu_l
-            emulator_r = config.llm.offsite_tuning.emu_r
-            offsite_tuning_kwargs = config.llm.offsite_tuning.kwargs[0]
-            self.model = \
-                generate_emulator_and_adapter(self.model,
-                                              strategy=compress_strategy,
-                                              emulator_l=emulator_l,
-                                              emulator_r=emulator_r,
-                                              **offsite_tuning_kwargs)
 
         self.device = f'cuda:{config.device}'
         self.add_special_tokens = True
 
-        try:
-            ckpt = torch.load(config.federate.save_to, map_location='cpu')
-            if 'model' and 'cur_round' in ckpt:
-                self.model.load_state_dict(ckpt['model'])
-            else:
-                self.model.load_state_dict(ckpt)
-        except Exception as error:
-            print(f"{error}, will use raw model.")
+        if config.llm.offsite_tuning.use:
+            from federatedscope.llm.offsite_tuning.utils import \
+                wrap_offsite_tuning_for_eval
+            self.model = wrap_offsite_tuning_for_eval(self.model, config)
+        else:
+            try:
+                ckpt = torch.load(config.federate.save_to, map_location='cpu')
+                if 'model' and 'cur_round' in ckpt:
+                    self.model.load_state_dict(ckpt['model'])
+                else:
+                    self.model.load_state_dict(ckpt)
+            except Exception as error:
+                print(f"{error}, will use raw model.")
 
         if config.train.is_enable_half:
-            self.model.half().to(self.device)
-        else:
-            self.model.to(self.device)
+            self.model.half()
+
+        self.model = self.model.to(self.device)
         self.model = self.model.eval()
         if torch.__version__ >= "2" and sys.platform != "win32":
             self.model = torch.compile(self.model)
@@ -80,7 +69,7 @@ class FSChatBot(object):
             input_ids.extend(text_ids)
         input_ids = torch.tensor(input_ids).long()
         input_ids = input_ids.unsqueeze(0).to(self.device)
-        response = self.model.generate(input_ids,
+        response = self.model.generate(input_ids=input_ids,
                                        max_new_tokens=self.max_len,
                                        num_beams=4,
                                        no_repeat_ngram_size=2,

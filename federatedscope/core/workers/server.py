@@ -13,7 +13,7 @@ from federatedscope.core.communication import StandaloneCommManager, \
 from federatedscope.core.auxiliaries.aggregator_builder import get_aggregator
 from federatedscope.core.auxiliaries.sampler_builder import get_sampler
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
-    Timeout, merge_param_dict, get_ds_rank
+    Timeout, merge_param_dict, add_prefix_to_path, get_ds_rank
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
@@ -93,6 +93,8 @@ class Server(BaseServer):
         if self._cfg.federate.share_local_model \
                 and not self._cfg.federate.process_num > 1 \
                 and not self._cfg.llm.deepspeed.use:
+            if self._cfg.train.is_enable_half:
+                model = model.half()
             # put the model to the specified device
             model.to(device)
         # Build aggregator
@@ -107,7 +109,8 @@ class Server(BaseServer):
                                f' {self._cfg.federate.restore_from}.')
             else:
                 _ = self.aggregator.load_model(self._cfg.federate.restore_from)
-                logger.info("Restored the model from {}-th round's ckpt")
+                logger.info(f"Restored the model from "
+                            f"{self._cfg.federate.restore_from}")
 
         if int(config.model.model_num_per_trainer) != \
                 config.model.model_num_per_trainer or \
@@ -407,7 +410,8 @@ class Server(BaseServer):
         if self.state != self.total_round_num and \
                 self.state % self._cfg.federate.save_freq == 0 and \
                 self._cfg.federate.save_freq > 0:
-            path = f'{self.state}_' + self._cfg.federate.save_to
+            path = add_prefix_to_path(f'{self.state}_',
+                                      self._cfg.federate.save_to)
             self.aggregator.save_model(path, self.state)
 
         if should_stop or self.state == self.total_round_num:
@@ -528,10 +532,11 @@ class Server(BaseServer):
         """
         To Save the best evaluation results.
         """
-
+        # Save final round model
         if self._cfg.federate.save_to != '':
-            self.aggregator.save_model(f'final_{self._cfg.federate.save_to}',
-                                       self.state)
+            self.aggregator.save_model(
+                add_prefix_to_path('final_', self._cfg.federate.save_to),
+                self.state)
         formatted_best_res = self._monitor.format_eval_res(
             results=self.best_results,
             rnd="Final",
@@ -609,11 +614,35 @@ class Server(BaseServer):
                             del formatted_logs[key]
                 logger.info(formatted_logs)
                 formatted_logs_all_set.update(formatted_logs)
-                update_best_this_round = self._monitor.update_best_result(
+                self._monitor.update_best_result(
                     self.best_results,
                     metrics_all_clients,
                     results_type="unseen_client_best_individual"
                     if merge_type == "unseen" else "client_best_individual")
+
+                self._monitor.save_formatted_results(formatted_logs)
+
+                update_prior = -1  # Bigger the higher priority
+                update_prior_list = ['fairness', 'avg', 'weighted_avg']
+                update_best_this_round = False
+                for form in self._cfg.eval.report:
+                    if form in update_prior_list:
+                        update_prior_tmp = update_prior_list.index(form)
+                    else:
+                        update_prior_tmp = -1
+                    if form != "raw":
+                        metric_name = form + "_unseen" if merge_type == \
+                                                          "unseen" else form
+                        update_best_this_round_tmp = \
+                            self._monitor.update_best_result(
+                                self.best_results,
+                                formatted_logs[f"Results_{metric_name}"],
+                                results_type=f"unseen_client_summarized_{form}"
+                                if merge_type == "unseen" else
+                                f"client_summarized_{form}")
+                        if update_prior_tmp >= update_prior:
+                            update_prior = update_prior_tmp
+                            update_best_this_round = update_best_this_round_tmp
                 if update_best_this_round:
                     # When the frequency of evaluations is high,
                     # the frequency of writing to disk in the early stages
@@ -621,17 +650,6 @@ class Server(BaseServer):
                     if self._cfg.federate.save_to != '':
                         self.aggregator.save_model(self._cfg.federate.save_to,
                                                    self.state)
-                self._monitor.save_formatted_results(formatted_logs)
-                for form in self._cfg.eval.report:
-                    if form != "raw":
-                        metric_name = form + "_unseen" if merge_type == \
-                                                          "unseen" else form
-                        self._monitor.update_best_result(
-                            self.best_results,
-                            formatted_logs[f"Results_{metric_name}"],
-                            results_type=f"unseen_client_summarized_{form}"
-                            if merge_type == "unseen" else
-                            f"client_summarized_{form}")
 
         return formatted_logs_all_set
 
@@ -676,11 +694,23 @@ class Server(BaseServer):
                                      self.models[model_idx_i])
 
         skip_broadcast = self._cfg.federate.method in ["local", "global"]
-        if self.model_num > 1:
-            model_para = [{} if skip_broadcast else model.state_dict()
-                          for model in self.models]
+        if self._cfg.federate.share_local_model and not \
+                self._cfg.federate.online_aggr:
+            if self.model_num > 1:
+                model_para = [
+                    {} if skip_broadcast else copy.deepcopy(model.state_dict())
+                    for model in self.models
+                ]
+            else:
+                model_para = {} if skip_broadcast else copy.deepcopy(
+                    self.models[0].state_dict())
         else:
-            model_para = {} if skip_broadcast else self.models[0].state_dict()
+            if self.model_num > 1:
+                model_para = [{} if skip_broadcast else model.state_dict()
+                              for model in self.models]
+            else:
+                model_para = {} if skip_broadcast else self.models[
+                    0].state_dict()
 
         # quantization
         if msg_type == 'model_para' and not skip_broadcast and \

@@ -181,3 +181,8 @@ def get_resource_info(filename):
 
 def get_ds_rank():
     return int(os.environ.get("RANK", "0"))
+
+
+def add_prefix_to_path(prefix, path):
+    directory, file = os.path.split(path)
+    return os.path.join(directory, prefix + file)

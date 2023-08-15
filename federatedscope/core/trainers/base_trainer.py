@@ -33,3 +33,6 @@ class BaseTrainer(abc.ABC):
         meta_info = tuple([(val.name, getattr(self, val.name))
                            for val in sign])
         return f'{self.__class__.__name__}{meta_info}'
+
+    def save_model(self, path, cur_round):
+        raise NotImplementedError

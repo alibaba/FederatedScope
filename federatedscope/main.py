@@ -55,7 +55,9 @@ if __name__ == '__main__':
 
     if init_cfg.federate.client_idx_for_local_train != 0:
         init_cfg.federate.client_num = 1
-        data = {1: data[init_cfg.federate.client_idx_for_local_train]}
+        new_data = {0: data[0]} if 0 in data.keys() else dict()
+        new_data[1] = data[init_cfg.federate.client_idx_for_local_train]
+        data = new_data
 
     init_cfg.freeze()
 

@@ -5,11 +5,10 @@ early_stop:
 federate:
   mode: standalone
   client_num: 8
-  client_idx_for_local_train: 3
   total_round_num: 500
-  save_to: "llama_dolly_meta_c3_30*500_0.001_32_0.1.ckpt"
-  save_freq: 100
-  share_local_model: False
+  save_to: "llama_dolly_fed_ot.ckpt"
+  save_freq: -1
+  share_local_model: True
   online_aggr: False
 data:
   root: data/
@@ -21,8 +20,24 @@ llm:
   chat:
     max_len: 1000
   adapter:
+    mv_to_cpu: True
+  offsite_tuning:
     use: True
-    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
+    eval_type: 'emu'
+    kwargs: [ { "drop_ratio": 0.2 } ]
+    emu_l: 2
+    emu_r: 30
+    emu_align:
+      use: True
+      restore_from: 'aligned_llama_dolly_fed_ot.ckpt'
+      save_to: 'aligned_llama_dolly_fed_ot.ckpt'
+      train:
+        local_update_steps: 500
+        batch_or_epoch: 'batch'
+        lm_loss_weight: 0.0
+        kd_loss_weight: 1.0
+        optimizer:
+          lr: 0.0001
 dataloader:
   batch_size: 1
 model:
@@ -31,7 +46,7 @@ train:
   local_update_steps: 30
   batch_or_epoch: batch
   optimizer:
-    lr: 0.001
+    lr: 0.005
   is_enable_half: True
 criterion:
   type: CrossEntropyLoss
