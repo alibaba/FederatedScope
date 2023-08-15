@@ -1,19 +1,25 @@
-# deepspeed federatedscope/main.py --cfg federatedscope/llm/baseline/deepspeed/llama_ds.yaml
+# CUDA_VISIBLE_DEVICES=0,1 deepspeed --master_port 29500 federatedscope/main.py --cfg federatedscope/llm/baseline/deepspeed/llama_server.yaml
 use_gpu: True
-device: 0
 early_stop:
   patience: 0
 federate:
-  mode: standalone
+  mode: distributed
   client_num: 1
   total_round_num: 500
   save_to: "llama_ds.ckpt"
-  share_local_model: True
 data:
   root: data/
   type: 'alpaca@llm'
   splits: [0.98,0.01,0.01]
   splitter: 'iid'
+distribute:
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051  # [50051, 50051 + client_num]
+  role: 'server'
+  data_idx: 1
+  grpc_max_send_message_length: 1048576000
+  grpc_max_receive_message_length: 1048576000
 llm:
   tok_len: 1000
   chat:

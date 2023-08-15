@@ -412,7 +412,7 @@ class Server(BaseServer):
                 self._cfg.federate.save_freq > 0:
             path = add_prefix_to_path(f'{self.state}_',
                                       self._cfg.federate.save_to)
-            if self.ds_rank() == 0:
+            if self.ds_rank == 0:
                 self.aggregator.save_model(path, self.state)
 
         if should_stop or self.state == self.total_round_num:
@@ -534,7 +534,7 @@ class Server(BaseServer):
         To Save the best evaluation results.
         """
         # Save final round model
-        if self._cfg.federate.save_to != '' and self.ds_rank() == 0:
+        if self._cfg.federate.save_to != '' and self.ds_rank == 0:
             self.aggregator.save_model(
                 add_prefix_to_path('final_', self._cfg.federate.save_to),
                 self.state)
