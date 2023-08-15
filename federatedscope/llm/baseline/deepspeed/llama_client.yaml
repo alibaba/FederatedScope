@@ -1,4 +1,4 @@
-# CUDA_VISIBLE_DEVICES=2,3 deepspeed --master_port 29501 federatedscope/main.py --cfg federatedscope/llm/baseline/deepspeed/llama_client.yaml
+# deepspeed --master_port 29501 federatedscope/main.py --cfg federatedscope/llm/baseline/deepspeed/llama_client.yaml
 use_gpu: True
 early_stop:
   patience: 0
@@ -7,7 +7,6 @@ federate:
   client_num: 1
   total_round_num: 500
   save_to: "llama_ds.ckpt"
-  share_local_model: True
 data:
   root: data/
   type: 'alpaca@llm'
@@ -47,6 +46,6 @@ train:
 trainer:
   type: llmtrainer
 eval:
-  freq: 50
+  freq: 5
   metrics: ['loss']
   count_flops: False

@@ -38,6 +38,7 @@ class LLMTrainer(GeneralTorchTrainer):
                         model_parameters=filter(lambda p: p.requires_grad,
                                                 ctx.model.parameters()),
                     )
+            # Enable all cards from 0
             ctx.device = ctx.model_engine.local_rank
             if ctx.cfg.train.is_enable_half:
                 ctx.fp16 = ctx.model_engine.fp16_enabled()

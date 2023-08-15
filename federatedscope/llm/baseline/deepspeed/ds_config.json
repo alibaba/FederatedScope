@@ -1,5 +1,5 @@
 {
-   "train_batch_size": 2,
+   "train_batch_size": 4,
    "steps_per_print": 2000,
    "fp16": {"enabled": true},
    "optimizer": {

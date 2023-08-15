@@ -10,11 +10,12 @@ from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
-    calculate_time_cost, add_prefix_to_path
+    calculate_time_cost, add_prefix_to_path, get_ds_rank
 from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+if get_ds_rank() == 0:
+    logger.setLevel(logging.INFO)
 
 
 class Client(BaseClient):

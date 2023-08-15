@@ -8,7 +8,6 @@ federate:
   client_num: 1
   total_round_num: 500
   save_to: "llama_ds.ckpt"
-  share_local_model: True
 data:
   root: data/
   type: 'alpaca@llm'
@@ -38,6 +37,6 @@ train:
 trainer:
   type: llmtrainer
 eval:
-  freq: 50
+  freq: 5
   metrics: ['loss']
   count_flops: False

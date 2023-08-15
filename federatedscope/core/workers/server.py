@@ -847,7 +847,8 @@ class Server(BaseServer):
                             self.models[0])) / 1024.0 * 8.
                     except Exception as error:
                         model_size = 1.0
-                        logger.warning(f'{error} in calculate model size.')
+                        logger.warning(f'Error {error} in calculate model '
+                                       f'size.')
                 else:
                     # TODO: calculate model size for TF Model
                     model_size = 1.0
