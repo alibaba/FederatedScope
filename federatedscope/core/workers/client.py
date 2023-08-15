@@ -560,7 +560,8 @@ class Client(BaseClient):
             if update_best_this_round and self._cfg.federate.save_client_model:
                 path = add_prefix_to_path(f'client_{self.ID}_',
                                           self._cfg.federate.save_to)
-                self.trainer.save_model(path, self.state)
+                if self.ds_rank() == 0:
+                    self.trainer.save_model(path, self.state)
 
             self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
