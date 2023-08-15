@@ -48,13 +48,15 @@ class LOMO(Optimizer):
             self.grad_func = self.fuse_update()
         # check if fp16 is enabled
         if p0.dtype == torch.float16:
-            self.loss_scaler = DynamicLossScaler(
-                init_scale=2 ** 16,
-            )  # TODO: add args
-            if self.clip_grad_norm is None:
-                raise ValueError(
-                    "Loss scaling is recommended to be used with grad norm to get better performance."
-                )
+            # TODO temporarily removed for test lomo with llama
+            self.loss_scaler = None
+            # self.loss_scaler = DynamicLossScaler(
+            #     init_scale=2 ** 16,
+            # )  # TODO: add args
+            # if self.clip_grad_norm is None:
+            #     raise ValueError(
+            #         "Loss scaling is recommended to be used with grad norm to get better performance."
+            #     )
         else:
             self.loss_scaler = None
 
