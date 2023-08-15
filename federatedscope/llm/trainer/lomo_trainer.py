@@ -33,6 +33,36 @@ class LOMOTrainer(LLMTrainer):
         else:
             ctx.skip_this_batch = CtxVar(False, LIFECYCLE.BATCH)
 
+        # if self.training_args.clip_grad_norm is not None and self.training_args.clip_grad_norm > 0:
+        if not ctx.skip_this_batch and ctx.optimizer.clip_grad_norm is not None and ctx.optimizer.clip_grad_norm > 0:
+            ctx.optimizer.grad_norm(loss)
+            # TODO check how to implement this
+            # if ctx.optimizer.loss_scaler and ctx.optimizer.loss_scaler.has_overflow_serial:
+            #     # print(f"Gradient overflow, skipping step {self.global_step}")
+            #     ctx.optimizer.get_param_coordinator(training=True).reset_step()
+            #     # if self.allow_print:
+            #     #     self.wandb.log(
+            #     #         {
+            #     #             'train/loss': loss.item(),
+            #     #             'train/learning_rate': self.lr,
+            #     #             'train/global_step': self.global_step,
+            #     #         },
+            #     #         step=self.global_step
+            #     #     )
+
+            # else:
+            #     ctx.optimizer.get_param_coordinator(training=True).reset_step()
+            # 第二次forward
+            input_ids = ctx.data_batch['input_ids'].to(ctx.device)
+            labels = ctx.data_batch['labels'].to(ctx.device)
+            attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
+
+            outputs = ctx.model(input_ids=input_ids,
+                                labels=labels,
+                                attention_mask=attention_mask)
+
+            loss = outputs.loss
+
         ctx.y_true = CtxVar(labels, LIFECYCLE.BATCH)
         ctx.y_prob = CtxVar(logits, LIFECYCLE.BATCH)
 
@@ -40,16 +70,34 @@ class LOMOTrainer(LLMTrainer):
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
-        ctx.optimizer.zero_grad()
+        # ctx.optimizer.zero_grad()
         if ctx.skip_this_batch:
             return
 
-        ctx.loss_task.backward()
+        # scaled_loss = loss * self.loss_scaler.loss_scale
+        #
+        # scaled_loss.backward()
+        # # update the last one since the hook function will not be called for the last parameter
+        # self.grad_func(0)
+        # self.loss_scaler.update_scale(overflow=False)
+        ctx.optimizer.fused_backward(ctx.loss_task, ctx.optimizer.lr)
+        # TODO check how to implement this
+        # ctx.optimizer.get_param_coordinator(training=True).reset_step()
+        # ctx.loss_task.backward()
 
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)
 
-        ctx.optimizer.step()
+        # ctx.optimizer.step()
         if ctx.scheduler is not None:
             ctx.scheduler.step()
+
+
+def call_lomo_trainer(trainer_type):
+    if trainer_type == 'lomotrainer':
+        trainer_builder = LOMOTrainer
+        return trainer_builder
+
+
+register_trainer('lomotrainer', call_lomo_trainer)

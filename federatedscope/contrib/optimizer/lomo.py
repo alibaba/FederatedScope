@@ -206,8 +206,9 @@ class LOMO(Optimizer):
             self.grad_norms = torch.stack(self.grad_norms)
 
             total_norm = torch.norm(self.grad_norms, 2.0)
-            self.clip_coef = float(self.clip_grad_norm) / (total_norm + 1e-6)
-            self.clip_coef = torch.clamp(self.clip_coef, max=1.0)
+            if self.clip_grad_norm is not None:
+                self.clip_coef = float(self.clip_grad_norm) / (total_norm + 1e-6)
+                self.clip_coef = torch.clamp(self.clip_coef, max=1.0)
         self.gather_norm = False
 
 
