@@ -1,33 +1,39 @@
-import os
+# This implementation is adapted from https://github.com/OpenLMLab/LOMO (MIT License)
+
+# Copyright (c) 2023 OpenLMLab
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import torch
 from torch.optim import Optimizer
-import torch.distributed as dist
 
 from federatedscope.register import register_optimizer
 
 
 class LOMO(Optimizer):
     """
-    一个自定义的优化器类LOMO，用于在分布式训练中的梯度更新。
-
-    该类实现两个梯度更新函数 :meth:`fuse_update` 和 :meth:`fuse_update_zero3`，分别用于非ZeRO和ZeRO模式下的梯度更新。
-
-    :param model: 待优化的模型
-    :param lr: 学习率，默认值为1e-3
-    :param clip_grad_norm: 梯度裁剪的范数阈值
-
-        .. note::
-
-            clip_grad_norm须为正数
-
-    :param clip_grad_value: 梯度裁剪的值域阈值
+    an optimizer for LOMOTrainer
     """
 
     def __init__(self, model, lr=1e-3, clip_grad_norm=None, clip_grad_value=None):
         self.model = model
         self.lr = lr
-        # self.local_rank = int(os.environ["LOCAL_RANK"])
-        # self.world_size = dist.get_world_size()
         self.local_rank = 0
         self.world_size = 1
         self.clip_grad_norm = clip_grad_norm
@@ -69,15 +75,12 @@ class LOMO(Optimizer):
 
     def fuse_update(self):
         """
-        在非ZeRO模式下更新模型参数的梯度。
+        update model parameters in non-ZeRO mode
 
-        :return: func，一个闭包函数，用于更新模型参数的梯度
+        :return: a closure function used for updating model parameters
         """
 
         def func(x):
-            """
-            闭包函数，用于更新模型参数的梯度。
-            """
             with torch.no_grad():
                 for n, p in self.model.named_parameters():
                     if p.requires_grad and p.grad is not None:
@@ -111,9 +114,9 @@ class LOMO(Optimizer):
 
     def fuse_update_zero3(self):
         """
-        在ZeRO模式下更新模型参数的梯度。
+        update model parameters in ZeRO mode
 
-        :return: func，一个闭包函数，用于更新模型参数的梯度。
+        :return: a closure function used for updating model parameters
         """
         def func(x):
             with torch.no_grad():
@@ -159,10 +162,10 @@ class LOMO(Optimizer):
 
     def fused_backward(self, loss, lr):
         """
-        执行一步反向传播并更新模型的梯度。
+        update the model parameters based on the gradient by a step of backpropagation
 
-        :param loss: 模型的loss值
-        :param lr: 学习率
+        :param loss: loss value, scalar
+        :param lr: learning rate
         """
         self.lr = lr
         # Users need call grad_norm themselves and then call backward_step
@@ -180,9 +183,9 @@ class LOMO(Optimizer):
 
     def grad_norm(self, loss):
         """
-        计算梯度的范数。
+        calculate the norm of gradients
 
-        :param loss: 模型的loss值
+        :param loss: loss value, scala
         """
         self.gather_norm = True
         self.grad_norms = []
@@ -241,19 +244,11 @@ class DynamicLossScaler:
     def loss_scale(self):
         return self.cur_scale
 
-    # `x` is a torch.Tensor
+
     def _has_inf_or_nan(self, x):
         try:
-            # if x is half, the .float() incurs an additional deep copy, but it's necessary if
-            # Pytorch's .sum() creates a one-element tensor of the same type as x
-            # (which is true for some recent version of pytorch).
             cpu_sum = float(x.float().sum())
-            # More efficient version that can be used if .sum() returns a Python scalar
-            # cpu_sum = float(x.sum())
         except RuntimeError as instance:
-            # We want to check if inst is actually an overflow exception.
-            # RuntimeError could come from a different error.
-            # If so, we still want the exception to propagate.
             if "value cannot be converted" not in instance.args[0]:
                 raise
             return True
@@ -262,10 +257,9 @@ class DynamicLossScaler:
                 return True
             return False
 
-    # `overflow` is boolean indicating whether the gradient overflowed
+
     def update_scale(self, overflow):
         if overflow:
-            # self.cur_scale /= self.scale_factor
             if self.delayed_shift == 1 or self.cur_hysteresis == 1:
                 if (self.cur_scale == self.min_scale) and self.raise_error_at_min_scale:
                     raise Exception(

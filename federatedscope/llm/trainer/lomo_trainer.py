@@ -1,23 +1,50 @@
+# This implementation is adapted from https://github.com/OpenLMLab/LOMO (MIT License)
+
+# Copyright (c) 2023 OpenLMLab
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import torch
 import logging
 from federatedscope.register import register_trainer
-# from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.llm.trainer.trainer import LLMTrainer
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE
-from federatedscope.core.monitors.monitor import Monitor
-from federatedscope.llm.model.adapter_builder import AdapterModel
+from federatedscope.contrib.optimizer.lomo import LOMO
 
 
 logger = logging.getLogger(__name__)
 
 
 class LOMOTrainer(LLMTrainer):
+    def _hook_on_epoch_start(self, ctx):
+        if not isinstance(ctx.optimizer, LOMO):
+            raise AttributeError('"LOMO" must be set as the type of `train.optimizer` if the trainer is LOMOTrainer')
+        return super()._hook_on_epoch_start(ctx)
+    
+    
     def _hook_on_batch_forward(self, ctx):
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['labels'].to(ctx.device)
         attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
 
+        # the first forward
         outputs = ctx.model(input_ids=input_ids,
                             labels=labels,
                             attention_mask=attention_mask)
@@ -33,26 +60,9 @@ class LOMOTrainer(LLMTrainer):
         else:
             ctx.skip_this_batch = CtxVar(False, LIFECYCLE.BATCH)
 
-        # if self.training_args.clip_grad_norm is not None and self.training_args.clip_grad_norm > 0:
         if not ctx.skip_this_batch and ctx.optimizer.clip_grad_norm is not None and ctx.optimizer.clip_grad_norm > 0:
             ctx.optimizer.grad_norm(loss)
-            # TODO check how to implement this
-            # if ctx.optimizer.loss_scaler and ctx.optimizer.loss_scaler.has_overflow_serial:
-            #     # print(f"Gradient overflow, skipping step {self.global_step}")
-            #     ctx.optimizer.get_param_coordinator(training=True).reset_step()
-            #     # if self.allow_print:
-            #     #     self.wandb.log(
-            #     #         {
-            #     #             'train/loss': loss.item(),
-            #     #             'train/learning_rate': self.lr,
-            #     #             'train/global_step': self.global_step,
-            #     #         },
-            #     #         step=self.global_step
-            #     #     )
-
-            # else:
-            #     ctx.optimizer.get_param_coordinator(training=True).reset_step()
-            # 第二次forward
+            # the second forward
             input_ids = ctx.data_batch['input_ids'].to(ctx.device)
             labels = ctx.data_batch['labels'].to(ctx.device)
             attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
@@ -70,26 +80,14 @@ class LOMOTrainer(LLMTrainer):
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
-        # ctx.optimizer.zero_grad()
         if ctx.skip_this_batch:
             return
-
-        # scaled_loss = loss * self.loss_scaler.loss_scale
-        #
-        # scaled_loss.backward()
-        # # update the last one since the hook function will not be called for the last parameter
-        # self.grad_func(0)
-        # self.loss_scaler.update_scale(overflow=False)
         ctx.optimizer.fused_backward(ctx.loss_task, ctx.optimizer.lr)
-        # TODO check how to implement this
-        # ctx.optimizer.get_param_coordinator(training=True).reset_step()
-        # ctx.loss_task.backward()
 
         if ctx.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                            ctx.grad_clip)
 
-        # ctx.optimizer.step()
         if ctx.scheduler is not None:
             ctx.scheduler.step()
 
