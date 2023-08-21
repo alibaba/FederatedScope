@@ -123,7 +123,7 @@ def main():
     model = fschatbot.model
     device = fschatbot.device
 
-    if not os.path.exists('data/mmlu'):
+    if not os.path.exists("data/mmlu"):
         download_url("https://people.eecs.berkeley.edu/~hendrycks/data.tar",
                      init_cfg.data.root)
         t = tarfile.open("data/data.tar", "r:")
@@ -131,8 +131,8 @@ def main():
         t.extractall(path="data/mmlu/")
         t.close()
 
-    data_dir = "data/mmlu/data/"
-    eval_dir = 'eval_result'
+    data_dir = os.path.join(init_cfg.data.root, "mmlu/data")
+    eval_dir = "eval_result"
 
     subjects = sorted([
         f.split("_test.csv")[0]
