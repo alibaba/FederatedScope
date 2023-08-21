@@ -124,7 +124,8 @@ def main():
     device = fschatbot.device
 
     if not os.path.exists('data/mmlu'):
-        download_url("https://people.eecs.berkeley.edu/~hendrycks/data.tar", init_cfg.data.root)
+        download_url("https://people.eecs.berkeley.edu/~hendrycks/data.tar",
+                     init_cfg.data.root)
         t = tarfile.open("data/data.tar", "r:")
         os.makedirs("data/mmlu/")
         t.extractall(path="data/mmlu/")
@@ -135,8 +136,7 @@ def main():
 
     subjects = sorted([
         f.split("_test.csv")[0]
-        for f in os.listdir(os.path.join(data_dir, "test"))
-        if "_test.csv" in f
+        for f in os.listdir(os.path.join(data_dir, "test")) if "_test.csv" in f
     ])
 
     if not os.path.exists(eval_dir):
