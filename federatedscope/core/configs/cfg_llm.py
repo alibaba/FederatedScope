@@ -32,7 +32,6 @@ def extend_llm_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.llm.deepspeed = CN()
     cfg.llm.deepspeed.use = False
-    cfg.llm.deepspeed.rank = 0
     cfg.llm.deepspeed.ds_config = ''
 
     # ---------------------------------------------------------------------- #
