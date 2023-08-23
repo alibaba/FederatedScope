@@ -147,13 +147,17 @@ class MeZOTrainer(LLMTrainer):
         if ctx.skip_this_batch:
             return
         torch.manual_seed(ctx.zo_random_seed)     
+        if ctx.scheduler is not None:
+            lr = ctx.scheduler.get_lr()
+        else:
+            lr = ctx.cfg.train.optimizer.lr
         for name, param in ctx.named_parameters_to_optim:
             # Resample z
             z = torch.normal(mean=0, std=1, size=param.data.size(), device=param.data.device, dtype=param.data.dtype)
             if "bias" not in name and "layer_norm" not in name and "layernorm" not in name:
-                param.data = param.data - ctx.cfg.train.optimizer.lr * (ctx.projected_grad * z + ctx.cfg.train.optimizer.weight_decay * param.data)
+                param.data = param.data - lr * (ctx.projected_grad * z + ctx.cfg.train.optimizer.weight_decay * param.data)
             else:
-                param.data = param.data - ctx.cfg.train.optimizer.lr * (ctx.projected_grad * z)
+                param.data = param.data - lr * (ctx.projected_grad * z)
 
         if ctx.scheduler is not None:
             ctx.scheduler.step()
