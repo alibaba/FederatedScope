@@ -32,7 +32,6 @@ from federatedscope.core.trainers.enums import LIFECYCLE
 
 logger = logging.getLogger(__name__)
 
-# 先zo_step计算loss，然后zo_update根据loss来更新参数
 class MeZOTrainer(LLMTrainer):
     @staticmethod
     def zo_step(ctx, zo_eps=1e-3):
@@ -142,17 +141,6 @@ class MeZOTrainer(LLMTrainer):
 
         ctx.loss_batch = CtxVar(loss, LIFECYCLE.BATCH)
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
-        # ctx.test = '123'
-        # input_ids = ctx.data_batch['input_ids'].to(ctx.device)
-        # labels = ctx.data_batch['labels'].to(ctx.device)
-        # attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
-
-        # outputs = ctx.model(input_ids=input_ids,
-        #                     labels=labels,
-        #                     attention_mask=attention_mask)
-
-        # logits = outputs.logits
-        # loss = outputs.loss
         
         
     def _hook_on_batch_backward(self, ctx):
