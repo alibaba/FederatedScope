@@ -10,6 +10,7 @@ federate:
 data:
   root: data/
   type: 'alpaca@llm'
+  # type: 'rosetta_alpaca@llm'
   splits: [0.98,0.01,0.01]
   splitter: 'iid'
 llm:
@@ -23,8 +24,8 @@ dataloader:
   batch_size: 1
 model:
   # type: 'decapoda-research/llama-7b-hf@huggingface_llm'
-  type: 'gpt2@huggingface_llm'
-  # type: 'openlm-research/open_llama_3b@huggingface_llm'
+  # type: 'gpt2@huggingface_llm'
+  type: 'openlm-research/open_llama_3b@huggingface_llm'
 train:
   local_update_steps: 60
   batch_or_epoch: batch
