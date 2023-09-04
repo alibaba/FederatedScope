@@ -48,7 +48,7 @@ Let’s start with fine-tuning GPT-2 on [Alpaca](https://github.com/tatsu-lab/st
 
 ### Step 1. Installation
 
-The installation of FS-LLM is similar to minimal FS (see [here](https://github.com/alibaba/FederatedScope/tree/llm/federatedscope/llm/README-main.md) for details), except that it requires **Pytorch>=1.13.0** (we recommend version 2.0.X) because of the [PEFT](https://github.com/huggingface/peft) dependency:
+The installation of FS-LLM is similar to minimal FS (see [here](https://github.com/alibaba/FederatedScope/tree/llm/README-main.md) for details), except that it requires **Pytorch>=1.13.0** (we recommend version 2.0.X) because of the [PEFT](https://github.com/huggingface/peft) dependency:
 
 ```bash
 # Create virtual environments with conda
