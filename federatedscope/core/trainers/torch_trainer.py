@@ -28,12 +28,12 @@ logger = logging.getLogger(__name__)
 
 class GeneralTorchTrainer(Trainer):
     def get_model_para(self):
-        if self.cfg.federate.process_num > 1:
+        if self.cfg.federate.process_num > 1 or \
+                self.cfg.federate.share_local_model or \
+                self.cfg.llm.deepspeed.use:
             return self._param_filter(self.ctx.model.state_dict())
         else:
-            return self._param_filter(
-                self.ctx.model.state_dict() if self.cfg.federate.
-                share_local_model else self.ctx.model.cpu().state_dict())
+            return self._param_filter(self.ctx.model.cpu().state_dict())
 
     def setup_data(self, ctx):
         """
@@ -463,8 +463,9 @@ class GeneralTorchTrainer(Trainer):
         Discharge the model from GPU device
         """
         # Avoid memory leak
-        if not self.cfg.federate.share_local_model:
-            if torch is None:
-                pass
-            else:
-                self.ctx.model.to(torch.device("cpu"))
+        if torch is None:
+            return
+
+        if not self.cfg.federate.share_local_model and \
+                not self.cfg.llm.deepspeed.use:
+            self.ctx.model.to(torch.device("cpu"))
