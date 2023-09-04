@@ -5,7 +5,7 @@
 ![](https://img.shields.io/badge/language-python-blue.svg)
 ![](https://img.shields.io/badge/license-Apache-000000.svg)
 [![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
-[![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
+[![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://colab.research.google.com/github/alibaba/FederatedScope)
 [![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
 
 <img src="https://img.alicdn.com/imgextra/i2/O1CN01y9mcld26RsLKK9Q98_!!6000000007659-2-tps-3710-2735.png" alt="img" style="zoom: 100%;" />
@@ -14,7 +14,7 @@ FederatedScope-LLM (FS-LLM) is a comprehensive package for federated fine-tuning
 
 * A complete **end-to-end benchmarking pipeline**, automizing the processes of dataset preprocessing, federated fine-tuning execution or simulation, and performance evaluation on federated LLM fine-tuning with different capability demonstration purposes; 
 * Comprehensive and off-the-shelf **federated fine-tuning algorithm** implementations and versatile programming interfaces for future extension to enhance the capabilities of LLMs in FL scenarios with low communication and computation costs, even without accessing the full model (e.g., closed-source LLMs);
-* we adopt several **accelerating operators and resource-efficient operators** for fine-tuning LLMs with limited resources and the flexible pluggable sub-routines for interdisciplinary study (e.g., LLMs in personalized FL). 
+* Several **accelerating operators and resource-efficient operators** for fine-tuning LLMs with limited resources and the flexible pluggable sub-routines for interdisciplinary study (e.g., LLMs in personalized FL). 
 
 We provide a hands-on tutorial here for your quick start.
 
@@ -26,7 +26,7 @@ We provide a hands-on tutorial here for your quick start.
 FederatedScope
 ├── federatedscope
 │   ├── core                     # Federated learning backend modules
-│   ├── llm                      # Federated fine-tuning LLMs    
+│   ├── llm                      # Federated fine-tuning LLMs modules 
 │   │   ├── baseline             # Scripts for LLMs
 │   │   ├── dataloader           # Federated fine-tuning dataloader
 │   │   ├── dataset              # Federated fine-tuning dataset
@@ -48,7 +48,7 @@ Let’s start with fine-tuning GPT-2 on [Alpaca](https://github.com/tatsu-lab/st
 
 ### Step 1. Installation
 
-The installation of FS-LLM is similar to minimal FS (see [here](https://github.com/alibaba/FederatedScope/tree/llm/federatedscope/llm/README-main.md) for details), except that it requires **Pytorch>=1.13.0** (we recommend version 2.0.X) because of the [PEFT](https://github.com/huggingface/peft) dependency:
+The installation of FS-LLM is similar to minimal FS (see [here](https://github.com/alibaba/FederatedScope/tree/master) for details), except that it requires **Pytorch>=1.13.0** (we recommend version 2.0.X) because of the [PEFT](https://github.com/huggingface/peft) dependency:
 
 ```bash
 # Create virtual environments with conda
