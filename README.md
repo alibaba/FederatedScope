@@ -58,7 +58,7 @@ FederatedScope
 ├── scripts                      # Scripts for reproducing existing algorithms
 ├── benchmark                    # We release several benchmarks for convenient and fair comparisons
 ├── doc                          # For automatic documentation
-├── enviornment                  # Installation requirements and provided docker files
+├── environment                  # Installation requirements and provided docker files
 ├── materials                    # Materials of related topics (e.g., paper lists)
 │   ├── notebook                        
 │   ├── paper_list                                        
