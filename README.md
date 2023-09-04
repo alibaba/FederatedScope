@@ -2,7 +2,7 @@
 
 ## Introduction
 
-FS-REAL is an efficient and scalable prototyping system for real-world cross-device federated learning. More details can be found in our [paper](link_to_be_added).
+FS-REAL is an efficient and scalable prototyping system for real-world cross-device federated learning. More details can be found in our [paper](https://arxiv.org/abs/2303.13363).
 This repository includes the implementation of its FL server, the FL clients runtime on android devices, the device simulation tool and running scripts. 
 
 - `FS-Device-MNN`:  Codes for FL server in FS-REAL.
