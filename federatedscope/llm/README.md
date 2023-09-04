@@ -14,7 +14,7 @@ FederatedScope-LLM (FS-LLM) is a comprehensive package for federated fine-tuning
 
 * A complete **end-to-end benchmarking pipeline**, automizing the processes of dataset preprocessing, federated fine-tuning execution or simulation, and performance evaluation on federated LLM fine-tuning with different capability demonstration purposes; 
 * Comprehensive and off-the-shelf **federated fine-tuning algorithm** implementations and versatile programming interfaces for future extension to enhance the capabilities of LLMs in FL scenarios with low communication and computation costs, even without accessing the full model (e.g., closed-source LLMs);
-* we adopt several **accelerating operators and resource-efficient operators** for fine-tuning LLMs with limited resources and the flexible pluggable sub-routines for interdisciplinary study (e.g., LLMs in personalized FL). 
+* Several **accelerating operators and resource-efficient operators** for fine-tuning LLMs with limited resources and the flexible pluggable sub-routines for interdisciplinary study (e.g., LLMs in personalized FL). 
 
 We provide a hands-on tutorial here for your quick start.
 
@@ -26,7 +26,7 @@ We provide a hands-on tutorial here for your quick start.
 FederatedScope
 ├── federatedscope
 │   ├── core                     # Federated learning backend modules
-│   ├── llm                      # Federated fine-tuning LLMs    
+│   ├── llm                      # Federated fine-tuning LLMs modules 
 │   │   ├── baseline             # Scripts for LLMs
 │   │   ├── dataloader           # Federated fine-tuning dataloader
 │   │   ├── dataset              # Federated fine-tuning dataset
