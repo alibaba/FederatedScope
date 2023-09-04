@@ -16,6 +16,8 @@ FederatedScope-LLM (FS-LLM) is a comprehensive package for federated fine-tuning
 * Comprehensive and off-the-shelf **federated fine-tuning algorithm** implementations and versatile programming interfaces for future extension to enhance the capabilities of LLMs in FL scenarios with low communication and computation costs, even without accessing the full model (e.g., closed-source LLMs);
 * Several **accelerating operators and resource-efficient operators** for fine-tuning LLMs with limited resources and the flexible pluggable sub-routines for interdisciplinary study (e.g., LLMs in personalized FL). 
 
+For more details, please refer to our paper: [FederatedScope-LLM: A Comprehensive Package for Fine-tuning Large Language Models in Federated Learning](https://arxiv.org/abs/2309.00363).
+
 We provide a hands-on tutorial here for your quick start.
 
 ## Code Structure
@@ -282,4 +284,14 @@ To make the federated fine-tuning efficient, we adopt a series of acceleration o
 - `OutOfMemoryError: CUDA out of memory.`
   - Torch's garbage collection mechanism may not be timely resulting in OOM, please set `cfg.eval.count_flops` to `False`.
 
+## Citation
+If you find FederatedScope-LLM useful for your research or development, please cite the following paper:
+```
+@article{kuang2023federatedscopellm,
+  title={FederatedScope-LLM: A Comprehensive Package for Fine-tuning Large Language Models in Federated Learning},
+  author={Weirui Kuang and Bingchen Qian and Zitao Li and Daoyuan Chen and Dawei Gao and Xuchen Pan and Yuexiang Xie and Yaliang Li and Bolin Ding and Jingren Zhou},
+  journal={arXiv preprint arXiv:2309.00363},
+  year={2023}
+}
+```
 
