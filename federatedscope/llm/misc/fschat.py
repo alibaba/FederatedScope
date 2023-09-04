@@ -17,7 +17,37 @@ logger = logging.getLogger(__name__)
 
 
 class FSChatBot(object):
+    """
+    A chatbot class that uses a language model for generating responses.
+
+    This class implements a chatbot that can interact with users using natural
+    language. It uses a pretrained language model as the backbone and can
+    optionally load a fine-tuned checkpoint from federated learning. It can
+    also use history and prompt templates to enhance the conversation quality.
+    It provides two methods for generating responses: predict and generate.
+
+    Attributes:
+        tokenizer: A transformers.PreTrainedTokenizer object that can
+            encode and decode text.
+        model: A transformers.PreTrainedModel object that can generate text.
+        device: A string representing the device to run the model on.
+        add_special_tokens: A boolean indicating whether to add special tokens
+            to the input and output texts.
+        max_history_len: An integer representing the maximum number of
+            previous turns to use as context.
+        max_len: An integer representing the maximum number of tokens to
+            generate for each response.
+        history: A list of lists of integers representing the tokenized input
+            and output texts of previous turns.
+    """
     def __init__(self, config):
+        """
+        Initializes the chatbot with the given configuration.
+
+        Args:
+            config: A FS configuration object that contains various settings
+                for the chatbot.
+        """
         model_name, _ = config.model.type.split('@')
         self.tokenizer, _ = get_tokenizer(model_name, config.data.root,
                                           config.llm.tok_len)
@@ -53,10 +83,32 @@ class FSChatBot(object):
         self.history = []
 
     def _build_prompt(self, input_text):
+        """
+        Builds a prompt template for the input text.
+
+        Args:
+            input_text: A string representing the user's input text.
+
+        Returns:
+            A string representing the source text with a prompt template.
+        """
         source = {'instruction': input_text}
         return PROMPT_DICT['prompt_no_input'].format_map(source)
 
     def predict(self, input_text, use_history=True, use_prompt=True):
+        """
+        Generates a response for the input text using the model.
+
+        Args:
+            input_text: A string representing the user's input text.
+            use_history: A boolean indicating whether to use previous turns as
+                context for generating the response. Default is True.
+            use_prompt: A boolean indicating whether to use a prompt
+                template for creating the source text. Default is True.
+
+        Returns:
+            A string representing the chatbot's response text.
+        """
         if use_prompt:
             input_text = self._build_prompt(input_text)
         text_ids = self.tokenizer.encode(input_text, add_special_tokens=False)
@@ -84,6 +136,21 @@ class FSChatBot(object):
 
     @torch.no_grad()
     def generate(self, input_text, generate_kwargs={}):
+        """
+        Generates a response for the input text using the model and
+        additional arguments.
+
+        Args:
+            input_text: A string representing the user's input text.
+            generate_kwargs: A dictionary of keyword arguments to pass to the
+                model's generate method. Default is an empty dictionary.
+
+        Returns:
+            A string or a list of strings representing the chatbot's response
+            text. If the generate_kwargs contains num_return_sequences > 1,
+            then a list of strings is returned. Otherwise, a single string is
+            returned.
+        """
         input_text = self.tokenizer(
             input_text,
             padding=False,
@@ -108,6 +175,11 @@ class FSChatBot(object):
         return response[0]
 
     def clear(self):
+        """Clears the history of previous turns.
+
+        This method can be used to reset the chatbot's state and start a new
+        conversation.
+        """
         self.history = []
 
 

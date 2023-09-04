@@ -15,11 +15,36 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LLMDataCollator(object):
-    """Collate examples for supervised fine-tuning."""
+    """
+    A data collator for supervised fine-tuning of language models.
+    This class implements a callable that takes a list of instances and
+    returns a batch of input_ids, labels, and attention_mask tensors. The
+    input_ids and labels are padded with the tokenizer's pad_token_id and a
+    special ignore index value, respectively. The attention_mask indicates
+    which tokens are not padding.
+    """
 
     tokenizer: transformers.PreTrainedTokenizer
 
     def __call__(self, instances):
+        """Collates a list of instances into a batch.
+
+        Args:
+            instances: A list of dictionaries, each containing input_ids and
+                labels as torch.LongTensor objects.
+
+        Returns:
+            A dictionary with the following keys and values:
+                - input_ids: A torch.LongTensor of shape (batch_size,
+                max_length)
+                    containing the padded input ids.
+                - labels: A torch.LongTensor of shape (batch_size, max_length)
+                    containing the padded labels.
+                - attention_mask: A torch.BoolTensor of shape (batch_size,
+                max_length)
+                    indicating which tokens are not padding.
+        """
+
         input_ids, labels = tuple([instance[key] for instance in instances]
                                   for key in ("input_ids", "labels"))
         input_ids = torch.nn.utils.rnn.pad_sequence(
@@ -38,6 +63,22 @@ class LLMDataCollator(object):
 
 
 def get_tokenizer(model_name, cache_dir, tok_len=128):
+    """
+    This function loads a tokenizer from a pretrained model name and adds some
+    default special tokens if they are not already defined. It also sets the
+    model max length and the padding side of the tokenizer.
+
+    Args:
+        model_name: A string, the name of the pretrained model.
+        cache_dir: A string, the path to the cache directory.
+        tok_len: An integer, the maximum length of the tokens. Defaults to 128.
+
+    Returns:
+        A tuple of (tokenizer, num_new_tokens), where:
+            - tokenizer: A transformers.AutoTokenizer object.
+            - num_new_tokens: An integer, the number of new special tokens
+    """
+
     from transformers import AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -68,6 +109,28 @@ def load_json(file_path,
               input='input',
               output='output',
               category='category'):
+    """
+    This function reads a JSON file that contains a list of examples,
+    each with an instruction, an input, an output, and a category. It
+    returns a list of dictionaries with the same keys, but with the
+    option to rename them.
+
+    Args:
+        file_path: A string, the path to the JSON file.
+        instruction: A string, the key for the instruction field. Defaults
+            to 'instruction'.
+        input: A string, the key for the input field. Defaults to 'input'.
+        output: A string, the key for the output field. Defaults to 'output'.
+        category: A string, the key for the category field. Defaults to
+            'category'.
+
+    Returns:
+        A list of dictionaries, each with four keys: instruction, input,
+            output, and category. The values are taken from the JSON file
+            and may be None if the corresponding key is not present in the
+            file.
+    """
+
     # Format: [{'instruction': ..., 'input': ..., 'output':...}]
     with open(file_path, 'r', encoding="utf-8") as f:
         list_data_dict = json.load(f)
@@ -90,6 +153,29 @@ def load_jsonl(file_path,
                output='output',
                category='category',
                is_gzip=False):
+    """
+    This function reads a JSONL file that contains one example per line,
+    each with an instruction, an input, an output, and a category. It
+    returns a list of dictionaries with the same keys, but with the option
+    to rename them. It also supports reading gzip-compressed files.
+
+    Args:
+        file_path: A string, the path to the JSONL file.
+        instruction: A string, the key for the instruction field. Defaults
+            to 'instruction'.
+        input: A string, the key for the input field. Defaults to 'input'.
+        output: A string, the key for the output field. Defaults to 'output'.
+        category: A string, the key for the category field. Defaults to
+            'category'.
+        is_gzip: A boolean, whether the file is gzip-compressed or not.
+            Defaults to False.
+
+    Returns:
+        A list of dictionaries, each with four keys: instruction, input,
+        output, and category. The values are taken from the JSONL file and
+        may be None if the corresponding key is not present in the line.
+
+    """
     # Format of each line:
     # {'instruction': ..., 'input': ..., 'output':...}
     list_data_dict = []
@@ -108,6 +194,27 @@ def load_jsonl(file_path,
 
 
 def load_llm_dataset(config=None, **kwargs):
+    """
+    This function takes a config object and optional keyword arguments and
+    returns a dataset object and an updated config object.
+    The function supports various dataset types, such as JSON, JSONL, alpaca,
+    alpaca_cleaned, dolly-15K, gsm8k, code_search_net, rosetta_alpaca. It
+    will download the data files from their respective URLs if they are not
+    found in the data directory. It will also load a tokenizer from a
+    pretrained model name and add some default special tokens if they are
+    not already defined.
+
+    Args:
+        config: An object, the configuration for loading the dataset.
+        **kwargs: Optional keyword arguments that can override the config
+            attributes.
+
+    Returns:
+        A tuple of (dataset, config), where:
+            - dataset: A LLMDataset object that contains the examples with
+                instruction, input, output, and category fields.
+            - config: An object, the updated configuration.
+    """
     model_name, _ = config.model.type.split('@')
     tokenizer, num_new_tokens = \
         get_tokenizer(model_name, config.data.root, config.llm.tok_len)

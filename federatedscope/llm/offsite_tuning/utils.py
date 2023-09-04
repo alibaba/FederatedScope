@@ -96,6 +96,21 @@ def get_layers(adapter_model):
 
 
 def set_layers(adapter_model, layers, emu_l=0, emu_r=-1):
+    """
+    Set the layers of the adapter model based on the model type and the
+    emulator range.
+
+    Args:
+        adapter_model (AdapterModel): The adapter model object that contains
+            the causal language model and the adapter layers.
+        layers (nn.ModuleList): The list of layers to be assigned to the
+            adapter model.
+        emu_l (int): The left index of the emulator range. Default to 0.
+        emu_r (int): The right index of the emulator range. Default to -1.
+
+    Returns:
+        AdapterModel: The adapter model object with the updated layers.
+    """
     if isinstance(adapter_model.model, OPTForCausalLM):
         adapter_model.model.model.decoder.layers = layers
     elif isinstance(adapter_model.model, GPT2LMHeadModel):
@@ -119,6 +134,17 @@ def set_layers(adapter_model, layers, emu_l=0, emu_r=-1):
 
 
 def model_drop_layer(layers, drop_ratio=0.5, **kwargs):
+    """
+    Drop layers from a list of layers based on a drop ratio.
+
+    Args:
+        layers (nn.ModuleList): The list of layers to be dropped.
+        drop_ratio (float): The ratio of layers to be dropped. Default to 0.5.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        nn.ModuleList: A new list of layers with some layers dropped.
+    """
     new_model = nn.ModuleList()
     num_new_layers = round(len(layers) * (1 - drop_ratio))
 
@@ -199,6 +225,18 @@ def generate_emulator_and_adapter(model: AdapterModel,
 
 
 def convert_layers_train_state(layers, is_trainable=True):
+    """
+    Convert the trainability state of a list of layers.
+
+    Args:
+        layers (nn.ModuleList): The list of layers to be converted.
+        is_trainable (bool): The flag to indicate whether the layers should
+            be trainable or not. Default to True.
+
+    Returns:
+        None: This function does not return anything, but modifies the
+            layers in-place.
+    """
     if is_trainable:
         for layer in layers:
             for param in layer.parameters():
@@ -210,6 +248,24 @@ def convert_layers_train_state(layers, is_trainable=True):
 
 
 def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
+    """
+    Align the student part of the adapter model with the teacher part using
+    knowledge distillation on a held-out dataset.
+
+    Args:
+        raw_model (AdapterModel): The original adapter model object that
+            contains the causal language model and the adapter layers.
+        adap_model (AdapterModel): The compressed adapter model object that
+            contains the emulator and the adapter layers.
+        cfg (Config): The configuration object that contains the alignment
+            parameters.
+        device (torch.device): The device to run the alignment on.
+        monitor (Monitor): The monitor object to track the FL progress.
+
+    Returns:
+        AdapterModel: The aligned adapter model object with the updated
+            emulator and adapter layers.
+    """
     def build_cfg_for_alignment(config):
         new_cfg = copy.deepcopy(config)
         new_cfg.defrost()
@@ -308,6 +364,20 @@ def align_student_with_teacher(raw_model, adap_model, cfg, device, monitor):
 
 
 def wrap_offsite_tuning_for_eval(model, config):
+    """
+    Wrap the offsite tuning process for evaluation.
+
+    Args:
+        model (AdapterModel): The original adapter model object that
+            contains the causal language model and the adapter layers.
+        config (Config): The configuration object that contains the
+            offsite-tuning parameters.
+
+    Returns:
+        AdapterModel or nn.Module: The offsite-tuned model object that
+            contains the emulator and the adapter layers, or the original model
+            object with the adapter layers updated.
+    """
     logger.info('===============use offsite tuning===============')
     # We use offsite-tuning in this experiment
     # Use adapter model instead
