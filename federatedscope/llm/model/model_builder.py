@@ -2,6 +2,17 @@ from federatedscope.llm.model.adapter_builder import AdapterModel
 
 
 def get_model_from_huggingface(model_name, config):
+    """
+    Load a causal language model from HuggingFace transformers library.
+
+    Args:
+        model_name (str): The name of the pre-trained model to load.
+        config (Config): The configuration object that contains the model
+            parameters.
+
+    Returns:
+        AutoModelForCausalLM: A causal language model object.
+    """
     from transformers import AutoModelForCausalLM
 
     kwargs = {}
@@ -12,12 +23,34 @@ def get_model_from_huggingface(model_name, config):
 
 
 def get_model_from_modelscope(model_name, config):
+    """
+    Load a causal language model from ModelScope models library.
+
+    Args:
+        model_name (str): The name of the pre-trained model to load.
+        config (Config): The configuration object that contains the model
+            parameters.
+
+    Returns:
+        Model: A causal language model object.
+    """
     from modelscope.models import Model
 
     return Model.from_pretrained(model_name)
 
 
 def get_llm(config):
+    """
+    Get a causal language model based on the configuration.
+
+    Args:
+        config (Config): The configuration object that contains the model
+            parameters.
+
+    Returns:
+        AdapterModel: A causal language model object with optional adapter
+            layers.
+    """
     from federatedscope.llm.dataloader import get_tokenizer
 
     model_config = config.model

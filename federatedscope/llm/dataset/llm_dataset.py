@@ -35,13 +35,51 @@ PROMPT_DICT = {
 }
 
 
-# TODO: support LDA when 'category' in keys
 class LLMDataset(Dataset):
+    """
+    A dataset for language modeling tasks.
+
+    This class inherits from torch.utils.data.Dataset and implements a
+    dataset that can load and preprocess data for language modeling. It
+    takes a list of data dictionaries, a tokenizer, and optional prompt
+    templates as input, and creates input ids, labels, and categories as
+    output. The input ids and labels are padded and masked according to
+    the tokenizer settings and the source and target lengths. The
+    categories are encoded as integers using pandas.Categorical.
+
+    Attributes:
+        input_ids: A list of torch.LongTensor objects of shape (max_length,)
+            containing the padded input ids.
+        labels: A list of torch.LongTensor objects of shape (max_length,)
+            containing the padded labels.
+        categories: A list of integers representing the category codes.
+        tokenizer: A transformers.PreTrainedTokenizer object that can
+            encode and decode text.
+    """
     def __init__(self,
                  list_data_dict,
                  tokenizer,
                  prompt_input=PROMPT_DICT["prompt_input"],
                  prompt_no_input=PROMPT_DICT["prompt_no_input"]):
+        """
+        Initializes the dataset with the given arguments.
+
+        Args:
+            list_data_dict: A list of dictionaries, each containing input,
+                output, and optionally category keys and values as strings.
+            tokenizer: A transformers.PreTrainedTokenizer object that can
+                encode and decode text.
+            prompt_input: An optional string template for creating the source
+                text when the input key is present in the data dictionary.
+                The template can use {input}, {output}, and {category} as
+                placeholders for the corresponding values. The default value
+                is PROMPT_DICT["prompt_input"].
+            prompt_no_input: An optional string template for creating the
+                source text when the input key is not present in the data
+                dictionary. The template can use {output} and {category} as
+                placeholders for the corresponding values. The default value is
+                PROMPT_DICT["prompt_no_input"].
+        """
         super(LLMDataset, self).__init__()
 
         sources = [
@@ -67,6 +105,25 @@ class LLMDataset(Dataset):
         self.categories = list(pd.Categorical(df["category"]).codes)
 
     def _tokenize_fn(self, strings, tokenizer):
+        """
+        Tokenizes a list of strings using the given tokenizer.
+
+        Args:
+            strings: A list of strings to be tokenized.
+            tokenizer: A transformers.PreTrainedTokenizer object that can
+                encode and decode text.
+
+        Returns:
+            A dictionary with the following keys and values:
+                - input_ids: A list of torch.LongTensor objects of shape (
+                    max_length,) containing the tokenized input ids.
+                - labels: A list of torch.LongTensor objects of shape (
+                    max_length,) containing the tokenized labels.
+                - input_ids_lens: A list of integers representing the
+                    lengths of the input ids before padding.
+                - labels_lens: A list of integers representing the lengths of
+                    the labels before padding.
+        """
         tokenized_list = [
             tokenizer(
                 text,
@@ -91,6 +148,22 @@ class LLMDataset(Dataset):
         )
 
     def preprocess(self, sources, targets, tokenizer):
+        """
+        Preprocesses the sources and targets using the given tokenizer.
+
+        Args:
+            sources: A list of strings representing the source texts.
+            targets: A list of strings representing the target texts.
+            tokenizer: A transformers.PreTrainedTokenizer object that can
+                encode and decode text.
+
+        Returns:
+            A dictionary with the following keys and values:
+                - input_ids: A list of torch.LongTensor objects of shape (
+                    max_length,) containing the padded input ids.
+                - labels: A list of torch.LongTensor objects of shape (
+                    max_length,) containing the padded labels.
+        """
         examples = [s + t for s, t in zip(sources, targets)]
         examples_tokenized, sources_tokenized = [
             self._tokenize_fn(strings, tokenizer)

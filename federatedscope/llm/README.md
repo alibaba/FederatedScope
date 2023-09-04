@@ -1,14 +1,54 @@
-# FederatedScope-LLM
+<h1 align="center">
+<img src="https://img.alicdn.com/imgextra/i4/O1CN01dc2sno1jj42lxvq6A_!!6000000004583-2-tps-521-321.png"width="400" alt="federatedscope-logo">
+</h1>
 
-FederatedScope-LLM (FS-LLM) is an efficient package for federated large language model. We provide a hands-on tutorial here, while for more detailed tutorial, please refer to [TO-BE-RELEASED]().
+![](https://img.shields.io/badge/language-python-blue.svg)
+![](https://img.shields.io/badge/license-Apache-000000.svg)
+[![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
+[![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
+[![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
+
+<img src="https://img.alicdn.com/imgextra/i2/O1CN01y9mcld26RsLKK9Q98_!!6000000007659-2-tps-3710-2735.png" alt="img" style="zoom: 100%;" />
+
+FederatedScope-LLM (FS-LLM) is a comprehensive package for federated fine-tuning large language models, which provide:
+
+* A complete **end-to-end benchmarking pipeline**, automizing the processes of dataset preprocessing, federated fine-tuning execution or simulation, and performance evaluation on federated LLM fine-tuning with different capability demonstration purposes; 
+* Comprehensive and off-the-shelf **federated fine-tuning algorithm** implementations and versatile programming interfaces for future extension to enhance the capabilities of LLMs in FL scenarios with low communication and computation costs, even without accessing the full model (e.g., closed-source LLMs);
+* we adopt several **accelerating operators and resource-efficient operators** for fine-tuning LLMs with limited resources and the flexible pluggable sub-routines for interdisciplinary study (e.g., LLMs in personalized FL). 
+
+We provide a hands-on tutorial here for your quick start.
+
+## Code Structure
+
+[LLM-related directory](https://github.com/alibaba/FederatedScope/tree/llm/federatedscope/llm)
+
+```
+FederatedScope
+├── federatedscope
+│   ├── core                     # Federated learning backend modules
+│   ├── llm                      # Federated fine-tuning LLMs    
+│   │   ├── baseline             # Scripts for LLMs
+│   │   ├── dataloader           # Federated fine-tuning dataloader
+│   │   ├── dataset              # Federated fine-tuning dataset
+│   │   ├── eval                 # Evaluation for fine-tuned LLMs
+│   │   ├── misc                 # Miscellaneous
+│   │   ├── model                # LLMs and Adapter
+│   │   ├── trainer              # Fine-tuning with accerating operators
+│   │   ├── ...
+│   ├── main.py                  # Running interface
+│   ├── ... ...          
+├── tests                        # Unittest modules for continuous integration
+├── LICENSE
+└── setup.py 
+```
 
 ## Quick Start
 
-Let’s start with finetuning GPT-2 on [Alpaca](https://github.com/tatsu-lab/stanford_alpaca) to familiarize you with FS-LLM.
+Let’s start with fine-tuning GPT-2 on [Alpaca](https://github.com/tatsu-lab/stanford_alpaca) to familiarize you with FS-LLM.
 
 ### Step 1. Installation
 
-The installation of FS-LLM is similar to minimal FS, except that it requires **Pytorch>=1.13.0** (we recommend version 2.0.X) because of the [PEFT](https://github.com/huggingface/peft) dependency:
+The installation of FS-LLM is similar to minimal FS (see [here](https://github.com/alibaba/FederatedScope/tree/llm/federatedscope/llm/README-main.md) for details), except that it requires **Pytorch>=1.13.0** (we recommend version 2.0.X) because of the [PEFT](https://github.com/huggingface/peft) dependency:
 
 ```bash
 # Create virtual environments with conda
@@ -92,9 +132,9 @@ llm:
     model: ''
   # PEFT related options
   adapter:
-    # Set ture to enable PEFT finetuning
+    # Set ture to enable PEFT fine-tuning
     use: True
-    # Args for PEFT finetuning
+    # Args for PEFT fine-tuning
     args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
 
 # DataLoader related options
@@ -196,18 +236,41 @@ With the help of parameter-efficient fine-tuning methods, federally fine-tuning 
 
 We support federated fine-tuning not only for open-source LLMs, but also for closed-source LLMs. In this scenario, clients can fine-tune LLMs without fully accessing the model, where models and data are both considered as privacy.
 
-| Methods        | Source                                   | How to enable                 |
-| -------------- | ---------------------------------------- | ----------------------------- |
-| Offsite-Tuning | [Link](https://arxiv.org/abs/2302.04870) | `llm.offsute_tuning.use=True` |
+| Methods        | Source                                   | How to enable                                                                                            | Note |
+|----------------|------------------------------------------|----------------------------------------------------------------------------------------------------------|----|
+| Offsite-Tuning | [Link](https://arxiv.org/abs/2302.04870) | `llm.offsite_tuning.use=True`                                                                            | -  |
 
-#### Federate fine-tune with multi-card
+For example, the following methods are supported:
 
-To make the federate fine-tuning efficient, we adopt a series of multi-card acceleration operators.
+| Methods       | Source | How to use                                                                                                  | Note                                                                                                                                                                               |
+|---------------|--------|-------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Drop layers   |   [Link](https://arxiv.org/abs/2302.04870)     | `llm.offsite_tuning.emu_l=2`<br/>`llm.offsite_tuning.emu_r=30`<br/> `llm.offsite_tuning.kwargs={"drop_ratio":0.2}}` | The server fixes the first two layers and the layers after 30th layer as the adapter, and uniformly drops 20% of the remaining layers, denoted as the emulator                     |
+| Model distill |[Link](https://arxiv.org/abs/2302.04870)| `llm.offsite_tuning.emu_align.use=True`<br/>`llm.offsite_tuning.emu_l=2`<br/>`llm.offsite_tuning.emu_r=30`<br/> | The server fixes the first two layers and the layers after 30th layer as the adapter, and regards the remaining as the teacher model, and distills a student model as the emulator |
 
-| Methods               | Source                                                       | How to use                       | Note                                          |
-| --------------------- | ------------------------------------------------------------ | -------------------------------- | --------------------------------------------- |
-| torch.nn.DataParallel | [Link](https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html) | `cfg.train.data_para_dids=[0,1]` | -                                             |
-| DeepSpeed             | [Link](https://github.com/microsoft/DeepSpeed)               | Coming soon                      | Use `nvcc - V` to make sure `CUDA` installed. |
+More methods will be supported ASAP.
+
+##### Evaluation of fine-tuned closed-source LLMs
+
+To evaluate fine-tuned closed-source LLMs, one should decide whether to evaluate the original model with fine-tuned adapters or the emulator with fine-tuned adapters.
+
+| Methods                                     | Source                                   | How to use                                          | note       |
+|---------------------------------------------|------------------------------------------|-----------------------------------------------------|-------|
+| Evaluation of fine-tuned closed-source LLMs | [Link](https://arxiv.org/abs/2302.04870) | `cfg.llm.offsite_tuning.eval_type='full'` (or `'emu'`) | 'full' means evaluating the original model with fine-tuned adapters; 'emu' means evaluating the emulator with fine-tuned adapters |
+
+#### Federate fine-tune with efficiency
+
+To make the federated fine-tuning efficient, we adopt a series of acceleration operators.
+
+| Methods       | Source                                                                       | How to use      | Note                                                                                                                                                      |
+|-----------------------|------------------------------------------------------------------------------|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| torch.nn.DataParallel | [Link](https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html) | `cfg.train.data_para_dids=[0,1]`  | It splits the input across the specified devices by chunking in the batch dimension.                                                                      |
+| DeepSpeed             | [Link](https://github.com/microsoft/DeepSpeed)                               | `cfg.llm.accelation.use=True`     | Use `nvcc - V` to make sure `CUDA` installed. <br/>When set it to `True`, we can full-parameter fine-tune a `llama-7b` on a machine with 4 V100-32G gpus. |
+| FP16                  | [Link](https://arxiv.org/abs/1710.03740)                                     | `train.is_enable_half=True`       | Converting float types to half-precision to save memory usage                                                                                             |
+| Share local model     | -                                                                            | `federate.share_local_model=True` | The clients will share the base model, which reduces a lot of cpu memory consumption.                                                                     |
+| Move to cpu           | -                                                                            | `llm.adapter.mv_to_cpu=True`      | Move adapter to `cpu` after training, which can save memory but cost more time.                                                                           |
+
+
+
 
 ## FAQ
 
@@ -218,3 +281,5 @@ To make the federate fine-tuning efficient, we adopt a series of multi-card acce
   - This is a problem with `transformers`, you can fix it in your local file. Replace `LLaMATokenizer` with `LlamaTokenizer` in `PATH_TO_DATA_ROOT/MODEL_REPO/snapshots/..../tokenizer_config.json`
 - `OutOfMemoryError: CUDA out of memory.`
   - Torch's garbage collection mechanism may not be timely resulting in OOM, please set `cfg.eval.count_flops` to `False`.
+
+
