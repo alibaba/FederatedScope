@@ -5,7 +5,7 @@
 ![](https://img.shields.io/badge/language-python-blue.svg)
 ![](https://img.shields.io/badge/license-Apache-000000.svg)
 [![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
-[![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
+[![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://colab.research.google.com/github/alibaba/FederatedScope)
 [![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
 
 <img src="https://img.alicdn.com/imgextra/i2/O1CN01y9mcld26RsLKK9Q98_!!6000000007659-2-tps-3710-2735.png" alt="img" style="zoom: 100%;" />
