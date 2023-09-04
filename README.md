@@ -1,6 +1,7 @@
 <h1 align="center">
 <img src="https://img.alicdn.com/imgextra/i4/O1CN01dc2sno1jj42lxvq6A_!!6000000004583-2-tps-521-321.png"width="400" alt="federatedscope-logo">
 </h1>
+
 ![](https://img.shields.io/badge/language-python-blue.svg)
 ![](https://img.shields.io/badge/license-Apache-000000.svg)
 [![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
