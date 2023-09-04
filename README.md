@@ -1,14 +1,13 @@
 <h1 align="center">
 <img src="https://img.alicdn.com/imgextra/i4/O1CN01dc2sno1jj42lxvq6A_!!6000000004583-2-tps-521-321.png"width="400" alt="federatedscope-logo">
 </h1>
-
 ![](https://img.shields.io/badge/language-python-blue.svg)
 ![](https://img.shields.io/badge/license-Apache-000000.svg)
 [![Website](https://img.shields.io/badge/website-FederatedScope-0000FF)](https://federatedscope.io/)
 [![Playground](https://shields.io/badge/JupyterLab-Enjoy%20Your%20FL%20Journey!-F37626?logo=jupyter)](https://try.federatedscope.io/)
 [![Contributing](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://federatedscope.io/docs/contributor/)
 
-<img src="https://img.alicdn.com/imgextra/i2/O1CN01v3gpan1f7GtrhlAFN_!!6000000003959-2-tps-3710-2735.png" alt="img" style="zoom: 20%;" />
+<img src="https://img.alicdn.com/imgextra/i2/O1CN01y9mcld26RsLKK9Q98_!!6000000007659-2-tps-3710-2735.png" alt="img" style="zoom: 100%;" />
 
 FederatedScope-LLM (FS-LLM) is a comprehensive package for federated fine-tuning large language models, which provide:
 
@@ -244,8 +243,8 @@ For example, the following methods are supported:
 
 | Methods       | Source | How to use                                                                                                  | Note                                                                                                                                                                               |
 |---------------|--------|-------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Drop layers   |   [Link](https://arxiv.org/abs/2302.04870)     | llm.offsite_tuning.emu_l=2<br/>llm.offsite_tuning.emu_r=30<br/> llm.offsite_tuning.kwargs={"drop_ratio":0.2}} | The server fixes the first two layers and the layers after 30th layer as the adapter, and uniformly drops 20% of the remaining layers, denoted as the emulator                     |
-| Model distill |[Link](https://arxiv.org/abs/2302.04870)| llm.offsite_tuning.emu_align.use=True<br/>llm.offsite_tuning.emu_l=2<br/>llm.offsite_tuning.emu_r=30<br/>   | The server fixes the first two layers and the layers after 30th layer as the adapter, and regards the remaining as the teacher model, and distills a student model as the emulator |
+| Drop layers   |   [Link](https://arxiv.org/abs/2302.04870)     | `llm.offsite_tuning.emu_l=2`<br/>`llm.offsite_tuning.emu_r=30`<br/> `llm.offsite_tuning.kwargs={"drop_ratio":0.2}}` | The server fixes the first two layers and the layers after 30th layer as the adapter, and uniformly drops 20% of the remaining layers, denoted as the emulator                     |
+| Model distill |[Link](https://arxiv.org/abs/2302.04870)| `llm.offsite_tuning.emu_align.use=True`<br/>`llm.offsite_tuning.emu_l=2`<br/>`llm.offsite_tuning.emu_r=30`<br/> | The server fixes the first two layers and the layers after 30th layer as the adapter, and regards the remaining as the teacher model, and distills a student model as the emulator |
 
 More methods will be supported ASAP.
 
@@ -255,7 +254,7 @@ To evaluate fine-tuned closed-source LLMs, one should decide whether to evaluate
 
 | Methods                                     | Source                                   | How to use                                          | note       |
 |---------------------------------------------|------------------------------------------|-----------------------------------------------------|-------|
-| Evaluation of fine-tuned closed-source LLMs | [Link](https://arxiv.org/abs/2302.04870) | `cfg.llm.offsite_tuning.eval_type='full' (or 'emu') | 'full' means evaluating the original model with fine-tuned adapters; 'emu' means evaluating the emulator with fine-tuned adapters |
+| Evaluation of fine-tuned closed-source LLMs | [Link](https://arxiv.org/abs/2302.04870) | `cfg.llm.offsite_tuning.eval_type='full'` (or `'emu'`) | 'full' means evaluating the original model with fine-tuned adapters; 'emu' means evaluating the emulator with fine-tuned adapters |
 
 #### Federate fine-tune with efficiency
 
@@ -281,4 +280,5 @@ To make the federated fine-tuning efficient, we adopt a series of acceleration o
   - This is a problem with `transformers`, you can fix it in your local file. Replace `LLaMATokenizer` with `LlamaTokenizer` in `PATH_TO_DATA_ROOT/MODEL_REPO/snapshots/..../tokenizer_config.json`
 - `OutOfMemoryError: CUDA out of memory.`
   - Torch's garbage collection mechanism may not be timely resulting in OOM, please set `cfg.eval.count_flops` to `False`.
+
 
