@@ -1,0 +1,51 @@
+# deepspeed --master_port 29501 federatedscope/main.py --cfg federatedscope/llm/baseline/deepspeed/llama_client.yaml
+use_gpu: True
+early_stop:
+  patience: 0
+federate:
+  mode: distributed
+  client_num: 1
+  total_round_num: 500
+  save_to: "llama_ds.ckpt"
+data:
+  root: data/
+  type: 'alpaca@llm'
+  splits: [0.98,0.01,0.01]
+  splitter: 'iid'
+distribute:
+  use: True
+  server_host: '127.0.0.1'
+  server_port: 50051  # [50051, 50051 + client_num]
+  client_host: '127.0.0.1'
+  client_port: 50061  # [50061, 50061 + client_num]
+  role: 'client'
+  data_idx: 1
+  grpc_max_send_message_length: 1048576000
+  grpc_max_receive_message_length: 1048576000
+llm:
+  tok_len: 1000
+  chat:
+    max_len: 2000
+  adapter:
+    use: True
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]
+  deepspeed:
+    use: True
+    ds_config: 'federatedscope/llm/baseline/deepspeed/ds_config.json'
+dataloader:
+  batch_size: 1
+model:
+  type: 'decapoda-research/llama-13b-hf@huggingface_llm'
+train:
+  local_update_steps: 30
+  batch_or_epoch: batch
+  optimizer:
+    lr: 0.0003
+    weight_decay: 0.0
+  is_enable_half: True
+trainer:
+  type: llmtrainer
+eval:
+  freq: 5
+  metrics: ['loss']
+  count_flops: False

@@ -13,6 +13,8 @@ from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.llm.misc.fschat import FSChatBot
+from federatedscope.core.data.utils import download_url
+import tarfile
 
 transformers.logging.set_verbosity(40)
 
@@ -121,19 +123,29 @@ def main():
     model = fschatbot.model
     device = fschatbot.device
 
+    if not os.path.exists("data/mmlu"):
+        download_url("https://people.eecs.berkeley.edu/~hendrycks/data.tar",
+                     init_cfg.data.root)
+        t = tarfile.open("data/data.tar", "r:")
+        os.makedirs("data/mmlu/")
+        t.extractall(path="data/mmlu/")
+        t.close()
+
+    data_dir = os.path.join(init_cfg.data.root, "mmlu/data")
+    eval_dir = "eval_result"
+
     subjects = sorted([
         f.split("_test.csv")[0]
-        for f in os.listdir(os.path.join('../data/', "test"))
-        if "_test.csv" in f
+        for f in os.listdir(os.path.join(data_dir, "test")) if "_test.csv" in f
     ])
 
-    if not os.path.exists('z_eval_result'):
-        os.makedirs('z_eval_result')
+    if not os.path.exists(eval_dir):
+        os.makedirs(eval_dir)
     if not os.path.exists(
-            os.path.join('z_eval_result', "results_{}".format(
+            os.path.join(eval_dir, "results_{}".format(
                 init_cfg.federate.save_to))):
         os.makedirs(
-            os.path.join('z_eval_result',
+            os.path.join(eval_dir,
                          "results_{}".format(init_cfg.federate.save_to)))
 
     all_cors = []
@@ -144,10 +156,10 @@ def main():
     cat_cors = {cat: [] for cat in categories}
 
     for subject in subjects:
-        dev_df = pd.read_csv(os.path.join('../data/', "dev",
+        dev_df = pd.read_csv(os.path.join(data_dir, "dev",
                                           subject + "_dev.csv"),
                              header=None)[:5]
-        test_df = pd.read_csv(os.path.join('../data/', "test",
+        test_df = pd.read_csv(os.path.join(data_dir, "test",
                                            subject + "_test.csv"),
                               header=None)
 
@@ -167,7 +179,7 @@ def main():
             test_df["{}_choice{}_probs".format(init_cfg.federate.save_to,
                                                choice)] = probs[:, j]
         test_df.to_csv(
-            os.path.join('z_eval_result',
+            os.path.join(eval_dir,
                          "results_{}".format(init_cfg.federate.save_to),
                          "{}.csv".format(subject)),
             index=None,
@@ -187,7 +199,7 @@ def main():
     print("Average accuracy: {:.3f}".format(weighted_acc))
 
     results_file = os.path.join(
-        'z_eval_result', "accuracies_{}.json".format(
+        eval_dir, "accuracies_{}.json".format(
             init_cfg.federate.save_to.replace("/", "_")))
     with open(results_file, "w") as f:
         json.dump(results, f)
