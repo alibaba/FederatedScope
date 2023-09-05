@@ -24,7 +24,6 @@ try:
     import torch
 except ImportError:
     torch=None
-    raise ImportError('Currently, LOMO optimizer is only implemented with `pytorch`')
 from torch.optim import Optimizer
 
 from federatedscope.register import register_optimizer
@@ -36,6 +35,8 @@ class LOMO(Optimizer):
     """
 
     def __init__(self, model, lr=1e-3, clip_grad_norm=None, clip_grad_value=None):
+        if torch is None:
+            raise ImportError('Currently, LOMO optimizer is only implemented with `pytorch`')
         self.model = model
         self.lr = lr
         self.local_rank = 0
