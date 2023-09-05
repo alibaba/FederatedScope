@@ -20,7 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import torch
+try:
+    import torch
+except ImportError:
+    torch=None
+    raise ImportError('Currently, LOMO optimizer is only implemented with `pytorch`')
 from torch.optim import Optimizer
 
 from federatedscope.register import register_optimizer
@@ -301,10 +305,10 @@ def call_lomo_optimizer(model, type, lr, **kwargs):
         optim = None
         optimizer = None
 
-    if type == 'LOMO':
+    if type == 'lomo':
         if optim is not None:
             optimizer = LOMO(model, lr=lr, clip_grad_norm=None, clip_grad_value=None)
         return optimizer
 
 
-register_optimizer('LOMO', call_lomo_optimizer)
+register_optimizer('lomo', call_lomo_optimizer)

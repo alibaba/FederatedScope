@@ -25,7 +25,7 @@ import logging
 from federatedscope.register import register_trainer
 from federatedscope.llm.trainer.trainer import LLMTrainer
 from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.trainers.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE, MODE
 from federatedscope.contrib.optimizer.lomo import LOMO
 
 
@@ -33,10 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class LOMOTrainer(LLMTrainer):
-    def _hook_on_epoch_start(self, ctx):
+    def _hook_on_fit_start_init(self, ctx):
+        ret = super()._hook_on_fit_start_init(ctx)
         if not isinstance(ctx.optimizer, LOMO):
-            raise AttributeError('"LOMO" must be set as the type of `train.optimizer` if the trainer is LOMOTrainer')
-        return super()._hook_on_epoch_start(ctx)
+            raise AttributeError(f'"lomo" must be set as the type of ',
+                                 f'`train.optimizer` if the trainer is LOMOTrainer')
+        return ret
     
     
     def _hook_on_batch_forward(self, ctx):
@@ -60,7 +62,12 @@ class LOMOTrainer(LLMTrainer):
         else:
             ctx.skip_this_batch = CtxVar(False, LIFECYCLE.BATCH)
 
-        if not ctx.skip_this_batch and ctx.optimizer.clip_grad_norm is not None and ctx.optimizer.clip_grad_norm > 0:
+        if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] \
+            and (
+                    not ctx.skip_this_batch 
+                    and ctx.optimizer.clip_grad_norm is not None 
+                    and ctx.optimizer.clip_grad_norm > 0
+                ):
             ctx.optimizer.grad_norm(loss)
             # the second forward
             input_ids = ctx.data_batch['input_ids'].to(ctx.device)
