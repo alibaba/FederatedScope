@@ -11,6 +11,7 @@ We summarize all the customizable configurations:
 - [cfg_differential_privacy.py](#differential-privacy)
 - [cfg_hpo.py](#auto-tuning-components)
 - [cfg_attack.py](#attack)
+- [cfg_llm.py](#llm)
 
 ### config
 The configurations related to environment of running experiment.
@@ -168,9 +169,10 @@ The following configurations are related to the local training.
 |   `train.batch_or_epoch`   |   (string) 'batch'   |           The type of local training.            |               `train.batch_or_epoch` specifies the unit that `train.local_update_steps` adopts. All new parameters will be used as arguments for the chosen optimizer.               |
 |     `train.optimizer`      |          -           |                        -                         |                     You can add new parameters under `train.optimizer` according to the optimizer, e.g., you can set momentum by `cfg.train.optimizer.momentum`.                     |
 |   `train.optimizer.type`   |    (string) 'SGD'    |  The type of optimizer used in local training.   |                                               Currently we support all optimizers build in PyTorch (The modules under `torch.optim`).                                                |
-| `train.optimizer.lr` |     (float) 0.1      |  The learning rate used in the local training.   |                                                                                          -                                                                                           |
+|    `train.optimizer.lr`    |     (float) 0.1      |  The learning rate used in the local training.   |                                                                                          -                                                                                           |
 |     `train.scheduler`      |          -           |                        -                         | Similar with `train.optimizer`, you can add new parameters as you need, e.g., `train.scheduler.step_size=10`. All new parameters will be used as arguments for the chosen scheduler. |
-| `train.scheduler.type` |     (string) ''      | The type of the scheduler used in local training |                                         Currently we support all schedulers build in PyTorch (The modules under `torch.optim.lr_scheduler`).                                         |
+|   `train.scheduler.type`   |     (string) ''      | The type of the scheduler used in local training |                                         Currently we support all schedulers build in PyTorch (The modules under `torch.optim.lr_scheduler`).                                         |
+|   `train.is_enable_half`   |     (bool) False     |            Whether use half precision            |                                                             When model is too large, users can use half-precision model                                                              |
 
 #### Fine tuning
 The following configurations are related to the fine tuning.
@@ -413,3 +415,52 @@ The configurations related to the data/dataset are defined in `cfg_attack.py`.
 `attack.self_opt` |(bool) False |This keyword represents whether to use his own training procedure for attack client.|-|
 `attack.self_lr` |(float) 0.05|This keyword represents learning rate of his own training procedure for attack client.|-|
 `attack.self_epoch` |(int) 6 |This keyword represents epoch number of his own training procedure for attack client.|-|
+
+### LLM
+The configurations related to LLMs are defined in `cfg_llm.py`.
+
+| [General](#llm-general) | [Inference](#inference) | [DeepSpeed](#deepspeed) | [Adapter](#Adapter) | [Offsite-tuning](#offsite-tuning) |
+#### LLM-general
+|         Name          | (Type) Default Value | Description                                              | Note |
+|:---------------------:|:--------------------:|:---------------------------------------------------------|:-----|
+|   `cfg.llm.tok_len`   |      (int) 128       | Max token length for model input (training)              ||
+| `cfg.llm.cache.model` |     (string) ''      | The fold for storing model cache, default in `~/.cache/` ||
+|||||
+#### Inference
+|              Name              | (Type) Default Value | Description                                  | Note |
+|:------------------------------:|:--------------------:|:---------------------------------------------|:-----|
+|     `cfg.llm.chat.max_len`     |      (int) 1000      | Max token length for model input (inference) ||
+| `cfg.llm.chat.max_history_len` |       (int) 10       | Max number of history texts                  ||
+#### DeepSpeed
+|             Name              | (Type) Default Value | Description                                                  | Note                                                                                                                                               |
+|:-----------------------------:|:--------------------:|:-------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------|
+|    `cfg.llm.deepspeed.use`    |     (bool) False     | Whether use DeepSpeed                                        | Use `nvcc - V` to make sure CUDA installed. When set it to `True`, we can full-parameter fine-tune a `llama-7b` on a machine with 4 V100-32G gpus. |
+| `cfg.llm.deepspeed.ds_config` |     (string) ''      | The path to the file containing configurations for DeepSpeed | See `federatedscope/llm/baseline/deepspeed/ds_config.json`                                                                                         |
+#### Adapter
+|            Name             | (Type) Default Value | Description                                              | Note                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|:---------------------------:|:--------------------:|:---------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    `cfg.llm.adapter.use`    |     (bool) False     | Whether use adapter                                      ||
+|   `cfg.llm.adapter.args`    |     list ([{}])      | Args for adapters                                        | We offer the following four adaptets:<br/>`[ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 32, 'lora_dropout': 0.1 } ]`; <br/> `[{'adapter_package': 'peft', 'adapter_method': 'prefix', 'prefix_projection': False, 'num_virtual_tokens': 20}]`; <br/> `[{'adapter_package': 'peft', 'adapter_method': 'p-tuning', 'encoder_reparameterization_type': 'MLP', 'encoder_dropout': 0.1, 'num_virtual_tokens': 20}]`; <br/> `[{'adapter_package': 'peft', 'adapter_method': 'prompt', 'prompt_tuning_init': 'RANDOM', 'num_virtual_tokens': 20}]`. |
+| `cfg.llm.adapter.mv_to_cpu` |     (bool) False     | Whether move the adapter to cpu after each training step | If true, it can save memory but cost more time                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+#### Offsite-tuning
+|                            Name                             |  (Type) Default Value  | Description                                                     | Note                                                                                                                                                                                   |
+|:-----------------------------------------------------------:|:----------------------:|:----------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|                `cfg.llm.offsite_tuning.use`                 |      (bool) False      | Whether apply offsite-tuning                                    | Set it `True` when clients cannot access to the full model                                                                                                                             |
+|              `cfg.llm.offsite_tuning.strategy`              | (string) 'drop_layer'  | The mothod used for offsite-tuning                              | More methods will be supported ASAP                                                                                                                                                    |
+|               `cfg.llm.offsite_tuning.emu_l`                |        (int) 1         | Fix the previous layers as adapter for training                 ||
+|               `cfg.llm.offsite_tuning.emu_r`                |        (int) 10        | Fix the layers behind as adapter for training                   ||
+|               `cfg.llm.offsite_tuning.kwargs`               |      (list) [{}]       | Args for offsite-tuning method                                  | E.g.,`[{'drop_ratio':0.2}]` means uniformly drops 20% of the layers between `cfg.llm.offsite_tuning.emu_l` and `cfg.llm.offsite_tuning.emu_r`, denote the remaining as emulator        |
+|             `cfg.llm.offsite_tuning.eval_type`              |     (string) 'emu'     | The type of evaluation for offsite-tuning                       | 'full' means evaluating the original model with fine-tuned adapters; 'emu' means evaluating the emulator with fine-tuned adapters                                                      |
+|           `cfg.llm.offsite_tuning.emu_align.use`            |      (bool) False      | Whether use model distillation                                  | If `True`, the server will regard the layers between `cfg.llm.offsite_tuning.emu_l` and `cfg.llm.offsite_tuning.emu_r` as a teacher model, and distill a student model as the emulator |
+|       `cfg.llm.offsite_tuning.emu_align.restore_from`       |      (string) ''       | The path to the emulator load by clients to perform fine-tuning ||
+|         `cfg.llm.offsite_tuning.emu_align.save_to`          |      (string) ''       | The path to the emulator saved by server                        ||
+|     `cfg.llm.offsite_tuning.emu_align.exit_after_align`     |      (bool) False      | Whether exist after model distillation                          ||
+|        `cfg.llm.offsite_tuning.emu_align.data.root`         |    (string) 'data'     | The fold where the `data` file located for model distilation    ||
+|        `cfg.llm.offsite_tuning.emu_align.data.type`         | (string) 'alpaca@llm'  | The Dataset name for model distillation                         ||
+|       `cfg.llm.offsite_tuning.emu_align.data.splits`        | (list) [0.8, 0.1, 0.1] | Train, valid, test splits for model distillation                ||
+| `cfg.llm.offsite_tuning.emu_align.train.local_update_steps` |        (int) 10        | The number of local training steps in model distillation        ||
+|   `cfg.llm.offsite_tuning.emu_align.train.batch_or_epoch`   |    (string) 'batch'    | The type of local training for model distillation               ||
+|   `cfg.llm.offsite_tuning.emu_align.train.lm_loss_weight`   |      (float) 0.1       | The ratio of language model loss in model distillation          ||
+|   `cfg.llm.offsite_tuning.emu_align.train.kd_loss_weight`   |      (float) 0.9       | The ratio of knowledge distillation loss in model distillation  ||
+|   `cfg.llm.offsite_tuning.emu_align.train.optimizer.type`   |     (string) 'SGD'     | The type of optimizer used in model distillation                ||
+|    `cfg.llm.offsite_tuning.emu_align.train.optimizer.lr`    |      (float) 0.01      | The learning rate used in model distillation                    ||
