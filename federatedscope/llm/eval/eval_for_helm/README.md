@@ -73,7 +73,7 @@
 * Install helm from our branch
   * `pip install -e git+https://github.com/qbc2016/helm.git@helm_for_fs#egg=crfm-helm`
 * Install FS-LLM (**errors can be igored**)
-  * `git clone -b dev/llm https://github.com/alibaba/FederatedScope.git`
+  * `git clone -b llm https://github.com/alibaba/FederatedScope.git`
   * `cd FederatedScope`
   * `pip install -e .[llm]`
 * Download and unzip Helm evaluation dataset

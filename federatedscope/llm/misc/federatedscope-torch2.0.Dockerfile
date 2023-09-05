@@ -39,7 +39,7 @@ RUN conda install -y pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorc
 
 # Install FS-LLM
 RUN cd /root \
-		&& git clone -b dev/llm https://github.com/alibaba/FederatedScope.git \
+		&& git clone -b llm https://github.com/alibaba/FederatedScope.git \
 		&& cd /root/FederatedScope \
 		&& pip install -e .[llm] \
 		&& pip cache purge
