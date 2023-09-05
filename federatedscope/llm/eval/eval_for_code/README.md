@@ -14,7 +14,7 @@
 
 # HumanEvalX Usage
 
-* Using the trained model to generate codes from prompt, and save them as 6 `jsonl` files (`['cpp', 'go', 'java', 'js', 'python', 'rust']`).
+* Using the trained model to generate codes from prompt, and save them as 5 `jsonl` files (`['cpp', 'go', 'java', 'js', 'python']`).
 
   * `python federatedscope/llm/eval/eval_for_code/humanevalx.py --cfg federatedscope/llm/baseline/llama.yaml`
 
