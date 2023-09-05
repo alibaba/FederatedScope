@@ -16,15 +16,14 @@ from federatedscope.llm.misc.fschat import FSChatBot
 transformers.logging.set_verbosity(40)
 
 DEBUG = False
-NUM_ANSWERS_PER_QUESTION = 2
-LANGUAGES = ['cpp', 'go', 'java', 'js', 'python', 'rust']
+NUM_ANSWERS_PER_QUESTION = 5
+LANGUAGES = ['cpp', 'go', 'java', 'js', 'python']
 LANGUAGE_TAG = {
     "cpp": "// language: C++",
     "python": "# language: Python",
     "java": "// language: Java",
     "js": "// language: JavaScript",
     "go": "// language: Go",
-    "rust": "// language: Rust",
 }
 
 
