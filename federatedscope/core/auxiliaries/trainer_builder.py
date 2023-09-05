@@ -161,8 +161,7 @@ def get_trainer(model=None,
             dict_path = "federatedscope.nlp.hetero_tasks.trainer"
         elif config.trainer.type.lower() in ['llmtrainer']:
             dict_path = "federatedscope.llm.trainer.trainer"
-        elif config.trainer.type.lower() in ['lomotrainer']:
-            print('in type')
+        elif config.trainer.type.lower() in ['lomotrainer']:    
             dict_path = "federatedscope.llm.trainer.lomo_trainer"
         else:
             raise ValueError
