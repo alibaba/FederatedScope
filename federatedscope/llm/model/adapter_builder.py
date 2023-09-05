@@ -213,10 +213,15 @@ class AdapterModel(nn.Module):
         """
         try:
             res = self.model.generate(*args, **kwargs)
-        except RuntimeError:
+        except RuntimeError as e:
+            # When does evaluation in HELM,
+            # half precision will cause RuntimeError,
+            # the following solves it
             if 'do_sample' in kwargs.keys():
                 del kwargs['do_sample']
                 res = self.model.generate(*args, **kwargs)
+            else:
+                raise RuntimeError(e)
         return res
 
     def state_dict(self, return_trainable=True, *args, **kwargs):
