@@ -211,7 +211,13 @@ class AdapterModel(nn.Module):
         Returns:
             The output of the model's generate method.
         """
-        return self.model.generate(*args, **kwargs)
+        try:
+            res = self.model.generate(*args, **kwargs)
+        except RuntimeError:
+            if 'do_sample' in kwargs.keys():
+                del kwargs['do_sample']
+                res = self.model.generate(*args, **kwargs)
+        return res
 
     def state_dict(self, return_trainable=True, *args, **kwargs):
         """

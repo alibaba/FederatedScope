@@ -56,7 +56,7 @@
     * `-m 100` means that there will be 100 items in each task.
     * `--skip-completed-runs` means that when restarted, it will skip the completed test sets. It is recommended to add this if you no dot want to waste your time for the completed tasks.
     * `--local-path xxx` means the directory to put cache files, default value is `prod_env`. It will always use it when you run a new task. It is recommended that before running a new task, delete it or assign a new name to it.
-    * If you want to test your own trained `ckpt` for `decapoda-research/llama-7b-hf`, please add parameters `--yaml /path/to/xxx.yaml`. If you want to modify the configurations in `yaml`, just add parameters similar to the behaviors in FS. For example, add `federate.save_to xxxx.ckpt` to change the ckpt. Ensure that half precision is not allowed, i.e., `train.is_enable_half False`.
+    * If you want to test your own trained `ckpt` for `decapoda-research/llama-7b-hf`, please add parameters `--yaml /path/to/xxx.yaml`. If you want to modify the configurations in `yaml`, just add parameters similar to the behaviors in FS. For example, add `federate.save_to xxxx.ckpt` to change the ckpt. 
 * Launch webserver to view results
   * `bash evaluaton/setup_server.sh -n ${SUITE_NAME} -p ${PORT}`
 
