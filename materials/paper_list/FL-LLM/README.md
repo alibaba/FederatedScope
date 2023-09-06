@@ -9,7 +9,7 @@ This list is constantly being updated. Feel free to contribute!
 ### 2022
 | Title | Venue | Link                                    |
 |-------|-------|-----------------------------------------|
-| Scaling Language Model Size in Cross-Device Federated Learning      | FL4NLP      | [pdf](https://arxiv.org/abs/2204.09715) |
+| Scaling Language Model Size in Cross-Device Federated Learning      | ACL Workshop      | [pdf](https://arxiv.org/abs/2204.09715) |
 
 ### 2021
 | Title | Venue | Link                                     |
