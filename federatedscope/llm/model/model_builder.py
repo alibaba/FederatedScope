@@ -34,9 +34,13 @@ def get_model_from_modelscope(model_name, config):
     Returns:
         Model: A causal language model object.
     """
-    from modelscope.models import Model
+    from modelscope import AutoModelForCausalLM
 
-    return Model.from_pretrained(model_name)
+    kwargs = {}
+    if len(config.llm.cache.model):
+        kwargs['cache_dir'] = config.llm.cache.model
+
+    return AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
 
 
 def get_llm(config):
@@ -66,7 +70,8 @@ def get_llm(config):
 
     # Resize LLM model based on settings
     tokenizer, num_new_tokens = \
-        get_tokenizer(model_name, config.data.root, config.llm.tok_len)
+        get_tokenizer(model_name, config.data.root, config.llm.tok_len,
+                      model_hub)
     model.resize_token_embeddings(len(tokenizer))
     if num_new_tokens > 0:
         input_embeddings = model.get_input_embeddings().weight.data
