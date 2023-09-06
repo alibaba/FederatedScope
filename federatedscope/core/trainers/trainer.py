@@ -279,9 +279,10 @@ class Trainer(BaseTrainer):
         return self.ctx.num_samples
 
     @lifecycle(LIFECYCLE.EPOCH)
-    def _run_epoch(self, hooks_set):
-        for epoch_i in range(
-                getattr(self.ctx, f"num_{self.ctx.cur_split}_epoch")):
+    def _run_epoch(self, hooks_set, run_step=-1):
+        if run_step == -1:
+            run_step = getattr(self.ctx, f"num_{self.ctx.cur_split}_epoch")
+        for epoch_i in range(run_step):
             self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
 
             for hook in hooks_set["on_epoch_start"]:
@@ -293,9 +294,10 @@ class Trainer(BaseTrainer):
                 hook(self.ctx)
 
     @lifecycle(LIFECYCLE.BATCH)
-    def _run_batch(self, hooks_set):
-        for batch_i in range(
-                getattr(self.ctx, f"num_{self.ctx.cur_split}_batch")):
+    def _run_batch(self, hooks_set, run_step=-1):
+        if run_step == -1:
+            run_step = getattr(self.ctx, f"num_{self.ctx.cur_split}_batch")
+        for batch_i in range(run_step):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
             for hook in hooks_set["on_batch_start"]:
