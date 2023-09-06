@@ -1,24 +1,27 @@
-# This implementation is adapted from https://github.com/OpenLMLab/LOMO (MIT License)
+'''
+This implementation is adapted from https://github.com/OpenLMLab/LOMO
+(MIT License)
 
-# Copyright (c) 2023 OpenLMLab
+Copyright (c) 2023 OpenLMLab
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+'''
 
 import torch
 import logging
@@ -28,7 +31,6 @@ from federatedscope.core.trainers.context import CtxVar
 from federatedscope.core.trainers.enums import LIFECYCLE, MODE
 from federatedscope.contrib.optimizer.lomo import LOMO
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -36,11 +38,11 @@ class LOMOTrainer(LLMTrainer):
     def _hook_on_fit_start_init(self, ctx):
         ret = super()._hook_on_fit_start_init(ctx)
         if not isinstance(ctx.optimizer, LOMO):
-            raise AttributeError(f'"lomo" must be set as the type of ',
-                                 f'`train.optimizer` if the trainer is LOMOTrainer')
+            raise AttributeError(
+                '"lomo" must be set as the type of'
+                '`train.optimizer` if the trainer is LOMOTrainer')
         return ret
-    
-    
+
     def _hook_on_batch_forward(self, ctx):
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['labels'].to(ctx.device)
@@ -64,8 +66,8 @@ class LOMOTrainer(LLMTrainer):
 
         if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE] \
             and (
-                    not ctx.skip_this_batch 
-                    and ctx.optimizer.clip_grad_norm is not None 
+                    not ctx.skip_this_batch
+                    and ctx.optimizer.clip_grad_norm is not None
                     and ctx.optimizer.clip_grad_norm > 0
                 ):
             ctx.optimizer.grad_norm(loss)
