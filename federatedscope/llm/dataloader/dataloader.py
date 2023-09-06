@@ -62,7 +62,7 @@ class LLMDataCollator(object):
         )
 
 
-def get_tokenizer(model_name, cache_dir, tok_len=128):
+def get_tokenizer(model_name, cache_dir, tok_len=128, pkg='huggingface'):
     """
     This function loads a tokenizer from a pretrained model name and adds some
     default special tokens if they are not already defined. It also sets the
@@ -78,8 +78,13 @@ def get_tokenizer(model_name, cache_dir, tok_len=128):
             - tokenizer: A transformers.AutoTokenizer object.
             - num_new_tokens: An integer, the number of new special tokens
     """
+    assert pkg in ['huggingface_llm', 'modelscope_llm'], \
+        f'Not supported package {pkg}.'
 
-    from transformers import AutoTokenizer
+    if pkg == 'huggingface_llm':
+        from transformers import AutoTokenizer
+    elif pkg == 'modelscope_llm':
+        from modelscope import AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
@@ -215,9 +220,10 @@ def load_llm_dataset(config=None, **kwargs):
                 instruction, input, output, and category fields.
             - config: An object, the updated configuration.
     """
-    model_name, _ = config.model.type.split('@')
+    model_name, model_hub = config.model.type.split('@')
     tokenizer, num_new_tokens = \
-        get_tokenizer(model_name, config.data.root, config.llm.tok_len)
+        get_tokenizer(model_name, config.data.root, config.llm.tok_len,
+                      model_hub)
 
     dataset_name, _ = config.data.type.split('@')
 

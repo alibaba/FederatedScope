@@ -87,9 +87,9 @@ def get_dataloader(dataset, config, split='train'):
     if config.data.type.lower().endswith('@llm'):
         from federatedscope.llm.dataloader import get_tokenizer, \
             LLMDataCollator
-        model_name, _ = config.model.type.split('@')
+        model_name, model_hub = config.model.type.split('@')
         tokenizer, _ = get_tokenizer(model_name, config.data.root,
-                                     config.llm.tok_len)
+                                     config.llm.tok_len, model_hub)
         data_collator = LLMDataCollator(tokenizer=tokenizer)
         filtered_args['collate_fn'] = data_collator
 
