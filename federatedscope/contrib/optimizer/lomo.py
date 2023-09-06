@@ -25,9 +25,9 @@ SOFTWARE.
 
 try:
     import torch
+    from torch.optim import Optimizer
 except ImportError:
     torch = None
-from torch.optim import Optimizer
 
 from federatedscope.register import register_optimizer
 
