@@ -7,6 +7,8 @@ federate:
   client_num: 3
   total_round_num: 500
   save_to: "llama.ckpt"
+  share_local_model: True
+  online_aggr: False
 data:
   root: data/
   type: 'alpaca@llm'
