@@ -34,9 +34,9 @@ jobs:
         pip install -e .[llm,test]
     - name: Test GPT2
       run: |
-        python federatedscope/main.py --cfg federatedscope/llm/baseline/testcase.yaml federate.total_round_num 1 eval.freq 1 eval.count_flops False
+        python federatedscope/main.py --cfg federatedscope/llm/baseline/testcase.yaml federate.total_round_num 1 eval.count_flops False train.local_update_steps 2 data.splits "[0.998, 0.001, 0.001]"
         [ $? -eq 1 ] && exit 1 || echo "Passed"
     - name: Test GPT2 with offsite-tuning
       run: |
-        python federatedscope/main.py --cfg federatedscope/llm/baseline/testcase.yaml federate.total_round_num 1 eval.freq 1 eval.count_flops False llm.offsite_tuning.use True llm.offsite_tuning.emu_l 2 llm.offsite_tuning.emu_r 10
+        python federatedscope/main.py --cfg federatedscope/llm/baseline/testcase.yaml federate.total_round_num 1 eval.count_flops False llm.offsite_tuning.use True llm.offsite_tuning.emu_l 2 llm.offsite_tuning.emu_r 10 train.local_update_steps 2 data.splits "[0.998, 0.001, 0.001]"
         [ $? -eq 1 ] && exit 1 || echo "Passed"
