@@ -22,6 +22,7 @@ minimal_requires = [
     'pympler',
     'protobuf==3.19.4',
     'matplotlib',
+    'dill',
 ]
 
 test_requires = [
