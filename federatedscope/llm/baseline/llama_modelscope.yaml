@@ -1,3 +1,4 @@
+#pip install "modelscope[nlp]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 use_gpu: True
 device: 0
 early_stop:
