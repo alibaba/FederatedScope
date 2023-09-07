@@ -60,6 +60,9 @@ class LOMO(Optimizer):
         self.clip_coef = None
 
         # check if zero3 is enabled
+        # please refer the following url for this checking clause
+        # https://deepspeed.readthedocs.io/en/stable
+        # /_modules/deepspeed/runtime/zero/stage3.html
         p0 = list(self.model.parameters())[0]
         if hasattr(p0, 'ds_tensor'):  # zero3 is enabled
             self.grad_func = self.fuse_update_zero3()
@@ -83,19 +86,23 @@ class LOMO(Optimizer):
         """
         def func(x):
             with torch.no_grad():
-                for n, p in self.model.named_parameters():
+                for _, p in self.model.named_parameters():
                     if p.requires_grad and p.grad is not None:
-                        if self.loss_scaler:
+                        # if there exists `loss scaler`
+                        if self.loss_scaler is not None:
+                            # if `overflow has occured` or
+                            #   `overflow is occuring`
                             if self.loss_scaler.has_overflow_serial or \
                                     self.loss_scaler._has_inf_or_nan(p.grad):
-                                # if overflowed, drop the gradient
+                                # some params have encoutered with overflow,
+                                # drop the gradient, stop the loop
                                 p.grad = None
                                 self.loss_scaler.has_overflow_serial = True
                                 break
                         grad_fp32 = p.grad.to(torch.float32)
                         # clear the calculated gradient for memory consumption
                         p.grad = None
-                        if self.loss_scaler:
+                        if self.loss_scaler is not None:
                             grad_fp32.div_(self.loss_scaler.loss_scale)
                         if self.gather_norm:
                             self.grad_norms.append(torch.norm(grad_fp32, 2.0))
@@ -126,21 +133,23 @@ class LOMO(Optimizer):
         """
         def func(x):
             with torch.no_grad():
-                for n, p in self.model.named_parameters():
+                for _, p in self.model.named_parameters():
                     if p.grad is not None:
                         torch.distributed.all_reduce(
                             p.grad,
                             op=torch.distributed.ReduceOp.AVG,
                             async_op=False)
-                        if self.loss_scaler:
-                            if self.loss_scaler.has_overflow_serial \
-                                or self.loss_scaler._has_inf_or_nan(
-                                    p.grad):
-                                # if overflowed, drop the gradient
+                        # if there exists `loss scaler`
+                        if self.loss_scaler is not None:
+                            # if `overflow has occured` or
+                            #   `overflow is occuring`
+                            if self.loss_scaler.has_overflow_serial or \
+                                    self.loss_scaler._has_inf_or_nan(p.grad):
+                                # some params have encoutered with overflow,
+                                # drop the gradient, stop the loop
                                 p.grad = None
                                 self.loss_scaler.has_overflow_serial = True
                                 break
-
                         grad_fp32 = p.grad.to(torch.float32)
                         p.grad = None
                         param_fp32 = p.ds_tensor.to(torch.float32)
