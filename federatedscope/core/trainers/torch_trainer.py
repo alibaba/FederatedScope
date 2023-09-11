@@ -469,7 +469,6 @@ class GeneralTorchTrainer(Trainer):
         Discharge the model from GPU device
         """
         # Avoid memory leak
-<<<<<<< HEAD
         if torch is None:
             return
 
@@ -477,10 +476,9 @@ class GeneralTorchTrainer(Trainer):
                 not self.cfg.llm.deepspeed.use and \
                 not self.cfg.computation_quantization.method == 'qlora':
             self.ctx.model.to(torch.device("cpu"))
-=======
+
         if not self.cfg.federate.share_local_model:
             if torch is None:
                 pass
             else:
                 self.ctx.model.to(torch.device("cpu"))
->>>>>>> parent of 0878582a ([Experimental Feature]DeepSpeed for LLM with standalone and distributed (#653))
