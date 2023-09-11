@@ -12,6 +12,7 @@ from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
     calculate_time_cost, add_prefix_to_path, get_ds_rank
 from federatedscope.core.workers.base_client import BaseClient
+from federatedscope.core.monitors.monitor import Monitor
 
 logger = logging.getLogger(__name__)
 if get_ds_rank() == 0:
@@ -175,7 +176,8 @@ class Client(BaseClient):
                 host=host,
                 port=port,
                 client_num=self._cfg.federate.client_num,
-                cfg=self._cfg.distribute)
+                cfg=self._cfg.distribute,
+                monitor=self._monitor)
             logger.info('Client: Listen to {}:{}...'.format(host, port))
             self.comm_manager.add_neighbors(neighbor_id=server_id,
                                             address={
@@ -303,16 +305,22 @@ class Client(BaseClient):
             timestamp = message.timestamp
             content = message.content
 
+            content = Message.dequantization(
+                content=content,
+                role='client',
+                method=self._cfg.quantization.method,
+                monitor=self._monitor)
+
             # dequantization
-            if self._cfg.quantization.method == 'uniform':
-                from federatedscope.core.compression import \
-                    symmetric_uniform_dequantization
-                if isinstance(content, list):  # multiple model
-                    content = [
-                        symmetric_uniform_dequantization(x) for x in content
-                    ]
-                else:
-                    content = symmetric_uniform_dequantization(content)
+            # if self._cfg.quantization.method == 'uniform':
+            #     from federatedscope.core.compression import \
+            #         symmetric_uniform_dequantization
+            #     if isinstance(content, list):  # multiple model
+            #         content = [
+            #             symmetric_uniform_dequantization(x) for x in content
+            #         ]
+            #     else:
+            #         content = symmetric_uniform_dequantization(content)
 
             # When clients share the local model, we must set strict=True to
             # ensure all the model params (which might be updated by other
@@ -417,19 +425,25 @@ class Client(BaseClient):
                 else:
                     shared_model_para = model_para_all
 
+                shared_model_para = Message.quantization(
+                    content=shared_model_para,
+                    role='client',
+                    method=self._cfg.quantization.method,
+                    nbits=self._cfg.quantization.nbits,
+                    monitor=self._monitor)
                 # quantization
-                if self._cfg.quantization.method == 'uniform':
-                    from federatedscope.core.compression import \
-                        symmetric_uniform_quantization
-                    nbits = self._cfg.quantization.nbits
-                    if isinstance(shared_model_para, list):
-                        shared_model_para = [
-                            symmetric_uniform_quantization(x, nbits)
-                            for x in shared_model_para
-                        ]
-                    else:
-                        shared_model_para = symmetric_uniform_quantization(
-                            shared_model_para, nbits)
+                # if self._cfg.quantization.method == 'uniform':
+                #     from federatedscope.core.compression import \
+                #         symmetric_uniform_quantization
+                #     nbits = self._cfg.quantization.nbits
+                #     if isinstance(shared_model_para, list):
+                #         shared_model_para = [
+                #             symmetric_uniform_quantization(x, nbits)
+                #             for x in shared_model_para
+                #         ]
+                #     else:
+                #         shared_model_para = symmetric_uniform_quantization(
+                #             shared_model_para, nbits)
 
                 self.comm_manager.send(
                     Message(msg_type='model_para',
@@ -440,6 +454,14 @@ class Client(BaseClient):
                                 init_timestamp=timestamp,
                                 instance_number=sample_size),
                             content=(sample_size, shared_model_para)))
+                if ((self._cfg.eval.efficiency.use
+                     and self._cfg.eval.efficiency.freq > 0
+                     and self.state % self._cfg.eval.efficiency.freq == 0) or
+                    (self._cfg.eval.efficiency.use
+                     and self.state == self._cfg.federate.total_round_num)):
+                    logger.info(
+                        self._monitor.format_efficiency_result(
+                            rnd=self.state, role='Client #{}'.format(self.ID)))
 
     def callback_funcs_for_assign_id(self, message: Message):
         """

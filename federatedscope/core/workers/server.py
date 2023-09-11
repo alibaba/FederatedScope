@@ -218,7 +218,8 @@ class Server(BaseServer):
             self.comm_manager = gRPCCommManager(host=host,
                                                 port=port,
                                                 client_num=client_num,
-                                                cfg=self._cfg.distribute)
+                                                cfg=self._cfg.distribute,
+                                                monitor=self._monitor)
             logger.info('Server: Listen to {}:{}...'.format(host, port))
 
         # inject noise before broadcast
@@ -713,19 +714,29 @@ class Server(BaseServer):
                 model_para = {} if skip_broadcast else self.models[
                     0].state_dict()
 
+        model_para = Message.quantization(content=model_para,
+                                          model_num=self.model_num,
+                                          role='server',
+                                          msg_type=msg_type,
+                                          flag=not skip_broadcast,
+                                          method=self._cfg.quantization.method,
+                                          nbits=self._cfg.quantization.nbits,
+                                          monitor=self._monitor)
+
         # quantization
-        if msg_type == 'model_para' and not skip_broadcast and \
-                self._cfg.quantization.method == 'uniform':
-            from federatedscope.core.compression import \
-                symmetric_uniform_quantization
-            nbits = self._cfg.quantization.nbits
-            if self.model_num > 1:
-                model_para = [
-                    symmetric_uniform_quantization(x, nbits)
-                    for x in model_para
-                ]
-            else:
-                model_para = symmetric_uniform_quantization(model_para, nbits)
+        # if msg_type == 'model_para' and not skip_broadcast and \
+        #         self._cfg.quantization.method == 'uniform':
+        #     from federatedscope.core.compression import \
+        #         symmetric_uniform_quantization
+        #     nbits = self._cfg.quantization.nbits
+        #     if self.model_num > 1:
+        #         model_para = [
+        #             symmetric_uniform_quantization(x, nbits)
+        #             for x in model_para
+        #         ]
+        #     else:
+        #         model_para =
+        #               symmetric_uniform_quantization(model_para, nbits)
 
         # We define the evaluation happens at the end of an epoch
         rnd = self.state - 1 if msg_type == 'evaluate' else self.state
@@ -983,19 +994,23 @@ class Server(BaseServer):
         content = message.content
         self.sampler.change_state(sender, 'idle')
 
+        content = Message.dequantization(content=content,
+                                         role='server',
+                                         method=self._cfg.quantization.method,
+                                         monitor=self._monitor)
         # dequantization
-        if self._cfg.quantization.method == 'uniform':
-            from federatedscope.core.compression import \
-                symmetric_uniform_dequantization
-            if isinstance(content[1], list):  # multiple model
-                sample_size = content[0]
-                quant_model = [
-                    symmetric_uniform_dequantization(x) for x in content[1]
-                ]
-            else:
-                sample_size = content[0]
-                quant_model = symmetric_uniform_dequantization(content[1])
-            content = (sample_size, quant_model)
+        # if self._cfg.quantization.method == 'uniform':
+        #     from federatedscope.core.compression import \
+        #         symmetric_uniform_dequantization
+        #     if isinstance(content[1], list):  # multiple model
+        #         sample_size = content[0]
+        #         quant_model = [
+        #             symmetric_uniform_dequantization(x) for x in content[1]
+        #         ]
+        #     else:
+        #         sample_size = content[0]
+        #         quant_model = symmetric_uniform_dequantization(content[1])
+        #     content = (sample_size, quant_model)
 
         # update the currency timestamp according to the received message
         assert timestamp >= self.cur_timestamp  # for test

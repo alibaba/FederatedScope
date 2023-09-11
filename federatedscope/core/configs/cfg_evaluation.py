@@ -31,6 +31,14 @@ def extend_evaluation_cfg(cfg):
     cfg.wandb.online_track = True
     cfg.wandb.client_train_info = False
 
+    # ---------------------------------------------------------------------- #
+    # efficiency related options # This works only for FS-LLM temporarily.
+    # ---------------------------------------------------------------------- #
+
+    cfg.eval.efficiency = CN()
+    cfg.eval.efficiency.use = False
+    cfg.eval.efficiency.freq = 1
+
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_evaluation_cfg)
 

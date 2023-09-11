@@ -5,6 +5,7 @@ import torch.distributed as dist
 
 from collections import deque
 
+from federatedscope.core.monitors.monitor import Monitor
 from federatedscope.core.proto import gRPC_comm_manager_pb2, \
     gRPC_comm_manager_pb2_grpc
 from federatedscope.core.gRPC_server import gRPCComServeFunc
@@ -44,6 +45,7 @@ class StandaloneCommManager(object):
             # Get all neighbors
             return self.neighbors
 
+    @Monitor.efficiency_comp_message_send_time
     def send(self, message):
         # All the workers share one comm_queue
         self.comm_queue.append(message)
@@ -105,7 +107,12 @@ class gRPCCommManager(object):
         The implementation of gRPCCommManager is referred to the tutorial on
         https://grpc.io/docs/languages/python/
     """
-    def __init__(self, host='0.0.0.0', port='50050', client_num=2, cfg=None):
+    def __init__(self,
+                 host='0.0.0.0',
+                 port='50050',
+                 client_num=2,
+                 cfg=None,
+                 monitor=None):
         self.host = host
         self.port = port
         options = [
@@ -128,7 +135,8 @@ class gRPCCommManager(object):
                                       port=port,
                                       options=options)
         self.neighbors = dict()
-        self.monitor = None  # used to track the communication related metrics
+        self.monitor = monitor
+        # used to track the communication related metrics
 
     def serve(self, max_workers, host, port, options):
         """
@@ -169,6 +177,7 @@ class gRPCCommManager(object):
             # Get all neighbors
             return self.neighbors
 
+    @Monitor.efficiency_comp_message_send_time
     def _send(self, receiver_address, message):
         def _create_stub(receiver_address):
             """

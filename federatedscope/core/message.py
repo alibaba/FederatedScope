@@ -3,6 +3,9 @@ import numpy as np
 
 from federatedscope.core.auxiliaries.utils import b64serializer
 from federatedscope.core.proto import gRPC_comm_manager_pb2
+from federatedscope.core.monitors.monitor import Monitor
+from federatedscope.core.compression import (symmetric_uniform_quantization,
+                                             symmetric_uniform_dequantization)
 
 
 class Message(object):
@@ -263,3 +266,55 @@ class Message(object):
                                                       list) else 1
         upload_bytes = download_bytes * upload_cnt
         return download_bytes, upload_bytes
+
+    @Monitor.efficiency_comp_message_compression_time
+    def quantization(content,
+                     role=None,
+                     model_num=None,
+                     msg_type=None,
+                     flag=None,
+                     method=None,
+                     nbits=None,
+                     monitor=None):
+        if role == 'server':
+            if (msg_type == 'model_para' and flag and method == 'uniform'):
+                if model_num > 1:
+                    content = [
+                        symmetric_uniform_quantization(x, nbits)
+                        for x in content
+                    ]
+                else:
+                    content = symmetric_uniform_quantization(content, nbits)
+        elif role == 'client':
+            if method == 'uniform':
+                if isinstance(content, list):
+                    content = [
+                        symmetric_uniform_quantization(x, nbits)
+                        for x in content
+                    ]
+                else:
+                    content = symmetric_uniform_quantization(content, nbits)
+        return content
+
+    @Monitor.efficiency_comp_message_compression_time
+    def dequantization(content, role=None, method=None, monitor=None):
+        if role == 'server':
+            if method == 'uniform':
+                if isinstance(content[1], list):  # multiple model
+                    sample_size = content[0]
+                    quant_model = [
+                        symmetric_uniform_dequantization(x) for x in content[1]
+                    ]
+                else:
+                    sample_size = content[0]
+                    quant_model = symmetric_uniform_dequantization(content[1])
+                content = (sample_size, quant_model)
+        elif role == 'client':
+            if method == 'uniform':
+                if isinstance(content, list):  # multiple model
+                    content = [
+                        symmetric_uniform_dequantization(x) for x in content
+                    ]
+                else:
+                    content = symmetric_uniform_dequantization(content)
+        return content
