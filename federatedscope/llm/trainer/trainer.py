@@ -112,6 +112,12 @@ class LLMTrainer(GeneralTorchTrainer):
 
     def _hook_on_batch_end(self, ctx):
         if ctx.skip_this_batch:
+            if ctx.cfg.llm.retry_on_nan_loss:
+                # Retry with new data in train and finetune
+                if ctx.cur_mode == MODE.TRAIN:
+                    self._run_batch(self.hooks_in_train, run_step=1)
+                elif ctx.cur_mode == MODE.FINETUNE:
+                    self._run_batch(self.hooks_in_ft, run_step=1)
             return
 
         ctx.num_samples += ctx.batch_size
