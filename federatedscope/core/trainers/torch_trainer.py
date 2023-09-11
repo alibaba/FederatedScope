@@ -28,9 +28,7 @@ logger = logging.getLogger(__name__)
 
 class GeneralTorchTrainer(Trainer):
     def get_model_para(self):
-        if self.cfg.federate.process_num > 1 or \
-                self.cfg.federate.share_local_model or \
-                self.cfg.llm.deepspeed.use:
+        if self.cfg.federate.process_num > 1:
             return self._param_filter(self.ctx.model.state_dict())
         else:
             if self.cfg.computation_quantization.method == 'qlora':
@@ -471,6 +469,7 @@ class GeneralTorchTrainer(Trainer):
         Discharge the model from GPU device
         """
         # Avoid memory leak
+<<<<<<< HEAD
         if torch is None:
             return
 
@@ -478,3 +477,10 @@ class GeneralTorchTrainer(Trainer):
                 not self.cfg.llm.deepspeed.use and \
                 not self.cfg.computation_quantization.method == 'qlora':
             self.ctx.model.to(torch.device("cpu"))
+=======
+        if not self.cfg.federate.share_local_model:
+            if torch is None:
+                pass
+            else:
+                self.ctx.model.to(torch.device("cpu"))
+>>>>>>> parent of 0878582a ([Experimental Feature]DeepSpeed for LLM with standalone and distributed (#653))

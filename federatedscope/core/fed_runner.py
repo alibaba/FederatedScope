@@ -9,8 +9,7 @@ import numpy as np
 from federatedscope.core.workers import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
-from federatedscope.core.auxiliaries.utils import get_resource_info, \
-    get_ds_rank
+from federatedscope.core.auxiliaries.utils import get_resource_info
 from federatedscope.core.auxiliaries.feat_engr_builder import \
     get_feat_engr_wrapper
 
@@ -133,10 +132,6 @@ class BaseRunner(object):
             dict: best results during the FL course
         """
         raise NotImplementedError
-
-    @property
-    def ds_rank(self):
-        return get_ds_rank()
 
     def _setup_server(self, resource_info=None, client_resource_info=None):
         """
@@ -523,7 +518,7 @@ class DistributedRunner(BaseRunner):
 
         self.server_address = {
             'host': self.cfg.distribute.server_host,
-            'port': self.cfg.distribute.server_port + self.ds_rank
+            'port': self.cfg.distribute.server_port
         }
         if self.cfg.distribute.role == 'server':
             self.server = self._setup_server(resource_info=sampled_resource)
@@ -532,7 +527,7 @@ class DistributedRunner(BaseRunner):
             # the server has been set up and number with #0
             self.client_address = {
                 'host': self.cfg.distribute.client_host,
-                'port': self.cfg.distribute.client_port + self.ds_rank
+                'port': self.cfg.distribute.client_port
             }
             self.client = self._setup_client(resource_info=sampled_resource)
 

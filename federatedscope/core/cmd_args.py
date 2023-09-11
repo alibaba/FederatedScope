@@ -17,10 +17,6 @@ def parse_args(args=None):
                         required=False,
                         default=None,
                         type=str)
-    parser.add_argument('--local_rank',
-                        type=int,
-                        default=-1,
-                        help='local rank passed from distributed launcher')
     parser.add_argument(
         '--help',
         nargs="?",

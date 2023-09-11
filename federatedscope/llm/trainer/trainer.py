@@ -1,78 +1,24 @@
 import torch
 import logging
-try:
-    import deepspeed
-    from deepspeed import DeepSpeedEngine
-except:
-    deepspeed = None
-    DeepSpeedEngine = None
 from federatedscope.register import register_trainer
 from federatedscope.core.trainers import GeneralTorchTrainer
 from federatedscope.core.trainers.context import CtxVar
-from federatedscope.core.trainers.enums import MODE, LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.monitors.monitor import Monitor
-from federatedscope.core.auxiliaries.optimizer_builder import get_optimizer
-from federatedscope.core.auxiliaries.scheduler_builder import get_scheduler
 from federatedscope.llm.model.adapter_builder import AdapterModel
 
 logger = logging.getLogger(__name__)
 
 
 class LLMTrainer(GeneralTorchTrainer):
-    def _hook_on_fit_start_numerical_precision(self, ctx):
-        if self.cfg.train.is_enable_half:
-            if not ctx.cfg.llm.deepspeed.use:
-                ctx.model = ctx.model.half()
-
-    def _hook_on_fit_start_init(self, ctx):
-        if ctx.cfg.llm.deepspeed.use:
-            # Enable deepspeed
-            # TODO: save ctx.optimizer and ctx.scheduler
-            # TODO: should clients share the same `ctx.model_engine`?
-            assert deepspeed is not None, "Please install deepspeed."
-            if not hasattr(ctx, 'model_engine'):
-                ctx.model_engine, ctx.optimizer, _, ctx.scheduler = \
-                    deepspeed.initialize(
-                        config=ctx.cfg.llm.deepspeed.ds_config,
-                        model=ctx.model,
-                        model_parameters=filter(lambda p: p.requires_grad,
-                                                ctx.model.parameters()),
-                    )
-            # Enable all cards from 0
-            ctx.device = ctx.model_engine.local_rank
-            if ctx.cfg.train.is_enable_half:
-                ctx.fp16 = ctx.model_engine.fp16_enabled()
-        else:
-            # prepare model and optimizer
-            ctx.model.to(ctx.device)
-            if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
-                # Initialize optimizer here to avoid the reuse of optimizers
-                # across different routines
-                ctx.optimizer = get_optimizer(
-                    ctx.model, **ctx.cfg[ctx.cur_mode].optimizer)
-                ctx.scheduler = get_scheduler(
-                    ctx.optimizer, **ctx.cfg[ctx.cur_mode].scheduler)
-
-        # prepare statistics
-        ctx.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
-        ctx.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
-        ctx.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
-        ctx.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
-        ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
-
     def _hook_on_batch_forward(self, ctx):
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['labels'].to(ctx.device)
         attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
 
-        if ctx.cfg.llm.deepspeed.use:
-            outputs = ctx.model_engine(input_ids=input_ids,
-                                       labels=labels,
-                                       attention_mask=attention_mask)
-        else:
-            outputs = ctx.model(input_ids=input_ids,
-                                labels=labels,
-                                attention_mask=attention_mask)
+        outputs = ctx.model(input_ids=input_ids,
+                            labels=labels,
+                            attention_mask=attention_mask)
 
         logits = outputs.logits
         loss = outputs.loss
@@ -92,21 +38,17 @@ class LLMTrainer(GeneralTorchTrainer):
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
+        ctx.optimizer.zero_grad()
         if ctx.skip_this_batch:
             return
 
-        if ctx.cfg.llm.deepspeed.use:
-            ctx.model_engine.backward(ctx.loss_task)
-            ctx.model_engine.step()
-        else:
-            ctx.optimizer.zero_grad()
-            ctx.loss_task.backward()
+        ctx.loss_task.backward()
 
-            if ctx.grad_clip > 0:
-                torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
-                                               ctx.grad_clip)
+        if ctx.grad_clip > 0:
+            torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
+                                           ctx.grad_clip)
 
-            ctx.optimizer.step()
+        ctx.optimizer.step()
         if ctx.scheduler is not None:
             ctx.scheduler.step()
 

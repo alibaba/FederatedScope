@@ -57,7 +57,7 @@ class LoggerPrecisionFilter(logging.Filter):
         return True
 
 
-def update_logger(cfg, clear_before_add=False, rank=0):
+def update_logger(cfg, clear_before_add=False):
     root_logger = logging.getLogger("federatedscope")
 
     # clear all existing handlers and add the default stream
@@ -70,16 +70,11 @@ def update_logger(cfg, clear_before_add=False, rank=0):
         root_logger.addHandler(handler)
 
     # update level
-    if rank == 0:
-        if cfg.verbose > 0:
-            logging_level = logging.INFO
-        else:
-            logging_level = logging.WARN
-            root_logger.warning("Skip DEBUG/INFO messages")
+    if cfg.verbose > 0:
+        logging_level = logging.INFO
     else:
-        root_logger.warning(f"Using deepspeed, and we will disable "
-                            f"subprocesses {rank} logger.")
-        logging_level = logging.CRITICAL
+        logging_level = logging.WARN
+        root_logger.warning("Skip DEBUG/INFO messages")
     root_logger.setLevel(logging_level)
 
     # ================ create outdir to save log, exp_config, models, etc,.
@@ -92,9 +87,6 @@ def update_logger(cfg, clear_before_add=False, rank=0):
     if cfg.expname_tag:
         cfg.expname = f"{cfg.expname}_{cfg.expname_tag}"
     cfg.outdir = os.path.join(cfg.outdir, cfg.expname)
-
-    if rank != 0:
-        return
 
     # if exist, make directory with given name and time
     if os.path.isdir(cfg.outdir) and os.path.exists(cfg.outdir):

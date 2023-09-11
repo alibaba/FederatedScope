@@ -9,7 +9,7 @@ if DEV_MODE:
 
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.utils import setup_seed, get_ds_rank
+from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
@@ -29,11 +29,7 @@ if __name__ == '__main__':
     cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
     init_cfg.merge_from_list(cfg_opt)
 
-    if init_cfg.llm.deepspeed.use:
-        import deepspeed
-        deepspeed.init_distributed()
-
-    update_logger(init_cfg, clear_before_add=True, rank=get_ds_rank())
+    update_logger(init_cfg, clear_before_add=True)
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file

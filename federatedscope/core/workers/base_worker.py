@@ -1,5 +1,4 @@
 from federatedscope.core.monitors.monitor import Monitor
-from federatedscope.core.auxiliaries.utils import get_ds_rank
 
 
 class Worker(object):
@@ -69,7 +68,3 @@ class Worker(object):
     @mode.setter
     def mode(self, value):
         self._mode = value
-
-    @property
-    def ds_rank(self):
-        return get_ds_rank()
