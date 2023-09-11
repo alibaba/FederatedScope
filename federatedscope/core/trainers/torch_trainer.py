@@ -476,5 +476,5 @@ class GeneralTorchTrainer(Trainer):
 
         if not self.cfg.federate.share_local_model and \
                 not self.cfg.llm.deepspeed.use and \
-                    not self.cfg.computation_quantization.method == 'qlora':
+                not self.cfg.computation_quantization.method == 'qlora':
             self.ctx.model.to(torch.device("cpu"))

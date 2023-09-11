@@ -14,7 +14,7 @@ def extend_computation_quantization_cfg(cfg):
 
     # Params
     # ['qlora', 'uniform']
-    cfg.computation_quantization.method = 'none'  
+    cfg.computation_quantization.method = 'none'
     cfg.computation_quantization.nbits = 4  # [4,8,16]
 
     # --------------- register corresponding check function ----------
@@ -23,13 +23,12 @@ def extend_computation_quantization_cfg(cfg):
 
 def assert_quant_cfg(cfg):
 
-    if cfg.quantization.method.lower() not in ['none', 
-                                               'qlora']:
+    if cfg.quantization.method.lower() not in ['none', 'qlora']:
         logger.warning(
-            f'Quantization for Communication method is expected '
-            f'to be one of ["none","qlora"]', 
+            'Quantization for Communication method is expected '
+            'to be one of ["none","qlora"]',
             f'but got "{cfg.quantization.method}". So we',
-            f'change it to "none"')
+            'change it to "none"')
 
     if cfg.quantization.method.lower(
     ) != 'none' and cfg.quantization.nbits not in [4, 8, 16]:
@@ -38,5 +37,5 @@ def assert_quant_cfg(cfg):
                          f'{cfg.quantization.nbits}.')
 
 
-register_config("computation_quantization", 
+register_config("computation_quantization",
                 extend_computation_quantization_cfg)

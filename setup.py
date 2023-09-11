@@ -54,7 +54,7 @@ llm_requires = [
     'transformers==4.29.2',
     'accelerate==0.20.3',
     # required by QLoRA: prepare_model_for_kbit_training
-    'peft==0.4.0',  
+    'peft==0.4.0',
     # required by QLoRA
     'bitsandbytes==0.41.1',
     'sentencepiece==0.1.99',
