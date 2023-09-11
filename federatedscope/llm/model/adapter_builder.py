@@ -10,6 +10,7 @@ def enable_adapter(model, package, adapter, **kwargs):
         PEFT: https://github.com/huggingface/peft
         Support methods:
             LoRA
+            QLoRA
             Prefix Tuning
             P-Tuning
             Prompt Tuning
@@ -20,6 +21,48 @@ def enable_adapter(model, package, adapter, **kwargs):
             from peft import LoraConfig
             peft_config = LoraConfig(task_type=TaskType.CAUSAL_LM, **kwargs)
             model = get_peft_model(model, peft_config)
+        elif adapter == 'qlora': 
+            # The implementation of QLoRA is adapted from 
+            # https://github.com/artidoro/qlora
+            import bitsandbytes as bnb
+            from peft import LoraConfig
+            from peft.tuners.lora import LoraLayer
+            def find_all_linear_names(bits, model):
+                cls = bnb.nn.Linear4bit if bits == 4 else \
+                    (bnb.nn.Linear8bitLt if bits == 8 else torch.nn.Linear)
+                lora_module_names = set()
+                for name, module in model.named_modules():
+                    if isinstance(module, cls):
+                        names = name.split('.')
+                        lora_module_names.add(
+                            names[0] if len(names) == 1 else names[-1])
+                if 'lm_head' in lora_module_names: # needed for 16-bit
+                    lora_module_names.remove('lm_head')
+                return list(lora_module_names)
+            peft_config = LoraConfig(
+                r=kwargs['r'],
+                lora_alpha=kwargs['lora_alpha'],
+                target_modules=find_all_linear_names(bits=4, model=model),
+                lora_dropout=kwargs['lora_dropout'],
+                bias="none",
+                task_type=TaskType.CAUSAL_LM,
+            )
+            # without the following line, an error with
+            # `element 0 of tensors does not require grad
+            # and does not have a grad_fn`
+            # would be caused
+            # @https://github.com/huggingface/peft/issues/137
+            model.enable_input_require_grads()
+            model = get_peft_model(model, peft_config)
+            for name, module in model.named_modules():
+                if isinstance(module, LoraLayer):
+                    module = module.to(torch.float16)
+                if 'norm' in name:
+                    module = module.to(torch.float32)
+                if 'lm_head' in name or 'embed_tokens' in name:
+                    if hasattr(module, 'weight'):
+                        if module.weight.dtype == torch.float32:
+                            module = module.to(torch.float16)
         elif adapter == 'prefix':
             from peft import PrefixTuningConfig
             peft_config = PrefixTuningConfig(task_type=TaskType.CAUSAL_LM,
@@ -135,7 +178,8 @@ class AdapterModel(nn.Module):
             adapter_package = kwargs.pop('adapter_package', 'peft')
             adapter_method = kwargs.pop('adapter_method', 'lora')
 
-            self.model = enable_adapter(model, adapter_package, adapter_method,
+            self.model = enable_adapter(model, adapter_package, 
+                                        adapter_method,
                                         **kwargs)
         else:
             self.model = model

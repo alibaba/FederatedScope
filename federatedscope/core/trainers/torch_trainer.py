@@ -33,7 +33,15 @@ class GeneralTorchTrainer(Trainer):
                 self.cfg.llm.deepspeed.use:
             return self._param_filter(self.ctx.model.state_dict())
         else:
-            return self._param_filter(self.ctx.model.cpu().state_dict())
+            if self.cfg.computation_quantization.method == 'qlora':
+                # bitsandbytes quantization does not support model discharge
+                # provided by weiruikuang@gmail.com
+                # https://github.com/huggingface/transformers/blob/
+                # fb7d246951d5f60aa36a7958841dfea72f51fc6b/src/
+                # transformers/trainer.py#L506C9-L512C1
+                return self._param_filter(self.ctx.model.state_dict())
+            else:
+                return self._param_filter(self.ctx.model.cpu().state_dict())
 
     def setup_data(self, ctx):
         """
@@ -467,5 +475,6 @@ class GeneralTorchTrainer(Trainer):
             return
 
         if not self.cfg.federate.share_local_model and \
-                not self.cfg.llm.deepspeed.use:
+                not self.cfg.llm.deepspeed.use and \
+                    not self.cfg.computation_quantization.method == 'qlora':
             self.ctx.model.to(torch.device("cpu"))
