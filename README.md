@@ -51,7 +51,7 @@ FederatedScope
 │   ├── nlp                      # Federated learning in NLP          
 │   ├── gfl                      # Graph federated learning          
 │   ├── autotune                 # Auto-tunning for federated learning         
-│   ├── vertical_fl              # Vartical federated learning         
+│   ├── vertical_fl              # Vertical federated learning         
 │   ├── contrib                          
 │   ├── main.py           
 │   ├── ... ...          
