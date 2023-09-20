@@ -62,7 +62,7 @@ class LLMDataCollator(object):
         )
 
 
-def get_tokenizer(model_name, cache_dir, tok_len=128, pkg='huggingface'):
+def get_tokenizer(model_name, cache_dir, tok_len=128, pkg='huggingface_llm'):
     """
     This function loads a tokenizer from a pretrained model name and adds some
     default special tokens if they are not already defined. It also sets the
