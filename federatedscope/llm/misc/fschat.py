@@ -48,9 +48,9 @@ class FSChatBot(object):
             config: A FS configuration object that contains various settings
                 for the chatbot.
         """
-        model_name, _ = config.model.type.split('@')
+        model_name, model_hub = config.model.type.split('@')
         self.tokenizer, _ = get_tokenizer(model_name, config.data.root,
-                                          config.llm.tok_len)
+                                          config.llm.tok_len, model_hub)
         self.model = get_llm(config)
 
         self.device = f'cuda:{config.device}'
