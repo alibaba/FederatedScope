@@ -65,7 +65,7 @@ class HideGraph(BaseTransform):
                                    data.x.shape[1]))))
                 else:
                     G.nodes[i]['x_missing'] = data.x[
-                        ids_missing[:self.num_pred]]
+                        ids_missing[:self.num_pred]].numpy()
             else:
                 G.nodes[i]['x_missing'] = np.zeros(
                     (self.num_pred, data.x.shape[1]))
