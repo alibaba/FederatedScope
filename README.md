@@ -51,14 +51,14 @@ FederatedScope
 │   ├── nlp                      # Federated learning in NLP          
 │   ├── gfl                      # Graph federated learning          
 │   ├── autotune                 # Auto-tunning for federated learning         
-│   ├── vertical_fl              # Vartical federated learning         
+│   ├── vertical_fl              # Vertical federated learning         
 │   ├── contrib                          
 │   ├── main.py           
 │   ├── ... ...          
 ├── scripts                      # Scripts for reproducing existing algorithms
 ├── benchmark                    # We release several benchmarks for convenient and fair comparisons
 ├── doc                          # For automatic documentation
-├── enviornment                  # Installation requirements and provided docker files
+├── environment                  # Installation requirements and provided docker files
 ├── materials                    # Materials of related topics (e.g., paper lists)
 │   ├── notebook                        
 │   ├── paper_list                                        

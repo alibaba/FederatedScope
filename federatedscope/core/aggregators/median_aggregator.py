@@ -41,7 +41,7 @@ class MedianAggregator(ClientsAvgAggregator):
         return updated_model
 
     def _aggre_with_median(self, models):
-        init_model = self.model.state_dict()
+        _, init_model = models[0]
         global_update = copy.deepcopy(init_model)
         for key in init_model:
             temp = torch.stack([each_model[1][key] for each_model in models],

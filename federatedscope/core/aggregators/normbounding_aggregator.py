@@ -35,28 +35,34 @@ class NormboundingAggregator(ClientsAvgAggregator):
     def _aggre_with_normbounding(self, models):
         models_temp = []
         for each_model in models:
-            param = self._flatten_updates(each_model[1])
+            param, ignore_keys = self._flatten_updates(each_model[1])
             if torch.norm(param, p=2) > self.norm_bound:
                 scaling_rate = self.norm_bound / torch.norm(param, p=2)
                 scaled_param = scaling_rate * param
                 models_temp.append(
-                    (each_model[0], self._reconstruct_updates(scaled_param)))
+                    (each_model[0],
+                     self._reconstruct_updates(scaled_param, ignore_keys)))
             else:
                 models_temp.append(each_model)
         return self._para_weighted_avg(models_temp)
 
     def _flatten_updates(self, model):
-        model_update = []
+        model_update, ignore_keys = [], []
         init_model = self.model.state_dict()
         for key in init_model:
+            if key not in model:
+                ignore_keys.append(key)
+                continue
             model_update.append(model[key].view(-1))
-        return torch.cat(model_update, dim=0)
+        return torch.cat(model_update, dim=0), ignore_keys
 
-    def _reconstruct_updates(self, flatten_updates):
+    def _reconstruct_updates(self, flatten_updates, ignore_keys):
         start_idx = 0
         init_model = self.model.state_dict()
         reconstructed_model = copy.deepcopy(init_model)
         for key in init_model:
+            if key in ignore_keys:
+                continue
             reconstructed_model[key] = flatten_updates[
                 start_idx:start_idx + len(init_model[key].view(-1))].reshape(
                     init_model[key].shape)

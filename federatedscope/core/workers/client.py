@@ -200,8 +200,10 @@ class Client(BaseClient):
 
         model_deltas = list()
         for model_index in range(len(init_model)):
-            model_delta = copy.deepcopy(init_model[model_index])
+            model_delta = copy.deepcopy(updated_model[model_index])
             for key in init_model[model_index].keys():
+                if key not in updated_model[model_index].keys():
+                    continue
                 model_delta[key] = updated_model[model_index][
                     key] - init_model[model_index][key]
             model_deltas.append(model_delta)
@@ -425,7 +427,6 @@ class Client(BaseClient):
                     else:
                         shared_model_para = symmetric_uniform_quantization(
                             shared_model_para, nbits)
-
                 self.comm_manager.send(
                     Message(msg_type='model_para',
                             sender=self.ID,
