@@ -1,9 +1,15 @@
-## Personalized Federated Learning
+## Cross-Device and Personalized Federated Learning
 This list is constantly being updated. Feel free to contribute!
 
 ### 2023
 | Title | Venue | Link | Keywords | Note |
 | --- | --- | --- | --- | --- |
+| Towards Real-World Cross-Device Federated Learning | KDD | [pdf](https://arxiv.org/abs/2303.13363) | system, cross-Device, heterogeneous device-runtime, FS-Real |
+| Personalized Federated Learning with Parameter Propagation | KDD | [pdf](https://dl.acm.org/doi/abs/10.1145/3580305.3599464) | adaptive parameter propagation, selective regularization, FEDORA |
+| FedCP: Separating Feature Information for Personalized Federated Learning via Conditional Policy | KDD | [pdf](https://dl.acm.org/doi/abs/10.1145/3580305.3599345) | conditional policy, partial model parameters  |
+| Efficient Personalized Federated Learning via Sparse Model-Adaptation | ICML | [pdf](https://arxiv.org/abs/2305.02776) | sparse models, conditional policy, cross-Device, pFedGate  |
+| Personalized Federated Learning with Inferred Collaboration Graphs| ICML | [pdf](https://icml.cc/virtual/2023/poster/24966) |  collaboration graph, pFedGraph, poisoning attacks |
+| DoCoFL: Downlink Compression for Cross-Device Federated Learning | ICML | [pdf](https://icml.cc/virtual/2023/poster/23954) |  communication compression, cross-device, anchor|
 | Personalized Federated Learning with Feature Alignment and Classifier Collaboration | ICLR | [pdf](https://openreview.net/pdf?id=SXZr8aDKia) | Collaboration | feature alignment by regularization, theoretically-guaranteed heads combination
 | Test-Time Robust Personalization for Federated Learning | ICLR | [pdf](https://openreview.net/pdf?id=3aBuJEza5sq) | Test-time Robustness |
 | A Statistical Framework for Personalized Federated Learning and Estimation: Theory, Algorithms, and Privacy | ICLR | [pdf](https://openreview.net/pdf?id=FUiDMCr_W4o) | Statistical Estimation, Differential Privacy, Empirical/Hierarchical Bayes |
