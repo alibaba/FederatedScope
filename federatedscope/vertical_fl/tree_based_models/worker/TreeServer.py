@@ -2,6 +2,7 @@ import numpy as np
 
 from federatedscope.core.workers import Server
 from federatedscope.core.message import Message
+from federatedscope.core.secret_sharing import MultiplicativeSecretSharing
 
 import logging
 
@@ -28,6 +29,10 @@ class TreeServer(Server):
         self.feature_partition = np.diff(self._cfg.vertical.dims, prepend=0)
         self.total_num_of_feature = self._cfg.vertical.dims[-1]
         self._init_data_related_var()
+
+        if self._cfg.vertical.eval_protection == 'ss':
+            self.ss = MultiplicativeSecretSharing(
+                shared_party_num=self.client_num)
 
     def _init_data_related_var(self):
         pass

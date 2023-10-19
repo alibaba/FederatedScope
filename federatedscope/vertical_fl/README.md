@@ -116,7 +116,7 @@ For label-scattering model, we provide privacy protection algorithms proposed by
 
 ```
 vertical:
-  mode: 'label_based'
+  mode: 'label_scattering'
   protect_object: 'grad_and_hess'
   protect_method: 'he'
   key_size: ks

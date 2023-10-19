@@ -6,6 +6,7 @@ from federatedscope.core.workers import Client
 from federatedscope.core.message import Message
 from federatedscope.vertical_fl.Paillier import \
             abstract_paillier
+from federatedscope.core.secret_sharing import MultiplicativeSecretSharing
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,9 @@ class TreeClient(Client):
             keys = abstract_paillier.generate_paillier_keypair(
                 n_length=self._cfg.vertical.key_size)
             self.public_key, self.private_key = keys
+        elif self._cfg.vertical.eval_protection == 'ss':
+            self.ss = MultiplicativeSecretSharing(
+                shared_party_num=self.client_num)
 
         self.feature_order = None
         self.merged_feature_order = None
