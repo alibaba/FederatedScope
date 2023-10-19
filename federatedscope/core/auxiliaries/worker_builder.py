@@ -72,10 +72,6 @@ def get_client_cls(cfg):
         from federatedscope.nlp.hetero_tasks.worker import ATCClient
         return ATCClient
 
-    if cfg.data.type.lower() == 'hetero_nlp_tasks':
-        from federatedscope.nlp.hetero_tasks.worker import ATCClient
-        return ATCClient
-
     if cfg.trainer.type.lower() == 'fedsp_trainer':
         from federatedscope.nlp.fedsp.worker import FedSPClient
         return FedSPClient

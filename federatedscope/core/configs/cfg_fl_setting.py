@@ -1,7 +1,8 @@
 import logging
-import torch
+
 from federatedscope.core.configs.config import CN
 from federatedscope.register import register_config
+import torch
 
 logger = logging.getLogger(__name__)
 
