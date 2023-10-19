@@ -52,14 +52,26 @@ def load_vertical_data(config=None, generate=False):
         theta = np.random.uniform(low=-1.0, high=1.0, size=(total_dims, 1))
         x = np.random.choice([-1.0, 1.0, -2.0, 2.0, -3.0, 3.0],
                              size=(INSTANCE_NUM, total_dims))
-        y = np.asarray([
-            1.0 if x >= 0 else -1.0
-            for x in np.reshape(np.matmul(x, theta), -1)
-        ])
+        if config.vertical.algo == 'nn':
+            y = np.asarray([
+                1.0 if x >= 0 else 0
+                for x in np.reshape(np.matmul(x, theta), -1)
+            ])
+        else:
+            y = np.asarray([
+                1.0 if x >= 0 else -1.0
+                for x in np.reshape(np.matmul(x, theta), -1)
+            ])
 
         train_num = int(TRAIN_SPLIT * INSTANCE_NUM)
         test_data = {'theta': theta, 'x': x[train_num:], 'y': y[train_num:]}
         data = dict()
+
+        test_data_1 = test_data.copy()
+        test_data_1['x'] = x[train_num:, :config.vertical.dims[0]]
+        test_data_1['y'] = None
+        test_data_2 = test_data.copy()
+        test_data_2['x'] = x[train_num:, config.vertical.dims[0]:]
 
         # For Server
         data[0] = dict()
@@ -71,7 +83,7 @@ def load_vertical_data(config=None, generate=False):
         data[1] = dict()
         data[1]['train'] = {'x': x[:train_num, :config.vertical.dims[0]]}
         data[1]['val'] = None
-        data[1]['test'] = test_data
+        data[1]['test'] = test_data_1
 
         # For Client #2
         data[2] = dict()
@@ -80,6 +92,6 @@ def load_vertical_data(config=None, generate=False):
             'y': y[:train_num]
         }
         data[2]['val'] = None
-        data[2]['test'] = test_data
+        data[2]['test'] = test_data_2
 
         return data, config

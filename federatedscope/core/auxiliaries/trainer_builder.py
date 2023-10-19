@@ -176,6 +176,14 @@ def get_trainer(model=None,
                                        data=data,
                                        device=device,
                                        monitor=monitor)
+    elif config.trainer.type.lower() in ['nntrainer']:
+        from federatedscope.vertical_fl.nn_model.trainer.trainer \
+            import nnTrainer
+        trainer = nnTrainer(config=config,
+                            model=model,
+                            data=data,
+                            device=device,
+                            monitor=monitor)
     else:
         # try to find user registered trainer
         trainer = None
