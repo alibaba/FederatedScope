@@ -37,7 +37,7 @@ def extend_training_cfg(cfg):
     cfg.train.optimizer = CN(new_allowed=True)
     cfg.train.optimizer.type = 'SGD'
     cfg.train.optimizer.lr = 0.1
-    #cfg.train.optimizer.eps = 1e-8  # adam
+    # cfg.train.optimizer.eps = 1e-8  # adam
 
     # you can add new arguments 'aa' by `cfg.train.scheduler.aa = 'bb'`
     cfg.train.scheduler = CN(new_allowed=True)
@@ -57,7 +57,7 @@ def extend_training_cfg(cfg):
     cfg.finetune.optimizer = CN(new_allowed=True)
     cfg.finetune.optimizer.type = 'SGD'
     cfg.finetune.optimizer.lr = 0.1
-    #cfg.train.optimizer.eps = 1e-8  # adam
+    # cfg.train.optimizer.eps = 1e-8  # adam
 
     cfg.finetune.scheduler = CN(new_allowed=True)
     cfg.finetune.scheduler.type = ''
