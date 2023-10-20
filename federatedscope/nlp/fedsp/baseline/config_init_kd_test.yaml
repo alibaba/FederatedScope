@@ -1,0 +1,23 @@
+federate:
+  total_round_num: 1
+  pl_alter_train: False
+data:
+  batch_size: 1
+model:
+  server_prefix_len: 0
+  client_prefix_len: 0
+  server_freeze_param: ['model']
+  client_freeze_param: []
+  only_use_hidden_loss: True
+train:
+  batch_or_epoch: batch
+  local_update_steps: 10
+  optimizer:
+    type: AdamW
+    lr: 5e-4
+    weight_decay: 0.01
+  scheduler:
+    type: warmup_step
+    warmup_ratio: 0.1
+grad:
+  grad_accum_count: 1

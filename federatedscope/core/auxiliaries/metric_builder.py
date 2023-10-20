@@ -1,11 +1,11 @@
 import logging
 import federatedscope.register as register
-from federatedscope.nlp.hetero_tasks.metric import *
 
 logger = logging.getLogger(__name__)
 
 try:
     from federatedscope.contrib.metrics import *
+    from federatedscope.nlp.hetero_tasks.metric import *
 except ImportError as error:
     logger.warning(
         f'{error} in `federatedscope.contrib.metrics`, some modules are not '

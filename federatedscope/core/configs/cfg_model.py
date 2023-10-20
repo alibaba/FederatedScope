@@ -49,6 +49,28 @@ def extend_model_cfg(cfg):
     cfg.model.contrast_topk = 100
     cfg.model.contrast_temp = 1.0
 
+    # prompt tuning
+    cfg.model.server_prefix_len = 0
+    cfg.model.client_prefix_len = 0
+    cfg.model.num_server_layers = 0
+    cfg.model.num_client_layers = 0
+    cfg.model.server_freeze_param = []
+    cfg.model.client_freeze_param = []
+    cfg.model.alter_model_param = []
+    cfg.model.alter_prompt_param = []
+    cfg.model.use_fp16 = False
+    cfg.model.use_prefix_prj = False
+    cfg.model.prefix_hidden_size = 0
+    cfg.model.use_c2s_kd_loss = False
+    cfg.model.use_s2c_kd_loss = False
+    cfg.model.only_use_hidden_loss = False
+    cfg.model.share_server_layer_param = False
+    cfg.model.share_client_layer_param = False
+    cfg.model.server_start_layer_id = 0
+    cfg.model.client_start_layer_id = 0
+    cfg.model.num_server_layers_per_cell = 1
+    cfg.model.num_client_layers_per_cell = 1
+
     # ---------------------------------------------------------------------- #
     # Criterion related options
     # ---------------------------------------------------------------------- #

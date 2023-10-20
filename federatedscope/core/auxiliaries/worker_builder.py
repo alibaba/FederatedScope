@@ -72,6 +72,10 @@ def get_client_cls(cfg):
         from federatedscope.nlp.hetero_tasks.worker import ATCClient
         return ATCClient
 
+    if cfg.trainer.type.lower() == 'fedsp_trainer':
+        from federatedscope.nlp.fedsp.worker import FedSPClient
+        return FedSPClient
+
     if cfg.federate.method.lower() in constants.CLIENTS_TYPE:
         client_type = constants.CLIENTS_TYPE[cfg.federate.method.lower()]
     else:
@@ -186,6 +190,14 @@ def get_server_cls(cfg):
     if cfg.data.type.lower() == 'hetero_nlp_tasks':
         from federatedscope.nlp.hetero_tasks.worker import ATCServer
         return ATCServer
+
+    if cfg.data.type.lower() == 'hetero_nlp_tasks':
+        from federatedscope.nlp.hetero_tasks.worker import ATCServer
+        return ATCServer
+
+    if cfg.trainer.type.lower() == 'fedsp_trainer':
+        from federatedscope.nlp.fedsp.worker import FedSPServer
+        return FedSPServer
 
     if cfg.federate.method.lower() in constants.SERVER_TYPE:
         server_type = constants.SERVER_TYPE[cfg.federate.method.lower()]

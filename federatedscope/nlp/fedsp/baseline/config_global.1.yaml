@@ -1,0 +1,4 @@
+train:
+  batch_or_epoch: batch
+  optimizer:
+    lr: 5e-3

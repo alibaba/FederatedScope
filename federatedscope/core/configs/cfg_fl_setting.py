@@ -23,6 +23,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.data_weighted_aggr = False  # If True, the weight of aggr is
     # the number of training samples in dataset.
     cfg.federate.online_aggr = False
+    cfg.federate.make_global_train = False
     cfg.federate.make_global_eval = False
     cfg.federate.use_diff = False
     cfg.federate.merge_test_data = False  # For efficient simulation, users
@@ -53,6 +54,17 @@ def extend_fl_setting_cfg(cfg):
     # atc (TODO: merge later)
     cfg.federate.atc_vanilla = False
     cfg.federate.atc_load_from = ''
+
+    # prompt tuning
+    cfg.federate.skip_local_train = False
+    cfg.federate.ckpt_path = ''
+    cfg.federate.pl_save_to = ''
+    cfg.federate.pl_ret_avg_model = False
+    cfg.federate.pl_alter_train = False  # alternately train model and prompt
+    # in each client
+    cfg.federate.pl_init_kd = False
+    cfg.federate.pl_kd_cfg_file = ''
+    cfg.federate.pl_global_cfg_file = ''
 
     # ---------------------------------------------------------------------- #
     # Distribute training related options

@@ -152,7 +152,7 @@ class Server(BaseServer):
                 data=self.data,
                 device=self.device,
                 config=self._cfg,
-                only_for_eval=True,
+                only_for_eval=not self._cfg.federate.make_global_train,
                 monitor=self._monitor
             )  # the trainer is only used for global evaluation
             self.trainers = [self.trainer]

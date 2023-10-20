@@ -70,6 +70,10 @@ def extend_fl_algo_cfg(cfg):
     cfg.personalization.epoch_linear = 2  # training epoch number
     cfg.personalization.weight_decay = 0.0
 
+    # prompt tuning
+    cfg.personalization.server_local_param = []
+    cfg.personalization.client_local_param = []
+
     # ---------------------------------------------------------------------- #
     # FedSage+ related options, gfl
     # ---------------------------------------------------------------------- #
