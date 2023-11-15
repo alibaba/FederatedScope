@@ -9,8 +9,10 @@ federate:
 data:
   root: data/
   type: VFLMovieLens1M
+dataloader:
+  type: mf
+  theta: -1
   batch_size: 8
-  num_workers: 0
 model:
   type: VMFNet
   hidden: 20
@@ -25,9 +27,10 @@ trainer:
 eval:
   freq: 2000
   metrics: []
+  best_res_update_round_wise_key: test_avg_loss
+  count_flops: False
 sgdmf:
   use: True
   epsilon: 4.
   delta: 0.75
   R: 5.
-  theta: -1

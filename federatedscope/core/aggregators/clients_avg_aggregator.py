@@ -5,9 +5,10 @@ from federatedscope.core.auxiliaries.utils import param2tensor
 
 
 class ClientsAvgAggregator(Aggregator):
-    """Implementation of vanilla FedAvg refer to `Communication-efficient
-    learning of deep networks from decentralized data` [McMahan et al., 2017]
-        (http://proceedings.mlr.press/v54/mcmahan17a.html)
+    """
+    Implementation of vanilla FedAvg refer to 'Communication-efficient \
+    learning of deep networks from decentralized data' [McMahan et al., 2017] \
+    http://proceedings.mlr.press/v54/mcmahan17a.html
     """
     def __init__(self, model=None, device='cpu', config=None):
         super(Aggregator, self).__init__()
@@ -20,9 +21,10 @@ class ClientsAvgAggregator(Aggregator):
         To preform aggregation
 
         Arguments:
-        agg_info (dict): the feedbacks from clients
-        :returns: the aggregated results
-        :rtype: dict
+            agg_info (dict): the feedbacks from clients
+
+        Returns:
+            dict: the aggregated results
         """
 
         models = agg_info["client_feedback"]
@@ -33,10 +35,10 @@ class ClientsAvgAggregator(Aggregator):
         return avg_model
 
     def update(self, model_parameters):
-        '''
+        """
         Arguments:
             model_parameters (dict): PyTorch Module object's state_dict.
-        '''
+        """
         self.model.load_state_dict(model_parameters, strict=False)
 
     def save_model(self, path, cur_round=-1):
@@ -56,6 +58,9 @@ class ClientsAvgAggregator(Aggregator):
             raise ValueError("The file {} does NOT exist".format(path))
 
     def _para_weighted_avg(self, models, recover_fun=None):
+        """
+        Calculates the weighted average of models.
+        """
         training_set_size = 0
         for i in range(len(models)):
             sample_size, _ = models[i]
@@ -65,6 +70,9 @@ class ClientsAvgAggregator(Aggregator):
         for key in avg_model:
             for i in range(len(models)):
                 local_sample_size, local_model = models[i]
+
+                if key not in local_model:
+                    continue
 
                 if self.cfg.federate.ignore_weight:
                     weight = 1.0 / len(models)
@@ -93,6 +101,9 @@ class ClientsAvgAggregator(Aggregator):
 
 
 class OnlineClientsAvgAggregator(ClientsAvgAggregator):
+    """
+    Implementation of online aggregation of FedAvg.
+    """
     def __init__(self,
                  model=None,
                  device='cpu',
@@ -102,6 +113,9 @@ class OnlineClientsAvgAggregator(ClientsAvgAggregator):
         self.src_device = src_device
 
     def reset(self):
+        """
+        Reset the state of the model to its initial state
+        """
         self.maintained = self.model.state_dict()
         for key in self.maintained:
             self.maintained[key].data = torch.zeros_like(
@@ -109,9 +123,14 @@ class OnlineClientsAvgAggregator(ClientsAvgAggregator):
         self.cnt = 0
 
     def inc(self, content):
+        """
+        Increment the model weight by the given content.
+        """
         if isinstance(content, tuple):
             sample_size, model_params = content
             for key in self.maintained:
+                if key not in model_params:
+                    continue
                 # if model_params[key].device != self.maintained[key].device:
                 #    model_params[key].to(self.maintained[key].device)
                 self.maintained[key] = (self.cnt * self.maintained[key] +
@@ -123,4 +142,7 @@ class OnlineClientsAvgAggregator(ClientsAvgAggregator):
                 "{} is not a tuple (sample_size, model_para)".format(content))
 
     def aggregate(self, agg_info):
+        """
+        Returns the aggregated value
+        """
         return self.maintained

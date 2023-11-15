@@ -5,7 +5,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -33,7 +33,7 @@ class AsynCIFAR10Test(unittest.TestCase):
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'CIFAR10@torchvision'
-        cfg.data.args = [{'download': False}]
+        cfg.data.args = [{'download': True}]
         cfg.data.splits = [0.8, 0.2, 0.2]
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.2
@@ -42,14 +42,14 @@ class AsynCIFAR10Test(unittest.TestCase):
                               [
                                   'Normalize', {
                                       'mean': [0.4914, 0.4822, 0.4465],
-                                      'std': [0.247, 0.243, 0.261]
+                                      'std': [0.2470, 0.2435, 0.2616]
                                   }
                               ]]
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.2}]
 
         cfg.model.type = 'convnet2'
-        cfg.model.hidden = 512
+        cfg.model.hidden = 128
         cfg.model.out_channels = 10
 
         cfg.train.local_update_steps = 2
@@ -92,7 +92,7 @@ class AsynCIFAR10Test(unittest.TestCase):
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'CIFAR10@torchvision'
-        cfg.data.args = [{'download': False}]
+        cfg.data.args = [{'download': True}]
         cfg.data.splits = [0.8, 0.2, 0.2]
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.2
@@ -101,14 +101,14 @@ class AsynCIFAR10Test(unittest.TestCase):
                               [
                                   'Normalize', {
                                       'mean': [0.4914, 0.4822, 0.4465],
-                                      'std': [0.247, 0.243, 0.261]
+                                      'std': [0.2470, 0.2435, 0.2616]
                                   }
                               ]]
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.2}]
 
         cfg.model.type = 'convnet2'
-        cfg.model.hidden = 512
+        cfg.model.hidden = 128
         cfg.model.out_channels = 10
 
         cfg.train.local_update_steps = 2
@@ -152,7 +152,7 @@ class AsynCIFAR10Test(unittest.TestCase):
 
         cfg.data.root = 'test_data/'
         cfg.data.type = 'CIFAR10@torchvision'
-        cfg.data.args = [{'download': False}]
+        cfg.data.args = [{'download': True}]
         cfg.data.splits = [0.8, 0.2, 0.2]
         cfg.data.batch_size = 10
         cfg.data.subsample = 0.2
@@ -161,14 +161,14 @@ class AsynCIFAR10Test(unittest.TestCase):
                               [
                                   'Normalize', {
                                       'mean': [0.4914, 0.4822, 0.4465],
-                                      'std': [0.247, 0.243, 0.261]
+                                      'std': [0.2470, 0.2435, 0.2616]
                                   }
                               ]]
         cfg.data.splitter = 'lda'
         cfg.data.splitter_args = [{'alpha': 0.2}]
 
         cfg.model.type = 'convnet2'
-        cfg.model.hidden = 512
+        cfg.model.hidden = 128
         cfg.model.out_channels = 10
 
         cfg.train.local_update_steps = 2
@@ -202,10 +202,10 @@ class AsynCIFAR10Test(unittest.TestCase):
         init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
@@ -223,10 +223,10 @@ class AsynCIFAR10Test(unittest.TestCase):
         init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)
@@ -244,10 +244,10 @@ class AsynCIFAR10Test(unittest.TestCase):
         init_cfg.merge_from_other_cfg(modified_cfg)
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         print(test_best_results)

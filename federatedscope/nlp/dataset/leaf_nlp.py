@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from sklearn.model_selection import train_test_split
 
-from federatedscope.core.auxiliaries.utils import save_local_data, download_url
+from federatedscope.core.data.utils import save_local_data, download_url
 from federatedscope.cv.dataset.leaf import LEAF
 from federatedscope.nlp.dataset.utils import *
 

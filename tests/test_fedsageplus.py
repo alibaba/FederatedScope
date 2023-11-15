@@ -5,7 +5,7 @@ from federatedscope.core.auxiliaries.data_builder import get_data
 from federatedscope.core.auxiliaries.utils import setup_seed
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.configs.config import global_cfg
-from federatedscope.core.fed_runner import FedRunner
+from federatedscope.core.auxiliaries.runner_builder import get_runner
 from federatedscope.core.auxiliaries.worker_builder import get_server_cls, get_client_cls
 
 
@@ -29,7 +29,9 @@ class FedSagePlusTest(unittest.TestCase):
         cfg.data.root = 'test_data/'
         cfg.data.type = 'cora'
         cfg.data.splitter = 'louvain'
-        cfg.data.batch_size = 1
+
+        cfg.dataloader.type = 'pyg'
+        cfg.dataloader.batch_size = 1
 
         cfg.model.type = 'sage'
         cfg.model.hidden = 64
@@ -62,10 +64,10 @@ class FedSagePlusTest(unittest.TestCase):
 
         self.assertIsNotNone(data)
 
-        Fed_runner = FedRunner(data=data,
-                               server_class=get_server_cls(init_cfg),
-                               client_class=get_client_cls(init_cfg),
-                               config=init_cfg.clone())
+        Fed_runner = get_runner(data=data,
+                                server_class=get_server_cls(init_cfg),
+                                client_class=get_client_cls(init_cfg),
+                                config=init_cfg.clone())
         self.assertIsNotNone(Fed_runner)
         test_best_results = Fed_runner.run()
         init_cfg.merge_from_other_cfg(backup_cfg)

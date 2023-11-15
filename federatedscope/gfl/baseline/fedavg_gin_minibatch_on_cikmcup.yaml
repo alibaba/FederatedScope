@@ -3,7 +3,6 @@ device: 0
 early_stop:
   patience: 20
   improve_indicator_mode: mean
-  the_smaller_the_better: False
 federate:
   mode: 'standalone'
   make_global_eval: False
@@ -12,6 +11,8 @@ federate:
 data:
   root: data/
   type: cikmcup
+dataloader:
+  type: pyg
 model:
   type: gin
   hidden: 64

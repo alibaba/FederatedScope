@@ -4,7 +4,6 @@ cd ..
 
 echo "Test distributed mode with LR..."
 
-echo "Data generation"
 python scripts/distributed_scripts/gen_data.py
 
 ### server owns global test data

@@ -5,22 +5,23 @@ import pickle
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
-    gRPCCommManager
+    StandaloneDDPCommManager, gRPCCommManager
 from federatedscope.core.monitors.early_stopper import EarlyStopper
-from federatedscope.core.workers import Worker
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
-from federatedscope.core.auxiliaries.utils import merge_dict, \
+from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
     calculate_time_cost
+from federatedscope.core.workers.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
-class Client(Worker):
+class Client(BaseClient):
     """
-    The Client class, which describes the behaviors of client in an FL course.
-    The behaviors are described by the handling functions (named as
-    callback_funcs_for_xxx)
+    The Client class, which describes the behaviors of client in an FL \
+    course. The behaviors are described by the handling functions (named as \
+    ``callback_funcs_for_xxx``)
 
     Arguments:
         ID: The unique ID of the client, which is assigned by the server
@@ -31,7 +32,25 @@ class Client(Worker):
         data: The data owned by the client
         model: The model maintained locally
         device: The device to run local training and evaluation
-        strategy: redundant attribute
+
+    Attributes:
+        ID: ID of worker
+        state: the training round index
+        model: the model maintained locally
+        cfg: the configuration of FL course, \
+            see ``federatedscope.core.configs``
+        mode: the run mode for FL, ``distributed`` or ``standalone``
+        monitor: monite FL course and record metrics, \
+            see ``federatedscope.core.monitors.monitor.Monitor``
+        trainer: instantiated trainer, see ``federatedscope.core.trainers``
+        best_results: best results ever seen
+        history_results: all evaluation results
+        early_stopper: determine when to early stop, \
+            see ``federatedscope.core.monitors.early_stopper.EarlyStopper``
+        ss_manager: secret sharing manager
+        msg_buffer: dict buffer for storing message
+        comm_manager: manager for communication, \
+            see ``federatedscope.core.communication``
     """
     def __init__(self,
                  ID=-1,
@@ -45,8 +64,16 @@ class Client(Worker):
                  is_unseen_client=False,
                  *args,
                  **kwargs):
-
         super(Client, self).__init__(ID, state, config, model, strategy)
+
+        self.data = data
+
+        # Register message handlers
+        self._register_default_handlers()
+
+        # Un-configured worker
+        if config is None:
+            return
 
         # the unseen_client indicates that whether this client contributes to
         # FL process by training on its local data and uploading the local
@@ -55,10 +82,22 @@ class Client(Worker):
         # [ICLR'22, What Do We Mean by Generalization in Federated Learning?]
         self.is_unseen_client = is_unseen_client
 
+        # Parse the attack_id since we support both 'int' (for single attack)
+        # and 'list' (for multiple attacks) for config.attack.attack_id
+        parsed_attack_ids = list()
+        if isinstance(config.attack.attacker_id, int):
+            parsed_attack_ids.append(config.attack.attacker_id)
+        elif isinstance(config.attack.attacker_id, list):
+            parsed_attack_ids = config.attack.attacker_id
+        else:
+            raise TypeError(f"The expected types of config.attack.attack_id "
+                            f"include 'int' and 'list', but we got "
+                            f"{type(config.attack.attacker_id)}")
+
         # Attack only support the stand alone model;
         # Check if is a attacker; a client is a attacker if the
         # config.attack.attack_method is provided
-        self.is_attacker = config.attack.attacker_id == ID and \
+        self.is_attacker = ID in parsed_attack_ids and \
             config.attack.attack_method != '' and \
             config.federate.mode == 'standalone'
 
@@ -70,6 +109,7 @@ class Client(Worker):
                                    config=self._cfg,
                                    is_attacker=self.is_attacker,
                                    monitor=self._monitor)
+        self.device = device
 
         # For client-side evaluation
         self.best_results = dict()
@@ -83,17 +123,13 @@ class Client(Worker):
         self.early_stopper = EarlyStopper(
             patience, self._cfg.early_stop.delta,
             self._cfg.early_stop.improve_indicator_mode,
-            self._cfg.early_stop.the_smaller_the_better)
+            self._monitor.the_larger_the_better)
 
         # Secret Sharing Manager and message buffer
         self.ss_manager = AdditiveSecretSharing(
             shared_party_num=int(self._cfg.federate.sample_client_num
                                  )) if self._cfg.federate.use_ss else None
         self.msg_buffer = {'train': dict(), 'eval': dict()}
-
-        # Register message handlers
-        self.msg_handlers = dict()
-        self._register_default_handlers()
 
         # Communication and communication ability
         if 'resource_info' in kwargs and kwargs['resource_info'] is not None:
@@ -118,8 +154,12 @@ class Client(Worker):
         self.server_id = server_id
         if self.mode == 'standalone':
             comm_queue = kwargs['shared_comm_queue']
-            self.comm_manager = StandaloneCommManager(comm_queue=comm_queue,
-                                                      monitor=self._monitor)
+            if self._cfg.federate.process_num <= 1:
+                self.comm_manager = StandaloneCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
+            else:
+                self.comm_manager = StandaloneDDPCommManager(
+                    comm_queue=comm_queue, monitor=self._monitor)
             self.local_address = None
         elif self.mode == 'distributed':
             host = kwargs['host']
@@ -127,7 +167,10 @@ class Client(Worker):
             server_host = kwargs['server_host']
             server_port = kwargs['server_port']
             self.comm_manager = gRPCCommManager(
-                host=host, port=port, client_num=self._cfg.federate.client_num)
+                host=host,
+                port=port,
+                client_num=self._cfg.federate.client_num,
+                cfg=self._cfg.distribute)
             logger.info('Client: Listen to {}:{}...'.format(host, port))
             self.comm_manager.add_neighbors(neighbor_id=server_id,
                                             address={
@@ -157,8 +200,10 @@ class Client(Worker):
 
         model_deltas = list()
         for model_index in range(len(init_model)):
-            model_delta = copy.deepcopy(init_model[model_index])
+            model_delta = copy.deepcopy(updated_model[model_index])
             for key in init_model[model_index].keys():
+                if key not in updated_model[model_index].keys():
+                    continue
                 model_delta[key] = updated_model[model_index][
                     key] - init_model[model_index][key]
             model_deltas.append(model_delta)
@@ -168,34 +213,9 @@ class Client(Worker):
         else:
             return model_deltas[0]
 
-    def register_handlers(self, msg_type, callback_func):
-        """
-        To bind a message type with a handling function.
-
-        Arguments:
-            msg_type (str): The defined message type
-            callback_func: The handling functions to handle the received
-            message
-        """
-        self.msg_handlers[msg_type] = callback_func
-
-    def _register_default_handlers(self):
-        self.register_handlers('assign_client_id',
-                               self.callback_funcs_for_assign_id)
-        self.register_handlers('ask_for_join_in_info',
-                               self.callback_funcs_for_join_in_info)
-        self.register_handlers('address', self.callback_funcs_for_address)
-        self.register_handlers('model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('ss_model_para',
-                               self.callback_funcs_for_model_para)
-        self.register_handlers('evaluate', self.callback_funcs_for_evaluate)
-        self.register_handlers('finish', self.callback_funcs_for_finish)
-        self.register_handlers('converged', self.callback_funcs_for_converged)
-
     def join_in(self):
         """
-        To send 'join_in' message to the server for joining in the FL course.
+        To send ``join_in`` message to the server for joining in the FL course.
         """
         self.comm_manager.send(
             Message(msg_type='join_in',
@@ -206,7 +226,7 @@ class Client(Worker):
 
     def run(self):
         """
-        To listen to the message and handle them accordingly (used for
+        To listen to the message and handle them accordingly (used for \
         distributed mode)
         """
         while True:
@@ -217,16 +237,21 @@ class Client(Worker):
             if msg.msg_type == 'finish':
                 break
 
+    def run_standalone(self):
+        """
+        Run in standalone mode
+        """
+        self.join_in()
+        self.run()
+
     def callback_funcs_for_model_para(self, message: Message):
         """
-        The handling function for receiving model parameters,
-        which triggers the local training process.
+        The handling function for receiving model parameters, \
+        which triggers the local training process. \
         This handling function is widely used in various FL courses.
 
         Arguments:
-            message: The received message, which includes sender, receiver,
-            state, and content.
-                More detail can be found in federatedscope.core.message
+            message: The received message
         """
         if 'ss' in message.msg_type:
             # A fragment of the shared secret
@@ -274,10 +299,25 @@ class Client(Worker):
             sender = message.sender
             timestamp = message.timestamp
             content = message.content
+
+            # dequantization
+            if self._cfg.quantization.method == 'uniform':
+                from federatedscope.core.compression import \
+                    symmetric_uniform_dequantization
+                if isinstance(content, list):  # multiple model
+                    content = [
+                        symmetric_uniform_dequantization(x) for x in content
+                    ]
+                else:
+                    content = symmetric_uniform_dequantization(content)
+
             # When clients share the local model, we must set strict=True to
             # ensure all the model params (which might be updated by other
             # clients in the previous local training process) are overwritten
             # and synchronized with the received model
+            if self._cfg.federate.process_num > 1:
+                for k, v in content.items():
+                    content[k] = v.to(self.device)
             self.trainer.update(content,
                                 strict=self._cfg.federate.share_local_model)
             self.state = round
@@ -338,9 +378,6 @@ class Client(Worker):
                         model_para[key] = model_para[key] * sample_size
                     model_para_list = self.ss_manager.secret_split(model_para)
                     model_para_list_all.append(model_para_list)
-                    # print(model_para)
-                    # print(self.ss_manager.secret_reconstruct(
-                    # model_para_list))
                 frame_idx = 0
                 for neighbor in self.comm_manager.neighbors:
                     if neighbor != self.server_id:
@@ -365,7 +402,9 @@ class Client(Worker):
                 self.msg_buffer['train'][self.state] = [(sample_size,
                                                          content_frame)]
             else:
-                if self._cfg.asyn.use:
+                if self._cfg.asyn.use or self._cfg.aggregator.robust_rule in \
+                        ['krum', 'normbounding', 'median', 'trimmedmean',
+                         'bulyan']:
                     # Return the model delta when using asynchronous training
                     # protocol, because the staled updated might be discounted
                     # and cause that the sum of the aggregated weights might
@@ -375,6 +414,19 @@ class Client(Worker):
                 else:
                     shared_model_para = model_para_all
 
+                # quantization
+                if self._cfg.quantization.method == 'uniform':
+                    from federatedscope.core.compression import \
+                        symmetric_uniform_quantization
+                    nbits = self._cfg.quantization.nbits
+                    if isinstance(shared_model_para, list):
+                        shared_model_para = [
+                            symmetric_uniform_quantization(x, nbits)
+                            for x in shared_model_para
+                        ]
+                    else:
+                        shared_model_para = symmetric_uniform_quantization(
+                            shared_model_para, nbits)
                 self.comm_manager.send(
                     Message(msg_type='model_para',
                             sender=self.ID,
@@ -387,9 +439,9 @@ class Client(Worker):
 
     def callback_funcs_for_assign_id(self, message: Message):
         """
-        The handling function for receiving the client_ID assigned by the
-        server (during the joining process),
-        which is used in the distributed mode.
+        The handling function for receiving the client_ID assigned by the \
+        server (during the joining process), which is used in the \
+        distributed mode.
 
         Arguments:
             message: The received message
@@ -401,8 +453,9 @@ class Client(Worker):
 
     def callback_funcs_for_join_in_info(self, message: Message):
         """
-        The handling function for receiving the request of join in information
-        (such as batch_size, num_of_samples) during the joining process.
+        The handling function for receiving the request of join in \
+        information (such as ``batch_size``, ``num_of_samples``) during \
+        the joining process.
 
         Arguments:
             message: The received message
@@ -414,14 +467,14 @@ class Client(Worker):
             if requirement.lower() == 'num_sample':
                 if self._cfg.train.batch_or_epoch == 'batch':
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self._cfg.data.batch_size
+                                 self._cfg.dataloader.batch_size
                 else:
                     num_sample = self._cfg.train.local_update_steps * \
-                                 self.trainer.ctx.num_train_batch
+                                 len(self.trainer.data.train_data)
                 join_in_info['num_sample'] = num_sample
                 if self._cfg.trainer.type == 'nodefullbatch_trainer':
                     join_in_info['num_sample'] = \
-                        self.trainer.ctx.data.x.shape[0]
+                        self.trainer.data.train_data.x.shape[0]
             elif requirement.lower() == 'client_resource':
                 assert self.comm_bandwidth is not None and self.comp_speed \
                        is not None, "The requirement join_in_info " \
@@ -442,7 +495,7 @@ class Client(Worker):
 
     def callback_funcs_for_address(self, message: Message):
         """
-        The handling function for receiving other clients' IP addresses,
+        The handling function for receiving other clients' IP addresses, \
         which is used for constructing a complex topology
 
         Arguments:
@@ -492,15 +545,12 @@ class Client(Worker):
                 metrics,
                 rnd=self.state,
                 role='Client #{}'.format(self.ID),
-                forms='raw',
+                forms=['raw'],
                 return_raw=True)
-            self._monitor.update_best_result(
-                self.best_results,
-                formatted_eval_res['Results_raw'],
-                results_type=f"client #{self.ID}",
-                round_wise_update_key=self._cfg.eval.
-                best_res_update_round_wise_key)
-            self.history_results = merge_dict(
+            self._monitor.update_best_result(self.best_results,
+                                             formatted_eval_res['Results_raw'],
+                                             results_type=f"client #{self.ID}")
+            self.history_results = merge_dict_of_results(
                 self.history_results, formatted_eval_res['Results_raw'])
             self.early_stopper.track_and_check(self.history_results[
                 self._cfg.eval.best_res_update_round_wise_key])
@@ -515,7 +565,7 @@ class Client(Worker):
 
     def callback_funcs_for_finish(self, message: Message):
         """
-        The handling function for receiving the signal of finishing the FL
+        The handling function for receiving the signal of finishing the FL \
         course.
 
         Arguments:
@@ -533,11 +583,14 @@ class Client(Worker):
 
     def callback_funcs_for_converged(self, message: Message):
         """
-        The handling function for receiving the signal that the FL course
+        The handling function for receiving the signal that the FL course \
         converged
 
         Arguments:
             message: The received message
         """
-
         self._monitor.global_converged()
+
+    @classmethod
+    def get_msg_handler_dict(cls):
+        return cls().msg_handlers_str

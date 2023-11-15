@@ -12,6 +12,9 @@ data:
   root: data/
   type: cora
   splitter: 'louvain'
+dataloader:
+  type: pyg
+  batch_size: 1
 model:
   type: gcn
   hidden: 64

@@ -1,7 +1,7 @@
 import logging
 
 from federatedscope.mf.trainer.trainer import MFTrainer
-from federatedscope.core.auxiliaries.utils import get_random
+from federatedscope.core.trainers.utils import get_random
 from typing import Type
 import numpy as np
 
@@ -37,13 +37,13 @@ def init_sgdmf_ctx(base_trainer):
     ctx = base_trainer.ctx
     cfg = base_trainer.cfg
 
-    sample_ratio = float(cfg.data.batch_size) / cfg.model.num_user
+    sample_ratio = float(cfg.dataloader.batch_size) / cfg.model.num_user
     # Noise multiplier
     tmp = cfg.sgdmf.constant * np.power(sample_ratio, 2) * (
         cfg.federate.total_round_num * ctx.num_total_train_batch) * np.log(
             1. / cfg.sgdmf.delta)
     noise_multipler = np.sqrt(tmp / np.power(cfg.sgdmf.epsilon, 2))
-    ctx.scale = max(cfg.sgdmf.theta, 1.) * noise_multipler * np.power(
+    ctx.scale = max(cfg.dataloader.theta, 1.) * noise_multipler * np.power(
         cfg.sgdmf.R, 1.5)
     logger.info("Inject noise: (loc=0, scale={})".format(ctx.scale))
     ctx.sgdmf_R = cfg.sgdmf.R

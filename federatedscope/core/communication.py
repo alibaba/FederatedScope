@@ -1,11 +1,17 @@
 import grpc
 from concurrent import futures
+import logging
+import torch.distributed as dist
 
-from federatedscope.core.configs.config import global_cfg
+from collections import deque
+
 from federatedscope.core.proto import gRPC_comm_manager_pb2, \
     gRPC_comm_manager_pb2_grpc
 from federatedscope.core.gRPC_server import gRPCComServeFunc
 from federatedscope.core.message import Message
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class StandaloneCommManager(object):
@@ -39,7 +45,57 @@ class StandaloneCommManager(object):
             return self.neighbors
 
     def send(self, message):
+        # All the workers share one comm_queue
         self.comm_queue.append(message)
+
+
+class StandaloneDDPCommManager(StandaloneCommManager):
+    """
+    The communicator used for standalone mode with multigpu
+    """
+    def __init__(self, comm_queue, monitor=None, id2comm=None):
+        super().__init__(comm_queue, monitor)
+        self.id2comm = id2comm
+        self.device = "cuda:{}".format(dist.get_rank())
+
+    def _send_model_para(self, model_para, dst_rank):
+        for v in model_para.values():
+            t = v.to(self.device)
+            dist.send(tensor=t, dst=dst_rank)
+
+    def send(self, message):
+        is_model_para = message.msg_type == 'model_para'
+        is_evaluate = message.msg_type == 'evaluate'
+        if self.id2comm is None:
+            # client to server
+            if is_model_para:
+                model_para = message.content[1]
+                message.content = (message.content[0], {})
+                self.comm_queue.append(message) if isinstance(
+                    self.comm_queue, deque) else self.comm_queue.put(message)
+                self._send_model_para(model_para, 0)
+            else:
+                self.comm_queue.append(message) if isinstance(
+                    self.comm_queue, deque) else self.comm_queue.put(message)
+        else:
+            receiver = message.receiver
+            if not isinstance(receiver, list):
+                receiver = [receiver]
+            if is_model_para or is_evaluate:
+                model_para = message.content
+                message.content = {}
+            for idx, each_comm in enumerate(self.comm_queue):
+                for each_receiver in receiver:
+                    if each_receiver in self.neighbors and \
+                            self.id2comm[each_receiver] == idx:
+                        each_comm.put(message)
+                        break
+                if is_model_para or is_evaluate:
+                    for each_receiver in receiver:
+                        if each_receiver in self.neighbors and \
+                                self.id2comm[each_receiver] == idx:
+                            self._send_model_para(model_para, idx + 1)
+                            break
         download_bytes, upload_bytes = message.count_bytes()
         self.monitor.track_upload_bytes(upload_bytes)
 
@@ -49,17 +105,23 @@ class gRPCCommManager(object):
         The implementation of gRPCCommManager is referred to the tutorial on
         https://grpc.io/docs/languages/python/
     """
-    def __init__(self, host='0.0.0.0', port='50050', client_num=2):
+    def __init__(self, host='0.0.0.0', port='50050', client_num=2, cfg=None):
         self.host = host
         self.port = port
         options = [
-            ("grpc.max_send_message_length",
-             global_cfg.distribute.grpc_max_send_message_length),
+            ("grpc.max_send_message_length", cfg.grpc_max_send_message_length),
             ("grpc.max_receive_message_length",
-             global_cfg.distribute.grpc_max_receive_message_length),
-            ("grpc.enable_http_proxy",
-             global_cfg.distribute.grpc_enable_http_proxy),
+             cfg.grpc_max_receive_message_length),
+            ("grpc.enable_http_proxy", cfg.grpc_enable_http_proxy),
         ]
+
+        if cfg.grpc_compression.lower() == 'deflate':
+            self.comp_method = grpc.Compression.Deflate
+        elif cfg.grpc_compression.lower() == 'gzip':
+            self.comp_method = grpc.Compression.Gzip
+        else:
+            self.comp_method = grpc.Compression.NoCompression
+
         self.server_funcs = gRPCComServeFunc()
         self.grpc_server = self.serve(max_workers=client_num,
                                       host=host,
@@ -75,6 +137,7 @@ class gRPCCommManager(object):
         """
         server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=max_workers),
+            compression=self.comp_method,
             options=options)
         gRPC_comm_manager_pb2_grpc.add_gRPCComServeFuncServicer_to_server(
             self.server_funcs, server)
@@ -113,6 +176,7 @@ class gRPCCommManager(object):
             https://grpc.io/docs/languages/python/basics/#creating-a-stub
             """
             channel = grpc.insecure_channel(receiver_address,
+                                            compression=self.comp_method,
                                             options=(('grpc.enable_http_proxy',
                                                       0), ))
             stub = gRPC_comm_manager_pb2_grpc.gRPCComServeFuncStub(channel)
@@ -122,7 +186,8 @@ class gRPCCommManager(object):
         request = message.transform(to_list=True)
         try:
             stub.sendMessage(request)
-        except grpc._channel._InactiveRpcError:
+        except grpc._channel._InactiveRpcError as error:
+            logger.warning(error)
             pass
         channel.close()
 

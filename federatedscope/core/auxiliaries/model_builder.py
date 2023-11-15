@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 import federatedscope.register as register
 
 logger = logging.getLogger(__name__)
@@ -13,13 +14,12 @@ except ImportError as error:
 
 def get_shape_from_data(data, model_config, backend='torch'):
     """
-    Extract the input shape from the given data, which can be used to build
-    the data. Users can also use `data.input_shape` to specify the shape
+    Extract the input shape from the given data, which can be used to build \
+    the data. Users can also use `data.input_shape` to specify the shape.
+
     Arguments:
-        data (object): the data used for local training or evaluation
-        The expected data format:
-        1): {train/val/test: {x:ndarray, y:ndarray}}}
-        2): {train/val/test: DataLoader}
+        data (`ClientData`): the data used for local training or evaluation \
+
     Returns:
         shape (tuple): the input shape
     """
@@ -31,20 +31,24 @@ def get_shape_from_data(data, model_config, backend='torch'):
             'gcn', 'sage', 'gpr', 'gat', 'gin', 'mpnn'
     ] or model_config.type.startswith('gnn_'):
         num_label = data['num_label'] if 'num_label' in data else None
-        num_edge_features = data[
+        num_edge_features = data['data'][
             'num_edge_features'] if model_config.type == 'mpnn' else None
         if model_config.task.startswith('graph'):
             # graph-level task
             data_representative = next(iter(data['train']))
-            return (data_representative.x.shape, num_label, num_edge_features)
+            return data_representative.x.shape, num_label, num_edge_features
         else:
             # node/link-level task
-            return (data.x.shape, num_label, num_edge_features)
+            return data['data'].x.shape, num_label, num_edge_features
+    elif model_config.type.lower() in ['atc_model']:
+        return None
 
     if isinstance(data, dict):
         keys = list(data.keys())
         if 'test' in keys:
             key_representative = 'test'
+        elif 'val' in keys:
+            key_representative = 'val'
         elif 'train' in keys:
             key_representative = 'train'
         elif 'data' in keys:
@@ -53,7 +57,6 @@ def get_shape_from_data(data, model_config, backend='torch'):
             key_representative = keys[0]
             logger.warning(f'We chose the key {key_representative} as the '
                            f'representative key to extract data shape.')
-
         data_representative = data[key_representative]
     else:
         # Handle the data with non-dict format
@@ -61,7 +64,7 @@ def get_shape_from_data(data, model_config, backend='torch'):
 
     if isinstance(data_representative, dict):
         if 'x' in data_representative:
-            shape = data_representative['x'].shape
+            shape = np.asarray(data_representative['x']).shape
             if len(shape) == 1:  # (batch, ) = (batch, 1)
                 return 1
             else:
@@ -70,10 +73,14 @@ def get_shape_from_data(data, model_config, backend='torch'):
         import torch
         if issubclass(type(data_representative), torch.utils.data.DataLoader):
             x, _ = next(iter(data_representative))
+            if isinstance(x, list):
+                return x[0].shape
             return x.shape
         else:
             try:
                 x, _ = data_representative
+                if isinstance(x, list):
+                    return x[0].shape
                 return x.shape
             except:
                 raise TypeError('Unsupported data type.')
@@ -88,13 +95,36 @@ def get_shape_from_data(data, model_config, backend='torch'):
 
 def get_model(model_config, local_data=None, backend='torch'):
     """
+    This function builds an instance of model to be trained.
+
     Arguments:
-        local_data (object): the model to be instantiated is
-        responsible for the given data.
+        model_config: ``cfg.model``, a submodule of ``cfg``
+        local_data: the model to be instantiated is responsible for the \
+        given data
+        backend: chosen from ``torch`` and ``tensorflow``
     Returns:
-        model (torch.Module): the instantiated model.
+        model (``torch.Module``): the instantiated model.
+
+    Note:
+      The key-value pairs of built-in model and source are shown below:
+        ===================================  ==============================
+        Model type                           Source
+        ===================================  ==============================
+        ``lr``                               ``core.lr.LogisticRegression`` \
+        or ``cross_backends.LogisticRegression``
+        ``mlp``                              ``core.mlp.MLP``
+        ``quadratic``                        ``tabular.model.QuadraticModel``
+        ``convnet2, convnet5, vgg11``        ``cv.model.get_cnn()``
+        ``lstm``                             ``nlp.model.get_rnn()``
+        ``{}@transformers``                  ``nlp.model.get_transformer()``
+        ``gcn, sage, gpr, gat, gin, mpnn``   ``gfl.model.get_gnn()``
+        ``vmfnet, hmfnet``                   \
+        ``mf.model.model_builder.get_mfnet()``
+        ===================================  ==============================
     """
-    if local_data is not None:
+    if model_config.type.lower() in ['xgb_tree', 'gbdt_tree', 'random_forest']:
+        input_shape = None
+    elif local_data is not None:
         input_shape = get_shape_from_data(local_data, model_config, backend)
     else:
         input_shape = model_config.input_shape
@@ -132,9 +162,18 @@ def get_model(model_config, local_data=None, backend='torch'):
         from federatedscope.tabular.model import QuadraticModel
         model = QuadraticModel(input_shape[-1], 1)
 
-    elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11', 'lr']:
+    elif model_config.type.lower() in ['convnet2', 'convnet5', 'vgg11']:
         from federatedscope.cv.model import get_cnn
         model = get_cnn(model_config, input_shape)
+    elif model_config.type.lower() in [
+            'simclr', 'simclr_linear', "supervised_local", "supervised_fedavg"
+    ]:
+        from federatedscope.cl.model import get_simclr
+        model = get_simclr(model_config, input_shape)
+        if model_config.type.lower().endswith('linear'):
+            for name, value in model.named_parameters():
+                if not name.startswith('linear'):
+                    value.requires_grad = False
     elif model_config.type.lower() in ['lstm']:
         from federatedscope.nlp.model import get_rnn
         model = get_rnn(model_config, input_shape)
@@ -149,6 +188,15 @@ def get_model(model_config, local_data=None, backend='torch'):
     elif model_config.type.lower() in ['vmfnet', 'hmfnet']:
         from federatedscope.mf.model.model_builder import get_mfnet
         model = get_mfnet(model_config, input_shape)
+    elif model_config.type.lower() in [
+            'xgb_tree', 'gbdt_tree', 'random_forest'
+    ]:
+        from federatedscope.vertical_fl.tree_based_models.model.model_builder \
+            import get_tree_model
+        model = get_tree_model(model_config)
+    elif model_config.type.lower() in ['atc_model']:
+        from federatedscope.nlp.hetero_tasks.model import ATCModel
+        model = ATCModel(model_config)
     else:
         raise ValueError('Model {} is not provided'.format(model_config.type))
 
@@ -156,4 +204,8 @@ def get_model(model_config, local_data=None, backend='torch'):
 
 
 def get_trainable_para_names(model):
-    return set(dict(list(model.named_parameters())).keys())
+    grad_params = set()
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            grad_params.add(name)
+    return grad_params

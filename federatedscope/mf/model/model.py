@@ -1,4 +1,3 @@
-from torch.nn import Parameter
 from torch.nn import Module
 
 import numpy as np
@@ -15,47 +14,34 @@ class BasicMFNet(Module):
     """
     def __init__(self, num_user, num_item, num_hidden):
         super(BasicMFNet, self).__init__()
-
-        self.embed_user = Parameter(
-            torch.normal(mean=0,
-                         std=0.1,
-                         size=(num_user, num_hidden),
-                         requires_grad=True,
-                         dtype=torch.float32))
-        self.register_parameter('embed_user', self.embed_user)
-        self.embed_item = Parameter(
-            torch.normal(mean=0,
-                         std=0.1,
-                         size=(num_item, num_hidden),
-                         requires_grad=True,
-                         dtype=torch.float32))
-        self.register_parameter('embed_item', self.embed_item)
+        self.num_user, self.num_item = num_user, num_item
+        self.embed_user = torch.nn.Embedding(num_user, num_hidden, sparse=True)
+        self.embed_item = torch.nn.Embedding(num_item, num_hidden, sparse=True)
 
     def forward(self, indices, ratings):
-        # TODO: do not use all embedding
-        pred = torch.matmul(self.embed_user, self.embed_item.T)
-        label = torch.sparse_coo_tensor(indices,
-                                        ratings,
-                                        size=pred.shape,
-                                        device=pred.device,
-                                        dtype=torch.float32).to_dense()
-        mask = torch.sparse_coo_tensor(indices,
-                                       np.ones(len(ratings)),
-                                       size=pred.shape,
-                                       device=pred.device,
-                                       dtype=torch.float32).to_dense()
+        device = self.embed_user.weight.device
 
-        return mask * pred, label, float(np.prod(pred.size())) / len(ratings)
+        indices = torch.tensor(np.array(indices)).to(device)
+
+        user_embedding = self.embed_user(indices[0])
+        item_embedding = self.embed_item(indices[1])
+
+        pred = (user_embedding * item_embedding).sum(dim=1)
+
+        label = torch.tensor(np.array(ratings)).to(device)
+
+        return pred, label
 
     def load_state_dict(self, state_dict, strict: bool = True):
 
-        state_dict[self.name_reserve] = getattr(self, self.name_reserve)
+        state_dict[self.name_reserve + '.weight'] = getattr(
+            getattr(self, self.name_reserve), 'weight')
         super().load_state_dict(state_dict, strict)
 
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         state_dict = super().state_dict(destination, prefix, keep_vars)
         # Mask embed_item
-        del state_dict[self.name_reserve]
+        del state_dict[self.name_reserve + '.weight']
         return state_dict
 
 

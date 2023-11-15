@@ -23,7 +23,7 @@ do
         do
             for (( g=0; g<${#models[@]}; g++ ))
             do
-                python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml federate.method ${method} model.model_num_per_trainer ${model_num_per_trainer} data.batch_size ${bs} device ${cudaid} train.optimizer.lr ${lrs[$i]} train.local_update_steps ${local_updates[$j]} model.type ${models[$g]} seed $k outdir ${outdir}/${models[$g]}_${lrs[$i]}_${local_updates[$j]}_bs${bs}_on_${dataset}
+                python federatedscope/main.py --cfg federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml federate.method ${method} model.model_num_per_trainer ${model_num_per_trainer} dataloader.batch_size ${bs} device ${cudaid} train.optimizer.lr ${lrs[$i]} train.local_update_steps ${local_updates[$j]} model.type ${models[$g]} seed $k outdir ${outdir}/${models[$g]}_${lrs[$i]}_${local_updates[$j]}_bs${bs}_on_${dataset}
             done
         done
     done

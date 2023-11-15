@@ -8,7 +8,7 @@ def generate_data(client_num=3,
                   feature_num=5,
                   save_data=True):
     """
-    Generate data in FedRunner format
+    Generate data in Runner format
     Args:
         client_num:
         instance_num:
@@ -99,6 +99,9 @@ def generate_data(client_num=3,
                     for k, v in data[client_idx]['test'].items()
                 } if data[client_idx]['test'] is not None else None
                 pickle.dump(save_client_data, f)
+
+        with open('toy_data/all_data', 'wb') as f:
+            pickle.dump(data, f)
 
     return data
 

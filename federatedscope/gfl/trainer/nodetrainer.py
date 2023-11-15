@@ -1,10 +1,7 @@
 import torch
-
-from torch_geometric.loader import DataLoader as PyGDataLoader
-from torch_geometric.data import Data
 from torch_geometric.loader import GraphSAINTRandomWalkSampler, NeighborSampler
 
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.monitors import Monitor
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.register import register_trainer
@@ -19,18 +16,16 @@ class NodeFullBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
         modes
-
         """
         init_dict = dict()
-        if isinstance(data, Data):
+        if isinstance(data, dict):
             for mode in ["train", "val", "test"]:
-                init_dict["{}_loader".format(mode)] = PyGDataLoader([data])
+                init_dict["{}_loader".format(mode)] = data.get(mode)
                 init_dict["{}_data".format(mode)] = None
                 # For node-level task dataloader contains one graph
                 init_dict["num_{}_data".format(mode)] = 1
-
         else:
-            raise TypeError("Type of data should be PyG data.")
+            raise TypeError("Type of data should be dict.")
         return init_dict
 
     def _hook_on_batch_forward(self, ctx):
@@ -96,7 +91,6 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
     def parse_data(self, data):
         """Populate "{}_data", "{}_loader" and "num_{}_data" for different
         modes
-
         """
         init_dict = dict()
         if isinstance(data, dict):
@@ -119,7 +113,7 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
                                 data.get(mode)
                             ]
                             init_dict["num_{}_data".format(
-                                mode)] = self.cfg.data.batch_size
+                                mode)] = self.cfg.dataloader.batch_size
                     else:
                         raise TypeError("Type {} is not supported.".format(
                             type(data.get(mode))))
@@ -128,7 +122,6 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
         return init_dict
 
     def _hook_on_epoch_start(self, ctx):
-        # TODO: blind torch
         if not isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
                           ReIterator):
             if isinstance(ctx.get("{}_loader".format(ctx.cur_split)),
@@ -154,9 +147,9 @@ class NodeMiniBatchTrainer(GeneralTorchTrainer):
             else:
                 # For GraphSAINTRandomWalkSampler or PyGDataLoader
                 batch = ctx.data_batch.to(ctx.device)
-                pred = ctx.model(batch.x,
-                                 batch.edge_index)[batch['{}_mask'.format(
-                                     ctx.cur_split)]]
+                pred = ctx.model(
+                    (batch.x,
+                     batch.edge_index))[batch['{}_mask'.format(ctx.cur_split)]]
                 label = batch.y[batch['{}_mask'.format(ctx.cur_split)]]
                 ctx.batch_size = torch.sum(ctx.data_batch['train_mask']).item()
         else:

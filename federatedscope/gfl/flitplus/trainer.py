@@ -1,10 +1,10 @@
 import torch
 from copy import deepcopy
 
-from federatedscope.core.auxiliaries.enums import LIFECYCLE
+from federatedscope.core.trainers.enums import LIFECYCLE
 from federatedscope.core.trainers.context import CtxVar
 from federatedscope.gfl.loss.vat import VATLoss
-from federatedscope.core.trainers.trainer import GeneralTorchTrainer
+from federatedscope.core.trainers import GeneralTorchTrainer
 
 
 class FLITTrainer(GeneralTorchTrainer):
