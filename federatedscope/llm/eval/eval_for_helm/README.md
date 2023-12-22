@@ -90,7 +90,7 @@
   * In `~/helm_fs/src/crfm-helm/evaluation/setup_server.sh`, set
     * `SUITE_NAME=${SUITE_NAME}`
     * `PATH_HELM=~/helm_fs/src/crfm-helm`
-    * `PATH_HELM=~/helm_fs/src/crfm-helm`
+    * `PATH_WORKDIR=~/helm_fs/src/crfm-helm`
     * `root/miniconda3/bin/python -> ${which python}`
   * `bash evaluation/setup_server.sh -n ${SUITE_NAME} -p ${PORT}`
     * Remark: Actually, it will show the result of the last task. If you want to see the result of another task, say, the suite name is result_of_exp1, add `?suite=result_of_exp1`after the port address.
