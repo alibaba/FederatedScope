@@ -87,7 +87,7 @@
 * Start to evaluate
   * `helm-run --conf-paths federatedscope/llm/eval/eval_for_helm/run_specs.conf --enable-local-huggingface-model decapoda-research/llama-7b-hf --suite ${SUITE_NAME} -m 100 --local -n 1 --skip-completed-runs --local-path xxx`
 * Launch webserver to view results
-  * In `~/helm_fs/src/crfm-helm/evaluation/setup_server.sh`, set
+  * In `~/helm_fs/src/crfm-helm/evaluation/setup_server.sh`, set 
     * `SUITE_NAME=${SUITE_NAME}`
     * `PATH_HELM=~/helm_fs/src/crfm-helm`
     * `PATH_WORKDIR=~/helm_fs/src/crfm-helm`
