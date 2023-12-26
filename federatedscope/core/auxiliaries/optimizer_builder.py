@@ -54,6 +54,15 @@ def get_optimizer(model, type, lr, **kwargs):
                                                   **tmp_kwargs)
             else:
                 return getattr(torch.optim, type)(model, lr, **tmp_kwargs)
+        elif 'bit.' in type:
+            type = type.split('.')[-1]
+            import bitsandbytes
+            if isinstance(model, torch.nn.Module):
+                return getattr(bitsandbytes.optim, type)(model.parameters(),
+                                                         lr, **tmp_kwargs)
+            else:
+                return getattr(bitsandbytes.optim, type)(model, lr,
+                                                         **tmp_kwargs)
         else:
             raise NotImplementedError(
                 'Optimizer {} not implement'.format(type))
