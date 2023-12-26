@@ -5,6 +5,9 @@ import os
 import gzip
 import shutil
 import datetime
+import sys
+import time
+import psutil
 from collections import defaultdict
 from importlib import import_module
 
@@ -109,6 +112,132 @@ class Monitor(object):
                 logger.error(
                     "cfg.wandb.use=True but not install the wandb package")
                 exit()
+
+        self.efficiency_memory = 0
+        self.efficiency_gpu = 0
+
+        self.efficiency_round_start_time = 0
+        self.efficiency_round_training_time = 0
+        self.efficiency_total_training_time = 0
+
+        self.efficiency_message_compression_time = 0
+        self.efficiency_message_send_time = 0
+        self.efficiency_total_message_compression_time = 0
+        self.efficiency_total_message_send_time = 0
+
+    def efficiency_compare(func):
+        """
+        Decorate functions in trainer to get memory, gpu consumption
+        """
+        def wrapper(*args, **kwargs):
+            if args[-1].monitor.cfg.eval.efficiency.use:
+                func(*args, **kwargs)
+                efficiency_memory = round(
+                    psutil.Process(os.getpid()).memory_info().rss / 1024 /
+                    1024 / 1024, 2)
+                efficiency_gpu = torch.cuda.max_memory_allocated(
+                    0) / 1024 / 1024 / 1024
+
+                args[-1].monitor.efficiency_memory = max(
+                    args[-1].monitor.efficiency_memory, efficiency_memory)
+                args[-1].monitor.efficiency_gpu = max(
+                    args[-1].monitor.efficiency_gpu, efficiency_gpu)
+            else:
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    def efficiency_training_start_time(func):
+        """
+        Decorate the start function in trainer
+            to get the starting time for training
+        """
+        def wrapper(*args, **kwargs):
+            if args[-1].monitor.cfg.eval.efficiency.use:
+                args[-1].monitor.efficiency_round_start_time = time.time()
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    def efficiency_training_end_time(func):
+        """
+        Decorate the end function in trainer to get the end time for training,
+        and get the total training time
+        """
+        def wrapper(*args, **kwargs):
+            if args[-1].monitor.cfg.eval.efficiency.use:
+                res = func(*args, **kwargs)
+                args[-1].monitor.efficiency_round_training_time = time.time(
+                ) - args[-1].monitor.efficiency_round_start_time
+                args[-1].monitor.efficiency_total_training_time += args[
+                    -1].monitor.efficiency_round_training_time
+                return res
+            else:
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    def efficiency_comp_message_compression_time(func):
+        """
+        Decorate the message-compression functions in message.py
+            to get the time for message compression
+        """
+        def wrapper(*args, **kwargs):
+            if kwargs['monitor'].cfg.eval.efficiency.use:
+                start = time.time()
+                res = func(*args, **kwargs)
+                compression_time = time.time() - start
+                if kwargs['monitor']:
+                    kwargs[
+                        'monitor'].efficiency_total_message_compression_time \
+                        += compression_time
+                return res
+            else:
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    def efficiency_comp_message_send_time(func):
+        """
+        Decorate message-sending functions in communication.py
+            to get the time for message sending
+        Note: in standalone mode,
+              we simulate the behavior for sening messages, i.e.,
+              we assume the bandwidth of the network to be 100Mib/s, thus
+              the sending time equals to sys.getsizeof(message) / 1024 / 100 S.
+        """
+        def wrapper(*args, **kwargs):
+            if args[0].monitor.cfg.eval.efficiency.use:
+                if args[0].monitor.cfg.federate.mode == 'standalone':
+                    args[0].monitor.efficiency_total_message_send_time +=\
+                        sys.getsizeof(args[1]) / 1024 / 100
+                    func(*args, **kwargs)
+                elif args[0].monitor.cfg.federate.mode == 'distributed':
+                    start_time = time.time()
+                    func(*args, **kwargs)
+                    efficiency_message_send_time = time.time() - start_time
+                    args[0].monitor.efficiency_total_message_send_time +=\
+                        efficiency_message_send_time
+            else:
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    def format_efficiency_result(self, rnd, role=-1):
+        res_dict = dict()
+        res_dict['Role'] = role
+        res_dict['Round'] = rnd
+        res_dict['Round_training_time'] = str(
+            self.efficiency_round_training_time) + ' S'
+        res_dict['Total_training_time'] = str(
+            self.efficiency_total_training_time) + ' S'
+        res_dict['Total_message_compression_time'] = str(
+            self.efficiency_total_message_compression_time) + ' S'
+        res_dict['Total_message_send_time'] = str(
+            self.efficiency_total_message_send_time) + ' S'
+        res_dict['Max memory usage'] = str(self.efficiency_memory) + ' GB'
+        res_dict['Max GPU usage'] = str(self.efficiency_gpu) + ' GB'
+        return res_dict
 
     def eval(self, ctx):
         """

@@ -24,6 +24,8 @@ class LLMTrainer(GeneralTorchTrainer):
             if not ctx.cfg.llm.deepspeed.use:
                 ctx.model = ctx.model.half()
 
+    @Monitor.efficiency_compare
+    @Monitor.efficiency_training_start_time
     def _hook_on_fit_start_init(self, ctx):
         if ctx.cfg.llm.deepspeed.use:
             # Enable deepspeed
@@ -60,6 +62,7 @@ class LLMTrainer(GeneralTorchTrainer):
         ctx.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
         ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
+    @Monitor.efficiency_compare
     def _hook_on_batch_forward(self, ctx):
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['labels'].to(ctx.device)
@@ -91,6 +94,7 @@ class LLMTrainer(GeneralTorchTrainer):
         ctx.loss_batch = CtxVar(loss, LIFECYCLE.BATCH)
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
 
+    @Monitor.efficiency_compare
     def _hook_on_batch_backward(self, ctx):
         if ctx.skip_this_batch:
             return
@@ -110,6 +114,7 @@ class LLMTrainer(GeneralTorchTrainer):
         if ctx.scheduler is not None:
             ctx.scheduler.step()
 
+    @Monitor.efficiency_compare
     def _hook_on_batch_end(self, ctx):
         if ctx.skip_this_batch:
             if ctx.cfg.llm.retry_on_nan_loss:
@@ -124,6 +129,8 @@ class LLMTrainer(GeneralTorchTrainer):
         ctx.loss_batch_total += ctx.loss_batch.item() * ctx.batch_size
         ctx.loss_regular_total += float(ctx.get("loss_regular", 0.))
 
+    @Monitor.efficiency_compare
+    @Monitor.efficiency_training_end_time
     def _hook_on_fit_end(self, ctx):
         avg_loss = 0 if float(
             ctx.num_samples) == 0 else ctx.loss_batch_total / float(
