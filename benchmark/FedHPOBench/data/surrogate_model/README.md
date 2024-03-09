@@ -1,1 +1,0 @@
-This is where the pickled surrogate model is stored.
