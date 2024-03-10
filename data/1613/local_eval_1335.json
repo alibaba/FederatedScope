@@ -1,0 +1,1 @@
+[{"instruction": "Given a question as input, give its short_answer as the output ", "input": "1 1 how many elements?", "output": "three elements", "category": "Question Answering 749.json"}, {"instruction": "Given a question as input, give its short_answer as the output ", "input": "1 liter how many ml?", "output": "1000", "category": "Question Answering 749.json"}]
