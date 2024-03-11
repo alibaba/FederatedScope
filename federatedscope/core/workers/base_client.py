@@ -71,7 +71,7 @@ class BaseClient(Worker):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def callback_funcs_for_model_para(self, message):
+    def callback_funcs_for_model_para(self, message, loss_log, param_log):
         """
         The handling function for receiving model parameters, \
         which triggers the local training process. \
@@ -118,7 +118,7 @@ class BaseClient(Worker):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def callback_funcs_for_evaluate(self, message):
+    def callback_funcs_for_evaluate(self, message, loss_log, param_log):
         """
         The handling function for receiving the request of evaluating
 
@@ -128,7 +128,7 @@ class BaseClient(Worker):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def callback_funcs_for_finish(self, message):
+    def callback_funcs_for_finish(self, message, loss_log, param_log):
         """
         The handling function for receiving the signal of finishing the FL \
         course.
@@ -139,7 +139,7 @@ class BaseClient(Worker):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def callback_funcs_for_converged(self, message):
+    def callback_funcs_for_converged(self, message, loss_log, param_log):
         """
         The handling function for receiving the signal that the FL course \
         converged

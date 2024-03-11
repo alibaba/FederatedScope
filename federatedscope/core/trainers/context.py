@@ -154,7 +154,6 @@ class Context(LifecycleDict):
 
         # Setup optimize-related context variable
         if self.cfg.backend == 'torch':
-            # TODO: should we make `self.trainable_para_names` @property？
             self.trainable_para_names = get_trainable_para_names(self.model)
             # TODO: make `criterion` and `regularizer` @property and cached
             #  to compare whether changes happen

@@ -14,6 +14,7 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate = CN()
 
     cfg.federate.client_num = 0
+    cfg.federate.client_idx_for_local_train = 0
     cfg.federate.sample_client_num = -1
     cfg.federate.sample_client_rate = -1.0
     cfg.federate.unseen_clients_rate = 0.0
@@ -38,6 +39,8 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.use_ss = False  # Whether to apply Secret Sharing
     cfg.federate.restore_from = ''
     cfg.federate.save_to = ''
+    cfg.federate.save_freq = -1
+    cfg.federate.save_client_model = False
     cfg.federate.join_in_info = [
     ]  # The information requirements (from server) for join_in
     cfg.federate.sampler = 'uniform'  # the strategy for sampling client
@@ -101,6 +104,10 @@ def extend_fl_setting_cfg(cfg):
     cfg.vertical.eval_protection = ''  # ['', 'he']
     cfg.vertical.data_size_for_debug = 0  # use a subset for debug in vfl,
     # 0 indicates using the entire dataset (disable debug mode)
+
+    cfg.adapter = CN()
+    cfg.adapter.use = False
+    cfg.adapter.args = []
 
     # --------------- register corresponding check function ----------
     cfg.register_cfg_check_fun(assert_fl_setting_cfg)

@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import time
 
 from federatedscope.core.auxiliaries.splitter_builder import get_splitter
 from federatedscope.core.data import ClientData, StandaloneDataDict
@@ -56,7 +57,9 @@ class BaseDataTranslator:
             ``StandaloneDataDict``
         """
         train, val, test = self.split_train_val_test(dataset)
+
         datadict = self.split_to_client(train, val, test)
+
         return datadict
 
     def split_train_val_test(self, dataset, cfg=None):
@@ -112,6 +115,7 @@ class BaseDataTranslator:
         # Split train/val/test to client
         if len(train) > 0:
             split_train = self.splitter(train)
+
             if self.global_cfg.data.consistent_label_distribution:
                 try:
                     train_label_distribution = [[j[1] for j in x]
@@ -119,7 +123,8 @@ class BaseDataTranslator:
                 except:
                     logger.warning(
                         'Cannot access train label distribution for '
-                        'splitter.')
+                        'splitter, split dataset without considering train '
+                        'label.')
         if len(val) > 0:
             split_val = self.splitter(val, prior=train_label_distribution)
         if len(test) > 0:
@@ -140,4 +145,37 @@ class BaseDataTranslator:
                                               train=split_train[client_id - 1],
                                               val=split_val[client_id - 1],
                                               test=split_test[client_id - 1])
+
+        
+        # data_train = []
+        # data_test = []
+
+        # batch_num = [0] * 9
+        # batch_num_test = [0] * 9
+
+        # for i in range(0, 9):
+        #     data_train.append(data_dict[i]['train'])
+
+        #     file_path = 'log_extract/1220/dolly/lda/8clients_meta/input_train_ids_{}.txt'.format(i)
+        #     with open(file_path, 'w') as f:
+        #         for batch in data_train[i]:
+        #             batch_num[i] += 1
+        #             input_ids = batch['input_ids'].numpy().tolist()
+        #             f.write(' '.join(map(str, input_ids)) + '\n')
+
+        #     print(f'The total train num of client {i} is {batch_num[i]}')
+
+
+        # for i in range(0, 9):
+        #     data_test.append(data_dict[i]['test'])
+
+        #     file_path = 'log_extract/1220/dolly/lda/8clients_meta/input_test_ids_{}.txt'.format(i)
+        #     with open(file_path, 'w') as f:
+        #         for batch in data_test[i]:
+        #             batch_num_test[i] += 1
+        #             input_ids = batch['input_ids'].numpy().tolist()
+        #             f.write(' '.join(map(str, input_ids)) + '\n')
+
+        #     print(f'The total test num of client {i} is {batch_num_test[i]}')
+
         return data_dict

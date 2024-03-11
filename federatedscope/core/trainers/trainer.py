@@ -1,6 +1,8 @@
 import collections
 import copy
 import logging
+import random
+import numpy as np
 
 from federatedscope.core.trainers.base_trainer import BaseTrainer
 from federatedscope.core.trainers.enums import MODE, LIFECYCLE
@@ -92,6 +94,7 @@ class Trainer(BaseTrainer):
         Initialization data by ``cfg``.
         """
         pass
+    
 
     def _setup_data_related_var_in_ctx(self, ctx):
         """
@@ -229,26 +232,99 @@ class Trainer(BaseTrainer):
         else:
             hooks_dict[trigger].insert(insert_pos, new_hook)
 
+    def set_dynamic_lr(self, ctx, loss_log, strategy, state, ID):
+        # Set learning rate by strategies
+
+        dynamic_lr_min = ctx.cfg.train.optimizer.lr - 0.000005
+        dynamic_lr_max = ctx.cfg.train.optimizer.lr + 0.000005
+
+        if strategy == 'random':
+            ctx.lr_strategy = random.uniform(dynamic_lr_min, dynamic_lr_max)
+
+        else:
+            if strategy == 'round-wise':
+                if state == 0:
+                    ctx.lr_strategy = ctx.cfg.train.optimizer.lr
+                else:
+                    loss_diff = loss_log[state-1, :3] - loss_log[state-1, 3]
+                    print('*************** The loss of last round is: {} ***************'.format(loss_log[state-1, :4]))
+
+                    max_abs_value = np.max(np.abs(loss_diff))
+                    loss_diff_norm = loss_diff / max_abs_value
+                    print('*************** The normalization of loss diff of last round is: {} ***************'.format(loss_diff_norm[:]))
+                    ctx.lr_strategy = ctx.cfg.train.optimizer.lr + 0.000005 * loss_diff_norm[ID-1]
+
+            if strategy == 'five-round':
+                if state <= 4:
+                    ctx.lr_strategy = ctx.cfg.train.optimizer.lr
+                else:
+                    loss_0 = np.mean(loss_log[state-5:state, 0])
+                    loss_1 = np.mean(loss_log[state-5:state, 1])
+                    loss_2 = np.mean(loss_log[state-5:state, 2])
+                    loss_avg = (loss_0 + loss_1 + loss_2) / 3
+                    loss_five_avg = np.array([loss_0, loss_1, loss_2, loss_avg])
+
+                    print('*************** The avg loss of last 5 rounds is: {} ***************'.format(loss_five_avg))
+                    loss_diff = loss_five_avg[ :3] - loss_five_avg[3]
+                    max_abs_value = np.max(np.abs(loss_diff))
+                    loss_diff_norm = loss_diff / max_abs_value
+                    print('*************** The normalization of loss diff of last 5 rounds is: {} ***************'.format(loss_diff_norm[:]))
+                    ctx.lr_strategy = ctx.cfg.train.optimizer.lr + 0.000005 * loss_diff_norm[ID-1]
+
+            if strategy == 'model-diff':
+                if state == 0:
+                    ctx.lr_strategy = ctx.cfg.train.optimizer.lr
+                else:
+                    print('*************** The gradient of last round is: {} ***************'.format(loss_log[state-1, 4:8]))
+                    loss_diff = loss_log[state-1, 4:7] - loss_log[state-1, 7]
+                    max_abs_value = np.max(np.abs(loss_diff))
+                    loss_diff_norm = loss_diff / max_abs_value
+                    print('*************** The normalization of gradient diff of last round is: {} ***************'.format(loss_diff_norm[:]))
+                    ctx.lr_strategy = ctx.cfg.train.optimizer.lr + 0.000005 * loss_diff_norm[ID-1]
+
+
+        
+
     @use_diff
-    def train(self, target_data_split_name="train", hooks_set=None):
+    def train(self, target_data_split_name="train", hooks_set=None, loss_log=None, param_log=None, ID=0, state=0):
+
         hooks_set = hooks_set or self.hooks_in_train
-
         self.ctx.check_split(target_data_split_name)
+        print('*************** The chosen train_strategy is: {} ***************'.format(self.cfg.train.train_strategy))
 
-        num_samples = self._run_routine(MODE.TRAIN, hooks_set,
-                                        target_data_split_name)
+        if self.cfg.train.train_strategy == 'frozen':
+            self.ctx.lr_strategy = self.cfg.train.optimizer.lr
+            num_samples = self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+
+        elif self.cfg.train.train_strategy in ['round-wise', 'five-round', 'random']:
+                self.set_dynamic_lr(self.ctx, loss_log, self.cfg.train.train_strategy, state, ID)
+                num_samples = self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+
+        elif self.cfg.train.train_strategy == 'model-diff':
+            model_param_start = self.get_model_para()
+            self.set_dynamic_lr(self.ctx, loss_log, self.cfg.train.train_strategy, state, ID)
+            num_samples = self._run_routine(MODE.TRAIN, hooks_set, target_data_split_name)
+
+            model_param_end = self.get_model_para()
+            model_diff = {}
+            for key in model_param_start:
+                model_diff[key] = model_param_end[key] - model_param_start[key]
+            param_log[f'round_{state}_model_param_diff_{ID}'] = model_diff
+
+
+        else:
+                raise KeyError("Non-existent train_strategy: {}".format(self.cfg.train.train_strategy))
+
+        print('*************** The learning rate is: {} ***************'.format(self.ctx.lr_strategy))
 
         return num_samples, self.get_model_para(), self.ctx.eval_metrics
 
-    def evaluate(self, target_data_split_name="test", hooks_set=None):
+    def evaluate(self, target_data_split_name="test", hooks_set=None, loss_log=None, ID=0, state=0):
+
         hooks_set = hooks_set or self.hooks_in_eval
 
         if self.ctx.check_split(target_data_split_name, skip=True):
-            if target_data_split_name in [MODE.TEST, MODE.VAL]:
-                self._run_routine(target_data_split_name, hooks_set,
-                                  target_data_split_name)
-            else:
-                self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
+            self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
         else:
             self.ctx.eval_metrics = dict()
 
@@ -275,6 +351,7 @@ class Trainer(BaseTrainer):
         for hook in hooks_set["on_fit_start"]:
             hook(self.ctx)
 
+
         self._run_epoch(hooks_set)
 
         for hook in hooks_set["on_fit_end"]:
@@ -283,11 +360,11 @@ class Trainer(BaseTrainer):
         return self.ctx.num_samples
 
     @lifecycle(LIFECYCLE.EPOCH)
-    def _run_epoch(self, hooks_set):
-        for epoch_i in range(
-                getattr(self.ctx, f"num_{self.ctx.cur_split}_epoch")):
+    def _run_epoch(self, hooks_set, run_step=-1):
+        if run_step == -1:
+            run_step = getattr(self.ctx, f"num_{self.ctx.cur_split}_epoch")
+        for epoch_i in range(run_step):
             self.ctx.cur_epoch_i = CtxVar(epoch_i, "epoch")
-
             for hook in hooks_set["on_epoch_start"]:
                 hook(self.ctx)
 
@@ -297,9 +374,11 @@ class Trainer(BaseTrainer):
                 hook(self.ctx)
 
     @lifecycle(LIFECYCLE.BATCH)
-    def _run_batch(self, hooks_set):
-        for batch_i in range(
-                getattr(self.ctx, f"num_{self.ctx.cur_split}_batch")):
+    def _run_batch(self, hooks_set, run_step=-1):
+        if run_step == -1:
+            run_step = getattr(self.ctx, f"num_{self.ctx.cur_split}_batch")
+
+        for batch_i in range(run_step):
             self.ctx.cur_batch_i = CtxVar(batch_i, LIFECYCLE.BATCH)
 
             for hook in hooks_set["on_batch_start"]:
@@ -392,11 +471,11 @@ class Trainer(BaseTrainer):
 
         trainable_filter = lambda p: True if \
             self.cfg.personalization.share_non_trainable_para else \
-            p in self.ctx.trainable_para_names
+            lambda p: p in self.ctx.trainable_para_names
         keyword_filter = filter_by_specified_keywords
         return dict(
             filter(
-                lambda elem: trainable_filter(elem[0]) and keyword_filter(
+                lambda elem: trainable_filter(elem[1]) and keyword_filter(
                     elem[0], filter_keywords), state_dict.items()))
 
     def save_model(self, path, cur_round=-1):

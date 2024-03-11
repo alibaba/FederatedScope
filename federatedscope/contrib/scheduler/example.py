@@ -1,7 +1,7 @@
 from federatedscope.register import register_scheduler
 
 
-def call_my_scheduler(optimizer, reg_type):
+def call_my_scheduler(optimizer, reg_type, **kwargs):
     try:
         import torch.optim as optim
     except ImportError:

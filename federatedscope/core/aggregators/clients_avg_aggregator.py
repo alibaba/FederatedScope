@@ -71,9 +71,6 @@ class ClientsAvgAggregator(Aggregator):
             for i in range(len(models)):
                 local_sample_size, local_model = models[i]
 
-                if key not in local_model:
-                    continue
-
                 if self.cfg.federate.ignore_weight:
                     weight = 1.0 / len(models)
                 elif self.cfg.federate.use_ss:
@@ -129,8 +126,6 @@ class OnlineClientsAvgAggregator(ClientsAvgAggregator):
         if isinstance(content, tuple):
             sample_size, model_params = content
             for key in self.maintained:
-                if key not in model_params:
-                    continue
                 # if model_params[key].device != self.maintained[key].device:
                 #    model_params[key].to(self.maintained[key].device)
                 self.maintained[key] = (self.cnt * self.maintained[key] +

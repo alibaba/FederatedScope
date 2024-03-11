@@ -92,6 +92,26 @@ def merge_dict_of_results(dict1, dict2):
     return dict1
 
 
+def b64serializer(x, tool='pickle'):
+    if tool == 'pickle':
+        return base64.b64encode(pickle.dumps(x))
+    elif tool == 'dill':
+        import dill
+        return base64.b64encode(dill.dumps(x))
+    else:
+        raise NotImplementedError('Choose from `pickle` or `dill`')
+
+
+def b64deserializer(x, tool='pickle'):
+    if tool == 'pickle':
+        return pickle.loads((base64.b64decode(x)))
+    elif tool == 'dill':
+        import dill
+        return dill.loads((base64.b64decode(x)))
+    else:
+        raise NotImplementedError('Choose from `pickle` or `dill`')
+
+
 def param2tensor(param):
     # TODO: make it work in `message`
     if isinstance(param, list):
@@ -101,7 +121,7 @@ def param2tensor(param):
     elif isinstance(param, float):
         param = torch.tensor(param, dtype=torch.float)
     elif isinstance(param, str):
-        param = pickle.loads((base64.b64decode(param)))
+        param = b64deserializer(param)
     return param
 
 
@@ -157,3 +177,12 @@ def get_resource_info(filename):
     with open(filename, 'br') as f:
         device_info = pickle.load(f)
     return device_info
+
+
+def get_ds_rank():
+    return int(os.environ.get("RANK", "0"))
+
+
+def add_prefix_to_path(prefix, path):
+    directory, file = os.path.split(path)
+    return os.path.join(directory, prefix + file)

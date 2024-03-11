@@ -77,7 +77,7 @@ class BulyanAggregator(ClientsAvgAggregator):
         Apply MultiKrum to select \theta (\theta <= client_num-
         2*self.byzantine_node_num) local models
         '''
-        _, init_model = models[0]
+        init_model = self.model.state_dict()
         global_update = copy.deepcopy(init_model)
         models_para = [each_model[1] for each_model in models]
         krum_scores = self._calculate_score(models_para)

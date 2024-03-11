@@ -9,7 +9,8 @@ import numpy as np
 from federatedscope.core.workers import Server, Client
 from federatedscope.core.gpu_manager import GPUManager
 from federatedscope.core.auxiliaries.model_builder import get_model
-from federatedscope.core.auxiliaries.utils import get_resource_info
+from federatedscope.core.auxiliaries.utils import get_resource_info, \
+    get_ds_rank
 from federatedscope.core.auxiliaries.feat_engr_builder import \
     get_feat_engr_wrapper
 
@@ -133,6 +134,10 @@ class BaseRunner(object):
         """
         raise NotImplementedError
 
+    @property
+    def ds_rank(self):
+        return get_ds_rank()
+
     def _setup_server(self, resource_info=None, client_resource_info=None):
         """
         Set up and instantiate the server.
@@ -201,18 +206,16 @@ class BaseRunner(object):
         client_device = self._server_device if \
             self.cfg.federate.share_local_model else \
             self.gpu_manager.auto_choice()
-        client = self.client_class(ID=client_id,
-                                   server_id=self.server_id,
-                                   config=client_specific_config,
-                                   data=client_data,
-                                   model=client_model
-                                   or get_model(client_specific_config.model,
-                                                client_data,
-                                                backend=self.cfg.backend),
-                                   device=client_device,
-                                   is_unseen_client=client_id
-                                   in self.unseen_clients_id,
-                                   **kw)
+        client = self.client_class(
+            ID=client_id,
+            server_id=self.server_id,
+            config=client_specific_config,
+            data=client_data,
+            model=client_model or get_model(
+                client_specific_config, client_data, backend=self.cfg.backend),
+            device=client_device,
+            is_unseen_client=client_id in self.unseen_clients_id,
+            **kw)
 
         if self.cfg.vertical.use:
             from federatedscope.vertical_fl.utils import wrap_vertical_client
@@ -340,9 +343,13 @@ class StandaloneRunner(BaseRunner):
         self.client = dict()
         # assume the client-wise data are consistent in their input&output
         # shape
-        self._shared_client_model = get_model(
-            self.cfg.model, self.data[1], backend=self.cfg.backend
-        ) if self.cfg.federate.share_local_model else None
+        if self.cfg.federate.online_aggr:
+            self._shared_client_model = get_model(
+                self.cfg, self.data[1], backend=self.cfg.backend
+            ) if self.cfg.federate.share_local_model else None
+        else:
+            self._shared_client_model = self.server.model \
+                if self.cfg.federate.share_local_model else None
         for client_id in range(1, self.cfg.federate.client_num + 1):
             self.client[client_id] = self._setup_client(
                 client_id=client_id,
@@ -360,14 +367,12 @@ class StandaloneRunner(BaseRunner):
     def _get_server_args(self, resource_info=None, client_resource_info=None):
         if self.server_id in self.data:
             server_data = self.data[self.server_id]
-            model = get_model(self.cfg.model,
-                              server_data,
-                              backend=self.cfg.backend)
+            model = get_model(self.cfg, server_data, backend=self.cfg.backend)
         else:
             server_data = None
             data_representative = self.data[1]
             model = get_model(
-                self.cfg.model, data_representative, backend=self.cfg.backend
+                self.cfg, data_representative, backend=self.cfg.backend
             )  # get the model according to client's data if the server
             # does not own data
         kw = {
@@ -394,11 +399,11 @@ class StandaloneRunner(BaseRunner):
             self._run_simulation_online()
         else:
             self._run_simulation()
-        # TODO: avoid using private attr
+        # TODO: avoid using private attrmsg_handlers
         self.server._monitor.finish_fed_runner(fl_mode=self.mode)
         return self.server.best_results
 
-    def _handle_msg(self, msg, rcv=-1):
+    def _handle_msg(self, msg, loss_log, param_log, rcv=-1):
         """
         To simulate the message handling process (used only for the \
         standalone mode)
@@ -413,11 +418,12 @@ class StandaloneRunner(BaseRunner):
         if not isinstance(receiver, list):
             receiver = [receiver]
         for each_receiver in receiver:
+
             if each_receiver == 0:
                 self.server.msg_handlers[msg.msg_type](msg)
                 self.server._monitor.track_download_bytes(download_bytes)
             else:
-                self.client[each_receiver].msg_handlers[msg.msg_type](msg)
+                self.client[each_receiver].msg_handlers[msg.msg_type](msg, loss_log, param_log)
                 self.client[each_receiver]._monitor.track_download_bytes(
                     download_bytes)
 
@@ -463,7 +469,12 @@ class StandaloneRunner(BaseRunner):
         Run for standalone simulation (W/O online aggr)
         """
         server_msg_cache = list()
+        cur_round_num = 0
+        loss_log = np.zeros((500, 8), dtype=np.float16)
+        param_log = {}
+
         while True:
+            
             if len(self.shared_comm_queue) > 0:
                 msg = self.shared_comm_queue.popleft()
                 if not self.cfg.vertical.use and msg.receiver == [
@@ -476,7 +487,8 @@ class StandaloneRunner(BaseRunner):
                     self.serial_num_for_msg += 1
                     heapq.heappush(server_msg_cache, msg)
                 else:
-                    self._handle_msg(msg)
+                    
+                    self._handle_msg(msg, loss_log, param_log)
             elif len(server_msg_cache) > 0:
                 msg = heapq.heappop(server_msg_cache)
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
@@ -488,9 +500,9 @@ class StandaloneRunner(BaseRunner):
                     if self.server.trigger_for_time_up(msg.timestamp):
                         heapq.heappush(server_msg_cache, msg)
                     else:
-                        self._handle_msg(msg)
+                        self._handle_msg(msg, loss_log, param_log)
                 else:
-                    self._handle_msg(msg)
+                    self._handle_msg(msg, loss_log, param_log)
             else:
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
                         == 'time_up':
@@ -518,7 +530,7 @@ class DistributedRunner(BaseRunner):
 
         self.server_address = {
             'host': self.cfg.distribute.server_host,
-            'port': self.cfg.distribute.server_port
+            'port': self.cfg.distribute.server_port + self.ds_rank
         }
         if self.cfg.distribute.role == 'server':
             self.server = self._setup_server(resource_info=sampled_resource)
@@ -527,15 +539,13 @@ class DistributedRunner(BaseRunner):
             # the server has been set up and number with #0
             self.client_address = {
                 'host': self.cfg.distribute.client_host,
-                'port': self.cfg.distribute.client_port
+                'port': self.cfg.distribute.client_port + self.ds_rank
             }
             self.client = self._setup_client(resource_info=sampled_resource)
 
     def _get_server_args(self, resource_info, client_resource_info):
         server_data = self.data
-        model = get_model(self.cfg.model,
-                          server_data,
-                          backend=self.cfg.backend)
+        model = get_model(self.cfg, server_data, backend=self.cfg.backend)
         kw = self.server_address
         kw.update({'resource_info': resource_info})
         return server_data, model, kw
@@ -682,7 +692,7 @@ class FedRunner(object):
         # assume the client-wise data are consistent in their input&output
         # shape
         self._shared_client_model = get_model(
-            self.cfg.model, self.data[1], backend=self.cfg.backend
+            self.cfg, self.data[1], backend=self.cfg.backend
         ) if self.cfg.federate.share_local_model else None
 
         for client_id in range(1, self.cfg.federate.client_num + 1):
@@ -830,16 +840,14 @@ class FedRunner(object):
         if self.mode == 'standalone':
             if self.server_id in self.data:
                 server_data = self.data[self.server_id]
-                model = get_model(self.cfg.model,
+                model = get_model(self.cfg,
                                   server_data,
                                   backend=self.cfg.backend)
             else:
                 server_data = None
                 data_representative = self.data[1]
                 model = get_model(
-                    self.cfg.model,
-                    data_representative,
-                    backend=self.cfg.backend
+                    self.cfg, data_representative, backend=self.cfg.backend
                 )  # get the model according to client's data if the server
                 # does not own data
             kw = {
@@ -849,9 +857,7 @@ class FedRunner(object):
             }
         elif self.mode == 'distributed':
             server_data = self.data
-            model = get_model(self.cfg.model,
-                              server_data,
-                              backend=self.cfg.backend)
+            model = get_model(self.cfg, server_data, backend=self.cfg.backend)
             kw = self.server_address
             kw.update({'resource_info': resource_info})
         else:
@@ -918,17 +924,18 @@ class FedRunner(object):
             client_device = self._server_device if \
                 self.cfg.federate.share_local_model else \
                 self.gpu_manager.auto_choice()
-            client = self.client_class(
-                ID=client_id,
-                server_id=self.server_id,
-                config=client_specific_config,
-                data=client_data,
-                model=client_model or get_model(client_specific_config.model,
-                                                client_data,
-                                                backend=self.cfg.backend),
-                device=client_device,
-                is_unseen_client=client_id in self.unseen_clients_id,
-                **kw)
+            client = self.client_class(ID=client_id,
+                                       server_id=self.server_id,
+                                       config=client_specific_config,
+                                       data=client_data,
+                                       model=client_model
+                                       or get_model(client_specific_config,
+                                                    client_data,
+                                                    backend=self.cfg.backend),
+                                       device=client_device,
+                                       is_unseen_client=client_id
+                                       in self.unseen_clients_id,
+                                       **kw)
         else:
             raise ValueError
 

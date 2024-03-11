@@ -1,12 +1,8 @@
 import json
-import pickle
-import base64
 import numpy as np
+
+from federatedscope.core.auxiliaries.utils import b64serializer
 from federatedscope.core.proto import gRPC_comm_manager_pb2
-
-
-def b64serializer(x):
-    return base64.b64encode(pickle.dumps(x))
 
 
 class Message(object):

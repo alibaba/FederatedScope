@@ -9,7 +9,7 @@ if DEV_MODE:
 
 from federatedscope.core.cmd_args import parse_args, parse_client_cfg
 from federatedscope.core.auxiliaries.data_builder import get_data
-from federatedscope.core.auxiliaries.utils import setup_seed
+from federatedscope.core.auxiliaries.utils import setup_seed, get_ds_rank
 from federatedscope.core.auxiliaries.logging import update_logger
 from federatedscope.core.auxiliaries.worker_builder import get_client_cls, \
     get_server_cls
@@ -21,6 +21,7 @@ if os.environ.get('https_proxy'):
 if os.environ.get('http_proxy'):
     del os.environ['http_proxy']
 
+
 if __name__ == '__main__':
     init_cfg = global_cfg.clone()
     args = parse_args()
@@ -29,7 +30,11 @@ if __name__ == '__main__':
     cfg_opt, client_cfg_opt = parse_client_cfg(args.opts)
     init_cfg.merge_from_list(cfg_opt)
 
-    update_logger(init_cfg, clear_before_add=True)
+    if init_cfg.llm.deepspeed.use:
+        import deepspeed
+        deepspeed.init_distributed()
+
+    update_logger(init_cfg, clear_before_add=True, rank=get_ds_rank())
     setup_seed(init_cfg.seed)
 
     # load clients' cfg file
@@ -47,8 +52,14 @@ if __name__ == '__main__':
                                   client_cfgs=client_cfgs)
     init_cfg.merge_from_other_cfg(modified_cfg)
 
-    init_cfg.freeze()
+    if init_cfg.federate.client_idx_for_local_train != 0:
+        init_cfg.federate.client_num = 1
+        new_data = {0: data[0]} if 0 in data.keys() else dict()
+        new_data[1] = data[init_cfg.federate.client_idx_for_local_train]
+        data = new_data
 
+    init_cfg.freeze()
+    
     runner = get_runner(data=data,
                         server_class=get_server_cls(init_cfg),
                         client_class=get_client_cls(init_cfg),

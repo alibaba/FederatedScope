@@ -7,29 +7,67 @@ __version__ = '0.3.0'
 URL = 'https://github.com/alibaba/FederatedScope'
 
 minimal_requires = [
-    'numpy<1.23.0', 'scikit-learn==1.0.2', 'scipy==1.7.3', 'pandas',
-    'grpcio>=1.45.0', 'grpcio-tools', 'pyyaml>=5.1', 'fvcore', 'iopath',
-    'wandb', 'tensorboard', 'tensorboardX', 'pympler', 'protobuf==3.19.4',
-    'matplotlib'
+    'numpy<1.23.0',
+    'scikit-learn==1.0.2',
+    'scipy==1.7.3',
+    'pandas',
+    'grpcio>=1.45.0',
+    'grpcio-tools',
+    'pyyaml>=5.1',
+    'fvcore',
+    'iopath',
+    'wandb',
+    'tensorboard',
+    'tensorboardX',
+    'pympler',
+    'protobuf==3.19.4',
+    'matplotlib',
+    'dill',
 ]
 
-test_requires = ['pytest', 'pytest-cov']
+test_requires = [
+    'pytest',
+    'pytest-cov',
+]
 
 dev_requires = test_requires + ['pre-commit', 'networkx', 'matplotlib']
 
-org_requires = ['paramiko==2.11.0', 'celery[redis]', 'cmd2']
+org_requires = [
+    'paramiko==2.11.0',
+    'celery[redis]',
+    'cmd2',
+]
 
 app_requires = [
-    'torch-geometric==2.0.4', 'nltk', 'transformers==4.16.2',
-    'tokenizers==0.10.3', 'datasets', 'sentencepiece', 'textgrid', 'typeguard',
-    'openml==0.12.2'
+    'torch-geometric==2.0.4',
+    'nltk',
+    'transformers==4.16.2',
+    'tokenizers==0.10.3',
+    'datasets',
+    'sentencepiece',
+    'textgrid',
+    'typeguard',
+    'openml==0.12.2',
+]
+
+llm_requires = [
+    'tokenizers==0.13.3',
+    'transformers==4.29.2',
+    'accelerate==0.23.0',
+    'peft==0.3.0',
+    'sentencepiece==0.1.97',
 ]
 
 benchmark_hpo_requires = [
-    'configspace==0.5.0', 'hpbandster==0.7.4', 'smac==1.3.3', 'optuna==2.10.0'
+    'configspace==0.5.0',
+    'hpbandster==0.7.4',
+    'smac==1.3.3',
+    'optuna==2.10.0',
 ]
 
-benchmark_htl_requires = ['learn2learn']
+benchmark_htl_requires = [
+    'learn2learn',
+]
 
 full_requires = org_requires + benchmark_hpo_requires + \
                 benchmark_htl_requires + app_requires
@@ -56,6 +94,7 @@ setuptools.setup(
     extras_require={
         'test': test_requires,
         'app': app_requires,
+        'llm': llm_requires,
         'org': org_requires,
         'dev': dev_requires,
         'hpo': benchmark_hpo_requires,

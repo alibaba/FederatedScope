@@ -28,12 +28,12 @@ logger = logging.getLogger(__name__)
 
 class GeneralTorchTrainer(Trainer):
     def get_model_para(self):
-        if self.cfg.federate.process_num > 1:
+        if self.cfg.federate.process_num > 1 or \
+                self.cfg.federate.share_local_model or \
+                self.cfg.llm.deepspeed.use:
             return self._param_filter(self.ctx.model.state_dict())
         else:
-            return self._param_filter(
-                self.ctx.model.state_dict() if self.cfg.federate.
-                share_local_model else self.ctx.model.cpu().state_dict())
+            return self._param_filter(self.ctx.model.cpu().state_dict())
 
     def setup_data(self, ctx):
         """
@@ -98,6 +98,8 @@ class GeneralTorchTrainer(Trainer):
         return self.ctx.eval_metrics
 
     def register_default_hooks_train(self):
+        self.register_hook_in_train(
+            self._hook_on_fit_start_numerical_precision, "on_fit_start")
         self.register_hook_in_train(self._hook_on_data_parallel_init,
                                     "on_fit_start")
         self.register_hook_in_train(self._hook_on_fit_start_init,
@@ -120,6 +122,8 @@ class GeneralTorchTrainer(Trainer):
         self.register_hook_in_train(self._hook_on_fit_end, "on_fit_end")
 
     def register_default_hooks_ft(self):
+        self.register_hook_in_ft(self._hook_on_fit_start_numerical_precision,
+                                 "on_fit_start")
         self.register_hook_in_ft(self._hook_on_data_parallel_init,
                                  "on_fit_start")
         self.register_hook_in_ft(self._hook_on_fit_start_init, "on_fit_start")
@@ -141,6 +145,8 @@ class GeneralTorchTrainer(Trainer):
 
     def register_default_hooks_eval(self):
         # test/val
+        self.register_hook_in_eval(self._hook_on_fit_start_numerical_precision,
+                                   "on_fit_start")
         self.register_hook_in_eval(self._hook_on_data_parallel_init,
                                    "on_fit_start")
         self.register_hook_in_eval(self._hook_on_fit_start_init,
@@ -152,6 +158,10 @@ class GeneralTorchTrainer(Trainer):
                                    "on_batch_forward")
         self.register_hook_in_eval(self._hook_on_batch_end, "on_batch_end")
         self.register_hook_in_eval(self._hook_on_fit_end, "on_fit_end")
+
+    def _hook_on_fit_start_numerical_precision(self, ctx):
+        if self.cfg.train.is_enable_half:
+            ctx.model = ctx.model.half()
 
     def _hook_on_data_parallel_init(self, ctx):
         """
@@ -191,7 +201,11 @@ class GeneralTorchTrainer(Trainer):
             ==================================  ===========================
         """
         # prepare model and optimizer
+        
         ctx.model.to(ctx.device)
+
+        print('the hook_on_fit_start_init start here')
+        dfdask
 
         if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
             # Initialize optimizer here to avoid the reuse of optimizers
@@ -362,6 +376,7 @@ class GeneralTorchTrainer(Trainer):
             and ``ctx.loss``
             ==================================  ===========================
         """
+
         ctx.loss_regular = CtxVar(
             self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
         ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular,
@@ -453,8 +468,9 @@ class GeneralTorchTrainer(Trainer):
         Discharge the model from GPU device
         """
         # Avoid memory leak
-        if not self.cfg.federate.share_local_model:
-            if torch is None:
-                pass
-            else:
-                self.ctx.model.to(torch.device("cpu"))
+        if torch is None:
+            return
+
+        if not self.cfg.federate.share_local_model and \
+                not self.cfg.llm.deepspeed.use:
+            self.ctx.model.to(torch.device("cpu"))

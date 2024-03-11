@@ -42,7 +42,7 @@ class TrimmedmeanAggregator(ClientsAvgAggregator):
         return updated_model
 
     def _aggre_with_trimmedmean(self, models):
-        _, init_model = models[0]
+        init_model = self.model.state_dict()
         global_update = copy.deepcopy(init_model)
         excluded_num = int(len(models) * self.excluded_ratio)
         for key in init_model:
