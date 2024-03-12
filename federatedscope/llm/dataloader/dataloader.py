@@ -12,7 +12,6 @@ from federatedscope.core.data.utils import download_url
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class LLMDataCollator(object):
     """
@@ -238,10 +237,10 @@ def load_llm_dataset(config=None, **kwargs):
     elif dataset_name.lower() == 'alpaca':
         fp = os.path.join(config.data.root, 'alpaca_data.json')
         download_url(
-            'https://raw.githubusercontent.com/tatsu-lab'
-            '/stanford_alpaca/'
-            '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
-            'alpaca_data.json', config.data.root)
+           'https://raw.githubusercontent.com/tatsu-lab'
+           '/stanford_alpaca/'
+           '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
+           'alpaca_data.json', config.data.root)
         list_data_dict = load_json(fp)
         dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'alpaca_cleaned':
@@ -255,9 +254,9 @@ def load_llm_dataset(config=None, **kwargs):
     elif dataset_name.lower() == 'dolly-15k':
         fp = os.path.join(config.data.root, 'databricks-dolly-15k.jsonl')
         download_url(
-            'https://raw.githubusercontent.com/databrickslabs'
-            '/dolly/d000e3030970379aabbf6d291f50ffdd3b715b64'
-            '/data/databricks-dolly-15k.jsonl', config.data.root)
+           'https://raw.githubusercontent.com/databrickslabs'
+           '/dolly/d000e3030970379aabbf6d291f50ffdd3b715b64'
+           '/data/databricks-dolly-15k.jsonl', config.data.root)
         list_data_dict = load_jsonl(fp,
                                     instruction='instruction',
                                     input='context',
@@ -267,11 +266,11 @@ def load_llm_dataset(config=None, **kwargs):
     elif dataset_name.lower() == 'gsm8k':
         fp = os.path.join(config.data.root, 'gsm8k_train.jsonl')
         if not os.path.exists(fp):
-            download_url(
-                'https://raw.githubusercontent.com/openai/grade-school-math'
-                '/3101c7d5072418e28b9008a6636bde82a006892c/'
-                'grade_school_math/data/train.jsonl', config.data.root)
-            os.rename(os.path.join(config.data.root, 'train.jsonl'), fp)
+           download_url(
+               'https://raw.githubusercontent.com/openai/grade-school-math'
+               '/3101c7d5072418e28b9008a6636bde82a006892c/'
+               'grade_school_math/data/train.jsonl', config.data.root)
+           os.rename(os.path.join(config.data.root, 'train.jsonl'), fp)
         list_data_dict = load_jsonl(fp,
                                     instruction='question',
                                     output='answer')

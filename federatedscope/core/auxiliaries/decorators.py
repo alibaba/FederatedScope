@@ -4,7 +4,7 @@ def use_diff(func):
             # TODO: any issue for subclasses?
             before_metric = self.evaluate(target_data_split_name='val')
 
-        num_samples_train, model_para, result_metric = func(
+        num_samples_train, model_para, result_metric= func(
             self, *args, **kwargs)
 
         if self.cfg.federate.use_diff:

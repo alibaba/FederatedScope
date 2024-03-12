@@ -1,0 +1,45 @@
+use_gpu: True
+device: 0
+early_stop:
+  patience: 0
+federate:
+  mode: standalone
+  client_num: 3
+  total_round_num: 500
+  save_to: "gsm8k_mezo_iid.ckpt"
+  save_freq: 100
+  share_local_model: True
+  online_aggr: False
+data:
+  root: data/
+  type: 'gsm8k@llm'
+  splits: [0.998,0.001,0.001]
+  splitter: 'iid'
+llm:
+  tok_len: 1000
+  chat:
+    max_len: 2000
+  adapter:
+    use: True
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 128, 'lora_alpha': 256, 'lora_dropout': 0.05 } ]
+dataloader:
+  batch_size: 1
+model:
+  type: 'openlm-research/open_llama_3b_v2@huggingface_llm'
+train:
+  train_strategy: 'frozen'
+  local_update_steps: 30
+  batch_or_epoch: batch
+  optimizer:
+    lr: 0.000025
+    weight_decay: 0.0
+  is_enable_half: True
+criterion:
+  type: CrossEntropyLoss
+trainer:
+  type: mezotrainer
+eval:
+  freq: 10
+  metrics: ['loss']
+  best_res_update_round_wise_key: val_loss
+  count_flops: False

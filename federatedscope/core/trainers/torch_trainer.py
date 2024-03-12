@@ -201,7 +201,11 @@ class GeneralTorchTrainer(Trainer):
             ==================================  ===========================
         """
         # prepare model and optimizer
+        
         ctx.model.to(ctx.device)
+
+        print('the hook_on_fit_start_init start here')
+        dfdask
 
         if ctx.cur_mode in [MODE.TRAIN, MODE.FINETUNE]:
             # Initialize optimizer here to avoid the reuse of optimizers
@@ -372,6 +376,7 @@ class GeneralTorchTrainer(Trainer):
             and ``ctx.loss``
             ==================================  ===========================
         """
+
         ctx.loss_regular = CtxVar(
             self.cfg.regularizer.mu * ctx.regularizer(ctx), LIFECYCLE.BATCH)
         ctx.loss_task = CtxVar(ctx.loss_batch + ctx.loss_regular,

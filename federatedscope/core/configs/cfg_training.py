@@ -37,6 +37,7 @@ def extend_training_cfg(cfg):
     cfg.train.optimizer = CN(new_allowed=True)
     cfg.train.optimizer.type = 'SGD'
     cfg.train.optimizer.lr = 0.1
+    cfg.train.train_strategy = 'frozen'
 
     # you can add new arguments 'aa' by `cfg.train.scheduler.aa = 'bb'`
     cfg.train.scheduler = CN(new_allowed=True)

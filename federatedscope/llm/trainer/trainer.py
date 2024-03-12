@@ -54,6 +54,7 @@ class LLMTrainer(GeneralTorchTrainer):
                     ctx.optimizer, **ctx.cfg[ctx.cur_mode].scheduler)
 
         # prepare statistics
+
         ctx.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
         ctx.loss_regular_total = CtxVar(0., LIFECYCLE.ROUTINE)
         ctx.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
@@ -61,6 +62,7 @@ class LLMTrainer(GeneralTorchTrainer):
         ctx.ys_prob = CtxVar([], LIFECYCLE.ROUTINE)
 
     def _hook_on_batch_forward(self, ctx):
+
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['labels'].to(ctx.device)
         attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
@@ -92,6 +94,7 @@ class LLMTrainer(GeneralTorchTrainer):
         ctx.batch_size = CtxVar(len(labels), LIFECYCLE.BATCH)
 
     def _hook_on_batch_backward(self, ctx):
+
         if ctx.skip_this_batch:
             return
 
@@ -111,6 +114,7 @@ class LLMTrainer(GeneralTorchTrainer):
             ctx.scheduler.step()
 
     def _hook_on_batch_end(self, ctx):
+
         if ctx.skip_this_batch:
             if ctx.cfg.llm.retry_on_nan_loss:
                 # Retry with new data in train and finetune

@@ -2,6 +2,7 @@ import copy
 import logging
 import sys
 import pickle
+import numpy as np
 
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
@@ -247,7 +248,7 @@ class Client(BaseClient):
         self.join_in()
         self.run()
 
-    def callback_funcs_for_model_para(self, message: Message):
+    def callback_funcs_for_model_para(self, message: Message, loss_log=None, param_log=None):
         """
         The handling function for receiving model parameters, \
         which triggers the local training process. \
@@ -345,7 +346,40 @@ class Client(BaseClient):
                         f"early stopped. "
                         f"The next FL update may result in negative effect")
                     self._monitor.local_converged()
-                sample_size, model_para_all, results = self.trainer.train()
+
+                # To define the gradient of local and global
+                if self._cfg.train.train_strategy == 'model-diff':
+
+                    model_param_diff_1_sum = 0
+                    model_param_diff_2_sum = 0
+                    model_param_diff_3_sum = 0
+                    if self.state >= 1:
+                        for key in param_log[f'round_{self.state-1}_model_param_diff_1']:
+                            model_param_1 = param_log[f'round_{self.state-1}_model_param_diff_1'][key].to('cpu').numpy().copy()
+                            model_param_2 = param_log[f'round_{self.state-1}_model_param_diff_2'][key].to('cpu').numpy().copy()
+                            model_param_3 = param_log[f'round_{self.state-1}_model_param_diff_3'][key].to('cpu').numpy().copy()
+                            model_param_diff_avg = model_param_1 + model_param_2 + model_param_3
+                            model_param_diff_avg = model_param_diff_avg / 3
+
+                            model_param_diff_1_sum += np.linalg.norm(model_param_1 - model_param_diff_avg)
+                            model_param_diff_2_sum += np.linalg.norm(model_param_2 - model_param_diff_avg)
+                            model_param_diff_3_sum += np.linalg.norm(model_param_3 - model_param_diff_avg)
+
+                    loss_log[self.state-1, 4] = model_param_diff_1_sum
+                    loss_log[self.state-1, 5] = model_param_diff_2_sum
+                    loss_log[self.state-1, 6] = model_param_diff_3_sum
+                    loss_log[self.state-1, 7] = np.mean(loss_log[self.state-1,4:7])
+
+                    if self.state >= 2:
+                        param_log[f'round_{self.state-2}_model_param_diff_1'] = None
+                        param_log[f'round_{self.state-2}_model_param_diff_2'] = None
+                        param_log[f'round_{self.state-2}_model_param_diff_3'] = None
+
+                sample_size, model_para_all, results = self.trainer.train('train', None, loss_log, param_log, self.ID, self.state)
+
+                loss_log[self.state, self.ID - 1] = results['train_avg_loss']
+                loss_log[self.state, 3] = np.mean(loss_log[self.state, :3])
+
                 if self._cfg.federate.share_local_model and not \
                         self._cfg.federate.online_aggr:
                     model_para_all = copy.deepcopy(model_para_all)
@@ -354,6 +388,7 @@ class Client(BaseClient):
                     rnd=self.state,
                     role='Client #{}'.format(self.ID),
                     return_raw=True)
+
                 logger.info(train_log_res)
                 if self._cfg.wandb.use and self._cfg.wandb.client_train_info:
                     self._monitor.save_formatted_results(train_log_res,
@@ -510,7 +545,7 @@ class Client(BaseClient):
             if int(neighbor_id) != self.ID:
                 self.comm_manager.add_neighbors(neighbor_id, address)
 
-    def callback_funcs_for_evaluate(self, message: Message):
+    def callback_funcs_for_evaluate(self, message: Message, loss_log=None, param_log=None):
         """
         The handling function for receiving the request of evaluating
 
@@ -532,8 +567,8 @@ class Client(BaseClient):
                 self.trainer.finetune()
             for split in self._cfg.eval.split:
                 # TODO: The time cost of evaluation is not considered here
-                eval_metrics = self.trainer.evaluate(
-                    target_data_split_name=split)
+
+                eval_metrics = self.trainer.evaluate(target_data_split_name=split)
 
                 if self._cfg.federate.mode == 'distributed':
                     logger.info(
@@ -577,7 +612,7 @@ class Client(BaseClient):
                     timestamp=timestamp,
                     content=metrics))
 
-    def callback_funcs_for_finish(self, message: Message):
+    def callback_funcs_for_finish(self, message: Message, loss_log, param_log=None):
         """
         The handling function for receiving the signal of finishing the FL \
         course.
@@ -595,7 +630,7 @@ class Client(BaseClient):
 
         self._monitor.finish_fl()
 
-    def callback_funcs_for_converged(self, message: Message):
+    def callback_funcs_for_converged(self, message: Message, loss_log, param_log=None):
         """
         The handling function for receiving the signal that the FL course \
         converged

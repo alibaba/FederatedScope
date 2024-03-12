@@ -123,7 +123,6 @@ def get_data(config, client_cfgs=None):
 
     # Load dataset from source files
     dataset, modified_config = load_dataset(config, client_cfgs)
-
     # Apply translator to non-FL dataset to transform it into its federated
     # counterpart
     if dataset is not None:
@@ -131,7 +130,6 @@ def get_data(config, client_cfgs=None):
                              DATA_TRANS_MAP[config.data.type.lower()])(
                                  modified_config, client_cfgs)
         data = translator(dataset)
-
         # Convert `StandaloneDataDict` to `ClientData` when in distribute mode
         data = convert_data_mode(data, modified_config)
     else:
