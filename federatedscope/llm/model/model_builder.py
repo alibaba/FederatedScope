@@ -1,6 +1,5 @@
 from federatedscope.llm.model.adapter_builder import AdapterModel
 
-
 def get_model_from_huggingface(model_name, config):
     """
     Load a causal language model from HuggingFace transformers library.

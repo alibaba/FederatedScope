@@ -26,8 +26,9 @@ def extend_evaluation_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.wandb = CN()
     cfg.wandb.use = False
-    cfg.wandb.name_user = ''
-    cfg.wandb.name_project = ''
+    # cfg.wandb.key = '85612b28f9e0e8936df210e5e983f22f1099ac59'
+    cfg.wandb.name_user = 'lingzhq11'
+    cfg.wandb.name_project = 'fs-mezo-final1'
     cfg.wandb.online_track = True
     cfg.wandb.client_train_info = False
 

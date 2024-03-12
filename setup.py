@@ -53,9 +53,9 @@ app_requires = [
 llm_requires = [
     'tokenizers==0.13.3',
     'transformers==4.29.2',
-    'accelerate==0.20.3',
+    'accelerate==0.23.0',
     'peft==0.3.0',
-    'sentencepiece==0.1.99',
+    'sentencepiece==0.1.97',
 ]
 
 benchmark_hpo_requires = [

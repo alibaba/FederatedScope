@@ -399,11 +399,11 @@ class StandaloneRunner(BaseRunner):
             self._run_simulation_online()
         else:
             self._run_simulation()
-        # TODO: avoid using private attr
+        # TODO: avoid using private attrmsg_handlers
         self.server._monitor.finish_fed_runner(fl_mode=self.mode)
         return self.server.best_results
 
-    def _handle_msg(self, msg, rcv=-1):
+    def _handle_msg(self, msg, loss_log, param_log, rcv=-1):
         """
         To simulate the message handling process (used only for the \
         standalone mode)
@@ -418,11 +418,12 @@ class StandaloneRunner(BaseRunner):
         if not isinstance(receiver, list):
             receiver = [receiver]
         for each_receiver in receiver:
+
             if each_receiver == 0:
                 self.server.msg_handlers[msg.msg_type](msg)
                 self.server._monitor.track_download_bytes(download_bytes)
             else:
-                self.client[each_receiver].msg_handlers[msg.msg_type](msg)
+                self.client[each_receiver].msg_handlers[msg.msg_type](msg, loss_log, param_log)
                 self.client[each_receiver]._monitor.track_download_bytes(
                     download_bytes)
 
@@ -468,7 +469,12 @@ class StandaloneRunner(BaseRunner):
         Run for standalone simulation (W/O online aggr)
         """
         server_msg_cache = list()
+        cur_round_num = 0
+        loss_log = np.zeros((500, 8), dtype=np.float16)
+        param_log = {}
+
         while True:
+            
             if len(self.shared_comm_queue) > 0:
                 msg = self.shared_comm_queue.popleft()
                 if not self.cfg.vertical.use and msg.receiver == [
@@ -481,7 +487,8 @@ class StandaloneRunner(BaseRunner):
                     self.serial_num_for_msg += 1
                     heapq.heappush(server_msg_cache, msg)
                 else:
-                    self._handle_msg(msg)
+                    
+                    self._handle_msg(msg, loss_log, param_log)
             elif len(server_msg_cache) > 0:
                 msg = heapq.heappop(server_msg_cache)
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
@@ -493,9 +500,9 @@ class StandaloneRunner(BaseRunner):
                     if self.server.trigger_for_time_up(msg.timestamp):
                         heapq.heappush(server_msg_cache, msg)
                     else:
-                        self._handle_msg(msg)
+                        self._handle_msg(msg, loss_log, param_log)
                 else:
-                    self._handle_msg(msg)
+                    self._handle_msg(msg, loss_log, param_log)
             else:
                 if self.cfg.asyn.use and self.cfg.asyn.aggregator \
                         == 'time_up':

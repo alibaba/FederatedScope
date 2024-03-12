@@ -179,14 +179,14 @@ def main():
     fschatbot = FSChatBot(init_cfg)
 
     # Get test file
-    fp = os.path.join(init_cfg.data.root, 'gsm8k_test.jsonl')
-    if not os.path.exists(fp):
-        download_url(
-            'https://raw.githubusercontent.com/openai/'
-            'grade-school-math/2909d34ef28520753df82a2234c357259d254aa8/'
-            'grade_school_math/data/test.jsonl', init_cfg.data.root)
-        os.rename(os.path.join(init_cfg.data.root, 'test.jsonl'), fp)
-
+    # fp = os.path.join(init_cfg.data.root, 'gsm8k_test.jsonl')
+    # if not os.path.exists(fp):
+    #     download_url(
+    #         'https://raw.githubusercontent.com/openai/'
+    #         'grade-school-math/2909d34ef28520753df82a2234c357259d254aa8/'
+    #         'grade_school_math/data/test.jsonl', init_cfg.data.root)
+    #     os.rename(os.path.join(init_cfg.data.root, 'test.jsonl'), fp)
+    fp = './federatedscope/llm/dataset/gsm8k/gsm8k_test.jsonl'
     list_data_dict = load_jsonl(fp, instruction='question', output='answer')
 
     answers = []
@@ -207,7 +207,12 @@ def main():
 
         print(f'Num of total question: {len(answers)}, '
               f'correct num: {sum(answers)}, '
-              f'correct rate: {float(sum(answers))/len(answers)}.')
+              f'correct rate: {float(sum(answers))/len(answers)}.', flush=True)
+
+        # with open('eval_result_log/gsm/iid/7b/eval_result.txt', 'a') as f:
+        #     f.write(f'Num of total question: {len(answers)}, '
+        #             f'correct num: {sum(answers)}, '
+        #             f'correct rate: {float(sum(answers))/len(answers)}.\n')
 
 
 if __name__ == "__main__":

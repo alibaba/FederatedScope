@@ -21,6 +21,7 @@ if os.environ.get('https_proxy'):
 if os.environ.get('http_proxy'):
     del os.environ['http_proxy']
 
+
 if __name__ == '__main__':
     init_cfg = global_cfg.clone()
     args = parse_args()
@@ -58,7 +59,7 @@ if __name__ == '__main__':
         data = new_data
 
     init_cfg.freeze()
-
+    
     runner = get_runner(data=data,
                         server_class=get_server_cls(init_cfg),
                         client_class=get_client_cls(init_cfg),
