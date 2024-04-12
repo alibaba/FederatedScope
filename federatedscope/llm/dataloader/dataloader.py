@@ -279,6 +279,32 @@ def load_llm_dataset(config=None, **kwargs):
             list_data_dict[i]['output'] = \
                 list_data_dict[i]['output'].replace('####', 'The answer is')
         dataset = LLMDataset(list_data_dict, tokenizer)
+    elif dataset_name.lower() == "medical_tc":
+        fp = os.path.join(config.data.root, 'medical_tc_train.jsonl')
+        if not os.path.exists(fp):
+            download_url(
+                'https://federatedscope.oss-cn-beijing.aliyuncs.com/FS-LLM'
+                '/medical_tc_train.jsonl', config.data.root)
+            os.rename(os.path.join(config.data.root, 'train.jsonl'), fp)
+        list_data_dict = load_jsonl(fp,
+                                    instruction='instruction',
+                                    input='input',
+                                    output='output',
+                                    category='output')
+        dataset = LLMDataset(list_data_dict, tokenizer)
+    elif dataset_name.lower() == "finance":
+        fp = os.path.join(config.data.root, 'finance_train_data.jsonl')
+        if not os.path.exists(fp):
+            download_url(
+                'https://federatedscope.oss-cn-beijing.aliyuncs.com/FS-LLM'
+                '/finance_train_data.jsonl', config.data.root)
+            os.rename(os.path.join(config.data.root, 'train.jsonl'), fp)
+        list_data_dict = load_jsonl(fp,
+                                    instruction='instruction',
+                                    input='input',
+                                    output='output',
+                                    category='category')
+        dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'code_search_net':
         from tqdm import tqdm
         from federatedscope.llm.dataset.code_search_net import \
