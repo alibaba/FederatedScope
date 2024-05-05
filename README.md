@@ -1,4 +1,4 @@
-# FedKSeed
+# [ICML'24] Federated Full-Parameter Tuning of Billion-Sized Language Models with Communication Cost under 18 Kilobytes
 
 This branch contains the official implementation for the work “**Federated Full-Parameter Tuning of Billion-Sized Language Models with Communication Cost under 18 Kilobytes**”. See more details in our [paper](https://arxiv.org/abs/2312.06353). 
 
