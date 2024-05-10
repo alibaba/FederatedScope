@@ -43,12 +43,12 @@ The arguments can be adjusted according to the `help` information in their defin
 ```Shell
 # On Natural Instructions, the number of clients `num_clients` does not require manual setting. 
 # It will be automatically adjusted to the number of tasks in `splits/default/train_tasks.txt`.
-python main.py --rounds 40 --model datajuicer/LLaMA-1B-dj-refine-150B --use_prompts --dataset instruct --lr 0.0000003 -K 1024 -m 0.05 --log
+python main.py --rounds 40 --model datajuicer/LLaMA-1B-dj-refine-150B --dataset instruct --lr 0.0000003 -K 1024 -m 0.05 --log
 ```
 
 2. FedKSeed on Dolly-15K with $\alpha=0.5$
 ```Shell
-python main.py --rounds 60 --model datajuicer/LLaMA-1B-dj-refine-150B --use_prompts --dataset dolly --iid dir0.5 --num_clients 200 --lr 0.0000003 -K 1024 -m 0.05 --log
+python main.py --rounds 60 --model datajuicer/LLaMA-1B-dj-refine-150B --dataset dolly --iid dir0.5 --num_clients 200 --lr 0.0000003 -K 1024 -m 0.05 --log
 ```
 
 
@@ -56,12 +56,12 @@ python main.py --rounds 60 --model datajuicer/LLaMA-1B-dj-refine-150B --use_prom
 ```Shell
 # On Natural Instructions, the number of clients `num_clients` does not require manual setting. 
 # It will be automatically adjusted to the number of tasks in `splits/default/train_tasks.txt`.
-python main.py --rounds 40 --bias_sampling  --model datajuicer/LLaMA-1B-dj-refine-150B --use_prompts --dataset instruct --lr 0.0000003 -K 1024 -m 0.05 --log
+python main.py --rounds 40 --bias_sampling  --model datajuicer/LLaMA-1B-dj-refine-150B --dataset instruct --lr 0.0000003 -K 1024 -m 0.05 --log
 ```
 
 4. FedKSeed-Pro on Dolly-15K with $\alpha=0.5$
 ```Shell
-python main.py --rounds 60 --bias_sampling  --model datajuicer/LLaMA-1B-dj-refine-150B --use_prompts --dataset dolly --iid dir0.5 --num_clients 200 --lr 0.0000003 -K 1024 -m 0.05 --log
+python main.py --rounds 60 --bias_sampling  --model datajuicer/LLaMA-1B-dj-refine-150B --dataset dolly --iid dir0.5 --num_clients 200 --lr 0.0000003 -K 1024 -m 0.05 --log
 ```
 
 ## License
