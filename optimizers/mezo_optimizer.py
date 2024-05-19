@@ -108,16 +108,10 @@ class MeZOFramework(object):
             for name, param in self.named_parameters_to_optim:
                 # Resample z
                 z = torch.normal(mean=0, std=1, size=param.data.size(), device=param.data.device, dtype=param.data.dtype)
-                if "bias" not in name and "layer_norm" not in name and "layernorm" not in name:
-                    param.data = param.data - self.lr * (self.projected_grad * z + self.args.weight_decay * param.data)
-                else:
-                    param.data = param.data - self.lr * (self.projected_grad * z)
+                param.data = param.data - (self.lr * self.projected_grad) * z
         else:
             torch.manual_seed(seed)
             for name, param in self.named_parameters_to_optim:
                 # Resample z
                 z = torch.normal(mean=0, std=1, size=param.data.size(), device=param.data.device, dtype=param.data.dtype)
-                if "bias" not in name and "layer_norm" not in name and "layernorm" not in name:
-                    param.data = param.data - self.lr * (grad * z + self.args.weight_decay * param.data)
-                else:
-                    param.data = param.data - self.lr * (grad * z)
+                param.data = param.data - (self.lr * grad) * z
