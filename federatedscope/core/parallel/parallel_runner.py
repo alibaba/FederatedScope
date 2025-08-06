@@ -225,7 +225,7 @@ class ServerRunner(Runner):
             data=self.data,
             model=model,
             client_num=self.config.federate.client_num,
-            totol_round_num=self.config.federate.total_round_num,
+            total_round_num=self.config.federate.total_round_num,
             device=self.device,
             unseen_clients_id=self.unseen_clients_id,
             **kw)
