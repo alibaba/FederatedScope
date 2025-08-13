@@ -68,10 +68,12 @@ python main.py --rounds 60 --bias_sampling  --model datajuicer/LLaMA-1B-dj-refin
 This project adopts the Apache-2.0 License. 
 If the implementations and/or our paper were useful to you, please consider citing this [work](https://arxiv.org/abs/2312.06353):
 ```latex
-@article{qin2023federated,
-      title={Federated Full-Parameter Tuning of Billion-Sized Language Models with Communication Cost under 18 Kilobytes}, 
-      author={Zhen Qin and Daoyuan Chen and Bingchen Qian and Bolin Ding and Yaliang Li and Shuiguang Deng},
-      journal={arXiv preprint arXiv:2312.06353}
-      year={2023}
+@inproceedings{qin2024federated,
+  title={Federated Full-Parameter Tuning of Billion-Sized Language Models with Communication Cost under 18 Kilobytes},
+  author={Qin, Zhen and Chen, Daoyuan and Qian, Bingchen and Ding, Bolin and Li, Yaliang and Deng, Shuiguang},
+  booktitle={International Conference on Machine Learning},
+  pages={41473--41497},
+  year={2024},
+  organization={PMLR}
 }
 ```
