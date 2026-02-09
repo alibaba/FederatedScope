@@ -14,7 +14,7 @@ class MedianAggregator(ClientsAvgAggregator):
     [Yin et al., 2018]
     (http://proceedings.mlr.press/v80/yin18a/yin18a.pdf)
 
-    It computes the coordinate-wise median of recieved updates from clients
+    It computes the coordinate-wise median of received updates from clients
 
     The code is adapted from https://github.com/bladesteam/blades
     """
