@@ -19,13 +19,13 @@ The compression of training ConvNet-2 on FEMNIST  is shown as below:
 
 
 ## Model quantization
-We provide a symmetric uniform quantization to transform the model parameters (32-bit float) to 8/16-bit int (note that it might bring model performance drop).
+We provide a symmetric uniform quantization to transform the model parameters (32-bit float) to 4/8/16-bit int (note that it might bring model performance drop).
 
 To apply model quantization, users need to add the following configurations:
 ```yaml
 quantization:
     method: 'uniform'
-    nbits: 16 # or 8
+    nbits: 8 # [4, 8, 16]
 ```
 
 We conduct experiments based on the scripts provided in `federatedscope/cv/baseline/fedavg_convnet2_on_femnist.yaml` and report the results as:
